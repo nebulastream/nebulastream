@@ -11,6 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(nautilus-remove-br-only-blocks-pass-test "RemoveBranchOnlyBlocksPassTest.cpp")
-target_link_libraries(nautilus-remove-br-only-blocks-pass-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-remove-br-only-blocks-pass-test COMMAND nautilus-remove-br-only-blocks-pass-test)
+add_executable(nautilus-remove-br-only-blocks-phase-test "RemoveBranchOnlyBlocksPhaseTest.cpp")
+target_link_libraries(nautilus-remove-br-only-blocks-phase-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME nautilus-remove-br-only-blocks-phase-test COMMAND nautilus-remove-br-only-blocks-phase-test)

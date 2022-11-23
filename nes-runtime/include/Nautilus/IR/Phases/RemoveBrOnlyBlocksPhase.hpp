@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -27,9 +27,9 @@ namespace NES::Nautilus::IR {
 
 /**
  * @brief This phase converts a execution trace to SSA form.
- * This implies that, each value is only assigned and that all parameters to a basic block are passed by block arguments.
+ * This implies that, each value is only assigned and that all parameters to a basic block are phaseed by block arguments.
  */
-class RemoveBrOnlyBlocksPass {
+class RemoveBrOnlyBlocksPhase {
   public:
     /**
      * @brief Applies the phase on a execution trace.
@@ -42,14 +42,14 @@ class RemoveBrOnlyBlocksPass {
     /**
      * @brief Internal context object, which maintains statue during IR creation.
      */
-    class RemoveBrOnlyBlocksPassContext {
+    class RemoveBrOnlyBlocksPhaseContext {
       public:
         /**
          * @brief Constructor for the context of the remove br-only-blocks phase.
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        RemoveBrOnlyBlocksPassContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
          * 
@@ -80,7 +80,7 @@ class RemoveBrOnlyBlocksPass {
          * @param visitedBlocks: Blocks that have already been processed and can be disregarded.
          */
         void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock, 
-                               std::vector<IR::BasicBlockPtr>& candidates, 
+                               std::stack<IR::BasicBlockPtr>& candidates, 
                                std::unordered_set<std::string> visitedBlocks);
 
       private:
@@ -90,4 +90,4 @@ class RemoveBrOnlyBlocksPass {
 };
 
 }// namespace NES::Nautilus::Tracing
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPASS_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_

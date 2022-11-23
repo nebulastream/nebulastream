@@ -15,6 +15,7 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+
 namespace NES::Nautilus::IR::Operations {
 IfOperation::IfOperation(OperationPtr booleanValue)
     : Operation(Operation::IfOp, Types::StampFactory::createVoidStamp()), booleanValue(booleanValue) {}
@@ -24,8 +25,7 @@ OperationPtr IfOperation::getValue() { return booleanValue.lock(); }
 BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockInvocation; }
 BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
 
-void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) { 
-    //Todo might need to adapt invocation arguments // Todo remove?
+void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) {
     this->trueBlockInvocation.setBlock(trueBlockInvocation); 
 }
 void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) { 
