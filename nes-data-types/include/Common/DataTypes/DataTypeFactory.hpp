@@ -156,8 +156,7 @@ class DataTypeFactory {
     static DataTypePtr createFixedChar(uint64_t length);
 
     /**
-    * @brief Creates a new Char data type.
-    * @param length length of the char
+    * @brief Creates a new text data type.
     * @return DataTypePtr
     */
     static DataTypePtr createText();
