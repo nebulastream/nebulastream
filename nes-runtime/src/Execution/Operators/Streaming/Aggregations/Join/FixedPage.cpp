@@ -44,4 +44,31 @@ uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * size
 
 size_t FixedPage::size() const { return pos; }
 
+FixedPage::FixedPage(const FixedPage& that) : sizeOfRecord(that.sizeOfRecord), data(that.data), pos(that.pos),
+                                        capacity(that.capacity), bloomFilter(that.bloomFilter.get()){}
+
+FixedPage::FixedPage(FixedPage&& that) : sizeOfRecord(that.sizeOfRecord), data(that.data), pos(that.pos),
+                                         capacity(that.capacity), bloomFilter(std::move(that.bloomFilter)) {
+    that.sizeOfRecord = 0;
+    that.data = nullptr;
+    that.pos = 0;
+    that.capacity = 0;
+}
+FixedPage& FixedPage::operator=(FixedPage&& that) {
+    if (this == std::addressof(that)) {
+        return *this;
+    }
+
+    swap(*this, that);
+    return *this;
+}
+
+void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) {
+    std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
+    std::swap(lhs.data, rhs.data);
+    std::swap(lhs.pos, rhs.pos);
+    std::swap(lhs.capacity, rhs.capacity);
+    std::swap(lhs.bloomFilter, rhs.bloomFilter);
+}
+
 } // namespace NES::Runtime::Execution::Operators
