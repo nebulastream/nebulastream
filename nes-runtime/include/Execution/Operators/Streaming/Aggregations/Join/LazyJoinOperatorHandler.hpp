@@ -15,6 +15,7 @@
 #define NES_LAZYJOINOPERATORHANDLER_HPP
 
 #include <vector>
+#include <cstddef>
 #include <API/Schema.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
