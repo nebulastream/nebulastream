@@ -32,6 +32,7 @@
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -54,9 +55,14 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -90,7 +96,8 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     for (auto& root : queryPlan->getRootOperators()) {
         queryPlan->removeAsRootOperator(root);
     }
-    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline); // TODO 3138: add list of operator handlers as a second param
+    auto nautilusPipelineWrapper =
+        NautilusPipelineOperator::create(pipeline);// TODO 3138: add list of operator handlers as a second param
     queryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
@@ -115,11 +122,16 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
-    }{
-        // add operator handler
-        // get index of operator handler
-        // create thresshold window
-
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
+        /*
+         * TODO 3138:
+         * 1) Add operator handler
+         * 2) Get index of operator handler and store it as window's attribute
+         * 3) Create a threshold window with the operator handler
+         */
+        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode);
+        parentOperator->setChild(thresholdWindow);
+        return thresholdWindow;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -168,6 +180,36 @@ LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorP
         std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
     return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                       PhysicalOperators::PhysicalOperatorPtr operatorPtr) {
+    auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
+
+    // TODO 3138: Properly get the handle index
+    uint64_t handlerIndex = 0;
+
+    auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
+        thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
+    auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+    auto predicate = lowerExpression(thresholdWindowType->getPredicate());
+
+    auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    // Currently only support a single aggregation and must be a Sum aggregation
+    // TODO 3138: Add an issue number
+    if (aggregations.size() != 1) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        if (aggregations[0]->getType() != Windowing::WindowAggregationDescriptor::Sum) {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+
+    auto aggregatedFieldAccess = lowerExpression(aggregations[0]->on());
+
+    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate, aggregatedFieldAccess, handlerIndex);
+}
+
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
 LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNode) {
     if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {

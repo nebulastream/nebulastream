@@ -72,8 +72,9 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    windowType->inferStamp(inputSchema);
+    if (!windowDefinition->getWindowType()->inferStamp(inputSchema)) {
+        return false;
+    }
 
     //Construct output schema
     outputSchema->clear();
