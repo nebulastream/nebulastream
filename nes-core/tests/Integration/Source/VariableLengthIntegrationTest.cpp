@@ -14,6 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -36,113 +37,130 @@ class VariableLengthIntegrationTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("VariableLengthIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup VariableLengthIntegrationTest test class.");
     }
+
+    std::string generateRandomString(size_t size) {
+        auto generateRandomCharacter = []() -> char {
+            const char charset[] = "0123456789"
+                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "abcdefghijklmnopqrstuvwxyz";
+            return charset[rand() % (sizeof(charset) - 1)];
+        };
+        std::string str(size, 0);
+        std::generate_n(str.begin(), size, generateRandomCharacter);
+        return str;
+    }
 };
 
+/// This test reads from a csv sink which contains variable-length fields and writes
+/// the same to a csv sink
 TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
+    // TODO check if using TestUtils is a better idea here?
+    std::string inputFileName = "variable-length.csv";
+    std::string outputFileName = "testCsvSourceWithVariableLengthFields.csv";
+    std::string inputFilePath = std::string(TEST_DATA_DIRECTORY) + inputFileName;
+    std::string outputFilePath = getTestResourceFolder() / outputFileName;
+    remove(outputFilePath.c_str());
+
+    // elegant project test schema
+    std::string testSchema = R"(Schema::create()->addField("camera_id", UINT64)
+                                                ->addField("timestamp", UINT64)
+                                                ->addField("rows", UINT64)
+                                                ->addField("cols", UINT64)
+                                                ->addField("type", UINT64)
+                                                ->addField("data", TEXT);)";// TEXT is the variable length field
+
+    // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+
     NES_INFO("VariableLengthIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    crd->getSourceCatalogService()->registerLogicalSource("variable_length", testSchema);
+
     EXPECT_NE(port, 0UL);
-    NES_INFO("VariableLengthIntegrationTest: Coordinator started successfully");
+    NES_DEBUG("VariableLengthIntegrationTest: Coordinator started successfully");
+    NES_DEBUG("VariableLengthIntegrationTest: Start worker 1");
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    auto sourceCatalog = crd->getSourceCatalog();
+    // setup csv sources
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(inputFilePath);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    auto physicalSource = PhysicalSource::create("variable_length", "test_stream", csvSourceType);
 
-    struct Record {
-        uint64_t cameraId;
-        uint64_t timestamp;
-        uint64_t rows;
-        uint64_t cols;
-        uint64_t type;
-        std::string data;
-    };
-    ASSERT_EQ(sizeof(Record), 72);
-
-    auto schema = Schema::create()
-                      ->addField("cameraId", DataTypeFactory::createUInt64())
-                      ->addField("timestamp", DataTypeFactory::createUInt64())
-                      ->addField("rows", DataTypeFactory::createUInt64())
-                      ->addField("cols", DataTypeFactory::createUInt64())
-                      ->addField("type", DataTypeFactory::createUInt64())
-                      ->addField("data", DataTypeFactory::createText());
-    ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
-
-    sourceCatalog->addLogicalSource("var_length_stream", schema);
-
-    NES_INFO("VariableLengthIntegrationTest: Start worker 1");
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->coordinatorPort = port;
-
-    constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
-    constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
-    auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
-    auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
-    auto* records = reinterpret_cast<Record*>(memArea);
-    size_t recordSize = schema->getSchemaSizeInBytes();
-    size_t numRecords = 40;//memAreaSize / recordSize;
-    for (uint64_t i = 0U; i < numRecords; ++i) {
-        records[i].cameraId = i;
-        records[i].timestamp = i;
-        records[i].rows = i;
-        records[i].cols = i;
-        records[i].type = i;
-        records[i].data = "12345678";
-    }
-
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, "interval");
-    auto physicalSource = PhysicalSource::create("var_length_stream", "stream_1", memorySourceType);
-    wrkConf->physicalSources.add(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    // setup worker
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+
     ASSERT_TRUE(retStart1);
     NES_INFO("VariableLengthIntegrationTest: Worker1 started successfully");
 
-    // local fs
-    std::string filePath = getTestResourceFolder() / "variableLengthTestOut.csv";
-    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    //register query
-    std::string queryString =
-        R"(Query::from("var_length_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    // register query
+    std::string queryString = R"(Query::from("variable_length").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
+
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("VariableLengthIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    std::ifstream ifs(filePath.c_str());
-    ASSERT_TRUE(ifs.good());
+    string const expectedContent =
+        "variable_length$camera_id:INTEGER,variable_length$timestamp:INTEGER,variable_length$rows:INTEGER,"
+        "variable_length$cols:INTEGER,variable_length$type:INTEGER,variable_length$data:Text\n"
+        "50,45,198,209,14,"
+        "fa37JncCHryDsbzayy4cBWDxS22JjzhMaiRrV41mtzxlYvKWrO72tK0LK0e1zLOZ2nOXpPIhMFSv8kP07U20o0J90xA0GWXIIwo7J4ogHFZQxwQ2RQ0D"
+        "RJKR"
+        "ETPVzxlFrXL8b7mtKLHIGhIh5JuWcFwrgJKdE3t5bECALy3eKIwYxEF3V7Z8KTx0nFe1IX5tjH22F5gXOa5LnIMIQuOiNJj\n"
+        "19,178,31,54,134,"
+        "8YL8rqDiZSkZfoEDAmGTXXqqvkCd5WKE2fMtVXa2zKae6opGY4i6bYuUG67LaSXd5tUbO4bNPB0TxnkWrSaQyUuEa0X9Q5mVwG4JLgeipeBlQtFFJpgH"
+        "JYTr"
+        "Wz0w2kQw1UFK8u2yWBjw3yCMlqc4M3tt2un4cDzdiEvq8vmf7TZAPjUAZ6Cu86nAyYDamCCSQ7GX33A8W\n"
+        "46,119,171,110,140,hGwRk40pHuxNf5JEItyS3QrBgOChWKCDa6eIAd7RV4mBA5NQxJt0jk9N6L5cdFnDLSWV3bvYghhol4EgN5e4poSt7V\n"
+        "55,153,184,11,12,VlkJw5jSYm4TKi92Ws4iYQoCSbysV6Nyp5Fl8wCfiE81uF1O7\n"
+        "32,121,189,87,183,36dRsouSmmxq8tfB7PK3Zzmn5lhLm5Qn92F2q9UatPR1G4DNRVR0SBlXwQqgTFRdHgd5n5ffS4gi9\n"
+        "246,250,214,64,35,"
+        "r6YKVZmgIIaj8ECLfncKQh5TLkvPPcYEg5ZBeJpubNdiZq3CbeW2JcTeKP4j1ayffXqHqdCQ0n8Xb9jDnEF7oij85ls4MqjzLXF9A\n"
+        "40,31,23,205,194,"
+        "PZ8CffopP1adEfRuPX0AP2UDmSWHhgS6DaIrE4eb5EEJudCHACPYCulwMIE1wg57ENyQSc1VpFnjqz019PZLHIIbYWaSAfaM3WnT7oyw2jdsibrryODE"
+        "hTpF"
+        "zQi73GT6kGXr5Ul7DOxwxplwDyAuRx8OLoVP2zTmDzeITNNekLYh8KbLIjEihK408aNAXrwko\n"
+        "207,192,48,64,218,"
+        "Y1HwMtgfSLnmx72gLiLfnKlLhtsWpaKMZZGwTubvFNhAUhppQASDSBYA4OetwzDWYTQzNzubMZlqHadfj3sBEOJIkyAevNATpYRAYLlutVj85MnoOfyc"
+        "1Hvl"
+        "F3N8QYaD41OcK7VDcELgY8SwlQXmiQVvTt4rPe5RdR4xYXB9lUpHdHCMgj7O7aHaRJRovWGYvKUUrfba7Qpif15LiChpkxNCGp0AJGgFYAh\n"
+        "161,77,146,35,31,"
+        "PnIxvgndJmgfTqKGbHenWRlgk2KxaVeyGuv9YinsTRVwIpCt7qedHPH0Pbx04awLSrS1YFr1fMvx97oGwQrBp89Di5Bmf757yY6UlvTQHOLRU9fQZXZN"
+        "dhYL"
+        "mj6RqBWmhbHRWkrm9BBbIqzqLYDzFjK1SQQIav2HWJi22Ym9jxkzojp7F06TjRUBptRPoUfKlLKnr7uY2eYqLNwbO247RWHHNieBAHTwdohUtc3vEbkY"
+        "yg9K"
+        "iBS\n"
+        "241,110,30,47,135,"
+        "8fjP3P1EYJiUwU9ONjRGw00UxgbHNmjVRQsUotjMAPo4txTEfsUbrT3o9e5UQnxpBnIzfzLpO9uF5LTiDvH4OKqWywyMhw9sjRsOQBCmL61ORS6cONfm"
+        "hVGd"
+        "PFx6B\n";
 
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    //    NES_INFO("VariableLengthIntegrationTest: content=" << content);
-    ASSERT_TRUE(!content.empty());
+    NES_INFO("VariableLengthIntegrationTest: content=" << content);
+    NES_INFO("VariableLengthIntegrationTest: expContent=" << expectedContent);
 
-    std::ifstream infile(filePath.c_str());
-    std::string line;
-    std::size_t lineCnt = 0;
-    while (std::getline(infile, line)) {
-        if (lineCnt > 0 && lineCnt < numRecords) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
-                + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1) + ","
-                + "12345678";
-            NES_INFO("VariableLengthIntegrationTest: Line " << line);
-            ASSERT_EQ(line, expectedString);
-        }
-        lineCnt++;
-    }
-
-    //ASSERT_EQ(recordsToExpect, lineCnt - 1);
+    EXPECT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);

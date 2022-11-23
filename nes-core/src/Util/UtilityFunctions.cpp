@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -30,6 +31,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -94,22 +96,40 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
         uint64_t offset = 0;
         for (uint64_t j = 0; j < schema->getSize(); j++) {
             auto field = schema->get(j);
-            auto ptr = field->getDataType();
-            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+            auto dataType = field->getDataType();
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
             auto fieldSize = physicalType->size();
-            auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
+            std::string str;
+
+            // handle variable-length field
+            if (dataType->isText()) {
+                // read the child buffer index from the tuple buffer
+                Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
+                    *reinterpret_cast<uint32_t const*>(buffer + offset + i * schema->getSchemaSizeInBytes());
+
+                // retrieve the child buffer from the tuple buffer
+                auto childTupleBuffer = tbuffer.loadChildBuffer(childIdx);
+
+                // retrieve the size of the variable-length field from the child buffer
+                uint32_t sizeOfTextField = 0;
+                std::memcpy(&sizeOfTextField, childTupleBuffer.getBuffer(), sizeof(uint32_t));
+
+                // build the string
+                auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
+                std::string deserialized(begin, begin + sizeOfTextField);
+                str = std::move(deserialized);
+            }
+
+            else {
+                str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
+            }
+
             ss << str.c_str();
             if (j < schema->getSize() - 1) {
                 ss << ",";
             }
             offset += fieldSize;
         }
-        //        #ifdef TFDEF
-        //        auto ts = std::chrono::system_clock::now();
-        //        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        //                                 ts.time_since_epoch()).count();
-        //        ss << "," << std::to_string(expulsionTime);
-        //        #endif
         ss << std::endl;
     }
     return ss.str();

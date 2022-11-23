@@ -31,7 +31,8 @@ CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTyp
 bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              uint64_t tupleCount,
                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                             const SchemaPtr& schema) {
+                                             const SchemaPtr& schema,
+                                             const Runtime::BufferManagerPtr& bufferManager) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
 
     std::vector<std::string> values;
@@ -43,15 +44,16 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
     }
 
     if (values.size() != schema->getSize()) {
-        NES_THROW_RUNTIME_ERROR("CSVParser: The input line does not contain the right number of delited fiels."s
-                                + " Fields in schema: " + std::to_string(schema->getSize()) + " Fields in line: "
-                                + std::to_string(values.size()) + " Schema: " + schema->toString() + " Line: " + csvInputLine);
+        NES_THROW_RUNTIME_ERROR(
+            "CSVParser: The input line does not contain the right number of delimited fields. Fields in schema: "
+            + std::to_string(schema->getSize()) + " Fields in line: " + std::to_string(values.size())
+            + " Schema: " + schema->toString() + " Line: " + csvInputLine);
     }
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
         NES_TRACE("Current value is: " << values[j]);
-        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount);
+        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount, bufferManager);
     }
     return true;
 }

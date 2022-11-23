@@ -41,11 +41,13 @@ class Parser {
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
    * @param schema: data schema
+   * @param bufferManager: the buffer manager
    */
     virtual bool writeInputTupleToTupleBuffer(const std::string& inputTuple,
                                               uint64_t tupleCount,
                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                              const SchemaPtr& schema) = 0;
+                                              const SchemaPtr& schema,
+                                              const Runtime::BufferManagerPtr& bufferManager) = 0;
 
     /**
    * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
@@ -55,12 +57,14 @@ class Parser {
    * @param json: denotes whether input comes from JSON for correct parsing
    * @param schema: the schema the data are supposed to have
    * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
+   * @param bufferManager: the buffer manager
    */
     void writeFieldValueToTupleBuffer(std::string value,
                                       uint64_t schemaFieldIndex,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
-                                      uint64_t tupleCount);
+                                      uint64_t tupleCount,
+                                      const Runtime::BufferManagerPtr& bufferManager);
 
   private:
     std::vector<PhysicalTypePtr> physicalTypes;

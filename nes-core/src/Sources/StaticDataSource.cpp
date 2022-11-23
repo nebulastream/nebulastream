@@ -220,7 +220,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
         }
         std::getline(input, line);
         NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         ++tupleCount;
         ++generatedTuples;
     }
