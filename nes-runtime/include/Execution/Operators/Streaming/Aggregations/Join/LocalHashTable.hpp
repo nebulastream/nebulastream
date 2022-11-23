@@ -31,13 +31,7 @@ class LocalHashTable {
                             std::atomic<uint64_t>& tail,
                             size_t overrunAddress);
 
-    /**
-     * @brief inserts the record into the hash table
-     * @param hash
-     * @param record
-     * @return pointer to the 
-     */
-    void* insert(Nautilus::Record& record, const std::string& joinFieldName) const;
+    uint8_t* insert(uint64_t key) const;
 
     /**
      * @brief

@@ -18,12 +18,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void LocalHashTable::insert(uint64_t key, const std::string& joinFieldName) const {
-
+uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = Util::murmurHash(key);
-    buckets[hashedKey & LazyJoinOperatorHandler::MASK]->append(hashedKey);
-
+    return buckets[hashedKey & LazyJoinOperatorHandler::MASK]->append(hashedKey);
 }
+
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
 

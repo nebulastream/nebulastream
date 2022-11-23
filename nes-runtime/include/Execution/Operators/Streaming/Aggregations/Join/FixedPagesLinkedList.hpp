@@ -32,7 +32,7 @@ class FixedPagesLinkedList{
 
     ~FixedPagesLinkedList();
 
-    void append(const uint64_t hash, Nautilus::Record& record);
+    uint8_t* append(const uint64_t hash);
 
     const std::vector<FixedPage*>& getPages() const;
 
@@ -42,6 +42,7 @@ class FixedPagesLinkedList{
     size_t pos;
     uint64_t overrunAddress;
     std::vector<FixedPage*> pages;
+    size_t sizeOfRecord;
 };
 }
 

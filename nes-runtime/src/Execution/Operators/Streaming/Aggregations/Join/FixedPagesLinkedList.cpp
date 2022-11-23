@@ -16,25 +16,30 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void FixedPagesLinkedList::append(const uint64_t hash, Nautilus::Record& record) {
-    if (!curPage->append(hash, record)) {
+uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
+    uint8_t* retPointer = curPage->append(hash);
+    if (retPointer == nullptr) {
         if (++pos < pages.size()) {
             curPage = pages[pos];
         } else {
-            size_t recordSize = sizeof(record);
-            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, recordSize));
+            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, sizeOfRecord));
         }
+        retPointer = curPage->append(hash);
     }
+
+    return retPointer;
 }
+
 const std::vector<FixedPage*>& FixedPagesLinkedList::getPages() const { return pages; }
 
 FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord)
-    : tail(tail), overrunAddress(overrunAddress) {
+    : tail(tail), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord) {
     for (auto i = 0; i < NUM_PREALLOCATED_PAGES; ++i) {
         pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord));
     }
     curPage = pages[0];
 }
+
 FixedPagesLinkedList::~FixedPagesLinkedList() {
     std::for_each(pages.begin(), pages.end(), [](FixedPage* p) {
         delete p;

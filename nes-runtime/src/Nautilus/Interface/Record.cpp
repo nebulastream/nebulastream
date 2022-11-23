@@ -35,6 +35,11 @@ void Record::write(RecordFieldIdentifier fieldIndex, Value<Any>& value) { fields
 
 bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
 std::vector<Record::RecordFieldIdentifier> Record::getAllField() {
-    return fields.ke
+    std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
+    for (auto& [fieldIdentifier, value] : fields) {
+        fieldIdentifierVec.emplace_back(fieldIdentifier);
+    }
+
+    return fieldIdentifierVec;
 }
 }// namespace NES::Nautilus
