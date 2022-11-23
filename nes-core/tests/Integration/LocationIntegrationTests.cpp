@@ -831,9 +831,11 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                               allowedTimeDiff);
                     firstPrediction = std::nullopt;
 
-                    //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
+                    //increase reconnect count and mark this reconnect as the last one so we do not check again until after the next reconnect
                     reconnectCounter++;
                     lastReconnectPositionAndTime = updatedLastReconnect;
+
+                    //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
                     bool predictedAtCoord = false;
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin();
                          prediction != checkVectorForCoordinatorPrediction.end();
