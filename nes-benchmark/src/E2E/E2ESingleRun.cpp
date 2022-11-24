@@ -141,7 +141,7 @@ void E2ESingleRun::createSources() {
                                                                         sourceAffinity,
                                                                         taskQueueId);
 
-            auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
+            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
             coordinatorConf->worker.physicalSources.add(physicalSource);
         }
         sourceCnt += 1;
