@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.63](https://github.com/nebulastream/nebulastream/tree/v0.3.63) (2022-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.62...v0.3.63)
+
+**Implemented enhancements:**
+
+- \[Feature\] Reintroduce support for multiple sources and document new options [\#3212](https://github.com/nebulastream/nebulastream/issues/3212)
+
 ## [v0.3.62](https://github.com/nebulastream/nebulastream/tree/v0.3.62) (2022-11-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.61...v0.3.62)
