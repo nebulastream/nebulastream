@@ -74,7 +74,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup QueryCompilerTest test class.");
     }
 
