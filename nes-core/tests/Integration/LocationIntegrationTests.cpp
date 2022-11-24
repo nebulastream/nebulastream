@@ -777,11 +777,11 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                             && ((lastReconnectPositionAndTime.first->isValid()
                                  && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first)
                                 || !lastReconnectPositionAndTime.first->isValid())) {
-                                NES_TRACE("path stabilized after reconnect")
-                                NES_TRACE(
-                                    "new predicted parent = " << newPredictedReconnect->reconnectPrediction.expectedNewParentId);
-                                predictedReconnect = newPredictedReconnect;
-                                firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
+                            NES_TRACE("path stabilized after reconnect")
+                            NES_TRACE(
+                                "new predicted parent = " << newPredictedReconnect->reconnectPrediction.expectedNewParentId);
+                            predictedReconnect = newPredictedReconnect;
+                            firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
 
                             if (predictedReconnect
                                 && predictedReconnect->predictedReconnectLocation
