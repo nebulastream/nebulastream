@@ -32,6 +32,7 @@
 #include <gtest/gtest.h>
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
@@ -42,6 +43,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -142,6 +144,12 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
+        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("className",
+                                                           "MethodName",
+                                                           std::vector<char>(),
+                                                           std::unordered_map<std::string, std::vector<char>>({{"class", {1}}}),
+                                                           Schema::create());
+        mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfOperator(javaUdfDescriptor);
     }
 
   protected:
@@ -150,7 +158,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
-    LogicalOperatorNodePtr mapOp;
+    LogicalOperatorNodePtr mapOp, mapJavaUdfOp;
     LogicalOperatorNodePtr projectPp;
     LogicalOperatorNodePtr iterationCEPOp;
     JoinLogicalOperatorNodePtr joinOp1;
@@ -712,6 +720,37 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Map Java Udf -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Map Java Udf Operator --- Physical Source 1
+ *
+ */
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUdfQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(mapJavaUdfOp);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapJavaUdfOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

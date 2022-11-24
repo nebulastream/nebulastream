@@ -75,6 +75,7 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
                                                          OperatorId id = Util::getNextOperatorId());
 
+#ifdef TFDEF
     /**
      * @brief a
      * @param b
@@ -85,6 +86,7 @@ class LogicalOperatorFactory {
                                                                 std::vector<ExpressionItemPtr> inputFields,
                                                                 std::vector<ExpressionItemPtr> outputFields,
                                                                 OperatorId id = Util::getNextOperatorId());
+#endif// TFDEF
 
     /**
      * @brief Create a new source operator with source descriptor.
