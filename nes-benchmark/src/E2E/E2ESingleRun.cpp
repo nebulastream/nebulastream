@@ -21,12 +21,12 @@
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Version/version.hpp>
 #include <algorithm>
 #include <cppkafka/cppkafka.h>
 #endif
 #include <fstream>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Benchmark {
 
@@ -80,7 +80,9 @@ void E2ESingleRun::createSources() {
         size_t taskQueueId = sourceCnt;
 
         if (dataGenerator->getName() == "YSBKafka") {
-            auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
+#ifdef ENABLE_KAFKA_BUILD
+            auto connectionStringVec =
+                NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
             //push data to kafka topic
             cppkafka::Configuration config = {{"metadata.broker.list", connectionStringVec[0]}};
             cppkafka::Producer producer(config);
@@ -115,6 +117,9 @@ void E2ESingleRun::createSources() {
 
             allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
+#else
+            NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
+#endif
         } else {
             auto dataProvider =
                 DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
@@ -244,7 +249,7 @@ void E2ESingleRun::stopQuery() {
 
     // Sending a stop request to the coordinator with a timeout of 30 seconds
     queryService->validateAndQueueStopQueryRequest(queryId);
-//    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
+    //    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId), "No valid stop request!");
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + stopQueryTimeoutInSec) {
         NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
