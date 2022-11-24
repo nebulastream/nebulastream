@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
@@ -219,6 +220,12 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         auto watermarkAssignerDetail =
             serializeWatermarkAssignerOperator(operatorNode->as<WatermarkAssignerLogicalOperatorNode>());
         serializedOperator.mutable_details()->PackFrom(watermarkAssignerDetail);
+    } else if (operatorNode->instanceOf<RenameSourceOperatorNode>()) {
+        // Serialize rename source operator.
+        NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceOperatorNode");
+        auto renameDetails = SerializableOperator_RenameDetails();
+        renameDetails.set_newsourcename(operatorNode->as<RenameSourceOperatorNode>()->getNewSourceName());
+        serializedOperator.mutable_details()->PackFrom(renameDetails);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
@@ -408,6 +415,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(&serializedWatermarkStrategyDetails);
         operatorNode =
             LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, Util::getNextOperatorId());
+    } else if (details.Is<SerializableOperator_RenameDetails>()) {
+        // Deserialize rename source operator.
+        NES_TRACE("OperatorSerializationUtil:: deserialize to rename source operator");
+        auto renameDetails = SerializableOperator_RenameDetails();
+        details.UnpackTo(&renameDetails);
+        operatorNode = LogicalOperatorFactory::createRenameSourceOperator(renameDetails.newsourcename());
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
