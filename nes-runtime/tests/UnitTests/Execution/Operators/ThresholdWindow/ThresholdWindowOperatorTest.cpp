@@ -98,8 +98,8 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 1);
-    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collector->records[0].read("sum"), 5);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 4);
+    EXPECT_EQ(collector->records[0].read("test$sum"), 5); // TODO 3138: test$ is a hack
 
     thresholdWindowOperator->terminate(ctx);
 }

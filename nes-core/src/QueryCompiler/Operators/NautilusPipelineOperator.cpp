@@ -12,23 +12,30 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
+#include <utility>
 
 namespace NES {
 namespace QueryCompilation {
 
-OperatorNodePtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline) {
-    return std::make_shared<NautilusPipelineOperator>(NautilusPipelineOperator(nautilusPipeline));
+OperatorNodePtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+                                                 std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
+    return std::make_shared<NautilusPipelineOperator>(NautilusPipelineOperator(std::move(nautilusPipeline), std::move(operatorHandlers)));
 }
 
-NautilusPipelineOperator::NautilusPipelineOperator(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline)
-    : OperatorNode(id), UnaryOperatorNode(id), nautilusPipeline(nautilusPipeline) {}
+NautilusPipelineOperator::NautilusPipelineOperator(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+                                                   std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+    : OperatorNode(id), UnaryOperatorNode(id), nautilusPipeline(std::move(nautilusPipeline)), operatorHandlers(std::move(operatorHandlers)) {}
 
 std::string NautilusPipelineOperator::toString() const { return "NautilusPipelineOperator"; }
 
-OperatorNodePtr NautilusPipelineOperator::copy() { return create(nautilusPipeline); }
+OperatorNodePtr NautilusPipelineOperator::copy() { return create(nautilusPipeline, operatorHandlers); }
 
 std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline() {
     return nautilusPipeline;
+}
+
+std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::getOperatorHandlers() {
+    return operatorHandlers;
 }
 
 }// namespace QueryCompilation

@@ -44,7 +44,7 @@ class PhysicalThresholdWindowOperator : public PhysicalUnaryOperator {
     OperatorNodePtr copy() override;
 
   private:
-    Windowing::WindowOperatorHandlerPtr operatorHandler
+    Windowing::WindowOperatorHandlerPtr operatorHandler;
 };
 
 }// namespace NES::QueryCompilation::PhysicalOperators

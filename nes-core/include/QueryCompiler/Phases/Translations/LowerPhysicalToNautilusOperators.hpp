@@ -61,7 +61,8 @@ class LowerPhysicalToNautilusOperators {
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
           PhysicalOperators::PhysicalOperatorPtr operatorPtr,
-          size_t bufferSize);
+          size_t bufferSize,
+          std::vector<Runtime::Execution::OperatorHandlerPtr> &operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                                        PhysicalOperators::PhysicalOperatorPtr sharedPtr,
                                                                        size_t bufferSize);
@@ -75,7 +76,8 @@ class LowerPhysicalToNautilusOperators {
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                         PhysicalOperators::PhysicalOperatorPtr sharedPtr);
+                         PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+                         uint64_t handlerIndex);
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(ExpressionNodePtr expressionNode);
 };
 }// namespace QueryCompilation
