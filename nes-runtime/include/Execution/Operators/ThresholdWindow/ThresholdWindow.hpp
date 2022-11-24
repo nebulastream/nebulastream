@@ -30,9 +30,11 @@ class ThresholdWindow : public ExecutableOperator {
      */
     explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                              Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
+                             Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
                              uint64_t operatorHandlerIndex)
         : predicateExpression(std::move(predicateExpression)),
           aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
+          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)),
           operatorHandlerIndex(operatorHandlerIndex){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -40,6 +42,8 @@ class ThresholdWindow : public ExecutableOperator {
   private:
     const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
     const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
+    const Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier;
+
     uint64_t operatorHandlerIndex;
 };
 }// namespace NES::Runtime::Execution::Operators

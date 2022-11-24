@@ -57,12 +57,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
         if (isWindowOpen) {
             auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
-            std::string prefix = "test$";    // TODO 3138: get the prefix and the fields from window operator
-            auto aggregationResult = Record({// TODO 3138: properly set the start, end, and cnt
-                                             {prefix + "start", 0},
-                                             {prefix + "end", 0},
-                                             {prefix + "cnt", 0},
-                                             {prefix + "sum", sumAggregation}});
+            auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
             FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>(0L));
             FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
             child->execute(ctx, aggregationResult);

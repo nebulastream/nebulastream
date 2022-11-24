@@ -78,11 +78,13 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
 
     //Construct output schema
     outputSchema->clear();
-    outputSchema =
-        outputSchema
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+    if (windowDefinition->getWindowType()->isTumblingWindow() || windowDefinition->getWindowType()->isSlidingWindow()) {
+        outputSchema =
+            outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+    }
 
     if (windowDefinition->isKeyed()) {
 
