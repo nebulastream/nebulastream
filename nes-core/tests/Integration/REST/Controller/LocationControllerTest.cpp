@@ -188,7 +188,7 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes) {
 }
 
 #ifdef S2DEF
-TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
+TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
