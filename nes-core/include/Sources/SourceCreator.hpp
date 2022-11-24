@@ -329,6 +329,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
 }// namespace Experimental::MaterializedView
 
+#ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief Create kafka source
  * @param schema schema of the elements
@@ -354,7 +355,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
+#endif
 #ifdef ENABLE_OPC_BUILD
 
 /**

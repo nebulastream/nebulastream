@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_KAFKA_BUILD
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -347,3 +348,4 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
 }
 #endif
 }// namespace NES
+#endif

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/KafkaSource.hpp>
@@ -47,6 +48,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                  std::move(successors)),
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode) {
+
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
@@ -157,3 +159,4 @@ bool KafkaSource::isAutoCommit() const { return autoCommit; }
 
 const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const { return kafkaConsumerTimeout; }
 }// namespace NES
+#endif
