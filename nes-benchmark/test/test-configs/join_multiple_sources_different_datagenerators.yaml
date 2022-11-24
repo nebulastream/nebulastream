@@ -11,7 +11,7 @@ startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1
 
 numberOfSources: 3
-logicalStreamNames:
+logicalSourceName:
   input1:
       type: Default
   input2:

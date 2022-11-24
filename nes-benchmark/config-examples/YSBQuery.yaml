@@ -13,7 +13,7 @@ bufferSizeInBytes: 131072
 ##benchmark parameter for the entire run
 dataGenerator: YSB
 numberOfPreAllocatedBuffer: 100
-logicalStreamNames:
+logicalSourceName:
   ysb:
     type: ysb
 dataProvider: Internal
