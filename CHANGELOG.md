@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.61](https://github.com/nebulastream/nebulastream/tree/v0.3.61) (2022-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.60...v0.3.61)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix LocationIntegrationTest [\#3242](https://github.com/nebulastream/nebulastream/issues/3242)
+- testLongWindow fails [\#2390](https://github.com/nebulastream/nebulastream/issues/2390)
+- RESTEnpointTest is randomly failing [\#2239](https://github.com/nebulastream/nebulastream/issues/2239)
+
 ## [v0.3.60](https://github.com/nebulastream/nebulastream/tree/v0.3.60) (2022-11-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.59...v0.3.60)
