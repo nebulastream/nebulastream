@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef ENABLE_KAFKA_BUILD
 #ifndef NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #include <cstdint>
@@ -108,3 +108,4 @@ class KafkaSource : public DataSource {
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
 #endif// NES_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#endif

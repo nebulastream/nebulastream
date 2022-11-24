@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef ENABLE_KAFKA_BUILD
 #ifndef NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #define NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #include <chrono>
@@ -87,3 +87,4 @@ class KafkaSink : public SinkMedium {
 typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
 #endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif

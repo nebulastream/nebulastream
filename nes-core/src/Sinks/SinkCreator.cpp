@@ -339,7 +339,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 }
 
 }// namespace Experimental::MaterializedView
-
+#ifdef ENABLE_KAFKA_BUILD
 DataSinkPtr createTextKafkaSink(SchemaPtr schema,
                                 QueryId queryId,
                                 QuerySubPlanId querySubPlanId,
@@ -363,7 +363,7 @@ DataSinkPtr createTextKafkaSink(SchemaPtr schema,
                                        faultToleranceType,
                                        numberOfOrigins);
 }
-
+#endif
 #ifdef ENABLE_OPC_BUILD
 DataSinkPtr createOPCSink(SchemaPtr schema,
                           QueryId queryId,

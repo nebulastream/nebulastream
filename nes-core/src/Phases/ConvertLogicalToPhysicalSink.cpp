@@ -90,6 +90,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     monitoringSinkDescriptor->getFaultToleranceType(),
                                     monitoringSinkDescriptor->getNumberOfOrigins());
     }
+#ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink");
         const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
@@ -109,8 +110,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             NES_THROW_RUNTIME_ERROR("Sinkformat " << kafkaSinkDescriptor->getSinkFormatAsString()
                                                   << " currently not supported for Kafka");
         }
-
     }
+#endif
 #ifdef ENABLE_OPC_BUILD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
