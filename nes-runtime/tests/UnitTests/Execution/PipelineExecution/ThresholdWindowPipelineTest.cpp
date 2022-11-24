@@ -78,14 +78,12 @@ TEST_P(ThresholdWindowPipelineTest, selectionPipeline) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
-    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, readF2, 0);
+    auto aggregationResultFieldName = "test$sum";
+    auto thresholdWindowOperator =
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, readF2, aggregationResultFieldName, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    // TODO 3138: test$ is a hack
-    emitSchema->addField("test$start", BasicType::INT64);
-    emitSchema->addField("test$end", BasicType::INT64);
-    emitSchema->addField("test$cnt", BasicType::INT64);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
@@ -125,7 +123,7 @@ TEST_P(ThresholdWindowPipelineTest, selectionPipeline) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
-    EXPECT_EQ(resultDynamicBuffer[0]["test$sum"].read<int64_t>(), 50); // TODO 3138: test$ is a hack
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

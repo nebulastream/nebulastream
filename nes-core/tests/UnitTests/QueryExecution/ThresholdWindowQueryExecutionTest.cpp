@@ -71,9 +71,6 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()
-                          ->addField("test$start", BasicType::INT64)
-                          ->addField("test$end", BasicType::INT64)
-                          ->addField("test$cnt", BasicType::INT64)
                           ->addField("test$sum", BasicType::INT64);
     auto testSink = executionEngine->createDateSink(sinkSchema);
 
@@ -97,11 +94,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
-    // TODO 3138: correctly check the start, end, and cnt
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL);  // start
-    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 0LL);  // end
-    EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL);  // cnt
-    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 210LL);// sum
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 210LL); // sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);

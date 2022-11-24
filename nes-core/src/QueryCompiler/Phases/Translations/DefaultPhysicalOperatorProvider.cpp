@@ -488,7 +488,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         }
     }
 }
-// TODO 3138: Add threshold window
+
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& plan, const LogicalOperatorNodePtr& operatorNode) {
     auto windowOperator = operatorNode->as<WindowOperatorNode>();
     auto windowInputSchema = windowOperator->getInputSchema();
