@@ -40,10 +40,9 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
 
     for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
-        std::string name = "input" + std::to_string(sourceCnt+1);
+        std::string name = "input" + std::to_string(sourceCnt + 1);
         dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
     }
-
 }
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
     std::stringstream oss;
@@ -93,16 +92,17 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
             Yaml::Node dataGeneratorNode = (*it).second;
 
             std::string generatorName = dataGeneratorNode["type"].As<std::string>();
-            configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName(generatorName, dataGeneratorNode);
+            configOverAllRuns.dataGenerators[name] =
+                DataGeneration::DataGenerator::createGeneratorByName(generatorName, dataGeneratorNode);
         }
     }
 
     // Padding the data generators to fit the number of sources. Creating a default data generator
-    for (auto sourceCnt = configOverAllRuns.dataGenerators.size(); sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
-        std::string name = "input" + std::to_string(sourceCnt+1);
+    for (auto sourceCnt = configOverAllRuns.dataGenerators.size(); sourceCnt < configOverAllRuns.numSources->getValue();
+         ++sourceCnt) {
+        std::string name = "input" + std::to_string(sourceCnt + 1);
         configOverAllRuns.dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
     }
-
 
     return configOverAllRuns;
 }
@@ -115,8 +115,7 @@ std::string E2EBenchmarkConfigOverAllRuns::getDataGeneratorsAsString() {
         if (cnt != 0) {
             oss << ", ";
         }
-        oss << item.first << ": "
-            << item.second->toString();
+        oss << item.first << ": " << item.second->toString();
         cnt += 1;
     }
 

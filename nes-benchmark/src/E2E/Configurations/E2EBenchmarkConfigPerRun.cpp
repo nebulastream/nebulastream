@@ -48,19 +48,22 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
     /* Getting all parameters per experiment run in vectors */
     auto numWorkerThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
-        configPerRun.numWorkerThreads->getDefaultValue());
+                                                                configPerRun.numWorkerThreads->getDefaultValue());
 
     auto bufferSizeInBytes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(),
-        configPerRun.bufferSizeInBytes->getDefaultValue());
+                                                                 configPerRun.bufferSizeInBytes->getDefaultValue());
 
-    auto numberOfBuffersInGlobalBufferManager = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(),
-            configPerRun.numberOfBuffersInGlobalBufferManager->getDefaultValue());
+    auto numberOfBuffersInGlobalBufferManager =
+        Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(),
+                                            configPerRun.numberOfBuffersInGlobalBufferManager->getDefaultValue());
 
-    auto numberOfBuffersPerPipeline = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersPerPipeline"].As<std::string>(),
-            configPerRun.numberOfBuffersPerPipeline->getDefaultValue());
+    auto numberOfBuffersPerPipeline =
+        Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersPerPipeline"].As<std::string>(),
+                                            configPerRun.numberOfBuffersPerPipeline->getDefaultValue());
 
-    auto numberOfBuffersInSourceLocalBufferPool = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
-        configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    auto numberOfBuffersInSourceLocalBufferPool =
+        Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
+                                            configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 
     /* Retrieving the maximum number of experiments to run */
     size_t totalBenchmarkRuns = numWorkerThreads.size();
@@ -72,10 +75,13 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     /* Padding all vectors to the desired size */
     Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
     Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
-    Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager, totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.back());
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager,
+                                    totalBenchmarkRuns,
+                                    numberOfBuffersInGlobalBufferManager.back());
     Util::padVectorToSize<uint32_t>(numberOfBuffersPerPipeline, totalBenchmarkRuns, numberOfBuffersPerPipeline.back());
-    Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool, totalBenchmarkRuns, numberOfBuffersInSourceLocalBufferPool.back());
-
+    Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool,
+                                    totalBenchmarkRuns,
+                                    numberOfBuffersInSourceLocalBufferPool.back());
 
     allConfigPerRuns.reserve(totalBenchmarkRuns);
     for (size_t i = 0; i < totalBenchmarkRuns; ++i) {

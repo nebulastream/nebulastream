@@ -25,7 +25,6 @@ using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
 
 class DataGenerator {
   public:
-
     /**
      * @brief constructor for a data generator
      */

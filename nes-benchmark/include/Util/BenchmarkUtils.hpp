@@ -22,11 +22,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-
 #include <chrono>
 
 namespace NES::Benchmark::Util {
-
 
 /**
 * @brief creates a vector with a range of [start, stop) and step size
