@@ -54,7 +54,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline());
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
-    auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), {});
+    auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
     pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
     return pipeline;
 }

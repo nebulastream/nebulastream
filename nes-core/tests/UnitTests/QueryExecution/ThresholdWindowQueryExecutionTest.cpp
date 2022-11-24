@@ -56,41 +56,53 @@ class ThresholdWindowQueryExecutionTest
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(1);
+        buf[recordIndex][1].write<int64_t>(recordIndex * 10);
     }
+    // close the window
+    buf[9][0].write<int64_t>(0);
+    buf[9][1].write<int64_t>(0);
     buf.setNumberOfTuples(10);
 }
 
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
-    auto schema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(schema);
-    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()
+                          ->addField("test$start", BasicType::INT64)
+                          ->addField("test$end", BasicType::INT64)
+                          ->addField("test$cnt", BasicType::INT64)
+                          ->addField("test$sum", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
-                     .window(ThresholdWindow::of(Attribute("test$f1") < 45))
-                     .apply(Sum(Attribute("test$f2", INT64)))
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
 
-    // TODO 3138: Uncomment these
-//    auto source = executionEngine->getDataSource(plan, 0);
-//    auto inputBuffer = executionEngine->getBuffer(schema);
-//    fillBuffer(inputBuffer);
-//    source->emitBuffer(inputBuffer);
-//    testSink->waitTillCompleted();
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
 
-//    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
-//    auto resultBuffer = testSink->getResultBuffer(0);
-//
-//    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 6u);
-//    for (uint32_t recordIndex = 0u; recordIndex < 6u; ++recordIndex) {
-//        EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
-//        EXPECT_EQ(resultBuffer[recordIndex][1].read<int64_t>(), 1LL);
-//    }
-//    ASSERT_TRUE(executionEngine->stopQuery(plan));
-//    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    // TODO 3138: correctly check the start, end, and cnt
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL);  // start
+    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 0LL);  // end
+    EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL);  // cnt
+    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 210LL);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }

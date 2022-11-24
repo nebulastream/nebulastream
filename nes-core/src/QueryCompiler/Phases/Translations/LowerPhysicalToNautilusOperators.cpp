@@ -33,6 +33,7 @@
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -88,16 +89,17 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
-    // TODO 3138: vector operator_handlers
+
     for (const auto& node : nodes) {
-        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize);
+        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
     for (auto& root : queryPlan->getRootOperators()) {
         queryPlan->removeAsRootOperator(root);
     }
     auto nautilusPipelineWrapper =
-        NautilusPipelineOperator::create(pipeline);// TODO 3138: add list of operator handlers as a second param
+        NautilusPipelineOperator::create(pipeline, operatorHandlers);
     queryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
@@ -105,7 +107,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
                                         PhysicalOperators::PhysicalOperatorPtr operatorNode,
-                                        size_t bufferSize) {
+                                        size_t bufferSize,
+                                        std::vector<Runtime::Execution::OperatorHandlerPtr> &operatorHandlers) {
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -123,13 +126,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        /*
-         * TODO 3138:
-         * 1) Add operator handler
-         * 2) Get index of operator handler and store it as window's attribute
-         * 3) Create a threshold window with the operator handler
-         */
-        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode);
+        auto handler = std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>();
+        operatorHandlers.push_back(handler);
+        auto indexForThisHandler = operatorHandlers.size()-1;
+
+        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
         parentOperator->setChild(thresholdWindow);
         return thresholdWindow;
     }
@@ -182,12 +183,10 @@ LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorP
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                       PhysicalOperators::PhysicalOperatorPtr operatorPtr) {
+LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                       PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+                                                       uint64_t handlerIndex) {
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
-
-    // TODO 3138: Properly get the handle index
-    uint64_t handlerIndex = 0;
 
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());

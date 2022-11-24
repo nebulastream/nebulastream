@@ -82,7 +82,11 @@ TEST_P(ThresholdWindowPipelineTest, selectionPipeline) {
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    emitSchema->addField("sum", BasicType::INT64);
+    // TODO 3138: test$ is a hack
+    emitSchema->addField("test$start", BasicType::INT64);
+    emitSchema->addField("test$end", BasicType::INT64);
+    emitSchema->addField("test$cnt", BasicType::INT64);
+    emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
@@ -121,7 +125,7 @@ TEST_P(ThresholdWindowPipelineTest, selectionPipeline) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
-    EXPECT_EQ(resultDynamicBuffer[0]["sum"].read<int64_t>(), 50);
+    EXPECT_EQ(resultDynamicBuffer[0]["test$sum"].read<int64_t>(), 50); // TODO 3138: test$ is a hack
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
