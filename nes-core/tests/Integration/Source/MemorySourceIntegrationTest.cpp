@@ -91,7 +91,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "memorySourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "memorySourceTestOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -190,7 +190,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "memorySourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "memorySourceTestOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -291,7 +291,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "memorySourceTestOut";
+    std::string filePath = getTestResourceFolder() / "memorySourceTestOut";
     remove(filePath.c_str());
 
     //register query
