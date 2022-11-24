@@ -19,11 +19,15 @@ endfunction()
 message(STATUS "Building benchmarks tests...")
 
 
+# TODO create unit tests and a similar test infrastructure than the other folders see issue #3227
 # Adding e2e tests
 add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
 add_benchmark_test(e2e-benchmark-test-join-multiple-source nes-benchmark/test/test-configs/join_multiple_sources.yaml)
 add_benchmark_test(e2e-benchmark-test-join-different-data-generators nes-benchmark/test/test-configs/join_multiple_sources_different_datagenerators.yaml)
-add_benchmark_test(e2e-benchmark-test-ysb-source nes-benchmark/test/test-configs/ysb_single_source.yaml)
+
+
+# TODO enable this test see issue #3246
+#add_benchmark_test(e2e-benchmark-test-ysb-source nes-benchmark/test/test-configs/ysb_single_source.yaml)
 
 
 message(STATUS "Done building benchmarks tests")

@@ -95,7 +95,7 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStartBenchmark(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService,
+    static bool waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService,
                                              std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:

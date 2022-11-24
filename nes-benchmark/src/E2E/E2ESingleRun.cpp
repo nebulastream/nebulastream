@@ -71,9 +71,9 @@ void E2ESingleRun::createSources() {
                                                         configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = sourceName;
+        auto logicalSourceName = sourceName;
         auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
-        auto logicalSource = LogicalSource::create(logicalStreamName, schema);
+        auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
@@ -113,7 +113,7 @@ void E2ESingleRun::createSources() {
             kafkaSourceType->setGroupId(connectionStringVec[2]);
             kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
 
-            auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, kafkaSourceType);
+            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
             coordinatorConf->worker.physicalSources.add(physicalSource);
 
             allDataGenerators.emplace_back(dataGenerator);
@@ -159,7 +159,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = waitForQueryToStartBenchmark(queryId, queryCatalog);
+    bool queryResult = waitForQueryToStart(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }
@@ -380,7 +380,7 @@ void E2ESingleRun::run() {
     writeMeasurementsToCsv();
 }
 
-bool E2ESingleRun::waitForQueryToStartBenchmark(QueryId queryId,
+bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
                                          const QueryCatalogServicePtr& queryCatalogService,
                                          std::chrono::seconds timeoutInSec) {
     NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
