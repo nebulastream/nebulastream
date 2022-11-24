@@ -42,7 +42,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                  faultToleranceType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
-      brokers(brokers), topic(topic), kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
+      brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 
     config = std::make_unique<cppkafka::Configuration>();
     config->set("metadata.broker.list", brokers.c_str());
