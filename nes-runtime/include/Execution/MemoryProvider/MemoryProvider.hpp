@@ -43,13 +43,11 @@ class MemoryProvider {
                                   Nautilus::Value<Nautilus::MemRef> bufferAddress,
                                   Nautilus::Value<Nautilus::UInt64> recordIndex) = 0;
 
-    // TODO 3138: Update documentation
     /**
-     * @brief Read fields from a record using projections.
-     * @param projections: Defines which fields of the record are accessed. Empty projections means all fields.
+     * @brief Write record.
+     * @param recordIndex: Index of the specific value that is accessed by 'write'.
      * @param bufferAddress: Address of the memory buffer that contains the record.
-     * @param recordIndex: Index of the specific value that is accessed by 'read'.
-     * @return Nautilus::Record: A Nautilus record constructed using the given projections.
+     * @param rec record to write.
      */
     virtual void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
                        Nautilus::Value<Nautilus::MemRef> bufferAddress,

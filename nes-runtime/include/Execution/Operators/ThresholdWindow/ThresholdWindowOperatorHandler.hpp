@@ -16,6 +16,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 

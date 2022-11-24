@@ -75,7 +75,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression, readF2, 0);
+
+    auto aggregationResultFieldName = "sum";
+    auto thresholdWindowOperator =
+        std::make_shared<ThresholdWindow>(greaterThanExpression, readF2, aggregationResultFieldName, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -98,8 +101,8 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 1);
-    EXPECT_EQ(collector->records[0].numberOfFields(), 4);
-    EXPECT_EQ(collector->records[0].read("test$sum"), 5); // TODO 3138: test$ is a hack
+    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
     thresholdWindowOperator->terminate(ctx);
 }
