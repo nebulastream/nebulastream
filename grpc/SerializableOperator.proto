@@ -399,6 +399,13 @@ message SerializableOperator{
   }
 
   /**
+  Rename details contain the new name of the source.
+   */
+  message RenameDetails {
+    string newSourceName = 1;
+  }
+
+  /**
  InferModelDetails contains the model file for the inference
  */
   message InferModelDetails {
