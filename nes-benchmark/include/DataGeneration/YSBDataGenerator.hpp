@@ -20,7 +20,6 @@ namespace NES::Benchmark::DataGeneration {
 
 class YSBDataGenerator : public DataGenerator {
   public:
-
     std::string getName() override;
 
     std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;

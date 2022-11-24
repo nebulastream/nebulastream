@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <E2E/E2ESingleRun.hpp>
-#include <Util/BenchmarkUtils.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
+#include <Util/BenchmarkUtils.hpp>
 #include <Version/version.hpp>
 #include <algorithm>
 #ifdef ENABLE_KAFKA_BUILD
@@ -381,8 +381,8 @@ void E2ESingleRun::run() {
 }
 
 bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
-                                         const QueryCatalogServicePtr& queryCatalogService,
-                                         std::chrono::seconds timeoutInSec) {
+                                       const QueryCatalogServicePtr& queryCatalogService,
+                                       std::chrono::seconds timeoutInSec) {
     NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
     auto start_timestamp = std::chrono::system_clock::now();
 
