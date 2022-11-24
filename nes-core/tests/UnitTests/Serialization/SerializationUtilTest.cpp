@@ -525,6 +525,13 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
+        auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(rename);
+        auto renameOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(rename->equal(renameOperator));
+    }
+
+    {
         auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(source);
         auto sourceOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
