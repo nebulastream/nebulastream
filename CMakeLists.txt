@@ -421,7 +421,7 @@ endif ()
 include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
 if (NOT APPLE)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
-#    add_compile_definitions(ENABLE_KAFKA_BUILD)
+    add_compile_definitions(ENABLE_KAFKA_BUILD)
     message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
 endif ()
 
