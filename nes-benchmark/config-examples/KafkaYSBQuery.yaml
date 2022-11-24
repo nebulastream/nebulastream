@@ -16,7 +16,7 @@ dataGenerator: YSBKafka
 ##broker,topic,group
 connectionString: "localhost:9092,nesKafka,0"
 numberOfPreAllocatedBuffer: 100
-logicalStreamNames:
+logicalSourceName:
   ysb:
     type: ysb
 dataProvider: Internal
