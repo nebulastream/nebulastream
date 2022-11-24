@@ -607,7 +607,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     EXPECT_FALSE(loc4->getLocation()->isValid());
 }
 
-TEST_F(LocationIntegrationTests, DISABLE_testReconnecting) {
+TEST_F(LocationIntegrationTests, testReconnecting) {
     NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
