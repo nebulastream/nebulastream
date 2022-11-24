@@ -23,8 +23,8 @@
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataProvider/DataProvider.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
-#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Measurements.hpp>
 #include <vector>
 
@@ -95,8 +95,9 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService,
-                                             std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
+    static bool waitForQueryToStart(QueryId queryId,
+                                    const QueryCatalogServicePtr& queryCatalogService,
+                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:
     E2EBenchmarkConfigPerRun configPerRun;
