@@ -349,6 +349,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     view);
 }
 }// namespace Experimental::MaterializedView
+#ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       Runtime::BufferManagerPtr bufferManager,
                                       Runtime::QueryManagerPtr queryManager,
@@ -378,6 +379,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                          numSourceLocalBuffers,
                                          successors);
 }
+#endif
 #ifdef ENABLE_OPC_BUILD
 const DataSourcePtr createOPCSource(SchemaPtr schema,
                                     Runtime::BufferManagerPtr bufferManager,
