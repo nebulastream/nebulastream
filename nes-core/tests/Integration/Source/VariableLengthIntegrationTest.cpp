@@ -104,7 +104,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     NES_INFO("VariableLengthIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "memorySourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "memorySourceTestOut.csv";
     remove(filePath.c_str());
 
     //register query
