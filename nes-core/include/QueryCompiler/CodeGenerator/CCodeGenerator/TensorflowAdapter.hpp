@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
-#define NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
+#ifndef NES_TENSORFLOWADAPTER_HPP
+#define NES_TENSORFLOWADAPTER_HPP
 
 #include <memory>
 #include <vector>
@@ -36,7 +36,7 @@ class TensorflowAdapter {
      * @param n
      * @param ...
      */
-    void infer(int n, ...);
+    void infer(uint8_t dataType, int n, ...);
 
     /**
      * @brief accesses the ith field of the output
@@ -55,4 +55,4 @@ class TensorflowAdapter {
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
+#endif//NES_TENSORFLOWADAPTER_HPP

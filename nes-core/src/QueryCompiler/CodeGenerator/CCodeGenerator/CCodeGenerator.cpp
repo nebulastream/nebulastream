@@ -417,6 +417,30 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
+
+    bool firstSkipped = false;
+    std::shared_ptr<DataType> commonStamp;
+    std::shared_ptr<ExpressionNode> previousField;
+    for (auto f : inputFields) {
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        if (!field->getStamp()->isNumeric() || !field->getStamp()->isBoolean()){
+            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported.");
+        }
+        if (firstSkipped) {
+            commonStamp = previousField->getStamp()->join(field->getStamp());
+        }
+        firstSkipped = true;
+        previousField = field;
+    }
+    std::string dataType = "0";
+    if (commonStamp->isInteger()) {
+        dataType = "1";
+    } else if (commonStamp->isFloat()) {
+        dataType = "2";
+    } else if (commonStamp->isBoolean()) {
+        dataType = "3";
+    }
+    generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, dataType))));
     generateTensorFlowInferCall->addParameter(
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
 

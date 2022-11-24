@@ -27,7 +27,7 @@
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model) {
-    std::cout << "INITIALIZING MODEL: " << model << std::endl;
+    NES_DEBUG("INITIALIZING MODEL: " << model);
 
     std::ifstream input(model, std::ios::in | std::ios::binary);
 
@@ -44,32 +44,81 @@ NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_sh
 
 float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void NES::TensorflowAdapter::infer(int n, ...) {
-    va_list vl;
-    va_start(vl, n);
+void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
-    TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-    int input_size = (int) (TfLiteTensorByteSize(input_tensor));
+    if (dataType == 1){
+        va_list vl;
+        va_start(vl, n);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 4);
+        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
-    int* input = (int*) malloc(input_size);
+        int* input = (int*) malloc(input_size);
 
-    for (int i = 0; i < n; ++i) {
-        input[i] = (int) va_arg(vl, int);
+        for (int i = 0; i < n; ++i) {
+            input[i] = (int) va_arg(vl, int);
+        }
+        va_end(vl);
+
+        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        TfLiteInterpreterInvoke(interpreter);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 4);
+
+        free(input);
+        if (output != nullptr) {
+            free(output);
+        }
+        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+        output = (float*) malloc(output_size);
+        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+    } else if (dataType == 2) {
+        va_list vl;
+        va_start(vl, n);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 11);
+        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
+
+        float* input = (float*) malloc(input_size);
+
+        for (int i = 0; i < n; ++i) {
+            input[i] = (float) va_arg(vl, double);
+        }
+        va_end(vl);
+
+        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        TfLiteInterpreterInvoke(interpreter);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 11);
+
+        free(input);
+        if (output != nullptr) {
+            free(output);
+        }
+        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+        output = (float*) malloc(output_size);
+        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+    }  else if (dataType == 3) {
+        va_list vl;
+        va_start(vl, n);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 6);
+        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
+
+        bool* input = (bool*) malloc(input_size);
+
+        for (int i = 0; i < n; ++i) {
+            input[i] = (bool) va_arg(vl, int);
+        }
+        va_end(vl);
+
+        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        TfLiteInterpreterInvoke(interpreter);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 6);
+
+        free(input);
+        if (output != nullptr) {
+            free(output);
+        }
+        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+        output = (float*) malloc(output_size);
+        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
     }
-    va_end(vl);
-
-    TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
-    TfLiteInterpreterInvoke(interpreter);
-    const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-
-    free(input);
-    if (output != nullptr) {
-        free(output);
-    }
-
-    int output_size = (int) (TfLiteTensorByteSize(output_tensor));
-    output = (float*) malloc(output_size);
-    TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 }
 
 #endif// TFDEF
