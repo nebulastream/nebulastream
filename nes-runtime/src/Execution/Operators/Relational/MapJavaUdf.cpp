@@ -75,14 +75,12 @@ MapJavaUdf::MapJavaUdf(std::string className,
                        SchemaPtr inputSchema,
                        SchemaPtr outputSchema,
                        std::vector<char> serializedInstance,
-                       std::string methodName,
-                       std::vector<Expressions::ExpressionPtr> arguments) : className(className),
+                       std::string methodName) : className(className),
                                                  byteCodeList(byteCodeList),
                                                  inputSchema(inputSchema),
                                                  outputSchema(outputSchema),
                                                  serializedInstance(serializedInstance),
-                                                 methodName(methodName),
-                                                 arguments(arguments){
+                                                 methodName(methodName){
     // Start VM
     if (jvm == nullptr) {
         // init java vm arguments
@@ -109,12 +107,11 @@ const std::string javaClass = "Udf";
 const SchemaPtr inputSchema = Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64);
 
 void *executeUdf(void *record){
-
     jclass pojoClass = env->FindClass(pojoName.data());
     if (env->ExceptionOccurred()) { // TODO more error checking
         std::cout << "find class\n";
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // load pojo
@@ -127,7 +124,7 @@ void *executeUdf(void *record){
     if (env->ExceptionOccurred()) { // TODO more error checking
         std::cout << "alloc obj\n";
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     for (auto field : inputSchema->fields) {
@@ -142,7 +139,7 @@ void *executeUdf(void *record){
             if (env->ExceptionOccurred()) { // TODO more error checking
                 std::cout << "get field id\n";
                 env->ExceptionDescribe(); // print the stack trace
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             auto rec = (Record*)record;
             auto val = rec->read("id");
@@ -154,7 +151,7 @@ void *executeUdf(void *record){
             if (env->ExceptionOccurred()) { // TODO more error checking
                 std::cout << "set int field\n";
                 env->ExceptionDescribe(); // print the stack trace
-                exit(1);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -167,7 +164,7 @@ void *executeUdf(void *record){
     }
     if (env->ExceptionOccurred()) { // TODO more error checking
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // TODO we need to derive the signature somehow
@@ -176,19 +173,19 @@ void *executeUdf(void *record){
     jmethodID mid = env->GetMethodID(c1, udf_name.c_str(), "(I)I");
     if (env->ExceptionOccurred()) { // TODO more error checking
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     std::cout << "found map\n";
     jmethodID constructor = env->GetMethodID(c1, "<init>", "()V");
     if (env->ExceptionOccurred()) { // TODO more error checking
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     std::cout << "found constructor\n";
     jobject object = env->NewObject(c1, constructor);
     if (env->ExceptionOccurred()) { // TODO more error checking
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     std::cout << "new object\n";
 
@@ -197,7 +194,7 @@ void *executeUdf(void *record){
     int udf_result = env->CallIntMethod(object, mid, pojo);
     if (env->ExceptionOccurred()) { // TODO more error checking
         env->ExceptionDescribe(); // print the stack trace
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     std::cout << "call Map: " << udf_result << "\n";
 

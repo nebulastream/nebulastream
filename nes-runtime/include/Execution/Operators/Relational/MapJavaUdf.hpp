@@ -37,15 +37,13 @@ class MapJavaUdf : public ExecutableOperator {
    * @param outputSchema
    * @param serializedInstance
    * @param methodName
-   * @param returnType
    */
     MapJavaUdf(std::string className,
                std::unordered_map<std::string, std::vector<char>> byteCodeList,
                SchemaPtr inputSchema,
                SchemaPtr outputSchema,
                std::vector<char> serializedInstance,
-               std::string methodName,
-               std::vector<Expressions::ExpressionPtr> arguments);
+               std::string methodName);
 
     /**
      * Init using jarPath currently only used for test purposes
@@ -62,7 +60,6 @@ class MapJavaUdf : public ExecutableOperator {
    SchemaPtr outputSchema;
    std::vector<char> serializedInstance;
    std::string methodName;
-   std::vector<Expressions::ExpressionPtr> arguments;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
