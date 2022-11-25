@@ -14,10 +14,12 @@
 
 #include <Measurements.hpp>
 #include <sstream>
+#include <iostream>
 
 namespace NES::Benchmark::Measurements {
 
 std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte) {
+    uint64_t maxTuplesPerSecond = 0;
     std::vector<std::string> vecCsvStrings;
     for (size_t measurementIdx = 0; measurementIdx < allTimeStamps.size() - 1; ++measurementIdx) {
         std::stringstream measurementsCsv;
@@ -35,6 +37,7 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
             (allProcessedTuples[measurementIdx + 1] - allProcessedTuples[measurementIdx]) / (timeDeltaSeconds);
         uint64_t tasksPerSecond =
             (allProcessedTasks[measurementIdx + 1] - allProcessedTasks[measurementIdx]) / (timeDeltaSeconds);
+        maxTuplesPerSecond = std::max(maxTuplesPerSecond, tuplesPerSecond);
         uint64_t bufferPerSecond =
             (allProcessedBuffers[measurementIdx + 1] - allProcessedBuffers[measurementIdx]) / (timeDeltaSeconds);
         uint64_t mebiBPerSecond = (tuplesPerSecond * schemaSizeInByte) / (1024 * 1024);
@@ -45,6 +48,7 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         vecCsvStrings.push_back(measurementsCsv.str());
     }
 
+    std::cout << "maxTuplesPerSecond=" << maxTuplesPerSecond << std::endl;
     return vecCsvStrings;
 }
 }// namespace NES::Benchmark::Measurements

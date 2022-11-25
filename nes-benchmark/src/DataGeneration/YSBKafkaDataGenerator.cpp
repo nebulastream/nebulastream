@@ -18,6 +18,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <unordered_map>
 
@@ -29,7 +30,7 @@ int main(int argc, const char* argv[]) {
     std::cout << "hello" << std::endl;
     //usage --broker --topic --partition
     if (argc != 5) {
-        std::cout << "Usage: --broker= --topic= --partition --numberOfBuffersToProduce= required as a command line "
+        std::cout << "Usage: --broker= --topic= --numberOfPartitions --numberOfBuffersToProduce= required as a command line "
                      "argument!\nExiting now..."
                   << std::endl;
         return -1;
@@ -43,8 +44,8 @@ int main(int argc, const char* argv[]) {
             argMap["broker"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
         } else if (pathArg.find("--topic") != std::string::npos) {
             argMap["topic"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-        } else if (pathArg.find("--partition") != std::string::npos) {
-            argMap["partition"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        } else if (pathArg.find("--numberOfPartitions") != std::string::npos) {
+            argMap["numberOfPartitions"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
         } else if (pathArg.find("--numberOfBuffersToProduce") != std::string::npos) {
             argMap["numberOfBuffersToProduce"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
         } else {
@@ -53,10 +54,11 @@ int main(int argc, const char* argv[]) {
     }
 
     uint64_t numberOfBuffersToProduce = std::atoi(argMap["numberOfBuffersToProduce"].c_str());
+    uint64_t numberOfPartitions = std::atoi(argMap["numberOfPartitions"].c_str());
 
     std::cout << "start with config broker=" << argMap["broker"] << " topic=" << argMap["topic"]
-              << " partition=" << argMap["partition"] << " numberOfBufferToProduce=" << argMap["numberOfBuffersToProduce"]
-              << std::endl;
+              << " numberOfPartitions=" << argMap["numberOfPartitions"]
+              << " numberOfBuffersToProduce=" << argMap["numberOfBuffersToProduce"] << std::endl;
     //push data to kafka topic
     cppkafka::Configuration config = {{"metadata.broker.list", argMap["broker"]}};
     cppkafka::Producer producer(config);
@@ -67,25 +69,55 @@ int main(int argc, const char* argv[]) {
     dataGenerator->setBufferManager(bufferManager);
     auto createdBuffers = dataGenerator->createData(numberOfBuffersToProduce, bufferSizeInBytes);
 
-    for (uint64_t cnt = 0; cnt < numberOfBuffersToProduce; cnt++) {
-        char* buffer = createdBuffers[cnt].getBuffer<char>();
-        size_t len = createdBuffers[cnt].getBufferSize();
-        std::vector<uint8_t> bytes(buffer, buffer + len);
-        try {
-            producer.produce(
-                cppkafka::MessageBuilder(argMap["topic"]).partition(atoi(argMap["partition"].c_str())).payload(bytes));
-            producer.flush(std::chrono::seconds(100));
-        } catch (const std::exception& ex) {
-            std::cout << ex.what() << std::endl;
-        } catch (const std::string& ex) {
-            std::cout << ex << std::endl;
-        } catch (...) {
-        }
-        if (cnt % 1000 == 0) {
-            std::cout << "number of buffers prod=" << cnt << std::endl;
-        }
+    std::vector<std::future<void>> futures;
+    for (uint64_t partition = 0; partition < numberOfPartitions; partition++) {
+        futures.push_back(std::async(std::launch::async, [&, partition]() {
+            std::cout << "start producer thread for partition=" << partition << std::endl;
+            for (uint64_t prodBuffer = 0; prodBuffer < numberOfBuffersToProduce; prodBuffer++) {
+                char* buffer = createdBuffers[prodBuffer].getBuffer<char>();
+                size_t len = createdBuffers[prodBuffer].getBufferSize();
+                std::vector<uint8_t> bytes(buffer, buffer + len);
+                try {
+                    producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
+                    producer.flush(std::chrono::seconds(100));
+                } catch (const std::exception& ex) {
+                    std::cout << ex.what() << std::endl;
+                } catch (const std::string& ex) {
+                    std::cout << ex << std::endl;
+                } catch (...) {
+                }
+                if (prodBuffer % 1000 == 0) {
+                    std::cout << "number of buffers prod =" << prodBuffer << " for partition=" << partition << std::endl;
+                }
+            }
+        }));
+    }
+
+    for (auto& e : futures) {
+        e.get();
     }
     producer.flush(std::chrono::seconds(100));
+
+//    for (uint64_t partition = 0; partition < numberOfPartitions; partition++) {
+//        for (uint64_t prodBuffer = 0; prodBuffer < numberOfBuffersToProduce; prodBuffer++) {
+//            char* buffer = createdBuffers[prodBuffer].getBuffer<char>();
+//            size_t len = createdBuffers[prodBuffer].getBufferSize();
+//            std::vector<uint8_t> bytes(buffer, buffer + len);
+//            try {
+//                producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
+//                producer.flush(std::chrono::seconds(100));
+//            } catch (const std::exception& ex) {
+//                std::cout << ex.what() << std::endl;
+//            } catch (const std::string& ex) {
+//                std::cout << ex << std::endl;
+//            } catch (...) {
+//            }
+//            if (prodBuffer % 1000 == 0) {
+//                std::cout << "number of buffers prod =" << prodBuffer << " for partition=" << prodBuffer << std::endl;
+//            }
+//        }
+//    }
+//    producer.flush(std::chrono::seconds(100));
     return 0;
 }
 #endif
