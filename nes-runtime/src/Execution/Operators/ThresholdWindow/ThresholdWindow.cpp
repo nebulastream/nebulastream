@@ -58,7 +58,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         if (isWindowOpen) {
             auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
             auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
-            FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>(0l));
+            FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
             FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
             child->execute(ctx, aggregationResult);
         }
