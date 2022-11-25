@@ -212,6 +212,41 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
     }
 
+    if (workerConfig->enableStatisticOutput) {
+        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+            NES_DEBUG("NesWorker: start statistic collection");
+            std::ofstream statisticsFile;
+            statisticsFile.open("statistics.csv", ios::out);
+            if (statisticsFile.is_open()) {
+                statisticsFile << "timestamp,";
+                statisticsFile << "queryId,";
+                statisticsFile << "subPlanId,";
+                statisticsFile << "processedTasks,";
+                statisticsFile << "processedTuple,";
+                statisticsFile << "processedBuffers,";
+                statisticsFile << "processedWatermarks,";
+                statisticsFile << "latencyAVG,";
+                statisticsFile << "queueSizeAVG,";
+                statisticsFile << "availableGlobalBufferAVG,";
+                statisticsFile << "availableFixedBufferAVG,";
+                statisticsFile << "workerId\n";
+                while (isRunning) {
+                    auto ts = std::chrono::system_clock::now();
+                    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                    auto stats = nodeEngine->getQueryStatistics(true);
+                    for (auto& query : stats) {
+                        statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                       << query.getQueryStatisticsAsString() << getWorkerId() << "\n";
+                        statisticsFile.flush();
+                    }
+                    sleep(1);
+                }
+            }
+            NES_DEBUG("NesWorker: statistic collection end");
+            statisticsFile.close();
+        }));
+    }
+
     NES_DEBUG("NesWorker: started, return");
     return true;
 }
