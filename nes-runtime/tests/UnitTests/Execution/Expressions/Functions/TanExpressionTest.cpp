@@ -98,7 +98,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 90));
-        ASSERT_EQ(resultValue,3 (double) -1.995200412208242);
+        ASSERT_EQ(resultValue, (double) -1.995200412208242);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
