@@ -12,3 +12,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+namespace NES::Runtime::Execution::Operators {
+
+class LazyJoinOperatorTest
+
+
+
+} // namespace NES::Runtime::Execution::Operators
