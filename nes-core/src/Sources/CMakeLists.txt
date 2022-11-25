@@ -28,6 +28,7 @@ add_source_files(nes-core
         MaterializedViewSource.cpp
         TCPSource.cpp
         KafkaSource.cpp
+        LoRaWANProxySource.cpp
 )
 add_subdirectory(Parsers)
 
