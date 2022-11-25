@@ -134,10 +134,11 @@ PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType);
  */
 template<class Type>
 bool isSamePhysicalType(PhysicalTypePtr physicalType) {
+    if (isText(physicalType) && IsUInt32<Type>) {
+        return true;
+    }
     if constexpr (IsChar<Type>) {
         return isChar(std::move(physicalType));
-    } else if constexpr (IsText<Type>) {
-        return isText(std::move(physicalType));
     } else if constexpr (IsUInt8<Type>) {
         return isUInt8(std::move(physicalType));
     } else if constexpr (IsBool<Type>) {
