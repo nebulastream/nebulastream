@@ -184,6 +184,8 @@ if (NES_USE_MQTT)
     add_nes_unit_test(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
 endif (NES_USE_MQTT)
 
+### LoRaWANProxySource Tests ###
+add_nes_unit_test(LoRaWANProxySource-tests "UnitTests/Source/LoRaWANProxySourceTest.cpp")
 
 ### Row Layout Tests ###
 add_nes_unit_test(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
