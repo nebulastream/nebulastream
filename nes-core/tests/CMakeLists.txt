@@ -46,7 +46,7 @@ target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 
 
 ### OutputQueueTest ###
-add_executable(fault-tolerance-test "UnitTests/Optimizer/QueryPlacement/FaultToleranceTest.cpp")
+add_executable(fault-tolerance-test "UnitTests/Optimizer/QueryPlacement/FaultToleranceTest.cpp" UnitTests/Optimizer/QueryPlacement/FinalTests.cpp)
 target_link_libraries(fault-tolerance-test nes-tests)
 add_test(NAME fault-tolerance-test COMMAND fault-tolerance-test)
 
