@@ -29,31 +29,39 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
 
 
   public:
-    explicit LazyJoinOperatorHandler(SchemaPtr joinSchema,
-                                     size_t maxNoWorkerThreads,
+    explicit LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
+                                     SchemaPtr joinSchemaRight,
+                                     std::string joinFieldNameLeft,
+                                     std::string joinFieldNameRight,
+                                     size_t maxNoWorkerThreadsLeftSide,
+                                     size_t maxNoWorkerThreadsRightSide,
                                      uint64_t counterFinishedBuildingStart,
                                      size_t totalSizeForDataStructures);
 
     ~LazyJoinOperatorHandler() override;
 
-    Operators::LocalHashTable& getWorkerHashTable(size_t index);
+    Operators::LocalHashTable& getWorkerHashTable(size_t index, bool leftSide);
 
     Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
 
     uint64_t fetch_sub(uint64_t sub);
 
-    SchemaPtr getJoinSchema() const;
+    SchemaPtr getJoinSchemaLeft() const;
+    SchemaPtr getJoinSchemaRight() const;
 
-    const std::string& getJoinFieldName() const;
+    const std::string& getJoinFieldNameLeft() const;
+    const std::string& getJoinFieldNameRight() const;
 
     void recyclePooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
     void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
 
   private:
-
-    SchemaPtr joinSchema;
-    std::string joinFieldName;
-    std::vector<Operators::LocalHashTable> workerThreadsHashTable;
+    SchemaPtr joinSchemaLeft;
+    SchemaPtr joinSchemaRight;
+    std::string joinFieldNameLeft;
+    std::string joinFieldNameRight;
+    std::vector<Operators::LocalHashTable> workerThreadsHashTableLeftSide;
+    std::vector<Operators::LocalHashTable> workerThreadsHashTableRightSide;
     Operators::SharedJoinHashTable leftSideHashTable;
     Operators::SharedJoinHashTable rightSideHashTable;
     std::atomic<uint64_t> counterFinishedBuilding;

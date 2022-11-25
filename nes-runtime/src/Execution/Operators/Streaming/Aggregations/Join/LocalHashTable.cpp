@@ -18,13 +18,13 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-LocalHashTable::LocalHashTable(SchemaPtr schema,
+LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                size_t numPartitions,
                                std::atomic<uint64_t>& tail,
-                               size_t overrunAddress) : schema(schema) {
+                               size_t overrunAddress) {
     buckets.reserve(numPartitions);
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, schema->getSchemaSizeInBytes()));
+        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, sizeOfRecord));
     }
 }
 

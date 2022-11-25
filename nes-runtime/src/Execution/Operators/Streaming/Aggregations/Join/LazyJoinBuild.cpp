@@ -25,11 +25,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getWorkerHashTableFunctionCall(void* ptrOpHandler, size_t index) {
+void* getWorkerHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isleftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(&opHandler->getWorkerHashTable(index));
+    return static_cast<void*>(&opHandler->getWorkerHashTable(index, isleftSide));
 }
 
 
@@ -52,7 +52,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     auto& sharedJoinHashTable = opHandler->getSharedJoinHashTable(isLeftSide);
-    auto& localHashTable = opHandler->getWorkerHashTable(workerIdIndex);
+    auto& localHashTable = opHandler->getWorkerHashTable(workerIdIndex, isLeftSide);
 
 
     for (auto a = 0; a < NUM_PARTITIONS; ++a) {
@@ -76,7 +76,7 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto localHashTableMemRef = Nautilus::FunctionCall("getWorkerHashTableFunctionCall",
                                                        getWorkerHashTableFunctionCall,
-                                                       operatorHandlerMemRef, ctx.getWorkerId());
+                                                       operatorHandlerMemRef, ctx.getWorkerId(), Value<Boolean>(isLeftSide));
 
 
     // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
@@ -95,7 +95,7 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-LazyJoinBuild::LazyJoinBuild(const std::string& joinFieldName, uint64_t handlerIndex, bool isLeftSide)
-    : joinFieldName(joinFieldName), handlerIndex(handlerIndex), isLeftSide(isLeftSide) {}
+LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide)
+    : handlerIndex(handlerIndex), isLeftSide(isLeftSide) {}
 
 } // namespace NES::Runtime::Execution::Operators

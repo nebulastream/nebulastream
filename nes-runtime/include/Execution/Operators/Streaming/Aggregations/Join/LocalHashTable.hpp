@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Operators {
 class LocalHashTable {
 
   public:
-    explicit LocalHashTable(SchemaPtr schema,
+    explicit LocalHashTable(size_t sizeOfRecord,
                             size_t numPartitions,
                             std::atomic<uint64_t>& tail,
                             size_t overrunAddress);
@@ -42,7 +42,6 @@ class LocalHashTable {
 
   private:
     std::vector<FixedPagesLinkedList*> buckets;
-    SchemaPtr schema;
 
 
 };
