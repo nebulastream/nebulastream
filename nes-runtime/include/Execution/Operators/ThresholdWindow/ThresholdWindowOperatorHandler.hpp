@@ -19,7 +19,9 @@
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
-
+/**
+ * @breif This handler stores states of a threshold window during its execution
+ */
 class ThresholdWindowOperatorHandler : public OperatorHandler {
   public:
     ThresholdWindowOperatorHandler() {}
@@ -28,7 +30,8 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    int64_t sum = 0L;
+    // TODO 3250: maybe move from this class to the aggregation
+    int64_t sum = 0L; // stores the sum aggregation
     bool isWindowOpen = false;
 };
 }// namespace NES::Runtime::Execution::Operators
