@@ -65,7 +65,7 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
 }
 
 TEST_F(BitcounterExpressionTest, divUIntegers) {
-        auto expression = UnaryExpressionWrapper<BitcounterExpression>();
+    auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
     // UInt8
     {
