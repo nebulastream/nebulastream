@@ -64,13 +64,13 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
     size_t joinedTuples = 0;
 
-    size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
+    size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
             auto lhsRecordPtr = lhsPage[i];
-            auto lhsKeyPtr = getKey(lhsRecordPtr, operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
+            auto lhsKeyPtr = getKey(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
             for(auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
@@ -80,13 +80,23 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                 for (auto j = 0UL; j < rhsLen; ++j) {
                     auto rhsRecordPtr = rhsPage[j];
-                    auto rhsRecordKeyPtr = getKey(rhsRecordPtr, operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
+                    auto rhsRecordKeyPtr = getKey(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
                     if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
                         ++joinedTuples;
-                        // TODO emit rhs tuple to buffer, ask Philipp if I do not have to change the schema as I should have now a different one due to the join
-                        ((void) pipelineCtx);
-                        ((void) workerCtx);
 
+                        // TODO ask Philipp how can I set win1win2$start and win1win2$end
+
+
+                        auto buffer = workerCtx->allocateTupleBuffer();
+                        auto bufferPtr = buffer.getBuffer<uint8_t>();
+                        auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
+                        auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
+
+                        memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
+                        memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
+                        memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
+
+                        pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
                     }
                 }
             }
@@ -142,6 +152,7 @@ void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 
     Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
                            partitionId.as<UInt64>());
+
 
 }
 

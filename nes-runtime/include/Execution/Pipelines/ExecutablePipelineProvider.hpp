@@ -35,7 +35,7 @@ class ExecutablePipelineProvider {
     virtual ~ExecutablePipelineProvider() = default;
 };
 
-using ExecutablePipelineProviderRegistry = Util::NamedPluginRegistry<ExecutablePipelineProvider>;
+using ExecutablePipelineProviderRegistry = NES::Util::NamedPluginRegistry<ExecutablePipelineProvider>;
 
 }// namespace NES::Runtime::Execution
 
