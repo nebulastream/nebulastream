@@ -12,73 +12,78 @@
     limitations under the License.
 */
 
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinSink.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <API/AttributeField.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <cstring>
 
 namespace NES::Runtime::Execution::Operators {
 
-void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto partitionId = recordBuffer.getBuffer().load<UInt64>() - 1;
-    LazyJoinOperatorHandlerPtr operatorHandler = static_cast<LazyJoinOperatorHandlerPtr>(ctx.getGlobalOperatorHandler(handlerIndex)->getValue());
+LazyJoinSink::LazyJoinSink(uint64_t handlerIndex)
+    : handlerIndex(handlerIndex) {}
 
-    auto leftHashTable = operatorHandler->getSharedJoinHashTable(true /* isLeftSide */);
-    auto rightHashTable = operatorHandler->getSharedJoinHashTable(false /* isLeftSide */);
 
-    auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
-    auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
-    auto leftBucketSize = leftHashTable.getNumItems(partitionId);
-    auto rightBucketSize = rightHashTable.getNumItems(partitionId);
 
-    size_t joinedTuples = 0;
-    if (leftBucketSize && rightBucketSize) {
-        if (leftBucketSize > rightBucketSize) {
-            joinedTuples = executeJoin(ctx, std::move(rightBucket), std::move(leftBucket));
-        } else {
-            joinedTuples = executeJoin(ctx, std::move(leftBucket), std::move(rightBucket));
-        }
-    }
-
-    if (joinedTuples) {
-        NES_DEBUG("Worker " << ctx.getWorkerId() << " got " << partitionId << " joined #tuple=" << joinedTuples);
-        NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
-                        "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
-                                                          << (leftBucketSize * rightBucketSize));
-    }
+bool compareField(uint8_t* fieldPtr1, uint8_t * fieldPtr2, size_t sizeOfField) {
+    return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
 }
-size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
-                                 std::vector<FixedPage>&& probeSide,
-                                 std::vector<FixedPage>&& buildSide) const {
+
+uint8_t* getKey(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& joinFieldName) {
+    uint8_t* pointer = recordBase;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (auto& field : joinSchema->fields) {
+        if (field->getName() == joinFieldName) {
+            break;
+        }
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        pointer += fieldType->size();
+    }
+    return pointer;
+}
+
+size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto const keyType = physicalDataTypeFactory.getPhysicalType(joinSchema->get(joinFieldName)->getDataType());
+    return keyType->size();
+}
+
+size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, LazyJoinOperatorHandler* operatorHandler,
+                   std::vector<FixedPage>&& probeSide,
+                   std::vector<FixedPage>&& buildSide) {
+
     size_t joinedTuples = 0;
-    LazyJoinOperatorHandlerPtr operatorHandler = static_cast<LazyJoinOperatorHandlerPtr>(executionContext.getGlobalOperatorHandler(handlerIndex)->getValue());
 
-
+    size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
 
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
-            auto lhsRecord = lhsPage[i];
-            auto lhsKey = lhsRecord.read(joinFieldName);
+            auto lhsRecordPtr = lhsPage[i];
+            auto lhsKeyPtr = getKey(lhsRecordPtr, operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
+
             for(auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
-                if (rhsLen == 0 || !rhsPage.bloomFilterCheck(lhsKey)) {
+                if (rhsLen == 0 || !rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
                     continue;
                 }
 
                 for (auto j = 0UL; j < rhsLen; ++j) {
-                    auto rhsRecord = rhsPage[j];
-                    if (rhsRecord.read(joinFieldName) == lhsKey) {
-                        // TODO ask Philipp if it makes more sense to store the records and then emit a full buffer
+                    auto rhsRecordPtr = rhsPage[j];
+                    auto rhsRecordKeyPtr = getKey(rhsRecordPtr, operatorHandler->getJoinSchema(), operatorHandler->getJoinFieldName());
+                    if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
                         ++joinedTuples;
-
-                        // TODO ask Philipp if I have to iterate over all fields
-                        auto buffer = executionContext.allocateBuffer();
-                        for (auto field : operatorHandler->getJoinSchema()->fields) {
-                            buffer.store(rhsRecord.read(field->getName()));
-                        }
-                        executionContext.emitBuffer(RecordBuffer(buffer));
+                        // TODO emit rhs tuple to buffer, ask Philipp if I do not have to change the schema as I should have now a different one due to the join
+                        ((void) pipelineCtx);
+                        ((void) workerCtx);
                     }
                 }
             }
@@ -89,7 +94,53 @@ size_t LazyJoinSink::executeJoin(ExecutionContext& executionContext,
     return joinedTuples;
 }
 
-LazyJoinSink::LazyJoinSink(uint64_t handlerIndex, const std::string& joinFieldName)
-    : handlerIndex(handlerIndex), joinFieldName(joinFieldName) {}
+
+void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, size_t partitionId) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+    NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+
+
+    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
+
+
+    auto& leftHashTable = opHandler->getSharedJoinHashTable(true /* isLeftSide */);
+    auto& rightHashTable = opHandler->getSharedJoinHashTable(false /* isLeftSide */);
+
+    auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
+    auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
+    auto leftBucketSize = leftHashTable.getNumItems(partitionId);
+    auto rightBucketSize = rightHashTable.getNumItems(partitionId);
+
+    size_t joinedTuples = 0;
+    if (leftBucketSize && rightBucketSize) {
+        if (leftBucketSize > rightBucketSize) {
+            joinedTuples = executeJoin(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket));
+        } else {
+            joinedTuples = executeJoin(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket));
+        }
+    }
+
+    if (joinedTuples) {
+        NES_DEBUG("Worker " << workerCtx->getId() << " got " << partitionId << " joined #tuple=" << joinedTuples);
+        NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
+                        "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
+                                                          << (leftBucketSize * rightBucketSize));
+    }
+
+}
+
+void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
+    auto partitionId = recordBuffer.getBuffer().load<UInt64>() - 1;
+
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+
+    Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
+                           partitionId.as<UInt64>());
+
+}
+
 
 } //namespace NES::Runtime::Execution::Operators

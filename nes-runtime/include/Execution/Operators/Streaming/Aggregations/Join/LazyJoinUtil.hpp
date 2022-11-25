@@ -23,6 +23,9 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
+static constexpr auto NUM_PARTITIONS = 8 * 1024;
+static constexpr auto MASK = NUM_PARTITIONS - 1;
+
 namespace detail {
 
 /**
