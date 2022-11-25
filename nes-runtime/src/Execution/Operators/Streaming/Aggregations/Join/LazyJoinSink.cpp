@@ -25,6 +25,8 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <cstring>
+#include <Execution/Operators/ExecutableOperator.hpp>
+
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -84,6 +86,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         // TODO emit rhs tuple to buffer, ask Philipp if I do not have to change the schema as I should have now a different one due to the join
                         ((void) pipelineCtx);
                         ((void) workerCtx);
+
                     }
                 }
             }
