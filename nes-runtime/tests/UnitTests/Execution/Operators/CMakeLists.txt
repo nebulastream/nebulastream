@@ -16,5 +16,3 @@ add_subdirectory(ThresholdWindow)
 
 add_nes_runtime_test(runtime-scan-operator-test "ScanOperatorTest.cpp")
 add_nes_runtime_test(runtime-emit-operator-test "EmitOperatorTest.cpp")
-
-
