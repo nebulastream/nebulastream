@@ -26,6 +26,7 @@
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/TCPSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -424,6 +425,27 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                               OriginId originId,
                               size_t numSourceLocalBuffers,
                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
+/**
+ * function to create a LoRaWANProxy Source
+ * @param schema of the data source
+ * @param bufferManager
+ * @param queryManager
+ * @param sourceConfig The configuration required for the source
+ * @param operatorId
+ * @param originId
+ * @param numSourceLocalBuffers
+ * @param gatheringMode
+ * @param executableSuccessors
+ * @return
+ */
+DataSourcePtr createLoRaWANProxySource(const SchemaPtr& schema,
+                                       const Runtime::BufferManagerPtr& bufferManager,
+                                       const Runtime::QueryManagerPtr& queryManager,
+                                       const LoRaWANProxySourceTypePtr& sourceConfig,
+                                       OperatorId operatorId,
+                                       OriginId originId,
+                                       size_t numSourceLocalBuffers,
+                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
+                                       );
 }// namespace NES
 #endif// NES_CORE_INCLUDE_SOURCES_SOURCECREATOR_HPP_

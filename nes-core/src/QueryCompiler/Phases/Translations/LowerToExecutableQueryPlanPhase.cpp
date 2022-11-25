@@ -24,6 +24,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -38,6 +39,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -403,6 +405,10 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getConnectionTimeout()->getValue(),
                                                  kafkaSourceType->getOffsetMode()->getValue(),
                                                  kafkaSourceType->getNumberOfBuffersToProduce()->getValue());
+        }
+        case LORAWAN_SOURCE: {
+            auto lorawanSourceType = physicalSourceType->as<LoRaWANProxySourceType>();
+            return LoRaWANProxySourceDescriptor::create(schema, lorawanSourceType, logicalSourceName, physicalSourceName);
         }
         default:
             throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()

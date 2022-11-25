@@ -30,6 +30,7 @@
 #include <Sources/StaticDataSource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
@@ -443,5 +444,25 @@ DataSourcePtr createTCPSource(const SchemaPtr& schema,
                                        numSourceLocalBuffers,
                                        GatheringMode::INTERVAL_MODE,
                                        successors);
+}
+DataSourcePtr createLoRaWANProxySource(const SchemaPtr& schema,
+                                       const Runtime::BufferManagerPtr& bufferManager,
+                                       const Runtime::QueryManagerPtr& queryManager,
+                                       const LoRaWANProxySourceTypePtr& sourceConfig,
+                                       OperatorId operatorId,
+                                       OriginId originId,
+                                       size_t numSourceLocalBuffers,
+                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors) {
+    return std::make_shared<LoRaWANProxySource>(
+        schema,
+        bufferManager,
+        queryManager,
+        sourceConfig,
+        operatorId,
+        originId,
+        numSourceLocalBuffers,
+        GatheringMode::INTERVAL_MODE, //TODO: figure out what this means
+        executableSuccessors);
+
 }
 }// namespace NES

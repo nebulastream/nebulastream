@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
@@ -299,7 +300,20 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                originId,
                                numSourceLocalBuffers,
                                successors);
-    } else {
+    } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating LoRaWANPRoxySource");
+        auto loRaWANProxySourceDescriptor = sourceDescriptor->as<LoRaWANProxySourceDescriptor>();
+        return createLoRaWANProxySource(
+            loRaWANProxySourceDescriptor->getSchema(),
+            bufferManager,
+            queryManager,
+            loRaWANProxySourceDescriptor->getSourceConfig(),
+            operatorId,
+            originId,
+            numSourceLocalBuffers,
+            successors);
+    }
+    else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
