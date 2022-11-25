@@ -48,6 +48,14 @@
 =======
 add_source_files(nes-runtime
         ModExpression.cpp
+        PiExpression.cpp
+        RadiansExpression.cpp
+        DegreesExpression.cpp
+        CosExpression.cpp
+        SinExpression.cpp
+        AbsExpression.cpp
+        Atan2Expression.cpp
+        AcosExpression.cpp
         RandomExpression.cpp
         )
 >>>>>>> 3050_Random_V1.0

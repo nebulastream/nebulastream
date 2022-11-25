@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -10,17 +11,40 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+=======
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+>>>>>>> 3050_Random_V2.0
 */
 
 #include <Execution/Expressions/Functions/RandomExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <iostream>
 #include <cstdlib>
+using namespace std;
 
 namespace NES::Runtime::Execution::Expressions {
 
+<<<<<<< HEAD
     RandomExpression::RandomExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
          : SubExpression(SubExpression) {}
+=======
+RandomExpression::RandomExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
+    : SubExpression(SubExpression) {}
+//return std::rand()/(RAND_MAX)
+double random(double x) {
+    srand( x );
+    return (double) rand()/RAND_MAX;}
+>>>>>>> 3050_Random_V2.0
 
     //return std::rand()/(RAND_MAX)
 double random(double x) {
@@ -47,6 +71,10 @@ Value<> RandomExpression::execute(NES::Nautilus::Record& record) const {
         // If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3050_Random_V2.0
 }
 
 }// namespace NES::Runtime::Execution::Expressions
