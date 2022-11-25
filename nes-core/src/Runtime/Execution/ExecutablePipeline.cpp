@@ -193,7 +193,6 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                                 << pipelineId << " belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
             auto refCnt = task.getUserData<uint32_t>();
             context.setObjectRefCnt(this, refCnt);
-            executablePipelineStage->reconfigure(task, context);
             break;
         }
         case FailEndOfStream:
@@ -203,7 +202,6 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->reconfigure(task, context);
                 }
-                executablePipelineStage->reconfigure(task, context);
             }
             break;
         }
@@ -299,7 +297,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             break;
         }
     }
-    executablePipelineStage->postReconfigurationCallback(task);
 }
 
 }// namespace NES::Runtime::Execution
