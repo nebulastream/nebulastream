@@ -14,20 +14,21 @@
 
 #include <atomic>
 
-#include <Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <cstring>
 
 namespace NES::Runtime::Execution::Operators {
 
 FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord) : sizeOfRecord(sizeOfRecord) {
     auto ptr = tail.fetch_add(CHUNK_SIZE);
     NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+    capacity = CHUNK_SIZE / sizeOfRecord;
     data = reinterpret_cast<uint8_t*>(ptr);
 
-    capacity = CHUNK_SIZE / sizeOfRecord;
     bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
 }
-
 
 uint8_t* FixedPage::append(const uint64_t hash)  {
     if (pos >= capacity) {
@@ -38,7 +39,15 @@ uint8_t* FixedPage::append(const uint64_t hash)  {
     return &data[pos];
 }
 
-bool FixedPage::bloomFilterCheck(uint64_t hash) const  { return bloomFilter->checkContains(hash); }
+
+bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
+
+    uint64_t totalKey;
+    memcpy(&totalKey, keyPtr, sizeOfKey);
+    uint64_t hash = Util::murmurHash(totalKey);
+
+    return bloomFilter->checkContains(hash);
+}
 
 uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * sizeOfRecord]); }
 
@@ -70,5 +79,8 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) {
     std::swap(lhs.capacity, rhs.capacity);
     std::swap(lhs.bloomFilter, rhs.bloomFilter);
 }
+
+FixedPage::FixedPage(FixedPage* page) : sizeOfRecord(page->sizeOfRecord), data(page->data), pos(page->pos),
+                                        capacity(page->capacity), bloomFilter(std::move(page->bloomFilter)) {}
 
 } // namespace NES::Runtime::Execution::Operators

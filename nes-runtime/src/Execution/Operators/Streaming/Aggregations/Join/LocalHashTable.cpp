@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = Util::murmurHash(key);
-    return buckets[hashedKey & LazyJoinOperatorHandler::MASK]->append(hashedKey);
+    return buckets[hashedKey & MASK]->append(hashedKey);
 }
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {

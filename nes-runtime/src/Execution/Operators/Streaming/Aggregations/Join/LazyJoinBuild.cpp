@@ -19,6 +19,8 @@
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {
@@ -29,6 +31,7 @@ void* getWorkerHashTableFunctionCall(void* ptrOpHandler, size_t index) {
 
     return static_cast<void*>(&opHandler->getWorkerHashTable(index));
 }
+
 
 void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
@@ -52,17 +55,16 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto& localHashTable = opHandler->getWorkerHashTable(workerIdIndex);
 
 
-    for (auto a = 0; a < LazyJoinOperatorHandler::NUM_PARTITIONS; ++a) {
+    for (auto a = 0; a < NUM_PARTITIONS; ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
     }
 
     if (opHandler->fetch_sub(1) == 1) {
         // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-        for (auto i = 0; i < LazyJoinOperatorHandler::NUM_PARTITIONS; ++i) {
+        for (auto i = 0; i < NUM_PARTITIONS; ++i) {
             auto partitionId = i + 1;
-            auto buffer = workerCtx->allocateTupleBuffer();
-            buffer.store(partitionId);
-            pipelineCtxemitBuffer(buffer);
+            auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(partitionId), 1, opHandler);
+            pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
         }
     }
 }
@@ -79,17 +81,20 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
     if (record.read("timestamp") < 0) {
-         auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall,
-                                          localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
 
-         for (auto& fields : record.getAllField()) {
-             entryMemRef.store(record.read(fields));
-         }
+        auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall,
+                                                     localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
+
+        for (auto& field : record.getAllField()) {
+            entryMemRef.store(record.read(field));
+            entryMemRef = entryMemRef + record.read(field);
+        }
     } else {
         Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
-                               ctx.getWorkerContext(), ctx.getWorkerId(), isLeftSide);
+                               ctx.getWorkerContext(), ctx.getWorkerId(), Value<Boolean>(isLeftSide));
     }
 }
+
 LazyJoinBuild::LazyJoinBuild(const std::string& joinFieldName, uint64_t handlerIndex, bool isLeftSide)
     : joinFieldName(joinFieldName), handlerIndex(handlerIndex), isLeftSide(isLeftSide) {}
 

@@ -32,13 +32,13 @@ class FixedPage{
 
     explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
 
+    FixedPage(FixedPage* page);
+
     FixedPage(const FixedPage& that);
 
     FixedPage(FixedPage&& that);
 
     FixedPage& operator=(FixedPage&& that);
-
-
 
     /**
      * @brief returns a pointer to the record at the given index
@@ -56,10 +56,10 @@ class FixedPage{
 
     /**
      * @brief checks if the key might be in this page
-     * @param key
+     * @param keyPtr
      * @return true or false
      */
-    bool bloomFilterCheck(uint64_t key) const;
+    bool bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const;
 
     /**
      * @brief returns the number of items on this page

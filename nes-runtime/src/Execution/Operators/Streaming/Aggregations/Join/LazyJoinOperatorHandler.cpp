@@ -28,7 +28,7 @@ Operators::LocalHashTable& LazyJoinOperatorHandler::getWorkerHashTable(size_t in
 }
 
 
-const Operators::SharedJoinHashTable& LazyJoinOperatorHandler::getSharedJoinHashTable(bool isLeftSide) const {
+Operators::SharedJoinHashTable& LazyJoinOperatorHandler::getSharedJoinHashTable(bool isLeftSide) {
     if (isLeftSide) {
         return leftSideHashTable;
     } else {
@@ -36,7 +36,7 @@ const Operators::SharedJoinHashTable& LazyJoinOperatorHandler::getSharedJoinHash
     }
 }
 
-uint64_t LazyJoinOperatorHandler::fetch_sub(uint64_t sub) const {
+uint64_t LazyJoinOperatorHandler::fetch_sub(uint64_t sub) {
     return counterFinishedBuilding.fetch_sub(sub);
 }
 
@@ -50,17 +50,21 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchema,
 
     head = detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
 
-
     workerThreadsHashTable.reserve(maxNoWorkerThreads);
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
         workerThreadsHashTable.emplace_back(Operators::LocalHashTable(joinSchema, NUM_PARTITIONS, tail, overrunAddress));
     }
 
-
 }
-LazyJoinOperatorHandler::~LazyJoinOperatorHandler(){
 
-
+LazyJoinOperatorHandler::~LazyJoinOperatorHandler() {
+    std::free(head);
 }
+
+
+void LazyJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
+
+void LazyJoinOperatorHandler::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
+const std::string& LazyJoinOperatorHandler::getJoinFieldName() const { return joinFieldName; }
 
 } // namespace NES::Runtime::Execution
