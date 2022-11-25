@@ -25,8 +25,11 @@ namespace NES::Runtime::Execution::Operators {
 class ThresholdWindow : public ExecutableOperator {
   public:
     /**
-     * @brief Creates a selection operator with a expression.
-     * @param expression boolean predicate expression
+     * @brief Creates a threshold window operator.
+     * @param predicateExpression boolean predicate expression which check if a tuple satisfy the threshold
+     * @param aggregatedFieldAccessExpression field access to the field that is aggregated
+     * @param aggregationResultFieldIdentifier a string indicating the name of field to store the aggregation result
+     * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
     explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                              Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,

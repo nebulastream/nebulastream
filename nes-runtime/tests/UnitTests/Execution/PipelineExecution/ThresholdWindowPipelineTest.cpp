@@ -63,9 +63,9 @@ class ThresholdWindowPipelineTest : public testing::Test, public AbstractPipelin
 };
 
 /**
- * @brief Selection pipeline that execute a select operator and filters elements.
+ * @brief Test running a pipeline containing a threshold window with a sum aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, selectionPipeline) {
+TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
