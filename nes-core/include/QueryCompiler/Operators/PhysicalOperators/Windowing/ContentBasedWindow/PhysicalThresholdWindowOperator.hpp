@@ -19,15 +19,19 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
+/**
+ * @brief Physical operator ThresholdWindow.
+ * This class represent physical operator for ThresholdWindow. It stores the operator handler which later can be used in the
+ * executable operator.
+ */
 class PhysicalThresholdWindowOperator : public PhysicalUnaryOperator {
   public:
     /**
-     *
-     * @param id id of the operator
+     * @brief constructor of the physical operator of threshold window
+     * @param id of the operator
      * @param inputSchema input schema for the operator
      * @param outputSchema output schema for the operator
-     * @param predicate predicate expression to evaluate whether a tuple satisfy the threshold
-     * @param aggregatedFieldAccess field access expression to the aggregated field
+     * @param operatorHandler pointer to the operator handler of the threshold window (of type ThresholdWindowOperatorHandler)
      */
     PhysicalThresholdWindowOperator(OperatorId id,
                                     SchemaPtr inputSchema,
