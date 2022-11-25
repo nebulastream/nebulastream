@@ -46,7 +46,3 @@ Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
 }
 
 }
-
-
-
-
