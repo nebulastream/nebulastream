@@ -69,25 +69,25 @@ TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
     }
     // UInt8
     {
-        auto resultValue = expression.eval(Value<UInt8>((UInt8(0))));
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 0));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     //UInt16
     {
-        auto resultValue = expression.eval(Value<UInt16>((UInt16(0))));
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 0));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     //UInt32
     {
-        auto resultValue = expression.eval(Value<UInt32>((UInt32(0))));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 0));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     //UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((UInt64(0))));
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 0));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

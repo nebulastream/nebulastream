@@ -35,13 +35,13 @@ Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int32>());
     } else if (value->isType<Int64>()) {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int64>());
-    } else if (value->isType<Float>()){
+    } else if (value->isType<UInt8>()){
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt8>());
-    } else if (value->isType<Float>()) {
+    } else if (value->isType<UInt16>()) {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt16>());
-    }else if (value->isType<Float>()) {
+    }else if (value->isType<UInt32>()) {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt32>());
-    }else if (value->isType<Float>()) {
+    }else if (value->isType<UInt64>()) {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt64>());
     } else if (value->isType<Float>()) {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Float>());
