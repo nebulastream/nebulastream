@@ -1,0 +1,91 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#ifdef ENABLE_KAFKA_BUILD
+#include <DataGeneration/DataGenerator.hpp>
+#include <DataProvider/DataProvider.hpp>
+#include <cppkafka/cppkafka.h>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <unordered_map>
+
+const uint64_t bufferSizeInBytes = 131072;
+
+namespace NES::Benchmark {}
+int main(int argc, const char* argv[]) {
+    // Activating and installing error listener
+    std::cout << "hello" << std::endl;
+    //usage --broker --topic --partition
+    if (argc != 5) {
+        std::cout << "Usage: --broker= --topic= --partition --numberOfBuffersToProduce= required as a command line "
+                     "argument!\nExiting now..."
+                  << std::endl;
+        return -1;
+    }
+
+    // Iterating through the arguments
+    std::unordered_map<std::string, std::string> argMap;
+    for (int i = 0; i < argc; ++i) {
+        auto pathArg = std::string(argv[i]);
+        if (pathArg.find("--broker") != std::string::npos) {
+            argMap["broker"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        } else if (pathArg.find("--topic") != std::string::npos) {
+            argMap["topic"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        } else if (pathArg.find("--partition") != std::string::npos) {
+            argMap["partition"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        } else if (pathArg.find("--numberOfBuffersToProduce") != std::string::npos) {
+            argMap["numberOfBuffersToProduce"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
+        } else {
+            std::cout << "parameter " << pathArg << " not supported" << std::endl;
+        }
+    }
+
+    uint64_t numberOfBuffersToProduce = std::atoi(argMap["numberOfBuffersToProduce"].c_str());
+
+    std::cout << "start with config broker=" << argMap["broker"] << " topic=" << argMap["topic"]
+              << " partition=" << argMap["partition"] << " numberOfBufferToProduce=" << argMap["numberOfBuffersToProduce"]
+              << std::endl;
+    //push data to kafka topic
+    cppkafka::Configuration config = {{"metadata.broker.list", argMap["broker"]}};
+    cppkafka::Producer producer(config);
+
+    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSizeInBytes, numberOfBuffersToProduce);
+
+    auto dataGenerator = NES::Benchmark::DataGeneration::DataGenerator::createGeneratorByName("YSBKafka", Yaml::Node());
+    dataGenerator->setBufferManager(bufferManager);
+    auto createdBuffers = dataGenerator->createData(numberOfBuffersToProduce, bufferSizeInBytes);
+
+    for (uint64_t cnt = 0; cnt < numberOfBuffersToProduce; cnt++) {
+        char* buffer = createdBuffers[cnt].getBuffer<char>();
+        size_t len = createdBuffers[cnt].getBufferSize();
+        std::vector<uint8_t> bytes(buffer, buffer + len);
+        try {
+            producer.produce(
+                cppkafka::MessageBuilder(argMap["topic"]).partition(atoi(argMap["partition"].c_str())).payload(bytes));
+            producer.flush(std::chrono::seconds(100));
+        } catch (const std::exception& ex) {
+            std::cout << ex.what() << std::endl;
+        } catch (const std::string& ex) {
+            std::cout << ex << std::endl;
+        } catch (...) {
+        }
+        if (cnt % 1000 == 0) {
+            std::cout << "number of buffers prod=" << cnt << std::endl;
+        }
+    }
+    producer.flush(std::chrono::seconds(100));
+    return 0;
+}
+#endif

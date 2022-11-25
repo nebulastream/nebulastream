@@ -16,6 +16,7 @@ numberOfPreAllocatedBuffer: 100
 logicalSourceName:
   ysb:
     type: ysb
+
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv

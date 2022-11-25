@@ -63,7 +63,8 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption inputType;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
+    Configurations::StringConfigOption dataGenerator;
+    Configurations::StringConfigOption logicalSourceName;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

@@ -81,7 +81,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 const uint64_t tupleCnt = msg.get_payload().get_size() / tupleSize;
                 const uint64_t payloadSize = msg.get_payload().get_size();
 
-                NES_ASSERT(msg.get_payload().get_size() < buffer.getBufferSize(), "The buffer is not large enough");
+                NES_ASSERT(msg.get_payload().get_size() <= buffer.getBufferSize(), "The buffer is not large enough");
                 NES_TRACE("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
                                                      << ", msg: " << msg.get_payload());
 
