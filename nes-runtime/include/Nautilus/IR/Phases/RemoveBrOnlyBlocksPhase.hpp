@@ -26,8 +26,7 @@
 namespace NES::Nautilus::IR {
 
 /**
- * @brief This phase converts a execution trace to SSA form.
- * This implies that, each value is only assigned and that all parameters to a basic block are phaseed by block arguments.
+ * @brief This phase removes branch-only-blocks from a given IR graph.
  */
 class RemoveBrOnlyBlocksPhase {
   public:
