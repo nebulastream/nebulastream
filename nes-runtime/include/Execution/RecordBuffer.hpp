@@ -47,6 +47,15 @@ class RecordBuffer {
      * @return Value<UInt64>
      */
     Value<UInt64> getNumRecords();
+    /**
+     * @brief Set the number of records.
+     * @param: Number-of-records-value to set.
+     */
+    void setNumRecords(Value<UInt64> numRecordsValue);
+    Value<UInt64> getOriginId();
+    Value<UInt64> getSequenceNr();
+    Value<UInt64> getWatermarkTs();
+    void setWatermarkTs(Value<UInt64> watermarkTs);
 
     /**
      * @brief Retrieve the reference to the underling buffer from the record buffer.
@@ -62,11 +71,7 @@ class RecordBuffer {
 
     ~RecordBuffer() = default;
 
-    /**
-     * @brief Set the number of records.
-     * @param: Number-of-records-value to set.
-     */
-    void setNumRecords(Value<UInt64> numRecordsValue);
+
 
   private:
     Value<MemRef> tupleBufferRef;

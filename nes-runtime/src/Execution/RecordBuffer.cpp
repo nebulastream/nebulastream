@@ -40,6 +40,25 @@ void RecordBuffer::setNumRecords(Value<UInt64> numRecordsValue) {
                    numRecordsValue);
 }
 
+Value<UInt64> RecordBuffer::getOriginId() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getOriginId",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getOriginId,
+                          tupleBufferRef);
+}
+
+Value<UInt64> RecordBuffer::getWatermarkTs() {
+    return FunctionCall<>("NES__Runtime__TupleBuffer__getOriginId",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,
+                          tupleBufferRef);
+}
+
+void RecordBuffer::setWatermarkTs(Value<UInt64> watermarkTs) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setWatermark",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark,
+                   tupleBufferRef,
+                   watermarkTs);
+}
+
 Value<MemRef> RecordBuffer::getBuffer() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getBuffer",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer,
