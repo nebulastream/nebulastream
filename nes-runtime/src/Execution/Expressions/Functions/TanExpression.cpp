@@ -16,16 +16,13 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 
-
 namespace NES::Runtime::Execution::Expressions {
 
 TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : expression(expression) {}
 
-
 double calculateTan(double x){
     return std::tan(x);
 }
-
 
 Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
     Value value = expression->execute(record);
