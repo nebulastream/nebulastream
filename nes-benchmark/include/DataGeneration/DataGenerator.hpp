@@ -74,8 +74,6 @@ class DataGenerator {
          */
     static DataGeneratorPtr createGeneratorByName(std::string name, Yaml::Node generatorNode);
 
-    static DataGeneratorPtr createGeneratorByName(std::string name, Runtime::BufferManagerPtr bufferManager);
-
   protected:
     /**
          * @brief allocates a buffer from the bufferManager
