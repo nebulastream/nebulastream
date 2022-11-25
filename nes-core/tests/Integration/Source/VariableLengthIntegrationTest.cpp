@@ -38,7 +38,6 @@ class VariableLengthIntegrationTest : public Testing::NESBaseTest {
     }
 };
 
-/// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -104,7 +103,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
     NES_INFO("VariableLengthIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "memorySourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "variableLengthTestOut.csv";
     remove(filePath.c_str());
 
     //register query

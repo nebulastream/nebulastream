@@ -1,5 +1,53 @@
 # Changelog
 
+## [v0.3.64](https://github.com/nebulastream/nebulastream/tree/v0.3.64) (2022-11-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.63...v0.3.64)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add bit\_count\(x\) expression [\#3036](https://github.com/nebulastream/nebulastream/issues/3036)
+
+## [v0.3.63](https://github.com/nebulastream/nebulastream/tree/v0.3.63) (2022-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.62...v0.3.63)
+
+**Implemented enhancements:**
+
+- \[Feature\] Reintroduce support for multiple sources and document new options [\#3212](https://github.com/nebulastream/nebulastream/issues/3212)
+
+## [v0.3.62](https://github.com/nebulastream/nebulastream/tree/v0.3.62) (2022-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.61...v0.3.62)
+
+**Implemented enhancements:**
+
+- \[Feature\] Benchmarking Rework [\#2992](https://github.com/nebulastream/nebulastream/issues/2992)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Variable length integration test failing randomly [\#3245](https://github.com/nebulastream/nebulastream/issues/3245)
+- \[BUG\] Random Failing Memory-source-integration-test [\#3239](https://github.com/nebulastream/nebulastream/issues/3239)
+
+## [v0.3.61](https://github.com/nebulastream/nebulastream/tree/v0.3.61) (2022-11-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.60...v0.3.61)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix LocationIntegrationTest [\#3242](https://github.com/nebulastream/nebulastream/issues/3242)
+- testLongWindow fails [\#2390](https://github.com/nebulastream/nebulastream/issues/2390)
+- RESTEnpointTest is randomly failing [\#2239](https://github.com/nebulastream/nebulastream/issues/2239)
+
+## [v0.3.60](https://github.com/nebulastream/nebulastream/tree/v0.3.60) (2022-11-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.59...v0.3.60)
+
+### Bug Fixes 🐛
+
+- \[BUG\] IMPORTED\_RUNTIME\_ARTIFACTS unsupported on CMAKE 3.20 [\#3229](https://github.com/nebulastream/nebulastream/issues/3229)
+- \[BUG\] Issue with location service  [\#3208](https://github.com/nebulastream/nebulastream/issues/3208)
+
 ## [v0.3.59](https://github.com/nebulastream/nebulastream/tree/v0.3.59) (2022-11-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.58...v0.3.59)

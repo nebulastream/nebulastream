@@ -34,10 +34,10 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     /**
      * Construct a MapUdfLogicalOperatorNode.
-     * @param id The ID of the operator.
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
+     * @param id The ID of the operator.
      */
-    MapJavaUdfLogicalOperatorNode(OperatorId id, const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor);
+    MapJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
 
     /**
      * Getter for the Java UDF descriptor.
@@ -82,7 +82,7 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
   private:
     const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
 };
-
+using MapJavaUdfLogicalOperatorNodePtr = std::shared_ptr<MapJavaUdfLogicalOperatorNode>;
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_

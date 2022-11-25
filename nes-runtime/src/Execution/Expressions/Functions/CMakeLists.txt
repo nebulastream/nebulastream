@@ -30,6 +30,7 @@
          LGammaExpression.cpp
          Log10Expression.cpp
          PowerExpression.cpp
+         BitcounterExpression.cpp
          Log2Expression.cpp
          LnExpression.cpp
          )

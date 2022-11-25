@@ -26,7 +26,6 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/cppkafka.h>
 #endif
-#include <Util/UtilityFunctions.hpp>
 #include <fstream>
 
 namespace NES::Benchmark {
@@ -63,26 +62,24 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (size_t sourceCnt = 0; sourceCnt < configOverAllRuns.numSources->getValue(); ++sourceCnt) {
+    for (auto& [sourceName, dataGenerator] : configOverAllRuns.dataGenerators) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                       configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
 
-        auto dataGenerator =
-            DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), bufferManager);
-
+        dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                         configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
-        auto logicalStreamName = configOverAllRuns.logicalStreamName->getValue();
+        auto logicalSourceName = sourceName;
         auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
-        auto logicalSource = LogicalSource::create(logicalStreamName, schema);
+        auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         size_t taskQueueId = sourceCnt;
 
-        if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
+        if (dataGenerator->getName() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
             auto connectionStringVec = NES::Util::splitWithStringDelimiter<std::string>(
                 configOverAllRuns.connectionString->getValue() configOverAllRuns.connectionString->getValue(),
@@ -114,9 +111,9 @@ void E2ESingleRun::createSources() {
             kafkaSourceType->setBrokers(connectionStringVec[0]);
             kafkaSourceType->setTopic(connectionStringVec[1]);
             kafkaSourceType->setGroupId(connectionStringVec[2]);
-            kafkaSourceType->setNumberOfBuffersToProduce(configPerRun.numBuffersToProduce->getValue());
+            kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
 
-            auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, kafkaSourceType);
+            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
             coordinatorConf->worker.physicalSources.add(physicalSource);
 
             allDataGenerators.emplace_back(dataGenerator);
@@ -138,13 +135,13 @@ void E2ESingleRun::createSources() {
             };
 
             LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
-                                                                        configPerRun.numBuffersToProduce->getValue(),
+                                                                        configOverAllRuns.numberOfBuffersToProduce->getValue(),
                                                                         /* gatheringValue */ 0,
                                                                         GatheringMode::INTERVAL_MODE,
                                                                         sourceAffinity,
                                                                         taskQueueId);
 
-            auto physicalSource = PhysicalSource::create(logicalStreamName, physicalStreamName, sourceConfig);
+            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
             coordinatorConf->worker.physicalSources.add(physicalSource);
         }
         sourceCnt += 1;
@@ -162,7 +159,7 @@ void E2ESingleRun::runQuery() {
     auto queryCatalog = coordinator->getQueryCatalogService();
 
     queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
-    bool queryResult = Benchmark::Util::waitForQueryToStart(queryId, queryCatalog);
+    bool queryResult = waitForQueryToStart(queryId, queryCatalog);
     if (!queryResult) {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Query id=" << queryId << " did not start!");
     }
@@ -223,9 +220,6 @@ void E2ESingleRun::runQuery() {
                 availFixedBufferSum +=
                     (subPlanStatistics->getAvailableFixedBufferSum() / subPlanStatistics->getProcessedBuffers());
             }
-            std::cout << "measure_out=" << processedTasks << "," << processedBuffers << "," << processedTuples << ","
-                      << latencySum << "," << queueSizeSum << "," << availGlobalBufferSum << "," << availFixedBufferSum << ","
-                      << timeStamp << std::endl;
 
             measurements.addNewMeasurement(processedTasks,
                                            processedBuffers,
@@ -384,6 +378,47 @@ void E2ESingleRun::run() {
     runQuery();
     stopQuery();
     writeMeasurementsToCsv();
+}
+
+bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
+                                       const QueryCatalogServicePtr& queryCatalogService,
+                                       std::chrono::seconds timeoutInSec) {
+    NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
+    auto start_timestamp = std::chrono::system_clock::now();
+
+    NES_TRACE("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+        auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
+        if (!queryCatalogEntry) {
+            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+            return false;
+        }
+        NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+        QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
+
+        switch (queryCatalogEntry->getQueryStatus()) {
+            case QueryStatus::MarkedForHardStop:
+            case QueryStatus::MarkedForSoftStop:
+            case QueryStatus::SoftStopCompleted:
+            case QueryStatus::SoftStopTriggered:
+            case QueryStatus::Stopped:
+            case QueryStatus::Running: {
+                return true;
+            }
+            case QueryStatus::Failed: {
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
+                return false;
+            }
+            default: {
+                NES_WARNING("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                break;
+            }
+        }
+
+        std::this_thread::sleep_for(E2ESingleRun::sleepDuration);
+    }
+    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+    return false;
 }
 
 }// namespace NES::Benchmark

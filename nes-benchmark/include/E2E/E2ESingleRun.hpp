@@ -22,6 +22,8 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <DataProvider/DataProvider.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfig.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Measurements.hpp>
 #include <vector>
@@ -35,6 +37,8 @@ class E2ESingleRun {
 
     static constexpr auto stopQuerySleep = std::chrono::milliseconds(250);
     static constexpr auto stopQueryTimeoutInSec = std::chrono::seconds(30);
+    static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);
+    static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
   public:
     /**
@@ -83,6 +87,17 @@ class E2ESingleRun {
      * @brief writes the measurement to the csv file
      */
     void writeMeasurementsToCsv();
+
+    /**
+     * @brief This method is used for waiting till the query gets into running status or a timeout occurs
+     * @param queryId : the query id to check for
+     * @param queryCatalogService: the catalog to look into for status change
+     * @param timeoutInSec: time to wait before stop checking
+     * @return true if query gets into running status else false
+     */
+    static bool waitForQueryToStart(QueryId queryId,
+                                    const QueryCatalogServicePtr& queryCatalogService,
+                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:
     E2EBenchmarkConfigPerRun configPerRun;

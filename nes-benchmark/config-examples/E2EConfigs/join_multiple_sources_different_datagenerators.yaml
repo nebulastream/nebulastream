@@ -1,7 +1,7 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 numberOfWorkerThreads: 1, 2, 4
 bufferSizeInBytes: 5120, 5120, 5120
-numberOfBuffersToProduce: 1000000
+numberOfPreAllocatedBuffer: 10000000
 
 
 # ~~~ Benchmark parameter for the entire run ~~~
@@ -11,7 +11,7 @@ startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
 numberOfSources: 3
-dataGenerators:
+logicalSourceName:
   input1:
       type: Default
   input2:
@@ -27,6 +27,7 @@ dataGenerators:
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
+dataProvider: Internal
 outputFile: JoinMultipleSources.csv
 benchmarkName: JoinMultipleSources
 query: 'Query::from("input1").joinWith(Query::from("input2"))

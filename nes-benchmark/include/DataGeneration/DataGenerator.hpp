@@ -25,10 +25,14 @@ using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
 
 class DataGenerator {
   public:
+    /**
+     * @brief constructor for a data generator
+     */
     DataGenerator();
 
-    DataGenerator(Runtime::BufferManagerPtr bufferManager);
-
+    /**
+     * @brief destructor for a data generator
+     */
     virtual ~DataGenerator() = default;
 
     /**
