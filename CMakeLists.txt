@@ -46,6 +46,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+option(NES_USE_LORAWAN OFF)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
@@ -431,6 +432,10 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
+if (NES_USE_LORAWAN)
+    message(STATUS "LoRaWAN support enabled")
+    set(NES_USE_MQTT ON)
+endif(NES_USE_LORAWAN)
 # Library containing MQTT client
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
