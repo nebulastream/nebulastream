@@ -12,17 +12,15 @@ bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
 dataGenerator: YSB
-numberOfPreAllocatedBuffer: 100
-logicalSourceName:
-  ysb:
-    type: ysb
+numberOfPreAllocatedBuffer: 10000
+logicalSourceName: ysb
 
 dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv
 benchmarkName: YSBQuery
-#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(RecordCreationTs()), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000

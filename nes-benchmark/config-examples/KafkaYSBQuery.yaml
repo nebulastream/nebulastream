@@ -1,8 +1,8 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 
 # Parameter that are changed per run with comma separated list
-numberOfWorkerThreads: 2
-numberOfSources: 2
+numberOfWorkerThreads: 1
+numberOfSources: 1
 
 # engine configuration parameter
 #numberOfBuffersInGlobalBufferManager: 32768
@@ -17,9 +17,8 @@ dataGenerator: YSBKafka
 #connectionString: "localhost:9092,nesKafka,0"
 connectionString: "10.156.0.2:9092,nesKafka,0"
 numberOfPreAllocatedBuffer: 10
+batchSize: 10
 logicalSourceName: ysb
-#  ysb:
-#    type: YSBKafka
 
 dataProvider: Internal
 dataProviderMode: ZeroCopy
@@ -34,4 +33,4 @@ numberOfBuffersToProduce: 20000
 logLevel: LOG_DEBUG
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
-numberOfMeasurementsToCollect: 3
+numberOfMeasurementsToCollect: 5

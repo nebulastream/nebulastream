@@ -28,7 +28,6 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     experimentMeasureIntervalInSeconds =
         ConfigurationOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "Measuring duration of one sample");
 
-    numSources = ConfigurationOption<uint32_t>::create("numSources", 1, "Number of sources");
     numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
     outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
     benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
@@ -40,11 +39,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     logicalSourceName = ConfigurationOption<std::string>::create("logicalSourceName", "test", "stream name");
     dataGenerator = ConfigurationOption<std::string>::create("dataGenerator", "Default", "Generator name");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
-
-//    for (auto sourceCnt = 0UL; sourceCnt < numSources->getValue(); ++sourceCnt) {
-//        std::string name = "input" + std::to_string(sourceCnt + 1);
-//        dataGenerators[name] = DataGeneration::DataGenerator::createGeneratorByName("Default", Yaml::Node());
-//    }
+    batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
 }
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
     std::stringstream oss;
@@ -55,9 +50,9 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- benchmarkName: " << benchmarkName->getValue() << std::endl
         << "- inputType: " << inputType->getValue() << std::endl
         << "- query: " << query->getValue() << std::endl
-        << "- numSources: " << numSources->getValueAsString() << std::endl
         << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
         << "- numberOfBuffersToProduce: " << numberOfBuffersToProduce->getValueAsString() << std::endl
+        << "- batchSize: " << batchSize->getValueAsString() << std::endl
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
         << "- dataGenerators: " << dataGenerator->getValue() << std::endl
@@ -79,8 +74,9 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
     configOverAllRuns.logicalSourceName->setValue(yamlConfig["logicalSourceName"].As<std::string>());
     configOverAllRuns.dataGenerator->setValue(yamlConfig["dataGenerator"].As<std::string>());
-    configOverAllRuns.numSources->setValue(yamlConfig["numberOfSources"].As<uint32_t>());
     configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
+    configOverAllRuns.batchSize->setValue(yamlConfig["batchSize"].As<uint32_t>());
+    configOverAllRuns.numberOfBuffersToProduce->setValue(yamlConfig["numberOfBuffersToProduce"].As<uint32_t>());
 
 //    if (yamlConfig["logicalSourceName"].Size() > 0) {
 //        /* Iterating through the node

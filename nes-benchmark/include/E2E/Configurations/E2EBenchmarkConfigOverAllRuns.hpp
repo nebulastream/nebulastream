@@ -55,9 +55,9 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::IntConfigOption startupSleepIntervalInSeconds;
     Configurations::IntConfigOption numMeasurementsToCollect;
     Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
-    Configurations::IntConfigOption numSources;
     Configurations::IntConfigOption numberOfPreAllocatedBuffer;
     Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption batchSize;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;

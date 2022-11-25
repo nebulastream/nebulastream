@@ -363,6 +363,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
+                                      uint64_t batchSize,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<KafkaSource>(schema,
                                          bufferManager,
@@ -377,6 +378,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                          operatorId,
                                          originId,
                                          numSourceLocalBuffers,
+                                         batchSize,
                                          successors);
 }
 #endif

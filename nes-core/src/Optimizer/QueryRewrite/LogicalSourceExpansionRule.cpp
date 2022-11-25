@@ -48,6 +48,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
     //Compute a map of all blocking operators in the query plan
     std::unordered_map<uint64_t, OperatorNodePtr> blockingOperators;
+//    expandSourceOnly = true;
     if (expandSourceOnly) {
         //Add downstream operators of the source operators as blocking operator
         for (auto& sourceOperator : sourceOperators) {

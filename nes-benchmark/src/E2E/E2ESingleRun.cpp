@@ -54,6 +54,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
+//    coordinatorConf->worker.queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     coordinatorConf->worker.numaAwareness = true;
     coordinatorConf->worker.queryCompiler.useCompilationCache = true;
     coordinatorConf->worker.enableMonitoring = false;
@@ -63,21 +64,23 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (uint64_t i = 0; i < configOverAllRuns.numSources->getValue(); i++) {
-        auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                      configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+    auto dataGenerator = NES::Benchmark::DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), Yaml::Node());
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+                                                                  configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
 
-        auto dataGenerator = NES::Benchmark::DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), Yaml::Node());
 
-        dataGenerator->setBufferManager(bufferManager);
+    dataGenerator->setBufferManager(bufferManager);
+    auto schema = dataGenerator->getSchema();
+    auto logicalSourceName = configOverAllRuns.logicalSourceName->getValue();
+    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+    coordinatorConf->logicalSources.add(logicalSource);
+
+    for (uint64_t i = 0; i < configPerRun.numberOfSources->getValue(); i++) {
+
+        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
+
         auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                         configPerRun.bufferSizeInBytes->getValue());
-
-        auto schema = dataGenerator->getSchema();
-        auto logicalSourceName = configOverAllRuns.logicalSourceName->getValue();
-        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
-        auto logicalSource = LogicalSource::create(logicalSourceName, schema);
-        coordinatorConf->logicalSources.add(logicalSource);
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
         //static query manager mode is currently not ported therefore only one queue
@@ -89,18 +92,21 @@ void E2ESingleRun::createSources() {
                 NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
 
             std::string destinationTopic;
-            if (sourceCnt == 0) {
-                destinationTopic = connectionStringVec[1];
-            } else {
-                destinationTopic = connectionStringVec[1] + std::to_string(sourceCnt);
-            }
+//            if (sourceCnt == 0) {
+//                destinationTopic = connectionStringVec[1];
+//            } else {
+//                destinationTopic = connectionStringVec[1] + std::to_string(sourceCnt);
+//            }
 
-            NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << destinationTopic)
+            NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << connectionStringVec[1])
             auto kafkaSourceType = KafkaSourceType::create();
             kafkaSourceType->setBrokers(connectionStringVec[0]);
-            kafkaSourceType->setTopic(destinationTopic);
-            kafkaSourceType->setGroupId(connectionStringVec[2]);
+            kafkaSourceType->setTopic(connectionStringVec[1]);
+
+            //we use the group id
+            kafkaSourceType->setGroupId(std::to_string(i));
             kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
+            kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
 
             auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
             coordinatorConf->worker.physicalSources.add(physicalSource);
@@ -216,6 +222,8 @@ void E2ESingleRun::runQuery() {
                                            availGlobalBufferSum,
                                            availFixedBufferSum,
                                            timeStamp);
+
+            std::cout << "Measurement processedBuffers=" << processedBuffers << std::endl;
         }
 
         // Calculating the time to sleep
@@ -295,7 +303,8 @@ void E2ESingleRun::stopQuery() {
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
 
-    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
+//    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
+    auto schemaSizeInB = 78;
     std::string queryString = configOverAllRuns.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
@@ -303,7 +312,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     header << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
               "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
               "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-              "numWorkerThreads,numSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
+              "numWorkerThreads,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
            << std::endl;
 
     std::stringstream outputCsvStream;
@@ -313,7 +322,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numWorkerThreads->getValue();
-        outputCsvStream << "," << configOverAllRuns.numSources->getValue();
+        outputCsvStream << "," << configPerRun.numberOfSources->getValue();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
