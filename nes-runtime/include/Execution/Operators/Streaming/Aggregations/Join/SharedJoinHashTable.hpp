@@ -39,12 +39,11 @@ class SharedJoinHashTable {
     class InternalNode {
       public:
         FixedPage dataPage;
-        std::atomic<InternalNode*> next;
+        std::atomic<InternalNode*> next{nullptr};
     };
 
 
   public:
-
 
     /**
      * @brief inserts the pages into the bucket at the bucketPos
@@ -66,6 +65,8 @@ class SharedJoinHashTable {
      * @return no. items of the bucket
      */
     size_t getNumItems(size_t bucketPos) const;
+
+    size_t getNumPages(size_t bucketPos) const;
 
 
   private:
