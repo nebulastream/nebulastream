@@ -19,4 +19,5 @@ add_source_files(nes-runtime
         SharedJoinHashTable.cpp
         FixedPage.cpp
         FixedPagesLinkedList.cpp
-        LazyJoinSink.cpp)
+        LazyJoinSink.cpp
+        LazyJoinUtil.cpp)
