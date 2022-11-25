@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Operators {
 class LazyJoinSink : public Operator {
 
   public:
-    LazyJoinSink(uint64_t handlerIndex, const std::string& joinFieldName);
+    LazyJoinSink(uint64_t handlerIndex);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket
@@ -32,21 +32,7 @@ class LazyJoinSink : public Operator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
-    /**
-     * @brief performs the join by comparing buckets (vector of fixed pages)
-     * @param executionContext
-     * @param probeSide
-     * @param buildSide
-     */
-    size_t executeJoin(ExecutionContext& executionContext, std::vector<FixedPage>&& probeSide,
-                       std::vector<FixedPage>&& buildSide) const;
-
-
-  private:
-    SchemaPtr joinSchema;
     uint64_t handlerIndex;
-    std::string joinFieldName;
-
 };
 
 

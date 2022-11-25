@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -43,12 +44,14 @@ class SharedJoinHashTable {
 
 
   public:
+
+
     /**
      * @brief inserts the pages into the bucket at the bucketPos
      * @param bucketPos
      * @param pagesLinkedList
      */
-    void insertBucket(size_t bucketPos, FixedPagesLinkedList const* pagesLinkedList) const;
+    void insertBucket(size_t bucketPos, FixedPagesLinkedList const* pagesLinkedList);
 
     /**
      * @brief returns all fixed pages
@@ -66,10 +69,9 @@ class SharedJoinHashTable {
 
 
   private:
-    std::vector<std::atomic<InternalNode*>> bucketHeads;
-    std::vector<std::atomic<size_t>> bucketNumItems;
-    std::vector<std::atomic<size_t>> bucketNumPages;
-    SchemaPtr schema;
+    std::array<std::atomic<InternalNode*>, NUM_PARTITIONS> bucketHeads;
+    std::array<std::atomic<size_t>, NUM_PARTITIONS> bucketNumItems;
+    std::array<std::atomic<size_t>, NUM_PARTITIONS> bucketNumPages;
 };
 
 

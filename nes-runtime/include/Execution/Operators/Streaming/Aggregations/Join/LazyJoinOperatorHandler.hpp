@@ -18,18 +18,14 @@
 #include <cstddef>
 #include <API/Schema.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution {
 
-class LazyJoinOperatorHandler;
-using LazyJoinOperatorHandlerPtr = LazyJoinOperatorHandler const*;
 
-class LazyJoinOperatorHandler : public OperatorHandler {
-  public:
-    static constexpr auto NUM_PARTITIONS = 8 * 1024;
-    static constexpr auto MASK = NUM_PARTITIONS - 1;
+class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
 
   public:
@@ -38,20 +34,25 @@ class LazyJoinOperatorHandler : public OperatorHandler {
                                      uint64_t counterFinishedBuildingStart,
                                      size_t totalSizeForDataStructures);
 
-    ~LazyJoinOperatorHandler();
-
+    ~LazyJoinOperatorHandler() override;
 
     Operators::LocalHashTable& getWorkerHashTable(size_t index);
 
-    const Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide) const;
+    Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
 
-    uint64_t fetch_sub(uint64_t sub) const;
+    uint64_t fetch_sub(uint64_t sub);
 
     SchemaPtr getJoinSchema() const;
+
+    const std::string& getJoinFieldName() const;
+
+    void recyclePooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
 
   private:
 
     SchemaPtr joinSchema;
+    std::string joinFieldName;
     std::vector<Operators::LocalHashTable> workerThreadsHashTable;
     Operators::SharedJoinHashTable leftSideHashTable;
     Operators::SharedJoinHashTable rightSideHashTable;
