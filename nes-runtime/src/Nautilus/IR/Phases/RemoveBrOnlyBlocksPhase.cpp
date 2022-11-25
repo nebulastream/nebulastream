@@ -198,4 +198,4 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::removeBrOnlyBlocks
         processPotentialBrOnlyBlock(currentBlock, newBlocks, visitedBlocks);
     } while (!newBlocks.empty());
 }
-}//namespace NES::Nautilus::Tracing
+}//namespace NES::Nautilus::IR
