@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.65](https://github.com/nebulastream/nebulastream/tree/v0.3.65) (2022-11-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.64...v0.3.65)
+
+#### User Defined Functions
+
+- \[Feature\] Perform type inference for queries containing UDFs [\#3071](https://github.com/nebulastream/nebulastream/issues/3071)
+
 ## [v0.3.64](https://github.com/nebulastream/nebulastream/tree/v0.3.64) (2022-11-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.63...v0.3.64)
