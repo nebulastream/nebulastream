@@ -354,6 +354,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
+                                      size_t batchSize,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 #ifdef ENABLE_OPC_BUILD

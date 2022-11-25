@@ -17,15 +17,15 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-namespace cppkafka
-{
+namespace cppkafka {
 class Configuration;
 class Consumer;
-}
+class Message;
+}// namespace cppkafka
 
 namespace NES {
 
-class KafkaSource : public DataSource {
+class KafkaSource : public DataSource, public Runtime::BufferRecycler {
   public:
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
@@ -40,6 +40,7 @@ class KafkaSource : public DataSource {
                 OriginId originId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
+                uint64_t batchSize,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**
@@ -65,7 +66,6 @@ class KafkaSource : public DataSource {
      */
     std::string getTopic() const;
 
-
     /**
      * @brief Get kafka offset
      */
@@ -77,6 +77,11 @@ class KafkaSource : public DataSource {
     std::string getGroupId() const;
 
     /**
+     * @brief Get kafka batch size
+     */
+    uint64_t getBatchSize() const;
+
+    /**
      * @brief If kafka offset is to be committed automatically
      */
     bool isAutoCommit() const;
@@ -86,6 +91,13 @@ class KafkaSource : public DataSource {
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
 
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+
+    /**
+     * @brief Interface method for unpooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
   private:
     /**
      * @brief method to connect kafka using the host and port specified before
@@ -103,6 +115,14 @@ class KafkaSource : public DataSource {
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
+    uint64_t bufferProducedCnt = 0;
+    uint64_t batchSize = 1;
+    uint64_t numberOfTuplesPerBuffer = 1;
+    std::vector<cppkafka::Message> messages;
+    uint64_t successFullPollCnt = 0;
+    uint64_t failedFullPollCnt = 0;
+    uint64_t reuseCnt = 0;
+
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;

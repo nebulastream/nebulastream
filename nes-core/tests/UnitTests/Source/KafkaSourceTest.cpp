@@ -109,6 +109,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     SUCCEED();
@@ -131,6 +132,7 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(sourceTest). OFFSETMODE(earliest). ";
@@ -253,6 +255,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     auto test_schema = Schema::create()->addField("var", UINT32);
 
