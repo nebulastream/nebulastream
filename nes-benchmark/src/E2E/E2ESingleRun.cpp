@@ -25,7 +25,6 @@
 #include <Version/version.hpp>
 #include <algorithm>
 #include <cppkafka/cppkafka.h>
-#endif
 #include <fstream>
 
 namespace NES::Benchmark {
@@ -38,6 +37,8 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->rpcPort = 5000 + portOffSet;
     coordinatorConf->restPort = 9082 + portOffSet;
     coordinatorConf->enableMonitoring = false;
+    coordinatorConf->optimizer.distributedWindowChildThreshold = 100;
+    coordinatorConf->optimizer.distributedWindowCombinerThreshold = 100;
 
     // Worker configuration
     coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerThreads->getValue();
@@ -62,60 +63,48 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    for (auto& [sourceName, dataGenerator] : configOverAllRuns.dataGenerators) {
+    for (uint64_t i = 0; i < configOverAllRuns.numSources->getValue(); i++) {
         auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                       configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+
+        auto dataGenerator = NES::Benchmark::DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(), Yaml::Node());
 
         dataGenerator->setBufferManager(bufferManager);
         auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
                                                         configPerRun.bufferSizeInBytes->getValue());
 
         auto schema = dataGenerator->getSchema();
-        auto logicalSourceName = sourceName;
+        auto logicalSourceName = configOverAllRuns.logicalSourceName->getValue();
         auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
-        size_t taskQueueId = sourceCnt;
-
-        if (dataGenerator->getName() == "YSBKafka") {
+        //static query manager mode is currently not ported therefore only one queue
+        size_t taskQueueId = 0;
+        std::cout << "dataGenerator->getName()=" << dataGenerator->getName() << std::endl;
+        if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
             auto connectionStringVec =
                 NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
-            //push data to kafka topic
-            cppkafka::Configuration config = {{"metadata.broker.list", connectionStringVec[0]}};
-            cppkafka::Producer producer(config);
 
-            for (uint64_t cnt = 0; cnt < createdBuffers.size(); cnt++) {
-                char* buffer = createdBuffers[cnt].getBuffer<char>();
-                size_t len = createdBuffers[cnt].getBufferSize();
-                std::vector<uint8_t> bytes(buffer, buffer + len);
-                try {
-                    producer.produce(cppkafka::MessageBuilder(connectionStringVec[1]).partition(0).payload(bytes));
-                    producer.flush(std::chrono::seconds(100));
-                } catch (const std::exception& ex) {
-                    std::cout << ex.what() << std::endl;
-                } catch (const std::string& ex) {
-                    std::cout << ex << std::endl;
-                } catch (...) {
-                }
-                if (cnt % 1000 == 0) {
-                    std::cout << "number of buffers prod=" << cnt << std::endl;
-                }
+            std::string destinationTopic;
+            if (sourceCnt == 0) {
+                destinationTopic = connectionStringVec[1];
+            } else {
+                destinationTopic = connectionStringVec[1] + std::to_string(sourceCnt);
             }
-            producer.flush(std::chrono::seconds(100));
 
+            NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << destinationTopic)
             auto kafkaSourceType = KafkaSourceType::create();
             kafkaSourceType->setBrokers(connectionStringVec[0]);
-            kafkaSourceType->setTopic(connectionStringVec[1]);
+            kafkaSourceType->setTopic(destinationTopic);
             kafkaSourceType->setGroupId(connectionStringVec[2]);
             kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
 
             auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
             coordinatorConf->worker.physicalSources.add(physicalSource);
 
-            allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
 #else
             NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
@@ -125,7 +114,6 @@ void E2ESingleRun::createSources() {
                 DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
             // Adding necessary items to the corresponding vectors
             allDataProviders.emplace_back(dataProvider);
-            allDataGenerators.emplace_back(dataGenerator);
             allBufferManagers.emplace_back(bufferManager);
 
             size_t generatorQueueIndex = 0;
