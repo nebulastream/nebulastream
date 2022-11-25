@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.64](https://github.com/nebulastream/nebulastream/tree/v0.3.64) (2022-11-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.63...v0.3.64)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add bit\_count\(x\) expression [\#3036](https://github.com/nebulastream/nebulastream/issues/3036)
+
 ## [v0.3.63](https://github.com/nebulastream/nebulastream/tree/v0.3.63) (2022-11-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.62...v0.3.63)
