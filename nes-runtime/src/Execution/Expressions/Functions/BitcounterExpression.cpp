@@ -14,22 +14,20 @@
 
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
 #include <bit>
+#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}
 
-uint32_t bitcounter(uint64_t number) {
-    return std::popcount(number);
-    }
+uint32_t bitcounter(uint64_t number) { return std::popcount(number); }
 
 Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = SubExpression->execute(record);
 
-    if (leftValue->isType<Int8>()){
+    if (leftValue->isType<Int8>()) {
         return FunctionCall<>("bitcounter", bitcounter, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("bitcounter", bitcounter, leftValue.as<Int16>());

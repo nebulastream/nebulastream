@@ -28,11 +28,10 @@ class BitcounterExpression : public Expression {
     BitcounterExpression(const ExpressionPtr& SubExpression);
     Value<> execute(NES::Nautilus::Record& record) const override;
 
-    private:
-      const  ExpressionPtr SubExpression;
+  private:
+    const ExpressionPtr SubExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_BITCOUNTEREXPRESSION_HPP
-
