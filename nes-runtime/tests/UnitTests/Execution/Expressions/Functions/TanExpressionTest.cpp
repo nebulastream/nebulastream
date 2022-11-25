@@ -21,7 +21,8 @@
 namespace NES::Runtime::Execution::Expressions {
 
 class TanExpressionTest : public testing::Test {
-    public:
+
+  public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("TanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -48,18 +49,46 @@ TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-
+    //Int16
+    {
+        auto resultValue = expression.eval(Value<Int16>((int16_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) 0));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 0));
         ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt8
+    {
+        auto resultValue = expression.eval(Value<UInt8>((UInt8(0))));
+        ASSERT_EQ(resultValue, (double) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    //UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((UInt16(0))));
+        ASSERT_EQ(resultValue, (double) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    //UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((UInt32(0))));
+        ASSERT_EQ(resultValue, (double) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    //UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((UInt64(0))));
+        ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -69,7 +98,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 90));
-        ASSERT_EQ(resultValue, (double) -1.995200412208242);
+        ASSERT_EQ(resultValue,3 (double) -1.995200412208242);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
