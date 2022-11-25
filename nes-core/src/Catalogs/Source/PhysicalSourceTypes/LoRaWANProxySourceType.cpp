@@ -90,22 +90,22 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(Yaml::Node yamlConfig)
         networkStack->setValue(yamlConfig[Configurations::LORAWAN_NETWORK_STACK_CONFIG].As<std::string>());
     }
     if (hasValue(Configurations::URL_CONFIG)){
-        networkStack->setValue(yamlConfig[Configurations::URL_CONFIG].As<std::string>());
+        url->setValue(yamlConfig[Configurations::URL_CONFIG].As<std::string>());
     }
     if (hasValue(Configurations::USER_NAME_CONFIG)){
-        networkStack->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
+        userName->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
 
     } else {
         NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no username defined! Please define a username.");
     }
     if (hasValue(Configurations::PASSWORD_CONFIG)){
-        networkStack->setValue(yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>());
+        password->setValue(yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>());
 
     } else {
         NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no password defined! Please define a password.");
     }
     if (hasValue(Configurations::LORAWAN_APP_ID_CONFIG)){
-        networkStack->setValue(yamlConfig[Configurations::LORAWAN_APP_ID_CONFIG].As<std::string>());
+        appId->setValue(yamlConfig[Configurations::LORAWAN_APP_ID_CONFIG].As<std::string>());
 
     } else {
         NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
