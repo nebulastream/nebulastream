@@ -18,7 +18,6 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/Worker/FaultToleranceConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -54,7 +53,6 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     std::string ipAddress = "127.0.0.1";
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr workerConfig;
-    FaultToleranceConfigurationPtr ftConfig;
     CSVSourceTypePtr csvSourceTypeInfinite;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
@@ -77,8 +75,6 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
-
-        ftConfig = FaultToleranceConfiguration::create();
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
