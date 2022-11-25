@@ -167,7 +167,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
     createCorrectBlock(correctBlocks, "1", {"0"}, {"3"});
     createCorrectBlock(correctBlocks, "3", {"0", "1"}, {});
     auto ir = createTraceAndApplyPhases(&simpleIfOperationWithoutFalseBranch_0);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
 Value<> doubleVerticalDiamondInTrueBranch_2() {
@@ -202,7 +202,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     createCorrectBlock(correctBlocks, "6", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "9", {"5", "6", "2"}, {});
     auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
 
@@ -228,7 +228,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOpe
     createCorrectBlock(correctBlocks, "4", {"1"}, {"6"});
     createCorrectBlock(correctBlocks, "2", {"6"}, {});
     auto ir = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_3);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
 Value<> mergeLoopMergeBlockWithLoopFollowUp_4() {
@@ -265,7 +265,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
     createCorrectBlock(correctBlocks, "8", {"10"}, {"10"});
     createCorrectBlock(correctBlocks, "9", {"10"}, {});
     auto ir = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_4);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
 // Tests all registered compilation backends.
