@@ -33,6 +33,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
+#include <fstream>
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -182,7 +183,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot create location source");
     }
 
-    if (workerConfig->enableStatisticOuput) {
+    if (workerConfig->enableStatisticOutput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             while (isRunning) {
