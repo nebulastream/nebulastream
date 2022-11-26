@@ -14,9 +14,9 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation {
 

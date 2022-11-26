@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 

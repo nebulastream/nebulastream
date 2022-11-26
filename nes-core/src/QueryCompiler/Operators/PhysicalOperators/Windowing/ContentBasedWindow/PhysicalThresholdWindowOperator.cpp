@@ -22,7 +22,8 @@ PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(OperatorId id,
                                                                  SchemaPtr inputSchema,
                                                                  SchemaPtr outputSchema,
                                                                  Windowing::WindowOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), operatorHandler(std::move(operatorHandler)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      operatorHandler(std::move(operatorHandler)) {}
 std::shared_ptr<PhysicalThresholdWindowOperator>
 PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
                                         SchemaPtr outputSchema,
@@ -34,12 +35,9 @@ PhysicalThresholdWindowOperator::create(SchemaPtr inputSchema,
                                                              operatorHandler);
 }
 
-
 std::string PhysicalThresholdWindowOperator::toString() const { return "PhysicalThresholdWindowOperator"; }
 
 OperatorNodePtr PhysicalThresholdWindowOperator::copy() { return create(inputSchema, outputSchema, operatorHandler); }
 
-Windowing::WindowOperatorHandlerPtr PhysicalThresholdWindowOperator::getOperatorHandler() {
-    return operatorHandler;
-}
+Windowing::WindowOperatorHandlerPtr PhysicalThresholdWindowOperator::getOperatorHandler() { return operatorHandler; }
 }//namespace NES::QueryCompilation::PhysicalOperators

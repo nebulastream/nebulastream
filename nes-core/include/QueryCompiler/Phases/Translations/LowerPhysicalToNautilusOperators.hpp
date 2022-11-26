@@ -62,7 +62,7 @@ class LowerPhysicalToNautilusOperators {
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
           PhysicalOperators::PhysicalOperatorPtr operatorPtr,
           size_t bufferSize,
-          std::vector<Runtime::Execution::OperatorHandlerPtr> &operatorHandlers);
+          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                                        PhysicalOperators::PhysicalOperatorPtr sharedPtr,
                                                                        size_t bufferSize);
