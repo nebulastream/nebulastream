@@ -31,7 +31,7 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
     // TODO 3250: maybe move from this class to the aggregation
-    int64_t sum = 0L; // stores the sum aggregation
+    int64_t sum = 0L;// stores the sum aggregation
     bool isWindowOpen = false;
 };
 }// namespace NES::Runtime::Execution::Operators
