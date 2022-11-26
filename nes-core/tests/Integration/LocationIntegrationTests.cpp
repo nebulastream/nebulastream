@@ -48,6 +48,7 @@ using std::string;
 uint16_t timeout = 5;
 namespace NES {
 using namespace Configurations;
+const Timestamp TIME_TOLERANCE = 10000000;
 
 class LocationIntegrationTests : public Testing::NESBaseTest {
   public:
@@ -347,7 +348,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
                         startTime,
                         4,
                         10000000,
-                        1000000,
+                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -393,7 +394,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
                         startTime,
                         4,
                         10000000,
-                        1000000,
+                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -444,7 +445,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
                         startTime,
                         4,
                         10000000,
-                        1000000,
+                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -470,8 +471,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->coordinatorPort = (port);
-    //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
-    wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
@@ -484,18 +483,14 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    auto locationProvider =
-        std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
     checkDeviceMovement(csvPath,
-                        startTime,
+                        simulatedStartTime,
                         4,
                         10000000,
-                        1000000,
+                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -1004,6 +999,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
+    //fail
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
@@ -1016,8 +1012,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    wrkConf1->dataPort.setValue(0);
-    wrkConf1->rpcPort.setValue(0);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
 
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 

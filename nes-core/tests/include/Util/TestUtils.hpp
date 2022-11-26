@@ -963,7 +963,7 @@ void checkDeviceMovement(std::string csvPath,
     NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
 
     //set the end time
-    auto loopTime = waypoints.back().second + timeError;
+    auto endTime = waypoints.back().second + timeError;
 
     Timestamp beforeQuery = getTimestamp();
     std::shared_ptr<NES::Spatial::Index::Experimental::Location> currentDeviceLocation = getLocation(functionParameters);
@@ -971,7 +971,7 @@ void checkDeviceMovement(std::string csvPath,
 
     NES::Spatial::Index::Experimental::Location lastWaypoint;
 
-    while (afterQuery < loopTime) {
+    while (afterQuery < endTime) {
         std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
         beforeQuery = getTimestamp();
         currentDeviceLocation = getLocation(functionParameters);
