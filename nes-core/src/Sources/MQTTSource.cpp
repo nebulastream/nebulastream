@@ -171,7 +171,11 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                 if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
-                    if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer, schema, localBufferManager)) {
+                    if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString,
+                                                                   tupleCount,
+                                                                   tupleBuffer,
+                                                                   schema,
+                                                                   localBufferManager)) {
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
