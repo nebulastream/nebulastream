@@ -108,8 +108,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                           "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer
-                Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
-                    *reinterpret_cast<uint32_t const*>(indexInBuffer);
+                Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
 
                 // retrieve the child buffer from the tuple buffer
                 auto childTupleBuffer = tbuffer.loadChildBuffer(childIdx);
@@ -118,7 +117,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                 uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
 
                 // build the string
-                if(sizeOfTextField > 0) {
+                if (sizeOfTextField > 0) {
                     auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
                     std::string deserialized(begin, begin + sizeOfTextField);
                     str = std::move(deserialized);
