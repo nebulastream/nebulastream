@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.67](https://github.com/nebulastream/nebulastream/tree/v0.3.67) (2022-11-27)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.66...v0.3.67)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Write variable length fields from data source to tuple buffers [\#3146](https://github.com/nebulastream/nebulastream/issues/3146)
+
 ## [v0.3.66](https://github.com/nebulastream/nebulastream/tree/v0.3.66) (2022-11-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.65...v0.3.66)
