@@ -38,8 +38,7 @@ class ThresholdWindow : public ExecutableOperator {
                              uint64_t operatorHandlerIndex)
         : predicateExpression(std::move(predicateExpression)),
           aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
-          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)),
-          minCount(std::move(minCount)),
+          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)), minCount(std::move(minCount)),
           operatorHandlerIndex(operatorHandlerIndex){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
