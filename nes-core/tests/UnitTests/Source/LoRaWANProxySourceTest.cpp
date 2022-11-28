@@ -10,11 +10,14 @@
 //     limitations under the License.
 // *
 
+
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
+#include <boost/process/spawn.hpp>
 #include <gtest/gtest.h>
+#include <mqtt/client.h>
 
 constexpr int OPERATORID = 1;
 constexpr int ORIGINID = 1;
@@ -29,6 +32,13 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
     Runtime::QueryManagerPtr queryManager;
     SchemaPtr schema;
     uint64_t buffer_size{};
+    std::map<std::string, std::string> sourceConfig{
+        {Configurations::LORAWAN_NETWORK_STACK_CONFIG, "ChirpStack"},
+        {Configurations::URL_CONFIG, "tcp://localhost:1883"},
+        {Configurations::USER_NAME_CONFIG, "hellothere"},
+        {Configurations::PASSWORD_CONFIG, "General Grevious"},
+        {Configurations::LORAWAN_APP_ID_CONFIG, "testing"},
+    };
     LoRaWANProxySourceTypePtr loRaWANProxySourceType;
 
     /* Will be called before any test in this class are executed. */
@@ -41,7 +51,7 @@ class LoRaWANProxySourceTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         NES_DEBUG("LORAWANPROXYSOURCETEST::SetUp() LoRaWANProxySource test cases set up.");
         schema = Schema::create()->addField("var", UINT32);
-        loRaWANProxySourceType = LoRaWANProxySourceType::create();
+        loRaWANProxySourceType = LoRaWANProxySourceType::create(sourceConfig);
         auto workerConfigurations = WorkerConfiguration::create();
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
@@ -73,7 +83,29 @@ TEST_F(LoRaWANProxySourceTest, LoRaWANProxySourceInit) {
                                          ORIGINID,
                                          NUMSOURCELOCALBUFFERS,
                                          {});
+    EXPECT_EQ(init->getSchema(), schema);
+    EXPECT_EQ(init->getOperatorId(), OPERATORID);
+    std::cout << init->toString();
     SUCCEED();
+}
+
+TEST_F(LoRaWANProxySourceTest, LoRaWANProxySourceInitCorrectValues) {
+    auto init = createLoRaWANProxySource(schema,
+                                         bufferManager,
+                                         queryManager,
+                                         loRaWANProxySourceType,
+                                         OPERATORID,
+                                         ORIGINID,
+                                         NUMSOURCELOCALBUFFERS,
+                                         {});
+    auto expected = "LoRaWANProxySource(SCHEMA(var:INTEGER ), CONFIG(LoRaWANProxySourceType =>  {\n"
+                    "networkStack: ChirpStack\n"
+                    "url: tcp://localhost:1883\n"
+                    "userName: hellothere\n"
+                    "password: General Grevious\n"
+                    "appId: testing\n"
+                    "})).";
+    EXPECT_EQ(expected, init->toString());
 }
 
 }// namespace NES
