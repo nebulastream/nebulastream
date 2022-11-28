@@ -65,7 +65,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
     if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
-        add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp src/Execution/Expressions/Functions/FloorExpression.cpp src/Execution/Expressions/Functions/CeilExpression.cpp)
+        add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Experimental/Interpreter/ProxyFunctions.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../nes-core/src/Runtime/detail/TupleBufferImpl.cpp)
         target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_link_libraries(nes-runtime PUBLIC nes)
         add_dependencies(nes-runtime nes)
