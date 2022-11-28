@@ -449,7 +449,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& address) {
+Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getLocation(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
@@ -460,9 +460,12 @@ Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::s
     Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
-        return {coord.lat(), coord.lng()};
+        //return {coord.lat(), coord.lng()};
+        //todo: keep editing from here
+        //auto location = std::make_shared<Spatial::Index::Experimental::Location>(coord.lat(), coord.lng());
+        return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
     }
-    return {};
+    return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& address) {

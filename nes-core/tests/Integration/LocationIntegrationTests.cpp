@@ -62,9 +62,10 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
     //wrapper function so allow the util function to call the member function of LocationProvider
-    static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromTopologyNode(std::shared_ptr<void> node) {
+    static std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> getLocationFromTopologyNode(std::shared_ptr<void> node) {
         auto casted = std::static_pointer_cast<TopologyNode>(node);
-        return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
+        //return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
+        return casted->getCoordinates();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationIntegrationTests class."); }
@@ -147,13 +148,13 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ((node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
+    EXPECT_EQ((node2->getCoordinates()->getLocation()), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
-    EXPECT_EQ(geoTopology->getClosestNodeTo((node4->getCoordinates())).value(), node4);
+    EXPECT_EQ(geoTopology->getClosestNodeTo((node4->getCoordinates()->getLocation())).value(), node4);
     geoTopology->updateFieldNodeCoordinates(node2,
                                             NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ((node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ((node2->getCoordinates()->getLocation()), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange =
@@ -264,8 +265,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(node1->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     EXPECT_EQ(node2->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 
-    EXPECT_TRUE(node1->getCoordinates().isValid());
-    EXPECT_EQ(node2->getCoordinates(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_TRUE(node1->getCoordinates()->getLocation().isValid());
+    EXPECT_EQ(node2->getCoordinates()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -523,8 +524,8 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     EXPECT_TRUE(retStart1);
 
     auto loc1 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk1));
-    EXPECT_TRUE(loc1.isValid());
-    EXPECT_EQ(loc1, NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+    EXPECT_TRUE(loc1->getLocation().isValid());
+    EXPECT_EQ(loc1->getLocation(), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -540,8 +541,8 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     EXPECT_TRUE(retStart2);
 
     auto loc2 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk2));
-    EXPECT_TRUE(loc2.isValid());
-    EXPECT_EQ(loc2, NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_TRUE(loc2->getLocation().isValid());
+    EXPECT_EQ(loc2->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
@@ -555,14 +556,14 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     EXPECT_TRUE(retStart3);
 
     auto loc3 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk3));
-    EXPECT_FALSE(loc3.isValid());
+    EXPECT_FALSE(loc3->getLocation().isValid());
 
     bool retStopWrk3 = wrk3->stop(false);
     EXPECT_TRUE(retStopWrk3);
 
     //test getting location of non existent node
     auto loc4 = client->getLocation("127.0.0.1:9999");
-    EXPECT_FALSE(loc4.isValid());
+    EXPECT_FALSE(loc4->getLocation().isValid());
 }
 
 TEST_F(LocationIntegrationTests, testReconnecting) {
@@ -618,8 +619,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
         currNode->setFixedCoordinates(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()->getLocation()), currNode->getId());
         idCount++;
     }
 
@@ -642,6 +643,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
+
+
 
     auto waypoints =
         std::dynamic_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(wrk1->getLocationProvider())
@@ -918,8 +921,8 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
         currNode->setFixedCoordinates(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()->getLocation()), currNode->getId());
         idCount++;
     }
 
