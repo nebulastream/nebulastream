@@ -82,6 +82,8 @@ class WorkerContext {
 
     void printStatistics(Runtime::TupleBuffer& inputBuffer);
 
+    void printPropagationDelay(uint64_t time);
+
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()
      * @return current worker context thread id

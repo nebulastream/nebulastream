@@ -177,11 +177,12 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::PropagateEpoch: {
 //            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
 //            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
+            auto epochMessage = task.getUserData<EpochMessage>();
 //            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
 //                                                                 << "punctuation= " << timestamp);
 //            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.trimStorage(nesPartition, timestamp);
+            workerContext.printPropagationDelay(epochMessage.getReplicationLevel());
+            workerContext.trimStorage(nesPartition, epochMessage.getTimestamp());
             break;
         }
         case Runtime::RedirectOutput: {
