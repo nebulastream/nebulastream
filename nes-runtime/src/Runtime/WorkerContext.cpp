@@ -41,6 +41,18 @@ WorkerContext::~WorkerContext() {
     localBufferPoolTLS.reset(nullptr);
 }
 
+void WorkerContext::printPropagationDelay(uint64_t timestamp) {
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    statisticsFile << timestamp << ",";
+    statisticsFile << value.count() - timestamp << "\n";
+}
+
 uint32_t WorkerContext::getId() const { return workerId; }
 
 uint32_t WorkerContext::getQueueId() const { return queueId; }
