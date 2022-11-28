@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.68](https://github.com/nebulastream/nebulastream/tree/v0.3.68) (2022-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.67...v0.3.68)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add tan\(x\) expression [\#3054](https://github.com/nebulastream/nebulastream/issues/3054)
+
 ## [v0.3.67](https://github.com/nebulastream/nebulastream/tree/v0.3.67) (2022-11-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.66...v0.3.67)
