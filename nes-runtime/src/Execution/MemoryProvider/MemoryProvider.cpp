@@ -101,9 +101,11 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
                                                          bufferReference,
                                                          textValue->getReference());
                 fieldReference.store(childIndex);
+                return value;
             };
             default: {
                 fieldReference.store(value);
+                return value;
             };
         }
     }
