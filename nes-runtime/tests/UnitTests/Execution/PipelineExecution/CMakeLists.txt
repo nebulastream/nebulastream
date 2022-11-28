@@ -22,3 +22,7 @@ add_test(NAME runtime-selection-pipeline-test COMMAND runtime-selection-pipeline
 add_executable(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
 target_link_libraries(runtime-threshold-window-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-threshold-window-pipeline-test COMMAND runtime-threshold-window-pipeline-test)
+
+add_executable(runtime-text-pipeline-test "TextPipelineTest.cpp")
+target_link_libraries(runtime-text-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-text-pipeline-test COMMAND runtime-text-pipeline-test)
