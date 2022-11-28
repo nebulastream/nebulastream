@@ -67,13 +67,12 @@ bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
         mobileNodes.erase(node->getId());
     }
 #ifdef S2DEF
-    auto geoLocation = node->getCoordinates();
+    auto geoLocation = node->getCoordinates()->getLocation();
     if (!geoLocation.isValid()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
     }
-    auto geoLoc = geoLocation;
-    S2Point point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude()));
+    S2Point point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude()));
     nodePointIndex.Remove(point, node);
     return true;
 #else
@@ -104,7 +103,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const Location& g
 
 std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto geoLocation = nodePtr->getCoordinates();
+    auto geoLocation = nodePtr->getCoordinates()->getLocation();
 
     if (!geoLocation.isValid()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
@@ -173,7 +172,7 @@ std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLoc
     std::unique_lock lock(locationIndexMutex);
     loccationVector.reserve(mobileNodes.size());
     for (const auto& [nodeId, topologyNode] : mobileNodes) {
-        auto location = std::make_shared<Location>(topologyNode->getCoordinates());
+        auto location = std::make_shared<Location>(topologyNode->getCoordinates()->getLocation());
         if (location->isValid()) {
             loccationVector.emplace_back(nodeId, location);
         }

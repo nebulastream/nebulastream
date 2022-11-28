@@ -86,7 +86,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
-    locIndex->initializeFieldNodeCoordinates(node2, (node2->getCoordinates()));
+    locIndex->initializeFieldNodeCoordinates(node2, (node2->getCoordinates()->getLocation()));
 
 #ifdef S2DEF
     NES_INFO("start worker 3");
@@ -151,7 +151,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
-    locIndex->initializeFieldNodeCoordinates(node2, node2->getCoordinates());
+    locIndex->initializeFieldNodeCoordinates(node2, node2->getCoordinates()->getLocation());
 
     auto response0 = service->requestLocationDataFromAllMobileNodesAsJson();
 

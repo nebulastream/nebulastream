@@ -15,6 +15,8 @@
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_
 
 #include <string>
+#include <Util/TimeMeasurement.hpp>
+#include <optional>
 
 class Coordinates;
 
@@ -117,6 +119,19 @@ class Location {
   private:
     double latitude;
     double longitude;
+};
+
+class Waypoint {
+  public:
+    Waypoint(Location location);
+    Waypoint(Location location, Timestamp timestamp);
+    static Waypoint invalid();
+    Location getLocation() const;
+    std::optional<Timestamp> getTimestamp() const;
+
+  private:
+    Location location;
+    std::optional<Timestamp> timestamp;
 };
 
 }// namespace NES::Spatial::Index::Experimental

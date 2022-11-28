@@ -957,7 +957,7 @@ void checkDeviceMovement(std::string csvPath,
                          size_t timesToCheckEndLocation,
                          Timestamp sleepTime,
                          Timestamp timeError,
-                         std::shared_ptr<NES::Spatial::Index::Experimental::Location> (*getLocation)(std::shared_ptr<void>),
+                         std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> (*getLocation)(std::shared_ptr<void>),
                          std::shared_ptr<void> functionParameters) {
     std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, startTime);
     NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
@@ -966,7 +966,7 @@ void checkDeviceMovement(std::string csvPath,
     auto endTime = waypoints.back().second + timeError;
 
     Timestamp beforeQuery = getTimestamp();
-    std::shared_ptr<NES::Spatial::Index::Experimental::Location> currentDeviceLocation = getLocation(functionParameters);
+    auto currentDeviceLocation = std::make_shared<NES::Spatial::Index::Experimental::Location>(getLocation(functionParameters)->getLocation());
     Timestamp afterQuery = getTimestamp();
 
     NES::Spatial::Index::Experimental::Location lastWaypoint;
@@ -974,7 +974,7 @@ void checkDeviceMovement(std::string csvPath,
     while (afterQuery < endTime) {
         std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
         beforeQuery = getTimestamp();
-        currentDeviceLocation = getLocation(functionParameters);
+        currentDeviceLocation = std::make_shared<NES::Spatial::Index::Experimental::Location>(getLocation(functionParameters)->getLocation());
         afterQuery = getTimestamp();
         NES_TRACE("Device is at location: " << currentDeviceLocation->toString());
         for (auto it = waypoints.cbegin(); it != waypoints.end(); ++it) {
@@ -1020,13 +1020,13 @@ void checkDeviceMovement(std::string csvPath,
         }
     }
 
-    currentDeviceLocation = getLocation(functionParameters);
+    currentDeviceLocation = std::make_shared<NES::Spatial::Index::Experimental::Location>(getLocation(functionParameters)->getLocation());
     auto endPosition = waypoints.back().first;
     for (size_t i = 0; i < timesToCheckEndLocation; ++i) {
         NES_DEBUG("checking if device remains in end position, check " << i + 1 << " out of " << timesToCheckEndLocation);
         EXPECT_EQ(*currentDeviceLocation, *endPosition);
         std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
-        currentDeviceLocation = getLocation(functionParameters);
+        currentDeviceLocation = std::make_shared<NES::Spatial::Index::Experimental::Location>(getLocation(functionParameters)->getLocation());
     }
 }
 }// namespace NES
