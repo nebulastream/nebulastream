@@ -33,7 +33,7 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
 
     // TODO 3250: maybe move from this class to the aggregation
     int64_t sum = 0L;// stores the sum aggregation
-    uint64_t recordCount = 0L;  // counts the records contributing to the aggregate
+    uint64_t recordCount = 0;  // counts the records contributing to the aggregate
     bool isWindowOpen = false;
     std::mutex mutex;
 };
