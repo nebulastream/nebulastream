@@ -47,7 +47,7 @@ extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
     handler->sum = valueToSet;
 }
 
-extern "C" uint64_t getSumAggregate(void* state) {
+extern "C" int64_t getSumAggregate(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
     return handler->sum;
 }
