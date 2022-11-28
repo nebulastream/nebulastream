@@ -30,7 +30,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                  executableSuccessors),
       sourceConfig(sourceConfig) {
     NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()");
-    client = std::make_shared<mqtt::async_client>(sourceConfig->getUrl()->getValue(), "Nesclient");
+    client = std::make_shared<mqtt::async_client>(sourceConfig->getUrl()->getValue(), "LoRaWANProxySource");
     user = sourceConfig->getUserName()->getValue();
     topic = "application/" + sourceConfig->getAppId()->getValue() + "/#";
 
@@ -145,7 +145,7 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
             auto devEUI = rcvTopic.substr(33, 64 / 8);
             auto event = rcvTopic.substr(46, rcvTopic.length());
 
-            jsonParser->writeInputTupleToTupleBuffer(rcvStr,buffer.getNumberOfTuples(), buffer,schema);
+            jsonParser->writeInputTupleToTupleBuffer(rcvStr,1,buffer,schema,localBufferManager);
             //TODO: this is a blocking call, which should get and return data to
             //      the caller. But where should we handle control msg or other msgs
             //      should prob. impl. async handling of msgs
