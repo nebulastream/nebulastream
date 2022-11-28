@@ -119,33 +119,44 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCount) {
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
-    auto thresholdWindowOperator =
+    auto thresholdWindowOperatorMinCountTrue =
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 2, readF2, aggregationResultFieldName, 0);
+
+    auto thresholdWindowOperatorMinCountFalse =
         std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, 0);
 
-    auto collector = std::make_shared<CollectOperator>();
-    thresholdWindowOperator->setChild(collector);
+    auto collectorTrue = std::make_shared<CollectOperator>();
+    thresholdWindowOperatorMinCountTrue->setChild(collectorTrue);
+    auto collectorFalse = std::make_shared<CollectOperator>();
+    thresholdWindowOperatorMinCountFalse->setChild(collectorFalse);
 
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
-    thresholdWindowOperator->setup(ctx);
+    thresholdWindowOperatorMinCountTrue->setup(ctx);
+    thresholdWindowOperatorMinCountFalse->setup(ctx);
 
-    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});
-    thresholdWindowOperator->execute(ctx, recordTen);
-    EXPECT_EQ(collector->records.size(), 0);
-
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});// opens the window
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
     auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
-    thresholdWindowOperator->execute(ctx, recordFifty);
-    thresholdWindowOperator->execute(ctx, recordNinety);
-    thresholdWindowOperator->execute(ctx, recordTwenty);
-    EXPECT_EQ(collector->records.size(), 1);
-    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
+    //check for minCount >= 2 == TRUE
+    thresholdWindowOperatorMinCountTrue->execute(ctx, recordFifty);
+    thresholdWindowOperatorMinCountTrue->execute(ctx, recordNinety);
+    thresholdWindowOperatorMinCountTrue->execute(ctx, recordTwenty);
+    EXPECT_EQ(collectorTrue->records.size(), 1);
+    EXPECT_EQ(collectorTrue->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collectorTrue->records[0].read(aggregationResultFieldName), 5);
+    //check for minCount >= 3 == False
+    thresholdWindowOperatorMinCountFalse->execute(ctx, recordFifty);
+    thresholdWindowOperatorMinCountFalse->execute(ctx, recordNinety);
+    thresholdWindowOperatorMinCountFalse->execute(ctx, recordTwenty);
+    EXPECT_EQ(collectorFalse->records.size(), 1);
+    EXPECT_EQ(collectorFalse->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collectorFalse->records[0].read(aggregationResultFieldName), 5);
 
-    thresholdWindowOperator->terminate(ctx);
+    thresholdWindowOperatorMinCountTrue->terminate(ctx);
+    thresholdWindowOperatorMinCountFalse->terminate(ctx);
 }
 }// namespace NES::Runtime::Execution::Operators

@@ -49,7 +49,7 @@ class ThresholdWindow : public ExecutableOperator {
     const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
     const Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier;
     uint64_t minCount = 0;
-    uint64_t operatorHandlerIndex = 0;
+    uint64_t operatorHandlerIndex;
 };
 }// namespace NES::Runtime::Execution::Operators
 
