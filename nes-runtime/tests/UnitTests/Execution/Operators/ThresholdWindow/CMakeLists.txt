@@ -1,3 +1,4 @@
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,13 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        Operator.cpp
-        ExecutableOperator.cpp
-        Emit.cpp
-        Scan.cpp
-        ExecutionContext.cpp
-        )
-
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
+add_executable(runtime-threshold-window-operator-test "ThresholdWindowOperatorTest.cpp")
+target_link_libraries(runtime-threshold-window-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-threshold-window-operator-test COMMAND runtime-selection-operator-test)

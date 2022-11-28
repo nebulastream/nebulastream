@@ -24,7 +24,7 @@ Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::
 Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
     auto fieldValue = fields.find(fieldIdentifier);
     if (fieldValue == fields.end()) {
-        throw new InterpreterException("Field " + fieldIdentifier + " dose not exists");
+        throw new InterpreterException("Field " + fieldIdentifier + " does not exists");
     }
     return fieldValue->second;
 }

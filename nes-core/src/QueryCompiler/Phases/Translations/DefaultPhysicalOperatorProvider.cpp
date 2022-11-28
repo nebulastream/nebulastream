@@ -48,6 +48,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
@@ -77,6 +78,8 @@
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
@@ -501,6 +504,16 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+        // handle if threshold window
+        if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+            if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
+                auto thresholdWindowPhysicalOperator =
+                    PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
+                                                                               windowOutputSchema,
+                                                                               windowOperatorHandler);
+                operatorNode->replace(thresholdWindowPhysicalOperator);
+            }
+        }
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {

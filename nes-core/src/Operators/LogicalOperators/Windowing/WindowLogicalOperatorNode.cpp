@@ -72,16 +72,19 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    windowType->inferStamp(inputSchema);
+    if (!windowDefinition->getWindowType()->inferStamp(inputSchema)) {
+        return false;
+    }
 
     //Construct output schema
     outputSchema->clear();
-    outputSchema =
-        outputSchema
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+    if (windowDefinition->getWindowType()->isTumblingWindow() || windowDefinition->getWindowType()->isSlidingWindow()) {
+        outputSchema =
+            outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+    }
 
     if (windowDefinition->isKeyed()) {
 

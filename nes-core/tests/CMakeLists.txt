@@ -620,7 +620,7 @@ add_dependencies(nemo-integration-test nesCoordinator nesWorker)
 ### MemorySourceIntegrationTest ###
 add_nes_integration_test(memory-source-integration-test "Integration/Source/MemorySourceIntegrationTest.cpp")
 
-### MemorySourceIntegrationTest ###
+### VariableLengthIntegrationTest ###
 add_nes_integration_test(variable-length-integration-test "Integration/Source/VariableLengthIntegrationTest.cpp")
 
 

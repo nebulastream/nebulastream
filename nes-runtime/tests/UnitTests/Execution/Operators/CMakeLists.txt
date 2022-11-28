@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_subdirectory(Relational)
+add_subdirectory(ThresholdWindow)
 
 add_executable(runtime-scan-operator-test "ScanOperatorTest.cpp")
 target_link_libraries(runtime-scan-operator-test nes-runtime-tests ${GTEST_LIBRARIES})

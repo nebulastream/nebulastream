@@ -13,6 +13,7 @@
 */
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
 
@@ -39,7 +40,7 @@ uint64_t BasicPhysicalType::size() const {
         case DOUBLE: return sizeof(double);
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
-        case TEXT: return sizeof(std::string);
+        case TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
     }
     return -1;
 }
@@ -60,8 +61,9 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
         case TEXT: {
-            std::string s = *static_cast<std::string const*>(data);
-            return s;
+            NES_DEBUG(
+                "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.");
+            return "TEXT conversion to string not implemented.";
         }
         case CHAR:
             if (size() != 1) {
@@ -90,8 +92,7 @@ std::string BasicPhysicalType::convertRawToStringWithoutFill(void const* data) c
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
         case TEXT: {
-            std::string s = *static_cast<std::string const*>(data);
-            return s;
+            return "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.";
         }
         case CHAR:
             if (size() != 1) {

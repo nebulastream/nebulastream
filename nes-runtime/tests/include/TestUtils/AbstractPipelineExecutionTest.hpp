@@ -22,6 +22,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
+#include <utility>
 #include <vector>
 
 namespace NES::Runtime {
@@ -32,7 +33,7 @@ class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext()
+    explicit MockedPipelineExecutionContext(std::vector<Execution::OperatorHandlerPtr> handlers = {})
         : PipelineExecutionContext(
             -1,// mock pipeline id
             0, // mock query id
@@ -44,7 +45,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            {}){
+            handlers){
             // nop
         };
 

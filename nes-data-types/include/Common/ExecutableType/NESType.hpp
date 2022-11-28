@@ -51,8 +51,6 @@ concept IsDouble = std::is_same_v<Type, double>;
 template<class Type>
 concept IsChar = std::is_same_v<Type, char>;
 template<class Type>
-concept IsText = std::is_same_v<Type, char>;
-template<class Type>
 concept IsBool = std::is_same_v<Type, bool>;
 template<class Type>
 concept IsArray = std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_base_of_v<NESType, Type>;

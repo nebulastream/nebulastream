@@ -39,11 +39,13 @@ class CSVParser : public Parser {
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param tupleBuffer: the TupleBuffer to which the value is written to containing the chosen memory layout
    * @param schema: data schema
+   * @param bufferManager: the buffer manager
    */
     bool writeInputTupleToTupleBuffer(const std::string& csvInput,
                                       uint64_t tupleCount,
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
-                                      const SchemaPtr& schema) override;
+                                      const SchemaPtr& schema,
+                                      const Runtime::BufferManagerPtr& bufferManager) override;
 
   private:
     uint64_t numberOfSchemaFields;

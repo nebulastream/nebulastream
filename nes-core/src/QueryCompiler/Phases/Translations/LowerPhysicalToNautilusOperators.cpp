@@ -32,6 +32,8 @@
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
+#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
@@ -54,9 +56,14 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -82,14 +89,17 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
+
     for (const auto& node : nodes) {
-        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize);
+        parentOperator =
+            lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
     for (auto& root : queryPlan->getRootOperators()) {
         queryPlan->removeAsRootOperator(root);
     }
-    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline);
+    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline, operatorHandlers);
     queryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }
@@ -97,7 +107,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
                                         PhysicalOperators::PhysicalOperatorPtr operatorNode,
-                                        size_t bufferSize) {
+                                        size_t bufferSize,
+                                        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -114,6 +125,14 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
+        auto handler = std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>();
+        operatorHandlers.push_back(handler);
+        auto indexForThisHandler = operatorHandlers.size() - 1;
+
+        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(thresholdWindow);
+        return thresholdWindow;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -162,6 +181,40 @@ LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorP
         std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
     return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                       PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+                                                       uint64_t handlerIndex) {
+    auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
+    auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
+        thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
+    auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+    auto predicate = lowerExpression(thresholdWindowType->getPredicate());
+
+    auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    // Currently only support a single aggregation and must be a Sum aggregation
+    // TODO 3250: Support other aggregation functions
+    if (aggregations.size() != 1) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        if (aggregations[0]->getType() != Windowing::WindowAggregationDescriptor::Sum) {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+    // Obtain the field name used to store the aggregation result
+    auto thresholdWindowResultSchema =
+        operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
+    auto aggregationResultFieldName = thresholdWindowResultSchema->getSourceNameQualifier() + "$sum";
+
+    auto aggregatedFieldAccess = lowerExpression(aggregations[0]->on());
+
+    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
+                                                                            aggregatedFieldAccess,
+                                                                            aggregationResultFieldName,
+                                                                            handlerIndex);
+}
+
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
 LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNode) {
     if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {

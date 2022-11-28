@@ -248,9 +248,9 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                 NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::JSON) {
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '" << buf << "'");
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                 } else {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                 }
                 tupleCount++;
             }

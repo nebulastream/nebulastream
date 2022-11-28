@@ -16,8 +16,8 @@
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES::Windowing {
 
@@ -29,12 +29,21 @@ bool WindowType::isTumblingWindow() { return false; }
 
 bool WindowType::isThresholdWindow() { return false; }
 
-std::shared_ptr<TimeBasedWindowType> WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
+TimeBasedWindowTypePtr WindowType::asTimeBasedWindowType(std::shared_ptr<WindowType> windowType) {
     if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {
         return timeBasedWindowType;
     } else {
         NES_ERROR("Can not cast the window type to a time based window type");
         NES_THROW_RUNTIME_ERROR("Can not cast the window type to a time based window type");
+    }
+}
+
+ContentBasedWindowTypePtr WindowType::asContentBasedWindowType(std::shared_ptr<WindowType> windowType) {
+    if (auto contentBasedWindowType = std::dynamic_pointer_cast<ContentBasedWindowType>(windowType)) {
+        return contentBasedWindowType;
+    } else {
+        NES_ERROR("Can not cast the window type to a content based window type");
+        NES_THROW_RUNTIME_ERROR("Can not cast the window type to a content based window type");
     }
 }
 }// namespace NES::Windowing

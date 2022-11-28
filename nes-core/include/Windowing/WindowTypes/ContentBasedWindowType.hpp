@@ -25,6 +25,19 @@ class ContentBasedWindowType : public WindowType {
     explicit ContentBasedWindowType();
 
     virtual ~ContentBasedWindowType() = default;
+
+    /**
+     * @brief Infer stamp of content-based window type
+     * @param schema : the schema of the window
+     * @return true if success else false
+     */
+    bool inferStamp(const SchemaPtr& schema) override;
+
+    /**
+       * Cast the current window type as a threshold window type
+       * @return a shared pointer of ThresholdWindow
+       */
+    static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
 }// namespace NES::Windowing
 

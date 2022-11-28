@@ -19,7 +19,7 @@
 namespace NES {
 
 /**
- * @brief The Text type represents a single Textacter.
+ * @brief The Text type represents a variable-sized text field.
  */
 class Text final : public DataType {
   public:
