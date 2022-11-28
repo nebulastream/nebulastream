@@ -39,30 +39,13 @@ Value<> FloorExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateFloor function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Int8>()) {
-        // call the calculateMod function with the correct type
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Int8>());
-    } else if (leftValue->isType<Int16>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Int16>());
-    } else if (leftValue->isType<Int32>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Int32>());
-    } else if (leftValue->isType<Int64>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<UInt64>());
-    } else if (leftValue->isType<Float>()) {
+    if (leftValue->isType<Float>()) {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Float>());
     } else if (leftValue->isType<Double>()) {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 
