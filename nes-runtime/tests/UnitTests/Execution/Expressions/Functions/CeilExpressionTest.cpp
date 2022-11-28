@@ -38,65 +38,14 @@ class CeilExpressionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-TEST_F(CeilExpressionTest, evaluateCeilExpressionInteger) {
-    auto expression = UnaryExpressionWrapper<CeilExpression>();
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>((int8_t) 17));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>((int16_t) 17));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-
-    // Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>((int32_t) 17.2));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>((int64_t) 17.5));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-
-    // Int8
-    {
-        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 17));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-
-    // Int16
-    {
-        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 17));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-
-    // Int32
-    {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 17.2));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-    // Int64
-    {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 17.5));
-        ASSERT_EQ(resultValue, (float) 18);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    }
-}
-
 TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat) {
     auto expression = UnaryExpressionWrapper<CeilExpression>();
+    // Double
+    {
+        auto resultValue = expression.eval(Value<Double>((double) 4.3));
+        ASSERT_EQ(resultValue, (float) 5);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 4.8));

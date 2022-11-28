@@ -34,49 +34,27 @@ Value<> SinExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int8>());
-
     } else if (subValue->isType<Int16>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int16>());
-
     } else if (subValue->isType<Int32>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int32>());
-
     } else if (subValue->isType<Int64>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Int64>());
-
     } else if (subValue->isType<UInt8>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt8>());
-
     } else if (subValue->isType<UInt16>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt16>());
-
     } else if (subValue->isType<UInt32>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt32>());
-
     } else if (subValue->isType<UInt64>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<UInt64>());
-
     } else if (subValue->isType<Float>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Float>());
-
     } else if (subValue->isType<Double>()) {
-
         return FunctionCall<>("calculateSin", calculateSin, subValue.as<Double>());
-
     } else {
-
         // If no type was applicable we throw an exception.
-
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
