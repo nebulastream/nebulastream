@@ -199,10 +199,12 @@ Value<> DivOp(const Value<>& left, const Value<>& right) {
     });
 }
 
+
+
 Value<> EqualsOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Equals(left, right);
-        if (result.has_value()) {
+        if (result.has_value() && left.isTracableType() && right.isTracableType()) {
             traceBinaryOperation(Nautilus::Tracing::OpCode::EQUALS, result.value().ref, left.ref, right.ref);
         }
         return result;

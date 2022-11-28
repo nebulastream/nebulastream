@@ -19,7 +19,6 @@
 
 namespace NES::Nautilus {
 
-
 Value<Text> transformReturnValues(TextValue* value) {
     auto textRef = TypedRef<TextValue>(value);
     return Value<Text>(std::make_unique<Text>(textRef));
@@ -27,22 +26,24 @@ Value<Text> transformReturnValues(TextValue* value) {
 
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
-bool textEquals(const TextValue* leftText, const TextValue* rightText) {
+int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
     if (leftText->length() != rightText->length()) {
         return false;
     }
-    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0;
+    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length());
 }
 
 Value<Boolean> Text::equals(const Value<Text>& other) const {
-    return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
+    Value<Int64> result = FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
+    auto boolResult = result == Value<Int64>(0l);
+    return boolResult.as<Boolean>();
 }
 
 uint32_t TextGetLength(const TextValue* text) { return text->length(); }
 
 const Value<UInt32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
 
-AnyPtr Text::copy() { return NES::Nautilus::AnyPtr(); }
+AnyPtr Text::copy() { return std::make_shared<Text>(rawReference); }
 
 int8_t readTextIndex(const TextValue* text, uint32_t index) { return text->c_str()[index]; }
 

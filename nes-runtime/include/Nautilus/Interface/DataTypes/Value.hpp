@@ -254,6 +254,8 @@ class Value : BaseValue {
     ValueType* operator->() const { return value.get(); }
     ValueType& getValue() const { return *value.get(); };
 
+    bool isTracableType() const { return std::dynamic_pointer_cast<TraceableType>(value) != nullptr; }
+
   public:
     mutable ValueTypePtr value;
     mutable Nautilus::Tracing::ValueRef ref;

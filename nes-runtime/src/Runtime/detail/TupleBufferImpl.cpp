@@ -198,7 +198,6 @@ bool BufferControlBlock::release() {
     if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1) {
         numberOfTuples = 0;
         for (auto&& child : children) {
-            NES_ASSERT2_FMT(child->controlBlock->getReferenceCount() == 1, "Child buffer is leaked");
             child->controlBlock->release();
         }
         children.clear();
