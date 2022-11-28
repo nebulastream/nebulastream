@@ -184,5 +184,4 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     thresholdWindowOperator->terminate(ctx);
 }
 
-}
-
+}// namespace NES::Runtime::Execution::Operators

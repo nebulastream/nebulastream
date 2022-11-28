@@ -16,8 +16,8 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <utility>
 #include <mutex>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 /**
@@ -32,8 +32,8 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
     // TODO 3250: maybe move from this class to the aggregation
-    int64_t sum = 0L;// stores the sum aggregation
-    uint64_t recordCount = 0;  // counts the records contributing to the aggregate
+    int64_t sum = 0L;        // stores the sum aggregation
+    uint64_t recordCount = 0;// counts the records contributing to the aggregate
     bool isWindowOpen = false;
     std::mutex mutex;
 };
