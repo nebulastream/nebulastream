@@ -27,13 +27,13 @@ JNIEnv* env;
  * @param byteCodeList
  * @return
  */
-std::vector<jclass> loadClassesFromByteList(std::unordered_map<std::string, std::vector<char>> byteCodeList){
+std::vector<jclass> loadClassesFromByteList(std::unordered_map<std::string, std::vector<char>> byteCodeList) {
     std::vector<jclass> classes;
     // Load the classes from the byte list and the serialized instance
     for (auto entry : byteCodeList) {
         // TODO add the custom class loader
         auto bufLen = entry.second.size();
-        const auto byteCode = reinterpret_cast<jbyte*> (&entry.second[0]);
+        const auto byteCode = reinterpret_cast<jbyte*>(&entry.second[0]);
         auto clazz = env->DefineClass(entry.first.data(), NULL, byteCode, (jsize) bufLen);
         classes.push_back(clazz);
     }
@@ -45,7 +45,7 @@ MapJavaUdf::MapJavaUdf(std::string javaPath) {
     // Start VM
     if (jvm == nullptr) {
         // init java vm arguments
-        JavaVMInitArgs vm_args;           // Initialization arguments
+        JavaVMInitArgs vm_args;                     // Initialization arguments
         JavaVMOption* options = new JavaVMOption[2];// JVM invocation options
         //options[0].optionString = (char*) ("-Djava.class.path=" + javaPath).c_str();
         options[0].optionString = (char*) "-Djava.class.path=/home/amichalke/nebulastream/udf";
@@ -63,8 +63,8 @@ MapJavaUdf::MapJavaUdf(std::string javaPath) {
             std::cout << rc << std::endl;
             exit(EXIT_FAILURE);
         }
-        if (env->ExceptionOccurred()) { // TODO more error checking
-            env->ExceptionDescribe(); // print the stack trace
+        if (env->ExceptionOccurred()) {// TODO more error checking
+            env->ExceptionDescribe();  // print the stack trace
             exit(1);
         }
     }
@@ -75,12 +75,9 @@ MapJavaUdf::MapJavaUdf(std::string className,
                        SchemaPtr inputSchema,
                        SchemaPtr outputSchema,
                        std::vector<char> serializedInstance,
-                       std::string methodName) : className(className),
-                                                 byteCodeList(byteCodeList),
-                                                 inputSchema(inputSchema),
-                                                 outputSchema(outputSchema),
-                                                 serializedInstance(serializedInstance),
-                                                 methodName(methodName){
+                       std::string methodName)
+    : className(className), byteCodeList(byteCodeList), inputSchema(inputSchema), outputSchema(outputSchema),
+      serializedInstance(serializedInstance), methodName(methodName) {
     // Start VM
     if (jvm == nullptr) {
         // init java vm arguments
@@ -100,17 +97,55 @@ MapJavaUdf::MapJavaUdf(std::string className,
     auto classes = loadClassesFromByteList(byteCodeList);
 }
 
-const std::string pojoName = "Pojo"; // TODO: get from java client
+const std::string pojoName = "Pojo";// TODO: get from java client
 //const std::string pojoName = "java/lang/Readable"; // TODO: get from java client
-const std::string udf_name = "map"; // TODO: use method name??
+const std::string udf_name = "map";// TODO: use method name??
 const std::string javaClass = "Udf";
 const SchemaPtr inputSchema = Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64);
 
-void *executeUdf(void *record){
+void* findClassProxy(void* operatorPtr) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
     jclass pojoClass = env->FindClass(pojoName.data());
-    if (env->ExceptionOccurred()) { // TODO more error checking
+    if (env->ExceptionOccurred()) {// TODO more error checking
         std::cout << "find class\n";
-        env->ExceptionDescribe(); // print the stack trace
+        env->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+    return pojoClass;
+}
+
+void* allocateObject(void* pojoClassPtr) {
+    auto pojoClass = (jclass) pojoClassPtr;
+    jobject pojo = env->AllocObject(pojoClass);
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "alloc obj\n";
+        env->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+    return pojo;
+}
+
+void* setIntField(void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex, int value) {
+    auto pojoClass = (jclass) pojoClassPtr;
+    auto pojo = (jobject) pojoObjectPtr;
+    // TODO get field name from schema
+    std::string fieldName;
+    jfieldID id = env->GetFieldID(pojoClass, fieldName, "I");
+    jint cla = value;
+    //int value = (int)((Record*)record)->read(field->getName());
+    env->SetIntField(pojo, id, cla);
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "set int field\n";
+        env->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+}
+
+void* executeUdf(void* record) {
+    jclass pojoClass = env->FindClass(pojoName.data());
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "find class\n";
+        env->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
     }
 
@@ -121,9 +156,9 @@ void *executeUdf(void *record){
     //auto pojo_obj = new jvalue;
     //pojo_obj->l = env->AllocObject(pojo);
     jobject pojo = env->AllocObject(pojoClass);
-    if (env->ExceptionOccurred()) { // TODO more error checking
+    if (env->ExceptionOccurred()) {// TODO more error checking
         std::cout << "alloc obj\n";
-        env->ExceptionDescribe(); // print the stack trace
+        env->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
     }
 
@@ -135,22 +170,22 @@ void *executeUdf(void *record){
 
         // TODO currently only support floats
         if (field->getDataType()->isInteger()) {
-            jfieldID id =  env->GetFieldID(pojoClass, field->getName().c_str(), "I");
-            if (env->ExceptionOccurred()) { // TODO more error checking
+            jfieldID id = env->GetFieldID(pojoClass, field->getName().c_str(), "I");
+            if (env->ExceptionOccurred()) {// TODO more error checking
                 std::cout << "get field id\n";
-                env->ExceptionDescribe(); // print the stack trace
+                env->ExceptionDescribe();// print the stack trace
                 exit(EXIT_FAILURE);
             }
-            auto rec = (Record*)record;
+            auto rec = (Record*) record;
             auto val = rec->read("id");
             // TODO this gives the wrong value...
             int val_ = (int&) val.getValue();
             jint cla = val_;
             //int value = (int)((Record*)record)->read(field->getName());
             env->SetIntField(pojo, id, cla);
-            if (env->ExceptionOccurred()) { // TODO more error checking
+            if (env->ExceptionOccurred()) {// TODO more error checking
                 std::cout << "set int field\n";
-                env->ExceptionDescribe(); // print the stack trace
+                env->ExceptionDescribe();// print the stack trace
                 exit(EXIT_FAILURE);
             }
         }
@@ -162,8 +197,8 @@ void *executeUdf(void *record){
         std::cerr << "ERROR: class not found !" << std::endl;
         //env->ExceptionDescribe(); // try to find the class
     }
-    if (env->ExceptionOccurred()) { // TODO more error checking
-        env->ExceptionDescribe(); // print the stack trace
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        env->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
 
@@ -171,20 +206,20 @@ void *executeUdf(void *record){
     // use for integer objects
     //jmethodID mid = env->GetMethodID(c1, udf_name.c_str(), "(Ljava/lang/Integer;)Ljava/lang/Integer;");
     jmethodID mid = env->GetMethodID(c1, udf_name.c_str(), "(I)I");
-    if (env->ExceptionOccurred()) { // TODO more error checking
-        env->ExceptionDescribe(); // print the stack trace
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        env->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "found map\n";
     jmethodID constructor = env->GetMethodID(c1, "<init>", "()V");
-    if (env->ExceptionOccurred()) { // TODO more error checking
-        env->ExceptionDescribe(); // print the stack trace
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        env->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "found constructor\n";
     jobject object = env->NewObject(c1, constructor);
-    if (env->ExceptionOccurred()) { // TODO more error checking
-        env->ExceptionDescribe(); // print the stack trace
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        env->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "new object\n";
@@ -192,8 +227,8 @@ void *executeUdf(void *record){
     // TODO change depending on the output value the function
     //auto udf_result = env->CallObjectMethod(object, mid, pojo);
     int udf_result = env->CallIntMethod(object, mid, pojo);
-    if (env->ExceptionOccurred()) { // TODO more error checking
-        env->ExceptionDescribe(); // print the stack trace
+    if (env->ExceptionOccurred()) {// TODO more error checking
+        env->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "call Map: " << udf_result << "\n";
@@ -203,7 +238,15 @@ void *executeUdf(void *record){
 }
 
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
-    auto resultRecord = FunctionCall<>("executeUdf", executeUdf, Value<MemRef>((int8_t*) &record));
+    auto classPtr = FunctionCall<>("findClassProxy", Value<MemRef>((int8*) this), findClassProxy);
+    auto pojoPtr = FunctionCall<>("allocateObject", allocateObject, classPtr);
+    for (int i = 0; i< inputSchema->fields.size(); i++) {
+        auto fieldName = inputSchema->fields[i]->name();
+        FunctionCall<>("setIntField", setIntField, classPtr, pojoPtr, i, record.read(fieldName).as<Int32>());
+    }
+
+    // call method
+    // read fields from result
     child->execute(ctx, (Record&) resultRecord.getValue());
 }
-}// namespace NES::Nautilus
+}// namespace NES::Runtime::Execution::Operators
