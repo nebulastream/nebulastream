@@ -73,13 +73,18 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
-        auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
-        if (isWindowOpen && recordCount >= minCount) {
-            auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
-            auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
-            FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
-            FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
-            child->execute(ctx, aggregationResult);
+        if (isWindowOpen) {
+            auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
+            if(recordCount >= minCount) {
+                auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
+                auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
+                FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
+                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
+                child->execute(ctx, aggregationResult);
+            }else{
+                FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
+                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
+            }
         }
     }
     FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
