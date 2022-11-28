@@ -25,11 +25,11 @@ namespace NES::Runtime::Execution::Expressions {
 */
 class CeilExpression : public Expression {
   public:
-    CeilExpression(const ExpressionPtr& leftSubExpression);
+    CeilExpression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr subExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
