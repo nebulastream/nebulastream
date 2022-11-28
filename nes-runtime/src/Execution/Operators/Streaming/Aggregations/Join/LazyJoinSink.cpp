@@ -85,6 +85,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         ++joinedTuples;
 
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
+                        // TODO ask Philipp if I should support columnar layout as the current implementation does not support it
 
 
                         auto buffer = workerCtx->allocateTupleBuffer();
@@ -104,6 +105,11 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
         }
     }
 
+    if (operatorHandler->getCurrentWindow().fetchSubSink(1) == 1) {
+        // delete the current hash table
+        operatorHandler->deleteCurrentWindow();
+    }
+
     return joinedTuples;
 }
 
@@ -119,8 +125,8 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, s
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
 
-    auto& leftHashTable = opHandler->getSharedJoinHashTable(true /* isLeftSide */);
-    auto& rightHashTable = opHandler->getSharedJoinHashTable(false /* isLeftSide */);
+    auto& leftHashTable = opHandler->getCurrentWindow().getSharedJoinHashTable(true /* isLeftSide */);
+    auto& rightHashTable = opHandler->getCurrentWindow().getSharedJoinHashTable(false /* isLeftSide */);
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
     auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
