@@ -40,7 +40,7 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Int8>()) {
         // call the calculateMod function with the correct type
-        return FunctionCall<>("calculateMod", calculateCeil, leftValue.as<Int8>());
+        return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Int16>());
     } else if (leftValue->isType<Int32>()) {
@@ -48,7 +48,7 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
     } else if (leftValue->isType<Int64>()) {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Int64>());
     }else if (leftValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateMod", calculateCeil, leftValue.as<UInt8>());
+        return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<UInt8>());
     } else if (leftValue->isType<UInt16>()) {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<UInt16>());
     } else if (leftValue->isType<UInt32>()) {
