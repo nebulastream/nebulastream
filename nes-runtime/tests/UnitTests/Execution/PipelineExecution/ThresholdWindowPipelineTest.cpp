@@ -80,7 +80,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$sum";
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, readF2, aggregationResultFieldName, 0);
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
