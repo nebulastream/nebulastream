@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.69](https://github.com/nebulastream/nebulastream/tree/v0.3.69) (2022-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.68...v0.3.69)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Threshold Window add locking for thresholdwindow agg updates  [\#3262](https://github.com/nebulastream/nebulastream/issues/3262)
+
 ## [v0.3.68](https://github.com/nebulastream/nebulastream/tree/v0.3.68) (2022-11-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.67...v0.3.68)
