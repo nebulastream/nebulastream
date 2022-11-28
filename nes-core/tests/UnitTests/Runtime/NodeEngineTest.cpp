@@ -751,7 +751,7 @@ TEST_F(NodeEngineTest, testReconfigureSink) {
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                       .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                       .build();
-    EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0, 0));
+    EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0));
 }
 
 namespace detail {
