@@ -24,7 +24,7 @@ class LazyJoinBuild : public ExecutableOperator {
 
   public:
 
-    LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide);
+    LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName);
 
     /**
      * @brief builds a hash table with the record
@@ -38,6 +38,8 @@ class LazyJoinBuild : public ExecutableOperator {
   private:
     uint64_t handlerIndex;
     bool isLeftSide;
+    std::string joinFieldName;
+    uint64_t lastTupleTimeStamp;
 };
 
 

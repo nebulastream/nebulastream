@@ -21,71 +21,56 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Operators::LocalHashTable& LazyJoinOperatorHandler::getWorkerHashTable(size_t index, bool leftSide) {
-    if (leftSide) {
-        return workerThreadsHashTableLeftSide[index];
-    } else {
-        return workerThreadsHashTableRightSide[index];
-    }
-}
-
-
-Operators::SharedJoinHashTable& LazyJoinOperatorHandler::getSharedJoinHashTable(bool isLeftSide) {
-    if (isLeftSide) {
-        return leftSideHashTable;
-    } else {
-        return rightSideHashTable;
-    }
-}
-
-uint64_t LazyJoinOperatorHandler::fetch_sub(uint64_t sub) {
-    return counterFinishedBuilding.fetch_sub(sub);
-}
-
-
 LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  SchemaPtr joinSchemaRight,
                                                  std::string joinFieldNameLeft,
                                                  std::string joinFieldNameRight,
-                                                 size_t maxNoWorkerThreadsLeftSide,
-                                                 size_t maxNoWorkerThreadsRightSide,
-                                                 uint64_t counterFinishedBuilding,
-                                                 size_t totalSizeForDataStructures)
+                                                 size_t maxNoWorkerThreads,
+                                                 uint64_t counterFinishedBuildingStart,
+                                                 uint64_t counterFinishedSinkStart,
+                                                 size_t totalSizeForDataStructures,
+                                                 size_t windowSize)
                                                     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
-                                                    joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight){
-
-    this->counterFinishedBuilding.store(counterFinishedBuilding);
-
-    head = detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
-
-    workerThreadsHashTableLeftSide.reserve(maxNoWorkerThreadsLeftSide);
-    workerThreadsHashTableRightSide.reserve(maxNoWorkerThreadsRightSide);
-
-    for (auto i = 0UL; i < maxNoWorkerThreadsLeftSide; ++i) {
-        workerThreadsHashTableLeftSide.emplace_back(Operators::LocalHashTable(joinSchemaLeft->getSchemaSizeInBytes(),
-                                                                              NUM_PARTITIONS, tail,
-                                                                              overrunAddress));
-    }
-
-    for (auto i = 0UL; i < maxNoWorkerThreadsRightSide; ++i) {
-        workerThreadsHashTableRightSide.emplace_back(Operators::LocalHashTable(joinSchemaRight->getSchemaSizeInBytes(),
-                                                                               NUM_PARTITIONS, tail,
-                                                                               overrunAddress));
-    }
-
+                                                    joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
+                                                    maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
+                                                    counterFinishedSinkStart(counterFinishedSinkStart),
+                                                    totalSizeForDataStructures(totalSizeForDataStructures),
+                                                    windowSize(windowSize) {
+    createNewLocalHashTables();
 }
 
-LazyJoinOperatorHandler::~LazyJoinOperatorHandler() {
-    std::free(head);
-}
 
 
 void LazyJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
 
 void LazyJoinOperatorHandler::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
+
 const std::string& LazyJoinOperatorHandler::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
 const std::string& LazyJoinOperatorHandler::getJoinFieldNameRight() const { return joinFieldNameRight; }
+
 SchemaPtr LazyJoinOperatorHandler::getJoinSchemaLeft() const { return joinSchemaLeft; }
 SchemaPtr LazyJoinOperatorHandler::getJoinSchemaRight() const { return joinSchemaRight; }
+
+void LazyJoinOperatorHandler::start(PipelineExecutionContextPtr,StateManagerPtr, uint32_t) {
+    NES_DEBUG("start LazyJoinOperatorHandler");
+}
+
+void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
+    NES_DEBUG("stop LazyJoinOperatorHandler");
+}
+void LazyJoinOperatorHandler::createNewLocalHashTables() {
+    lazyJoinWindows.emplace(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
+                                           totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
+                                           joinSchemaRight->getSchemaSizeInBytes());
+}
+
+void LazyJoinOperatorHandler::deleteCurrentWindow() {
+    lazyJoinWindows.pop();
+}
+
+LazyJoinWindow& LazyJoinOperatorHandler::getCurrentWindow() {
+    return lazyJoinWindows.front();
+}
+size_t LazyJoinOperatorHandler::getWindowSize() const { return windowSize; }
 
 } // namespace NES::Runtime::Execution
