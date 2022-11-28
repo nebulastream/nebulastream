@@ -191,6 +191,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
     auto predicate = lowerExpression(thresholdWindowType->getPredicate());
+    auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     // Currently only support a single aggregation and must be a Sum aggregation
@@ -210,6 +211,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto aggregatedFieldAccess = lowerExpression(aggregations[0]->on());
 
     return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
+                                                                            minCount,
                                                                             aggregatedFieldAccess,
                                                                             aggregationResultFieldName,
                                                                             handlerIndex);
