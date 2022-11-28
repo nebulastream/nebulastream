@@ -111,7 +111,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCount) {
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
@@ -119,44 +119,70 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCount) {
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
-    auto thresholdWindowOperatorMinCountTrue =
+    auto thresholdWindowOperator =
         std::make_shared<ThresholdWindow>(greaterThanExpression, 2, readF2, aggregationResultFieldName, 0);
 
-    auto thresholdWindowOperatorMinCountFalse =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, 0);
-
-    auto collectorTrue = std::make_shared<CollectOperator>();
-    thresholdWindowOperatorMinCountTrue->setChild(collectorTrue);
-    auto collectorFalse = std::make_shared<CollectOperator>();
-    thresholdWindowOperatorMinCountFalse->setChild(collectorFalse);
+    auto collector = std::make_shared<CollectOperator>();
+    thresholdWindowOperator->setChild(collector);
 
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
 
-    thresholdWindowOperatorMinCountTrue->setup(ctx);
-    thresholdWindowOperatorMinCountFalse->setup(ctx);
+    thresholdWindowOperator->setup(ctx);
 
-    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});// opens the window
+    auto recordTen = Record({{"f1", Value<>(10)}, {"f2", Value<>(1)}});
+    thresholdWindowOperator->execute(ctx, recordTen);
+    EXPECT_EQ(collector->records.size(), 0);
+
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
     auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
-    //check for minCount >= 2 == TRUE
-    thresholdWindowOperatorMinCountTrue->execute(ctx, recordFifty);
-    thresholdWindowOperatorMinCountTrue->execute(ctx, recordNinety);
-    thresholdWindowOperatorMinCountTrue->execute(ctx, recordTwenty);
-    EXPECT_EQ(collectorTrue->records.size(), 1);
-    EXPECT_EQ(collectorTrue->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collectorTrue->records[0].read(aggregationResultFieldName), 5);
-    //check for minCount >= 3 == False
-    thresholdWindowOperatorMinCountFalse->execute(ctx, recordFifty);
-    thresholdWindowOperatorMinCountFalse->execute(ctx, recordNinety);
-    thresholdWindowOperatorMinCountFalse->execute(ctx, recordTwenty);
-    EXPECT_EQ(collectorFalse->records.size(), 1);
-    EXPECT_EQ(collectorFalse->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collectorFalse->records[0].read(aggregationResultFieldName), 5);
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 1);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
-    thresholdWindowOperatorMinCountTrue->terminate(ctx);
-    thresholdWindowOperatorMinCountFalse->terminate(ctx);
+    thresholdWindowOperator->terminate(ctx);
 }
-}// namespace NES::Runtime::Execution::Operators
+
+/**
+ * @brief Tests the threshold window operator with a sum aggregation.
+ */
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) {
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    // Attribute(f1) > 42, sum(f2)
+
+    auto aggregationResultFieldName = "sum";
+    auto thresholdWindowOperator =
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, 0);
+
+    auto collector = std::make_shared<CollectOperator>();
+    thresholdWindowOperator->setChild(collector);
+
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+
+    thresholdWindowOperator->setup(ctx);
+
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 0);
+
+    thresholdWindowOperator->terminate(ctx);
+}
+
+}
+
