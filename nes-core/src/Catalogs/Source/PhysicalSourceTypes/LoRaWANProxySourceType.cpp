@@ -53,22 +53,22 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string
                 networkStack->setValue(sourceConfigMap.find(Configurations::LORAWAN_NETWORK_STACK_CONFIG)->second);
         }
         if (sourceConfigMap.contains(Configurations::URL_CONFIG)){
-            networkStack->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
+            url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
         }
         if (sourceConfigMap.contains(Configurations::USER_NAME_CONFIG)){
-            networkStack->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
+            userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
 
         } else {
             NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no username defined! Please define a username.");
         }
         if (sourceConfigMap.contains(Configurations::PASSWORD_CONFIG)){
-            networkStack->setValue(sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
+            password->setValue(sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
 
         } else {
             NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no password defined! Please define a password.");
         }
         if (sourceConfigMap.contains(Configurations::LORAWAN_APP_ID_CONFIG)){
-            networkStack->setValue(sourceConfigMap.find(Configurations::LORAWAN_APP_ID_CONFIG)->second);
+            appId->setValue(sourceConfigMap.find(Configurations::LORAWAN_APP_ID_CONFIG)->second);
 
         } else {
             NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
@@ -163,13 +163,13 @@ void LoRaWANProxySourceType::reset() {
 std::string LoRaWANProxySourceType::toString() {
     std::stringstream ss;
     ss << "LoRaWANProxySourceType =>  {\n";
-    ss << Configurations::LORAWAN_NETWORK_STACK_CONFIG + ":" + networkStack->toStringNameCurrentValue();
-    ss << Configurations::URL_CONFIG + ":" + url->toStringNameCurrentValue();
-    ss << Configurations::USER_NAME_CONFIG + ":" + userName->toStringNameCurrentValue();
+    ss << networkStack->toStringNameCurrentValue();
+    ss << url->toStringNameCurrentValue();
+    ss << userName->toStringNameCurrentValue();
     //might be bad style to expose this
-    ss << Configurations::PASSWORD_CONFIG + ":" + password->toStringNameCurrentValue();
-    ss << Configurations::LORAWAN_APP_ID_CONFIG + ":" + appId->toStringNameCurrentValue();
-    ss << "\n}";
+    ss << password->toStringNameCurrentValue();
+    ss << appId->toStringNameCurrentValue();
+    ss << "}";
     return ss.str();
 }
 bool LoRaWANProxySourceType::equal(const PhysicalSourceTypePtr& other) {

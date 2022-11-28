@@ -76,8 +76,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
      * @brief constructor to create a new LoRaWAN proxysource config object initialized with default values as set below
      */
     LoRaWANProxySourceType();
-
-  private:
+    
     Configurations::StringConfigOption networkStack;
     Configurations::StringConfigOption url;
     Configurations::StringConfigOption userName;
