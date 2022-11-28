@@ -89,4 +89,9 @@ bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
+Waypoint::Waypoint(Location location) : location(location), timestamp(std::nullopt) {};
+Waypoint::Waypoint(Location location, Timestamp timestamp) : location(location), timestamp(timestamp) {}
+Waypoint Waypoint::invalid() { return Waypoint(Experimental::Location()); };
+Location Waypoint::getLocation() const { return location; }
+std::optional<Timestamp> Waypoint::getTimestamp() const { return timestamp; }
 }// namespace NES::Spatial::Index::Experimental

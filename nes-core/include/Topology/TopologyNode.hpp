@@ -21,6 +21,7 @@
 #include <any>
 #include <map>
 #include <optional>
+#include <Util/TimeMeasurement.hpp>
 
 namespace NES {
 class TopologyNode;
@@ -28,6 +29,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
+using WaypointPtr = std::shared_ptr<Waypoint>;
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
 
@@ -168,7 +170,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    NES::Spatial::Index::Experimental::Location getCoordinates();
+    NES::Spatial::Index::Experimental::WaypointPtr getCoordinates();
 
     /**
      * Experimental
