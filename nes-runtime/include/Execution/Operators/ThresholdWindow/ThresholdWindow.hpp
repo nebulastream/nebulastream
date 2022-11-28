@@ -32,23 +32,6 @@ class ThresholdWindow : public ExecutableOperator {
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
     explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
-                             Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
-                             Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
-                             uint64_t operatorHandlerIndex)
-        : predicateExpression(std::move(predicateExpression)),
-          aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
-          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)),
-          operatorHandlerIndex(operatorHandlerIndex){};
-
-    /**
-     * @brief Creates a threshold window operator.
-     * @param predicateExpression boolean predicate expression which check if a tuple satisfy the threshold
-     * @param aggregatedFieldAccessExpression field access to the field that is aggregated
-     * @param aggregationResultFieldIdentifier a string indicating the name of field to store the aggregation result
-     * @param minCount the defined minimum Count
-     * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
-     */
-    ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                              uint64_t minCount,
                              Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
                              Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
@@ -65,7 +48,7 @@ class ThresholdWindow : public ExecutableOperator {
     const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
     const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
     const Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier;
-    uint64_t minCount;
+    uint64_t minCount = 0;
     uint64_t operatorHandlerIndex = 0;
 };
 }// namespace NES::Runtime::Execution::Operators
