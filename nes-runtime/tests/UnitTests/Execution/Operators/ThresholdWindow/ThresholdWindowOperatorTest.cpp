@@ -79,7 +79,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 
     auto aggregationResultFieldName = "sum";
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, readF2, aggregationResultFieldName, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -111,7 +111,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 /**
  * @brief Tests the threshold window operator with a sum aggregation.
  */
-TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestLocking) {
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCount) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
@@ -120,7 +120,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestLocking) {
 
     auto aggregationResultFieldName = "sum";
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, readF2, aggregationResultFieldName, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -139,11 +139,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestLocking) {
     auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
     auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
     auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
-    auto recordNinety2 = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
-    thresholdWindowOperator->execute(ctx, recordNinety2);
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);

@@ -37,9 +37,9 @@ extern "C" bool getIsWindowOpen(void* state) {
     return handler->isWindowOpen;
 }
 
-extern "C" bool getMinCountFulfilled(void* state) {
+extern "C" uint64_t getRecordCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    return handler->recordCount >= handler->minCount;
+    return handler->recordCount;
 }
 
 extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
@@ -47,14 +47,19 @@ extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
     handler->sum = valueToSet;
 }
 
-extern "C" int64_t getSumAggregate(void* state) {
+extern "C" uint64_t getSumAggregate(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
     return handler->sum;
 }
 
 extern "C" void lockWindowHandler(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    std::lock_guard<std::mutex> lock(handler->mutex);
+    handler->mutex.lock();
+}
+
+extern "C" void unlockWindowHandler(void* state) {
+    auto handler = (ThresholdWindowOperatorHandler*) state;
+    handler->mutex.unlock();
 }
 
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
@@ -68,8 +73,8 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
-        auto minCountFulfilled = FunctionCall("getMinCountFulfilled", getMinCountFulfilled, handler);
-        if (isWindowOpen && minCountFulfilled) {
+        auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
+        if (isWindowOpen && recordCount >= minCount) {
             auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
             auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
             FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
@@ -77,6 +82,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
             child->execute(ctx, aggregationResult);
         }
     }
+    FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
 }
 
 }// namespace NES::Runtime::Execution::Operators
