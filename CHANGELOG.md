@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.70](https://github.com/nebulastream/nebulastream/tree/v0.3.70) (2022-11-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.69...v0.3.70)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add sqrt\(x\) expression [\#3053](https://github.com/nebulastream/nebulastream/issues/3053)
+- \[DBPRO\] Add cbrt\(x\) expression [\#3037](https://github.com/nebulastream/nebulastream/issues/3037)
+
 ## [v0.3.69](https://github.com/nebulastream/nebulastream/tree/v0.3.69) (2022-11-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.68...v0.3.69)
