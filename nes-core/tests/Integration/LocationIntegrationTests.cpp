@@ -182,7 +182,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker->size(), (size_t) 2);
     EXPECT_TRUE(inRangeAtWorker->count(wrk4->getWorkerId()));
-    EXPECT_EQ(inRangeAtWorker->find(wrk4->getWorkerId())->second, (*wrk4->getLocationProvider()->getLocation()));
+    EXPECT_EQ(inRangeAtWorker->find(wrk4->getWorkerId())->second, wrk4->getLocationProvider()->getLocation()->getLocation());
 
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(500.0);
@@ -266,7 +266,7 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->getLocationProvider()->getNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     EXPECT_EQ(wrk2->getLocationProvider()->getNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 
-    EXPECT_EQ(*(wrk2->getLocationProvider()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_EQ(wrk2->getLocationProvider()->getLocation()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
@@ -683,7 +683,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
     //keep looping until the final waypoint is reached
     for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation();
-        !isClose(*workerLocation.first, *(waypoints.back().first), 0.0000001);
+        !isClose(workerLocation->getLocation(), *(waypoints.back().first), 0.0000001);
          workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
         //test local node index
         NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition =
@@ -723,7 +723,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         //testing path prediction
         //find out which one is the upcoming waypoint
         auto nextWaypoint = waypoints[waypointCounter];
-        while (workerLocation.second > nextWaypoint.second) {
+        while (workerLocation->getTimestamp().value() > nextWaypoint.second) {
             //expecting this to be true works with the current input data
             //for paths where waypoints lead to less sharp turns, we also need to consider the option, that the predicted path did not change after passing a waypoint
             EXPECT_TRUE(waypointCovered[waypointCounter]);
@@ -742,7 +742,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     auto endPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEnd);
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
                     auto pathCurrentPosToWayPoint =
-                        S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation.first),
+                        S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(workerLocation->getLocation()),
                                                 NES::Spatial::Util::S2Utilities::locationToS2Point(*nextWaypoint.first)}));
                     waypointCovered[waypointCounter] =
                         lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
@@ -764,7 +764,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_TRUE(lastPredictedPath.Equals(pathNew));
                 }
 
-                if (workerLocation.second > lastPredictedPathRetrievalTime
+                if (workerLocation->getTimestamp() > lastPredictedPathRetrievalTime
                         + mobilityConfiguration1->pathPredictionUpdateInterval.getValue() * 1000000) {
                     NES_TRACE("update interval passed, check stabilizing and node covering");
 
@@ -777,10 +777,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         auto newSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
                         //the path covered the waypoint, but the new schedule is not necessarily computed yet, therefore we need to keep querying for the prediction
                         EXPECT_TRUE(lastReconnectPositionAndTime.first);
-                        EXPECT_TRUE(updatedLastReconnect.first);
                         if (newPredictedReconnect
                             && ((lastReconnectPositionAndTime.first->isValid()
-                                 && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first)
+                                 && updatedLastReconnect->getLocation() == *lastReconnectPositionAndTime.first)
                                 || !lastReconnectPositionAndTime.first->isValid())) {
                             NES_TRACE("path stabilized after reconnect")
                             NES_TRACE(
@@ -804,32 +803,34 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
         //testing scheduling of reconnects
         auto updatedLastReconnect = wrk1->getTrajectoryPredictor()->getLastReconnectLocationAndTime();
-        EXPECT_TRUE(updatedLastReconnect.first);
+        //EXPECT_TRUE(updatedLastReconnect->getLocation().isValid());
         //if there has been a reconnect, check the accuracy of the prediction against the actual reconnect place and time
-        if (get<0>(updatedLastReconnect)->isValid()) {
+        if (updatedLastReconnect->getLocation().isValid()) {
             if (!get<0>(lastReconnectPositionAndTime)->isValid()
-                || get<0>(updatedLastReconnect) != get<0>(lastReconnectPositionAndTime)) {
+                //todo: look into what comparison used to be made here, seems like we compared pointers
+                || updatedLastReconnect->getLocation() != *get<0>(lastReconnectPositionAndTime)) {
                 NES_DEBUG("worker reconnected")
                 if (predictedReconnect) {
                     auto predictedPoint =
                         NES::Spatial::Util::S2Utilities::locationToS2Point(predictedReconnect->predictedReconnectLocation);
-                    auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*(updatedLastReconnect.first));
+                    auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(updatedLastReconnect->getLocation());
                     EXPECT_TRUE(S2::ApproxEquals(predictedPoint, actualPoint, allowedReconnectPositionPredictionError));
                     EXPECT_NE(predictedReconnect->reconnectPrediction.expectedTime, 0);
-                    EXPECT_NE(get<1>(updatedLastReconnect), 0);
+                    EXPECT_NE(updatedLastReconnect->getTimestamp(), 0);
                     NES_DEBUG("timediff " << predictedReconnect->reconnectPrediction.expectedTime
-                                  - (long long) get<1>(updatedLastReconnect));
+                                  - (long long) updatedLastReconnect->getTimestamp().value());
                     NES_DEBUG("expected parent id " << predictedReconnect->reconnectPrediction.expectedNewParentId);
                     EXPECT_LT(abs((long long) predictedReconnect->reconnectPrediction.expectedTime
-                                  - (long long) get<1>(updatedLastReconnect)),
+                                  - (long long) updatedLastReconnect->getTimestamp().value()),
                               allowedTimeDiff);
-                    EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
+                    EXPECT_LT(abs((long long) firstPrediction.value() - (long long) updatedLastReconnect->getTimestamp().value()),
                               allowedTimeDiff);
                     firstPrediction = std::nullopt;
 
                     //increase reconnect count and mark this reconnect as the last one so we do not check again until after the next reconnect
                     reconnectCounter++;
-                    lastReconnectPositionAndTime = updatedLastReconnect;
+                    //todo: make both vars be waypoints
+                    lastReconnectPositionAndTime = {std::make_shared<NES::Spatial::Index::Experimental::Location>(updatedLastReconnect->getLocation()), updatedLastReconnect->getTimestamp().value()};
 
                     //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
                     bool predictedAtCoord = false;

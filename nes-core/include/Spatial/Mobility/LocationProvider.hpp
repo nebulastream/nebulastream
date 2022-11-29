@@ -140,7 +140,7 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation();
+    virtual Index::Experimental::WaypointPtr getCurrentLocation();
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
