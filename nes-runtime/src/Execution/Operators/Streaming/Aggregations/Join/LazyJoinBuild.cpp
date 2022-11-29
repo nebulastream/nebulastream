@@ -72,10 +72,19 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 }
 
 
-void incrementLastTupleTimeStampRuntime(void* lazyJoinBuildPtr) {
-    LazyJoinBuild* lazyJoinBuild = static_cast<LazyJoinBuild*>(lazyJoinBuildPtr);
+void incrementLastTupleTimeStampRuntime(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
-    lazyJoinBuild->incLastTupleTimeStamp(lazyJoinBuild->getWindowSize());
+    opHandler->incLastTupleTimeStamp(opHandler->getWindowSize());
+}
+
+
+size_t getLastTupleWindow(void* ptrOpHandler) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+
+    return opHandler->getWindowSize();
 }
 
 
@@ -90,32 +99,29 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                        ctx.getWorkerId(),
                                                        Value<Boolean>(isLeftSide));
 
+    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef);
 
-    if (record.read("timestamp") != lastTupleTimeStamp) {
+    if (record.read("timestamp") != lastTupleWindowRef) {
 
-        auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall,
-                                                     localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
-
-        for (auto& field : record.getAllFields()) {
-            entryMemRef.store(record.read(field));
-            entryMemRef = entryMemRef + record.read(field);
-        }
-
-    } else {
         Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
                                ctx.getWorkerContext(), ctx.getWorkerId(), Value<Boolean>(isLeftSide));
 
-        Nautilus::FunctionCall("incrementLastTupleTimeStampRuntime", incrementLastTupleTimeStampRuntime, Value<MemRef>(this));
+        Nautilus::FunctionCall("incrementLastTupleTimeStampRuntime", incrementLastTupleTimeStampRuntime, operatorHandlerMemRef);
+
     }
+
+
+    auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall, localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
+    for (auto& field : record.getAllFields()) {
+        entryMemRef.store(record.read(field));
+        entryMemRef = entryMemRef + record.read(field);
+    }
+
 }
 
-LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName, size_t windowSize)
-    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), windowSize(windowSize) {
-    lastTupleTimeStamp = windowSize;
+LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName)
+    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName){
 }
 
-size_t LazyJoinBuild::getWindowSize() const { return windowSize; }
-
-void LazyJoinBuild::incLastTupleTimeStamp(uint64_t increment) {}
 
 } // namespace NES::Runtime::Execution::Operators
