@@ -237,7 +237,7 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     uint64_t workerNodeId3 = wrk3->getTopologyNodeId();
 
     TopologyNodePtr node1 = coordinator->getTopology()->findNodeWithId(workerNodeId1);
-    locIndex->initializeFieldNodeCoordinates(node1, (node1->getCoordinates()->getLocation()));
+    locIndex->initializeFieldNodeCoordinates(node1, *node1->getCoordinates()->getLocation());
     TopologyNodePtr node2 = coordinator->getTopology()->findNodeWithId(workerNodeId2);
     locIndex->addMobileNode(node2);
     TopologyNodePtr node3 = coordinator->getTopology()->findNodeWithId(workerNodeId3);
