@@ -144,9 +144,7 @@ void setIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int
     auto pojo = (jobject) pojoObjectPtr;
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
-    jint cla = value;
-    //int value = (int)((Record*)record)->read(field->getName());
-    mapUDF->getEnvironment()->SetIntField(pojo, id, cla);
+    mapUDF->getEnvironment()->SetIntField(pojo, id, (jint) value);
     if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
         std::cout << "set int field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
@@ -160,10 +158,67 @@ int getIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int 
     auto pojo = (jobject) pojoObjectPtr;
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
-    //int value = (int)((Record*)record)->read(field->getName());
     int value = (int) mapUDF->getEnvironment()->GetIntField(pojo, id);
     if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
-        std::cout << "set int field\n";
+        std::cout << "get int field\n";
+        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+    return value;
+}
+
+void setFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex, float value) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto pojoClass = (jclass) pojoClassPtr;
+    auto pojo = (jobject) pojoObjectPtr;
+    std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
+    mapUDF->getEnvironment()->SetIntField(pojo, id, (jfloat) value);
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "set float field\n";
+        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+}
+
+float getFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto pojoClass = (jclass) pojoClassPtr;
+    auto pojo = (jobject) pojoObjectPtr;
+    std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
+    float value = (float) mapUDF->getEnvironment()->GetFloatField(pojo, id);
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "get float field\n";
+        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+    return value;
+}
+
+void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex, bool value) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto pojoClass = (jclass) pojoClassPtr;
+    auto pojo = (jobject) pojoObjectPtr;
+    std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
+    mapUDF->getEnvironment()->SetIntField(pojo, id, (jboolean) value);
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "set bool field\n";
+        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
+        exit(EXIT_FAILURE);
+    }
+}
+
+float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto pojoClass = (jclass) pojoClassPtr;
+    auto pojo = (jobject) pojoObjectPtr;
+    std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
+    bool value = (bool) mapUDF->getEnvironment()->GetBooleanField(pojo, id);
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+        std::cout << "get bool field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
     }
@@ -216,35 +271,65 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
         mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
-    //std::cout << "call Map: " << udf_result << "\n";
-
-
-
-    auto result = new Record({{"result", Value<>(udf_result)}});
-    return result;
+    return udf_result;
 }
-
 
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto thisOperatorPtr = Value<MemRef>((std::int8_t *) this);
     auto inputClassPtr = FunctionCall<>("findClassProxyInput", findClassProxyInput, thisOperatorPtr);
     auto inputPojoPtr = FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, inputClassPtr);
     for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
-        auto fieldName = inputSchema->fields[i]->getName();
-        FunctionCall<>("setIntField", setIntField, thisOperatorPtr, inputClassPtr, inputPojoPtr, Value<Int32>(i), record.read(fieldName).as<Int32>());
+        auto field = inputSchema->fields[i];
+        auto fieldName = field->getName();
+        if (field->getDataType()->isInteger()) {
+            FunctionCall<>("setIntField",
+                           setIntField,
+                           thisOperatorPtr,
+                           inputClassPtr,
+                           inputPojoPtr,
+                           Value<Int32>(i),
+                           record.read(fieldName).as<Int32>());
+        } else if (field->getDataType()->isFloat()) {
+            FunctionCall<>("setFloatField",
+                           setFloatField,
+                           thisOperatorPtr,
+                           inputClassPtr,
+                           inputPojoPtr,
+                           Value<Int32>(i),
+                           record.read(fieldName).as<Float>());
+        } else if (field->getDataType()->isBoolean()) {
+            FunctionCall<>("setBooleanField",
+                           setBooleanField,
+                           thisOperatorPtr,
+                           inputClassPtr,
+                           inputPojoPtr,
+                           Value<Int32>(i),
+                           record.read(fieldName).as<Boolean>());
+        }
     }
 
     auto outputClassPtr = FunctionCall<>("findClassProxyOutput", findClassProxyOutput, thisOperatorPtr);
     auto outputPojoPtr =  FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, outputClassPtr);
 
-    auto resultRecord = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, outputPojoPtr);
+    outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, outputPojoPtr);
     auto result = new Record();
     for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
-        auto fieldName = inputSchema->fields[i]->getName();
-        Value<> res = FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
-        result->write(fieldName, res);
+        auto field = outputSchema->fields[i];
+        auto fieldName = field->getName();
+        if (field->getDataType()->isInteger()) {
+            Value<> val =
+                FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+            result->write(fieldName, val);
+        } else if (field->getDataType()->isFloat()) {
+            Value<> val =
+                FunctionCall<>("getFloatField", getFloatField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+            result->write(fieldName, val);
+        } else if (field->getDataType()->isBoolean()) {
+            Value<> val =
+                FunctionCall<>("getBooleanField", getBooleanField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+            result->write(fieldName, val);
+        }
     }
-    // read fields from result
-    child->execute(ctx, (Record&) resultRecord.getValue());
+    child->execute(ctx, (Record&) result);
 }
 }// namespace NES::Runtime::Execution::Operators
