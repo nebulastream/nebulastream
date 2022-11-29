@@ -460,9 +460,11 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getLocation(const std
     Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
-        //return {coord.lat(), coord.lng()};
         //todo: keep editing from here
-        //auto location = std::make_shared<Spatial::Index::Experimental::Location>(coord.lat(), coord.lng());
+        auto timestamp = reply.timestamp();
+        if (timestamp != 0) {
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()), timestamp);
+        }
         return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
     }
     return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());

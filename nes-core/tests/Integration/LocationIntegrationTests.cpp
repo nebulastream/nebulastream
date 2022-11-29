@@ -64,7 +64,6 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     //wrapper function so allow the util function to call the member function of LocationProvider
     static std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> getLocationFromTopologyNode(std::shared_ptr<void> node) {
         auto casted = std::static_pointer_cast<TopologyNode>(node);
-        //return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
         return casted->getCoordinates();
     }
 
@@ -949,7 +948,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2interpolated.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -1489,7 +1488,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2interpolated.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
