@@ -78,13 +78,43 @@ class MapJavaUdf : public ExecutableOperator {
     */
    SchemaPtr getOutputSchema(){ return outputSchema;};
 
+   /**
+    * Return the name of the class containing the udf
+    * @return std::string
+    */
+   std::string getClassName(){ return className;};
+
+   /**
+    * Return the name of the method inplementing the udf
+    * @return std::string
+    */
+   std::string getMethodName(){ return methodName;};
+
+   /**
+    * Return the name of the object used as udf input value
+    * @return std::string
+    */
+   std::string getInputProxyName(){ return inputProxyName;};
+
+    /**
+     * Return the name of the object used as udf output value
+     * @return std::string
+     */
+    std::string getOutputProxyName(){ return outputProxyName;};
+
  private:
    std::string className;
+   std::string methodName;
+
+   std::string inputProxyName;
+   std::string outputProxyName;
+
    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+   std::vector<char> serializedInstance;
+
    SchemaPtr inputSchema;
    SchemaPtr outputSchema;
-   std::vector<char> serializedInstance;
-   std::string methodName;
+
    JavaVM* jvm;
    JNIEnv* env;
 };
