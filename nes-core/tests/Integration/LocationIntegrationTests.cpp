@@ -68,6 +68,16 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         return casted->getCoordinates();
     }
 
+    static bool isClose(NES::Spatial::Index::Experimental::Location location1, NES::Spatial::Index::Experimental::Location location2, double error) {
+        if (std::abs(location1.getLatitude() - location2.getLatitude()) > error) {
+            return false;
+        }
+        if (std::abs(location1.getLongitude() - location2.getLongitude()) > error) {
+            return false;
+        }
+        return true;
+    }
+
     static void TearDownTestCase() { NES_INFO("Tear down LocationIntegrationTests class."); }
 };
 
@@ -639,16 +649,14 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2interpolated.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-
-
-    auto waypoints =
+    auto startTime =
         std::dynamic_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(wrk1->getLocationProvider())
-            ->getWaypoints();
+            ->getStartTime();
+    auto waypoints = getWaypointsFromCsv(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv", startTime);
     auto reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
     while (!reconnectSchedule->getLastIndexUpdatePosition()) {
         NES_DEBUG("reconnect schedule does not yet contain index update position")
@@ -662,7 +670,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     uint64_t parentId = 0;
     Timestamp allowedTimeDiff = 150000000;//0.15 seconds
     std::optional<Timestamp> firstPrediction;
-    auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
+    auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(100);
     std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime =
         std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
     std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
@@ -676,7 +684,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
     //keep looping until the final waypoint is reached
     for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation();
-         *workerLocation.first != *(waypoints.back().first);
+        !isClose(*workerLocation.first, *(waypoints.back().first), 0.0000001);
          workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
         //test local node index
         NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition =
