@@ -35,7 +35,7 @@ int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
 
 Value<Boolean> Text::equals(const Value<Text>& other) const {
     Value<Int64> result = FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
-    auto boolResult = result == Value<Int64>(0l);
+    auto boolResult = result == Value<Int64>((int64_t) 0);
     return boolResult.as<Boolean>();
 }
 
