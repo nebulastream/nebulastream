@@ -198,8 +198,12 @@ void TrajectoryPredictor::startReconnectPlanning() {
 #ifdef S2DEF
     updateDownloadedNodeIndex(locationProvider->getCurrentLocation().first);
     //fill up the buffer before starting to calculate path
-    for (size_t i = 0; i < locationBufferSize; ++i) {
+    while(locationBuffer.size() < locationBufferSize) {
         auto currentLocation = locationProvider->getCurrentLocation();
+        if (!locationBuffer.empty() && *currentLocation.first == *locationBuffer.back().first) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
+            continue;
+        }
         locationBuffer.push_back(currentLocation);
         NES_DEBUG("added: " << locationBuffer.back().first->toString() << ", " << locationBuffer.back().second);
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval * locationBufferSaveRate));
@@ -214,6 +218,10 @@ void TrajectoryPredictor::startReconnectPlanning() {
 
     while (updatePrediction) {
         auto currentOwnLocation = locationProvider->getCurrentLocation();
+        if (!locationBuffer.empty() && *currentOwnLocation.first == *locationBuffer.back().first) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
+            continue;
+        }
 
         //if locationBufferSaveRate updates have been done since last save: save current location to buffer and reset save counter
         if (stepsSinceLastLocationSave == locationBufferSaveRate) {
