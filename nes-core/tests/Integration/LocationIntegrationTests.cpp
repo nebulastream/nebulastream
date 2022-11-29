@@ -48,7 +48,6 @@ using std::string;
 uint16_t timeout = 5;
 namespace NES {
 using namespace Configurations;
-const Timestamp TIME_TOLERANCE = 10000000;
 
 class LocationIntegrationTests : public Testing::NESBaseTest {
   public:
@@ -357,8 +356,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -403,8 +400,6 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -454,8 +449,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif
@@ -499,8 +492,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     checkDeviceMovement(csvPath,
                         simulatedStartTime,
                         4,
-                        10000000,
-                        TIME_TOLERANCE,
                         getLocationFromTopologyNode,
                         std::static_pointer_cast<void>(wrk1Node));
 #endif

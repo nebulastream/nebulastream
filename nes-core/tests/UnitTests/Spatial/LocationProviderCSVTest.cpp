@@ -50,8 +50,6 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        1000000,
                         getLocationFromProvider,
                         std::static_pointer_cast<void>(locationProvider));
 }
@@ -69,8 +67,6 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        1000000,
                         getLocationFromProvider,
                         std::static_pointer_cast<void>(locationProvider));
 }
@@ -88,8 +84,6 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     checkDeviceMovement(csvPath,
                         startTime,
                         4,
-                        10000000,
-                        1000000,
                         getLocationFromProvider,
                         std::static_pointer_cast<void>(locationProvider));
 }
