@@ -481,12 +481,16 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, 
     auto sinks = qep->getSinks();
     for (auto sink : sinks) {
         if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+            auto now = std::chrono::system_clock::now();
+            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+            auto epoch = now_ms.time_since_epoch();
+            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
             NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId= " << queryId << "punctuation= " << epochBarrier);
             auto newReconf = ReconfigurationMessage(queryId,
                                                     qep->getQuerySubPlanId(),
                                                     Runtime::ReconfigurationType::PropagateEpoch,
                                                     sink,
-                                                    std::make_any<uint64_t>(epochBarrier));
+                                                    std::make_any<EpochMessage>(epochBarrier, value.count()));
             addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
             isPropagated = true;
         }
