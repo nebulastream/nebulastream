@@ -81,16 +81,10 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     std::stringstream ss;
     ss << "queryId=" << queryId.load();
     ss << " subPlanId=" << subQueryId.load();
-    ss << " processedTasks=" << processedTasks.load();
     ss << " processedTuple=" << processedTuple.load();
     ss << " processedBuffers=" << processedBuffers.load();
-    ss << " processedWatermarks=" << processedWatermarks.load();
     ss << " latencyAVG=" << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     ss << " queueSizeAVG=" << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableGlobalBufferAVG="
-       << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableFixedBufferAVG="
-       << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     return ss.str();
 }
 

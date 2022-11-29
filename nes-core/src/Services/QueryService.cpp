@@ -75,6 +75,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         PlacementStrategy::Value placementStrategy;
         try {
             placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            //placementStrategy = PlacementStrategy::BottomUp;
         } catch (...) {
             NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);

@@ -887,17 +887,20 @@ switch(indexOfBestScore) {
         }
 
         int BasePlacementStrategy::getOperatorCostsRecursively(const LogicalOperatorNodePtr& operatorNode){
-            NodePtr nodePtr = operatorNode->as<Node>();
             int cost = 0;
             if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
                 cost++;
-            } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+            }
+            if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
                 cost += 2;
-            } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+            }
+            if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
                 cost += 2;
-            } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+            }
+            if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
                 cost += 2;
-            } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+            }
+            if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
                 cost++;
             }
             for(auto& child : operatorNode->getChildren()){
@@ -1175,7 +1178,6 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                     + (3 * (ftConfig->getAckSize() * ftConfig->getAckInterval()));
             }
             float newUsedBand = (ftConfig->getIngestionRate() * ftConfig->getTupleSize()) + topNode->getUsedBandwidth();
-
 
             float result =  (newUsedBand / topNode->getAvailableBandwidth()) * activeStandbyNetworkingFormula;
 

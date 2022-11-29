@@ -82,7 +82,7 @@ float FaultToleranceConfiguration::getTimeBetweenAcks() const { return (static_c
  * @return output queue size in byte
  */
 float FaultToleranceConfiguration::getOutputQueueSize(float delayToDownstream) const {
-    return ((this->getTimeBetweenAcks() * this->tuple_size * this->tuple_size) + (delayToDownstream * this->ingestion_rate * this->tuple_size));
+    return ((this->getTimeBetweenAcks() * this->ingestion_rate * this->tuple_size) + (delayToDownstream * this->ingestion_rate * this->tuple_size));
 }
 
 void FaultToleranceConfiguration::setQueryId(QueryId queryId){ this->queryId = queryId; };
