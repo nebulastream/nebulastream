@@ -86,7 +86,10 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     // 2. Calculate the network cost.
     // Network cost = sum over all operators (output of operator * distance of operator)
     auto cost_net = z3Context->int_val(0);// initialize the network cost with 0
-
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     for (auto const& [operatorID, position] : distances) {
         OperatorNodePtr operatorNode = operatorNodes[operatorID]->as<OperatorNode>();
         if (operatorNode->getParents().empty())
@@ -103,7 +106,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
     }
     NES_DEBUG("cost_net: " << cost_net);
-
     // 3. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
     auto overUtilizationCost = z3Context->int_val(0);// initialize the over-utilization cost with 0
