@@ -43,7 +43,6 @@ FileBuilder FileBuilder::create(const std::string&) {
            "#include <Runtime/ExecutionResult.hpp>\n"
            "#include <Runtime/QueryTerminationType.hpp>\n"
            "#include <Runtime/WorkerContext.hpp>\n"
-           "#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>\n"
            "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
            "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
            "#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>\n"
