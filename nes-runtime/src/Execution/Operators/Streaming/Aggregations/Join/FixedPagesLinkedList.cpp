@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
