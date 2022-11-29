@@ -19,15 +19,15 @@ namespace NES {
 class EpochMessage {
 
   public:
-    EpochMessage(uint64_t timestamp, uint64_t replicationLevel);
+    EpochMessage(uint64_t timestamp, uint64_t additionalInfo);
 
 
     uint64_t getTimestamp() const;
 
-    uint64_t getReplicationLevel() const;
+    uint64_t getAdditionalInfo() const;
 
   private:
     uint64_t timestamp;
-    uint64_t replicationLevel;
+    uint64_t additionalInfo;
 };
 }// namespace NES

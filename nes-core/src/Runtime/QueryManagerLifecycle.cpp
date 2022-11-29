@@ -501,7 +501,7 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, 
     return false;
 }
 
-bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier) {
+bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t originalTimestamp) {
     std::unique_lock queryLock(queryMutex);
     auto queryId = getQueryId(querySubPlanId);
     auto qep = getQueryExecutionPlan(querySubPlanId);
@@ -509,15 +509,11 @@ bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uin
     bool isPropagated = false;
     for (auto source : sources) {
         if (source->getType() == SourceType::NETWORK_SOURCE) {
-            auto now = std::chrono::system_clock::now();
-            auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-            auto epoch = now_ms.time_since_epoch();
-            auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
             auto newReconf = Runtime::ReconfigurationMessage(queryId,
                                                              querySubPlanId,
                                                              Runtime::ReconfigurationType::PropagateEpoch,
                                                              source,
-                                                             std::make_any<EpochMessage>(epochBarrier, value.count()));
+                                                             std::make_any<EpochMessage>(epochBarrier, originalTimestamp));
             addReconfigurationMessage(queryId, querySubPlanId, newReconf);
             isPropagated = true;
         }

@@ -79,38 +79,38 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->numberOfBuffersPerEpoch = 900;
+        coordinatorConfig->numberOfBuffersPerEpoch = 3;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
-        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
-        coordinatorConfig->numWorkerThreads = 4;
+        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 10;
+        coordinatorConfig->numWorkerThreads = 1;
         coordinatorConfig->replicationLevel = 1;
 
         workerConfig1 = WorkerConfiguration::create();
-        workerConfig1->numberOfBuffersPerEpoch = 900;
-        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig1->numberOfBuffersPerEpoch = 3;
+        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
-        workerConfig1->numWorkerThreads = 4;
+        workerConfig1->numWorkerThreads = 1;
         workerConfig1->replicationLevel = 1;
 
         workerConfig2 = WorkerConfiguration::create();
-        workerConfig2->numberOfBuffersPerEpoch = 900;
-        workerConfig2->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig2->numberOfBuffersPerEpoch = 3;
+        workerConfig2->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig2->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig2->coordinatorPort = *rpcCoordinatorPort;
         workerConfig2->enableStatisticOutput = true;
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 10;
-        workerConfig2->numWorkerThreads = 4;
+        workerConfig2->numWorkerThreads = 1;
         workerConfig2->replicationLevel = 1;
 
         workerConfig3 = WorkerConfiguration::create();
-        workerConfig3->numberOfBuffersPerEpoch = 900;
-        workerConfig3->numWorkerThreads = 4;
-        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig3->numberOfBuffersPerEpoch = 3;
+        workerConfig3->numWorkerThreads = 1;
+        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig3->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig3->coordinatorPort = *rpcCoordinatorPort;
         workerConfig3->enableStatisticOutput = true;
@@ -543,8 +543,8 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    wrk3->getNodeEngine()->updateNetworkSink(2, workerConfig2->localWorkerIp, workerConfig2->dataPort, 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
+//wrk3->getNodeEngine()->updateNetworkSink(2, workerConfig2->localWorkerIp, workerConfig2->dataPort, 1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));

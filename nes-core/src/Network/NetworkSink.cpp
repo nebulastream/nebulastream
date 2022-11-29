@@ -190,7 +190,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 //            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
                                                                  << "punctuation= " << timestamp);
 //            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.printPropagationDelay(epochMessage.getReplicationLevel());
+            workerContext.printPropagationDelay(epochMessage.getAdditionalInfo());
             workerContext.trimStorage(nesPartition, epochMessage.getTimestamp());
             break;
         }
@@ -285,9 +285,10 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
+        auto originalTimestamp = epochEvent->creationTimestampValue();
         trimmingCallback(epochBarrier);
         NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << this->queryId << " trimmed");
-        auto success = queryManager->propagateEpochBackwards(this->querySubPlanId, epochBarrier);
+        auto success = queryManager->propagateEpochBackwards(this->querySubPlanId, epochBarrier, originalTimestamp);
         if (success) {
             NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << this->queryId << " sent further");
         } else {
