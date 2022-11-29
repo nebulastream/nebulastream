@@ -19,12 +19,42 @@
 
 namespace NES::Spatial::Index::Experimental {
 
+/**
+ * @brief This class contains a location combined with an optional timestamp to represent where a device has been at a certain time or
+ * where it is expected to be at that time. For fixed location nodes the timestamp will be set to nullopt_t
+ */
 class Waypoint {
   public:
+    /**
+     * @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
+     * @param location The location of the device
+     */
     Waypoint(Location location);
+
+    /**
+     * @brief Construct a waypoint with a certain timestamp
+     * @param location the geaographical location of the device
+     * @param timestamp the expected or actual time
+     */
     Waypoint(Location location, Timestamp timestamp);
+
+    /**
+     * @brief return a waypoint signaling that no location data is available. Location wil be invalid and timestamp will be
+     * nulltopt_t
+     * @return invalid waypoint
+     */
     static Waypoint invalid();
+
+    /**
+     * @brief Getter function for the location
+     * @return the geographical location
+     */
     Location getLocation() const;
+
+    /**
+     * @brief Getter function for the timestamp
+     * @return the actual of expected time when the device is at the specified location
+     */
     std::optional<Timestamp> getTimestamp() const;
 
   private:
