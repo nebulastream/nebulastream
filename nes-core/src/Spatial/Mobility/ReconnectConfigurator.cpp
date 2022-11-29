@@ -21,6 +21,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <utility>
 #ifdef S2DEF
+#include <Util/Experimental/S2Utilities.hpp>
 #include <s2/s1angle.h>
 #include <s2/s2earth.h>
 #include <s2/s2latlng.h>
@@ -91,15 +92,16 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
     if (locProvider) {
         //get the devices current location
         auto currentLocationTuple = locProvider->getCurrentLocation();
-        auto currentLocation = currentLocationTuple.first;
-        S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
+        auto currentLocation = currentLocationTuple->getLocation();
+        auto currentPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(currentLocation);
+        //S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
 
         std::unique_lock lock(reconnectConfigMutex);
         //check if we moved further than the threshold. if so, tell the coordinator about the devices new position
         if (S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold) {
             NES_DEBUG("device has moved further then threshold, sending location")
-            //todo: make pointer here
-            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second});
+            //todo: also use struct here
+            coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {currentLocation, currentLocationTuple->getTimestamp().value()});
             lastTransmittedLocation = currentPoint;
         } else {
             NES_DEBUG("device has not moved further than threshold, location will not be transmitted")
@@ -110,11 +112,12 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySendLocationUpdates() {
     //get the devices current location
     auto currentLocationTuple = worker.getLocationProvider()->getCurrentLocation();
-    auto currentLocation = currentLocationTuple.first;
-    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
+    auto currentLocation = currentLocationTuple->getLocation();
+    auto currentPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(currentLocation);
+    //S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
 
     NES_DEBUG("transmitting initial location")
-    coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {*currentLocation, currentLocationTuple.second});
+    coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), {currentLocation, currentLocationTuple->getTimestamp().value()});
     std::unique_lock lock(reconnectConfigMutex);
     lastTransmittedLocation = currentPoint;
     lock.unlock();
