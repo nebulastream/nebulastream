@@ -20,6 +20,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>

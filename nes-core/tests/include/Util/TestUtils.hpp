@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;

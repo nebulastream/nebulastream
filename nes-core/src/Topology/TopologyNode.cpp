@@ -18,6 +18,7 @@
 #include <Util/Experimental/NodeType.hpp>
 #include <algorithm>
 #include <utility>
+#include <Spatial/Index/Waypoint.hpp>
 
 namespace NES {
 

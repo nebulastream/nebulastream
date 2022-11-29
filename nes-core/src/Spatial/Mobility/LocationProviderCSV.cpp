@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Logger/Logger.hpp>

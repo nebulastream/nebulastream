@@ -39,6 +39,7 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
+class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
 }// namespace Spatial::Index::Experimental
 

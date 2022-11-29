@@ -23,6 +23,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Spatial/Index/LocationIndex.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <unordered_map>
