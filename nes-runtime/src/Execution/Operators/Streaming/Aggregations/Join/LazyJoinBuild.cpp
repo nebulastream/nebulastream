@@ -68,12 +68,16 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
         }
 
         opHandler->createNewLocalHashTables();
-
-        // TODO think about how we can change lastTupleTimeStamp
-
-
     }
 }
+
+
+void incrementLastTupleTimeStampRuntime(void* lazyJoinBuildPtr) {
+    LazyJoinBuild* lazyJoinBuild = static_cast<LazyJoinBuild*>(lazyJoinBuildPtr);
+
+    lazyJoinBuild->incLastTupleTimeStamp(lazyJoinBuild->getWindowSize());
+}
+
 
 
 void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -87,13 +91,12 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                        Value<Boolean>(isLeftSide));
 
 
-    // TODO check and see how we can differentiate, if the window is done and we can go to the merge part of the lazyjoin
     if (record.read("timestamp") != lastTupleTimeStamp) {
 
         auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall,
                                                      localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
 
-        for (auto& field : record.getAllField()) {
+        for (auto& field : record.getAllFields()) {
             entryMemRef.store(record.read(field));
             entryMemRef = entryMemRef + record.read(field);
         }
@@ -101,10 +104,18 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     } else {
         Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
                                ctx.getWorkerContext(), ctx.getWorkerId(), Value<Boolean>(isLeftSide));
+
+        Nautilus::FunctionCall("incrementLastTupleTimeStampRuntime", incrementLastTupleTimeStampRuntime, Value<MemRef>(this));
     }
 }
 
-LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName)
-    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName) {}
+LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName, size_t windowSize)
+    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), windowSize(windowSize) {
+    lastTupleTimeStamp = windowSize;
+}
+
+size_t LazyJoinBuild::getWindowSize() const { return windowSize; }
+
+void LazyJoinBuild::incLastTupleTimeStamp(uint64_t increment) {}
 
 } // namespace NES::Runtime::Execution::Operators

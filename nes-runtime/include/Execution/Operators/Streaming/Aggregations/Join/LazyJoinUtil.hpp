@@ -19,6 +19,8 @@ limitations under the License.
 #include <cstring>
 #include <sys/mman.h>
 
+#include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution {
@@ -70,6 +72,14 @@ namespace Util {
  * @return calculated hash
  */
 uint64_t murmurHash(uint64_t key);
+
+
+Runtime::TupleBuffer getRecordFromPointer(uint8_t* recordPtr, SchemaPtr schema);
+
+Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema);
+
+
+
 } // namespace Util
 } // namespace NES::Runtime::Execution
 #endif//NES_LAZYJOINUTIL_HPP
