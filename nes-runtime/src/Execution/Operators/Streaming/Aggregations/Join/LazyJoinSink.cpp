@@ -39,11 +39,11 @@ bool compareField(uint8_t* fieldPtr1, uint8_t * fieldPtr2, size_t sizeOfField) {
     return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
 }
 
-uint8_t* getKey(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& joinFieldName) {
+uint8_t* getField(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& fieldName) {
     uint8_t* pointer = recordBase;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : joinSchema->fields) {
-        if (field->getName() == joinFieldName) {
+        if (field->getName() == fieldName) {
             break;
         }
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -70,7 +70,8 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
             auto lhsRecordPtr = lhsPage[i];
-            auto lhsKeyPtr = getKey(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
+            auto lhsKeyPtr =
+                getField(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
             for(auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
@@ -80,7 +81,8 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                 for (auto j = 0UL; j < rhsLen; ++j) {
                     auto rhsRecordPtr = rhsPage[j];
-                    auto rhsRecordKeyPtr = getKey(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
+                    auto rhsRecordKeyPtr =
+                        getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
                     if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
                         ++joinedTuples;
 

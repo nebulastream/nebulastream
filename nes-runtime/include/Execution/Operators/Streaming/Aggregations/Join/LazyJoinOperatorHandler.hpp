@@ -38,10 +38,8 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
                                      size_t maxNoWorkerThreads,
                                      uint64_t counterFinishedBuildingStart,
                                      uint64_t counterFinishedSinkStart,
-                                     size_t totalSizeForDataStructures,
-                                     size_t windowSize);
+                                     size_t totalSizeForDataStructures);
 
-    size_t getWindowSize() const;
     SchemaPtr getJoinSchemaLeft() const;
     SchemaPtr getJoinSchemaRight() const;
 
@@ -71,7 +69,6 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
     size_t totalSizeForDataStructures;
-    size_t windowSize;
 };
 
 } // namespace NES::Runtime::Execution::Operators
