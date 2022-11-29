@@ -28,14 +28,12 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  size_t maxNoWorkerThreads,
                                                  uint64_t counterFinishedBuildingStart,
                                                  uint64_t counterFinishedSinkStart,
-                                                 size_t totalSizeForDataStructures,
-                                                 size_t windowSize)
+                                                 size_t totalSizeForDataStructures)
                                                     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
                                                     joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
                                                     counterFinishedSinkStart(counterFinishedSinkStart),
-                                                    totalSizeForDataStructures(totalSizeForDataStructures),
-                                                    windowSize(windowSize) {
+                                                    totalSizeForDataStructures(totalSizeForDataStructures) {
     createNewLocalHashTables();
 }
 
@@ -71,6 +69,5 @@ void LazyJoinOperatorHandler::deleteCurrentWindow() {
 LazyJoinWindow& LazyJoinOperatorHandler::getCurrentWindow() {
     return lazyJoinWindows.front();
 }
-size_t LazyJoinOperatorHandler::getWindowSize() const { return windowSize; }
 
 } // namespace NES::Runtime::Execution
