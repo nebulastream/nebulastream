@@ -450,7 +450,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getLocation(const std::string& address) {
+Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
@@ -461,13 +461,15 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getLocation(const std
     Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
-        //todo: keep editing from here
         auto timestamp = reply.timestamp();
+        //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
             return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()), timestamp);
         }
+        //no valid timestamp to include
         return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
     }
+    //location is invalid
     return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
 }
 

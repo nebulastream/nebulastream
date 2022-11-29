@@ -177,7 +177,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the device position
      * @return true if the received list of node positions was not empty
      */
-    bool downloadFieldNodes(Index::Experimental::Location currentLocation);
+    bool downloadFieldNodes(Index::Experimental::LocationPtr currentLocation);
 
     /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the
@@ -239,7 +239,7 @@ class TrajectoryPredictor {
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
-    Index::Experimental::WaypointPtr devicePositionTupleAtLastReconnect;
+    Index::Experimental::WaypointPtr lastReconnectWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_

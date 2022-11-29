@@ -38,9 +38,9 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
     return true;
 }
 
-Index::Experimental::WaypointPtr LocationProvider::getLocation() {
+Index::Experimental::WaypointPtr LocationProvider::getWaypoint() {
     switch (nodeType) {
-        case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentLocation();
+        case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentWaypoint();
         case Index::Experimental::NodeType::FIXED_LOCATION: return std::make_shared<Index::Experimental::Waypoint>(*fixedLocationCoordinates);
         case Index::Experimental::NodeType::NO_LOCATION: return {};
         case Index::Experimental::NodeType::INVALID:
@@ -50,20 +50,19 @@ Index::Experimental::WaypointPtr LocationProvider::getLocation() {
 }
 
 std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
-LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
+LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius) {
     if (!coordinatorRpcClient) {
         NES_WARNING("worker has no coordinator rpc client, cannot download node index");
         return {};
     }
-    auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(coord, radius);
+    auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(location, radius);
     return std::make_shared<std::unordered_map<uint64_t, Index::Experimental::Location>>(nodeVector.begin(), nodeVector.end());
 }
 
 std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
-    auto coord = getLocation()->getLocation();
-    if (coord.isValid()) {
-        //todo  #2918: pass pointer
-        return getNodeIdsInRange(coord, radius);
+    auto location = getWaypoint()->getLocation();
+    if (location && location->isValid()) {
+        return getNodeIdsInRange(location, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
@@ -73,7 +72,7 @@ void LocationProvider::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinat
     coordinatorRpcClient = coordinatorClient;
 }
 
-Index::Experimental::WaypointPtr LocationProvider::getCurrentLocation() {
+Index::Experimental::WaypointPtr LocationProvider::getCurrentWaypoint() {
     //location provider base class will always return invalid current locations
     return std::make_shared<Index::Experimental::Waypoint>(Index::Experimental::Waypoint::invalid());
 }

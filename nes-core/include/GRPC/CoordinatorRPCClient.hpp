@@ -39,7 +39,8 @@ class RegistrationMetrics;
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-
+class Waypoint;
+using WaypointPtr = std::shared_ptr<Waypoint>;
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
 
@@ -212,7 +213,7 @@ class CoordinatorRPCClient {
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
     std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>>
-    getNodeIdsInRange(NES::Spatial::Index::Experimental::Location coord, double radius);
+    getNodeIdsInRange(NES::Spatial::Index::Experimental::LocationPtr location, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
@@ -266,7 +267,7 @@ class CoordinatorRPCClient {
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::Location, Timestamp> locationUpdate);
+    bool sendLocationUpdate(uint64_t nodeId, NES::Spatial::Index::Experimental::WaypointPtr locationUpdate);
 
   private:
     uint64_t workerId;

@@ -322,7 +322,7 @@ bool NesWorker::connect() {
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::Index::Experimental::Location fixedCoordinates = {};
     if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-        fixedCoordinates = locationProvider->getLocation()->getLocation();
+        fixedCoordinates = *locationProvider->getWaypoint()->getLocation();
     }
 
     NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);

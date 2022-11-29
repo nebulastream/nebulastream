@@ -191,12 +191,12 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         //return an empty reply
         return Status::OK;
     }
-    auto waypoint = locationProvider->getLocation();
+    auto waypoint = locationProvider->getWaypoint();
     auto loc = waypoint->getLocation();
-    if (loc.isValid()) {
+    if (loc->isValid()) {
         Coordinates* coord = reply->mutable_coord();
-        coord->set_lat(loc.getLatitude());
-        coord->set_lng(loc.getLongitude());
+        coord->set_lat(loc->getLatitude());
+        coord->set_lng(loc->getLongitude());
     }
     if (waypoint->getTimestamp()) {
         reply->set_timestamp(waypoint->getTimestamp().value());

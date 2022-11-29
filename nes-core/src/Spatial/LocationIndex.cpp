@@ -69,11 +69,11 @@ bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
     }
 #ifdef S2DEF
     auto geoLocation = node->getCoordinates()->getLocation();
-    if (!geoLocation.isValid()) {
+    if (!geoLocation->isValid()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
     }
-    S2Point point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude()));
+    S2Point point(S2LatLng::FromDegrees(geoLocation->getLatitude(), geoLocation->getLongitude()));
     nodePointIndex.Remove(point, node);
     return true;
 #else
@@ -106,7 +106,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
 #ifdef S2DEF
     auto geoLocation = nodePtr->getCoordinates()->getLocation();
 
-    if (!geoLocation.isValid()) {
+    if (!geoLocation->isValid()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
         return {};
     }
@@ -115,7 +115,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
-        S2Point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude())));
+        S2Point(S2LatLng::FromDegrees(geoLocation->getLatitude(), geoLocation->getLongitude())));
     auto queryResult = query.FindClosestPoint(&target);
     //if we cannot find any node within the radius return an empty optional
     if (queryResult.is_empty()) {
@@ -173,7 +173,7 @@ std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLoc
     std::unique_lock lock(locationIndexMutex);
     loccationVector.reserve(mobileNodes.size());
     for (const auto& [nodeId, topologyNode] : mobileNodes) {
-        auto location = std::make_shared<Location>(topologyNode->getCoordinates()->getLocation());
+        auto location = topologyNode->getCoordinates()->getLocation();
         if (location->isValid()) {
             loccationVector.emplace_back(nodeId, location);
         }

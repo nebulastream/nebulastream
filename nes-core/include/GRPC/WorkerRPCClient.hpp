@@ -227,7 +227,7 @@ class WorkerRPCClient {
      * @param address: the ip adress of the node
      * @return location representing the nodes location or invalid if no such location exists
      */
-    static NES::Spatial::Index::Experimental::WaypointPtr getLocation(const std::string& address);
+    static NES::Spatial::Index::Experimental::WaypointPtr getWaypoint(const std::string& address);
 
     /**
      * @brief method to obtain the reconnect schedule calculated by a mobile worker containing beginning and end locations of the
