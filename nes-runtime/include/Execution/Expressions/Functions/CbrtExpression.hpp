@@ -29,10 +29,9 @@ class CbrtExpression : public Expression {
     Value<> execute(Record& record) const override;
 
   private:
-    const  ExpressionPtr subExpression;
+    const ExpressionPtr subExpression;
 };
 
 }// namespace NES::Runtime::Execution::Expressions
-
 
 #endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_CBRTEXPRESSION_HPP_
