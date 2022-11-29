@@ -14,6 +14,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>

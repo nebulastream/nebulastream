@@ -29,6 +29,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
+class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
 enum class NodeType;
 }// namespace Spatial::Index::Experimental

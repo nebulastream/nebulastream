@@ -23,5 +23,6 @@ add_source_files(nes-core
         Mobility/TrajectoryPredictor.cpp
         Mobility/ReconnectConfigurator.cpp
         Location.cpp
+        Waypoint.cpp
 )
 

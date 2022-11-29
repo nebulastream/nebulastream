@@ -16,6 +16,7 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
