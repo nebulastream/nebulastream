@@ -20,6 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -480,11 +481,14 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 }
 
 std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
-CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::Location coord, double radius) {
+CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::LocationPtr location, double radius) {
+    if (!location) {
+        return {};
+    }
     GetNodesInRangeRequest request;
     Coordinates* pCoordinates = request.mutable_coord();
-    pCoordinates->set_lat(coord.getLatitude());
-    pCoordinates->set_lng(coord.getLongitude());
+    pCoordinates->set_lat(location->getLatitude());
+    pCoordinates->set_lng(location->getLongitude());
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
@@ -623,7 +627,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
 }
 
 bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId,
-                                              std::pair<Spatial::Index::Experimental::Location, Timestamp> locationUpdate) {
+                                              Spatial::Index::Experimental::WaypointPtr locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
@@ -631,10 +635,12 @@ bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId,
     request.set_id(nodeId);
 
     Coordinates* coordinates = request.mutable_coord();
-    coordinates->set_lat(locationUpdate.first.getLatitude());
-    coordinates->set_lng(locationUpdate.first.getLongitude());
+    coordinates->set_lat(locationUpdate->getLocation()->getLatitude());
+    coordinates->set_lng(locationUpdate->getLocation()->getLongitude());
 
-    request.set_time(locationUpdate.second);
+    if (locationUpdate->getTimestamp()) {
+        request.set_time(locationUpdate->getTimestamp().value());
+    }
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();
 }

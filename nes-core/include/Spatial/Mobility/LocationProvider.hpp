@@ -94,7 +94,7 @@ class LocationProvider {
      * @return Location object containig the current location if the worker runs on a mobile device, the fixed location if
      * the worker is a field node or an invalid location if there is no known location
      */
-    Index::Experimental::WaypointPtr getLocation();
+    Index::Experimental::WaypointPtr getWaypoint();
 
     /**
      * Experimental
@@ -105,7 +105,7 @@ class LocationProvider {
      */
 
     std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
-    getNodeIdsInRange(Index::Experimental::Location coord, double radius);
+    getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius);
 
     /**
      * Experimental
@@ -141,7 +141,7 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual Index::Experimental::WaypointPtr getCurrentLocation();
+    virtual Index::Experimental::WaypointPtr getCurrentWaypoint();
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;

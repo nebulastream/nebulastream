@@ -53,7 +53,7 @@ class LocationProviderCSV : public LocationProvider {
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
     //todo: #2951: change return type
-    [[nodiscard]] Index::Experimental::WaypointPtr getCurrentLocation() override;
+    [[nodiscard]] Index::Experimental::WaypointPtr getCurrentWaypoint() override;
 
     /**
      * @brief return a vector containing all the waypoints read from the csv file

@@ -27,10 +27,10 @@ LocationService::LocationService(TopologyPtr topology) : locationIndex(topology-
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr) {
+    if (!nodePtr || !nodePtr->getCoordinates()) {
         return nullptr;
     }
-    return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates()->getLocation());
+    return convertNodeLocationInfoToJson(nodeId, *nodePtr->getCoordinates()->getLocation());
 }
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {

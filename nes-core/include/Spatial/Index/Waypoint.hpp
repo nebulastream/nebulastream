@@ -16,8 +16,10 @@
 #include <Util/TimeMeasurement.hpp>
 #include <optional>
 #include <Spatial/Index/Location.hpp>
+#include <memory>
 
 namespace NES::Spatial::Index::Experimental {
+using LocationPtr = std::shared_ptr<Location>;
 
 /**
  * @brief This class contains a location combined with an optional timestamp to represent where a device has been at a certain time or
@@ -49,7 +51,7 @@ class Waypoint {
      * @brief Getter function for the location
      * @return the geographical location
      */
-    Location getLocation() const;
+    LocationPtr getLocation() const;
 
     /**
      * @brief Getter function for the timestamp
@@ -58,7 +60,7 @@ class Waypoint {
     std::optional<Timestamp> getTimestamp() const;
 
   private:
-    Location location;
+    LocationPtr location;
     std::optional<Timestamp> timestamp;
 };
 }
