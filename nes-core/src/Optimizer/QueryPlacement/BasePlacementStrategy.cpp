@@ -1167,6 +1167,8 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                                                                           maxUpstreamBackupNetworkingCost, minUpstreamBackupNetworkingCost,
                                                                           maxUpstreamBackupMemoryCost, minUpstreamBackupMemoryCost);
 
+
+
             return upstreamBackupCost;
         }
 
@@ -1391,10 +1393,29 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
 
             for(auto& executionNode : executionNodes){
 
+                std::ofstream timingsLogFile;
+                timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
 
+                auto t0 = std::chrono::high_resolution_clock::now();
                 float upstreamBackupCost = calcUpstreamBackupCost(executionNode, executionNodes, ftConfig, topology);
+                auto t1 = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> fs = t1 - t0;
+                std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
+                timingsLogFile << "calcUpstreamBackupCost" << "," << ms.count() << "\n";
+
+                t0 = std::chrono::high_resolution_clock::now();
                 float activeStandbyCost = calcActiveStandbyCost(executionNode, executionNodes, ftConfig, topology);
+                t1 = std::chrono::high_resolution_clock::now();
+                fs = t1 - t0;
+                ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
+                timingsLogFile << "calcActiveStandbyCost" << "," << ms.count() << "\n";
+
+                t0 = std::chrono::high_resolution_clock::now();
                 float checkpointingCost = calcCheckpointingCost(executionNode, executionNodes, ftConfig, topology);
+                t1 = std::chrono::high_resolution_clock::now();
+                fs = t1 - t0;
+                ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
+                timingsLogFile << "calcCheckpointingCost" << "," << ms.count() << "\n";
 
                 mappedCosts.insert({executionNode->getId(), (upstreamBackupCost + activeStandbyCost + checkpointingCost)});
 
@@ -1402,6 +1423,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                 NES_INFO("\nACTIVE STANDBY COST ON NODE " << executionNode->getId() << ": " << activeStandbyCost);
                 NES_INFO("\nCHECKPOINTING COST ON NODE " << executionNode->getId() << ": " << checkpointingCost);
 
+                timingsLogFile.close();
 
             }
 

@@ -104,6 +104,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         logFile.open("/home/noah/placements.csv");//3 Nodes
         logFile << "topologyId, queryId, executionNodes, approach" << "\n";
         logFile.close();
+
+        std::ofstream timingsLogFile;
+        timingsLogFile.open("/home/noah/timings.csv");//3 Nodes
+        timingsLogFile << "activity, timeInMs" << "\n";
+        timingsLogFile.close();
     }
 };
 
