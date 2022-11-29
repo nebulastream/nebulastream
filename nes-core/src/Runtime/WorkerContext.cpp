@@ -30,17 +30,17 @@ WorkerContext::WorkerContext(uint32_t workerId,
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
     currentEpoch = 0;
     statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
-//    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
+    storageFile.open("propagation" + std::to_string(workerId) + ".csv", std::ios::out);
     statisticsFile << "time, latency\n";
-//    storageFile << "time, numberOfBuffers\n";
+    storageFile << "time, originTime, difference\n";
 }
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
-//    storageFile.clear();
+    storageFile.clear();
     statisticsFile.flush();
     statisticsFile.close();
-//    storageFile.close();
+    storageFile.close();
 }
 
 size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
@@ -69,9 +69,9 @@ void WorkerContext::printPropagationDelay(uint64_t timestamp) {
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    statisticsFile << timestamp << ",";
-    statisticsFile << value.count() - timestamp << "\n";
+    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    storageFile << timestamp << ",";
+    storageFile << value.count() - timestamp << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
