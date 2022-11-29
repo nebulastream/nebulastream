@@ -19,6 +19,7 @@ limitations under the License.
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
+#include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -53,6 +54,30 @@ class MapJavaUdf : public ExecutableOperator {
 
    void execute(ExecutionContext& ctx, Record& record) const override;
 
+   /**
+    * Return the java vm
+    * @return JavaVM
+    */
+   JavaVM *getVM() {return jvm;};
+
+   /**
+    * Return the JNI environment
+    * @return JNIEnv
+    */
+   JNIEnv *getEnvironment() {return env;};
+
+   /**
+    * Return the operators input schema
+    * @return SchemaPtr
+    */
+   SchemaPtr getInputSchema(){ return inputSchema;};
+
+   /**
+    * Return the operators output schema
+    * @return SchemaPtr
+    */
+   SchemaPtr getOutputSchema(){ return outputSchema;};
+
  private:
    std::string className;
    std::unordered_map<std::string, std::vector<char>> byteCodeList;
@@ -60,6 +85,8 @@ class MapJavaUdf : public ExecutableOperator {
    SchemaPtr outputSchema;
    std::vector<char> serializedInstance;
    std::string methodName;
+   JavaVM* jvm;
+   JNIEnv* env;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
