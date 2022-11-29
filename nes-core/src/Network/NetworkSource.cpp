@@ -206,10 +206,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         case Runtime::PropagateEpoch: {
             auto* channel = workerContext.getEventOnlyNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch punctuation= " << timestamp);
+            auto epochMessage = task.getUserData<EpochMessage>();
+            NES_DEBUG("Executing PropagateEpoch punctuation= " << epochMessage.getTimestamp());
             if (channel) {
-                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
+                channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, epochMessage.getTimestamp(), epochMessage.getAdditionalInfo());
             }
             break;
         }
@@ -218,10 +218,10 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto epochMessage = task.getUserData<EpochMessage>();
             auto timestamp = epochMessage.getTimestamp();
-            auto replicationLevel = epochMessage.getReplicationLevel();
-            NES_DEBUG("Executing PropagateKEpoch punctuation= " << timestamp << " replication level= " << replicationLevel);
+            auto additionalInfo = epochMessage.getAdditionalInfo();
+            NES_DEBUG("Executing PropagateKEpoch punctuation= " << timestamp << " replication level= " << additionalInfo);
             if (channel) {
-                channel->sendEvent<Runtime::PropagateKEpochEvent>(Runtime::EventType::kEpochPropagation, timestamp, replicationLevel);
+                channel->sendEvent<Runtime::PropagateKEpochEvent>(Runtime::EventType::kEpochPropagation, timestamp, additionalInfo);
             }
             break;
         }
