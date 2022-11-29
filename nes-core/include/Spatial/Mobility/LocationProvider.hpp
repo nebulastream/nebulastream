@@ -39,7 +39,7 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-
+using WaypointPtr = std::shared_ptr<Waypoint>;
 }// namespace Spatial::Index::Experimental
 
 namespace Configurations {
@@ -93,7 +93,7 @@ class LocationProvider {
      * @return Location object containig the current location if the worker runs on a mobile device, the fixed location if
      * the worker is a field node or an invalid location if there is no known location
      */
-    Index::Experimental::LocationPtr getLocation();
+    Index::Experimental::WaypointPtr getLocation();
 
     /**
      * Experimental
