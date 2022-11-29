@@ -45,6 +45,8 @@ LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinish
     counterFinishedSink.store(counterFinishedSinkStart);
 
     head = detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
+    overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSizeForDataStructures;
+    tail.store(reinterpret_cast<uintptr_t>(head));
 
     localHashTableLeftSide.reserve(maxNoWorkerThreads);
     localHashTableRightSide.reserve(maxNoWorkerThreads);

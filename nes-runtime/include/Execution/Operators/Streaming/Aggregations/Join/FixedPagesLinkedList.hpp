@@ -24,9 +24,6 @@ namespace NES::Runtime::Execution::Operators {
  * @brief
  */
 class FixedPagesLinkedList{
-    static constexpr auto PREALLOCATED_SIZE = 16 * 1024;
-    static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / FixedPage::CHUNK_SIZE;
-
   public:
     FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
 

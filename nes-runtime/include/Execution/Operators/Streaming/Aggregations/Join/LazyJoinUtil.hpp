@@ -25,7 +25,11 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-static constexpr auto NUM_PARTITIONS = 8 * 1024;
+static constexpr auto CHUNK_SIZE = 128;
+static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
+static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
+static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / CHUNK_SIZE;
+static constexpr auto NUM_PARTITIONS = 512;
 static constexpr auto MASK = NUM_PARTITIONS - 1;
 
 namespace detail {

@@ -24,9 +24,30 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution {
+
+class TestRunner : public NES::Exceptions::ErrorListener {
+  public:
+    void onFatalError(int signalNumber, std::string callStack) override {
+        std::ostringstream fatalErrorMessage;
+        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
+                          << callStack;
+
+        NES_FATAL_ERROR(fatalErrorMessage.str());
+        std::cerr << fatalErrorMessage.str() << std::endl;
+    }
+
+    void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
+        std::ostringstream fatalExceptionMessage;
+        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
+
+        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        std::cerr << fatalExceptionMessage.str() << std::endl;
+    }
+};
 
 
 class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecutionTest {
@@ -35,6 +56,8 @@ class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecut
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LazyJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup LazyJoinOperatorTest test class." << std::endl;
+
+
     }
 
     /* Will be called before a test is executed. */
@@ -60,6 +83,12 @@ class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecut
  * @brief tests a simple join with two sources in a columnar layout with one thread for both sides
  */
 TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
+    // Activating and installing error listener
+    auto runner = std::make_shared<TestRunner>();
+    NES::Exceptions::installGlobalErrorListener(runner);
+
+
+
     auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::INT64)
                           ->addField("f2_left", BasicType::INT64)
@@ -75,7 +104,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
     auto joinFieldNameLeft = "f1_left";
     auto joinFieldNameRight = "f1_right";
     auto noWorkerThreads = 1UL;
-    auto joinSizeInByte = 1 * 1024 * 1024UL; // 1 GiB
+    auto joinSizeInByte = 16 * 1024 * 1024UL; // 16 GiB
     auto numberOfBuffersPerWorker = 128UL;
     auto numberOfTuplesToProduce = 100UL;
     auto windowSize = 1000;
@@ -103,7 +132,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft, windowSize);
+    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft);
 
 
     // Execute record and thus fill the hash table

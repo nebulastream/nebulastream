@@ -28,12 +28,19 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  size_t maxNoWorkerThreads,
                                                  uint64_t counterFinishedBuildingStart,
                                                  uint64_t counterFinishedSinkStart,
-                                                 size_t totalSizeForDataStructures)
+                                                 size_t totalSizeForDataStructures,
+                                                 size_t windowSize)
                                                     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
                                                     joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
                                                     counterFinishedSinkStart(counterFinishedSinkStart),
-                                                    totalSizeForDataStructures(totalSizeForDataStructures) {
+                                                    totalSizeForDataStructures(totalSizeForDataStructures),
+                                                    windowSize(windowSize){
+
+    size_t minRequiredSize = NUM_PARTITIONS * PREALLOCATED_SIZE;
+    NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures, "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
+
+
     createNewLocalHashTables();
 }
 
@@ -68,6 +75,12 @@ void LazyJoinOperatorHandler::deleteCurrentWindow() {
 
 LazyJoinWindow& LazyJoinOperatorHandler::getCurrentWindow() {
     return lazyJoinWindows.front();
+}
+void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment) {
+    lastTupleTimeStamp += increment;
+}
+size_t LazyJoinOperatorHandler::getWindowSize() const {
+    return windowSize;
 }
 
 } // namespace NES::Runtime::Execution
