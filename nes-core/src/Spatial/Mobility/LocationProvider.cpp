@@ -37,12 +37,14 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
     return true;
 }
 
-Index::Experimental::LocationPtr LocationProvider::getLocation() {
+Index::Experimental::WaypointPtr LocationProvider::getLocation() {
     switch (nodeType) {
-        case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentLocation().first;
+        case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentLocation();
         case Index::Experimental::NodeType::FIXED_LOCATION: return fixedLocationCoordinates;
         case Index::Experimental::NodeType::NO_LOCATION: return {};
-        case Index::Experimental::NodeType::INVALID: NES_WARNING("Location Provider has invalid spatial type") return {};
+        case Index::Experimental::NodeType::INVALID:
+            NES_WARNING("Location Provider has invalid spatial type")
+            return std::make_shared<Index::Experimental::Waypoint>(Index::Experimental::Waypoint::invalid());
     }
 }
 
