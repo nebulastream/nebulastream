@@ -376,6 +376,8 @@ namespace NES {
         static std::vector<int> getNumberOfEachOperatorOnExecutionNode(const ExecutionNodePtr executionNode, QueryId queryId);
         static int getNumberOfOperatorsRecursively(const LogicalOperatorNodePtr& operatorNode);
         static int getNumberOfOperators(const ExecutionNodePtr& executionNode, QueryId queryId);
+        static std::vector<ExecutionNodePtr> removeParentNodeFromVector(const ExecutionNodePtr& executionNode,
+                                                                 std::vector<ExecutionNodePtr> vector);
     };
     }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

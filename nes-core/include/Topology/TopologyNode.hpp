@@ -96,9 +96,9 @@ namespace NES {
 
             void setLatency(int latencySet);
 
-            int getAvailableBuffers() const;
+            long getAvailableBuffers() const;
 
-            void setAvailableBuffers(int availableBuffersSet);
+            void setAvailableBuffers(long availableBuffersSet);
 
             void increaseUsedBuffers(int usedBuffers);
 
@@ -262,11 +262,13 @@ namespace NES {
             float effectiveResources;
             int latency;
             float effectiveLatency;
-            int availableBuffers;
+            //10GB
+            long availableBuffers = 10737418240;
             bool maintenanceFlag;
             NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
             bool isMobile;
-            double availableBandwidth = 0;
+            //20mbit
+            double availableBandwidth = 2621440;
             float usedBandwidth = 0;
 
             /**

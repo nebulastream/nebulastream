@@ -31,6 +31,7 @@
 #include <cpprest/http_client.h>
 #include <gtest/gtest.h>
 #include <thread>
+#include <Services/TopologyManagerService.hpp>
 
 using namespace utility;
 using namespace std;
@@ -57,6 +58,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
     Runtime::BufferManagerPtr bufferManager;
+    std::vector<std::string> queries;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UpstreamBackupTest.log", NES::LogLevel::LOG_DEBUG);
@@ -75,6 +77,8 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        //workerConfig->enableStatisticOutput = true;
+        workerConfig->numberOfSlots = 8;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -87,9 +91,19 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
         inputSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+                          ->addField("timestamp", DataTypeFactory::createUInt64())
+                          ->addField("clientID", DataTypeFactory::createUInt32())
+                          ->addField("objectID", DataTypeFactory::createUInt32())
+                          ->addField("size", DataTypeFactory::createUInt32())
+                          ->addField("method", DataTypeFactory::createUInt8())
+                          ->addField("status", DataTypeFactory::createUInt8())
+                          ->addField("type", DataTypeFactory::createUInt8())
+                          ->addField("server", DataTypeFactory::createUInt8());
+
+        std::ofstream logFile;
+        logFile.open("/home/noah/placements.csv");//3 Nodes
+        logFile << "topologyId, queryId, executionNodes, approach" << "\n";
+        logFile.close();
     }
 };
 
@@ -380,4 +394,96 @@ TEST_F(UpstreamBackupTest, faultToleranceTest) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("UpstreamBackupTest: Test finished");*/
 }
+
+TEST_F(UpstreamBackupTest, test1) {
+    NES_INFO("UpstreamBackupTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalogService()->registerLogicalSource("worldCup", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("UpstreamBackupTest: Coordinator started successfully");
+
+    //Setup Worker
+    NES_INFO("UpstreamBackupTest: Start worker 1");
+    auto physicalSource1 = PhysicalSource::create("worldCup", "x1", csvSourceTypeInfinite);
+    workerConfig->physicalSources.add(physicalSource1);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("UpstreamBackupTest: Worker3 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    crd->getTopologyManagerService()->removeParent(4,1);
+    crd->getTopologyManagerService()->removeParent(3,1);
+    crd->getTopologyManagerService()->addParent(3,2);
+    crd->getTopologyManagerService()->addParent(4,3);
+
+    std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
+    remove(outputFilePath.c_str());
+
+    //ADD QUERIES
+    NES_INFO("UpstreamBackupTest: Submit query");
+    string query1 =
+        "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"size\"),Attribute(\"timestamp\")).map(Attribute(\"size\")=9317 + Attribute(\"clientID\")).filter(Attribute(\"clientID\")<=2491).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId1 =
+        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    string query2 =
+        "Query::from(\"worldCup\").map(Attribute(\"clientID\")=8285 * Attribute(\"server\")).project(Attribute(\"clientID\").as(\"qowhd\"),Attribute(\"objectID\").as(\"ogfpg\"),Attribute(\"timestamp\")).filter(Attribute(\"ogfpg\")>6787).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId2 =
+        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    /*EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 1));
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 1));*/
+
+    //REMOVE QUERIES
+    NES_INFO("UpstreamBackupTest: Remove query 1");
+    queryService->validateAndQueueStopQueryRequest(queryId1);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+
+    NES_INFO("UpstreamBackupTest: Remove query 2");
+    queryService->validateAndQueueStopQueryRequest(queryId2);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+
+
+
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("UpstreamBackupTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("UpstreamBackupTest: Stop worker 2");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+
+    NES_INFO("UpstreamBackupTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("UpstreamBackupTest: Test finished");
+}
+
 }// namespace NES

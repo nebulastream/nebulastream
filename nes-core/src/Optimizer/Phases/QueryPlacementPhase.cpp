@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
@@ -23,9 +25,10 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
+#include <sstream>
 #include <utility>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
+
 
 namespace NES::Optimizer {
 
@@ -77,16 +80,88 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
         throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
     }
 
-    //checkFaultTolerance(globalExecutionPlan,topology,queryId);
-
-
-
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
                                                                    faultToleranceType,
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
+
+    //Implement here
+
+    FaultToleranceConfigurationPtr ftConfig = FaultToleranceConfiguration::create();
+    ftConfig->setIngestionRate(500);
+    ftConfig->setTupleSize(24);
+    ftConfig->setAckRate(750);
+    ftConfig->setAckSize(8);
+    ftConfig->setProcessingGuarantee(FaultToleranceType::AT_LEAST_ONCE);
+    ftConfig->setQueryId(queryId);
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+
+
+    TopologyPtr top = topology;
+    executionNodes.erase(std::remove_if(
+                             executionNodes.begin(), executionNodes.end(),
+                             [top](const ExecutionNodePtr& node) {
+                                 return node->getId() == top->getRoot()->getId(); // put your condition here
+                             }), executionNodes.end());
+
+
+    Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
+
+    std::vector<ExecutionNodePtr> sortedList =
+        Optimizer::BasePlacementStrategy::getSortedListForFirstFit(executionNodes, ftConfig, topology, globalExecutionPlan);
+
+    FaultToleranceType placedFT = Optimizer::BasePlacementStrategy::firstFitQueryPlacement(sortedList, ftConfig, topology);
+
+    NES_INFO("\nFOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT));
+
+    for(auto& node : executionNodes){
+        TopologyNodePtr topNode = topology->findNodeWithId(node->getId());
+        float networkConnectivityInSeconds = Optimizer::BasePlacementStrategy::getNetworkConnectivity(topology, node) / 1000;
+        topology->findNodeWithId(node->getId())->increaseUsedBandwidth(ftConfig->getIngestionRate() * ftConfig->getTupleSize());
+
+        switch(placedFT){
+            case FaultToleranceType::ACTIVE_STANDBY:
+                topNode->increaseUsedBandwidth((ftConfig->getIngestionRate() * ftConfig->getTupleSize() * ftConfig->getAckInterval())
+                                                                               + (3 * (ftConfig->getAckSize() * ftConfig->getAckInterval())));
+                topNode->increaseUsedBuffers((ftConfig->getOutputQueueSize(networkConnectivityInSeconds) * 2));
+            case FaultToleranceType::CHECKPOINTING:
+                topNode->increaseUsedBandwidth(2 * (ftConfig->getAckSize() * ftConfig->getAckInterval()));
+                topNode->increaseUsedBuffers(ftConfig->getOutputQueueSize(networkConnectivityInSeconds) + ftConfig->getCheckpointSize());
+            case FaultToleranceType::UPSTREAM_BACKUP:
+                topNode->increaseUsedBandwidth(((ftConfig->getIngestionRate() / ftConfig->getAckRate()) * ftConfig->getAckSize())
+                                                                               + ((node->getChildren().size() * ftConfig->getAckSize()) * ftConfig->getAckInterval()));
+                topNode->increaseUsedBuffers(Optimizer::BasePlacementStrategy::calcUpstreamBackupMemorySingleNode(node, topology, ftConfig));
+            default:
+                break;
+        }
+    }
+    std::ofstream logFile;
+    logFile.open("/home/noah/placements.csv", std::ios_base::app);
+    std::stringstream topologyList;
+    topologyList.str(std::string());
+    topologyList << "1,";
+    topologyList << std::to_string(queryId) + ",";
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::sort(executionNodes.begin(), executionNodes.end(), [](ExecutionNodePtr a, ExecutionNodePtr b){return a->getId() < b->getId();});
+    for(auto& node : executionNodes){
+        if(!node->getChildren().empty()){
+            topologyList << std::to_string(node->getId()) + "-";
+        }else{
+            topologyList << std::to_string(node->getId());
+        }
+    }
+    topologyList << ",";
+    topologyList << toString(placedFT) + "\n";
+    logFile << topologyList.str();
+    logFile.close();
+
+
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+
+
 
     NES_INFO("\nTOPOLOGY ENDING:" + topology->toString())
 

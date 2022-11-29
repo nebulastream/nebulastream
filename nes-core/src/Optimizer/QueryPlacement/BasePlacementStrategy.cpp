@@ -643,6 +643,21 @@ namespace NES::Optimizer {
 
         }
 
+        std::vector<ExecutionNodePtr> BasePlacementStrategy::removeParentNodeFromVector(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> vector){
+
+            std::vector<ExecutionNodePtr> answer = vector;
+
+            answer.erase(std::remove_if(
+                             answer.begin(), answer.end(),
+                                          [executionNode](const ExecutionNodePtr e){
+                                              return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
+                                          }), answer.end());
+
+
+            return answer;
+
+        }
+
         int BasePlacementStrategy::getDepth(const ExecutionNodePtr& executionNode){
 
             int ncounter = 0;
@@ -1431,6 +1446,11 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
         FaultToleranceType BasePlacementStrategy::firstFitPlacement(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan){
 
             std::vector<ExecutionNodePtr> downstreamNeighbors = getNeighborNodes(globalExecutionPlan->getExecutionNodeByNodeId(1),0, getDepth(executionNode) - 1);
+            downstreamNeighbors.erase(std::remove_if(
+                downstreamNeighbors.begin(), downstreamNeighbors.end(),
+                [executionNode](const ExecutionNodePtr e){
+                    return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
+                }), downstreamNeighbors.end());
 
             if(checkActiveStandbyConstraints(executionNode, ftConfig, downstreamNeighbors, topology)){
                 return FaultToleranceType::ACTIVE_STANDBY;
@@ -1452,7 +1472,9 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                                                                   std::vector<ExecutionNodePtr> downstreamNeighbors, const TopologyPtr& topology){
             float activeStandbyOperatorCosts = getExecutionNodeOperatorCosts(getExecutionNodeParent(executionNode), ftConfig->getQueryId());
 
-            bool activeStandbyDownstreamWithAvailResourcesExists = std::any_of(downstreamNeighbors.begin(), downstreamNeighbors.end(), [topology, activeStandbyOperatorCosts](const ExecutionNodePtr& e){
+
+            bool activeStandbyDownstreamWithAvailResourcesExists = std::any_of(downstreamNeighbors.begin(), downstreamNeighbors.end(),
+                                                                               [topology, activeStandbyOperatorCosts](const ExecutionNodePtr& e){
                 return  topology->findNodeWithId(e->getId())->getAvailableResources()
                     >= activeStandbyOperatorCosts; });
 
@@ -1555,6 +1577,11 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                                             calcCheckpointingCost(executionNode, executionNodes, ftConfig, topology)};
 
             std::vector<ExecutionNodePtr> downstreamNeighbors = getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1);
+            downstreamNeighbors.erase(std::remove_if(
+                                          downstreamNeighbors.begin(), downstreamNeighbors.end(),
+                                          [executionNode](const ExecutionNodePtr e){
+                                              return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
+                                          }), downstreamNeighbors.end());
 
             double minCost = *std::min_element(std::begin(allCosts), std::end(allCosts));
 
@@ -1626,8 +1653,8 @@ return result;
 
 
             bool activeStandby = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
-                                             {return checkActiveStandbyConstraints(executionNode, ftConfig,
-                                                                                      getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
+                                                 {return checkActiveStandbyConstraints(executionNode, ftConfig,
+                                                                                      removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
 
             if(activeStandby){
@@ -1636,7 +1663,7 @@ return result;
 
             bool checkpointing = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                              {return checkCheckpointingConstraints(executionNode, ftConfig,
-                                                                                      getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
+                                                                                      removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
 
             if(checkpointing){

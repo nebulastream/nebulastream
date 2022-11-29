@@ -217,7 +217,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             std::ofstream statisticsFile;
-            statisticsFile.open("statistics.csv", ios::out);
+            statisticsFile.open("/home/noah/statistics.csv", ios::out);
             if (statisticsFile.is_open()) {
                 statisticsFile << "timestamp,";
                 statisticsFile << "queryId,";

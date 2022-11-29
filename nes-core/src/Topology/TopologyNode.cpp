@@ -240,11 +240,11 @@ return (childCost * (highestChildCapacity / this->getResourceCapacity()));
 
         int TopologyNode::getLatency() const { return latency; }
 
-        int TopologyNode::getAvailableBuffers() const { return availableBuffers; }
+        long TopologyNode::getAvailableBuffers() const { return availableBuffers; }
 
         int TopologyNode::getEffectiveLatency() const { return effectiveLatency; }
 
-        void TopologyNode::setAvailableBuffers(int availableBuffersSet){ this->availableBuffers = availableBuffersSet; }
+        void TopologyNode::setAvailableBuffers(long availableBuffersSet){ this->availableBuffers = availableBuffersSet; }
 
         void TopologyNode::increaseUsedBuffers(int usedBuffers){ this->availableBuffers -= usedBuffers; }
 

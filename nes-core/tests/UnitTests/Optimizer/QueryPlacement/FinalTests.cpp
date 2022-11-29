@@ -444,7 +444,7 @@ class FinalTests : public ::testing::TestWithParam<std::tuple<int,int,int,int,in
         queryId = sharedQueryPlan->getSharedQueryId();
         auto queryPlacementPhase =
             Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-        queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+        queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, sharedQueryPlan);
         executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
         NES_INFO("\n"+globalExecutionPlan->getAsString())
@@ -471,9 +471,11 @@ TEST_P(FinalTests, testTest){
     //setupTopologyWith3Nodes({5,3,1},{5120,5120,5120},{2000000,1000000});
     //setupTopologyWith3Nodes({200,200,200},{5120,5120,5120},{2000000,1000000});
     //setupTopologyWith3Nodes({std::get<0>(GetParam()),std::get<1>(GetParam()),std::get<2>(GetParam())},{100000,100000,100000},{2000000,2000000,2000000});
-    setupTopologyWith5Nodes({100,100,100,100,100},
-                            {100000000,100000000,100000000,100000000,100000000},
-                            {20000000,10000000,5000000,5000000,1000000});
+    setupTopologyWith5Nodes({std::get<0>(GetParam()),std::get<1>(GetParam()),std::get<2>(GetParam()),
+        std::get<3>(GetParam()),std::get<4>(GetParam())},{500000,500000,500000},{2000000,2000000,2000000});
+    //setupTopologyWith5Nodes({100,100,100,100,100},
+    //                        {100000000,100000000,100000000,100000000,100000000},
+    //                        {20000000,10000000,5000000,5000000,1000000});
     topology->findNodeWithId(1)->increaseUsedBandwidth(std::get<0>(GetParam()));
     topology->findNodeWithId(2)->increaseUsedBandwidth(std::get<1>(GetParam()));
     topology->findNodeWithId(3)->increaseUsedBandwidth(std::get<2>(GetParam()));
@@ -545,7 +547,6 @@ TEST_P(FinalTests, testTest){
                 additionalOperatorSlots += Optimizer::BasePlacementStrategy::getExecutionNodeOperatorCosts(
                     Optimizer::BasePlacementStrategy::getExecutionNodeParent(node), ftConfig->getQueryId());
                 additionalNetworkingBytesPerSecond += 2 * (ftConfig->getAckSize() * ftConfig->getAckInterval());
-                additionalNetworkingBytesPerSecond = 2 * (ftConfig->getAckSize() * ftConfig->getAckInterval());
                 additionalMemoryBytes += ftConfig->getOutputQueueSize(networkConnectivityInSeconds) + ftConfig->getCheckpointSize();
                 break;
             case FaultToleranceType::UPSTREAM_BACKUP:
@@ -603,11 +604,16 @@ INSTANTIATE_TEST_SUITE_P(TestSanity, FinalTests, testing::Combine(
                                                      //testing::Values(10,9,8,7,6,5,4,3,2,1),
                                                      //testing::Values(10,9,8,7,6,5,4,3,2,1),
                                                      //testing::Values(10,9,8,7,6,5,4,3,2,1),
-                                                     testing::Values(50000,500000,1000000,5000000,10000000,20000000),
-                                                     testing::Values(30000,50000,500000,1000000,5000000,10000000),
-                                                     testing::Values(20000,30000,50000,500000,1000000,5000000),
-                                                     testing::Values(20000,30000,50000,500000,1000000,5000000),
-                                                     testing::Values(10000,20000,30000,50000,500000,1000000),
+                                                     //testing::Values(50000,500000,1000000,5000000,10000000,20000000),
+                                                     //testing::Values(30000,50000,500000,1000000,5000000,10000000),
+                                                     //testing::Values(20000,30000,50000,500000,1000000,5000000),
+                                                     //testing::Values(20000,30000,50000,500000,1000000,5000000),
+                                                     //testing::Values(10000,20000,30000,50000,500000,1000000),
+                                                     testing::Values(5,4,3,2,1),
+                                                     testing::Values(5,4,3,2,1),
+                                                     testing::Values(5,4,3,2,1),
+                                                     testing::Values(5,4,3,2,1),
+                                                     testing::Values(5,4,3,2,1),
                                                      testing::Values(Query::from("worldCup").project(Attribute("clientID"),Attribute("objectID"),Attribute("size"),Attribute("timestamp")).map(Attribute("size")=9317 + Attribute("clientID")).filter(Attribute("clientID")<=2491).sink(NullOutputSinkDescriptor::create())
                                                                      )));
 
