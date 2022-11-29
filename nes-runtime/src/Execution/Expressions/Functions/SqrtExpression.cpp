@@ -32,7 +32,6 @@ Value<> SqrtExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value value = subExpression->execute(record);
 
-
     // As we don't know the exact type of value here, we have to check the type and then call the function.
     // value.as<Int8>() makes an explicit cast from Value to Value<Int8>.
     // In all cases we can call the same calculateSqrt function as under the hood C++ can do an implicit cast from
