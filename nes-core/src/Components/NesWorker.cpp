@@ -31,10 +31,10 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
