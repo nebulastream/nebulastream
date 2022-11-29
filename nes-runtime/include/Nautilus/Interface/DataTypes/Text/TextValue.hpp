@@ -42,8 +42,21 @@ class TextValue final : public BaseVariableSizeType {
      */
     static TextValue* create(const std::string& string);
 
-    static TextValue* create(Runtime::TupleBuffer buffer, uint32_t size);
-    static TextValue* create(Runtime::TupleBuffer buffer, const std::string& string);
+    /**
+     * @brief Creates a new TextValue from a string on a specific tuple buffer
+     * @param buffer
+     * @param string
+     * @return TextValue*
+     */
+    static TextValue* create(Runtime::TupleBuffer& buffer, uint32_t size);
+
+    /**
+     * @brief Creates a new TextValue from a string on a specific tuple buffer
+     * @param buffer
+     * @param string
+     * @return TextValue*
+     */
+    static TextValue* create(Runtime::TupleBuffer& buffer, const std::string& string);
 
 
     /**
@@ -58,21 +71,25 @@ class TextValue final : public BaseVariableSizeType {
      * @brief Returns the length in the number of characters of the text value
      * @return int32_t
      */
-    uint32_t length() const;
+    [[nodiscard]] uint32_t length() const;
 
     /**
      * @brief Returns the char* to the text.
      * @return char*
      */
-    char* str();
+    [[nodiscard]] char* str();
 
     /**
      * @brief Returns the const char* to the text.
      * @return const char*
      */
-    const char* c_str() const;
+    [[nodiscard]] const char* c_str() const;
 
-    Runtime::TupleBuffer getBuffer() const;
+    /**
+     * @brief Retrieves the underling buffer of this text value.
+     * @return Runtime::TupleBuffer
+     */
+    [[nodiscard]] Runtime::TupleBuffer getBuffer() const;
 
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.

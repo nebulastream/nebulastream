@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Nautilus/Interface/DataTypes/Text/TextValue.hpp"
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -30,7 +29,7 @@ char* TextValue::str() { return reinterpret_cast<char*>(this + DATA_FIELD_OFFSET
 
 const char* TextValue::c_str() const { return reinterpret_cast<const char*>(this + DATA_FIELD_OFFSET); }
 
-TextValue* TextValue::create(Runtime::TupleBuffer buffer, uint32_t size) {
+TextValue* TextValue::create(Runtime::TupleBuffer& buffer, uint32_t size) {
     buffer.retain();
     return new (buffer.getBuffer()) TextValue(size);
 }
@@ -46,7 +45,7 @@ TextValue* TextValue::create(const std::string& string) {
     return textValue;
 }
 
-TextValue* TextValue::create(Runtime::TupleBuffer buffer, const std::string& string) {
+TextValue* TextValue::create(Runtime::TupleBuffer& buffer, const std::string& string) {
     auto* textValue = create(buffer, string.length());
     std::memcpy(textValue->str(), string.c_str(), string.length());
     return textValue;
@@ -57,9 +56,7 @@ TextValue* TextValue::load(Runtime::TupleBuffer& buffer) {
     return reinterpret_cast<TextValue*>(buffer.getBuffer());
 }
 
-Runtime::TupleBuffer TextValue::getBuffer() const {
-    return Runtime::TupleBuffer::reinterpretAsTupleBuffer((void*) this);
-}
+Runtime::TupleBuffer TextValue::getBuffer() const { return Runtime::TupleBuffer::reinterpretAsTupleBuffer((void*) this); }
 
 TextValue::~TextValue() {
     // A text value always is backed by the data region of a tuple buffer.
