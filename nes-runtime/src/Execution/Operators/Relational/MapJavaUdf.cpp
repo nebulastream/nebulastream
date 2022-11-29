@@ -19,15 +19,6 @@ limitations under the License.
 
 namespace NES::Runtime::Execution::Operators {
 
-
-const std::string pojoNameInput = "IPojo";// TODO: get from java client
-const std::string pojoNameOutput = "OPojo";// TODO: get from java client
-//const std::string pojoName = "java/lang/Readable"; // TODO: get from java client
-const std::string udf_name = "map";// TODO: use method name??
-const std::string javaClass = "Udf";
-const SchemaPtr inputSchema = Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64);
-
-
 // Only used for test purposes
 MapJavaUdf::MapJavaUdf(std::string javaPath) {
     // Start VM
@@ -41,8 +32,8 @@ MapJavaUdf::MapJavaUdf(std::string javaPath) {
         options[2].optionString = (char*) "-verbose:class";// where to find java .class
         vm_args.nOptions = 3;                              // number of options
         vm_args.options = options;
-        vm_args.version = JNI_VERSION_1_2;// minimum Java version
-        vm_args.ignoreUnrecognized = true;// invalid options make the JVM init fail
+        vm_args.version = JNI_VERSION_1_2; // minimum Java version
+        vm_args.ignoreUnrecognized = true; // invalid options make the JVM init fail
 
         // create java VM anc check for errors
         jint rc = JNI_CreateJavaVM(&jvm, (void**) &env, &vm_args);
@@ -51,7 +42,7 @@ MapJavaUdf::MapJavaUdf(std::string javaPath) {
             std::cout << rc << std::endl;
             exit(EXIT_FAILURE);
         }
-        if (env->ExceptionOccurred()) {// TODO more error checking
+        if (env->ExceptionOccurred()) {
             env->ExceptionDescribe();  // print the stack trace
             exit(1);
         }
@@ -106,8 +97,8 @@ MapJavaUdf::MapJavaUdf(std::string className,
 
 void* findClassProxyInput(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
-    jclass pojoClass = mapUDF->getEnvironment()->FindClass(pojoNameInput.data());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getInputProxyName().c_str());
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "find class\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -117,8 +108,8 @@ void* findClassProxyInput(void* operatorPtr) {
 
 void* findClassProxyOutput(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
-    jclass pojoClass = mapUDF->getEnvironment()->FindClass(pojoNameOutput.data());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getOutputProxyName().c_str());
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "find class\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -130,7 +121,7 @@ void* allocateObject(void* operatorPtr, void* pojoClassPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto pojoClass = (jclass) pojoClassPtr;
     jobject pojo = mapUDF->getEnvironment()->AllocObject(pojoClass);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "alloc obj\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -145,7 +136,7 @@ void setIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jint) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "set int field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -159,7 +150,7 @@ int getIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int 
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
     int value = (int) mapUDF->getEnvironment()->GetIntField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "get int field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -174,7 +165,7 @@ void setFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, i
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jfloat) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "set float field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -188,7 +179,7 @@ float getFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, 
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
     float value = (float) mapUDF->getEnvironment()->GetFloatField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "get float field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -203,7 +194,7 @@ void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr,
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jboolean) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "set bool field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -217,7 +208,7 @@ float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
     bool value = (bool) mapUDF->getEnvironment()->GetBooleanField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         std::cout << "get bool field\n";
         mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
         exit(EXIT_FAILURE);
@@ -232,42 +223,47 @@ float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr
  */
 void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
-    jclass c1 = mapUDF->getEnvironment()->FindClass(javaClass.data());
-    if (c1 == nullptr) {
-        std::cerr << "ERROR: class not found !" << std::endl;
-        //env->ExceptionDescribe(); // try to find the class
-    }
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+
+    // find class implementing the map udf
+    jclass c1 = mapUDF->getEnvironment()->FindClass(mapUDF->getClassName().c_str());
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
 
-    // TODO we need to derive the signature somehow
-    // use for integer objects
-    //jmethodID mid = env->GetMethodID(c1, udf_name.c_str(), "(Ljava/lang/Integer;)Ljava/lang/Integer;");
-    jmethodID mid = mapUDF->getEnvironment()->GetMethodID(c1, udf_name.c_str(), "(I)I");
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
-    std::cout << "found map\n";
+    // find the constructor method
+    // We assume that the constructor
     jmethodID constructor = mapUDF->getEnvironment()->GetMethodID(c1, "<init>", "()V");
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "found constructor\n";
+
+    // Create obj by calling the constructor
     jobject object = mapUDF->getEnvironment()->NewObject(c1, constructor);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
     std::cout << "new object\n";
 
-    // TODO change depending on the output value the function
+    // Build function signature of map function
+    // Currently we assume that the pojos are *not* in java packages
+    // if this changes it should be reflected in the signature here
+    std::string sig = "(L" + mapUDF->getInputProxyName() + ";)L" + mapUDF->getOutputProxyName() + ";";
+
+    // Find udf function
+    jmethodID mid = mapUDF->getEnvironment()->GetMethodID(c1, mapUDF->getMethodName().c_str(), sig.c_str());
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
+        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "found map\n";
+
+    // Call udf function
     jobject udf_result = mapUDF->getEnvironment()->CallObjectMethod(object, mid, pojoObjectPtr);
-    //int udf_result = env->CallIntMethod(object, mid, pojoObjectPtr);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {// TODO more error checking
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
         exit(EXIT_FAILURE);
     }
@@ -276,11 +272,14 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
 
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto thisOperatorPtr = Value<MemRef>((std::int8_t *) this);
+
+    // Create proxy input pojo and load record values
     auto inputClassPtr = FunctionCall<>("findClassProxyInput", findClassProxyInput, thisOperatorPtr);
     auto inputPojoPtr = FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, inputClassPtr);
     for (int i = 0; i < (int) inputSchema->fields.size(); i++) {
         auto field = inputSchema->fields[i];
         auto fieldName = field->getName();
+
         if (field->getDataType()->isInteger()) {
             FunctionCall<>("setIntField",
                            setIntField,
@@ -308,14 +307,17 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         }
     }
 
+    // Get proxy pojo and call Udf
     auto outputClassPtr = FunctionCall<>("findClassProxyOutput", findClassProxyOutput, thisOperatorPtr);
     auto outputPojoPtr =  FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, outputClassPtr);
-
     outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, outputPojoPtr);
+
+    // Write result into result record
     auto result = new Record();
     for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
         auto field = outputSchema->fields[i];
         auto fieldName = field->getName();
+
         if (field->getDataType()->isInteger()) {
             Value<> val =
                 FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
@@ -330,6 +332,8 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             result->write(fieldName, val);
         }
     }
+
+    // Trigger execution of next operator
     child->execute(ctx, (Record&) result);
 }
 }// namespace NES::Runtime::Execution::Operators
