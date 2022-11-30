@@ -19,9 +19,7 @@ namespace NES::Nautilus::IR::Operations {
 BasicBlockInvocation::BasicBlockInvocation()
     : Operation(OperationType::BlockInvocation, Types::StampFactory::createVoidStamp()) {}
 
-void BasicBlockInvocation::setBlock(BasicBlockPtr block) { 
-    this->basicBlock = block;
-}
+void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = block; }
 
 BasicBlockPtr BasicBlockInvocation::getBlock() { return basicBlock; }
 

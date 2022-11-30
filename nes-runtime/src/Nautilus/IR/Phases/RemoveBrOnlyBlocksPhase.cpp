@@ -23,8 +23,7 @@
 #include <cstdint>
 #include <memory>
 #include <stack>
-#include <unordered_map>        
-
+#include <unordered_map>
 
 namespace NES::Nautilus::IR {
 
@@ -94,7 +93,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
                 newPredecessorBlocks.emplace_back(predecessor);
             }
             auto terminatorOp = predecessor.lock()->getTerminatorOp();
-            // If the predecessor has an if-operation as its terminator-operation, first check which branch points to 
+            // If the predecessor has an if-operation as its terminator-operation, first check which branch points to
             // the brOnlyBlock. If it is the true-branch-block, simply add the non-br-only-block as the new true-branch-block.
             // If it is the false-branch-block, add it as the new false-branch-block, and check whether the true-branch-block
             // is the same. If it is, we found an empty if-else case and can replace the if-operation with a branch-operation.
@@ -141,9 +140,9 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
 }
 
 void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBrOnlyBlock(
-        IR::BasicBlockPtr currentBlock,
-        std::stack<IR::BasicBlockPtr>& newBlocks,
-        std::unordered_set<std::string> visitedBlocks) {
+    IR::BasicBlockPtr currentBlock,
+    std::stack<IR::BasicBlockPtr>& newBlocks,
+    std::unordered_set<std::string> visitedBlocks) {
     // We are searching for branch-only-blocks. If the currentBlock has a different terminator operation, simply
     // add the next-block(s) to the newBlocks and proceed.
     auto terminatorOp = currentBlock->getTerminatorOp();

@@ -15,8 +15,8 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
@@ -37,7 +37,7 @@ class RemoveBrOnlyBlocksPhase {
      */
     std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir);
 
-    private:
+  private:
     /**
      * @brief Internal context object, which maintains statue during IR creation.
      */
@@ -78,9 +78,9 @@ class RemoveBrOnlyBlocksPhase {
          * @param candidates: Blocks that still need to be processed.
          * @param visitedBlocks: Blocks that have already been processed and can be disregarded.
          */
-        void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock, 
-                               std::stack<IR::BasicBlockPtr>& candidates, 
-                               std::unordered_set<std::string> visitedBlocks);
+        void inline processPotentialBrOnlyBlock(IR::BasicBlockPtr currentBlock,
+                                                std::stack<IR::BasicBlockPtr>& candidates,
+                                                std::unordered_set<std::string> visitedBlocks);
 
       private:
         std::shared_ptr<IR::IRGraph> ir;
@@ -88,5 +88,5 @@ class RemoveBrOnlyBlocksPhase {
     };
 };
 
-}// namespace NES::Nautilus::Tracing
+}// namespace NES::Nautilus::IR
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_REMOVEBRONLYBLOCKSPHASE_HPP_

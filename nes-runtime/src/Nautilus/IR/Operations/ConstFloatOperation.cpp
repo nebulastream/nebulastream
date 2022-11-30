@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <cstdint>
 #include <string>
