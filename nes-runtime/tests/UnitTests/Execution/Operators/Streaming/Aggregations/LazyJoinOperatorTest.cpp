@@ -11,6 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
@@ -79,35 +85,29 @@ class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecut
 
 
 
-/**
- * @brief tests a simple join with two sources in a columnar layout with one thread for both sides
- */
+
 TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
-    // Activating and installing error listener
-    auto runner = std::make_shared<TestRunner>();
-    NES::Exceptions::installGlobalErrorListener(runner);
 
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("f1_left", BasicType::UINT64)
+                          ->addField("f2_left", BasicType::UINT64)
+                          ->addField("timestamp", BasicType::UINT64);
 
-
-    auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("f1_left", BasicType::INT64)
-                          ->addField("f2_left", BasicType::INT64)
-                          ->addField("timestamp", BasicType::INT64);
-
-    auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("f1_right", BasicType::INT64)
-                          ->addField("f2_right", BasicType::INT64)
-                          ->addField("timestamp", BasicType::INT64);
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("f1_right", BasicType::UINT64)
+                          ->addField("f2_right", BasicType::UINT64)
+                          ->addField("timestamp", BasicType::UINT64);
 
     auto leftMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bm->getBufferSize());
 
-    auto joinFieldNameLeft = "f1_left";
-    auto joinFieldNameRight = "f1_right";
-    auto noWorkerThreads = 1UL;
-    auto joinSizeInByte = 16 * 1024 * 1024UL; // 16 GiB
-    auto numberOfBuffersPerWorker = 128UL;
-    auto numberOfTuplesToProduce = 100UL;
-    auto windowSize = 1000;
+    const auto joinFieldNameLeft = "f2_left";
+    const auto joinFieldNameRight = "f2_right";
+    const auto timeStampField = "timestamp";
+    const auto noWorkerThreads = 1UL;
+    const auto joinSizeInByte = 16 * 1024 * 1024UL; // 16 GiB
+    const auto numberOfBuffersPerWorker = 128UL;
+    const auto numberOfTuplesToProduce = 100UL;
+    const auto windowSize = 1000;
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
@@ -132,45 +132,122 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft);
+    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                    timeStampField, leftSchema);
 
 
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
-        auto record = Nautilus::Record({{"f1_left", Value<>(i)}, {"f2_left", Value<>(i % 10)}, {"timestamp", Value<>(i)}});
+        auto record = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 1)}, {"timestamp", Value<UInt64>(i)}});
         lazyJoinBuild->execute(executionContext, record);
 
-        auto hash = Util::murmurHash(record.read(joinFieldNameLeft));
-        auto hashTable = lazyJoinOpHandler->getCurrentWindow().getLocalHashTable(/* workerThreadId*/ 0, /*isLeftSide*/ true);
+        // TODO talk with Philipp if this is the correct way to do this
+        uint64_t joinKey = record.read(joinFieldNameLeft).as<UInt64>().getValue().getValue();
+        auto hash = Util::murmurHash(joinKey);
+        auto hashTable = lazyJoinOpHandler->getWindowToBeFilled().getLocalHashTable(/* workerThreadId*/ 0, /*isLeftSide*/ true);
         auto bucket = hashTable.getBucketLinkedList(hash & MASK);
 
-        bool found = false;
+        bool correctlyInserted = false;
         for (auto page : bucket->getPages()) {
             for (auto k = 0UL; k < page->size(); ++k) {
                 uint8_t* recordPtr = page->operator[](k);
-                auto bucketBuffer = Util::getRecordFromPointer(recordPtr, leftSchema);
-                auto recordBuffer = Util::getBufferFromNautilus(record, leftSchema);
+                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, leftSchema, bm);
+                auto recordBuffer = Util::getBufferFromNautilus(record, leftSchema, bm);
+
+                NES_INFO("\nBucketBuffer: " << Util::printTupleBufferAsCSV(bucketBuffer, leftSchema) << "\nRecordBuffer: " << Util::printTupleBufferAsCSV(recordBuffer, leftSchema));
 
                 if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), leftSchema->getSchemaSizeInBytes()) == 0) {
-                    found = true;
+
+                    correctlyInserted = true;
                     break;
                 }
             }
         }
-        ASSERT_TRUE(found);
+        ASSERT_TRUE(correctlyInserted);
     }
 }
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestColumnLayoutSingleThreaded) {
+TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
+    // set here the size of a fixedpage to only contain 2 tuples and then insert into a single bucket 100 tuples
+    // also set the number of buckets NUM_PARTITIONS to 1
     NES_NOT_IMPLEMENTED();
 }
 
-TEST_F(LazyJoinOperatorTest, joinSinkTestRowLayoutSingleThreaded) {
-    NES_NOT_IMPLEMENTED();
-}
+TEST_F(LazyJoinOperatorTest, joinSinkTest) {
+    // Activating and installing error listener
+    auto runner = std::make_shared<TestRunner>();
+    NES::Exceptions::installGlobalErrorListener(runner);
 
-TEST_F(LazyJoinOperatorTest, joinSinkTestColumnLayoutSingleThreaded) {
-    NES_NOT_IMPLEMENTED();
+
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                          ->addField("f1_left", BasicType::UINT64)
+                          ->addField("f2_left", BasicType::UINT64)
+                          ->addField("timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                           ->addField("f1_right", BasicType::UINT64)
+                           ->addField("f2_right", BasicType::UINT64)
+                           ->addField("timestamp", BasicType::UINT64);
+
+    const auto leftMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bm->getBufferSize());
+
+    const auto joinFieldNameLeft = "f2_left";
+    const auto joinFieldNameRight = "f2_right";
+    const auto timeStampField = "timestamp";
+    const auto noWorkerThreads = 1UL;
+    const auto joinSizeInByte = 16 * 1024 * 1024UL; // 16 GiB
+    const auto numberOfBuffersPerWorker = 128UL;
+    const auto numberOfTuplesToProduce = 100UL;
+    const auto windowSize = 2;
+
+    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
+    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
+                                                                       joinFieldNameLeft, joinFieldNameRight,
+                                                                       noWorkerThreads, noWorkerThreads,
+                                                                       noWorkerThreads,
+                                                                       joinSizeInByte, windowSize);
+
+    auto pipelineContext = PipelineExecutionContext( -1,// mock pipeline id
+                                                    0, // mock query id
+                                                    nullptr,
+                                                    noWorkerThreads,
+                                                    [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                                                        this->emittedBuffers.emplace_back(std::move(buffer));
+                                                    },
+                                                    [this](TupleBuffer& buffer) {
+                                                        this->emittedBuffers.emplace_back(std::move(buffer));
+                                                    },
+                                                    {lazyJoinOpHandler});
+
+    auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
+                                             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
+
+
+    auto handlerIndex = 0UL;
+    auto lazyJoinBuildLeft = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                    timeStampField, leftSchema);
+    auto lazyJoinBuildRight = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
+                                                                    timeStampField, rightSchema);
+    auto lazyJoinSink = std::make_shared<Operators::LazyJoinSink>(handlerIndex);
+
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
+        auto recordLeft = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
+        auto recordRight = Nautilus::Record({{"f1_right", Value<UInt64>(i)}, {"f2_right", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
+
+        lazyJoinBuildLeft->execute(executionContext, recordLeft);
+        lazyJoinBuildRight->execute(executionContext, recordRight);
+    }
+
+
+    for (auto tupleBuffer : emittedBuffers) {
+        RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        lazyJoinSink->open(executionContext, recordBuffer);
+    }
+
+
+
 }
 
 

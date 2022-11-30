@@ -21,13 +21,17 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord) : sizeOfRecord(sizeOfRecord) {
-    auto ptr = tail.fetch_add(CHUNK_SIZE);
+FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize) : sizeOfRecord(sizeOfRecord) {
+    auto ptr = tail.fetch_add(pageSize);
     NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
-    capacity = CHUNK_SIZE / sizeOfRecord;
+
+    capacity = pageSize / sizeOfRecord;
+    NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
+
     data = reinterpret_cast<uint8_t*>(ptr);
 
     bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
+    pos = 0;
 }
 
 uint8_t* FixedPage::append(const uint64_t hash)  {
@@ -36,7 +40,9 @@ uint8_t* FixedPage::append(const uint64_t hash)  {
     }
 
     bloomFilter->add(hash);
-    return &data[pos];
+    uint8_t* ptr = &data[pos * sizeOfRecord];
+    pos++;
+    return ptr;
 }
 
 

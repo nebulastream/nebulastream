@@ -64,17 +64,35 @@ void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContex
     NES_DEBUG("stop LazyJoinOperatorHandler");
 }
 void LazyJoinOperatorHandler::createNewLocalHashTables() {
-    lazyJoinWindows.emplace(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
+    lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
                                            totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
-                                           joinSchemaRight->getSchemaSizeInBytes());
+                                           joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp
+                                 );
 }
 
-void LazyJoinOperatorHandler::deleteCurrentWindow() {
-    lazyJoinWindows.pop();
+void LazyJoinOperatorHandler::deleteWindow(size_t timeStamp) {
+    for (auto it = lazyJoinWindows.begin(); it != lazyJoinWindows.end(); ++it) {
+        if (timeStamp <= it->getLastTupleTimeStamp()) {
+            lazyJoinWindows.erase(it);
+            break;
+        }
+    }
+
 }
 
-LazyJoinWindow& LazyJoinOperatorHandler::getCurrentWindow() {
-    return lazyJoinWindows.front();
+LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
+    for (auto& lazyJoinWindow : lazyJoinWindows) {
+        if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
+            return lazyJoinWindow;
+        }
+    }
+
+    NES_THROW_RUNTIME_ERROR("Could not find lazyJoinWindow");
+
+}
+
+LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled() {
+    return getWindow(lastTupleTimeStamp);
 }
 void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment) {
     lastTupleTimeStamp += increment;
