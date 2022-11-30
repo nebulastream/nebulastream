@@ -21,5 +21,6 @@ add_source_files(nes-core
         EnumConfOption.cpp
         BaseConfiguration.cpp
         ConfigurationKeys.cpp
-)
+        PropertyKeys.cpp
+        )
 

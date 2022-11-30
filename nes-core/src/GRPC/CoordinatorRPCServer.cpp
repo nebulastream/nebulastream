@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/PropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -41,24 +42,31 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
       locationService(locationService){};
 
-Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
+Status CoordinatorRPCServer::RegisterWorker(ServerContext*, const RegisterWorkerRequest* request, RegisterWorkerReply* reply) {
     uint64_t id;
+    auto workerProperties = request->properties();
+
+    auto address = std::any_cast<std::string>(workerProperties[ADDRESS]);
+    auto grpcPort = std::any_cast<int64_t>(workerProperties[GRPC_PORT]);
+    auto dataPort = std::any_cast<int64_t>(workerProperties[DATA_PORT]);
+    auto slots = std::any_cast<int64_t>(workerProperties[SLOTS]);
+
     if (request->has_coordinates()) {
         NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
+        id = topologyManagerService->registerNode(address,
+                                                  grpcPort,
+                                                  dataPort,
+                                                  slots,
                                                   NES::Spatial::Index::Experimental::Location(request->coordinates()),
                                                   NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
                                                   request->istfinstalled());
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
         of geographical location */
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
+        id = topologyManagerService->registerNode(address,
+                                                  grpcPort,
+                                                  dataPort,
+                                                  slots,
                                                   NES::Spatial::Index::Experimental::Location(),
                                                   NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
                                                   request->istfinstalled());
@@ -80,7 +88,8 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) {
+Status
+CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
     bool success = topologyManagerService->unregisterNode(request->id());
