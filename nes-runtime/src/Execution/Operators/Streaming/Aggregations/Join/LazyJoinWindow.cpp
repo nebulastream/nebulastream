@@ -39,7 +39,8 @@ uint64_t LazyJoinWindow::fetchSubBuild(uint64_t sub) {
 }
 
 LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                               size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight){
+                               size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
+                               size_t lastTupleTimeStamp) : lastTupleTimeStamp(lastTupleTimeStamp) {
 
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
@@ -55,7 +56,6 @@ LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinish
         localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, NUM_PARTITIONS, tail, overrunAddress));
         localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, NUM_PARTITIONS, tail, overrunAddress));
     }
-
 }
 
 LazyJoinWindow::~LazyJoinWindow() {
@@ -65,4 +65,6 @@ LazyJoinWindow::~LazyJoinWindow() {
 uint64_t LazyJoinWindow::fetchSubSink(uint64_t sub) {
     return counterFinishedSink.fetch_sub(sub);
 }
+
+size_t LazyJoinWindow::getLastTupleTimeStamp() const { return lastTupleTimeStamp; }
 } // namespace NES::Runtime::Execution

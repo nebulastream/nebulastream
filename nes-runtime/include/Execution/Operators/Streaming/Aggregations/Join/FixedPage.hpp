@@ -18,6 +18,8 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -27,7 +29,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class FixedPage{
   public:
-    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
+    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize = CHUNK_SIZE);
 
     FixedPage(FixedPage* page);
 
