@@ -19,6 +19,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::Util {
@@ -34,22 +36,23 @@ namespace NES::Runtime::Execution::Util {
         return hash;
     }
 
-    Runtime::TupleBuffer getRecordFromPointer(uint8_t* recordPtr, SchemaPtr schema) {
-        Runtime::TupleBuffer buffer;
+    Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        auto buffer = bufferManager->getBufferBlocking();
         uint8_t* bufferPtr = buffer.getBuffer();
 
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
         for (auto& field : schema->fields) {
             auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-            memcpy(recordPtr, bufferPtr, fieldType->size());
+            std::memcpy(bufferPtr, recordPtr, fieldType->size());
             bufferPtr += fieldType->size();
             recordPtr += fieldType->size();
         }
+        buffer.setNumberOfTuples(1);
         return buffer;
     }
 
-    Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema) {
-        Runtime::TupleBuffer buffer;
+    Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        auto buffer = bufferManager->getBufferBlocking();
         uint8_t* bufferPtr = buffer.getBuffer();
 
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -57,12 +60,42 @@ namespace NES::Runtime::Execution::Util {
             auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 
             auto fieldVal = nautilusRecord.read(field->getName());
-
-            memcpy(&fieldVal, bufferPtr, fieldType->size());
+            i do not think that this is possible... ask philipp
+            memcpy(bufferPtr, fieldVal, fieldType->size());
             bufferPtr += fieldType->size();
         }
 
-
+        buffer.setNumberOfTuples(1);
         return buffer;
+    }
+
+    std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
+        std::stringstream ss;
+        auto numberOfTuples = tbuffer.getNumberOfTuples();
+        auto* buffer = tbuffer.getBuffer<char>();
+        auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+        for (uint64_t i = 0; i < numberOfTuples; i++) {
+            uint64_t offset = 0;
+            for (uint64_t j = 0; j < schema->getSize(); j++) {
+                auto field = schema->get(j);
+                auto ptr = field->getDataType();
+                auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+                auto fieldSize = physicalType->size();
+                auto str = physicalType->convertRawToString(buffer + offset + i * schema->getSchemaSizeInBytes());
+                ss << str.c_str();
+                if (j < schema->getSize() - 1) {
+                    ss << ",";
+                }
+                offset += fieldSize;
+            }
+            //        #ifdef TFDEF
+            //        auto ts = std::chrono::system_clock::now();
+            //        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            //                                 ts.time_since_epoch()).count();
+            //        ss << "," << std::to_string(expulsionTime);
+            //        #endif
+            ss << std::endl;
+        }
+        return ss.str();
     }
 }

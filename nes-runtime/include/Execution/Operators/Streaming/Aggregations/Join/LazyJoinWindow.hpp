@@ -26,7 +26,8 @@ class LazyJoinWindow {
 
   public:
     explicit LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                   size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight);
+                            size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
+                            size_t lastTupleTimeStamp);
     virtual ~LazyJoinWindow();
 
     Operators::LocalHashTable& getLocalHashTable(size_t index, bool leftSide);
@@ -36,6 +37,8 @@ class LazyJoinWindow {
     uint64_t fetchSubBuild(uint64_t sub);
 
     uint64_t fetchSubSink(uint64_t sub);
+
+    size_t getLastTupleTimeStamp() const;
 
   private:
     std::vector<Operators::LocalHashTable> localHashTableLeftSide;
@@ -47,6 +50,7 @@ class LazyJoinWindow {
     uint8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
+    size_t lastTupleTimeStamp;
 };
 
 } // namespace NES::Runtime::Execution

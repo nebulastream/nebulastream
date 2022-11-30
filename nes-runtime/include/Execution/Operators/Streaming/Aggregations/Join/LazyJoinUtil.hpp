@@ -18,15 +18,15 @@ limitations under the License.
 #include <cstdint>
 #include <cstring>
 #include <sys/mman.h>
-
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution {
 
-static constexpr auto CHUNK_SIZE = 128;
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
+static constexpr auto CHUNK_SIZE = 128;
 static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
 static constexpr auto NUM_PREALLOCATED_PAGES = PREALLOCATED_SIZE / CHUNK_SIZE;
 static constexpr auto NUM_PARTITIONS = 512;
@@ -77,10 +77,18 @@ namespace Util {
  */
 uint64_t murmurHash(uint64_t key);
 
+/**
+ * @brief create CSV lines from the tuples
+ * @param tbuffer the tuple buffer
+ * @param schema how to read the tuples from the buffer
+ * @return a full string stream as string
+ */
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
-Runtime::TupleBuffer getRecordFromPointer(uint8_t* recordPtr, SchemaPtr schema);
 
-Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema);
+Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager);
+
+Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 
 

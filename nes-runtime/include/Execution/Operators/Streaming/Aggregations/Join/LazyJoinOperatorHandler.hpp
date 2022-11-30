@@ -56,9 +56,12 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
 
     void createNewLocalHashTables();
-    void deleteCurrentWindow();
 
-    LazyJoinWindow& getCurrentWindow();
+    void deleteWindow(size_t timeStamp);
+
+    LazyJoinWindow& getWindow(size_t timeStamp);
+
+    LazyJoinWindow& getWindowToBeFilled();
 
     void incLastTupleTimeStamp(uint64_t increment);
 
@@ -69,7 +72,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    std::queue<LazyJoinWindow> lazyJoinWindows;
+    std::list<LazyJoinWindow> lazyJoinWindows;
     size_t maxNoWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;

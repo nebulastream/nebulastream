@@ -14,14 +14,19 @@
 
 #include <atomic>
 
-#include <Execution/RecordBuffer.hpp>
+#include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-
+#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,7 +34,7 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(&opHandler->getCurrentWindow().getLocalHashTable(index, isLeftSide));
+    return static_cast<void*>(&opHandler->getWindowToBeFilled().getLocalHashTable(index, isLeftSide));
 }
 
 
@@ -51,15 +56,15 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    auto& sharedJoinHashTable = opHandler->getCurrentWindow().getSharedJoinHashTable(isLeftSide);
-    auto& localHashTable = opHandler->getCurrentWindow().getLocalHashTable(workerIdIndex, isLeftSide);
+    auto& sharedJoinHashTable = opHandler->getWindowToBeFilled().getSharedJoinHashTable(isLeftSide);
+    auto& localHashTable = opHandler->getWindowToBeFilled().getLocalHashTable(workerIdIndex, isLeftSide);
 
 
     for (auto a = 0; a < NUM_PARTITIONS; ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
     }
 
-    if (opHandler->getCurrentWindow().fetchSubBuild(1) == 1) {
+    if (opHandler->getWindowToBeFilled().fetchSubBuild(1) == 1) {
         // If the last thread/worker is done with building, then start the second phase (comparing buckets)
         for (auto i = 0; i < NUM_PARTITIONS; ++i) {
             auto partitionId = i + 1;
@@ -101,26 +106,31 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef);
 
-    if (record.read("timestamp") != lastTupleWindowRef) {
-
+    if (record.read(timeStampField) >= lastTupleWindowRef) {
         Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
                                ctx.getWorkerContext(), ctx.getWorkerId(), Value<Boolean>(isLeftSide));
 
         Nautilus::FunctionCall("incrementLastTupleTimeStampRuntime", incrementLastTupleTimeStampRuntime, operatorHandlerMemRef);
-
     }
 
 
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall, localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
-    for (auto& field : record.getAllFields()) {
-        entryMemRef.store(record.read(field));
-        entryMemRef = entryMemRef + record.read(field);
+    for (auto& field : schema->fields) {
+        auto const fieldName = field->getName();
+        auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        auto int8FieldType = Int8((int8_t)fieldType->size());
+
+        entryMemRef.store(record.read(fieldName));
+        entryMemRef = entryMemRef->add(int8FieldType);
     }
 
 }
 
-LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName)
-    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName){
+LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
+                             const std::string& timeStampField, SchemaPtr schema)
+    : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
+      schema(schema) {
 }
 
 
