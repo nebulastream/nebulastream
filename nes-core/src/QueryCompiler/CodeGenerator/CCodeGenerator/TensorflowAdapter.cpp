@@ -76,10 +76,10 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
         int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
-        float* input = (float*) malloc(input_size);
+        double* input = (double*) malloc(input_size);
 
         for (int i = 0; i < n; ++i) {
-            input[i] = (float) va_arg(vl, double);
+            input[i] = (double) va_arg(vl, double);
         }
         va_end(vl);
 
