@@ -49,7 +49,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
     if (dataType == 1){
         va_list vl;
         va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 4);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
         int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
         int* input = (int*) malloc(input_size);
@@ -61,7 +61,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 4);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
         free(input);
         if (output != nullptr) {
@@ -73,7 +73,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
     } else if (dataType == 2) {
         va_list vl;
         va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 11);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
         int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
         float* input = (float*) malloc(input_size);
@@ -85,7 +85,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 11);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
         free(input);
         if (output != nullptr) {
@@ -97,7 +97,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
     }  else if (dataType == 3) {
         va_list vl;
         va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 6);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
         int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
         bool* input = (bool*) malloc(input_size);
@@ -109,7 +109,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 6);
+        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
         free(input);
         if (output != nullptr) {
