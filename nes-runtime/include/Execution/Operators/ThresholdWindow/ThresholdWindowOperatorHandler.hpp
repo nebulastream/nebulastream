@@ -15,6 +15,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOWOPERATORHANDLER_HPP_
 
+#include <Execution/Aggregation/SumAggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
 #include <utility>
@@ -25,7 +26,8 @@ namespace NES::Runtime::Execution::Operators {
  */
 class ThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    ThresholdWindowOperatorHandler() {}
+    explicit ThresholdWindowOperatorHandler(std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue)
+        : sumAggregationValue(std::move(sumAggregationValue)) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
 
@@ -33,9 +35,10 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
 
     // TODO 3250: maybe move from this class to the aggregation
     int64_t sum = 0L;        // stores the sum aggregation
-    uint64_t recordCount = 0;// counts the records contributing to the aggregate
+    uint64_t recordCount = 0;// counts the records contributing to the aggregate,  // TODO 3250: maybe move this count to the AggregationValue
     bool isWindowOpen = false;
     std::mutex mutex;
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue; // TODO 3250: change to the base class once added
 };
 }// namespace NES::Runtime::Execution::Operators
 
