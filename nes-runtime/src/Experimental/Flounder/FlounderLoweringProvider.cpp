@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
-#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Experimental/Flounder/FlounderLoweringProvider.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
+#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>

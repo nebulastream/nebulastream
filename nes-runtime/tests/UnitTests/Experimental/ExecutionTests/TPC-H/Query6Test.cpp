@@ -15,20 +15,20 @@
 #ifdef USE_BABELFISH
 #include <Experimental/Babelfish/BabelfishPipelineCompilerBackend.hpp>
 #endif
+#include <API/Schema.hpp>
+#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
+#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
 #include <Experimental/ExecutionEngine/InterpretationBasedPipelineExecutionEngine.hpp>
+#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/SubExpression.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Experimental/Interpreter/Operators/Aggregation/AvgFunction.hpp>
 #include <Experimental/Interpreter/Operators/GroupedAggregation.hpp>
+#include <Experimental/Utility/TPCHUtil.hpp>
 #include <Util/Timer.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <API/Schema.hpp>
-#include <Experimental/ExecutionEngine/CompilationBasedPipelineExecutionEngine.hpp>
-#include <Experimental/ExecutionEngine/ExecutablePipeline.hpp>
-#include <Experimental/ExecutionEngine/PhysicalOperatorPipeline.hpp>
-#include <Experimental/Utility/TPCHUtil.hpp>
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
