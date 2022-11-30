@@ -46,7 +46,9 @@ class MLModelDeploymentTest : public Testing::NESBaseTest {
     }
 };
 
-
+/**
+ * tests integer input to ML inference model
+ */
 TEST_F(MLModelDeploymentTest, testSimpleMLModelDeployment) {
     struct IrisData {
         uint64_t id;
@@ -109,6 +111,9 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeployment) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
 }
 
+/**
+ *  tests double input to ML inference model
+ */
 TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
     struct IrisData {
         uint64_t id;
@@ -171,6 +176,9 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
 }
 
+/**
+ * tests boolean input to ml inference operator
+ */
 TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
 
     auto irisSchema = Schema::create()
