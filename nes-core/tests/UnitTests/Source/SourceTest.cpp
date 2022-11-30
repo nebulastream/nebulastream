@@ -51,6 +51,7 @@
 #include <Sources/TCPSource.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
@@ -2118,6 +2119,34 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanTuple) {
+    // create metrics and plan for MonitoringSource
+    auto testCollector = std::make_shared<Monitoring::CpuCollector>();
+    auto cpuMetrics = testCollector->readMetric()->getValue<Monitoring::CpuMetricsWrapper>();
+    uint64_t numCpuMetrics = cpuMetrics.size();
+    ASSERT_TRUE(numCpuMetrics > 0);
+
+
+    auto schema = Monitoring::CpuMetrics::getSchema("");
+    auto bufferSize = numCpuMetrics - 1;
+
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 12);
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value(); // MetricCollectorTest.cpp l. 80
+
+    //uint64_t numBuffers = 1;
+    MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
+                                               bufferManager,
+                                               this->nodeEngine->getQueryManager(),
+                                               this->operatorId,
+                                               this->numSourceLocalBuffersDefault,
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+
+    // open starts the bufferManager, otherwise receiveData will fail
+    monitoringDataSource.open();
+    auto buf = monitoringDataSource.receiveData();
 }
 
 }// namespace NES
