@@ -26,21 +26,23 @@
 namespace NES::Nautilus::IR {
 
 /**
- * @brief This phase converts a execution trace to SSA form.
- * This implies that, each value is only assigned and that all parameters to a basic block are phaseed by block arguments.
+ * @brief This phase takes an IR graph with blocks that either have branch- or if-operations as terminator-operations.
+ *        Subsequently, this phase detects which if-operations are loop operations, converts them and enriches them with
+ *        relevant information. Furthermore, if-operations are matched with their correct corresponding merge-blocks,.
+ *        Also if-operations are enriched with information on which blocks branch to the merge-blocks. 
+ *        This is required to correctly create MLIR YieldOps.
  */
 class StructuredControlFlowPhase {
   public:
     /**
-     * @brief Applies the phase on a execution trace.
-     * @param Trace.
-     * @return The modified execution trace.
+     * @brief Applies the StructuredControlFlowPhase to the supplied IR graph.
+     * @param IR graph that the StructuredControlFlowPhase is applied to.
      */
-    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir);
+    void apply(std::shared_ptr<IR::IRGraph> ir);
 
     private:
     /**
-     * @brief Internal context object, which maintains statue during IR creation.
+     * @brief Internal context object contains phase logic and state.
      */
     class StructuredControlFlowPhaseContext {
       public:
@@ -53,17 +55,15 @@ class StructuredControlFlowPhase {
         };
 
         /**
-         * @brief Constructor for the context of the remove br-only-blocks phase.
+         * @brief Constructor for the context of the StructuredControlFlowPhase.
          * 
-         * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
+         * @param ir: IRGraph to which StructuredControlFlowPhase will be applied.
          */
         StructuredControlFlowPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         /**
-         * @brief Actually applies the remove br-only-blocks phase to the IR.
-         * 
-         * @return std::shared_ptr<IR::IRGraph> The IR without br-only-blocks.
+         * @brief Actually applies the StructuredControlFlowPhase to the IR.
          */
-        std::shared_ptr<IR::IRGraph> process();
+        void process();
 
       private:
 

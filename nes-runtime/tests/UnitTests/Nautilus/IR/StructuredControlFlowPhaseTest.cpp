@@ -27,7 +27,16 @@
 
 
 namespace NES::Nautilus {
-
+/**
+ * @brief The StructuredControlFlowPhaseTest contains a battery of tests that all do the following:
+ *          -> they call a unique(in the scope of this test) Nautilus function with the same name as the test
+ *          -> they apply symbolic execution to the Nautilus function to get a function trace
+ *          -> the function trace passes the SSA-, and the TraceToIRConversion phases, which generates an IR graph
+ *          -> the IR graph passes the AddPredecessor- and Remove-Branch-Only phases, which operate on the IR graph
+ *          -> then, the IR graph passes the FindLoopHeader- and the CreateIfOperation phases
+ *          -> Lastly, we iterate over the resulting IR graph and check whether loop blocks have been marked as loop
+ *             blocks, and whether if-operations have been matched with their correct corresponding merge-blocks
+ */
 class StructuredControlFlowPhaseTest : public testing::Test, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
@@ -45,15 +54,16 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phasees.
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhasees(std::function<Value<>()> nautilusFunction) {
+    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
+    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
         auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() {
             return nautilusFunction();
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
-        ir = removeBrOnlyBlocksPhase.apply(ir);
-        return structuredControlFlowPhase.apply(ir);
+        removeBrOnlyBlocksPhase.apply(ir);
+        structuredControlFlowPhase.apply(ir);
+        return ir;
     }
 
     struct CorrectBlockValues {
@@ -116,7 +126,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
 };
 
 //==----------------------------------------------------------==//
-//==------------------ NAUTILUS PHASE TESTS -------------------==//
+//==------------------ NAUTILUS PHASE TESTS ------------------==//
 //==----------------------------------------------------------==//
 Value<> threeIfOperationsOneNestedThreeMergeBlocks_1() {
     Value agg = Value(0);
@@ -143,7 +153,7 @@ TEST_P(StructuredControlFlowPhaseTest, 1_threeIfOperationsOneNestedThreeMergeBlo
     createCorrectBlock(correctBlocks, "0", 0, "7");
     createCorrectBlock(correctBlocks, "3", 0, "9");
     createCorrectBlock(correctBlocks, "7", 0, "8");
-    auto ir = createTraceAndApplyPhasees(&threeIfOperationsOneNestedThreeMergeBlocks_1);
+    auto ir = createTraceAndApplyPhases(&threeIfOperationsOneNestedThreeMergeBlocks_1);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -171,7 +181,7 @@ TEST_P(StructuredControlFlowPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     createCorrectBlock(correctBlocks, "0", 0, "9");
     createCorrectBlock(correctBlocks, "1", 0, "8");
     createCorrectBlock(correctBlocks, "8", 0, "9");
-    auto ir = createTraceAndApplyPhasees(&doubleVerticalDiamondInTrueBranch_2);
+    auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -203,7 +213,7 @@ TEST_P(StructuredControlFlowPhaseTest, 3_doubleHorizontalDiamondWithOneMergeBloc
     createCorrectBlock(correctBlocks, "1", 0, "12");
     createCorrectBlock(correctBlocks, "2", 0, "12");
     createCorrectBlock(correctBlocks, "12", 0, "11");
-    auto ir = createTraceAndApplyPhasees(&doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3);
+    auto ir = createTraceAndApplyPhases(&doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -230,7 +240,7 @@ TEST_P(StructuredControlFlowPhaseTest, 4_oneMergeBlockThatClosesOneIfAndBecomesM
     createCorrectBlock(correctBlocks, "0", 0, "9");
     createCorrectBlock(correctBlocks, "1", 0, "9");
     createCorrectBlock(correctBlocks, "4", 0, "9");
-    auto ir = createTraceAndApplyPhasees(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4);
+    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -261,7 +271,7 @@ TEST_P(StructuredControlFlowPhaseTest, 5_oneMergeBlockThatClosesOneIfAndBecomesM
     createCorrectBlock(correctBlocks, "1", 0, "12");
     createCorrectBlock(correctBlocks, "4", 0, "12");
     createCorrectBlock(correctBlocks, "7", 1, "");
-    auto ir = createTraceAndApplyPhasees(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
+    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -292,7 +302,7 @@ TEST_P(StructuredControlFlowPhaseTest, 6_oneMergeBlockThatClosesOneIfAndBecomesM
     createCorrectBlock(correctBlocks, "1", 0, "12");
     createCorrectBlock(correctBlocks, "4", 0, "12");
     createCorrectBlock(correctBlocks, "12", 1, "");
-    auto ir = createTraceAndApplyPhasees(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6);
+    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -312,7 +322,7 @@ TEST_P(StructuredControlFlowPhaseTest, 7_loopMergeBlockBeforeCorrespondingIfOper
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     createCorrectBlock(correctBlocks, "6", 2, "");
     createCorrectBlock(correctBlocks, "1", 0, "6");
-    auto ir = createTraceAndApplyPhasees(&loopMergeBlockBeforeCorrespondingIfOperation_7);
+    auto ir = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_7);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -342,7 +352,7 @@ TEST_P(StructuredControlFlowPhaseTest, 8_mergeLoopMergeBlockWithLoopFollowUp) {
     createCorrectBlock(correctBlocks, "3", 0, "12");
     createCorrectBlock(correctBlocks, "12", 2, "");
     createCorrectBlock(correctBlocks, "10", 1, "");
-    auto ir = createTraceAndApplyPhasees(&mergeLoopMergeBlockWithLoopFollowUp_8);
+    auto ir = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_8);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -412,7 +422,7 @@ TEST_P(StructuredControlFlowPhaseTest, 9_loopHeaderWithNineBackLinks) {
     createCorrectBlock(correctBlocks, "17", 0, "36");
     createCorrectBlock(correctBlocks, "15", 0, "36");
     createCorrectBlock(correctBlocks, "29", 0, "36");
-    auto ir = createTraceAndApplyPhasees(&LoopHeaderWithNineBackLinks_9);
+    auto ir = createTraceAndApplyPhases(&LoopHeaderWithNineBackLinks_9);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -433,7 +443,7 @@ TEST_P(StructuredControlFlowPhaseTest, 10_mergeLoopBlock) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     createCorrectBlock(correctBlocks, "0", 0, "6");
     createCorrectBlock(correctBlocks, "6", 1, "");
-    auto ir = createTraceAndApplyPhasees(&mergeLoopBlock_10);
+    auto ir = createTraceAndApplyPhases(&mergeLoopBlock_10);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -507,7 +517,7 @@ TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNes
     createCorrectBlock(correctBlocks, "36", 0, "42");
     createCorrectBlock(correctBlocks, "45", 2, "");
     createCorrectBlock(correctBlocks, "37", 0, "45");
-    auto ir = createTraceAndApplyPhasees(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
+    auto ir = createTraceAndApplyPhases(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -521,7 +531,7 @@ Value<> emptyIfElse_12() {
     return agg;
 }
 TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
-    auto ir = createTraceAndApplyPhasees(&emptyIfElse_12);
+    auto ir = createTraceAndApplyPhases(&emptyIfElse_12);
     auto convertedIfOperation = ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp();
     ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp());
@@ -539,7 +549,7 @@ Value<> MergeBlockRightAfterBranchSwitch_13() {
 }
 TEST_P(StructuredControlFlowPhaseTest, 13_MergeBlockRightAfterBranchSwitch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&MergeBlockRightAfterBranchSwitch_13);
+    auto ir = createTraceAndApplyPhases(&MergeBlockRightAfterBranchSwitch_13);
     createCorrectBlock(correctBlocks, "0", 0, "3");
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
@@ -557,7 +567,7 @@ Value<> StartBlockIsMergeBlock_14() {
 }
 TEST_P(StructuredControlFlowPhaseTest, 14_StartBlockIsMergeBlock) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&StartBlockIsMergeBlock_14);
+    auto ir = createTraceAndApplyPhases(&StartBlockIsMergeBlock_14);
     createCorrectBlock(correctBlocks, "6", 2, "");
     createCorrectBlock(correctBlocks, "1", 0, "6");
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
@@ -592,12 +602,12 @@ Value<> correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15() {
 }
 TEST_P(StructuredControlFlowPhaseTest, 15_correctMergeBlockForwardingAfterFindingMergeBlocks) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&correctMergeBlockForwardingAfterFindingMergeBlocksOne_15);
+    auto ir = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksOne_15);
     createCorrectBlock(correctBlocks, "0", 0, "5");
     createCorrectBlock(correctBlocks, "2", 0, "6");
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
     correctBlocks.clear();
-    ir = createTraceAndApplyPhasees(&correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15);
+    ir = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15);
     createCorrectBlock(correctBlocks, "0", 0, "6");
     createCorrectBlock(correctBlocks, "2", 0, "6");
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
@@ -622,7 +632,7 @@ Value<> OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_1
 }
 TEST_P(StructuredControlFlowPhaseTest, 16_OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_16);
+    auto ir = createTraceAndApplyPhases(&OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_16);
     createCorrectBlock(correctBlocks, "0", 0, "9");
     createCorrectBlock(correctBlocks, "2", 0, "9");
     createCorrectBlock(correctBlocks, "3", 0, "9");
@@ -646,7 +656,7 @@ Value<> NestedLoopWithFalseBranchPointingToParentLoopHeader_17() {
 }
 TEST_P(StructuredControlFlowPhaseTest, 17_NestedLoopWithFalseBranchPointingToParentLoopHeader) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&NestedLoopWithFalseBranchPointingToParentLoopHeader_17);
+    auto ir = createTraceAndApplyPhases(&NestedLoopWithFalseBranchPointingToParentLoopHeader_17);
     createCorrectBlock(correctBlocks, "9", 2, "");
     createCorrectBlock(correctBlocks, "1", 0, "9");
     createCorrectBlock(correctBlocks, "8", 1, "");
@@ -676,7 +686,7 @@ Value<> InterruptedMergeBlockForwarding() {
 }
 TEST_P(StructuredControlFlowPhaseTest, DISABLED_InterruptedMergeBlockForwarding) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&InterruptedMergeBlockForwarding);
+    auto ir = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding);
     // createCorrectBlock(correctBlocks, "0", 0, "11");
     // createCorrectBlock(correctBlocks, "2", 0, "11");
     // createCorrectBlock(correctBlocks, "3", 0, "11");
@@ -706,7 +716,7 @@ Value<> TracingBreaker() {
 }
 TEST_P(StructuredControlFlowPhaseTest, DISABLED_TracingBreaker) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhasees(&TracingBreaker);
+    auto ir = createTraceAndApplyPhases(&TracingBreaker);
     createCorrectBlock(correctBlocks, "0", 0, "5");
     createCorrectBlock(correctBlocks, "5", 0, "11");
     createCorrectBlock(correctBlocks, "4", 0, "11");
