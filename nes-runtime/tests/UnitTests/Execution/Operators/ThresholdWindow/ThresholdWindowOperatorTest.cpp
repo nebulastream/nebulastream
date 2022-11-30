@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -22,7 +24,6 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-
 #include <memory>
 #include <utility>
 
@@ -78,13 +79,16 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -119,13 +123,16 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 2, readF2, aggregationResultFieldName, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -160,13 +167,16 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, sumAgg, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>();
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));

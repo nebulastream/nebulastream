@@ -14,6 +14,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
@@ -126,7 +127,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        auto handler = std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>();
+        // TODO 3250 change with a factory for different aggregation values
+        auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
+
+        auto handler =
+            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -194,12 +199,18 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     // Currently only support a single aggregation and must be a Sum aggregation
     // TODO 3250: Support other aggregation functions
     if (aggregations.size() != 1) {
         NES_NOT_IMPLEMENTED();
     } else {
-        if (aggregations[0]->getType() != Windowing::WindowAggregationDescriptor::Sum) {
+        auto aggregation = aggregations[0];
+        if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
+            aggregationFunction =
+                std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregation->getInputStamp(),
+                                                                                          aggregation->getFinalAggregateStamp());
+        } else {
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -214,6 +225,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                                             minCount,
                                                                             aggregatedFieldAccess,
                                                                             aggregationResultFieldName,
+                                                                            aggregationFunction,
                                                                             handlerIndex);
 }
 

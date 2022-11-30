@@ -13,13 +13,13 @@
 */
 
 #include <API/Schema.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
@@ -79,8 +79,10 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$sum";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, 0);
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -111,7 +113,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>();
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
