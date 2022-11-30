@@ -28,16 +28,16 @@
 using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
 
-std::shared_ptr<IR::IRGraph> StructuredControlFlowPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
+void StructuredControlFlowPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
     auto phaseContext = StructuredControlFlowPhaseContext(std::move(ir));
-    return phaseContext.process();
+    phaseContext.process();
 };
 
-std::shared_ptr<IR::IRGraph> StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
+void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     findLoopHeadBlocks(rootOperation->getFunctionBasicBlock());
     createIfOperations(rootOperation->getFunctionBasicBlock());
-    return std::move(ir);
+    // return std::move(ir);
 }
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchForLoopHeadBlocks(

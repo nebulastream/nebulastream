@@ -31,15 +31,14 @@ namespace NES::Nautilus::IR {
 class RemoveBrOnlyBlocksPhase {
   public:
     /**
-     * @brief Applies the phase on a execution trace.
-     * @param Trace.
-     * @return The modified execution trace.
+     * @brief Applies the RemoveBrOnlyBlocksPhase to the supplied IR graph.
+     * @param IR graph that the RemoveBrOnlyBlocksPhase is applied to.
      */
-    std::shared_ptr<IR::IRGraph> apply(std::shared_ptr<IR::IRGraph> ir);
+    void apply(std::shared_ptr<IR::IRGraph> ir);
 
   private:
     /**
-     * @brief Internal context object, which maintains statue during IR creation.
+     * @brief Internal context object contains phase logic and state.
      */
     class RemoveBrOnlyBlocksPhaseContext {
       public:
@@ -49,12 +48,11 @@ class RemoveBrOnlyBlocksPhase {
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
         RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
-         * 
-         * @return std::shared_ptr<IR::IRGraph> The IR without br-only-blocks.
          */
-        std::shared_ptr<IR::IRGraph> process();
+        void process();
 
       private:
         /**
