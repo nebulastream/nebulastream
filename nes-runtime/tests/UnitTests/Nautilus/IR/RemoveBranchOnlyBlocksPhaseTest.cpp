@@ -52,7 +52,7 @@ class RemoveBranchOnlyBlocksPhaseTest : public testing::Test, public AbstractCom
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
-        return removeBrOnlyBlocksPass.apply(ir);
+        return removeBrOnlyBlocksPhase.apply(ir);
     }
 
     /**
