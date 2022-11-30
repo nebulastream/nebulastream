@@ -12,15 +12,13 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <Util/Timer.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <API/Schema.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -33,6 +31,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <execinfo.h>
 #include <fstream>

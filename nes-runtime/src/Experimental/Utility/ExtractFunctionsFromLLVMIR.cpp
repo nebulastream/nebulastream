@@ -14,20 +14,22 @@
 
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
 #include <llvm/Bitcode/BitcodeWriterPass.h>
+#include <llvm/Demangle/Demangle.h>
+#include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <llvm/IR/DataLayout.h>
+#include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/DebugInfo.h>
-#include <llvm/IR/Mangler.h>
-#include <llvm/Demangle/Demangle.h>
-#include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Mangler.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IRReader/IRReader.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
 
+#include <cstddef>
+#include <iostream>
 #include <llvm/Pass.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/Error.h>
@@ -38,8 +40,6 @@
 #include <llvm/Support/SystemUtils.h>
 #include <llvm/Support/ToolOutputFile.h>
 #include <llvm/Transforms/IPO.h>
-#include <cstddef>
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
