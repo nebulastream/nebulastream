@@ -13,16 +13,16 @@
 */
 
 syntax = "proto3";
-
+import "google/protobuf/any.proto";
 import "WorkerLocation.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
   // Sends a registration request for new worker to the coordinator
-  rpc RegisterNode (RegisterNodeRequest) returns (RegisterNodeReply) {}
+  rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerReply) {}
 
   // Sends a unregistration request for a worker to the coordinator
-  rpc UnregisterNode (UnregisterNodeRequest) returns (UnregisterNodeReply) {}
+  rpc UnregisterWorker (UnregisterWorkerRequest) returns (UnregisterWorkerReply) {}
 
   // Sends a registration request for a collection of physical sources to the coordinator
   rpc RegisterPhysicalSource (RegisterPhysicalSourcesRequest) returns (RegisterPhysicalSourcesReply) {}
@@ -69,26 +69,20 @@ service CoordinatorRPCService {
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 }
 
-message RegisterNodeRequest {
-  string address = 1;
-  uint32 grpcPort = 2;
-  uint32 dataPort = 3;
-  uint32 numberOfSlots = 4;
-  SerializableRegistrationMetrics registrationMetrics = 5;
-  Coordinates coordinates = 6;
-  NodeType spatialType = 7;
-  bool isTfInstalled = 8;
+message RegisterWorkerRequest {
+  map<string, google.protobuf.Any> properties = 1;
+  SerializableRegistrationMetrics registrationMetrics = 2;
 }
 
-message RegisterNodeReply {
+message RegisterWorkerReply {
   uint64 id = 1;
 }
 
-message UnregisterNodeRequest {
+message UnregisterWorkerRequest {
   uint64 id = 1;
 }
 
-message UnregisterNodeReply {
+message UnregisterWorkerReply {
   bool success = 1;
 }
 

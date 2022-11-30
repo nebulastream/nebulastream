@@ -14,6 +14,8 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/ConfigurationKeys.hpp>
+#include <Configurations/PropertyKeys.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
@@ -295,14 +297,16 @@ bool NesWorker::connect() {
 
     NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);
 
-    bool successPRCRegister = coordinatorRpcClient->registerNode(workerConfig->localWorkerIp.getValue(),
-                                                                 localWorkerRpcPort.load(),
-                                                                 nodeEngine->getNetworkManager()->getServerDataPort(),
-                                                                 workerConfig->numberOfSlots,
-                                                                 registrationMetrics,
-                                                                 fixedCoordinates,
-                                                                 workerConfig->nodeSpatialType.getValue(),
-                                                                 /*isTfInstalled*/ false);
+    std::map<std::string, std::any> workerProperties;
+    workerProperties[ADDRESS] = workerConfig->localWorkerIp.getValue();
+    workerProperties[GRPC_PORT] = localWorkerRpcPort.load();
+    workerProperties[DATA_PORT] = nodeEngine->getNetworkManager()->getServerDataPort();
+    workerProperties[SLOTS] = workerConfig->numberOfSlots.getValue();
+    workerProperties[LOCATION] = fixedCoordinates;
+    workerProperties[SPATIAL_TYPE] = workerConfig->nodeSpatialType.getValue();
+    workerProperties[TENSER_FLOW_SUPPORT] = false;
+
+    bool successPRCRegister = coordinatorRpcClient->registerWorker(workerProperties, registrationMetrics);
 
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();

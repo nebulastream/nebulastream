@@ -22,6 +22,7 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
+#include <any>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -128,14 +129,8 @@ class CoordinatorRPCClient {
      * @param isMobile: indicates if this worker is running on a fixed location device or on a mobile device
      * @return bool indicating success
      */
-    bool registerNode(const std::string& ipAddress,
-                      int64_t grpcPort,
-                      int64_t dataPort,
-                      int16_t numberOfSlots,
-                      const Monitoring::RegistrationMetrics& registrationMetrics,
-                      NES::Spatial::Index::Experimental::Location fixedCoordinates,
-                      NES::Spatial::Index::Experimental::NodeType spatialType,
-                      bool isTfInstalled);
+    bool registerWorker(const std::map<std::string, std::any> properties,
+                        const Monitoring::RegistrationMetrics& registrationMetrics);
 
     /**
      * @brief method to check if the coordinator is alive

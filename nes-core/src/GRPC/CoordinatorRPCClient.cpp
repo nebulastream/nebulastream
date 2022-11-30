@@ -348,23 +348,23 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
 bool CoordinatorRPCClient::unregisterNode() {
     NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId=" << workerId);
 
-    UnregisterNodeRequest request;
+    UnregisterWorkerRequest request;
     request.set_id(workerId);
     NES_DEBUG("CoordinatorRPCClient::unregisterNode request=" << request.DebugString());
 
-    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterNodeRequest, UnregisterNodeReply> {
+    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
       public:
         std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
 
         explicit UnRegisterNodeListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
             : coordinatorStub(coordinatorStub) {}
 
-        Status rpcCall(const UnregisterNodeRequest& request, UnregisterNodeReply* reply) override {
+        Status rpcCall(const UnregisterWorkerRequest& request, UnregisterWorkerReply* reply) override {
             ClientContext context;
 
-            return coordinatorStub->UnregisterNode(&context, request, reply);
+            return coordinatorStub->UnregisterWorker(&context, request, reply);
         }
-        bool onSuccess(const UnregisterNodeReply& reply) override {
+        bool onSuccess(const UnregisterWorkerReply& reply) override {
             NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
             return reply.success();
         }
@@ -380,42 +380,35 @@ bool CoordinatorRPCClient::unregisterNode() {
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
-                                        int64_t grpcPort,
-                                        int64_t dataPort,
-                                        int16_t numberOfSlots,
-                                        const Monitoring::RegistrationMetrics& registrationMetrics,
-                                        Spatial::Index::Experimental::Location fixedCoordinates,
-                                        Spatial::Index::Experimental::NodeType spatialType,
-                                        bool isTfInstalled) {
+bool CoordinatorRPCClient::registerWorker(const std::map<std::string, std::any> properties,
+                                          const Monitoring::RegistrationMetrics& registrationMetrics) {
 
-    RegisterNodeRequest request;
-    request.set_address(ipAddress);
-    request.set_grpcport(grpcPort);
-    request.set_dataport(dataPort);
-    request.set_numberofslots(numberOfSlots);
-    request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
+    RegisterWorkerRequest request;
+    auto requestProperties = request.mutable_properties();
+    for (auto& property : properties) {
+        std::string key = property.first;
+        auto value = google::protobuf::Any();
+        value.set_value(std::any_cast<std::string>(property.second));
+        (*requestProperties)[key] = value;
+    }
+    //    request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
-    request.set_istfinstalled(isTfInstalled);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
-    Coordinates* pCoordinates = request.mutable_coordinates();
-    pCoordinates->set_lat(fixedCoordinates.getLatitude());
-    pCoordinates->set_lng(fixedCoordinates.getLongitude());
 
-    class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
+    class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
       public:
         uint64_t& workerId;
         std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
 
-        explicit RegisterNodeListener(uint64_t& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+        explicit RegisterWorkerListener(uint64_t& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
             : workerId(workerId), coordinatorStub(coordinatorStub) {}
 
-        Status rpcCall(const RegisterNodeRequest& request, RegisterNodeReply* reply) override {
+        Status rpcCall(const RegisterWorkerRequest& request, RegisterWorkerReply* reply) override {
             ClientContext context;
 
-            return coordinatorStub->RegisterNode(&context, request, reply);
+            return coordinatorStub->RegisterWorker(&context, request, reply);
         }
-        bool onSuccess(const RegisterNodeReply& reply) override {
+        bool onSuccess(const RegisterWorkerReply& reply) override {
             workerId = reply.id();
             return true;
         }
@@ -434,8 +427,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
         bool onFailure() override { return false; }
     };
 
-    auto listener = RegisterNodeListener{workerId, coordinatorStub};
-
+    auto listener = RegisterWorkerListener{workerId, coordinatorStub};
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
