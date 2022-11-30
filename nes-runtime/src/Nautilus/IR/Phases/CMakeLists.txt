@@ -13,6 +13,6 @@
 
 
 add_source_files(nes-runtime
-        RemoveBrOnlyBlocksPass.cpp
-        StructuredControlFlowPass.cpp
+        RemoveBrOnlyBlocksPhase.cpp
+        StructuredControlFlowPhase.cpp
         )
