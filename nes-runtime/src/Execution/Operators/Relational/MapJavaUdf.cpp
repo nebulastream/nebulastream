@@ -15,19 +15,83 @@ limitations under the License.
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <utility>
 #include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
 
-// Only used for test purposes
-MapJavaUdf::MapJavaUdf(std::string javaPath) {
+/**
+ * Load classes without custom class loader
+ * @param byteCodeList
+ * @return
+ */
+void loadClassesFromByteList(void* operatorPtr, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    // Inti ClassLoader()
+    // jobject classLoader
+
+    // Load the classes from the byte list and the serialized instance
+    for (auto entry : byteCodeList) {
+        // TODO add the custom class loader???
+        auto bufLen = entry.second.size();
+        const auto byteCode = reinterpret_cast<jbyte*>(&entry.second[0]);
+        mapUDF->getEnvironment()->DefineClass(entry.first.data(), nullptr, byteCode, (jsize) bufLen);
+    }
+}
+
+// TODO: Load serialized instance
+// https://docs.oracle.com/javase/8/docs/platform/serialization/spec/input.html
+void *loadSerializedInstance(void* operatorPtr){
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+
+    // create NewDirectByteBuffer in JNI which takes the byte buffer
+    jobject buffer = mapUDF->getEnvironment()->NewDirectByteBuffer(operatorPtr->, jlong capacity);
+
+    // Call bytearrayinputstream(byte[])
+
+    // Call ObjectInputStream(InputStream in)
+
+    // Call ObjectInputStream.readObject()
+
+    // load with class path?
+}
+
+/**
+ * Error checking JNI call. Call this function after each JNI call.
+ * @param operatorPtr
+ */
+inline void jniErrorCheck(void* operatorPtr) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
+        // print the stack trace
+        mapUDF->getEnvironment()->ExceptionDescribe();
+        NES_FATAL_ERROR("An error occured during a map java UDF execution");
+        exit(EXIT_FAILURE);
+    }
+}
+
+MapJavaUdf::MapJavaUdf(const std::string& className,
+                       const std::string& methodName,
+                       const std::string& inputProxyName,
+                       const std::string& outputProxyName,
+                       const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
+                       const std::vector<char>& serializedInstance,
+                       SchemaPtr inputSchema,
+                       SchemaPtr outputSchema,
+                       const std::string& javaPath) : className(className),
+                                                      methodName(methodName),
+                                                      inputProxyName(inputProxyName),
+                                                      outputProxyName(outputProxyName),
+                                                      byteCodeList(byteCodeList),
+                                                      serializedInstance(serializedInstance),
+                                                      inputSchema(inputSchema),
+                                                      outputSchema(outputSchema) {
     // Start VM
     if (jvm == nullptr) {
         // init java vm arguments
-        JavaVMInitArgs vm_args;                     // Initialization arguments
-        JavaVMOption* options = new JavaVMOption[2];// JVM invocation options
-        //options[0].optionString = (char*) ("-Djava.class.path=" + javaPath).c_str();
-        options[0].optionString = (char*) "-Djava.class.path=/home/amichalke/nebulastream/udf";
+        JavaVMInitArgs vm_args;             // Initialization arguments
+        auto* options = new JavaVMOption[2];// JVM invocation options
+        options[0].optionString = (char*) ("-Djava.class.path=" + javaPath).c_str();
         options[1].optionString = (char*) "-verbose:jni";
         options[2].optionString = (char*) "-verbose:class";// where to find java .class
         vm_args.nOptions = 3;                              // number of options
@@ -35,85 +99,95 @@ MapJavaUdf::MapJavaUdf(std::string javaPath) {
         vm_args.version = JNI_VERSION_1_2; // minimum Java version
         vm_args.ignoreUnrecognized = true; // invalid options make the JVM init fail
 
-        // create java VM anc check for errors
         jint rc = JNI_CreateJavaVM(&jvm, (void**) &env, &vm_args);
-        if (rc != JNI_OK) {
-            // TODO: error processing
-            std::cout << rc << std::endl;
+        if (rc == JNI_OK) {
+            NES_TRACE("Java VM startup was successful");
+        } else if (rc == JNI_ERR) {
+            NES_FATAL_ERROR("An unknown error occured during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EDETACHED) {
+            NES_FATAL_ERROR("Thread detached from the VM during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EVERSION) {
+            NES_FATAL_ERROR("A JNI version error occured during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_ENOMEM) {
+            NES_FATAL_ERROR("Not enough memory during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EEXIST) {
+            NES_FATAL_ERROR("Java VM already exists!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EINVAL) {
+            NES_FATAL_ERROR("Invalid arguments during Java VM startup!");
             exit(EXIT_FAILURE);
         }
-        if (env->ExceptionOccurred()) {
-            env->ExceptionDescribe();  // print the stack trace
-            exit(1);
-        }
     }
+
 }
 
-/**
- * Load classes without custom class loader
- * @param byteCodeList
- * @return
- */
-std::vector<jclass> loadClassesFromByteList(void* operatorPtr, std::unordered_map<std::string, std::vector<char>> byteCodeList) {
-    auto mapUDF = (MapJavaUdf*) operatorPtr;
-    std::vector<jclass> classes;
-    // Load the classes from the byte list and the serialized instance
-    for (auto entry : byteCodeList) {
-        // TODO add the custom class loader
-        auto bufLen = entry.second.size();
-        const auto byteCode = reinterpret_cast<jbyte*>(&entry.second[0]);
-        auto clazz = mapUDF->getEnvironment()->DefineClass(entry.first.data(), NULL, byteCode, (jsize) bufLen);
-        classes.push_back(clazz);
-    }
-    return classes;
-}
-
-MapJavaUdf::MapJavaUdf(std::string className,
-                       std::unordered_map<std::string, std::vector<char>> byteCodeList,
+MapJavaUdf::MapJavaUdf(const std::string& className,
+                       const std::string& methodName,
+                       const std::string& inputProxyName,
+                       const std::string& outputProxyName,
+                       const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
+                       const std::vector<char>& serializedInstance,
                        SchemaPtr inputSchema,
-                       SchemaPtr outputSchema,
-                       std::vector<char> serializedInstance,
-                       std::string methodName)
-    : className(className), byteCodeList(byteCodeList), inputSchema(inputSchema), outputSchema(outputSchema),
-      serializedInstance(serializedInstance), methodName(methodName) {
+                       SchemaPtr outputSchema) : className(className),
+                                                      methodName(methodName),
+                                                      inputProxyName(inputProxyName),
+                                                      outputProxyName(outputProxyName),
+                                                      byteCodeList(byteCodeList),
+                                                      serializedInstance(serializedInstance),
+                                                      inputSchema(inputSchema),
+                                                      outputSchema(outputSchema) {
     // Start VM
     if (jvm == nullptr) {
         // init java vm arguments
-        JavaVMInitArgs vm_args;           // Initialization arguments
-        vm_args.version = JNI_VERSION_1_2;// minimum Java version
-        vm_args.ignoreUnrecognized = true;// invalid options make the JVM init fail
+        JavaVMInitArgs vm_args;
+        vm_args.version = JNI_VERSION_1_2; // minimum Java version
+        vm_args.ignoreUnrecognized = true; // invalid options make the JVM init fail
 
-        // create java VM anc check for errors
         jint rc = JNI_CreateJavaVM(&jvm, (void**) &env, &vm_args);
-        if (rc != JNI_OK) {
-            // TODO: error processing
-            std::cout << rc << std::endl;
+        if (rc == JNI_OK) {
+            NES_TRACE("Java VM startup was successful");
+        } else if (rc == JNI_ERR) {
+            NES_FATAL_ERROR("An unknown error occured during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EDETACHED) {
+            NES_FATAL_ERROR("Thread detached from the VM during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EVERSION) {
+            NES_FATAL_ERROR("A JNI version error occured during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_ENOMEM) {
+            NES_FATAL_ERROR("Not enough memory during Java VM startup!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EEXIST) {
+            NES_FATAL_ERROR("Java VM already exists!");
+            exit(EXIT_FAILURE);
+        } else if (rc == JNI_EINVAL) {
+            NES_FATAL_ERROR("Invalid arguments during Java VM startup!");
             exit(EXIT_FAILURE);
         }
     }
+    loadClassesFromByteList(this, byteCodeList);
+}
 
-    auto classes = loadClassesFromByteList(this, byteCodeList);
+MapJavaUdf::~MapJavaUdf(){
+    jvm->DestroyJavaVM();
 }
 
 void* findClassProxyInput(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getInputProxyName().c_str());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "find class\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return pojoClass;
 }
 
 void* findClassProxyOutput(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getOutputProxyName().c_str());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "find class\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return pojoClass;
 }
 
@@ -121,11 +195,7 @@ void* allocateObject(void* operatorPtr, void* pojoClassPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto pojoClass = (jclass) pojoClassPtr;
     jobject pojo = mapUDF->getEnvironment()->AllocObject(pojoClass);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "alloc obj\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return pojo;
 }
 
@@ -136,11 +206,7 @@ void setIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jint) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "set int field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
 }
 
 int getIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
@@ -150,11 +216,7 @@ int getIntField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int 
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "I");
     int value = (int) mapUDF->getEnvironment()->GetIntField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "get int field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return value;
 }
 
@@ -164,12 +226,8 @@ void setFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, i
     auto pojo = (jobject) pojoObjectPtr;
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
-    mapUDF->getEnvironment()->SetIntField(pojo, id, (jfloat) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "set float field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    mapUDF->getEnvironment()->SetFloatField(pojo, id, (jfloat) value);
+    jniErrorCheck(mapUDF);
 }
 
 float getFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
@@ -179,14 +237,11 @@ float getFloatField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, 
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "F");
     float value = (float) mapUDF->getEnvironment()->GetFloatField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "get float field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return value;
 }
 
+// prefix
 void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex, bool value) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto pojoClass = (jclass) pojoClassPtr;
@@ -194,11 +249,7 @@ void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr,
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jboolean) value);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "set bool field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
 }
 
 float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
@@ -208,11 +259,7 @@ float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
     bool value = (bool) mapUDF->getEnvironment()->GetBooleanField(pojo, id);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        std::cout << "get bool field\n";
-        mapUDF->getEnvironment()->ExceptionDescribe();// print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return value;
 }
 
@@ -224,55 +271,43 @@ float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr
 void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
 
+    // TODO only construct when we do not have an serialized instance
+    // if do not use serialized instance
     // find class implementing the map udf
     jclass c1 = mapUDF->getEnvironment()->FindClass(mapUDF->getClassName().c_str());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
 
     // find the constructor method
     // We assume that the constructor
     jmethodID constructor = mapUDF->getEnvironment()->GetMethodID(c1, "<init>", "()V");
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     std::cout << "found constructor\n";
 
     // Create obj by calling the constructor
     jobject object = mapUDF->getEnvironment()->NewObject(c1, constructor);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     std::cout << "new object\n";
+    // else
+    // serializedInstance
 
     // Build function signature of map function
-    // Currently we assume that the pojos are *not* in java packages
-    // if this changes it should be reflected in the signature here
     std::string sig = "(L" + mapUDF->getInputProxyName() + ";)L" + mapUDF->getOutputProxyName() + ";";
 
     // Find udf function
     jmethodID mid = mapUDF->getEnvironment()->GetMethodID(c1, mapUDF->getMethodName().c_str(), sig.c_str());
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     std::cout << "found map\n";
 
     // Call udf function
     jobject udf_result = mapUDF->getEnvironment()->CallObjectMethod(object, mid, pojoObjectPtr);
-    if (mapUDF->getEnvironment()->ExceptionOccurred()) {
-        mapUDF->getEnvironment()->ExceptionDescribe();  // print the stack trace
-        exit(EXIT_FAILURE);
-    }
+    jniErrorCheck(mapUDF);
     return udf_result;
 }
 
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto thisOperatorPtr = Value<MemRef>((std::int8_t *) this);
 
+    //if not primitve typ {
     // Create proxy input pojo and load record values
     auto inputClassPtr = FunctionCall<>("findClassProxyInput", findClassProxyInput, thisOperatorPtr);
     auto inputPojoPtr = FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, inputClassPtr);
@@ -304,16 +339,20 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                            inputPojoPtr,
                            Value<Int32>(i),
                            record.read(fieldName).as<Boolean>());
-        }
+        } // Ganze schnittmenge
+        // Object newStringUTF()
     }
+    // } else {
+    //  String, Integer, ...
+    // }
 
     // Get proxy pojo and call Udf
     auto outputClassPtr = FunctionCall<>("findClassProxyOutput", findClassProxyOutput, thisOperatorPtr);
-    auto outputPojoPtr =  FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, outputClassPtr);
-    outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, outputPojoPtr);
+    auto outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, inputPojoPtr);
 
     // Write result into result record
     auto result = new Record();
+    //if not primitive typexecute {
     for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
         auto field = outputSchema->fields[i];
         auto fieldName = field->getName();
@@ -332,6 +371,9 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             result->write(fieldName, val);
         }
     }
+    // else
+
+    // relase objects auch strings in pojo
 
     // Trigger execution of next operator
     child->execute(ctx, (Record&) result);
