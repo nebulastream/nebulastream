@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.72](https://github.com/nebulastream/nebulastream/tree/v0.3.72) (2022-11-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.71...v0.3.72)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] YSB Generator [\#3236](https://github.com/nebulastream/nebulastream/issues/3236)
+- \[JIT Compiler\] Remove br-Only-Blocks from Nautilus IR [\#3161](https://github.com/nebulastream/nebulastream/issues/3161)
+
 ## [v0.3.71](https://github.com/nebulastream/nebulastream/tree/v0.3.71) (2022-11-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.70...v0.3.71)
