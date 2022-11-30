@@ -28,7 +28,7 @@ namespace NES::Nautilus::IR {
 /**
  * @brief This phase removes branch-only-blocks from a given IR graph.
  */
-class RemoveBrOnlyBlocksPass {
+class RemoveBrOnlyBlocksPhase {
   public:
     /**
      * @brief Applies the phase on a execution trace.
@@ -41,14 +41,14 @@ class RemoveBrOnlyBlocksPass {
     /**
      * @brief Internal context object, which maintains statue during IR creation.
      */
-    class RemoveBrOnlyBlocksPassContext {
+    class RemoveBrOnlyBlocksPhaseContext {
       public:
         /**
          * @brief Constructor for the context of the remove br-only-blocks phase.
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        RemoveBrOnlyBlocksPassContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
          * 
