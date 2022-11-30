@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/PropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -41,6 +42,52 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
       locationService(locationService){};
+
+Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
+                                            const RegisterWorkerRequest* registrationRequest,
+                                            RegisterWorkerReply* reply) {
+
+    NES_DEBUG("Received worker registration request " << registrationRequest->DebugString());
+    auto address = registrationRequest->address();
+    auto grpcPort = registrationRequest->grpcport();
+    auto dataPort = registrationRequest->dataport();
+    auto slots = registrationRequest->numberofslots();
+    //construct worker property from the request
+    std::map<std::string, std::any> workerProperties;
+    workerProperties[NES::Worker::Properties::MAINTENANCE] =
+        false;//During registration, we assume the node is not under maintenance
+    workerProperties[NES::Worker::Configuration::TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
+    workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
+    workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
+        NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
+
+    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
+    uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
+
+    NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
+                                                                   registrationRequest->waypoint().geolocation().lng());
+
+    if (!topologyManagerService->addGeoLocation(workerId, std::move(geoLocation))) {
+        NES_ERROR("Unable to update geo location of the topology");
+        reply->set_workerid(0);
+        return Status::CANCELLED;
+    }
+
+    auto registrationMetrics =
+        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(registrationRequest->registrationmetrics()),
+                                             Monitoring::MetricType::RegistrationMetric);
+    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = workerId;
+    monitoringManager->addMonitoringData(workerId, registrationMetrics);
+
+    if (workerId != 0) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << workerId);
+        reply->set_workerid(workerId);
+        return Status::OK;
+    }
+    NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
+    reply->set_workerid(0);
+    return Status::CANCELLED;
+}
 
 Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
@@ -113,45 +160,6 @@ Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const Regi
     }
     NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource NOT successfully registered");
     reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
-    uint64_t id;
-    if (request->has_coordinates()) {
-        NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                                  NES::Spatial::Index::Experimental::Location(request->coordinates()),
-                                                  NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
-                                                  request->istfinstalled());
-    } else {
-        /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
-        of geographical location */
-        id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                                  NES::Spatial::Index::Experimental::Location(),
-                                                  NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
-                                                  request->istfinstalled());
-    }
-
-    auto registrationMetrics =
-        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()),
-                                             Monitoring::MetricType::RegistrationMetric);
-    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = id;
-    monitoringManager->addMonitoringData(id, registrationMetrics);
-
-    if (id != 0) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
-        reply->set_id(id);
-        return Status::OK;
-    }
-    NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
-    reply->set_id(0);
     return Status::CANCELLED;
 }
 
