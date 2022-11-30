@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_THRESHOLDWINDOW_HPP_
+#include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <utility>
@@ -31,15 +32,16 @@ class ThresholdWindow : public ExecutableOperator {
      * @param aggregationResultFieldIdentifier a string indicating the name of field to store the aggregation result
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
-    explicit ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+    ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                              uint64_t minCount,
                              Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
                              Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
+                             Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
                              uint64_t operatorHandlerIndex)
         : predicateExpression(std::move(predicateExpression)),
           aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
-          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)), minCount(std::move(minCount)),
-          operatorHandlerIndex(operatorHandlerIndex){};
+          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)), minCount(minCount),
+          operatorHandlerIndex(operatorHandlerIndex), aggregationFunction(std::move(aggregationFunction)){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -49,6 +51,7 @@ class ThresholdWindow : public ExecutableOperator {
     const Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier;
     uint64_t minCount = 0;
     uint64_t operatorHandlerIndex;
+    const std::shared_ptr<Aggregation::AggregationFunction> aggregationFunction;
 };
 }// namespace NES::Runtime::Execution::Operators
 
