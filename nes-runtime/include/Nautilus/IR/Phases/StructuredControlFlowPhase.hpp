@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPASS_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPASS_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -27,9 +27,9 @@ namespace NES::Nautilus::IR {
 
 /**
  * @brief This phase converts a execution trace to SSA form.
- * This implies that, each value is only assigned and that all parameters to a basic block are passed by block arguments.
+ * This implies that, each value is only assigned and that all parameters to a basic block are phaseed by block arguments.
  */
-class StructuredControlFlowPass {
+class StructuredControlFlowPhase {
   public:
     /**
      * @brief Applies the phase on a execution trace.
@@ -42,7 +42,7 @@ class StructuredControlFlowPass {
     /**
      * @brief Internal context object, which maintains statue during IR creation.
      */
-    class StructuredControlFlowPassContext {
+    class StructuredControlFlowPhaseContext {
       public:
         /**
          * @brief Helper struct used to keep track of the currently active branch of an if-operation.
@@ -57,7 +57,7 @@ class StructuredControlFlowPass {
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        StructuredControlFlowPassContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        StructuredControlFlowPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.
          * 
@@ -97,7 +97,7 @@ class StructuredControlFlowPass {
         bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
                     std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
                     std::unordered_map<std::string, uint32_t>& candidateEdgeCounter, 
-                    const bool newVisit,
+                    bool newVisit,
                     const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody);
 
       private:
@@ -107,4 +107,4 @@ class StructuredControlFlowPass {
 };
 
 }// namespace NES::Nautilus::Tracing
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPASS_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
