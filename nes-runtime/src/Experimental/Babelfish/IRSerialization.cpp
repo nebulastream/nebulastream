@@ -11,19 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Babelfish/IRSerialization.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
-#include <Experimental/Babelfish/IRSerialization.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
-#include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -12,15 +12,11 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
-#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
+#include <Nautilus/IR/Operations/ConstBooleanOperation.hpp>
 #include <Nautilus/IR/Operations/LoadOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
@@ -30,6 +26,7 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>

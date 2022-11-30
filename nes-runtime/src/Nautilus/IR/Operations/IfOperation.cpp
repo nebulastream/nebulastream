@@ -26,10 +26,10 @@ BasicBlockInvocation& IfOperation::getTrueBlockInvocation() { return trueBlockIn
 BasicBlockInvocation& IfOperation::getFalseBlockInvocation() { return falseBlockInvocation; }
 
 void IfOperation::setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation) {
-    this->trueBlockInvocation.setBlock(trueBlockInvocation); 
+    this->trueBlockInvocation.setBlock(trueBlockInvocation);
 }
-void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) { 
-    this->falseBlockInvocation.setBlock(falseBlockInvocation); 
+void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
+    this->falseBlockInvocation.setBlock(falseBlockInvocation);
 }
 
 BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }

@@ -25,8 +25,8 @@ BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel),
-      operations(std::move(operations)), arguments(std::move(arguments)) {}
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)),
+      arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
@@ -78,7 +78,7 @@ void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector
     addOperation(branchOp);
     // add this block as a predecessor to the next block
     //Todo #3167 : can we use this to replace the addPredecessor pass? (also: addTrueBlock, and addFalseBlock)
-    // nextBlock->addPredecessor(shared_from_this()); 
+    // nextBlock->addPredecessor(shared_from_this());
 }
 void BasicBlock::removeOperation(Operations::OperationPtr operation) {
     operations.erase(std::find(operations.begin(), operations.end(), operation));
