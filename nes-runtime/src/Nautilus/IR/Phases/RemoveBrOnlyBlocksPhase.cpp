@@ -27,17 +27,16 @@
 
 namespace NES::Nautilus::IR {
 
-std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
+void RemoveBrOnlyBlocksPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
     auto phaseContext = RemoveBrOnlyBlocksPhaseContext(std::move(ir));
-    return phaseContext.process();
+    phaseContext.process();
 };
 
-std::shared_ptr<IR::IRGraph> RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::process() {
+void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     addPredecessors(rootOperation->getFunctionBasicBlock());
     removeBrOnlyBlocks(rootOperation->getFunctionBasicBlock());
     NES_DEBUG(ir->toString());
-    return std::move(ir);
 }
 
 void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,
