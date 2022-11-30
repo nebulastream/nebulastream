@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.71](https://github.com/nebulastream/nebulastream/tree/v0.3.71) (2022-11-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.70...v0.3.71)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add protobuf representation of rename operator [\#3249](https://github.com/nebulastream/nebulastream/issues/3249)
+
 ## [v0.3.70](https://github.com/nebulastream/nebulastream/tree/v0.3.70) (2022-11-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.69...v0.3.70)
