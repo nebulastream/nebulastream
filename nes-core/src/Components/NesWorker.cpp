@@ -241,6 +241,16 @@ bool NesWorker::stop(bool) {
             NES_WARNING("No health check service was created");
         }
 
+        if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+            if (trajectoryPredictor) {
+                trajectoryPredictor->stopReconnectPlanning();
+                NES_DEBUG("triggered stopping of reconnect planner thread");
+            }
+            if (reconnectConfigurator) {
+                reconnectConfigurator->stopPeriodicUpdating();
+                NES_DEBUG("triggered stopping of location update push thread");
+            }
+        }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
@@ -259,16 +269,6 @@ bool NesWorker::stop(bool) {
             rpcThread->join();
         }
 
-        if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
-            if (trajectoryPredictor) {
-                trajectoryPredictor->stopReconnectPlanning();
-                NES_DEBUG("triggered stopping of reconnect planner thread");
-            }
-            if (reconnectConfigurator) {
-                reconnectConfigurator->stopPeriodicUpdating();
-                NES_DEBUG("triggered stopping of location update push thread");
-            }
-        }
         rpcServer.reset();
         rpcThread.reset();
         if (statisticOutputThread && statisticOutputThread->joinable()) {
