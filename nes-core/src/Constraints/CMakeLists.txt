@@ -1,4 +1,3 @@
-# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        ConfigurationException.cpp
-        BaseOption.cpp
-        TypedBaseOption.cpp
-        ScalarOption.cpp
-        SequenceConfOption.cpp
-        EnumConfOption.cpp
-        BaseConfiguration.cpp
-        ConfigurationKeys.cpp
-)
-
+        Constraint.cpp
+        NeedsConfiguredConstraint.cpp
+        )
