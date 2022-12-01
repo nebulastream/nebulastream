@@ -52,7 +52,7 @@ class TopologyNode : public Node {
                                   const uint32_t grpcPort,
                                   const uint32_t dataPort,
                                   const uint16_t resources,
-                                  std::map<std::string, std::any>& properties);
+                                  std::map<std::string, std::any> properties);
 
     virtual ~TopologyNode() = default;
 
@@ -102,7 +102,7 @@ class TopologyNode : public Node {
      * @brief Get maintenance flag where 1 represents marked for maintenance
      * @return bool
      */
-    bool isUnderMaintenance() const;
+    bool isUnderMaintenance();
 
     /**
      * @brief sets maintenance flag where 1 represents marked for maintenance
@@ -123,7 +123,7 @@ class TopologyNode : public Node {
                           const uint32_t grpcPort,
                           const uint32_t dataPort,
                           const uint16_t resources,
-                          std::map<std::string, std::any>& properties);
+                          std::map<std::string, std::any> properties);
 
     bool containAsParent(NodePtr node) override;
 

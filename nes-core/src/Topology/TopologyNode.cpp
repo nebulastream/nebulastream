@@ -29,16 +29,16 @@ TopologyNode::TopologyNode(const uint64_t id,
                            const uint32_t grpcPort,
                            const uint32_t dataPort,
                            const uint16_t resources,
-                           std::map<std::string, std::any>& properties)
+                           std::map<std::string, std::any> properties)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      nodeProperties(properties) {}
+      nodeProperties(std::move(properties)) {}
 
 TopologyNodePtr TopologyNode::create(const uint64_t id,
                                      const std::string& ipAddress,
                                      const uint32_t grpcPort,
                                      const uint32_t dataPort,
                                      const uint16_t resources,
-                                     std::map<std::string, std::any>& properties) {
+                                     std::map<std::string, std::any> properties) {
     NES_DEBUG("TopologyNode: Creating node with ID " << id << " and resources " << resources);
     return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, properties);
 }
@@ -51,7 +51,7 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
-bool TopologyNode::isUnderMaintenance() const { return std::any_cast<bool>(nodeProperties[MAINTENANCE]); };
+bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[MAINTENANCE]); };
 
 void TopologyNode::setForMaintenance(bool flag) { nodeProperties[MAINTENANCE] = flag; }
 

@@ -44,34 +44,20 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*, const RegisterWorkerRequest* request, RegisterWorkerReply* reply) {
     uint64_t id;
-    auto workerProperties = request->properties();
+
+    //construct worker property from the request
+    std::map<std::string, std::any> workerProperties;
+    for (auto& property : request->properties()) {
+        workerProperties[property.first] = property.second;
+    }
 
     auto address = std::any_cast<std::string>(workerProperties[ADDRESS]);
     auto grpcPort = std::any_cast<int64_t>(workerProperties[GRPC_PORT]);
     auto dataPort = std::any_cast<int64_t>(workerProperties[DATA_PORT]);
     auto slots = std::any_cast<int64_t>(workerProperties[SLOTS]);
-    auto location = std::any_cast<NES::Spatial::Index::Experimental::Location>(workerProperties[LOCATION]);
 
-    if (request->has_coordinates()) {
-        NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerWorker(address,
-                                                    grpcPort,
-                                                    dataPort,
-                                                    slots,
-                                                    location,
-                                                    NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
-                                                    request->istfinstalled());
-    } else {
-        /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
-        of geographical location */
-        id = topologyManagerService->registerWorker(address,
-                                                    grpcPort,
-                                                    dataPort,
-                                                    slots,
-                                                    NES::Spatial::Index::Experimental::Location(),
-                                                    NES::Spatial::Index::Experimental::NodeType(request->spatialtype()),
-                                                    request->istfinstalled());
-    }
+    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
+    id = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
 
     auto registrationMetrics =
         std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()),
