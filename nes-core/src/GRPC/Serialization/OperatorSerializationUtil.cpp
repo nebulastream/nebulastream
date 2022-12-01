@@ -849,7 +849,14 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     auto distrChar = windowDetails->distrchar();
     Windowing::DistributionCharacteristicPtr distChar;
-    if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
+    if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset) {
+        // `Unset' indicates that the logical operator has just been deserialized from a client.
+        // We change it to `Complete' which is the default used in `Query::window' and `Query::windowByKey'.
+        // TODO This logic should be revisited when #2884 is fixed.
+        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset");
+        distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
+    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
         NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
@@ -876,7 +883,17 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         keyAccessExpression.emplace_back(
             ExpressionSerializationUtil::deserializeExpression(&key)->as<FieldAccessExpressionNode>());
     }
-    if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
+    if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset) {
+        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
+                                                                    aggregation,
+                                                                    window,
+                                                                    distChar,
+                                                                    trigger,
+                                                                    action,
+                                                                    allowedLateness);
+        windowDef->setOriginId(windowDetails->origin());
+        return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
+    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
         auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
                                                                     aggregation,
                                                                     window,

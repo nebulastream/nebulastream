@@ -422,8 +422,13 @@ message SerializableOperator{
 
     message DistributionCharacteristic {
       enum Distribution{
-        Complete = 0;
-        Slicing = 1;
+        // `Unset' indicates that the logical operator has just been deserialized from a client.
+        // The deserialization logic in the coordinator will change it to `Complete' to be inline with the creation
+        // logic in `Query::window' and `Query::windowByKey'.
+        // TODO This logic should be revisited when #2884 is fixed.
+        Unset = 0;
+        Complete = 1;
+        Slicing = 2;
         Combining = 3;
         Merging = 4;
       }
