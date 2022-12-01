@@ -68,7 +68,8 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
-    void popOperation();
+    // void popOperation();
+    void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
 
   private:
     std::string identifier;

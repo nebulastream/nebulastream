@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/Loop/LoopOperation.hpp"
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -89,30 +90,34 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         do {
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = candidates.back();
-            if (correctBlocks.contains(currentBlock->getIdentifier())) {
-                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-                backLinksAreCorrect = currentBlock->getNumLoopBackEdges()
-                    == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-                if (!backLinksAreCorrect) {
-                    NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -"
-                                          << currentBlock->getNumLoopBackEdges() << "- backLinks instead of: -"
-                                          << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
-                }
-                auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
-                if (!correctMergeBlockId.empty()) {
-                    mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
-                } else {
-                    mergeBlocksAreCorrect = !ifOp->getMergeBlock();
-                }
-                if (!mergeBlocksAreCorrect) {
-                    NES_ERROR("\nMerge-Block mismatch for block "
-                              << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier() << " instead of "
-                              << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+            auto terminatorOp = currentBlock->getTerminatorOp();
+            if(correctBlocks.contains(currentBlock->getIdentifier())) {
+                //Todo avoid double casting
+                if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
+                    auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
+                    auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
+                    if(!correctMergeBlockId.empty()) {
+                        mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
+                    } else {
+                        mergeBlocksAreCorrect = !ifOp->getMergeBlock();
+                    }
+                    if(!mergeBlocksAreCorrect) {
+                        NES_ERROR("\nMerge-Block mismatch for block " << currentBlock->getIdentifier() << ": " <<
+                        ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
+                        correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+                    }
+                } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
+                    // Todo check LoopInfo
+                    // auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
+                    backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                    if(!backLinksAreCorrect) {
+                        NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
+                        << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                    }
                 }
             }
             candidates.pop_back();
-            auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
+            if(terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {   
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
@@ -124,6 +129,14 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                 }
                 if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
+                }
+            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
+                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
+                if(!visitedBlocks.contains(loopOp->getLoopFalseBlock().getBlock()->getIdentifier())) {
+                    candidates.emplace_back(loopOp->getLoopFalseBlock().getBlock());
+                }
+                if(!visitedBlocks.contains(loopOp->getLoopBodyBlock().getBlock()->getIdentifier())) {
+                    candidates.emplace_back(loopOp->getLoopBodyBlock().getBlock());
                 }
             }
         } while (mergeBlocksAreCorrect && backLinksAreCorrect && !candidates.empty());
