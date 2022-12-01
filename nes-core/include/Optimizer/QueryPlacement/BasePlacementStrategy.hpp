@@ -378,6 +378,8 @@ namespace NES {
         static int getNumberOfOperators(const ExecutionNodePtr& executionNode, QueryId queryId);
         static std::vector<ExecutionNodePtr> removeParentNodeFromVector(const ExecutionNodePtr& executionNode,
                                                                  std::vector<ExecutionNodePtr> vector);
+        static std::vector<ExecutionNodePtr> getDownstreamNeighborNodes(const ExecutionNodePtr& executionNode,
+                                                                 std::vector<ExecutionNodePtr> executionNodes);
     };
     }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

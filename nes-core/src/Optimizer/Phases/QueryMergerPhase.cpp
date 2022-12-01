@@ -34,6 +34,8 @@ QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, Optimizer::
 
 QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRuleName) {
 
+
+
     switch (queryMergerRuleName) {
         case QueryMergerRule::FaultToleranceBasedQueryMergerRule:
             queryMergerRule = FaultToleranceBasedQueryMergerRule::create();

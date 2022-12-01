@@ -626,6 +626,20 @@ namespace NES::Optimizer {
             return candidateQueryPlan;
         }
 
+        std::vector<ExecutionNodePtr> BasePlacementStrategy::getDownstreamNeighborNodes(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> executionNodes){
+
+            int targetDepth = getDepth(executionNode) - 1;
+            std::vector<ExecutionNodePtr> answer = {};
+            std::for_each(executionNodes.begin(), executionNodes.end(), [&answer, &targetDepth, &executionNode](ExecutionNodePtr& e) mutable{
+                if(Optimizer::BasePlacementStrategy::getDepth(e) == (targetDepth) && Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode) != e){
+                    answer.push_back(e);
+                }
+
+            });
+
+            return answer;
+        }
+
         std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth){
 
             std::vector<ExecutionNodePtr> answer;
@@ -1380,7 +1394,12 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
         }
 
         std::vector<ExecutionNodePtr> BasePlacementStrategy::getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes, FaultToleranceConfigurationPtr ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
-
+            std::ofstream timingsLogFile;
+            timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
+            float upstreamBackupTimeAdded = 0;
+            float activeStandbyTimeAdded = 0;
+            float checkpointingTimeAdded = 0;
+            auto tSortedStart = std::chrono::high_resolution_clock::now();
             /**
  * 1. Fill map with entries {nodeID, cost} where cost = UBcost + AScost + PScost
  * 2. Order entries by cost
@@ -1393,29 +1412,35 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
 
             for(auto& executionNode : executionNodes){
 
-                std::ofstream timingsLogFile;
-                timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
 
-                auto t0 = std::chrono::high_resolution_clock::now();
+
+                auto tUpstreamBackupStart = std::chrono::high_resolution_clock::now();
+
                 float upstreamBackupCost = calcUpstreamBackupCost(executionNode, executionNodes, ftConfig, topology);
-                auto t1 = std::chrono::high_resolution_clock::now();
-                std::chrono::duration<float> fs = t1 - t0;
-                std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
-                timingsLogFile << "calcUpstreamBackupCost" << "," << ms.count() << "\n";
 
-                t0 = std::chrono::high_resolution_clock::now();
+                auto tUpstreamBackupEnd = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> durationUpstreamBackup = tUpstreamBackupEnd - tUpstreamBackupStart;
+                std::chrono::milliseconds msUpstreamBackup = std::chrono::duration_cast<std::chrono::milliseconds>(durationUpstreamBackup);
+                upstreamBackupTimeAdded += msUpstreamBackup.count();
+
+
+                auto tActiveStandbyStart = std::chrono::high_resolution_clock::now();
+
                 float activeStandbyCost = calcActiveStandbyCost(executionNode, executionNodes, ftConfig, topology);
-                t1 = std::chrono::high_resolution_clock::now();
-                fs = t1 - t0;
-                ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
-                timingsLogFile << "calcActiveStandbyCost" << "," << ms.count() << "\n";
 
-                t0 = std::chrono::high_resolution_clock::now();
+                auto tActiveStandbyEnd = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> durationActiveStandby = tActiveStandbyEnd - tActiveStandbyStart;
+                std::chrono::milliseconds msActiveStandby = std::chrono::duration_cast<std::chrono::milliseconds>(durationActiveStandby);
+                activeStandbyTimeAdded += msActiveStandby.count();
+
+                auto tCheckpointingStart = std::chrono::high_resolution_clock::now();
+
                 float checkpointingCost = calcCheckpointingCost(executionNode, executionNodes, ftConfig, topology);
-                t1 = std::chrono::high_resolution_clock::now();
-                fs = t1 - t0;
-                ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
-                timingsLogFile << "calcCheckpointingCost" << "," << ms.count() << "\n";
+
+                auto tCheckpointingEnd = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> durationCheckpointing = tCheckpointingEnd - tCheckpointingStart;
+                std::chrono::milliseconds msCheckpointing = std::chrono::duration_cast<std::chrono::milliseconds>(durationCheckpointing);
+                checkpointingTimeAdded += msCheckpointing.count();
 
                 mappedCosts.insert({executionNode->getId(), (upstreamBackupCost + activeStandbyCost + checkpointingCost)});
 
@@ -1423,7 +1448,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                 NES_INFO("\nACTIVE STANDBY COST ON NODE " << executionNode->getId() << ": " << activeStandbyCost);
                 NES_INFO("\nCHECKPOINTING COST ON NODE " << executionNode->getId() << ": " << checkpointingCost);
 
-                timingsLogFile.close();
+
 
             }
 
@@ -1439,8 +1464,16 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
                 result.push_back(globalExecutionPlan->getExecutionNodeByNodeId(entry.first));
             }
 
-            return result;
+            auto tSortedEnd = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> fs = tSortedEnd - tSortedStart;
+            std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(fs);
+            timingsLogFile << "calcUpstreamBackupCost" << "," << ftConfig->getQueryId() << "," << upstreamBackupTimeAdded << "\n";
+            timingsLogFile << "calcActiveStandbyCost" << "," << ftConfig->getQueryId() << "," << activeStandbyTimeAdded << "\n";
+            timingsLogFile << "calcCheckpointingCost" << "," << ftConfig->getQueryId() << "," << checkpointingTimeAdded << "\n";
+            timingsLogFile << "createSortedListForFirstFit" << "," << ftConfig->getQueryId() << "," << (ms.count() - activeStandbyTimeAdded - checkpointingTimeAdded - upstreamBackupTimeAdded) << "\n";
+            timingsLogFile.close();
 
+            return result;
         }
 
         double BasePlacementStrategy::calcExecutionNodeNormalizedFTCost(int processingCost, float networkingCost, float memoryCost, int maxProc, int minProc, float maxNetw, float minNetw, float maxMem, float minMem){
@@ -1672,85 +1705,60 @@ return result;
 }*/
 
         FaultToleranceType BasePlacementStrategy::firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology){
+            std::ofstream timingsLogFile;
+            timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
 
+            auto activeStandbyStart = std::chrono::high_resolution_clock::now();
 
             bool activeStandby = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                                  {return checkActiveStandbyConstraints(executionNode, ftConfig,
-                                                                                      removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
+                                                                                      getDownstreamNeighborNodes(executionNode, executionNodes),
+                                                                                      //getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
+                                                                                      //removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
+
+            auto activeStandbyEnd = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> activeStandbyDuration = activeStandbyEnd - activeStandbyStart;
+            std::chrono::milliseconds msActiveStandby = std::chrono::duration_cast<std::chrono::milliseconds>(activeStandbyDuration);
+            timingsLogFile << "checkActiveStandbyConstraints" << "," << ftConfig->getQueryId() << "," << msActiveStandby.count() << "\n";
 
             if(activeStandby){
                 return FaultToleranceType::ACTIVE_STANDBY;
             }
 
+            auto checkpointingStart = std::chrono::high_resolution_clock::now();
+
             bool checkpointing = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                              {return checkCheckpointingConstraints(executionNode, ftConfig,
-                                                                                      removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
+                                                                                      getDownstreamNeighborNodes(executionNode, executionNodes),
+                                                                                      //getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
+                                                                                      //removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
+
+            auto checkpointingEnd = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> checkpointingDuration = checkpointingEnd - activeStandbyStart;
+            std::chrono::milliseconds msCheckpointing = std::chrono::duration_cast<std::chrono::milliseconds>(checkpointingDuration);
+            timingsLogFile << "checkCheckpointingConstraints" << "," << ftConfig->getQueryId() << "," << msCheckpointing.count() << "\n";
 
             if(checkpointing){
                 return FaultToleranceType::CHECKPOINTING;
             }
 
+            auto upstreamBackupStart = std::chrono::high_resolution_clock::now();
+
             bool upstreamBackup = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                               {return checkUpstreamBackupConstraints(executionNode, ftConfig, topology);});
+
+            auto upstreamBackupEnd = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<float> upstreamBackupDuration = upstreamBackupEnd - upstreamBackupStart;
+            std::chrono::milliseconds msUpstreamBackup = std::chrono::duration_cast<std::chrono::milliseconds>(upstreamBackupDuration);
+            timingsLogFile << "checkUpstreamBackupConstraints" << "," << ftConfig->getQueryId() << "," << msUpstreamBackup.count() << "\n";
 
             if(upstreamBackup){
                 return FaultToleranceType::UPSTREAM_BACKUP;
             }
 
-            /*for(auto& approach : sortedApproaches){
-    switch(approach){
-        case FaultToleranceType::UPSTREAM_BACKUP:
-            if(std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                                              {return checkUpstreamBackupConstraints(executionNode, ftConfig, topology);})){
-                return FaultToleranceType::UPSTREAM_BACKUP;
-            }
-        case FaultToleranceType::CHECKPOINTING:
-            if(std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                            {return checkCheckpointingConstraints(executionNode, ftConfig,
-                                                                     getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
-                                                                     topology);})){
-                return FaultToleranceType::CHECKPOINTING;
-            }
-        case FaultToleranceType::ACTIVE_STANDBY:
-            if(std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                            {return checkActiveStandbyConstraints(executionNode, ftConfig,
-                                                                     getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
-                                                                     topology);})){
-                return FaultToleranceType::ACTIVE_STANDBY;
-            }
-        default:
-            return FaultToleranceType::NONE;
-
-    }
-}*/
-
-
-
-            /*bool activeStandby = std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                      {return checkActiveStandbyConstraints(executionNode, ftConfig,
-                       getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
-                       topology);});
-
-if(activeStandby){
-    return FaultToleranceType::ACTIVE_STANDBY;
-}
-
-bool checkpointing = std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                                 {return checkCheckpointingConstraints(executionNode, ftConfig,
-                                                                          getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
-                                                                          topology);});
-
-if(checkpointing){
-    return FaultToleranceType::CHECKPOINTING;
-}
-
-bool upstreamBackup = std::all_of(executionNodes.begin(), executionNodes.end(), [&](ExecutionNodePtr executionNode)
-                                 {return checkUpstreamBackupConstraints(executionNode, ftConfig, topology);});*/
-
-
-
+            timingsLogFile.close();
             return FaultToleranceType::AMNESIA;
         }
 

@@ -116,6 +116,10 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     FaultToleranceType placedFT = Optimizer::BasePlacementStrategy::firstFitQueryPlacement(sortedList, ftConfig, topology);
 
     NES_INFO("\nFOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT));
+    std::ofstream logFilePlacements;
+    logFilePlacements.open("/home/noah/placements.txt", std::ios_base::app);//3 Nodes
+    logFilePlacements << "FOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT) << "\n";
+    logFilePlacements.close();
 
     for(auto& node : executionNodes){
         TopologyNodePtr topNode = topology->findNodeWithId(node->getId());
