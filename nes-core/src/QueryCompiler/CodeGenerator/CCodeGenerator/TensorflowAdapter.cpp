@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #ifdef TFDEF
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
 #endif// TFDEF
@@ -46,7 +47,7 @@ float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
 void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
-    if (dataType == 1){
+    if (dataType == BasicPhysicalType::NativeType::INT_64){
         va_list vl;
         va_start(vl, n);
         TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
@@ -68,9 +69,34 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
             free(output);
         }
         int output_size = (int) (TfLiteTensorByteSize(output_tensor));
-        output = (float*) malloc(output_size);
+        output = (double*) malloc(output_size);
         TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
-    } else if (dataType == 2) {
+    } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
+        va_list vl;
+        va_start(vl, n);
+        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
+
+        float* input = (float*) malloc(input_size);
+
+        for (int i = 0; i < n; ++i) {
+            input[i] = (float) va_arg(vl, double);
+        }
+        va_end(vl);
+
+        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        TfLiteInterpreterInvoke(interpreter);
+
+        const TfLiteTensor* output_tensor = (TfLiteInterpreterGetOutputTensor(interpreter, 0));
+
+        free(input);
+        if (output != nullptr) {
+            free(output);
+        }
+        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+        output = (double*) malloc(output_size);
+        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+    } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
         va_list vl;
         va_start(vl, n);
         TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
@@ -85,16 +111,17 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+
+        const TfLiteTensor* output_tensor = (TfLiteInterpreterGetOutputTensor(interpreter, 0));
 
         free(input);
         if (output != nullptr) {
             free(output);
         }
         int output_size = (int) (TfLiteTensorByteSize(output_tensor));
-        output = (float*) malloc(output_size);
+        output = (double*) malloc(output_size);
         TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
-    }  else if (dataType == 3) {
+    } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
         va_list vl;
         va_start(vl, n);
         TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
@@ -116,7 +143,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
             free(output);
         }
         int output_size = (int) (TfLiteTensorByteSize(output_tensor));
-        output = (float*) malloc(output_size);
+        output = (double*) malloc(output_size);
         TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
     }
 }
