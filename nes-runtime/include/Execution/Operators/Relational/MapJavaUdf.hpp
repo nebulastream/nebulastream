@@ -14,11 +14,11 @@ limitations under the License.
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <API/Schema.hpp>
-#include <API/AttributeField.hpp>
 #include <jni.h>
 
 namespace NES::Runtime::Execution::Operators {
@@ -29,94 +29,123 @@ namespace NES::Runtime::Execution::Operators {
 */
 class MapJavaUdf : public ExecutableOperator {
   public:
-
-  /**
-   * Create java UDF function
-   * @param className
-   * @param byteCodeList
-   * @param inputSchema
-   * @param outputSchema
-   * @param serializedInstance
-   * @param methodName
-   */
-    MapJavaUdf(std::string className,
-               std::unordered_map<std::string, std::vector<char>> byteCodeList,
+    /**
+     *
+     * @param className
+     * @param methodName
+     * @param inputProxyName
+     * @param outputProxyName
+     * @param byteCodeList
+     * @param serializedInstance
+     * @param inputSchema
+     * @param outputSchema
+     * @param javaPath
+     */
+    MapJavaUdf(const std::string& className,
+               const std::string& methodName,
+               const std::string& inputProxyName,
+               const std::string& outputProxyName,
+               const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
+               const std::vector<char>& serializedInstance,
                SchemaPtr inputSchema,
                SchemaPtr outputSchema,
-               std::vector<char> serializedInstance,
-               std::string methodName);
+               const std::string& javaPath);
 
     /**
-     * Init using jarPath currently only used for test purposes
-     * @param jarPath
+     *
+     * @param className
+     * @param methodName
+     * @param inputProxyName
+     * @param outputProxyName
+     * @param byteCodeList
+     * @param serializedInstance
+     * @param inputSchema
+     * @param outputSchema
      */
-    MapJavaUdf(std::string javaPath);
+    MapJavaUdf(const std::string& className,
+               const std::string& methodName,
+               const std::string& inputProxyName,
+               const std::string& outputProxyName,
+               const std::unordered_map<std::string, std::vector<char>>& byteCodeList,
+               const std::vector<char>& serializedInstance,
+               SchemaPtr inputSchema,
+               SchemaPtr outputSchema);
 
-   void execute(ExecutionContext& ctx, Record& record) const override;
+    /**
+     * Deconstructor of MapJavaUdf
+     */
+    ~MapJavaUdf() override;
 
-   /**
-    * Return the java vm
-    * @return JavaVM
-    */
-   JavaVM *getVM() {return jvm;};
+    /**
+     *
+     * @param ctx
+     * @param record
+     */
+    void execute(ExecutionContext& ctx, Record& record) const override;
 
-   /**
+    /**
     * Return the JNI environment
     * @return JNIEnv
     */
-   JNIEnv *getEnvironment() {return env;};
+    JNIEnv* getEnvironment() { return env; };
 
-   /**
+    /**
     * Return the operators input schema
     * @return SchemaPtr
     */
-   SchemaPtr getInputSchema(){ return inputSchema;};
+    SchemaPtr getInputSchema() { return inputSchema; };
 
-   /**
+    /**
     * Return the operators output schema
     * @return SchemaPtr
     */
-   SchemaPtr getOutputSchema(){ return outputSchema;};
+    SchemaPtr getOutputSchema() { return outputSchema; };
 
-   /**
-    * Return the name of the class containing the udf
+    /**
+    * Return the name with pkg prefix of the class containing the udf
     * @return std::string
     */
-   std::string getClassName(){ return className;};
+    std::string getClassName() { return className; };
 
-   /**
+    /**
     * Return the name of the method inplementing the udf
     * @return std::string
     */
-   std::string getMethodName(){ return methodName;};
-
-   /**
-    * Return the name of the object used as udf input value
-    * @return std::string
-    */
-   std::string getInputProxyName(){ return inputProxyName;};
+    std::string getMethodName() { return methodName; };
 
     /**
-     * Return the name of the object used as udf output value
+    * Return the name with pkg prefix of the object used as udf input value
+    * @return std::string
+    */
+    std::string getInputProxyName() { return inputProxyName; };
+
+    /**
+     * Return the name with pkg prefix of the object used as udf output value
      * @return std::string
      */
-    std::string getOutputProxyName(){ return outputProxyName;};
+    std::string getOutputProxyName() { return outputProxyName; };
 
- private:
-   std::string className;
-   std::string methodName;
+    /**
+     * Retrun the serialized instance of the class implementing the UDF
+     * @return
+     */
+    std::vector<char> getSerializedInstance() { return serializedInstance; };
 
-   std::string inputProxyName;
-   std::string outputProxyName;
+  private:
+    std::string className;
+    std::string methodName;
 
-   std::unordered_map<std::string, std::vector<char>> byteCodeList;
-   std::vector<char> serializedInstance;
+    std::string inputProxyName;
+    std::string outputProxyName;
 
-   SchemaPtr inputSchema;
-   SchemaPtr outputSchema;
+    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+    std::vector<char> serializedInstance;
 
-   JavaVM* jvm;
-   JNIEnv* env;
+    SchemaPtr inputSchema;
+    SchemaPtr outputSchema;
+
+    JavaVM* jvm;
+    JNIEnv* env;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
