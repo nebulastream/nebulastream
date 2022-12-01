@@ -24,7 +24,7 @@ const std::string LOCATION = "LOCATION";
 const std::string DATA_PORT = "DATA_PORT";
 const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
-std::string MAINTENANCE = "MAINTENANCE";
+const std::string MAINTENANCE = "MAINTENANCE";
 
 }// namespace NES
 
