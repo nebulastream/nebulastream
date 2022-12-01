@@ -31,6 +31,7 @@ namespace NES {
 TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(std::move(topology)) {
     NES_DEBUG("TopologyManagerService()");
 }
+
 void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckService) {
     this->healthCheckService = healthCheckService;
 }
@@ -39,8 +40,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
                                                 const int64_t grpcPort,
                                                 const int64_t dataPort,
                                                 const uint16_t numberOfSlots,
-                                                const NES::Spatial::Index::Experimental::Location geoLocation,
-                                                const std::map<std::string, std::any> workerProperties) {
+                                                std::map<std::string, std::any> workerProperties) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -56,9 +56,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     NES_DEBUG("TopologyManagerService::registerWorker: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
-    TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-    newTopologyNode->setSpatialNodeType(spatialType);
-    newTopologyNode->addNodeProperty("tf_installed", isTfInstalled);
+    TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
@@ -75,11 +73,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (fixedCoordinates.isValid()
+    auto newNodeGeoLocation = newTopologyNode->getGeoLocation();
+
+    if (newNodeGeoLocation.isValid()
         && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
-                                                            << fixedCoordinates.getLongitude());
-        topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, fixedCoordinates);
+        NES_DEBUG("added node with geographical location: " << newNodeGeoLocation.getLatitude() << ", "
+                                                            << newNodeGeoLocation.getLongitude());
+        topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, newNodeGeoLocation);
     } else {
         NES_DEBUG("added node is a non field node");
         if (newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
@@ -213,8 +213,7 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 
 uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
-//TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
-
+//TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
 std::vector<std::pair<TopologyNodePtr, Spatial::Index::Experimental::Location>>
 TopologyManagerService::getNodesInRange(Spatial::Index::Experimental::Location center, double radius) {
     return topology->getLocationIndex()->getNodesInRange(center, radius);
