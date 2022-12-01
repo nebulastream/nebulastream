@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_AGGREGATIONFUNCTION_HPP
-#define NES_AGGREGATIONFUNCTION_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
 #include <Common/DataTypes/DataType.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -21,18 +21,33 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 /**
- * TODO 3250: doc
+ * This class is the Nautilus aggregation interface
  */
 class AggregationFunction {
   public:
     AggregationFunction(DataTypePtr inputType, DataTypePtr finalType);
 
     /**
-     * TODO 3250: docs
+     * @brief lift adds the incoming value to the existing aggregation value
+     * @param memref existing aggregation value
+     * @param value the value to add
      */
     virtual void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) = 0;
+    /**
+     * @brief combine composes to aggregation value into one
+     * @param memref1 an aggregation value (intermediate result)
+     * @param memref2 another aggregation value (intermediate result)
+     */
     virtual void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) = 0;
+    /**
+     * @brief lower returns the aggregation value
+     * @param memref the derived aggregation value
+     */
     virtual Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) = 0;
+    /**
+     * @brief resets the stored aggregation value to init (=0)
+     * @param memref the current aggragtion value which need to be reset
+     */
     virtual void reset(Nautilus::Value<Nautilus::MemRef> memref) = 0;
 
     virtual ~AggregationFunction();
@@ -45,4 +60,4 @@ class AggregationFunction {
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif//NES_AGGREGATIONFUNCTION_HPP
+#endif //NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
