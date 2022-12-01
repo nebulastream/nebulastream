@@ -247,7 +247,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     std::vector<NodePtr> updatedParents;
     //filters out all parents that are marked for maintenance, as these should be ignored during path finding
     for (auto& parent : parents) {
-        if (!parent->as<TopologyNode>()->getMaintenanceFlag()) {
+        if (!parent->as<TopologyNode>()->isUnderMaintenance()) {
             updatedParents.push_back(parent);
         }
     }
@@ -442,7 +442,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
         for (const auto& parent : candidateNode->getParents()) {
-            if (!parent->as<TopologyNode>()->getMaintenanceFlag())
+            if (!parent->as<TopologyNode>()->isUnderMaintenance())
                 nodesToProcess.push_back(parent);
         }
     }
@@ -491,7 +491,7 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
         for (const auto& child : candidateNode->getChildren()) {
-            if (!child->as<TopologyNode>()->getMaintenanceFlag()) {
+            if (!child->as<TopologyNode>()->isUnderMaintenance()) {
                 nodesToProcess.push_back(child);
             }
         }

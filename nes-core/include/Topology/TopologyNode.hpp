@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Spatial/Index/Location.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
@@ -28,9 +27,12 @@ class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
+class Location;
 using LocationPtr = std::shared_ptr<Location>;
+
 class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
+
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
 
@@ -45,8 +47,13 @@ using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 class TopologyNode : public Node {
 
   public:
-    static TopologyNodePtr
-    create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    static TopologyNodePtr create(const uint64_t id,
+                                  const std::string& ipAddress,
+                                  const uint32_t grpcPort,
+                                  const uint32_t dataPort,
+                                  const uint16_t resources,
+                                  std::map<std::string, std::any>& properties);
+
     virtual ~TopologyNode() = default;
 
     /**
@@ -95,13 +102,13 @@ class TopologyNode : public Node {
      * @brief Get maintenance flag where 1 represents marked for maintenance
      * @return bool
      */
-    bool getMaintenanceFlag() const;
+    bool isUnderMaintenance() const;
 
     /**
      * @brief sets maintenance flag where 1 represents marked for maintenance
      * @param flag
      */
-    void setMaintenanceFlag(bool flag);
+    void setForMaintenance(bool flag);
 
     std::string toString() const override;
 
@@ -111,7 +118,12 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-    explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    explicit TopologyNode(const uint64_t id,
+                          const std::string ipAddress,
+                          const uint32_t grpcPort,
+                          const uint32_t dataPort,
+                          const uint16_t resources,
+                          std::map<std::string, std::any>& properties);
 
     bool containAsParent(NodePtr node) override;
 
@@ -171,7 +183,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    NES::Spatial::Index::Experimental::WaypointPtr getCoordinates();
+    NES::Spatial::Index::Experimental::WaypointPtr getGeoLocation();
 
     /**
      * Experimental
@@ -186,15 +198,15 @@ class TopologyNode : public Node {
      * @param lng: geographical longitude in signed degrees [-180, 180]
      * @return true on success
      */
-    void setFixedCoordinates(double latitude, double longitude);
+    void setGeoLocation(double latitude, double longitude);
 
     /**
      * Experimental
      * @brief set the fixed geographical coordinates of this topology node, making it a field node
-     * @param geoLoc: the Geographical location of the node
+     * @param geoLocation: the Geographical location of the node
      * @return true on success
      */
-    void setFixedCoordinates(NES::Spatial::Index::Experimental::Location geoLoc);
+    void setGeoLocation(NES::Spatial::Index::Experimental::Location geoLocation);
 
     /**
      * Experimental
@@ -218,9 +230,6 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
-    bool maintenanceFlag;
-    NES::Spatial::Index::Experimental::Location fixedCoordinates;
-    NES::Spatial::Index::Experimental::NodeType spatialType;
 
     /**
      * @brief A field to store a map of node properties

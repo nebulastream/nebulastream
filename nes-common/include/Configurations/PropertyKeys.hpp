@@ -18,12 +18,14 @@
 #include <string>
 
 namespace NES {
-const std::string SPATIAL_TYPE = "SPATIAL_TYPE";
+
 const std::string SLOTS = "SLOTS";
 const std::string LOCATION = "LOCATION";
 const std::string DATA_PORT = "DATA_PORT";
 const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
+std::string MAINTENANCE = "MAINTENANCE";
+
 }// namespace NES
 
 #endif//NES_PROPERTYKEYS_HPP

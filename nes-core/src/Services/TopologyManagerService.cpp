@@ -35,26 +35,25 @@ void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckS
     this->healthCheckService = healthCheckService;
 }
 
-uint64_t TopologyManagerService::registerNode(const std::string& address,
-                                              int64_t grpcPort,
-                                              int64_t dataPort,
-                                              uint16_t numberOfSlots,
-                                              Spatial::Index::Experimental::Location fixedCoordinates,
-                                              Spatial::Index::Experimental::NodeType spatialType,
-                                              bool isTfInstalled) {
+uint64_t TopologyManagerService::registerWorker(const std::string& address,
+                                                const int64_t grpcPort,
+                                                const int64_t dataPort,
+                                                const uint16_t numberOfSlots,
+                                                const NES::Spatial::Index::Experimental::Location geoLocation,
+                                                const std::map<std::string, std::any> workerProperties) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
-    NES_DEBUG("TopologyManagerService::registerNode: topology before insert");
+    NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
     topology->print();
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR("TopologyManagerService::registerNode: node with address " << address << " and grpc port " << grpcPort
-                                                                             << " already exists");
+        NES_ERROR("TopologyManagerService::registerWorker: node with address " << address << " and grpc port " << grpcPort
+                                                                               << " already exists");
         return false;
     }
 
-    NES_DEBUG("TopologyManagerService::registerNode: register node");
+    NES_DEBUG("TopologyManagerService::registerWorker: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
@@ -69,10 +68,10 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     const TopologyNodePtr rootNode = topology->getRoot();
 
     if (!rootNode) {
-        NES_DEBUG("TopologyManagerService::registerNode: tree is empty so this becomes new root");
+        NES_DEBUG("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
         topology->setAsRoot(newTopologyNode);
     } else {
-        NES_DEBUG("TopologyManagerService::registerNode: add link to the root node " << rootNode->toString());
+        NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node " << rootNode->toString());
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
@@ -96,7 +95,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         healthCheckService->addNodeToHealthCheck(newTopologyNode);
     }
 
-    NES_DEBUG("TopologyManagerService::registerNode: topology after insert = ");
+    NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
     topology->print();
     return id;
 }

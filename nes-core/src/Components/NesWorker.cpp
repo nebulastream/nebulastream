@@ -344,7 +344,7 @@ bool NesWorker::connect() {
     topologyNodeId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(topologyNodeId);
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerNode rpc register success with id " << topologyNodeId);
+        NES_DEBUG("NesWorker::registerWorker rpc register success with id " << topologyNodeId);
         connected = true;
         nodeEngine->setNodeId(topologyNodeId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
@@ -380,7 +380,7 @@ bool NesWorker::connect() {
 
         return true;
     }
-    NES_DEBUG("NesWorker::registerNode rpc register failed");
+    NES_DEBUG("NesWorker::registerWorker rpc register failed");
     connected = false;
     return false;
 }
@@ -389,14 +389,14 @@ bool NesWorker::disconnect() {
     NES_DEBUG("NesWorker::disconnect()");
     bool successPRCRegister = coordinatorRpcClient->unregisterNode();
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerNode rpc unregister success");
+        NES_DEBUG("NesWorker::registerWorker rpc unregister success");
         connected = false;
         NES_DEBUG("NesWorker::stop health check");
         healthCheckService->stopHealthCheck();
         NES_DEBUG("NesWorker::stop health check successful");
         return true;
     }
-    NES_DEBUG("NesWorker::registerNode rpc unregister failed");
+    NES_DEBUG("NesWorker::registerWorker rpc unregister failed");
     return false;
 }
 

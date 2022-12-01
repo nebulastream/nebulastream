@@ -163,17 +163,23 @@ Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const Regi
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) {
+Status
+CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
-    bool success = topologyManagerService->unregisterNode(request->id());
+    bool success = topologyManagerService->removeGeoLocation(request->workerid());
     if (success) {
-        monitoringManager->removeMonitoringNode(request->id());
-        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
+        if (!topologyManagerService->unregisterNode(request->workerid())) {
+            NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
+            reply->set_success(false);
+            return Status::CANCELLED;
+        }
+        monitoringManager->removeMonitoringNode(request->workerid());
+        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
+    NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
     reply->set_success(false);
     return Status::CANCELLED;
 }

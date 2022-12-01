@@ -518,7 +518,7 @@ bool CoordinatorRPCClient::registerWorker(const std::map<std::string, std::any> 
             return true;
         }
         bool onPartialFailure(const Status& status) override {
-            NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
+            NES_ERROR(" CoordinatorRPCClient::registerWorker error=" << status.error_code() << ": " << status.error_message());
             switch (status.error_code()) {
                 case grpc::UNIMPLEMENTED:
                 case grpc::UNAVAILABLE: {
