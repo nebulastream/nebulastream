@@ -19,7 +19,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <iostream>
 
 namespace NES::Nautilus {
 
