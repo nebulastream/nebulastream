@@ -50,7 +50,6 @@ class TopologyManagerService {
      * @param grpcPort: grpc port used by the worker for communication
      * @param dataPort: port used by the worker for receiving or transmitting data
      * @param numberOfSlots: the slots available at the worker
-     * @param geoLocation: an optional containing either the node location in as a Location object if the node is a field node, or nullopt_t for non field nodes
      * @param workerProperties: Additional properties of worker
      * @return unique identifier of the worker
      */
@@ -58,8 +57,7 @@ class TopologyManagerService {
                             const int64_t grpcPort,
                             const int64_t dataPort,
                             const uint16_t numberOfSlots,
-                            const NES::Spatial::Index::Experimental::Location geoLocation,
-                            const std::map<std::string, std::any> workerProperties);
+                            std::map<std::string, std::any> workerProperties);
 
     /**
     * @brief unregister an existing node
