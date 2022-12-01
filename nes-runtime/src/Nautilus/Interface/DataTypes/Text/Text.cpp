@@ -39,6 +39,37 @@ Value<Boolean> Text::equals(const Value<Text>& other) const {
     return boolResult.as<Boolean>();
 }
 
+TextValue* textSubstringTest(const TextValue* text, uint32_t index, uint32_t len){
+    auto resultText = TextValue::create(len);
+    uint32_t j = 0;
+    for(uint32_t i=index-1; i<index+len-1; i++){
+        resultText->str()[j] = text->c_str()[i];
+        j++;
+    }
+    return resultText;
+}
+Value<Text> Text::substring(Value<UInt32> index,Value<UInt32> len) const {
+    return FunctionCall<>("textSubstringTest", textSubstringTest, rawReference, index, len);
+}
+
+TextValue* concat(const TextValue* leftText, const TextValue* rightText){
+    uint32_t len = leftText->length() + rightText->length();
+    auto resultText = TextValue::create(len);
+    uint32_t j = 0;
+    for(uint32_t i=0;i<leftText->length(); i++){
+        resultText->str()[j] = leftText->c_str()[i];
+        j++;
+    }
+    for(uint32_t k=0;k<rightText->length();k++){
+        resultText->str()[j] = rightText->c_str()[k];
+        j++;
+    }
+    return resultText;
+}
+Value<Text> Text::StringConcat(const Value<Text>& other) const {
+    return FunctionCall<>("concat", concat, rawReference, other.value->rawReference);
+}
+
 uint32_t TextGetLength(const TextValue* text) { return text->length(); }
 
 const Value<UInt32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
