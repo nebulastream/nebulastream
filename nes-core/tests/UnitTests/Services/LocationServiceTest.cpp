@@ -77,7 +77,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    node2->setFixedCoordinates(13.4, -23);
+    node2->setGeoLocation(13.4, -23);
     node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 #ifdef S2DEF
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
@@ -87,7 +87,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
-    locIndex->initializeFieldNodeCoordinates(node2, *node2->getCoordinates()->getLocation());
+    locIndex->initializeFieldNodeCoordinates(node2, *node2->getGeoLocation()->getLocation());
 
 #ifdef S2DEF
     NES_INFO("start worker 3");
@@ -144,7 +144,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
-    node2->setFixedCoordinates(13.4, -23);
+    node2->setGeoLocation(13.4, -23);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
     node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
@@ -152,7 +152,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
-    locIndex->initializeFieldNodeCoordinates(node2, *node2->getCoordinates()->getLocation());
+    locIndex->initializeFieldNodeCoordinates(node2, *node2->getGeoLocation()->getLocation());
 
     auto response0 = service->requestLocationDataFromAllMobileNodesAsJson();
 

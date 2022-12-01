@@ -30,7 +30,7 @@ nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     if (!nodePtr || !nodePtr->getCoordinates()) {
         return nullptr;
     }
-    return convertNodeLocationInfoToJson(nodeId, *nodePtr->getCoordinates()->getLocation());
+    return convertNodeLocationInfoToJson(nodeId, *nodePtr->getGeoLocation()->getLocation());
 }
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {

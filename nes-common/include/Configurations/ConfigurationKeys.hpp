@@ -22,6 +22,7 @@ namespace NES {
 const std::string TENSER_FLOW_SUPPORT = "TENSER_FLOW";
 const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
 const std::string MOBILITY_SUPPORT = "MOBILITY";
+const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
 
 }// namespace NES
 
