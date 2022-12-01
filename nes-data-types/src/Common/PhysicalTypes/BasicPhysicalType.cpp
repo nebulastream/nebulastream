@@ -41,6 +41,7 @@ uint64_t BasicPhysicalType::size() const {
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
         case TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
+        case UNDEFINED: return -1;
     }
     return -1;
 }
@@ -118,6 +119,7 @@ std::string BasicPhysicalType::toString() const noexcept {
         case BOOLEAN: return "BOOLEAN";
         case CHAR: return "CHAR";
         case TEXT: return "TEXT";
+        case UNDEFINED: return "UNDEFINED";
     }
     return "";
 }

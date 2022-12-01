@@ -33,8 +33,9 @@ class TensorflowAdapter {
 
     /**
      * @brief runs the tensorflow model of a single tuple
-     * @param n
-     * @param ...
+     * @param dataType enum of type BasicPhysicalType::NativeType; only available options currently are: INT_64, DOUBLE, and BOOLEAN
+     * @param n size of the first dimensional input tensor (vector)
+     * @param ... values for the first dimensional input tensor (vector)
      */
     void infer(uint8_t dataType, int n, ...);
 
@@ -49,7 +50,7 @@ class TensorflowAdapter {
 
   private:
     TfLiteInterpreter* interpreter;
-    float* output{};
+    double* output{};
 #endif// TFDEF
 };
 
