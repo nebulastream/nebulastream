@@ -12,16 +12,32 @@
     limitations under the License.
 */
 
-#ifndef NES_SUMAGGREGATIONVALUE_HPP
-#define NES_SUMAGGREGATIONVALUE_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP
 
 #include <cstdint>
 namespace NES::Runtime::Execution::Aggregation {
 
-// TODO 3250: add a Base class
-struct SumAggregationValue {
+/**
+ * Base class for aggregation Value
+ */
+struct AggregationValue {
+};
+
+struct AvgAggregationValue : AggregationValue {
+    int64_t sum = 0;
+    int64_t count = 0;
+};
+
+struct SumAggregationValue : AggregationValue {
     int64_t sum = 0;
 };
+
+struct CountAggregationValue : AggregationValue {
+    int64_t count = 0;
+};
+
+
 }// namespace NES::Runtime::Execution::Aggregation
 
 #endif//NES_SUMAGGREGATIONVALUE_HPP

@@ -12,22 +12,23 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP
-#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP
+#define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
-class SumAggregationFunction : public AggregationFunction {
+class AvgAggregationFunction : public AggregationFunction {
 
   public:
-    SumAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
+    AvgAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
+    void lift(Nautilus::Value<Nautilus::MemRef> memrefCount, Nautilus::Value<Nautilus::MemRef> memrefSum, Nautilus::Value<> value);
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) override;
     Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif //NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP
+#endif //NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP

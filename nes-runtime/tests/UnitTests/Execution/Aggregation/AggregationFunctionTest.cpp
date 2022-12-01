@@ -11,10 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Execution/Aggregation/AvgAggregation.hpp"
+#include "Execution/Aggregation/CountAggregation.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Aggregation/SumAggregationValue.hpp>
 #include <gtest/gtest.h>
 namespace NES::Runtime::Execution::Expressions {
 class AggregationFunctionTest : public testing::Test {
@@ -36,7 +38,7 @@ class AggregationFunctionTest : public testing::Test {
 };
 
 // TODO 3250: doc
-TEST_F(AggregationFunctionTest, scanEmitPipeline) {
+TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
     auto sumValue = Aggregation::SumAggregationValue();
@@ -47,11 +49,57 @@ TEST_F(AggregationFunctionTest, scanEmitPipeline) {
     sumAgg.lift(memref, incomingValue);
     ASSERT_EQ(sumValue.sum, 1);
 
-    // TODO 3250: test combine
+    // test combine
+    sumAgg.combine(memref, memref);
+    ASSERT_EQ(sumValue.sum, 2);
 
     // test lower
     auto aggregationResult = sumAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 1);
+    ASSERT_EQ(aggregationResult, 2);
 }
+
+TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
+    auto countValue = Aggregation::CountAggregationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
+
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    // test lift
+    countAgg.lift(memref, incomingValue);
+    ASSERT_EQ(countValue.count, 1);
+
+    // test combine
+    countAgg.combine(memref, memref);
+    ASSERT_EQ(countValue.count, 2);
+
+    // test lower
+    auto aggregationResult = countAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 2);
+}
+
+TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, integerType);
+    auto avgValue = Aggregation::AvgAggregationValue();
+    auto memrefCount = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.count);
+    auto memrefsum = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.sum);
+
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    // test lift
+    avgAgg.lift(memrefCount, memrefsum, incomingValue);
+    ASSERT_EQ(avgValue.count, 1);
+    ASSERT_EQ(avgValue.sum, 2);
+
+    // test combine
+   /* avgAgg.combine(memref, memref);
+    ASSERT_EQ(avgValue.count, 2);
+    ASSERT_EQ(avgValue.sum, 4);
+
+    // test lower
+    auto aggregationResult = avgAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 2);*/
+}
+
 
 }// namespace NES::Runtime::Execution::Expressions
