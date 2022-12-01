@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -45,7 +46,11 @@ uint64_t BasicBlock::getIndexOfArgument(std::shared_ptr<Operations::Operation> a
     return -1;
 }
 
-void BasicBlock::popOperation() { operations.pop_back(); }
+// void BasicBlock::popOperation() { operations.pop_back(); }
+void BasicBlock::replaceTerminatorOperation(Operations::OperationPtr loopOperation) {
+    operations.pop_back();
+    operations.emplace_back(std::move(loopOperation));
+}
 
 // NESIR Assembly
 std::shared_ptr<BasicBlock> BasicBlock::addOperation(Operations::OperationPtr operation) {
