@@ -153,21 +153,21 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    topologyManagerService->registerNode("1",
-                                         0,
-                                         0,
-                                         UINT16_MAX,
-                                         NES::Spatial::Index::Experimental::Location(),
-                                         NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                         /* isTfInstalled */ false);
+    topologyManagerService->registerWorker("1",
+                                           0,
+                                           0,
+                                           UINT16_MAX,
+                                           NES::Spatial::Index::Experimental::Location(),
+                                           NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                           /* isTfInstalled */ false);
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerNode(std::to_string(i),
-                                             0,
-                                             0,
-                                             UINT16_MAX,
-                                             NES::Spatial::Index::Experimental::Location(),
-                                             NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                             /* isTfInstalled */ false);
+        topologyManagerService->registerWorker(std::to_string(i),
+                                               0,
+                                               0,
+                                               UINT16_MAX,
+                                               NES::Spatial::Index::Experimental::Location(),
+                                               NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                               /* isTfInstalled */ false);
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));

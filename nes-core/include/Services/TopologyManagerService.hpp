@@ -45,23 +45,21 @@ class TopologyManagerService {
     TopologyManagerService(TopologyPtr topology);
 
     /**
-     * @brief registers a node. The node can be a field node (a non mobile worker node with a known location where
-     *  mobile devices might connect based on the location info) or a non field node (a non mobile worker node without a known
-     *  location which will not be considered as a connect target by mobile devices)
-     * @param address of node ip:port
-     * @param cpu the cpu capacity of the worker
-     * @param nodeProperties of the to be added sensor
-     * @param coordinates: an optional containing either the node location in as a Location object if the node is a field node, or nullopt_t for non field nodes
-     * @param spatialType: indicates if this worker is running on a fixed location device or on a mobile device or if there is no location data available
-     * @return id of node
+     * @brief registers a worker.
+     * @param address: address of the worker in ip:port format
+     * @param grpcPort: grpc port used by the worker for communication
+     * @param dataPort: port used by the worker for receiving or transmitting data
+     * @param numberOfSlots: the slots available at the worker
+     * @param geoLocation: an optional containing either the node location in as a Location object if the node is a field node, or nullopt_t for non field nodes
+     * @param workerProperties: Additional properties of worker
+     * @return unique identifier of the worker
      */
-    uint64_t registerNode(const std::string& address,
-                          int64_t grpcPort,
-                          int64_t dataPort,
-                          uint16_t numberOfSlots,
-                          NES::Spatial::Index::Experimental::Location fixedCoordinates,
-                          NES::Spatial::Index::Experimental::NodeType spatialType,
-                          bool isTfInstalled);
+    uint64_t registerWorker(const std::string& address,
+                            const int64_t grpcPort,
+                            const int64_t dataPort,
+                            const uint16_t numberOfSlots,
+                            const NES::Spatial::Index::Experimental::Location geoLocation,
+                            const std::map<std::string, std::any> workerProperties);
 
     /**
     * @brief unregister an existing node

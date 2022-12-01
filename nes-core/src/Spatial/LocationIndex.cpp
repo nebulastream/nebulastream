@@ -57,7 +57,7 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
     std::unique_lock lock(locationIndexMutex);
 #endif
-    node->setFixedCoordinates(geoLoc);
+    node->setGeoLocation(geoLoc);
     lock.unlock();
     return true;
 }
@@ -68,7 +68,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
         mobileNodes.erase(node->getId());
     }
 #ifdef S2DEF
-    auto geoLocation = node->getCoordinates()->getLocation();
+    auto geoLocation = node->getGeoLocation()->getLocation();
     if (!geoLocation->isValid()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
@@ -104,7 +104,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const Location& g
 
 std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto geoLocation = nodePtr->getCoordinates()->getLocation();
+    auto geoLocation = nodePtr->getGeoLocation()->getLocation();
 
     if (!geoLocation->isValid()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
@@ -173,7 +173,7 @@ std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLoc
     std::unique_lock lock(locationIndexMutex);
     loccationVector.reserve(mobileNodes.size());
     for (const auto& [nodeId, topologyNode] : mobileNodes) {
-        auto location = topologyNode->getCoordinates()->getLocation();
+        auto location = topologyNode->getGeoLocation()->getLocation();
         if (location->isValid()) {
             loccationVector.emplace_back(nodeId, location);
         }
