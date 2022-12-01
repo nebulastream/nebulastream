@@ -13,4 +13,6 @@
 add_source_files(nes-runtime
         AggregationFunction.cpp
         SumAggregation.cpp
+        CountAggregation.cpp
+        AvgAggregation.cpp
         )

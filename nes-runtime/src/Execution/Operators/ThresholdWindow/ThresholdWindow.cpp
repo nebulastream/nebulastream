@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include "Common/DataTypes/DataTypeFactory.hpp"
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Aggregation/SumAggregationValue.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
@@ -61,7 +61,7 @@ extern "C" void unlockWindowHandler(void* state) {
 
 extern "C" void* getAggregationValue(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    return (void*) handler->sumAggregationValue.get();
+    return (void*) handler->AggregationValue.get();
 }
 
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
