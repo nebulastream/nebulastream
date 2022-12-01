@@ -10,24 +10,10 @@
 //     limitations under the License.
 // *
 
-// /*
-//     Licensed under the Apache License, Version 2.0 (the "License");
-//     you may not use this file except in compliance with the License.
-//     You may obtain a copy of the License at
-//         https://www.apache.org/licenses/LICENSE-2.0
-//     Unless required by applicable law or agreed to in writing, software
-//     distributed under the License is distributed on an "AS IS" BASIS,
-//     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//     See the License for the specific language governing permissions and
-//     limitations under the License.
-// *
-
-//
-// Created by Kasper Hjort Berthelsen on 28/11/2022.
-//
-
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <NesBaseTest.hpp>
+#include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
 #include <boost/process/spawn.hpp>
@@ -40,10 +26,9 @@ constexpr int NUMSOURCELOCALBUFFERS = 12;
 const std::string ADDRESS{"tcp://localhost:1883"};
 const std::string PRODUCER_CLIENT_ID{"producer_client"};
 const std::string CONSUMER_CLIENT_ID{"consumer_client"};
-const std::string DEVICE_ID = "test_deviceid";
-const std::string APP_ID = "test_appid";
+const std::string DEVICE_ID = "1122334455667788";
+const std::string APP_ID = "0102030405060708";
 const std::string TOPIC = "application/" + APP_ID + "/device/" + DEVICE_ID + "/event/up";
-
 
 namespace NES {
 class LoRaWANProxySourceMQTTTest : public Testing::NESBaseTest {
@@ -125,12 +110,75 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceRecieveData) {
                                    NUMSOURCELOCALBUFFERS,
                                    GatheringMode::INTERVAL_MODE,
                                    {});
+    init.open();
     EXPECT_TRUE(init.connect());
     sleep(1);
-    auto msg = mqtt::make_message(TOPIC, R"({"var":1})");
+    auto msg = mqtt::make_message(TOPIC, R"({ "var" : 1337 })");
     client.publish(msg);
     sleep(1);
     auto data = init.receiveData();
     EXPECT_TRUE(data.has_value());
+    uint32_t tuple = (*(uint32_t*) data->getBuffer());
+    EXPECT_EQ(tuple, 1337);
 };
-}
+
+TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceConfig) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->numWorkerThreads = 4;
+
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    //register logical source qnv
+    std::string source =
+        R"(Schema::create()->addField(createField("value", UINT8));)";
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+
+    auto sourceType = LoRaWANProxySourceType::create();
+    sourceType->setUrl(ADDRESS);
+    sourceType->setAppId(APP_ID);
+    sourceType->setUserName("testUser");
+    auto physicalSource = PhysicalSource::create("stream", "test_stream", sourceType);
+    wrkConf->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+
+    EXPECT_TRUE(wrk1->start(false, true));
+
+    // send some data
+    client.publish(mqtt::make_message(TOPIC, R"({ "value": 1 })"));
+    //client.publish(mqtt::make_message(TOPIC, R"({ "type" : ['h','e','l','l','o','t','h','e','r','e'], "value": 2 })"));
+    //client.publish(mqtt::make_message(TOPIC, R"({ "type" : ['g','e','n','e','r','a','l',' ','g','r'], "value": 3 })"));
+    sleep(1);
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath =  "/tmp/test.out";
+    string query = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "TEXT_FORMAT", "APPEND"));)";
+    string query2 = R"(Query::from("stream").filter(Attribute("value") < 3).sink(PrintSinkDescriptor::create());)";
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    sleep(10);
+    //EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId,2));
+    NES_INFO("\n\n --------- CONTENT --------- \n\n");
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    NES_INFO(content);
+
+    queryService->validateAndQueueStopQueryRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    EXPECT_TRUE(wrk1->stop(true));
+
+    EXPECT_TRUE(crd->stopCoordinator(true));
+};
+
+}// namespace NES

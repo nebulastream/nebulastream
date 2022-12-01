@@ -39,7 +39,7 @@ LoRaWANProxySourceType::LoRaWANProxySourceType()
                                                                         "",
                                                                         "Password for the MQTT broker for the chosen network stack")),
       appId(Configurations::ConfigurationOption<std::string>::create(Configurations::LORAWAN_APP_ID_CONFIG,
-                                                                     "",
+                                                                     "0102030405060708",
                                                                      "AppId for the configured application in the chosen network stack"))
 {
     NES_INFO(Configurations::LORAWAN_PROXY_SOURCE_CONFIG + "Init source config object with default values");
