@@ -1710,7 +1710,11 @@ return result;
 
             auto activeStandbyStart = std::chrono::high_resolution_clock::now();
 
-            bool activeStandby = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
+            std::vector<ExecutionNodePtr> consideredNodes = {};
+            std::copy_if(executionNodes.begin(), executionNodes.end(), std::back_inserter(consideredNodes),
+                         [](const ExecutionNodePtr& e) {return (Optimizer::BasePlacementStrategy::getExecutionNodeParent(e)->getId() != 1);});
+
+            bool activeStandby = std::all_of(consideredNodes.begin(), consideredNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                                  {return checkActiveStandbyConstraints(executionNode, ftConfig,
                                                                                       getDownstreamNeighborNodes(executionNode, executionNodes),
                                                                                       //getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
@@ -1728,7 +1732,7 @@ return result;
 
             auto checkpointingStart = std::chrono::high_resolution_clock::now();
 
-            bool checkpointing = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
+            bool checkpointing = std::all_of(consideredNodes.begin(), consideredNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                              {return checkCheckpointingConstraints(executionNode, ftConfig,
                                                                                       getDownstreamNeighborNodes(executionNode, executionNodes),
                                                                                       //getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
