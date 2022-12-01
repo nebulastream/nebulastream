@@ -43,6 +43,20 @@ class Text final : public Nautilus::Any {
     Value<Boolean> equals(const Value<Text>& other) const;
 
     /**
+     * @brief concat two text object
+     * @param other text object
+     * @return combination of two text object
+     */
+    Value<Text> StringConcat(const Value<Text>& other) const;
+
+    /**
+     * @brief exract a subtext object
+     * @param a text object, a index, a length for subtext
+     * @return text object
+     */
+    Value<Text> substring(Value<UInt32> ,Value<UInt32> ) const;
+
+    /**
      * @brief Returns the number of characters of this text value.
      * @return Value<Int32>
      */
