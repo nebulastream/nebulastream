@@ -26,7 +26,8 @@
 
 namespace NES::Runtime::Execution {
 
-
+class LazyJoinOperatorHandler;
+using LazyJoinOperatorHandlerPtr = std::shared_ptr<LazyJoinOperatorHandler>;
 class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
 
