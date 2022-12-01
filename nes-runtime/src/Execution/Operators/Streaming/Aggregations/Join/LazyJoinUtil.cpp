@@ -17,10 +17,16 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::Util {
@@ -53,16 +59,23 @@ namespace NES::Runtime::Execution::Util {
 
     Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
         auto buffer = bufferManager->getBufferBlocking();
-        uint8_t* bufferPtr = buffer.getBuffer();
+        int8_t* bufferPtr = (int8_t *)buffer.getBuffer();
 
-        auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-        for (auto& field : schema->fields) {
-            auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 
-            auto fieldVal = nautilusRecord.read(field->getName());
-            i do not think that this is possible... ask philipp
-            memcpy(bufferPtr, fieldVal, fieldType->size());
-            bufferPtr += fieldType->size();
+        if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+            auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+            auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+
+            memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
+
+        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+            auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+            auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+
+            memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
+
+        } else {
+            NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
         }
 
         buffer.setNumberOfTuples(1);

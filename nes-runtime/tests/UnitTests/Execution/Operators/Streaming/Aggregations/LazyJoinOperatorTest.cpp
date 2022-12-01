@@ -84,6 +84,45 @@ class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecut
 };
 
 
+bool lazyJoinBuildAndCheck(size_t numberOfTuplesToProduce, Operators::LazyJoinBuildPtr lazyJoinBuild,
+                           LazyJoinOperatorHandlerPtr lazyJoinOpHandler, const std::string& joinFieldName,
+                           BufferManagerPtr bufferManager, SchemaPtr schema, ExecutionContext& executionContext) {
+    // Execute record and thus fill the hash table
+    for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
+        auto record = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 1)}, {"timestamp", Value<UInt64>(i)}});
+        lazyJoinBuild->execute(executionContext, record);
+
+        // TODO talk with Philipp if this is the correct way to do this
+        uint64_t joinKey = record.read(joinFieldName).as<UInt64>().getValue().getValue();
+        auto hash = Util::murmurHash(joinKey);
+        auto hashTable = lazyJoinOpHandler->getWindowToBeFilled().getLocalHashTable(/* workerThreadId*/ 0, /*isLeftSide*/ true);
+        auto bucket = hashTable.getBucketLinkedList(hash & MASK);
+
+        bool correctlyInserted = false;
+        for (auto page : bucket->getPages()) {
+            for (auto k = 0UL; k < page->size(); ++k) {
+                uint8_t* recordPtr = page->operator[](k);
+                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, schema, bufferManager);
+                auto recordBuffer = Util::getBufferFromNautilus(record, schema, bufferManager);
+
+                NES_TRACE("\nBucketBuffer: " << Util::printTupleBufferAsCSV(bucketBuffer, schema)
+                                            << "\nRecordBuffer: " << Util::printTupleBufferAsCSV(recordBuffer, schema));
+
+                if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), schema->getSchemaSizeInBytes()) == 0) {
+
+                    correctlyInserted = true;
+                    break;
+                }
+            }
+        }
+        if (!correctlyInserted) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 
 TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
@@ -109,6 +148,10 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
     const auto numberOfTuplesToProduce = 100UL;
     const auto windowSize = 1000;
 
+    auto handlerIndex = 0;
+    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                    timeStampField, leftSchema);
+
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
@@ -131,40 +174,9 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
 
-    auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
-                                                                    timeStampField, leftSchema);
 
-
-    // Execute record and thus fill the hash table
-    for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
-        auto record = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 1)}, {"timestamp", Value<UInt64>(i)}});
-        lazyJoinBuild->execute(executionContext, record);
-
-        // TODO talk with Philipp if this is the correct way to do this
-        uint64_t joinKey = record.read(joinFieldNameLeft).as<UInt64>().getValue().getValue();
-        auto hash = Util::murmurHash(joinKey);
-        auto hashTable = lazyJoinOpHandler->getWindowToBeFilled().getLocalHashTable(/* workerThreadId*/ 0, /*isLeftSide*/ true);
-        auto bucket = hashTable.getBucketLinkedList(hash & MASK);
-
-        bool correctlyInserted = false;
-        for (auto page : bucket->getPages()) {
-            for (auto k = 0UL; k < page->size(); ++k) {
-                uint8_t* recordPtr = page->operator[](k);
-                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, leftSchema, bm);
-                auto recordBuffer = Util::getBufferFromNautilus(record, leftSchema, bm);
-
-                NES_INFO("\nBucketBuffer: " << Util::printTupleBufferAsCSV(bucketBuffer, leftSchema) << "\nRecordBuffer: " << Util::printTupleBufferAsCSV(recordBuffer, leftSchema));
-
-                if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), leftSchema->getSchemaSizeInBytes()) == 0) {
-
-                    correctlyInserted = true;
-                    break;
-                }
-            }
-        }
-        ASSERT_TRUE(correctlyInserted);
-    }
+    ASSERT_TRUE(lazyJoinBuildAndCheck(numberOfTuplesToProduce, lazyJoinBuild, lazyJoinOpHandler, joinFieldNameLeft,
+                                      bm, leftSchema, executionContext));
 }
 
 TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {

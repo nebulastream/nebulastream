@@ -20,6 +20,9 @@ limitations under the License.
 
 namespace NES::Runtime::Execution::Operators {
 
+class LazyJoinBuild;
+using LazyJoinBuildPtr = std::shared_ptr<LazyJoinBuild>;
+
 class LazyJoinBuild : public ExecutableOperator {
 
   public:
