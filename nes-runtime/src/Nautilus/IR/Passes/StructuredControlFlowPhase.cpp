@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp"
+#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopOperation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
@@ -64,9 +68,36 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchF
         }
     }
     // If currentBlock is an already visited block that also is a loopHeaderCandidate, we found a loop-header-block.
-    if (loopHeaderCandidates.contains(currentBlock->getIdentifier())) {
-        //todo replace ifOperation with loopOperation and add LoopInfo #3169
-        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+    if(loopHeaderCandidates.contains(currentBlock->getIdentifier())) {
+        if(!currentBlock->isLoopHeaderBlock()) {
+            auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+            auto loopOp = std::make_shared<Operations::LoopOperation>(Operations::LoopOperation::LoopType::CountedLoop);
+            loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
+            loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getBlock());
+
+            auto countedLoopInfo = std::make_unique<CountedLoopInfo>();
+            if(ifOp->getBooleanValue()->getOperationType() == Operation::CompareOp) {
+                auto compareOp = std::static_pointer_cast<Operations::CompareOperation>(ifOp->getBooleanValue());
+                countedLoopInfo->lowerBound = compareOp->getLeftInput();
+                countedLoopInfo->upperBound = compareOp->getRightInput();
+                countedLoopInfo->loopBodyInductionVariable = compareOp->getLeftInput();
+            }
+            countedLoopInfo->loopEndBlock = currentBlock;
+            // Todo the MLIR value for step size is only created when the respective block is called.
+            // -> this happens AFTER the loop-operation is created
+            // -> thus, the loop-operation would point to an undefined value? Can we then insert a value there?
+            // Solution for now: 
+            // -> Option 1: Simply create an MLIR constant integer with value 0 (Ignore ValueFrame).
+            // -> Option 2: Create an MLIR constant integer using the value defined in the given stepSize. Insert it
+            //              into the ValueFrame using the correct identifier, and then when the MLIR code generation
+            //              for the addOp, make sure that we check whether the value already exists so we do not 
+            //              overwrite it.
+            countedLoopInfo->stepSize = std::static_pointer_cast<Operations::AddOperation>(currentBlock->getOperations().at(countedLoopInfo->loopEndBlock->getOperations().size()-2))->getRightInput();
+            countedLoopInfo->loopBodyBlock = ifOp->getTrueBlockInvocation().getBlock();
+            // ifOp->setCountedLoopInfo(std::move(countedLoopInfo));
+            loopOp->setLoopInfo(std::move(countedLoopInfo));
+            currentBlock->replaceTerminatorOperation(std::move(loopOp));
+        }
         // Currently, we increase the number of loopBackEdges (default: 0) of the loop-header-block.
         // Thus, after this phase, if a block has numLoopBackEdges > 0, it is a loop-header-block.
         // More information will be added in the scope of issue #3169.
@@ -90,15 +121,19 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::findLoopHead
         // Set the current values for the loop halting values.
         noMoreIfBlocks = ifBlocks.empty();
         returnBlockVisited = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operation::ReturnOp);
-        if (!noMoreIfBlocks) {
+        if(!noMoreIfBlocks) {
             // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.
             // Since loops can only loop back on their true-branch, we can safely stop tracking it as a loop candidate.
             loopHeaderCandidates.erase(ifBlocks.top()->getIdentifier());
             // Set currentBlock to first block in false-branch of ifOperation.
             // The false branch might contain nested loop-operations.
-            currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())
-                               ->getFalseBlockInvocation()
-                               .getBlock();
+            if(ifBlocks.top()->getTerminatorOp()->getOperationType() == Operation::IfOp) {
+                currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())
+                                ->getFalseBlockInvocation().getBlock();
+            } else {
+                currentBlock = std::static_pointer_cast<IR::Operations::LoopOperation>(ifBlocks.top()->getTerminatorOp())
+                                ->getLoopFalseBlock().getBlock();
+            }
             ifBlocks.pop();
         }
     } while (!(noMoreIfBlocks && returnBlockVisited));
@@ -133,13 +168,12 @@ bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCh
             - (currentBlock->isLoopHeaderBlock()) * currentBlock->getNumLoopBackEdges();
     } else {
         openEdges = currentBlock->getNumLoopBackEdges() - numPriorVisits;
-        if (openEdges < 2) {
-            // We exhausted the loop-operations true-branch (body block) and now switch to its false-branch.
-            currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
-            ifOperations.pop();
-            // Since we switched to a new currentBlock, we need to check whether it is a merge-block with openEdges.
-            // If the new currentBlock is a loop-header-block again, we have multiple recursive calls.
-            return mergeBlockCheck(currentBlock, ifOperations, numMergeBlocksVisits, true, loopBlockWithVisitedBody);
+        if(openEdges < 2) {
+                // We exhausted the loop-operations true-branch (body block) and now switch to its false-branch.
+                currentBlock = std::static_pointer_cast<Operations::LoopOperation>(currentBlock->getTerminatorOp())->getLoopFalseBlock().getBlock();
+                // Since we switched to a new currentBlock, we need to check whether it is a merge-block with openEdges.
+                // If the new currentBlock is a loop-header-block again, we have multiple recursive calls.
+                return mergeBlockCheck(currentBlock, ifOperations, numMergeBlocksVisits, true, loopBlockWithVisitedBody);
         }
     }
     // If the number of openEdges is 2 or greater, we found a merge-block.
@@ -180,22 +214,21 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 currentBlock = branchOp->getNextBlockInvocation().getBlock();
                 newVisit = true;
-            } else if (terminatorOp->getOperationType() == Operation::IfOp) {
+            } else if (terminatorOp->getOperationType() == Operation::IfOp) { 
                 // If the currentBlock is an if-block, we push its if-operation on top of our IfOperation stack.
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
                 ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
-                // If the if-operation is a loop-header-if-operation, we processed everything 'above' the loop-header.
-                // Thus, we now explore the loop's body, which we remember using the loopBlockWithVisitedBody set.
-                // If numMergeBlockVisits exists for the loop-header-block, it will be reset.
-                // From now on, we will check whether it is an open-merge-block using its numLoopBackEdges count.
-                if (currentBlock->isLoopHeaderBlock()) {
-                    loopBlockWithVisitedBody.emplace(currentBlock);
-                    if (numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
-                        numMergeBlockVisits.erase(currentBlock->getIdentifier());
-                    }
-                }
                 // We now follow the if-operation's true-branch until we find a new if-operation or a merge-block.
                 currentBlock = ifOp->getTrueBlockInvocation().getBlock();
+                newVisit = true;
+            }
+            else if (terminatorOp->getOperationType() == Operation::LoopOp) {
+                loopBlockWithVisitedBody.emplace(currentBlock);
+                if(numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
+                    numMergeBlockVisits.erase(currentBlock->getIdentifier());
+                }
+                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
+                currentBlock = loopOp->getLoopBodyBlock().getBlock();
                 newVisit = true;
             }
         }
@@ -232,4 +265,4 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
     }
 }
 
-}// namespace NES::Nautilus::IR
+}//namespace NES::Nautilus::IR
