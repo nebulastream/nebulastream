@@ -883,59 +883,30 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         keyAccessExpression.emplace_back(
             ExpressionSerializationUtil::deserializeExpression(&key)->as<FieldAccessExpressionNode>());
     }
-    if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                    aggregation,
-                                                                    window,
-                                                                    distChar,
-                                                                    trigger,
-                                                                    action,
-                                                                    allowedLateness);
-        windowDef->setOriginId(windowDetails->origin());
-        return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
-    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                    aggregation,
-                                                                    window,
-                                                                    distChar,
-                                                                    trigger,
-                                                                    action,
-                                                                    allowedLateness);
-        windowDef->setOriginId(windowDetails->origin());
-        return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)->as<CentralWindowOperator>();
-    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                    aggregation,
-                                                                    window,
-                                                                    distChar,
-                                                                    trigger,
-                                                                    action,
-                                                                    allowedLateness);
-        windowDef->setOriginId(windowDetails->origin());
-        return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
-            ->as<WindowComputationOperator>();
-    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                    aggregation,
-                                                                    window,
-                                                                    distChar,
-                                                                    trigger,
-                                                                    action,
-                                                                    allowedLateness);
-        windowDef->setOriginId(windowDetails->origin());
-        return LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef, operatorId)->as<SliceMergingOperator>();
-    } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-        auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
-                                                                    aggregation,
-                                                                    window,
-                                                                    distChar,
-                                                                    trigger,
-                                                                    action,
-                                                                    allowedLateness);
-        windowDef->setOriginId(windowDetails->origin());
-        return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)->as<SliceCreationOperator>();
-    } else {
-        NES_NOT_IMPLEMENTED();
+    auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
+                                                                aggregation,
+                                                                window,
+                                                                distChar,
+                                                                trigger,
+                                                                action,
+                                                                allowedLateness);
+    windowDef->setOriginId(windowDetails->origin());
+    switch (distrChar.distr()) {
+        case SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset:
+            return LogicalOperatorFactory::createWindowOperator(windowDef, operatorId)->as<WindowOperatorNode>();
+        case SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete:
+            return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
+                ->as<CentralWindowOperator>();
+        case SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining:
+            return LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef, operatorId)
+                ->as<WindowComputationOperator>();
+        case SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging:
+            return LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef, operatorId)
+                ->as<SliceMergingOperator>();
+        case SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing:
+            return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)
+                ->as<SliceCreationOperator>();
+        default: NES_NOT_IMPLEMENTED();
     }
 }
 
