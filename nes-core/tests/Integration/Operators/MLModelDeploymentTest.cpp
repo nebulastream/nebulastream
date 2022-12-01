@@ -49,7 +49,7 @@ class MLModelDeploymentTest : public Testing::NESBaseTest {
 /**
  * tests integer input to ML inference model
  */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeployment) {
+TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
     struct IrisData {
         uint64_t id;
         uint64_t f1;
@@ -97,14 +97,14 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 
     std::vector<Output> expectedOutput = {{0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0},
                                           {0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0}};
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 }};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -162,14 +162,14 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
 
     std::vector<Output> expectedOutput = {{0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0},
                                           {0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0}};
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 }};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -217,14 +217,14 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
 
     std::vector<Output> expectedOutput = {{0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0},
                                           {0, 1, 0 },
                                           {0, 1, 0 },
-                                          {0, 1, 0},
-                                          {0, 1, 0},
-                                          {0, 1, 0}};
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 }};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 

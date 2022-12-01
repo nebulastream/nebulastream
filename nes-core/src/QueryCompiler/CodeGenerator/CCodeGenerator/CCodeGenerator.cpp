@@ -423,8 +423,8 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     std::shared_ptr<ExpressionNode> previousField;
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
-        if (!field->getStamp()->isNumeric() || !field->getStamp()->isBoolean()){
-            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported.");
+        if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()){
+            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
         }
         if (firstSkipped) {
             commonStamp = previousField->getStamp()->join(field->getStamp());
@@ -432,25 +432,44 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
         firstSkipped = true;
         previousField = field;
     }
-    std::string dataType = "0";
     if (commonStamp->isInteger()) {
-        dataType = "1";
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
     } else if (commonStamp->isFloat()) {
-        dataType = "2";
+        std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
+        if (floatStamp->getBits() == 32) {
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::FLOAT)))));
+        } else {
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::DOUBLE)))));
+        }
     } else if (commonStamp->isBoolean()) {
-        dataType = "3";
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::BOOLEAN)))));
+    } else {
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::UNDEFINED)))));
     }
-    generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, dataType))));
     generateTensorFlowInferCall->addParameter(
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
 
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
-        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
-        generateTensorFlowInferCall->addParameter(
-            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                VarRef(variableDeclaration)));
+        if (commonStamp->isInteger()) {
+            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createInt64(), attrField->getName());
+            generateTensorFlowInferCall->addParameter(
+                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                    VarRef(variableDeclaration)));
+        } else if (commonStamp->isFloat()) {
+            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createDouble(), attrField->getName());
+            generateTensorFlowInferCall->addParameter(
+                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                    VarRef(variableDeclaration)));
+        } else if (commonStamp->isBoolean()) {
+            auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createBoolean(), attrField->getName());
+            generateTensorFlowInferCall->addParameter(
+                VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+                    VarRef(variableDeclaration)));
+        } else {
+            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
+        }
     }
 
     code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
