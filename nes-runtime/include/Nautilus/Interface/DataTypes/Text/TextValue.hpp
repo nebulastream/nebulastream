@@ -37,27 +37,26 @@ class TextValue final : public BaseVariableSizeType {
 
     /**
      * @brief Creates a new TextValue from a string
-     * @param string
+     * @param string content
      * @return TextValue*
      */
     static TextValue* create(const std::string& string);
 
     /**
      * @brief Creates a new TextValue from a string on a specific tuple buffer
-     * @param buffer
-     * @param string
+     * @param buffer that is used to create the text
+     * @param size in characters
      * @return TextValue*
      */
     static TextValue* create(Runtime::TupleBuffer& buffer, uint32_t size);
 
     /**
      * @brief Creates a new TextValue from a string on a specific tuple buffer
-     * @param buffer
-     * @param string
+     * @param buffer that is used to create the text
+     * @param string content
      * @return TextValue*
      */
     static TextValue* create(Runtime::TupleBuffer& buffer, const std::string& string);
-
 
     /**
      * @brief Loads a text value from a tuple buffer.

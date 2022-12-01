@@ -62,12 +62,11 @@ class TextPipelineTest : public testing::Test, public AbstractPipelineExecutionT
 };
 
 /**
- * @brief Selection pipeline that execute a select operator and filters elements.
+ * @brief Pipeline that execute a text processing expression.
  */
 TEST_P(TextPipelineTest, textEqualsPipeline) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::TEXT);
-  //  schema->addField("f2", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
