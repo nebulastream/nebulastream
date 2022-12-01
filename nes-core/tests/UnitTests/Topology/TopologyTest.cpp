@@ -645,9 +645,9 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     TopologyNodePtr thirdStartNodeParent4 = thirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(thirdStartNodeParent4->getId() == topologyNodes[0]->getId());
     //flags nodes currently on path for maintenance
-    topologyNodes[1]->setMaintenanceFlag(true);
-    topologyNodes[3]->setMaintenanceFlag(true);
-    topologyNodes[10]->setMaintenanceFlag(true);
+    topologyNodes[1]->setForMaintenance(true);
+    topologyNodes[3]->setForMaintenance(true);
+    topologyNodes[10]->setForMaintenance(true);
     //calculate Path again
     const std::vector<TopologyNodePtr> mStartNodes = topology->findPathBetween(sourceNodes, destinationNodes);
     //checks path from source node 12 to sink
@@ -716,16 +716,16 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     auto topNodes = {topologyNodes.at(4), topologyNodes.at(5)};
     auto commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 1);
-    topology->findNodeWithId(1)->setMaintenanceFlag(true);
+    topology->findNodeWithId(1)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 2);
-    topology->findNodeWithId(2)->setMaintenanceFlag(true);
+    topology->findNodeWithId(2)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 3);
-    topology->findNodeWithId(3)->setMaintenanceFlag(true);
+    topology->findNodeWithId(3)->setForMaintenance(true);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor == nullptr);
-    topology->findNodeWithId(1)->setMaintenanceFlag(false);
+    topology->findNodeWithId(1)->setForMaintenance(false);
     commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 1);
 }
@@ -766,16 +766,16 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     auto topNodes = {topologyNodes.at(1), topologyNodes.at(2)};
     auto commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 4);
-    topology->findNodeWithId(4)->setMaintenanceFlag(true);
+    topology->findNodeWithId(4)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 5);
-    topology->findNodeWithId(5)->setMaintenanceFlag(true);
+    topology->findNodeWithId(5)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 3);
-    topology->findNodeWithId(3)->setMaintenanceFlag(true);
+    topology->findNodeWithId(3)->setForMaintenance(true);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild == nullptr);
-    topology->findNodeWithId(4)->setMaintenanceFlag(false);
+    topology->findNodeWithId(4)->setForMaintenance(false);
     commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 4);
 }
@@ -825,7 +825,7 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     //try to find a new node onto which we could potentially migrate the subqueries on node 5.
     //this node must be reachable from node 7 and 8 as well as 1 and 2.
     //In this topology the only such node is node 3
-    topology->findNodeWithId(5)->setMaintenanceFlag(true);
+    topology->findNodeWithId(5)->setForMaintenance(true);
 
     auto childNodes = {topologyNodes.at(7), topologyNodes.at(8)};
     auto parentNodes = {topologyNodes.at(1), topologyNodes.at(2)};
