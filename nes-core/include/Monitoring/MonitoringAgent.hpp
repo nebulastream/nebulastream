@@ -88,7 +88,7 @@ class MonitoringAgent {
      * @brief Set the node ID of the topology
      * @param nodeId
      */
-    void setNodeId(TopologyNodeId nodeId);
+    void setWorkerId(TopologyNodeId nodeId);
 
     /**
      * @brief Getter for the metric collector pointer for a given metric type

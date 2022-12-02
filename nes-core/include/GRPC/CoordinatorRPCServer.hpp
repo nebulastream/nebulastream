@@ -114,11 +114,11 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
-     * @param request: node registration request
+     * @param registrationRequest: node registration request
      * @param reply: the node registration reply
      * @return success
      */
-    Status RegisterWorker(ServerContext* context, const RegisterWorkerRequest* request, RegisterWorkerReply* reply) override;
+    Status RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node

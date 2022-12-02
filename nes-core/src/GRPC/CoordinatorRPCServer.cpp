@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <Configurations/PropertyKeys.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -28,7 +29,6 @@
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
 
 using namespace NES;
 
@@ -85,6 +85,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         return Status::OK;
     }
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
+    reply->set_workerid(0);
     reply->set_workerid(0);
     return Status::CANCELLED;
 }

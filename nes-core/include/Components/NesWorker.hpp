@@ -292,7 +292,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
     NES::Spatial::Mobility::Experimental::ReconnectConfiguratorPtr reconnectConfigurator;
     std::atomic<bool> isRunning{false};
-    TopologyNodeId topologyNodeId;
+    TopologyNodeId workerId;
     HealthCheckServicePtr healthCheckService;
 
     std::unique_ptr<grpc::Server> rpcServer;

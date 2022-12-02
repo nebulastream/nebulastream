@@ -13,7 +13,6 @@
 */
 
 syntax = "proto3";
-
 import "WorkerLocation.proto";
 
 // The greeting service definition.
@@ -227,7 +226,7 @@ message RemoveParentReply {
 }
 
 message GetNodesInRangeRequest {
-  Coordinates coord = 1;
+  GeoLocation geoLocation = 1;
   double radius = 2;
 }
 
@@ -266,7 +265,7 @@ message SendScheduledReconnectReply {
 
 message LocationUpdateRequest {
   uint64 id = 1;
-  Coordinates coord = 2;
+  GeoLocation geoLocation = 2;
   uint64 time = 3;
 }
 

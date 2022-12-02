@@ -149,10 +149,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param registrationRequest: request containing necessary input for worker registration
+     * @param registrationRequest:
      * @return bool indicating success
      */
-    bool registerWorker(const RegisterWorkerRequest& registrationRequest);
+    bool registerWorker(RegisterWorkerRequest registrationRequest);
 
     /**
      * @brief method to check if the coordinator is alive
