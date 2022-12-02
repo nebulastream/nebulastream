@@ -44,7 +44,7 @@ class TensorflowAdapter {
      * @param i
      * @return
      */
-    float getResultAt(int i);
+    double getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
 

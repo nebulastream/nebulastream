@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/DataTypeFactory.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -210,6 +211,101 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .project(Attribute("id").as("new_id"), Attribute("value"))
                      .filter(Attribute("id") < 42)
+                     .sink(FileSinkDescriptor::create(""));
+
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
+}
+
+/**
+ * Test ML inference operator input with valid input
+ */
+TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
+    NES_INFO("Valid ML inference operator test");
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "irisData";
+    auto irisSchema = Schema::create()
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("f1", DataTypeFactory::createFloat())
+                          ->addField("f2", DataTypeFactory::createUInt32())
+                          ->addField("f3", DataTypeFactory::createInt8())
+                          ->addField("f4", DataTypeFactory::createInt64())
+                          ->addField("target", DataTypeFactory::createUInt64());
+    sourceCatalog->addLogicalSource(logicalSourceName, irisSchema);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+    auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
+    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
+    sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
+
+    auto query = Query::from("irisData")
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                     .sink(FileSinkDescriptor::create(""));
+
+    semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan());
+}
+
+/**
+ * Test ML inference operator input with invalid mixed input
+ */
+TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
+    NES_INFO("Invalid projection test");
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "irisData";
+    auto irisSchema = Schema::create()
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("f1", DataTypeFactory::createFloat())
+                          ->addField("f2", DataTypeFactory::createBoolean())
+                          ->addField("f3", DataTypeFactory::createInt8())
+                          ->addField("f4", DataTypeFactory::createInt64())
+                          ->addField("target", DataTypeFactory::createUInt64());
+    sourceCatalog->addLogicalSource(logicalSourceName, irisSchema);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+    auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
+    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
+    sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
+
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
+
+    auto query = Query::from("irisData")
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                     .sink(FileSinkDescriptor::create(""));
+
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
+}
+
+/**
+ * Test ML inference operator input with invalid input
+ */
+TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
+    NES_INFO("Invalid projection test");
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "irisData";
+    auto irisSchema = Schema::create()
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("f1", DataTypeFactory::createChar())
+                          ->addField("f2", DataTypeFactory::createUInt32())
+                          ->addField("f3", DataTypeFactory::createInt8())
+                          ->addField("f4", DataTypeFactory::createInt64())
+                          ->addField("target", DataTypeFactory::createUInt64());
+    sourceCatalog->addLogicalSource(logicalSourceName, irisSchema);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+    auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
+    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
+    sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
+
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
+
+    auto query = Query::from("irisData")
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                                 {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);

@@ -77,7 +77,7 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
 
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT64), Attribute("iris1", FLOAT64), Attribute("iris2", FLOAT64)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
@@ -85,9 +85,9 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
                                   .setupTopology();
 
     struct Output {
-        double iris0;
-        double iris1;
-        double iris2;
+        float iris0;
+        float iris1;
+        float iris2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -117,19 +117,19 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
 TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
     struct IrisData {
         uint64_t id;
-        double f1;
-        double f2;
-        double f3;
-        double f4;
+        float f1;
+        float f2;
+        float f3;
+        float f4;
         uint64_t target;
     };
 
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("f1", DataTypeFactory::createDouble())
-                          ->addField("f2", DataTypeFactory::createDouble())
-                          ->addField("f3", DataTypeFactory::createDouble())
-                          ->addField("f4", DataTypeFactory::createDouble())
+                          ->addField("f1", DataTypeFactory::createFloat())
+                          ->addField("f2", DataTypeFactory::createFloat())
+                          ->addField("f3", DataTypeFactory::createFloat())
+                          ->addField("f4", DataTypeFactory::createFloat())
                           ->addField("target", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(IrisData), irisSchema->getSchemaSizeInBytes());
@@ -142,7 +142,7 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
 
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT64), Attribute("iris1", FLOAT64), Attribute("iris2", FLOAT64)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
@@ -150,9 +150,73 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
                                   .setupTopology();
 
     struct Output {
-        double iris0;
-        double iris1;
-        double iris2;
+        float iris0;
+        float iris1;
+        float iris2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 },
+                                          {0, 1, 0 }};
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+}
+
+/**
+ * tests mixed input to ml inference operator
+ */
+TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentMixedTypes) {
+
+    struct IrisData {
+        uint64_t id;
+        float f1;
+        uint32_t f2;
+        int8_t f3;
+        int64_t f4;
+        uint64_t target;
+    };
+
+    auto irisSchema = Schema::create()
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("f1", DataTypeFactory::createFloat())
+                          ->addField("f2", DataTypeFactory::createUInt32())
+                          ->addField("f3", DataTypeFactory::createInt8())
+                          ->addField("f4", DataTypeFactory::createInt64())
+                          ->addField("target", DataTypeFactory::createUInt64());
+
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_short_bool.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType->setNumberOfBuffersToProduce(10);
+    csvSourceType->setSkipHeader(false);
+
+    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
+                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("irisData", irisSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
+
+    struct Output {
+        float iris0;
+        float iris1;
+        float iris2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
@@ -197,7 +261,7 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
 
     string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT64), Attribute("iris1", FLOAT64), Attribute("iris2", FLOAT64)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
@@ -205,9 +269,9 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
                                   .setupTopology();
 
     struct Output {
-        double iris0;
-        double iris1;
-        double iris2;
+        float iris0;
+        float iris1;
+        float iris2;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
