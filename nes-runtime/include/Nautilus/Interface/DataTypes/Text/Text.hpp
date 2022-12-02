@@ -18,6 +18,8 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
+#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 
 namespace NES::Nautilus {
 
@@ -41,6 +43,40 @@ class Text final : public Nautilus::Any {
      * @return true if this and other text object are equal.
      */
     Value<Boolean> equals(const Value<Text>& other) const;
+
+    /**
+     * @brief  checks if the first Text starts with another.
+     * @param other text object.
+     * @return true if text objects starts with another.
+     */
+    Value<Boolean> prefix(const Value<Text>& other) const;
+
+    /**
+     * @brief repeats the TextObject repeatNumber times.
+     * @param Value repeat_times.
+     * @return rawReference.
+     */
+    Value<Text> repeat(Value<UInt32> repeat_times) const;
+
+    /**
+     * @brief Reverses the Text.
+     * @return rawReference.
+     */
+    Value<Text> reverse() const;
+
+    /**
+     * @brief find the location of first occurrence of search_text in Text.
+     * @param other text object(search_text).
+     * @return location of first occurrence of search_text in Text, return 0 if no match found.
+     */
+    Value<UInt32> position(Value<Text>& other) const;
+
+    /**
+     * @brief Replace all occurrences of source in text with target
+     * @param sourcetext, targettext.
+     * @return Text Object
+     */
+    Value<Text> replace(Value<Text>& source, Value<Text>& target) const;
 
     /**
      * @brief concat two text object

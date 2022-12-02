@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
+#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstring>
@@ -69,6 +71,118 @@ TextValue* textConcat(const TextValue* leftText, const TextValue* rightText) {
 }
 Value<Text> Text::concat(const Value<Text>& other) const {
     return FunctionCall<>("textConcat", textConcat, rawReference, other.value->rawReference);
+}
+
+bool textPrefix(const TextValue* leftText, const TextValue* rightText) {
+    if (rightText->length() > leftText->length()) {
+        NES_THROW_RUNTIME_ERROR("prefixText is longer than sourceText");
+    }
+    if (leftText->length() < rightText->length()) {
+        return false;
+    }
+    return std::memcmp(leftText->c_str(), rightText->c_str(), rightText->length()) == 0;
+}
+
+Value<Boolean> Text::prefix(const Value<Text>& other) const {
+    return FunctionCall<>("textPrefix", textPrefix, rawReference, other.value->rawReference);
+}
+
+TextValue* textRepeat(const TextValue* text, uint32_t n) {
+    if (n <= 0) {
+        NES_THROW_RUNTIME_ERROR("repetitions require a positive int, but received n<=0");
+    }
+    uint32_t len = text->length() * n;
+    auto resultText = TextValue::create(len);
+    uint32_t k = 0;
+    for (uint32_t i = 1; i <= n; i++) {
+        for (uint32_t j = 0; j < text->length(); j++) {
+            resultText->str()[k] = text->c_str()[j];
+            k++;
+        }
+    }
+    return resultText;
+}
+
+Value<Text> Text::repeat(Value<UInt32> repeat_times) const {
+    return FunctionCall<>("textRepeat", textRepeat, rawReference, repeat_times);
+}
+
+TextValue* textReverse(const TextValue* text) {
+    auto resultText = TextValue::create(text->length());
+    for (uint32_t i = 0; i < text->length(); i++) {
+        uint32_t j = text->length() - 1 - i;
+        resultText->str()[i] = text->c_str()[j];
+    }
+    return resultText;
+}
+
+Value<Text> Text::reverse() const { return FunctionCall<>("textReverse", textReverse, rawReference); }
+
+uint32_t textPosition(const TextValue* text, const TextValue* target) {
+    uint32_t pos = 0;
+    bool match = false;
+    if (text->length() < target->length()) {
+        NES_THROW_RUNTIME_ERROR("TargetText length is longer than sourceText length");
+    }
+    for (uint32_t i = 0; i < text->length(); i++) {
+        if (text->c_str()[i] == target->c_str()[0] && i + target->length() <= text->length()) {
+            match = true;
+            for (uint32_t j = 1; j < target->length() - 1; j++) {
+                if (text->c_str()[j + i] != target->c_str()[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                pos = i + 1;
+                break;
+            }
+        }
+    }
+    return pos;
+}
+
+Value<UInt32> Text::position(Value<Text>& other) const {
+    return FunctionCall<>("textPosition", textPosition, rawReference, other.value->rawReference);
+}
+
+TextValue* textReplace(const TextValue* text, const TextValue* source, const TextValue* target) {
+    uint32_t p = textPosition(text, source);
+    if (p == 0) {
+        NES_THROW_RUNTIME_ERROR("no match sourcetext in text");
+    }
+    uint32_t startIndex = p - 1;
+    uint32_t len = text->length() - source->length() + target->length();
+    auto resultText = TextValue::create(len);
+
+    uint32_t currentIndex = 0;
+    for (uint32_t i = 0; i < startIndex; i++) {
+        resultText->str()[i] = text->c_str()[i];
+        currentIndex++;
+    }
+    uint32_t targetIndex = 0;
+    for (uint32_t j = currentIndex; j < startIndex + target->length(); j++) {
+        resultText->str()[j] = target->c_str()[targetIndex];
+        targetIndex++;
+        currentIndex++;
+    }
+    uint32_t restSourceIndex = startIndex + source->length();
+    for (uint32_t k = currentIndex; k < len; k++) {
+        resultText->str()[k] = text->c_str()[restSourceIndex];
+        restSourceIndex++;
+    }
+    // if the text still contain the search sequence we have to replace again.
+    if (textPosition(resultText, source) != 0) {
+        auto tmpText = resultText;
+        resultText = textReplace(tmpText, source, target);
+        // The text value is manually allocated with create. So we have to free it manually.
+        tmpText->~TextValue();
+    }
+    return resultText;
+}
+
+Value<Text> Text::replace(Value<Text>& source, Value<Text>& target) const {
+    return FunctionCall<>("textReplace", textReplace, rawReference, source.value->rawReference, target.value->rawReference);
 }
 
 uint32_t TextGetLength(const TextValue* text) { return text->length(); }
