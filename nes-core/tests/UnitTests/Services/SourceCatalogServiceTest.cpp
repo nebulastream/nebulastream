@@ -17,6 +17,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -103,13 +105,11 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     csvSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
-    uint64_t nodeId = topologyManagerService->registerWorker(address,
-                                                             4000,
-                                                             5000,
-                                                             6,
-                                                             NES::Spatial::Index::Experimental::Location(),
-                                                             NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
-                                                             /* isTfInstalled */ false);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    uint64_t nodeId = topologyManagerService->registerWorker(address, 4000, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

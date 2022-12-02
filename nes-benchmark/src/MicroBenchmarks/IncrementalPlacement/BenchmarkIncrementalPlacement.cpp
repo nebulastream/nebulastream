@@ -20,6 +20,8 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -151,23 +153,15 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
  */
 void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    topologyManagerService->registerWorker("1",
-                                           0,
-                                           0,
-                                           UINT16_MAX,
-                                           NES::Spatial::Index::Experimental::Location(),
-                                           NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
-                                           /* isTfInstalled */ false);
+    topologyManagerService->registerWorker("1", 0, 0, UINT16_MAX, properties);
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
-        topologyManagerService->registerWorker(std::to_string(i),
-                                               0,
-                                               0,
-                                               UINT16_MAX,
-                                               NES::Spatial::Index::Experimental::Location(),
-                                               NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
-                                               /* isTfInstalled */ false);
+        topologyManagerService->registerWorker(std::to_string(i), 0, 0, UINT16_MAX, properties);
     }
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));

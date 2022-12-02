@@ -20,6 +20,8 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -31,6 +33,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
+#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 
@@ -56,7 +59,10 @@ class RenameSourceToProjectOperatorRuleTest : public Testing::TestWithErrorHandl
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
         Catalogs::Source::SourceCatalogEntryPtr sce =

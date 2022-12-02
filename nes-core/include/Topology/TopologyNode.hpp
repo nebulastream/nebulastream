@@ -212,9 +212,9 @@ class TopologyNode : public Node {
      * Experimental
      * @brief sets the status of the node as running on a mobile device or a fixed location device.
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
-     * @param workerSpatialType
+     * @param spatialType
      */
-    void setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType workerSpatialType);
+    void setSpatialType(NES::Spatial::Index::Experimental::SpatialType spatialType);
 
     /**
      * Experimental

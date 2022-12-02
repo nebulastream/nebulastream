@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "z3++.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -20,6 +19,8 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -42,8 +43,10 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <z3++.h>
 
 using namespace NES;
 using namespace z3;
@@ -84,15 +87,19 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
         topologyForILP = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(3, "localhost", 123, 124, 100);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr rootNode = TopologyNode::create(3, "localhost", 123, 124, 100, properties);
         rootNode->addNodeProperty("slots", 100);
         topologyForILP->setAsRoot(rootNode);
 
-        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10);
+        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10, properties);
         middleNode->addNodeProperty("slots", 10);
         topologyForILP->addNewTopologyNodeAsChild(rootNode, middleNode);
 
-        TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1);
+        TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1, properties);
         sourceNode->addNodeProperty("slots", 1);
         topologyForILP->addNewTopologyNodeAsChild(middleNode, sourceNode);
 

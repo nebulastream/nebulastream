@@ -19,6 +19,8 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -34,6 +36,7 @@
 #include <Services/QueryService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <z3++.h>
 
@@ -80,9 +83,12 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
 
         std::vector<int> sources{8, 9, 10, 11, 12};
 
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
         std::vector<TopologyNodePtr> nodes;
         for (int i = 0; i < (int) resources.size(); i++) {
-            nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i]));
+            nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i], properties));
             if (i == 0) {
                 topology->setAsRoot(nodes[i]);
             } else {

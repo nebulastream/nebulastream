@@ -19,6 +19,8 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <NesBaseTest.hpp>
@@ -26,6 +28,7 @@
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -59,7 +62,10 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         std::string logicalSourceName = "default_logical";
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
         auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
         auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
@@ -178,7 +184,10 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
     std::string logicalSourceName = "default_logical";
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
-    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
     auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
@@ -200,7 +209,10 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     std::string logicalSourceName = "default_logical";
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
-    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
     auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
 

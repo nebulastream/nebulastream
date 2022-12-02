@@ -21,6 +21,8 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
@@ -49,6 +51,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
@@ -87,16 +90,19 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     void setupTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
 
         topology = Topology::create();
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
         rootNode->addNodeProperty("tf_installed", true);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
         sourceNode1->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2], properties);
         sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
@@ -124,25 +130,30 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
+
     void setupComplexTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
         rootNode->addNodeProperty("tf_installed", true);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
         sourceNode1->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2], properties);
         sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        TopologyNodePtr sourceNode3 = TopologyNode::create(4, "localhost", 123, 124, resources[1]);
+        TopologyNodePtr sourceNode3 = TopologyNode::create(4, "localhost", 123, 124, resources[1], properties);
         topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode3);
 
-        TopologyNodePtr sourceNode4 = TopologyNode::create(5, "localhost", 123, 124, resources[2]);
+        TopologyNodePtr sourceNode4 = TopologyNode::create(5, "localhost", 123, 124, resources[2], properties);
         topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode4);
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
@@ -1007,9 +1018,13 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
-    auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-    auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
+    auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
+    auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -1129,11 +1144,15 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
 //TODO: enable this test after fixing #2486
 TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     // Setup the topology
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-    auto midNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
-    auto srcNode1 = TopologyNode::create(3, "localhost", 4003, 5003, 4);
-    auto srcNode2 = TopologyNode::create(4, "localhost", 4004, 5004, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
+    auto midNode2 = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
+    auto srcNode1 = TopologyNode::create(3, "localhost", 4003, 5003, 4, properties);
+    auto srcNode2 = TopologyNode::create(4, "localhost", 4004, 5004, 4, properties);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -1274,9 +1293,13 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
  */
 TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     // Setup the topology
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
+    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
@@ -1388,9 +1411,13 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
  */
 TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     // Setup the topology
-    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
+    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4, properties);
 
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);

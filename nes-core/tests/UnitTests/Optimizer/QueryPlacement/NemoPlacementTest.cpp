@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "z3++.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -22,6 +21,8 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -42,10 +43,12 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <utility>
+#include <z3++.h>
 
 using namespace NES;
 using namespace z3;
@@ -87,8 +90,12 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         std::vector<TopologyNodePtr> nodes;
         std::vector<TopologyNodePtr> parents;
 
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
         // Setup the topology
-        auto rootNode = TopologyNode::create(nodeId, "localhost", 4000, 5000, resources);
+        auto rootNode = TopologyNode::create(nodeId, "localhost", 4000, 5000, resources, properties);
         topology = Topology::create();
         topology->setAsRoot(rootNode);
         nodes.emplace_back(rootNode);
@@ -106,7 +113,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
                         leafNodes++;
                     }
                     nodeId++;
-                    auto newNode = TopologyNode::create(nodeId, "localhost", 4000 + nodeId, 5000 + nodeId, resources);
+                    auto newNode = TopologyNode::create(nodeId, "localhost", 4000 + nodeId, 5000 + nodeId, resources, properties);
                     topology->addNewTopologyNodeAsChild(parent, newNode);
                     nodes.emplace_back(newNode);
                     newParents.emplace_back(newNode);
