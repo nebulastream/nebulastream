@@ -22,7 +22,7 @@
 #include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
@@ -78,10 +78,10 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     node2->setGeoLocation(13.4, -23);
-    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
 #ifdef S2DEF
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
 #endif
 
     topology->setAsRoot(node1);
@@ -93,7 +93,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -143,12 +143,12 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    node2->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
     node2->setGeoLocation(13.4, -23);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
-    node4->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node4->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
@@ -162,7 +162,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -188,7 +188,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->rpcPort = rpcPortWrk4;
-    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf4->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf4->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
@@ -237,13 +237,13 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    node3->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     topology->setAsRoot(node1);
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");

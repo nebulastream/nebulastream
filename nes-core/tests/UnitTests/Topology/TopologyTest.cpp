@@ -12,12 +12,16 @@
     limitations under the License.
 */
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstddef>
+#include <gtest/gtest.h>
 #include <iostream>
+#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 
@@ -39,7 +43,9 @@ TEST_F(TopologyTest, createNode) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     EXPECT_NE(physicalNode.get(), nullptr);
     EXPECT_EQ(physicalNode->toString(),
               "PhysicalNode[id=" + std::to_string(node1Id) + ", ip=" + node1Address
@@ -63,7 +69,9 @@ TEST_F(TopologyTest, removeRootNode) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(physicalNode);
 
     bool success = topology->removePhysicalNode(physicalNode);
@@ -84,14 +92,17 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
 
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode);
     EXPECT_TRUE(success);
@@ -111,7 +122,9 @@ TEST_F(TopologyTest, DISABLED_removeNodeFromEmptyTopology) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto physicalNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
 
     EXPECT_FALSE(topology->removePhysicalNode(physicalNode));
 }
@@ -125,14 +138,16 @@ TEST_F(TopologyTest, createLink) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
@@ -141,7 +156,7 @@ TEST_F(TopologyTest, createLink) {
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
+    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources, properties);
     success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
@@ -156,14 +171,16 @@ TEST_F(TopologyTest, createExistingLink) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
@@ -182,14 +199,16 @@ TEST_F(TopologyTest, removeLink) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
@@ -208,14 +227,16 @@ TEST_F(TopologyTest, removeNonExistingLink) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->removeNodeAsChild(rootNode, childNode1);
     EXPECT_FALSE(success);
     EXPECT_FALSE(rootNode->containAsChild(childNode1));
@@ -228,11 +249,14 @@ TEST_F(TopologyTest, printGraph) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // creater workers
     std::vector<TopologyNodePtr> workers;
     int resource = 4;
     for (uint32_t i = 0; i < 7; ++i) {
-        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -240,7 +264,7 @@ TEST_F(TopologyTest, printGraph) {
     // create sensors
     std::vector<TopologyNodePtr> sensors;
     for (uint32_t i = 7; i < 23; ++i) {
-        sensors.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        sensors.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -293,14 +317,16 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
@@ -309,7 +335,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
+    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources,properties);
     success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
@@ -328,11 +354,14 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // creater workers
     std::vector<TopologyNodePtr> workers;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource,properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -372,14 +401,16 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
     uint64_t resources = 4;
-    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 
     int node2Id = 2;
     std::string node2Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
+    auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources, properties);
     bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
@@ -388,7 +419,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
+    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources, properties);
     success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
@@ -410,11 +441,14 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // creater workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -471,11 +505,14 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // creater workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -559,11 +596,14 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // create workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 15; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -687,11 +727,14 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // create workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 6; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -739,11 +782,14 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // create workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 6; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
@@ -790,11 +836,14 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+
     // create workers
     std::vector<TopologyNodePtr> topologyNodes;
     int resource = 4;
     for (uint32_t i = 0; i < 9; ++i) {
-        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }

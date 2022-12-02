@@ -19,7 +19,7 @@
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <nlohmann/json.hpp>
 
 namespace NES::Spatial::Index::Experimental {
@@ -35,7 +35,7 @@ nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr || nodePtr->getSpatialNodeType() != NodeType::MOBILE_NODE) {
+    if (!nodePtr || nodePtr->getSpatialNodeType() != SpatialType::MOBILE_NODE) {
         return nullptr;
     }
     auto schedule = nodePtr->getReconnectSchedule();

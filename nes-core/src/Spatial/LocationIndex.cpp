@@ -14,7 +14,7 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Index/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <unordered_map>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
@@ -64,7 +64,7 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
     std::unique_lock lock(locationIndexMutex);
-    if (node->getSpatialNodeType() == NodeType::MOBILE_NODE) {
+    if (node->getSpatialNodeType() == SpatialType::MOBILE_NODE) {
         mobileNodes.erase(node->getId());
     }
 #ifdef S2DEF

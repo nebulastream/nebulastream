@@ -19,7 +19,7 @@ message GeoLocation {
   double lng = 2;
 }
 
-enum NodeType {
+enum SpatialType {
   NO_LOCATION = 0;
   FIXED_LOCATION = 1;
   MOBILE_NODE = 2;

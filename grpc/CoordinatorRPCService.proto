@@ -75,13 +75,13 @@ message RegisterWorkerRequest {
   uint32 numberOfSlots = 4;
   SerializableRegistrationMetrics registrationMetrics = 5;
   GeoLocation geoLocation = 6;
-  NodeType spatialType = 7;
+  SpatialType spatialType = 7;
   bool tfSupported = 8;
   bool javaUDFSupported = 9;
 }
 
 message RegisterWorkerReply {
-  uint64 id = 1;
+  uint64 workerId = 1;
 }
 
 message UnregisterWorkerRequest {
