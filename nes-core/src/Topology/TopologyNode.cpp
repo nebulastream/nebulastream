@@ -194,9 +194,15 @@ void TopologyNode::setGeoLocation(double latitude, double longitude) {
     setGeoLocation(Spatial::Index::Experimental::Location(latitude, longitude));
 }
 
-void TopologyNode::setGeoLocation(Spatial::Index::Experimental::Location geoLocation) { nodeProperties[LOCATION] = geoLocation; }
+void TopologyNode::setSpatialType(NES::Spatial::Index::Experimental::SpatialType spatialType) {
+    nodeProperties[SPATIAL_SUPPORT] = spatialType;
+}
 
 Spatial::Index::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[SPATIAL_SUPPORT]);
+}
+
+void TopologyNode::setGeoLocation(NES::Spatial::Index::Experimental::Location geoLocation) {
+    nodeProperties[LOCATION] = geoLocation;
 }
 }// namespace NES

@@ -22,6 +22,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -72,8 +74,11 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
 
 void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
-    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
 
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
@@ -90,12 +95,15 @@ void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatal
 void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
-    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
-    TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4);
-    TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4);
-    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4, properties);
+    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4,properties);
 
     NES_DEBUG("topo=" << topology->toString());
 
@@ -122,7 +130,10 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);

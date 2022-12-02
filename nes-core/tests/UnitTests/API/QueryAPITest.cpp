@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -40,14 +42,13 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <gmock/gmock-matchers.h>
 #include <iostream>
+#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES {
 
@@ -254,7 +255,11 @@ TEST_F(QueryAPITest, testQueryExpression) {
  * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
  */
 TEST_F(QueryAPITest, windowAggregationWithAs) {
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
     Catalogs::Source::SourceCatalogEntryPtr sce =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 

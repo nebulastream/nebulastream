@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -19,6 +21,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES {
 
@@ -27,15 +30,19 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
     static void SetUpTestCase() { setupLogging(); }
 
     void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        rootNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
-        mid1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-        mid2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
-        mid3 = TopologyNode::create(3, "localhost", 4003, 5003, 4);
-        src1 = TopologyNode::create(4, "localhost", 4004, 5004, 4);
-        src2 = TopologyNode::create(5, "localhost", 4005, 5005, 4);
-        src3 = TopologyNode::create(6, "localhost", 4006, 5006, 4);
-        src4 = TopologyNode::create(7, "localhost", 4007, 5007, 4);
+
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+        rootNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
+        mid1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
+        mid2 = TopologyNode::create(2, "localhost", 4002, 5002, 4, properties);
+        mid3 = TopologyNode::create(3, "localhost", 4003, 5003, 4, properties);
+        src1 = TopologyNode::create(4, "localhost", 4004, 5004, 4, properties);
+        src2 = TopologyNode::create(5, "localhost", 4005, 5005, 4, properties);
+        src3 = TopologyNode::create(6, "localhost", 4006, 5006, 4, properties);
+        src4 = TopologyNode::create(7, "localhost", 4007, 5007, 4, properties);
     }
 
   protected:
