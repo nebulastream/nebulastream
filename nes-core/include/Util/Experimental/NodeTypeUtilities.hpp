@@ -14,23 +14,24 @@
 
 #ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_
 #define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPEUTILITIES_HPP_
-#include <Util/Experimental/NodeType.hpp>
+
+#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES::Spatial::Util {
 
 /**
- * @brief this class contains functions to convert a spatial node type enum to its equivalent protobuf type and vice versa
+ * @brief this class contains functions to convert a spatial type enum to its equivalent protobuf type and vice versa
  * as well as functions to convert the node type enum to/from string
  */
 class NodeTypeUtilities {
   public:
-    static Index::Experimental::NodeType stringToNodeType(const std::string nodeTypeString);
+    static Index::Experimental::SpatialType stringToNodeType(const std::string nodeTypeString);
 
-    static Index::Experimental::NodeType protobufEnumToNodeType(NodeType nodeType);
+    static Index::Experimental::SpatialType protobufEnumToNodeType(SpatialType nodeType);
 
-    static std::string toString(Index::Experimental::NodeType nodeType);
+    static std::string toString(Index::Experimental::SpatialType nodeType);
 
-    static NodeType toProtobufEnum(Index::Experimental::NodeType nodeType);
+    static SpatialType toProtobufEnum(Index::Experimental::SpatialType nodeType);
 };
 
 }// namespace NES::Spatial::Util

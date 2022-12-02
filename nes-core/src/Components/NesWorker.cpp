@@ -35,8 +35,9 @@
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -156,9 +157,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                             << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
-    if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Index::Experimental::NodeType::NO_LOCATION) {
+    if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
-        if (locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
             trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider,
                                                                                                               mobilityConfig,
                                                                                                               parentId);
@@ -292,8 +293,8 @@ bool NesWorker::connect() {
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::Index::Experimental::Location geoLocation = {};
-    if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-        geoLocation = *locationProvider->getWaypoint()->getLocation();
+    if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
+        geoLocation = *(locationProvider->getWaypoint()->getLocation());
     }
 
     NES_DEBUG("NesWorker::connect() Registering worker with coordinator at " << coordinatorAddress);
@@ -308,9 +309,9 @@ bool NesWorker::connect() {
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
-    Coordinates* pCoordinates = registrationRequest.mutable_coordinates();
-    pCoordinates->set_lat(geoLocation.getLatitude());
-    pCoordinates->set_lng(geoLocation.getLongitude());
+    GeoLocation* geolocation = registrationRequest.mutable_geolocation();
+    geolocation->set_lat(geoLocation.getLatitude());
+    geolocation->set_lng(geoLocation.getLongitude());
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
@@ -329,7 +330,7 @@ bool NesWorker::connect() {
 
         if (locationProvider) {
             locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
-            if (locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+            if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
                 reconnectConfigurator =
                     std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this,
                                                                                                   coordinatorRpcClient,

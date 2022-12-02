@@ -21,7 +21,7 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
@@ -76,13 +76,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     auto newNodeGeoLocation = newTopologyNode->getGeoLocation();
 
     if (newNodeGeoLocation.isValid()
-        && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
+        && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << newNodeGeoLocation.getLatitude() << ", "
                                                             << newNodeGeoLocation.getLongitude());
         topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, newNodeGeoLocation);
     } else {
         NES_DEBUG("added node is a non field node");
-        if (newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        if (newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
             topology->getLocationIndex()->addMobileNode(newTopologyNode);
             NES_DEBUG("added node is a mobile node");
         } else {

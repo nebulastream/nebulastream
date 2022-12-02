@@ -36,7 +36,7 @@ Location::Location(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-Location::Location(const Coordinates& coord) : Location(coord.lat(), coord.lng()) {}
+Location::Location(const GeoLocation& geoLocation) : Location(geoLocation.lat(), geoLocation.lng()) {}
 
 Location Location::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {
@@ -62,8 +62,8 @@ Location::operator std::tuple<double, double>() { return std::make_tuple(latitud
 
 Location::Location(std::tuple<double, double> coordTuple) : Location(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
 
-Location::operator Coordinates() const {
-    Coordinates coordinates;
+Location::operator GeoLocation() const {
+    GeoLocation coordinates;
     coordinates.set_lat(latitude);
     coordinates.set_lng(longitude);
     return coordinates;

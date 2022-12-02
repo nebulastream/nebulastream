@@ -79,7 +79,7 @@ class RegistrationMetrics {
     bool operator==(const RegistrationMetrics& rhs) const;
     bool operator!=(const RegistrationMetrics& rhs) const;
 
-    uint64_t nodeId;
+    uint64_t workerId;
     uint64_t totalMemoryBytes;
     uint64_t cpuCoreNum;
     uint64_t totalCPUJiffies;//user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
