@@ -14,9 +14,9 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigurationKeys.hpp>
-#include <Configurations/PropertyKeys.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -36,6 +36,7 @@
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -56,7 +57,7 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)) {
@@ -290,31 +291,36 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
-    NES::Spatial::Index::Experimental::Location fixedCoordinates = {};
+    NES::Spatial::Index::Experimental::Location geoLocation = {};
     if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-        fixedCoordinates = *locationProvider->getWaypoint()->getLocation();
+        geoLocation = *locationProvider->getWaypoint()->getLocation();
     }
 
-    NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);
+    NES_DEBUG("NesWorker::connect() Registering worker with coordinator at " << coordinatorAddress);
 
-    std::map<std::string, std::any> workerProperties;
-    workerProperties[ADDRESS] = workerConfig->localWorkerIp.getValue();
-    workerProperties[GRPC_PORT] = localWorkerRpcPort.load();
-    workerProperties[DATA_PORT] = nodeEngine->getNetworkManager()->getServerDataPort();
-    workerProperties[SLOTS] = workerConfig->numberOfSlots.getValue();
-    workerProperties[LOCATION] = fixedCoordinates;
-    workerProperties[SPATIAL_TYPE] = workerConfig->nodeSpatialType.getValue();
-    workerProperties[TENSER_FLOW_SUPPORT] = false;
+    RegisterWorkerRequest registrationRequest;
+    registrationRequest.set_address(workerConfig->localWorkerIp.getValue());
+    registrationRequest.set_grpcport(localWorkerRpcPort.load());
+    registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
+    registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
+    registrationRequest.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
+    registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
+    registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
+    registrationRequest.set_spatialtype(
+        NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
+    Coordinates* pCoordinates = registrationRequest.mutable_coordinates();
+    pCoordinates->set_lat(geoLocation.getLatitude());
+    pCoordinates->set_lng(geoLocation.getLongitude());
 
-    bool successPRCRegister = coordinatorRpcClient->registerWorker(workerProperties, registrationMetrics);
+    bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
-    NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
-    topologyNodeId = coordinatorRpcClient->getId();
-    monitoringAgent->setNodeId(topologyNodeId);
+    NES_DEBUG("NesWorker::connect() Worker registered successfully and got id=" << coordinatorRpcClient->getId());
+    workerId = coordinatorRpcClient->getId();
+    monitoringAgent->setWorkerId(workerId);
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerWorker rpc register success with id " << topologyNodeId);
+        NES_DEBUG("NesWorker::registerWorker rpc register success with id " << workerId);
         connected = true;
-        nodeEngine->setNodeId(topologyNodeId);
+        nodeEngine->setNodeId(workerId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
@@ -529,7 +535,7 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 #endif
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
+TopologyNodeId NesWorker::getTopologyNodeId() const { return workerId; }
 
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
 

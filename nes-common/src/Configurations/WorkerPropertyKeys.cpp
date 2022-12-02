@@ -12,18 +12,4 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONKEYS_HPP
-#define NES_CONFIGURATIONKEYS_HPP
-
-#include <string>
-
-namespace NES {
-
-const std::string TENSER_FLOW_SUPPORT = "TENSER_FLOW";
-const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
-const std::string MOBILITY_SUPPORT = "MOBILITY";
-const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
-
-}// namespace NES
-
-#endif//NES_CONFIGURATIONKEYS_HPP
+#include <Configurations/WorkerPropertyKeys.hpp>

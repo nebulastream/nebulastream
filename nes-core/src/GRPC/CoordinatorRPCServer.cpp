@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <Configurations/PropertyKeys.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -42,25 +43,33 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
       locationService(locationService){};
 
-Status CoordinatorRPCServer::RegisterWorker(ServerContext*, const RegisterWorkerRequest* request, RegisterWorkerReply* reply) {
-    uint64_t id;
-
+Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
+                                            const RegisterWorkerRequest* registrationRequest,
+                                            RegisterWorkerReply* reply) {
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    for (auto& property : request->properties()) {
-        workerProperties[property.first] = property.second;
-    }
+    workerProperties[ADDRESS] = registrationRequest->address();
+    workerProperties[GRPC_PORT] = registrationRequest->grpcport();
+    workerProperties[DATA_PORT] = registrationRequest->dataport();
+    workerProperties[SLOTS] = registrationRequest->numberofslots();
+    workerProperties[TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
+    workerProperties[JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
+    workerProperties[SPATIAL_SUPPORT] = NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
+
+    registrationRequest
+
+    workerProperties[LOCATION] =
 
     auto address = std::any_cast<std::string>(workerProperties[ADDRESS]);
     auto grpcPort = std::any_cast<int64_t>(workerProperties[GRPC_PORT]);
     auto dataPort = std::any_cast<int64_t>(workerProperties[DATA_PORT]);
     auto slots = std::any_cast<int64_t>(workerProperties[SLOTS]);
 
-    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
+    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
     id = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
 
     auto registrationMetrics =
-        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(request->registrationmetrics()),
+        std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(registrationRequest->registrationmetrics()),
                                              Monitoring::MetricType::RegistrationMetric);
     registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = id;
     monitoringManager->addMonitoringData(id, registrationMetrics);

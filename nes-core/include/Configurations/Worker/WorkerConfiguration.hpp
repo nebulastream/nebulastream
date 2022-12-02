@@ -46,6 +46,11 @@ class WorkerConfiguration : public BaseConfiguration {
     WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
 
     /**
+     * @brief Factory function for a worker config
+     */
+    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
+
+    /**
      * @brief IP of the Worker.
      */
     StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP."};
@@ -203,12 +208,8 @@ class WorkerConfiguration : public BaseConfiguration {
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 #ifdef TFDEF
-    BoolOption isTfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
+    BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
 #endif// TFDEF
-    /**
-     * @brief Factory function for a worker config
-     */
-    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
      * @brief Configuration numberOfQueues.
@@ -251,6 +252,8 @@ class WorkerConfiguration : public BaseConfiguration {
                                      8,
                                      "Number of tuple buffers allowed in one network channel before blocking transfer."};
 
+    BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Java UDF execution supported by the worker"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,
@@ -284,7 +287,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &workerHealthCheckWaitTime,
                 &configPath,
 #ifdef TFDEF
-                &isTfInstalled
+                &isTensorflowSupported
 #endif
         };
     }

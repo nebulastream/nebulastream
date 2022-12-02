@@ -12,20 +12,18 @@
     limitations under the License.
 */
 
-#ifndef NES_PROPERTYKEYS_HPP
-#define NES_PROPERTYKEYS_HPP
+#ifndef NES_WORKERCONFIGURATIONKEYS_HPP
+#define NES_WORKERCONFIGURATIONKEYS_HPP
 
 #include <string>
 
 namespace NES {
 
-const std::string SLOTS = "SLOTS";
-const std::string LOCATION = "LOCATION";
-const std::string DATA_PORT = "DATA_PORT";
-const std::string GRPC_PORT = "GRPC_PORT";
-const std::string ADDRESS = "ADDRESS";
-const std::string MAINTENANCE = "MAINTENANCE";
+const std::string TENSORFLOW_SUPPORT = "TENSOR_FLOW";
+const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
+const std::string MOBILITY_SUPPORT = "MOBILITY";
+const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
 
 }// namespace NES
 
-#endif//NES_PROPERTYKEYS_HPP
+#endif//NES_WORKERCONFIGURATIONKEYS_HPP

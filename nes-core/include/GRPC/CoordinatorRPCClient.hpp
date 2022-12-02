@@ -120,17 +120,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param ipAddress: where this node is listening
-     * @param grpcPort: the grpc port of the node
-     * @param dataPort: the data port of the node
-     * @param numberOfSlots: processing slots capacity
-     * @param registrationMetrics: metrics to report
-     * @param fixedCoordinates: the fixed geographical location of a non mobile node if it is known
-     * @param isMobile: indicates if this worker is running on a fixed location device or on a mobile device
+     * @param registrationRequest:
      * @return bool indicating success
      */
-    bool registerWorker(const std::map<std::string, std::any> properties,
-                        const Monitoring::RegistrationMetrics& registrationMetrics);
+    bool registerWorker(RegisterWorkerRequest registrationRequest);
 
     /**
      * @brief method to check if the coordinator is alive
