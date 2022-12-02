@@ -1,0 +1,30 @@
+# ~~~ Configurations for the NES Coordinator ~~~
+
+# ~~ IPs and Ports ~~
+# Set NES ip of the REST server
+restIp: 127.0.0.1
+
+# Set RPC IP address of NES Coordinator
+coordinatorIp: 127.0.0.1
+
+# Set RPC Server port of NES Coordinator
+rpcPort: 4000
+
+# Set port exposed for REST endpoints
+restPort: 8081
+
+# Set the data port of the network manager
+dataPort: 3001
+
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+logLevel: LOG_TRACE
+
+# Set a single logical source with multiple fields in the schema
+# Valid types are: INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR
+# CHARS require the length key
+# FLOAT32 is float, FLOAT64 is double
+logicalSources:
+  - logicalSourceName: ls
+    fields:
+      - name: "var"
+        type: "UINT32"
