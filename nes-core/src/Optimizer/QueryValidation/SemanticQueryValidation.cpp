@@ -13,6 +13,11 @@
 */
 
 #include <API/Query.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
@@ -20,8 +25,10 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
@@ -107,6 +114,30 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
         throw InvalidQueryException(errorMessage + "\n");
+    }
+
+    auto mlInferenceModels = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperatorNode>();
+    if (mlInferenceModels.size() > 0) {
+        bool firstIter = false;
+        std::shared_ptr<DataType> commonStamp;
+        for (const auto& mlInferModel : mlInferenceModels) {
+            for (const auto& inputField : mlInferModel->getInputFieldsAsPtr()) {
+                auto field = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()){
+                    throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for tensorflow model not supported: " + field->getStamp()->toString());
+                }
+                if (!firstIter) {
+                    commonStamp = field->getStamp();
+                } else {
+                    commonStamp = commonStamp->join(field->getStamp());
+                }
+                firstIter = true;
+            }
+        }
+        NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: " << commonStamp->toString());
+        if (commonStamp->isUndefined()) {
+            throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as input to the tensorflow model.");
+        }
     }
 }
 

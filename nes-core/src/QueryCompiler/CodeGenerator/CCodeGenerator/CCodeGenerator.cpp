@@ -418,20 +418,20 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
 
-    bool firstSkipped = false;
+    bool firstIter = false;
     std::shared_ptr<DataType> commonStamp;
-    std::shared_ptr<ExpressionNode> previousField;
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()){
-            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
+            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
         }
-        if (firstSkipped) {
-            commonStamp = previousField->getStamp()->join(field->getStamp());
+        if (!firstIter) {
+            commonStamp = field->getStamp();
+        } else {
+            commonStamp = commonStamp->join(field->getStamp());
         }
-        firstSkipped = true;
-        previousField = field;
     }
+    NES_DEBUG("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: " << commonStamp->toString());
     if (commonStamp->isInteger()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
     } else if (commonStamp->isFloat()) {
@@ -468,7 +468,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
                 VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                     VarRef(variableDeclaration)));
         } else {
-            NES_ERROR("CCodeGenerator: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
+            NES_ERROR("CCodeGenerator: common data type for tensorflow model not supported: " << commonStamp->toString());
         }
     }
 
