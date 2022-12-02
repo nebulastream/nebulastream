@@ -43,7 +43,7 @@ void NES::TensorflowAdapter::initializeModel(std::string model) {
 
 NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
-float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
+double NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
 void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
@@ -72,6 +72,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         output = (double*) malloc(output_size);
         TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
     } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
+        std::cout << "Are you going here? " << dataType << std::endl;
         va_list vl;
         va_start(vl, n);
         TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
