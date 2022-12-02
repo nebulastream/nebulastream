@@ -26,8 +26,8 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace NES;
@@ -85,7 +85,6 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
         return Status::OK;
     }
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
-    reply->set_workerid(0);
     reply->set_workerid(0);
     return Status::CANCELLED;
 }
@@ -359,13 +358,13 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>> inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->coord()),
+        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->geolocation()),
                                                    request->radius());
 
     for (auto elem : inRange) {
         WorkerLocationInfo* workerInfo = reply->add_nodes();
         workerInfo->set_id(elem.first);
-        workerInfo->set_allocated_coord(new Coordinates{elem.second});
+        workerInfo->set_allocated_geolocation(new GeoLocation{elem.second});
     }
     return Status::OK;
 }
@@ -445,7 +444,7 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
-    auto coordinates = request->coord();
+    auto coordinates = request->geolocation();
     NES_DEBUG("Coordinator received location update from node with id "
               << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
               << request->time());

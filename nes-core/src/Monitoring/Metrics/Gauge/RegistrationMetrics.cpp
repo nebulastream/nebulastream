@@ -27,20 +27,20 @@
 namespace NES::Monitoring {
 
 RegistrationMetrics::RegistrationMetrics()
-    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
+    : workerId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
       hasBattery(false) {
     NES_DEBUG("RegistrationMetrics: Default ctor");
 }
 
 RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
-    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
+    : workerId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
     NES_DEBUG("RegistrationMetrics: Init with flag moving:" + std::to_string(isMoving)
               + ", hasBattery:" + std::to_string(hasBattery));
 }
 
 RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
-    : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()),
+    : workerId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()),
       totalCPUJiffies(metrics.totalcpujiffies()), cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()),
       isMoving(metrics.ismoving()), hasBattery(metrics.hasbattery()) {
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
@@ -73,7 +73,7 @@ void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupl
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(workerId);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalMemoryBytes);
     buffer[tupleIndex][cnt++].write<uint64_t>(cpuCoreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalCPUJiffies);
@@ -90,7 +90,7 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
     uint64_t cnt = 0;
 
-    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    workerId = buffer[tupleIndex][cnt++].read<uint64_t>();
     totalMemoryBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
     cpuCoreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     totalCPUJiffies = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -102,7 +102,7 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
 
 nlohmann::json RegistrationMetrics::toJson() const {
     nlohmann::json metricsJson{};
-    metricsJson["NODE_ID"] = nodeId;
+    metricsJson["NODE_ID"] = workerId;
     metricsJson["TotalMemory"] = totalMemoryBytes;
 
     metricsJson["CpuCoreNum"] = cpuCoreNum;
@@ -129,7 +129,7 @@ SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const {
 }
 
 bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
-    return nodeId == rhs.nodeId && totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum
+    return workerId == rhs.workerId && totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum
         && totalCPUJiffies == rhs.totalCPUJiffies && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS
         && isMoving == rhs.isMoving && hasBattery == rhs.hasBattery;
 }

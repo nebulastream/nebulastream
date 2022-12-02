@@ -23,7 +23,7 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <map>
 #include <string>
 
@@ -189,9 +189,9 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify if the worker is running on a mobile device, if it is a node with a known fixed loction, or if it
      * does not have a known location.
      */
-    EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {
+    EnumOption<NES::Spatial::Index::Experimental::SpatialType> nodeSpatialType = {
         SPATIAL_TYPE_CONFIG,
-        NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
+        NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION,
         "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
 
     /**

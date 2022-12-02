@@ -18,8 +18,8 @@
 #include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -216,7 +216,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             currentNodeJsonValue["id"] = currentNode->getId();
             currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
             currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
-            if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+            if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
                 NES::Spatial::Index::Experimental::Location location = *currentNode->getGeoLocation()->getLocation();
                 auto locationInfo = nlohmann::json{};
                 if (location.isValid()) {

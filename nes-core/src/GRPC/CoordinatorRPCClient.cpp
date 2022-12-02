@@ -23,6 +23,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <filesystem>
@@ -485,9 +486,9 @@ bool CoordinatorRPCClient::unregisterNode() {
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerWorker(RegisterWorkerRequest registrationRequest) {
+bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrationRequest) {
 
-    NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << registrationRequest.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << registrationRequest.DebugString());
 
     class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
       public:
@@ -503,7 +504,7 @@ bool CoordinatorRPCClient::registerWorker(RegisterWorkerRequest registrationRequ
             return coordinatorStub->RegisterWorker(&context, request, reply);
         }
         bool onSuccess(const RegisterWorkerReply& reply) override {
-            workerId = reply.id();
+            workerId = reply.workerid();
             return true;
         }
         bool onPartialFailure(const Status& status) override {
@@ -571,7 +572,7 @@ CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::LocationPt
         return {};
     }
     GetNodesInRangeRequest request;
-    Coordinates* pCoordinates = request.mutable_coord();
+    GeoLocation* pCoordinates = request.mutable_geolocation();
     pCoordinates->set_lat(location->getLatitude());
     pCoordinates->set_lng(location->getLongitude());
     request.set_radius(radius);
@@ -582,7 +583,7 @@ CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::LocationPt
 
     std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodesInRange;
     for (WorkerLocationInfo workerInfo : *reply.mutable_nodes()) {
-        nodesInRange.emplace_back(workerInfo.id(), workerInfo.coord());
+        nodesInRange.emplace_back(workerInfo.id(), workerInfo.geolocation());
     }
     return nodesInRange;
 }
@@ -718,7 +719,7 @@ bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, Spatial::Index::E
 
     request.set_id(nodeId);
 
-    Coordinates* coordinates = request.mutable_coord();
+    GeoLocation* coordinates = request.mutable_geolocation();
     coordinates->set_lat(locationUpdate->getLocation()->getLatitude());
     coordinates->set_lng(locationUpdate->getLocation()->getLongitude());
 

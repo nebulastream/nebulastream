@@ -36,8 +36,8 @@
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -134,7 +134,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     //wrkConf2->dataPort.setValue(*getAvailablePort());
     //wrkConf2->rpcPort.setValue(*getAvailablePort());
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
@@ -145,7 +145,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     //wrkConf3->dataPort.setValue(*getAvailablePort());
     //wrkConf3->rpcPort.setValue(*getAvailablePort());
     wrkConf3->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location3));
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart3);
@@ -156,7 +156,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     wrkConf4->dataPort.setValue(*getAvailablePort());
     wrkConf4->rpcPort.setValue(*getAvailablePort());
     wrkConf4->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location4));
-    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart4);
@@ -270,7 +270,7 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -284,9 +284,9 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = (port);
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
-    //wrkConf2->dataPort.setValue(*getAvailablePort());
-    //wrkConf2->rpcPort.setValue(*getAvailablePort());
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+//    wrkConf2->dataPort.setValue(*getAvailablePort());
+//    wrkConf2->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
@@ -383,7 +383,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -425,7 +425,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -468,7 +468,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -513,7 +513,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->coordinatorPort = (port);
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -553,7 +553,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->rpcPort = *rpcPortWrk1;
     //wrkConf1->dataPort.setValue(*getAvailablePort());
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -574,7 +574,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     wrkConf2->rpcPort = *rpcPortWrk2;
     //wrkConf2->dataPort.setValue(*getAvailablePort());
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
@@ -655,7 +655,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     size_t idCount = 10000;
     for (auto elem : locVec) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0);
-        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getGeoLocation()->getLocation()));
@@ -667,7 +667,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->parentId.setValue(10006);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
@@ -957,7 +957,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     size_t idCount = 10000;
     for (auto elem : locVec) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0);
-        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getGeoLocation()->getLocation()));
@@ -969,7 +969,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->parentId.setValue(10045);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
@@ -1447,7 +1447,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     for (auto elem : locVec) {
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
-        wrkConf->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+        wrkConf->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
         wrkConf->locationCoordinates.setValue(elem);
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         fieldNodes.push_back(wrk);
@@ -1474,7 +1474,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     auto sequenceSource = PhysicalSource::create("seq", "test_stream", stype);
     wrkConf1->physicalSources.add(sequenceSource);
 
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->parentId.setValue(startParentId);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);

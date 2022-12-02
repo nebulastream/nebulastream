@@ -458,8 +458,8 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, request, &reply);
-    if (reply.has_coord()) {
-        auto coord = reply.coord();
+    if (reply.has_geolocation()) {
+        auto coord = reply.geolocation();
         auto timestamp = reply.timestamp();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
@@ -500,7 +500,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto vec = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
-            auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
+            auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.geolocation().lat(), reconnectData.geolocation().lng());
             vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
                 Spatial::Mobility::Experimental::ReconnectPoint{
                     loc,

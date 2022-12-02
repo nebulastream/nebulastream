@@ -194,7 +194,7 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     auto waypoint = locationProvider->getWaypoint();
     auto loc = waypoint->getLocation();
     if (loc->isValid()) {
-        Coordinates* coord = reply->mutable_coord();
+        GeoLocation* coord = reply->mutable_geolocation();
         coord->set_lat(loc->getLatitude());
         coord->set_lng(loc->getLongitude());
     }
@@ -221,13 +221,13 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
     //if a predicted path was calculated, insert its start and endpoint into the message to be sent
     auto startLoc = schedule->getPathStart();
     if (startLoc) {
-        Coordinates* startCoord = scheduleMsg->mutable_pathstart();
+        GeoLocation* startCoord = scheduleMsg->mutable_pathstart();
         startCoord->set_lat(startLoc->getLatitude());
         startCoord->set_lng(startLoc->getLongitude());
     }
     auto endLoc = schedule->getPathEnd();
     if (endLoc) {
-        Coordinates* endCoord = scheduleMsg->mutable_pathend();
+        GeoLocation* endCoord = scheduleMsg->mutable_pathend();
         endCoord->set_lat(endLoc->getLatitude());
         endCoord->set_lng(endLoc->getLongitude());
     }
@@ -235,7 +235,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
     //if the device downloaded nodes to the local index, insert the location of the device at the time of the update into the message
     auto updateLocation = schedule->getLastIndexUpdatePosition();
     if (updateLocation) {
-        Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
+        GeoLocation* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
         updateCoordinates->set_lat(updateLocation->getLatitude());
         updateCoordinates->set_lng(updateLocation->getLongitude());
     }
@@ -250,7 +250,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
                 continue;
             }
             SerializableReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
-            Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
+            GeoLocation* reconnectLocation = reconnectPoint->mutable_geolocation();
             auto loc = elem->predictedReconnectLocation;
             reconnectLocation->set_lat(loc.getLatitude());
             reconnectLocation->set_lng(loc.getLongitude());

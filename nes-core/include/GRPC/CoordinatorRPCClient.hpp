@@ -152,7 +152,7 @@ class CoordinatorRPCClient {
      * @param registrationRequest:
      * @return bool indicating success
      */
-    bool registerWorker(RegisterWorkerRequest registrationRequest);
+    bool registerWorker(const RegisterWorkerRequest& registrationRequest);
 
     /**
      * @brief method to check if the coordinator is alive

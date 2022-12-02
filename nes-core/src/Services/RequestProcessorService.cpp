@@ -282,9 +282,7 @@ void RequestProcessorService::start() {
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (std::exception& ex) {
-        NES_FATAL_ERROR(
-            "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: "
-            << ex.what());
+        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queryId : " << ex.what());
         shutDown();
     }
     shutDown();

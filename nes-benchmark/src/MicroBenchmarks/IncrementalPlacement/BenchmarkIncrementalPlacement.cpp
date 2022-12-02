@@ -158,7 +158,7 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
                                            0,
                                            UINT16_MAX,
                                            NES::Spatial::Index::Experimental::Location(),
-                                           NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                           NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
                                            /* isTfInstalled */ false);
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
         topologyManagerService->registerWorker(std::to_string(i),
@@ -166,7 +166,7 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
                                                0,
                                                UINT16_MAX,
                                                NES::Spatial::Index::Experimental::Location(),
-                                               NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                               NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
                                                /* isTfInstalled */ false);
     }
 

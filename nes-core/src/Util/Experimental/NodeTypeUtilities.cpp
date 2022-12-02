@@ -11,48 +11,49 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Util/Logger/Logger.hpp"
-#include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Spatial::Util {
 
-Index::Experimental::NodeType NodeTypeUtilities::stringToNodeType(const std::string nodeTypeString) {
+Index::Experimental::SpatialType NodeTypeUtilities::stringToNodeType(const std::string nodeTypeString) {
     if (nodeTypeString == "NO_LOCATION") {
-        return Index::Experimental::NodeType::NO_LOCATION;
+        return Index::Experimental::SpatialType::NO_LOCATION;
     } else if (nodeTypeString == "FIXED_LOCATION") {
-        return Index::Experimental::NodeType::FIXED_LOCATION;
+        return Index::Experimental::SpatialType::FIXED_LOCATION;
     } else if (nodeTypeString == "MOBILE_NODE") {
-        return Index::Experimental::NodeType::MOBILE_NODE;
+        return Index::Experimental::SpatialType::MOBILE_NODE;
     }
-    return Index::Experimental::NodeType::INVALID;
+    return Index::Experimental::SpatialType::INVALID;
 }
 
-Index::Experimental::NodeType NodeTypeUtilities::protobufEnumToNodeType(NodeType nodeType) {
+Index::Experimental::SpatialType NodeTypeUtilities::protobufEnumToNodeType(SpatialType nodeType) {
     switch (nodeType) {
-        case NodeType::NO_LOCATION: return Index::Experimental::NodeType::NO_LOCATION;
-        case NodeType::FIXED_LOCATION: return Index::Experimental::NodeType::FIXED_LOCATION;
-        case NodeType::MOBILE_NODE: return Index::Experimental::NodeType::MOBILE_NODE;
-        case NodeType_INT_MIN_SENTINEL_DO_NOT_USE_: return Index::Experimental::NodeType::INVALID;
-        case NodeType_INT_MAX_SENTINEL_DO_NOT_USE_: return Index::Experimental::NodeType::INVALID;
+        case SpatialType::NO_LOCATION: return Index::Experimental::SpatialType::NO_LOCATION;
+        case SpatialType::FIXED_LOCATION: return Index::Experimental::SpatialType::FIXED_LOCATION;
+        case SpatialType::MOBILE_NODE: return Index::Experimental::SpatialType::MOBILE_NODE;
+        case SpatialType_INT_MIN_SENTINEL_DO_NOT_USE_: return Index::Experimental::SpatialType::INVALID;
+        case SpatialType_INT_MAX_SENTINEL_DO_NOT_USE_: return Index::Experimental::SpatialType::INVALID;
     }
-    return Index::Experimental::NodeType::INVALID;
+    return Index::Experimental::SpatialType::INVALID;
 }
 
-std::string NodeTypeUtilities::toString(const Index::Experimental::NodeType nodeType) {
+std::string NodeTypeUtilities::toString(const Index::Experimental::SpatialType nodeType) {
     switch (nodeType) {
-        case Index::Experimental::NodeType::NO_LOCATION: return "NO_LOCATION";
-        case Index::Experimental::NodeType::FIXED_LOCATION: return "FIXED_LOCATION";
-        case Index::Experimental::NodeType::MOBILE_NODE: return "MOBILE_NODE";
-        case Index::Experimental::NodeType::INVALID: return "INVALID";
+        case Index::Experimental::SpatialType::NO_LOCATION: return "NO_LOCATION";
+        case Index::Experimental::SpatialType::FIXED_LOCATION: return "FIXED_LOCATION";
+        case Index::Experimental::SpatialType::MOBILE_NODE: return "MOBILE_NODE";
+        case Index::Experimental::SpatialType::INVALID: return "INVALID";
     }
 }
 
-NodeType NodeTypeUtilities::toProtobufEnum(Index::Experimental::NodeType nodeType) {
+SpatialType NodeTypeUtilities::toProtobufEnum(Index::Experimental::SpatialType nodeType) {
     switch (nodeType) {
-        case Index::Experimental::NodeType::NO_LOCATION: return NodeType::NO_LOCATION;
-        case Index::Experimental::NodeType::FIXED_LOCATION: return NodeType::FIXED_LOCATION;
-        case Index::Experimental::NodeType::MOBILE_NODE: return NodeType::MOBILE_NODE;
-        case Index::Experimental::NodeType::INVALID:
+        case Index::Experimental::SpatialType::NO_LOCATION: return SpatialType::NO_LOCATION;
+        case Index::Experimental::SpatialType::FIXED_LOCATION: return SpatialType::FIXED_LOCATION;
+        case Index::Experimental::SpatialType::MOBILE_NODE: return SpatialType::MOBILE_NODE;
+        case Index::Experimental::SpatialType::INVALID:
             NES_FATAL_ERROR("cannot construct protobuf enum from invalid spatial type, exiting")
             exit(EXIT_FAILURE);
     }

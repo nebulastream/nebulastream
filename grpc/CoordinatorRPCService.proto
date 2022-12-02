@@ -135,14 +135,14 @@ message RegisterWorkerRequest {
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
   SerializableRegistrationMetrics registrationMetrics = 5;
-  NES.Spatial.Protobuf.Waypoint waypoint = 6;
-  NES.Spatial.Protobuf.SpatialType spatialType = 7;
+  GeoLocation geoLocation = 6;
+  SpatialType spatialType = 7;
   bool tfSupported = 8;
   bool javaUDFSupported = 9;
 }
 
 message RegisterWorkerReply {
-  uint64 id = 1;
+  uint64 workerId = 1;
 }
 
 message UnregisterWorkerRequest {
