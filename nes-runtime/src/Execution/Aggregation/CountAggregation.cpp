@@ -5,11 +5,11 @@ namespace NES::Runtime::Execution::Aggregation {
 CountAggregationFunction::CountAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
-void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
+void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) {
     // load memref
     auto oldValue = memref.load<Nautilus::Int64>();// TODO 3250 check the type
     // add the value
-    auto newValue = oldValue + value;
+    auto newValue = oldValue + 1;
     // put back to the memref
     memref.store(newValue);
 }
