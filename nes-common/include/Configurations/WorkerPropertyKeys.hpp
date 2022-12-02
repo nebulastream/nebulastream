@@ -12,4 +12,20 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigurationKeys.hpp>
+#ifndef NES_WORKERPROPERTYKEYS_HPP
+#define NES_WORKERPROPERTYKEYS_HPP
+
+#include <string>
+
+namespace NES {
+
+const std::string SLOTS = "SLOTS";
+const std::string LOCATION = "LOCATION";
+const std::string DATA_PORT = "DATA_PORT";
+const std::string GRPC_PORT = "GRPC_PORT";
+const std::string ADDRESS = "ADDRESS";
+const std::string MAINTENANCE = "MAINTENANCE";
+
+}// namespace NES
+
+#endif//NES_WORKERPROPERTYKEYS_HPP

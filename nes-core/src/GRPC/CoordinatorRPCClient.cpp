@@ -380,20 +380,9 @@ bool CoordinatorRPCClient::unregisterNode() {
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerWorker(const std::map<std::string, std::any> properties,
-                                          const Monitoring::RegistrationMetrics& registrationMetrics) {
+bool CoordinatorRPCClient::registerWorker(RegisterWorkerRequest registrationRequest) {
 
-    RegisterWorkerRequest request;
-    auto requestProperties = request.mutable_properties();
-    for (auto& property : properties) {
-        std::string key = property.first;
-        auto value = google::protobuf::Any();
-        value.set_value(std::any_cast<std::string>(property.second));
-        (*requestProperties)[key] = value;
-    }
-    //    request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
-    request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
-    NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
+    NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << registrationRequest.DebugString());
 
     class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
       public:
@@ -428,7 +417,7 @@ bool CoordinatorRPCClient::registerWorker(const std::map<std::string, std::any> 
     };
 
     auto listener = RegisterWorkerListener{workerId, coordinatorStub};
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    return detail::processRpc(registrationRequest, rpcRetryAttemps, rpcBackoff, listener);
 }
 
 bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
