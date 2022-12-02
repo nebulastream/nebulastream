@@ -19,7 +19,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
 namespace NES::Nautilus {
 
 class TextTypeTest : public testing::Test {
@@ -33,7 +32,7 @@ class TextTypeTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
@@ -72,6 +71,53 @@ TEST_F(TextTypeTest, createTextTest) {
     ASSERT_EQ(textValue, textValue4);
 }
 
+TEST_F(TextTypeTest, prefixTest) {
+    auto preTest1 = Value<Text>("abc");
+    auto preTest2 = Value<Text>("ab");
+    bool x = preTest1->prefix(preTest2);
+    ASSERT_EQ(x, true);
+    ASSERT_ANY_THROW(preTest2->prefix(preTest1));
+}
+
+TEST_F(TextTypeTest, repeatTest) {
+    auto repeatTest1 = Value<Text>("A");
+    auto repeatTest2 = repeatTest1->repeat((uint32_t) 5);
+    auto repeatTest3 = Value<Text>("AAAAA");
+    ASSERT_EQ(repeatTest2, repeatTest3);
+    ASSERT_ANY_THROW(repeatTest1->repeat((uint32_t) 0));
+}
+
+TEST_F(TextTypeTest, reverseTest) {
+    auto reverseTest1 = Value<Text>("hello");
+    auto reverseTest2 = reverseTest1->reverse();
+    auto reverseTest3 = Value<Text>("olleh");
+    ASSERT_EQ(reverseTest2, reverseTest3);
+}
+
+TEST_F(TextTypeTest, positionTest) {
+    auto positionTest1 = Value<Text>("Nebula");
+    auto positionTest2 = Value<Text>("NNebulaStream");
+    auto positionTest3 = Value<Text>("Streamm");
+    auto positionTest4 = Value<Text>("e");
+    auto test1 = positionTest2->position(positionTest1);
+    auto test2 = positionTest2->position(positionTest4);
+    auto test3 = positionTest2->position(positionTest3);
+    ASSERT_EQ(test1, (uint32_t) 2);
+    ASSERT_EQ(test2, (uint32_t) 3);
+    ASSERT_EQ(test3, (uint32_t) 0);
+    ASSERT_ANY_THROW(positionTest1->position(positionTest2));
+}
+
+TEST_F(TextTypeTest, replaceTest) {
+    auto replaceTest1 = Value<Text>("xoldxold");
+    auto replaceTest2 = Value<Text>("old");
+    auto replaceTest3 = Value<Text>("new");
+    auto replaceTest4 = Value<Text>("xnewxnew");
+    auto test1 = replaceTest1->replace(replaceTest2, replaceTest3);
+    ASSERT_EQ(test1, replaceTest4);
+   // ASSERT_ANY_THROW(replaceTest2->replace(replaceTest3, replaceTest4););
+}
+
 TEST_F(TextTypeTest, subStringTest) {
     auto subtext1 = Value<Text>("Hello");
     auto subtext2 = subtext1->substring((uint32_t) 2, (uint32_t) 2);
@@ -84,7 +130,7 @@ TEST_F(TextTypeTest, subStringTestFail) {
     ASSERT_ANY_THROW(subtext1->substring((uint32_t) 200, (uint32_t) 200));
 }
 
-TEST_F(TextTypeTest, StringconcatTest) {
+TEST_F(TextTypeTest, stringconcatTest) {
     auto concatTest1 = Value<Text>("Nebula");
     auto concatTest2 = Value<Text>("Stream");
     auto concatTest3 = Value<Text>("NebulaStream");

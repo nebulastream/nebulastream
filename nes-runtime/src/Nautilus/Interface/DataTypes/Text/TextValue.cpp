@@ -65,7 +65,7 @@ TextValue::~TextValue() {
 }
 Runtime::TupleBuffer TextValue::allocateBuffer(uint32_t size) {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
-    auto optBuffer = provider->getUnpooledBuffer(size);
+    auto optBuffer = provider->getUnpooledBuffer(size + DATA_FIELD_OFFSET);
     if (!optBuffer.has_value()) {
         NES_THROW_RUNTIME_ERROR("Buffer allocation failed for text");
     }
