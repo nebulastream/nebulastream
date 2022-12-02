@@ -22,6 +22,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -35,6 +37,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
@@ -67,7 +70,11 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());

@@ -577,14 +577,8 @@ add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCa
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
 
-
-# RESTEndpointTest
-add_nes_integration_test(rest-endpoint-test "Integration/RESTEndpointTest.cpp")
-
-
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
-
 
 # NetworkStackUnitTest
 add_nes_integration_test(network-stack-test "UnitTests/Network/NetworkStackTest.cpp")

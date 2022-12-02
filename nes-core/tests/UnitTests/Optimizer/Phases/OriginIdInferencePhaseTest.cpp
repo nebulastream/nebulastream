@@ -22,6 +22,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -77,7 +79,10 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
 
     void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
         NES_INFO("Setup FilterPushDownTest test case.");
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
         auto schemaA = Schema::create()->addField("id", INT32)->addField("value", UINT32);
         sourceCatalog->addLogicalSource("A", schemaA);

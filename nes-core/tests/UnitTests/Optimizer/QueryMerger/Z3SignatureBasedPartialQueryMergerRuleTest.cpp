@@ -22,6 +22,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -40,10 +42,10 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <cstring>
+
 #include <iostream>
 #include <z3++.h>
+#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -75,9 +77,12 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
         sourceCatalog->addLogicalSource("car", schema);
         sourceCatalog->addLogicalSource("bike", schema);
         sourceCatalog->addLogicalSource("truck", schema);
+        std::map<std::string, std::any> properties;
+        properties[MAINTENANCE] = false;
+        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4, properties);
 
         auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
