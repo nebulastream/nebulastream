@@ -24,7 +24,7 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 
@@ -74,7 +74,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
                                                              5000,
                                                              6,
                                                              NES::Spatial::Index::Experimental::Location(),
-                                                             NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                                             NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
                                                              /* isTfInstalled */ false);
     EXPECT_NE(nodeId, 0u);
 
@@ -83,7 +83,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
                                                               5000,
                                                               6,
                                                               NES::Spatial::Index::Experimental::Location(),
-                                                              NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                                              NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
                                                               /* isTfInstalled */ false);
     EXPECT_NE(nodeId1, 0u);
 
@@ -93,7 +93,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
                                                               5000,
                                                               6,
                                                               NES::Spatial::Index::Experimental::Location(),
-                                                              NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
+                                                              NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION,
                                                               /* isTfInstalled */ false);
     EXPECT_EQ(nodeId2, 0u);
 

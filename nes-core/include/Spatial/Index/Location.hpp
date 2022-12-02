@@ -16,7 +16,7 @@
 
 #include <string>
 
-class Coordinates;
+class GeoLocation;
 
 namespace NES::Spatial::Index::Experimental {
 
@@ -43,9 +43,9 @@ class Location {
     /**
      * @brief constructs a Geographicala location object from a Coordinates object used as members of protobuf messages
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
-     * @param coord: the coordinate object
+     * @param geoLocation: the coordinate object
      */
-    explicit Location(const Coordinates& coord);
+    explicit Location(const GeoLocation& geoLocation);
 
     /**
      * @brief constructs a Geographical location from a tuple of doubles
@@ -64,7 +64,7 @@ class Location {
      * @brief creates a protobuf Coordinate object containing the latitude and longitude allowing
      * @return a Coordinates object containing the locations latitude and longitude
      */
-    explicit operator Coordinates() const;
+    explicit operator GeoLocation() const;
 
     /**
      * @brief compares two GeographicalLocations and checks if they represent the same point on the map

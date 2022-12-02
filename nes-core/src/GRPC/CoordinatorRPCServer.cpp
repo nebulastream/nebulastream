@@ -26,8 +26,8 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace NES;
@@ -46,41 +46,39 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
                                             RegisterWorkerReply* reply) {
+
+    NES_DEBUG("Received worker registration request " << registrationRequest->DebugString());
+    auto address = registrationRequest->address();
+    auto grpcPort = registrationRequest->grpcport();
+    auto dataPort = registrationRequest->dataport();
+    auto slots = registrationRequest->numberofslots();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    workerProperties[ADDRESS] = registrationRequest->address();
-    workerProperties[GRPC_PORT] = registrationRequest->grpcport();
-    workerProperties[DATA_PORT] = registrationRequest->dataport();
-    workerProperties[SLOTS] = registrationRequest->numberofslots();
+    workerProperties[MAINTENANCE] = false; //During registration, we assume the node is not under maintenance
     workerProperties[TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
     workerProperties[JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
-    workerProperties[SPATIAL_SUPPORT] = NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
-
-    registrationRequest
-
-    workerProperties[LOCATION] =
-
-    auto address = std::any_cast<std::string>(workerProperties[ADDRESS]);
-    auto grpcPort = std::any_cast<int64_t>(workerProperties[GRPC_PORT]);
-    auto dataPort = std::any_cast<int64_t>(workerProperties[DATA_PORT]);
-    auto slots = std::any_cast<int64_t>(workerProperties[SLOTS]);
+    workerProperties[SPATIAL_SUPPORT] =
+        NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
+    NES::Spatial::Index::Experimental::Location location(registrationRequest->geolocation().lat(),
+                                                         registrationRequest->geolocation().lng());
+    workerProperties[LOCATION] = location;
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
-    id = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
+    uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
 
     auto registrationMetrics =
         std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(registrationRequest->registrationmetrics()),
                                              Monitoring::MetricType::RegistrationMetric);
-    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = id;
-    monitoringManager->addMonitoringData(id, registrationMetrics);
+    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().workerId = workerId;
+    monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
-    if (id != 0) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
-        reply->set_id(id);
+    if (workerId != 0) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << workerId);
+        reply->set_workerid(workerId);
         return Status::OK;
     }
     NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
-    reply->set_id(0);
+    reply->set_workerid(0);
     return Status::CANCELLED;
 }
 
@@ -274,13 +272,13 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>> inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->coord()),
+        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->geolocation()),
                                                    request->radius());
 
     for (auto elem : inRange) {
         WorkerLocationInfo* workerInfo = reply->add_nodes();
         workerInfo->set_id(elem.first);
-        workerInfo->set_allocated_coord(new Coordinates{elem.second});
+        workerInfo->set_allocated_geolocation(new GeoLocation{elem.second});
     }
     return Status::OK;
 }
@@ -360,7 +358,7 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
-    auto coordinates = request->coord();
+    auto coordinates = request->geolocation();
     NES_DEBUG("Coordinator received location update from node with id "
               << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
               << request->time());

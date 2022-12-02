@@ -18,20 +18,20 @@
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 
-LocationProvider::LocationProvider(Index::Experimental::NodeType spatialType, Index::Experimental::Location fieldNodeLoc) {
-    this->nodeType = spatialType;
+LocationProvider::LocationProvider(Index::Experimental::SpatialType spatialType, Index::Experimental::Location fieldNodeLoc) {
+    this->spatialType = spatialType;
     this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
 }
 
-Index::Experimental::NodeType LocationProvider::getNodeType() const { return nodeType; };
+Index::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
 
 bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc) {
-    if (nodeType != Index::Experimental::NodeType::FIXED_LOCATION) {
+    if (spatialType != Index::Experimental::SpatialType::FIXED_LOCATION) {
         return false;
     }
     fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(geoLoc);
@@ -39,12 +39,11 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
 }
 
 Index::Experimental::WaypointPtr LocationProvider::getWaypoint() {
-    switch (nodeType) {
-        case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentWaypoint();
-        case Index::Experimental::NodeType::FIXED_LOCATION:
-            return std::make_shared<Index::Experimental::Waypoint>(*fixedLocationCoordinates);
-        case Index::Experimental::NodeType::NO_LOCATION: return {};
-        case Index::Experimental::NodeType::INVALID:
+    switch (SpatialType) {
+        case Index::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
+        case Index::Experimental::SpatialType::FIXED_LOCATION: return std::make_shared<Index::Experimental::Waypoint>(*fixedLocationCoordinates);
+        case Index::Experimental::SpatialType::NO_LOCATION: return {};
+        case Index::Experimental::SpatialType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
             return std::make_shared<Index::Experimental::Waypoint>(Index::Experimental::Waypoint::invalid());
     }

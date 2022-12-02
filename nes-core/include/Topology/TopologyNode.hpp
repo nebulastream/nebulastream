@@ -33,7 +33,7 @@ using LocationPtr = std::shared_ptr<Location>;
 class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
 
-enum class NodeType;
+enum class SpatialType;
 }// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
@@ -214,14 +214,14 @@ class TopologyNode : public Node {
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
      * @param workerSpatialType
      */
-    void setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType workerSpatialType);
+    void setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType workerSpatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    NES::Spatial::Index::Experimental::NodeType getSpatialNodeType();
+    NES::Spatial::Index::Experimental::SpatialType getSpatialNodeType();
 
   private:
     uint64_t id;
