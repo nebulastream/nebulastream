@@ -142,7 +142,7 @@ message GetLocationRequest {
 }
 
 message GetLocationReply {
-  Coordinates coord = 1;
+  GeoLocation geoLocation = 1;
   uint64 timestamp = 2;
 }
 

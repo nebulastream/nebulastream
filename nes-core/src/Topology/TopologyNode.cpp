@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigurationKeys.hpp>
-#include <Configurations/PropertyKeys.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/Waypoint.hpp>
