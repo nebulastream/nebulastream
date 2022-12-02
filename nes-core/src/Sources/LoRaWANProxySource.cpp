@@ -7,9 +7,27 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/LoRaWANProxySource.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
+
+enum class ChirpStackEvent {
+    UP,
+    STATUS,
+    JOIN,
+    ACK,
+    TXACK,
+    LOG,
+    LOCATION,
+    INTEGRATION
+};
+
+ChirpStackEvent strToEvent(const std::string& s) {
+    return magic_enum::enum_cast<ChirpStackEvent>(s).value();
+};
+
 LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                                        const Runtime::BufferManagerPtr& bufferManager,
                                        const Runtime::QueryManagerPtr& queryManager,
@@ -28,13 +46,13 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  executableSuccessors),
-      sourceConfig(sourceConfig) {
-    NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()");
+      sourceConfig(sourceConfig)
+{
     client = std::make_shared<mqtt::async_client>(sourceConfig->getUrl()->getValue(), "LoRaWANProxySource");
     user = sourceConfig->getUserName()->getValue();
     topic = "application/" + sourceConfig->getAppId()->getValue() + "/#";
 
-    //initialize parser
+    //region initialize parser
     std::vector<std::string> schemaKeys;
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
@@ -43,10 +61,17 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
         auto physField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physField);
         auto fieldName = field->getName();
-        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
+        if (fieldName.find('$') == std::string::npos) {
+            schemaKeys.push_back(fieldName);
+        }
+        else { // if fieldname contains a $ the name is logicalstream$fieldname
+            schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
+        }
+
     }
     jsonParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
-
+    //endregion
+    NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()")
 
 }
 LoRaWANProxySource::~LoRaWANProxySource() {
@@ -64,6 +89,7 @@ LoRaWANProxySource::~LoRaWANProxySource() {
 
 bool LoRaWANProxySource::connect() {
     if (!client->is_connected()) {
+        open();
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
             auto connOpts =
@@ -104,6 +130,7 @@ bool LoRaWANProxySource::connect() {
 bool LoRaWANProxySource::disconnect() {
     NES_DEBUG("LoRaWANProxySource::disconnect connected=" << client->is_connected());
     if (client->is_connected()) {
+        //close();
         NES_DEBUG("LoRaWANProxySource: Shutting down and disconnecting from the MQTT server.");
 
         client->unsubscribe(topic)->wait();
@@ -128,6 +155,8 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
     auto buffer = allocateBuffer();
     if (connect()) {//connects if not connected, or return true if already connected. Might be bad design
         NES_TRACE("Connected and listening for mqtt messages for 1 sec")
+
+        unsigned int count = 0;
         while (true) {
             mqtt::const_message_ptr msg;
             auto msgRcvd = client->try_consume_message_for(&msg, std::chrono::seconds(1));
@@ -138,18 +167,20 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
 
             auto rcvStr = msg->get_payload_str();
             auto rcvTopic = msg->get_topic();
-            NES_TRACE("Received msg on topic: \"" << rcvTopic << "\" with payload: \"" << rcvStr << "\"")
-            // 0                                33            46
+            NES_TRACE("Received msg no. " << count << " on topic: \"" << rcvTopic << "\" with payload: \"" << rcvStr << "\"")
+            // 0                                35            58
             // |                                |             |
             // application/APPLICATION_ID/device/DEV_EUI/event/EVENT
-            auto devEUI = rcvTopic.substr(33, 64 / 8);
-            auto event = rcvTopic.substr(46, rcvTopic.length());
+            auto devEUI = rcvTopic.substr(36, 64 / 4);
+            auto event = rcvTopic.substr(59, rcvTopic.length());
 
-            jsonParser->writeInputTupleToTupleBuffer(rcvStr,1,buffer,schema,localBufferManager);
+            jsonParser->writeInputTupleToTupleBuffer(rcvStr,0,buffer,schema,localBufferManager);
             //TODO: this is a blocking call, which should get and return data to
             //      the caller. But where should we handle control msg or other msgs
             //      should prob. impl. async handling of msgs
+            ++count;
         }
+        buffer.setNumberOfTuples(count);
     }
     return buffer.getBuffer();
 }

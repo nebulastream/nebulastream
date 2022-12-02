@@ -126,9 +126,11 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numWorkerThreads = 4;
+    wrkConf->logLevel = LogLevel::LOG_TRACE;
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->logLevel= LogLevel::LOG_TRACE;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
