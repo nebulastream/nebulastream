@@ -22,6 +22,7 @@ namespace NES::Runtime::Execution::Aggregation {
  * Base class for aggregation Value
  */
 struct AggregationValue {
+     //int64_t count; // TODO add count to base class adjust MemRef (sumAggValue = memRefcount + offsite) clean that up and think about it
 };
 
 struct AvgAggregationValue : AggregationValue {
@@ -36,7 +37,6 @@ struct SumAggregationValue : AggregationValue {
 struct CountAggregationValue : AggregationValue {
     int64_t count = 0;
 };
-
 
 }// namespace NES::Runtime::Execution::Aggregation
 
