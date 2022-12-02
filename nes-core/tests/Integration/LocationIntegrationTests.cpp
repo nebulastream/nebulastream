@@ -22,6 +22,8 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
@@ -653,9 +655,11 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
     S2PointIndex<uint64_t> nodeIndex;
     size_t idCount = 10000;
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
     for (auto elem : locVec) {
-        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0);
-        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getGeoLocation()->getLocation()));
@@ -953,11 +957,14 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         {52.45558349451082, 13.774558360650097},  {52.50660545385822, 13.171564805090318},
         {52.38586011054127, 13.772290920473052},  {52.4010561708298, 13.426889487526187}};
 
+    std::map<std::string, std::any> properties;
+    properties[MAINTENANCE] = false;
+    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+
     S2PointIndex<uint64_t> nodeIndex;
     size_t idCount = 10000;
     for (auto elem : locVec) {
-        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0);
-        currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getGeoLocation()->getLocation()));
