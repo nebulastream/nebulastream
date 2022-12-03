@@ -15,7 +15,6 @@
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -25,7 +24,8 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <health.grpc.pb.h>
+#include <Health.grpc.pb.h>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 
