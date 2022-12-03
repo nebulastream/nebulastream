@@ -37,7 +37,7 @@ class Tag {
      * @brief Constructor to create a new tag.
      * @param addresses
      */
-    Tag(std::vector<TagAddress> addresses);
+    Tag(const std::vector<TagAddress>& addresses);
     /**
      * @brief The hasher enables to leverage the tag in a std::map
      */
@@ -61,8 +61,10 @@ class Tag {
     bool operator==(const Tag& other) const;
     friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
 
+    const std::vector<TagAddress>& getAddresses();
+
   private:
-    std::vector<TagAddress> addresses;
+    const std::vector<TagAddress> addresses;
     friend TagHasher;
 };
 
