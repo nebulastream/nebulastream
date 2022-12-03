@@ -17,9 +17,10 @@
 
 namespace NES::Constraint {
 
-class Constraint{
-
-};
+/**
+ * Base class for different types of constraints that can be used during optimization decisions (e.g. operator placement)
+ */
+class Constraint{};
 
 }
 
