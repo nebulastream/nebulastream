@@ -20,8 +20,11 @@
 
 namespace NES::Constraint {
 
-class NeedsConfiguredConstraint : public Constraint {
-    NeedsConfiguredConstraint(std::string configurationKey);
+/**
+ * Constraint that requires a worker with desired configuration. The configuration key is passes as the constructor parameter.
+ */
+class NeedWorkerWithConfiguredConstraint : public Constraint {
+    NeedWorkerWithConfiguredConstraint(std::string configurationKey);
 
   private:
     std::string configurationKey;
