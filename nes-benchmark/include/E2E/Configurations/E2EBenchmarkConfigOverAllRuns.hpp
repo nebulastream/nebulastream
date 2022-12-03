@@ -43,12 +43,6 @@ class E2EBenchmarkConfigOverAllRuns {
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
-     * @brief returns the data generators for this e2e benchmark in a csv
-     * @return string representation of the data generators
-     */
-    std::string getDataGeneratorsAsString();
-
-    /**
      * @brief all configurations that are constant over all runs
      */
   public:
@@ -61,6 +55,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;
+    Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
     Configurations::StringConfigOption dataGenerator;

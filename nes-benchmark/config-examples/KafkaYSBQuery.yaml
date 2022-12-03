@@ -4,18 +4,21 @@
 numberOfWorkerThreads: 1
 numberOfSources: 1
 
+numberOfQueriesToDeploy: 1,2,4,8,16
+sourceSharing: off
+
 # engine configuration parameter
 #numberOfBuffersInGlobalBufferManager: 32768
-numberOfBuffersInGlobalBufferManager: 32768
-numberOfBuffersPerPipeline: 1024
-numberOfBuffersInSourceLocalBufferPool: 1024
+numberOfBuffersInGlobalBufferManager: 98304
+numberOfBuffersPerPipeline: 128
+numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
 
 ##benchmark parameter for the entire run
 dataGenerator: YSBKafka
 ##broker,topic,group
 #connectionString: "localhost:9092,nesKafka,0"
-connectionString: "10.156.0.2:9092,nesKafka,0"
+connectionString: "10.156.0.30:9092,nesKafka,0"
 numberOfPreAllocatedBuffer: 10
 batchSize: 10
 logicalSourceName: ysb
@@ -29,7 +32,7 @@ query: 'Query::from("ysb").filter(Attribute("event_type") < 1).window(TumblingWi
 #query: 'Query::from("ysb").filter(Attribute("event_type") < 1).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
-numberOfBuffersToProduce: 20000
+numberOfBuffersToProduce: 200000
 logLevel: LOG_DEBUG
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0

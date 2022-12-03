@@ -21,8 +21,11 @@
 #include <cppkafka/cppkafka.h>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <string>
+
 namespace NES {
 
 KafkaSource::KafkaSource(SchemaPtr schema,
@@ -57,19 +60,19 @@ KafkaSource::KafkaSource(SchemaPtr schema,
     config->set("enable.auto.commit", autoCommit == true ? "true" : "false");
     config->set("auto.offset.reset", offsetMode);
 
-    //testconfig from ventura
-//    config->set("receive.buffer.bytes",4 * 1024 * 1024);
-//    config->set("fetch.min.bytes",32768);
-//    config->set("max.partition.fetch.bytes",10 * 1024 * 102);
-//    config->set("offsets.commit.timeout.ms",3 * 60 * 1000);
     this->numBuffersToProcess = numbersOfBufferToProduce;
 
     numberOfTuplesPerBuffer =
         std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
+
+    //temp for the experiment
+    this->gatheringMode = GatheringMode::INGESTION_RATE_MODE;
+    this->gatheringIngestionRate = 600;
 }
 
 KafkaSource::~KafkaSource() {
-    std::cout << "Kafka source " << topic << " partition/group=" << groupId << " produced=" << bufferProducedCnt << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
+    std::cout << "Kafka source " << topic << " partition/group=" << groupId << " produced=" << bufferProducedCnt
+              << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
               << " failedFullPollCnt=" << failedFullPollCnt << "reuseCnt=" << reuseCnt << std::endl;
 }
 
@@ -101,7 +104,9 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
 #ifdef COPYBUFFER
                 Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
                 NES_ASSERT(messages.back().get_payload().get_size() <= buffer.getBufferSize(), "The buffer is not large enough");
-                std::memcpy(buffer.getBuffer(), messages.back().get_payload().get_data(), messages.back().get_payload().get_size());
+                std::memcpy(buffer.getBuffer(),
+                            messages.back().get_payload().get_data(),
+                            messages.back().get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
                 buffer.setCreationTimestamp(timeStamp);
 #else
@@ -113,28 +118,24 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
 #endif
                 bufferProducedCnt++;
                 // XXX: maybe commit message every N times
-//                if (!autoCommit) {
-//                    consumer->commit(messages.back());
-//                }
+                //                if (!autoCommit) {
+                //                    consumer->commit(messages.back());
+                //                }
                 messages.pop_back();
                 return buffer;
 
             }//end of else
-        }
-        else {
+        } else {
             NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
-//            auto start = std::chrono::high_resolution_clock::now();
+            //            auto start = std::chrono::high_resolution_clock::now();
             messages = consumer->poll_batch(batchSize);
-//            auto finish = std::chrono::high_resolution_clock::now();
-//            std::chrono::duration<double> elapsed = finish - start;
+            //            auto finish = std::chrono::high_resolution_clock::now();
+            //            std::chrono::duration<double> elapsed = finish - start;
 
-            if(!messages.empty())
-            {
-//                std::cout << "poll got " << messages.size() << " entries" << " time=" << elapsed.count() << std::endl;
+            if (!messages.empty()) {
+                //                std::cout << "poll got " << messages.size() << " entries" << " time=" << elapsed.count() << std::endl;
                 successFullPollCnt++;
-            }
-            else
-            {
+            } else {
                 failedFullPollCnt++;
             }
             if (!this->running) {
@@ -184,15 +185,17 @@ bool KafkaSource::connect() {
         cppkafka::TopicPartition assignment(topic, std::atoi(groupId.c_str()));
         vec.push_back(assignment);
         consumer->assign(vec);
-//        consumer->subscribe({topic});
-//        auto conf = consumer->get_configuration();
-//        auto param = conf.get_all();
-//        for(std::map<std::string, std::string>::const_iterator it = param.begin();
-//             it != param.end(); ++it)
-//        {
-//            std::cout << it->first << " " << it->second << "\n";
-//        }
-//        NES_DEBUG("Consuming messages from topic " << topic << " brocker=" << brokers << " groupid=" << groupId);
+        std::cout << "kafka source=" << this->operatorId << " connect to topic=" << topic
+                  << " partition=" << std::atoi(groupId.c_str()) << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::string markerFile = "/tmp/start.source";
+
+        while (!std::filesystem::exists(markerFile)) {
+            NES_DEBUG("Waiting for the signal");
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+        std::cout << "kafka source starts producing" << std::endl;
 
         connected = true;
     }
