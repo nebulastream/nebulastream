@@ -67,6 +67,7 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
   private:
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     uint64_t currentlyEmittedBuffer = 0;
+    bool started = false;
 };
 }// namespace NES::Benchmark::DataProviding
 

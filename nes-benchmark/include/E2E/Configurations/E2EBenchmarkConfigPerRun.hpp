@@ -49,6 +49,7 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;
     Configurations::IntConfigOption numberOfBuffersPerPipeline;
     Configurations::IntConfigOption numberOfBuffersInSourceLocalBufferPool;
+    Configurations::IntConfigOption numberOfQueriesToDeploy;
 };
 }// namespace NES::Benchmark
 

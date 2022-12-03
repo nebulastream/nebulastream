@@ -24,7 +24,9 @@ InternalProvider::InternalProvider(uint64_t id,
 std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId) {
     // For now we only have a single source
     ((void) sourceId);
-
+    while (!started) {
+        //wait with data production until the source is really started and also block if the source gets stopped
+    }
     if (!preAllocatedBuffers.empty()) {
         auto buffer = preAllocatedBuffers[currentlyEmittedBuffer % preAllocatedBuffers.size()];
         ++currentlyEmittedBuffer;
@@ -44,8 +46,11 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
 void InternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
 void InternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
 
-void InternalProvider::start() {}
-void InternalProvider::stop() { preAllocatedBuffers.clear(); }
+void InternalProvider::start() { started = true; }
+void InternalProvider::stop() {
+    started = false;
+    preAllocatedBuffers.clear();
+}
 InternalProvider::~InternalProvider() { preAllocatedBuffers.clear(); }
 
 }// namespace NES::Benchmark::DataProviding
