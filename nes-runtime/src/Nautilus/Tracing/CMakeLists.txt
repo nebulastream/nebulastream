@@ -16,10 +16,7 @@ add_source_files(nes-runtime
         TraceContext.cpp
         ValueRef.cpp
         Tag.cpp
-        BacktraceTagRecorder.cpp
         TagRecorder.cpp
-        NativeTagRecorder.cpp
-        #UnwindTagRecorder.cpp
         )
 
 add_subdirectory(Phases)

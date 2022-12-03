@@ -18,7 +18,7 @@
 #include <iostream>
 #include <map>
 namespace NES::Nautilus::Tracing {
-Tag::Tag(std::vector<TagAddress> addresses) : addresses(std::move(addresses)) {}
+Tag::Tag(const std::vector<TagAddress>& addresses) : addresses(addresses) {}
 
 bool Tag::operator==(const Tag& other) const { return other.addresses == addresses; }
 
@@ -59,6 +59,10 @@ Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
 TagAddress Tag::createCurrentAddress() {
 #pragma GCC diagnostic ignored "-Wframe-address"
     return (uint64_t)(__builtin_return_address(3));
+}
+
+const std::vector<TagAddress>& Tag::getAddresses() {
+    return addresses;
 }
 
 std::size_t Tag::TagHasher::operator()(const Tag& k) const {

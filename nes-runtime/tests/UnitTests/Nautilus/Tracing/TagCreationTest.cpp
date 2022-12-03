@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Nautilus/Tracing/BacktraceTagRecorder.hpp>
-#include <Nautilus/Tracing/NativeTagRecorder.hpp>
+#include <Nautilus/Exceptions/TagCreationException.hpp>
+#include <Nautilus/Tracing/TagRecorder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+#include <unordered_set>
 
 namespace NES::Nautilus::Tracing {
 
 class TagCreationTest : public testing::Test {
   public:
-    std::unique_ptr<TagRecorder> tr;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TagCreationTest.log", NES::LogLevel::LOG_DEBUG);
@@ -30,10 +30,7 @@ class TagCreationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
-        std::cout << "Setup TagCreationTest test case." << std::endl;
-        tr = std::make_unique<BacktraceTagRecorder>();
-    }
+    void SetUp() override { std::cout << "Setup TagCreationTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "Tear down TagCreationTest test case." << std::endl; }
@@ -42,33 +39,43 @@ class TagCreationTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TagCreationTest test class." << std::endl; }
 };
 
-
-
 TEST_F(TagCreationTest, tagCreation) {
-    auto start = tr->createStartAddress();
-    auto x = tr->createTag(start);
-    auto y = tr->createTag(start);
-    NES_DEBUG(x);
-    ASSERT_NE(x, y);
+    auto tr = TagRecorder::createTagRecorder();
+    auto tag1 = tr.createTag();
+    NES_INFO(tag1);
+    auto tag2 = tr.createTag();
+    NES_INFO(tag2);
+    ASSERT_NE(tag1, tag2);
 }
 
-void tagFunction(std::unique_ptr<TagRecorder>& tr) {
-    void* (*funcPointerC)() = reinterpret_cast<void*(*)()>(tagFunction);
-    auto x = tr->createTag(0);
-    std::cout << (uint64_t)funcPointerC << std::endl;
-    std::cout << x << std::endl;
+void createTagFunction(TagRecorder& tr, std::unordered_set<Tag, Tag::TagHasher>& tags, int i) {
+    tags.emplace(tr.createTag());
+    if (i != 0) {
+        createTagFunction(tr, tags, i - 1);
+    }
 }
 
-TEST_F(TagCreationTest, tagCreationFunction) {
-    tagFunction(tr);
+TEST_F(TagCreationTest, recursiveCreateTag) {
+    auto tr = TagRecorder::createTagRecorder();
+    std::unordered_set<Tag, Tag::TagHasher> tagMap;
+    for (auto i = 0; i < 10; i++) {
+        createTagFunction(tr, tagMap, 9);
+    }
+    ASSERT_EQ(tagMap.size(), 10);
+}
+
+TEST_F(TagCreationTest, deepRecursiveCreateTag) {
+    auto tr = TagRecorder::createTagRecorder();
+    std::unordered_set<Tag, Tag::TagHasher> tagMap;
+    ASSERT_THROW(createTagFunction(tr, tagMap, 50), TagCreationException);
 }
 
 TEST_F(TagCreationTest, tagCreationLoop) {
-    auto start = tr->createStartAddress();
+    auto tr = TagRecorder::createTagRecorder();
     std::unordered_map<Tag, bool, Tag::TagHasher> tagMap;
     for (auto i = 0; i < 1000000; i++) {
-        auto x = tr->createTag(start);
-        tagMap.emplace(std::make_pair(x, true));
+        auto x = tr.createTag();
+        tagMap.emplace(x, true);
     }
     ASSERT_EQ(tagMap.size(), 1);
 }
