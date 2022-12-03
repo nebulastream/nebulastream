@@ -58,7 +58,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <health.pb.h>
+#include <Health.pb.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
