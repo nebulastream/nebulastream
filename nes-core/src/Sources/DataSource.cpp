@@ -105,7 +105,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
             NES_DEBUG("push task for queueid=" << queueId << " successor=" << &successor);
-            queryManager->addWorkForNextPipeline(buffer, successor, queueId++);
+            queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }
 }
@@ -208,10 +208,10 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         wasGracefullyStopped = graceful;
     }
 
-    refCounter++;
-    if (refCounter != numberOfConsumerQueries) {
-        return true;
-    }
+//    refCounter++;
+//    if (refCounter != numberOfConsumerQueries) {
+//        return true;
+//    }
 
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     bool expected = true;

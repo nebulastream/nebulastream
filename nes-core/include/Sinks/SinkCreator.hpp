@@ -316,9 +316,15 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 /**
  * @brief create kafka sink
  * @param schema: schema of the data
+ * @param queryId
+ * @param querySubPlanId
+ * @param nodeEngine
+ * @param activeProducers
  * @param brokers: broker list
  * @param topic: kafka topic to write to
  * @param kafkaProducerTimeout: kafka producer timeout
+ * @param faultToleranceType
+ * @param numberOfOrigins
  * @return a data sink pointer
  */
 DataSinkPtr createTextKafkaSink(SchemaPtr schema,

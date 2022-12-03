@@ -84,7 +84,8 @@ class KafkaSink : public SinkMedium {
 
     std::chrono::milliseconds kafkaProducerTimeout;
 };
-typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
+using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
+
 }// namespace NES
 #endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #endif

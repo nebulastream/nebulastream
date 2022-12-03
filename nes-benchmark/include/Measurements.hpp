@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace NES::Benchmark::Measurements {
 /**
@@ -43,15 +44,21 @@ class Measurements {
                            size_t availGlobalBufferSum,
                            size_t availFixedBufferSum,
                            uint64_t timeStamp) {
-        addNewProcessedTasks(processedTasks);
-        addNewProcessedBuffers(processedBuffers);
-        addNewProcessedTuples(processedTuples);
-        addNewLatencySum(latencySum);
-        addNewQueueSizeSum(queueSizeSum);
-        addNewAvailGlobalBufferSum(availGlobalBufferSum);
-        addNewAvailFixedBufferSum(availFixedBufferSum);
-        addNewTimeStamp(timeStamp);
+        addNewProcessedTasks(timeStamp, processedTasks);
+        addNewProcessedBuffers(timeStamp, processedBuffers);
+        addNewProcessedTuples(timeStamp, processedTuples);
+        addNewLatencySum(timeStamp, latencySum);
+        addNewQueueSizeSum(timeStamp, queueSizeSum);
+        addNewAvailGlobalBufferSum(timeStamp, availGlobalBufferSum);
+        addNewAvailFixedBufferSum(timeStamp,availFixedBufferSum);
     }
+
+    /**
+     * @brief adds availFixedBufferSum
+     * @param timestamp
+     * @param availFixedBufferSum
+     */
+    void addNewTimestamp(size_t timestamp) { timestamps.push_back(timestamp); }
 
     /**
      * @brief returns the measurements and calculates the deltas of the measurements and then
@@ -64,61 +71,62 @@ class Measurements {
   private:
     /**
      * @brief adds processedTasks
+     * @param timestamp
      * @param processedTasks
      */
-    void addNewProcessedTasks(size_t processedTasks) { allProcessedTasks.push_back(processedTasks); }
+    void addNewProcessedTasks(size_t timestamp, size_t processedTasks) { allProcessedTasks[timestamp] += processedTasks; }
 
     /**
      * @brief adds processedBuffers
+     * @param timestamp
      * @param processedBuffers
      */
-    void addNewProcessedBuffers(size_t processedBuffers) { allProcessedBuffers.push_back(processedBuffers); }
+    void addNewProcessedBuffers(size_t timestamp, size_t processedBuffers) { allProcessedBuffers[timestamp] += processedBuffers; }
 
     /**
      * @brief adds processedTuples
+     * @param timestamp
      * @param processedTuples
      */
-    void addNewProcessedTuples(size_t processedTuples) { allProcessedTuples.push_back(processedTuples); }
+    void addNewProcessedTuples(size_t timestamp, size_t processedTuples) { allProcessedTuples[timestamp] += processedTuples; }
 
     /**
      * @brief adds latencySum
+     * @param timestamp
      * @param newLatencySum
      */
-    void addNewLatencySum(size_t latencySum) { allLatencySum.push_back(latencySum); }
+    void addNewLatencySum(size_t timestamp, size_t latencySum) { allLatencySum[timestamp] += latencySum; }
 
     /**
      * @brief adds queueSizeSum
+     * @param timestamp
      * @param queueSizeSum
      */
-    void addNewQueueSizeSum(size_t queueSizeSum) { allQueueSizeSums.push_back(queueSizeSum); }
+    void addNewQueueSizeSum(size_t timestamp, size_t queueSizeSum) { allQueueSizeSums[timestamp] += queueSizeSum; }
 
     /**
      * @brief adds availGlobalBufferSum
+     * @param timestamp
      * @param availGlobalBufferSum
      */
-    void addNewAvailGlobalBufferSum(size_t availGlobalBufferSum) { allAvailGlobalBufferSum.push_back(availGlobalBufferSum); }
+    void addNewAvailGlobalBufferSum(size_t timestamp, size_t availGlobalBufferSum) { allAvailGlobalBufferSum[timestamp] += availGlobalBufferSum; }
 
     /**
      * @brief adds availFixedBufferSum
+     * @param timestamp
      * @param availFixedBufferSum
      */
-    void addNewAvailFixedBufferSum(size_t availFixedBufferSum) { allAvailFixedBufferSum.push_back(availFixedBufferSum); }
-
-    /**
-     * @brief adds a timestamp
-     * @param timeStamp
-     */
-    void addNewTimeStamp(uint64_t timeStamp) { allTimeStamps.push_back(timeStamp); }
+    void addNewAvailFixedBufferSum(size_t timestamp, size_t availFixedBufferSum) { allAvailFixedBufferSum[timestamp] += availFixedBufferSum; }
 
   private:
-    std::vector<uint64_t> allTimeStamps;
-    std::vector<size_t> allProcessedTasks;
-    std::vector<size_t> allProcessedBuffers;
-    std::vector<size_t> allProcessedTuples;
-    std::vector<size_t> allLatencySum;
-    std::vector<size_t> allQueueSizeSums;
-    std::vector<size_t> allAvailGlobalBufferSum;
-    std::vector<size_t> allAvailFixedBufferSum;
+    std::vector<size_t> timestamps;
+    std::map<size_t, size_t> allProcessedTasks;
+    std::map<size_t, size_t> allProcessedBuffers;
+    std::map<size_t, size_t> allProcessedTuples;
+    std::map<size_t, size_t> allLatencySum;
+    std::map<size_t, size_t> allQueueSizeSums;
+    std::map<size_t, size_t> allAvailGlobalBufferSum;
+    std::map<size_t, size_t> allAvailFixedBufferSum;
 };
 }// namespace NES::Benchmark::Measurements
 #endif//NES_MEASUREMENTS_HPP

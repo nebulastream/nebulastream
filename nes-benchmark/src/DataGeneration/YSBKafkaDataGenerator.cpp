@@ -98,26 +98,6 @@ int main(int argc, const char* argv[]) {
     }
     producer.flush(std::chrono::seconds(100));
 
-//    for (uint64_t partition = 0; partition < numberOfPartitions; partition++) {
-//        for (uint64_t prodBuffer = 0; prodBuffer < numberOfBuffersToProduce; prodBuffer++) {
-//            char* buffer = createdBuffers[prodBuffer].getBuffer<char>();
-//            size_t len = createdBuffers[prodBuffer].getBufferSize();
-//            std::vector<uint8_t> bytes(buffer, buffer + len);
-//            try {
-//                producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
-//                producer.flush(std::chrono::seconds(100));
-//            } catch (const std::exception& ex) {
-//                std::cout << ex.what() << std::endl;
-//            } catch (const std::string& ex) {
-//                std::cout << ex << std::endl;
-//            } catch (...) {
-//            }
-//            if (prodBuffer % 1000 == 0) {
-//                std::cout << "number of buffers prod =" << prodBuffer << " for partition=" << prodBuffer << std::endl;
-//            }
-//        }
-//    }
-//    producer.flush(std::chrono::seconds(100));
     return 0;
 }
 #endif

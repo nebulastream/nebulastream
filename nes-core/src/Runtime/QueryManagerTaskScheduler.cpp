@@ -182,9 +182,14 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_TRACE("QueryManager: added Task this pipelineID="
                   << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
-                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
+                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer
+                  << " queryId=" << (*nextPipeline)->getQueryId() << " getQuerySubPlanId=" << (*nextPipeline)->getQuerySubPlanId()
+                  << " queueId=" << queueId);
 
+        size_t queueSizeDebug = taskQueue.sizeGuess() < 0 ? 0 : taskQueue.sizeGuess();
+        NES_ASSERT(queueSizeDebug <= taskQueue.capacity(), " size=" << queueSizeDebug << " capa=" << taskQueue.capacity());
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
+
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
         NES_TRACE("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
                                                        << " queueId=" << queueId);

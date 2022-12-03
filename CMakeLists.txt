@@ -83,7 +83,6 @@ include(cmake/semver/GetSemanticVersion.cmake)
 
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
-message("CMAKE_MODULE_PATH=" ${CMAKE_MODULE_PATH})
 include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
@@ -418,8 +417,8 @@ else ()
 endif ()
 
 # Library containing Kafka client
-include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
 if (NOT APPLE)
+    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
     set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
     add_compile_definitions(ENABLE_KAFKA_BUILD)
     message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")

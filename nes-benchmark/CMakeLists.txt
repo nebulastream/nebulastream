@@ -51,8 +51,6 @@ add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutput
 #YSB Kafka data generaot
 add_nes_benchmarks(ysb-kafka-data-generator "src/DataGeneration/YSBKafkaDataGenerator.cpp")
 
-
-
 # Adding benchmark tests
 add_subdirectory(test)
 

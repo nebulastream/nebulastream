@@ -65,7 +65,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerCon
             msgBuilder->payload(cppBuffer);
             producer->produce(*msgBuilder);
         }
-        producer->flush(std::chrono::seconds(10));
+        producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
 
         NES_DEBUG("KAFKASINK " << this << ": send successfully");
     } catch (const cppkafka::HandleException& ex) {
