@@ -17,8 +17,8 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
-#include <Nautilus/Tracing/TraceContext2.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Nautilus/Tracing/TraceContext2.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -702,6 +702,63 @@ TEST_F(SymbolicTracingTest, nestedFunctionCall) {
     auto basicBlocks = execution->getBlocks();
     std::cout << *execution.get() << std::endl;
     ASSERT_EQ(basicBlocks.size(), 4);
+}
+
+void deepLoop() {
+    Value i = Value(0);
+    while (i < 10) {
+        while (i < 10) {
+            while (i < 10) {
+                while (i < 10) {
+                    while (i < 10) {
+                        while (i < 10) {
+                            while (i < 10) {
+                                while (i < 10) {
+                                    while (i < 10) {
+                                        while (i < 10) {
+                                            i = i + 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    while (i < 10) {
+        while (i < 10) {
+            while (i < 10) {
+                while (i < 10) {
+                    while (i < 10) {
+                        while (i < 10) {
+                            while (i < 10) {
+                                while (i < 10) {
+                                    while (i < 10) {
+                                        while (i < 10) {
+                                            i = i + 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_F(SymbolicTracingTest, deepLoop) {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
+        deepLoop();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 61);
 }
 
 }// namespace NES::Nautilus::Tracing
