@@ -57,6 +57,14 @@ void TraceContext2::traceBinaryOperation(const OpCode& op,
 void TraceContext2::traceReturnOperation(const ValueRef& resultRef) {
     if (!isExpectedOperation(RETURN)) {
         auto tag = tagRecorder->createTag();
+        if (auto ref = executionTrace->findKnownOperation(tag)) {
+            if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
+                auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
+                auto mergeOperation = mergeBlock.operations.front();
+                currentOperationCounter = 1;
+                return;
+            }
+        }
         TraceOperation result = TraceOperation(RETURN);
         result.result = resultRef;
         executionTrace->addOperation(result);
