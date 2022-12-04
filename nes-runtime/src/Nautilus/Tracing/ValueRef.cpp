@@ -41,10 +41,9 @@ ValueRef& ValueRef::operator=(const ValueRef&& other) {
     return *this;
 }
 
-ValueRef createNextRef(NES::Nautilus::IR::Types::StampPtr type) {
-    auto ctx = getThreadLocalTraceContext();
-    if (ctx) {
-        return ctx->createNextRef(type);
+ValueRef createNextRef(NES::Nautilus::IR::Types::StampPtr stamp) {
+    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+        return ctx->createNextRef(std::move(stamp));
     }
     return ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
 }

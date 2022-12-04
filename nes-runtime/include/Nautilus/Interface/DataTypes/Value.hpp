@@ -25,6 +25,7 @@
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
@@ -41,6 +42,7 @@ void traceBinaryOperation(const Tracing::OpCode& op,
                           const Tracing::ValueRef& leftRef,
                           const Tracing::ValueRef& rightRef);
 void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
+void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef);
 
 class BaseValue {};
 
@@ -202,15 +204,15 @@ class Value : BaseValue {
      */
     template<typename ResultType, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     auto load() {
-        std::shared_ptr<ResultType> result;
-        if (Nautilus::Tracing::isInSymbolicExecution()) {
-            result = std::make_shared<ResultType>((int64_t) 0);
+        if (Tracing::TraceUtil::inTracer()) {
+            auto result = std::make_shared<ResultType>((int64_t) 0);
+            auto resultValue = Value<ResultType>(std::move(result));
+            traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
+            return resultValue;
         } else {
-            result = ((MemRef*) this->value.get())->load<ResultType>();
+            auto result = ((MemRef*) this->value.get())->load<ResultType>();
+            return Value<ResultType>(std::move(result));
         }
-        auto resultValue = Value<ResultType>(std::move(result));
-        traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
-        return resultValue;
     }
 
     /**
@@ -221,12 +223,10 @@ class Value : BaseValue {
      */
     template<typename InputValue, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     void store(Value<InputValue>& storeValue) {
-        if (!Nautilus::Tracing::isInSymbolicExecution()) {
+        if (Tracing::TraceUtil::inInterpreter()) {
             this->value->store(storeValue.getValue());
-        }
-        if (auto* ctx = Nautilus::Tracing::getThreadLocalTraceContext()) {
-            auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::STORE, {ref, storeValue.ref});
-            ctx->trace(operation);
+        } else {
+            traceStoreOperation(ref, storeValue.ref);
         }
     }
 

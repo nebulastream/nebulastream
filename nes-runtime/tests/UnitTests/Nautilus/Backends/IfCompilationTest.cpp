@@ -51,7 +51,7 @@ Value<> ifThenCondition() {
 }
 
 TEST_P(IfCompilationTest, ifConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifThenCondition();
     });
     auto engine = prepare(executionTrace);
@@ -71,7 +71,7 @@ Value<> ifThenElseCondition() {
 }
 
 TEST_P(IfCompilationTest, ifThenElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifThenElseCondition();
     });
     auto engine = prepare(executionTrace);
@@ -93,7 +93,7 @@ Value<> nestedIfThenElseCondition() {
 }
 
 TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedIfThenElseCondition();
     });
     auto engine = prepare(executionTrace);
@@ -116,7 +116,7 @@ Value<> nestedIfNoElseCondition() {
 }
 
 TEST_P(IfCompilationTest, nestedIFThenNoElse) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedIfNoElseCondition();
     });
     auto engine = prepare(executionTrace);
@@ -138,7 +138,7 @@ Value<> doubleIfCondition() {
 }
 
 TEST_P(IfCompilationTest, doubleIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return doubleIfCondition();
     });
     auto engine = prepare(executionTrace);
@@ -158,7 +158,7 @@ Value<> ifElseIfCondition() {
 }
 
 TEST_P(IfCompilationTest, ifElseIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifElseIfCondition();
     });
     auto engine = prepare(executionTrace);
@@ -186,7 +186,7 @@ Value<> deeplyNestedIfElseCondition() {
 }
 
 TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return deeplyNestedIfElseCondition();
     });
     auto engine = prepare(executionTrace);
@@ -212,7 +212,7 @@ Value<> deeplyNestedIfElseIfCondition() {
 // Currently fails, because an empty block (Block 7) is created, during trace building.
 // Fix in #3021
 TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
