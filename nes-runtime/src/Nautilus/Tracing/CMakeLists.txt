@@ -17,6 +17,7 @@ add_source_files(nes-runtime
         ValueRef.cpp
         Tag.cpp
         TagRecorder.cpp
+        TraceContext2.cpp
         )
 
 add_subdirectory(Phases)

@@ -17,6 +17,7 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext2.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -51,7 +52,7 @@ void assignmentOperator() {
 }
 
 TEST_F(SymbolicTracingTest, assignmentOperatorTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         assignmentOperator();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -73,7 +74,7 @@ void arithmeticExpression() {
 }
 
 TEST_F(SymbolicTracingTest, arithmeticExpressionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         arithmeticExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -100,7 +101,7 @@ void logicalExpressionLessThan() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionLessThanTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessThan);
+    auto executionTrace = Nautilus::Tracing::traceFunction2(logicalExpressionLessThan);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto basicBlocks = executionTrace->getBlocks();
@@ -117,7 +118,7 @@ void logicalExpressionEquals() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionEqualsTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         logicalExpressionEquals();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -135,7 +136,7 @@ void logicalExpressionLessEquals() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionLessEqualsTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionLessEquals);
+    auto executionTrace = Nautilus::Tracing::traceFunction2(logicalExpressionLessEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -153,7 +154,7 @@ void logicalExpressionGreater() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionGreaterTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreater);
+    auto executionTrace = Nautilus::Tracing::traceFunction2(logicalExpressionGreater);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -169,7 +170,7 @@ void logicalExpressionGreaterEquals() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionGreaterEqualsTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction(logicalExpressionGreaterEquals);
+    auto executionTrace = Nautilus::Tracing::traceFunction2(logicalExpressionGreaterEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -192,7 +193,7 @@ Value<> logicalAssignTest() {
 }
 
 TEST_F(SymbolicTracingTest, logicalAssignEqualsTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2WithReturn([]() {
         return logicalAssignTest();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -211,7 +212,7 @@ void logicalExpression() {
 }
 
 TEST_F(SymbolicTracingTest, logicalExpressionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         logicalExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -239,7 +240,7 @@ void ifCondition(bool flag) {
 }
 
 TEST_F(SymbolicTracingTest, ifConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         ifCondition(true);
     });
 
@@ -294,7 +295,7 @@ void ifElseCondition(bool flag) {
 }
 
 TEST_F(SymbolicTracingTest, ifElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         ifElseCondition(true);
     });
     std::cout << *executionTrace << std::endl;
@@ -349,7 +350,7 @@ void nestedIfThenElseCondition() {
 }
 
 TEST_F(SymbolicTracingTest, nestedIfElseConditionTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction2([]() {
         nestedIfThenElseCondition();
     });
     std::cout << *executionTrace << std::endl;
@@ -411,7 +412,7 @@ void emptyLoop() {
 }
 
 TEST_F(SymbolicTracingTest, emptyLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         emptyLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -458,7 +459,7 @@ void longEmptyLoop() {
 }
 
 TEST_F(SymbolicTracingTest, longEmptyLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         longEmptyLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -505,7 +506,7 @@ void sumLoop() {
 
 TEST_F(SymbolicTracingTest, sumLoopTest) {
 
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -554,7 +555,7 @@ void sumWhileLoop() {
 }
 
 TEST_F(SymbolicTracingTest, sumWhileLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         sumWhileLoop();
     });
 
@@ -601,7 +602,7 @@ void invertedLoop() {
 }
 
 TEST_F(SymbolicTracingTest, invertedLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         invertedLoop();
     });
     std::cout << execution << std::endl;
@@ -644,7 +645,7 @@ void nestedLoop() {
 }
 
 TEST_F(SymbolicTracingTest, nestedLoop) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         nestedLoop();
     });
     std::cout << execution << std::endl;
@@ -670,7 +671,7 @@ void nestedLoopIf() {
 }
 
 TEST_F(SymbolicTracingTest, nestedLoopIf) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         nestedLoopIf();
     });
     std::cout << execution << std::endl;
@@ -693,7 +694,7 @@ void f1() {
 }
 
 TEST_F(SymbolicTracingTest, nestedFunctionCall) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction2([]() {
         f1();
     });
     std::cout << execution << std::endl;
