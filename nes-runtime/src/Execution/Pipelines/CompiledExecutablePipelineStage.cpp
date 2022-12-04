@@ -17,6 +17,7 @@
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::Runtime::Execution {
@@ -53,10 +54,11 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
     // generate trace
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([&]() {
-        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(pipelineExecutionContextRef.ref);
-        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(workerContextRef.ref);
-        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(recordBuffer.getReference().ref);
+    auto executionTrace = Nautilus::Tracing::traceFunction([&]() {
+        auto traceContext = Tracing::TraceContext::get();
+        traceContext->addTraceArgument(pipelineExecutionContextRef.ref);
+        traceContext->addTraceArgument(workerContextRef.ref);
+        traceContext->addTraceArgument(recordBuffer.getReference().ref);
         auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
         rootOperator->open(ctx, recordBuffer);
         rootOperator->close(ctx, recordBuffer);

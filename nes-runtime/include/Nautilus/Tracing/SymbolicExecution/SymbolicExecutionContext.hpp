@@ -11,15 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
 #include <Nautilus/Tracing/Tag.hpp>
+#include <Nautilus/Tracing/TagRecorder.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <functional>
 #include <list>
-#include <unordered_map>
+#include <unordered_set>
 namespace NES::Nautilus::Tracing {
 class SymbolicExecutionPath;
 class ExecutionTrace;
@@ -34,75 +35,35 @@ class SymbolicExecutionContext {
     // The number of iterations we want to spend maximally to explore executions.
     static const uint64_t MAX_ITERATIONS = 100000;
     SymbolicExecutionContext();
-    /**
-     * @brief Invokes the symbolic execution of the given function
-     * @param function
-     * @return The collected trace
-     */
-    std::shared_ptr<ExecutionTrace> apply(const std::function<NES::Nautilus::Tracing::ValueRef()>& function);
 
     /**
      * @brief Performs a symbolic execution of a CMP operation.
      * Depending on all previous executions this function determines if a branch should be explored or not.
      * @return the return value of this branch
      */
-    bool executeCMP();
+    bool executeCMP(TagRecorder* tr);
+    bool shouldContinue();
+    void next();
+
+  private:
+    bool follow(TagRecorder* tr);
+    bool record(TagRecorder* tr);
 
   private:
     /**
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.
      */
-    enum MODE { FOLLOW, RECORD };
-    std::unordered_map<Tag, bool, Tag::TagHasher> tagMap;
-    TagAddress startAddress;
-    std::list<std::shared_ptr<SymbolicExecutionPath>> inflightExecutionPaths;
-    MODE currentMode;
-    std::shared_ptr<SymbolicExecutionPath> currentExecutionPath;
-    uint64_t currentOperation;
+    enum MODE : int8_t { FOLLOW, RECORD };
+    enum TagState : int8_t { FirstVisit, SecondVisit };
+    std::unordered_map<Tag, TagState, Tag::TagHasher> tagMap;
+    std::list<SymbolicExecutionPath> inflightExecutionPaths;
+    MODE currentMode = RECORD;
+    SymbolicExecutionPath currentExecutionPath = SymbolicExecutionPath();
+    uint64_t currentOperation = 0;
+    uint64_t iterations = 0;
 };
-
-/**
- * @brief Returns the current symbolic execution context.
- * The symbolic execution context is always thread local.
- * @return SymbolicExecutionContext
- */
-SymbolicExecutionContext* getThreadLocalSymbolicExecutionContext();
-SymbolicExecutionContext* initThreadSymbolicExecutionContext();
-void disableSymbolicExecution();
-/**
- * @brief Indicates if the symbolic execution is active.
- * @return true if execution is symbolic
- */
-bool isInSymbolicExecution();
-
-void initThreadLocalTraceContext();
-
-/**
- * @brief Performs a symbolic execution for the given function
- * @param func
- * @return
- */
-template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunctionSymbolically(const Functor func) {
-    auto symbolicExecution = initThreadSymbolicExecutionContext();
-    auto result = symbolicExecution->apply([&func] {
-        func();
-        return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
-    });
-    disableSymbolicExecution();
-    return result;
-}
-
-template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunctionSymbolicallyWithReturn(const Functor func) {
-    auto symbolicExecution = initThreadSymbolicExecutionContext();
-    return symbolicExecution->apply([&func] {
-        auto res = func();
-        return res.ref;
-    });
-}
 
 }// namespace NES::Nautilus::Tracing
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_

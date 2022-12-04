@@ -56,7 +56,7 @@ void sumLoop() {
 
 TEST_F(LoopInferencePhaseTest, sumLoopTest) {
 
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));

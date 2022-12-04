@@ -47,7 +47,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return loadFunction(tempPara);
     });
 
@@ -69,7 +69,7 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
     tempPara.load<Int64>();
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([&tempPara]() {
         storeFunction(tempPara);
     });
     auto engine = prepare(executionTrace);
@@ -93,7 +93,7 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto size = Value<Int64>((int64_t) 0);
     size.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memPtr, &size]() {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);
