@@ -53,7 +53,7 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
     // generate trace
-    auto executionTrace = Nautilus::Tracing::traceFunction([&rootOperator, &executionContext, &recordBuffer]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([&rootOperator, &executionContext, &recordBuffer]() {
         Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(executionContext.getReference().ref);
         Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(recordBuffer.getReference().ref);
         rootOperator->open(executionContext, recordBuffer);
