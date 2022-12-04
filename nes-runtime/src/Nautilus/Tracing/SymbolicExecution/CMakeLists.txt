@@ -13,6 +13,6 @@
 
 
 add_source_files(nes-runtime
-        SymbolicExecutionContext2.cpp
+        SymbolicExecutionContext.cpp
         SymbolicExecutionPath.cpp
         )
