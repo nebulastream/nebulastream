@@ -38,6 +38,14 @@ struct CountAggregationValue : AggregationValue {
     int64_t count = 0;
 };
 
+struct MinAggregationValue : AggregationValue {
+    int64_t min = std::numeric_limits<int64_t>::max();
+};
+
+struct MaxAggregationValue : AggregationValue {
+    int64_t max = std::numeric_limits<int64_t>::min();
+};
+
 }// namespace NES::Runtime::Execution::Aggregation
 
 #endif//NES_SUMAGGREGATIONVALUE_HPP

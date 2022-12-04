@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Execution/Aggregation/AvgAggregation.hpp"
-#include "Execution/Aggregation/CountAggregation.hpp"
+#include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Execution/Aggregation/CountAggregation.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Aggregation/MinAggregation.hpp>
+#include <Execution/Aggregation/MaxAggregation.hpp>
 #include <gtest/gtest.h>
+
 namespace NES::Runtime::Execution::Expressions {
 class AggregationFunctionTest : public testing::Test {
   public:
@@ -99,6 +102,42 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     // test lower
     auto aggregationResult = avgAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 2);*/
+}
+
+TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
+    auto minValue = Aggregation::MinAggregationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+
+    // lift value in minAgg
+    minAgg.lift(memref, incomingValue);
+    ASSERT_EQ(minValue.min, incomingValue);
+    // combine memrefs in minAgg
+    minAgg.combine(memref, memref);
+    ASSERT_EQ(minValue.min, 1);
+    // lower value in minAgg
+    auto aggregationResult = minAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 1);
+}
+
+TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
+    auto maxValue = Aggregation::MaxAggregationValue();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+
+    // lift value in minAgg
+    maxAgg.lift(memref, incomingValue);
+    ASSERT_EQ(maxValue.max, incomingValue);
+    // combine memrefs in minAgg
+    maxAgg.combine(memref, memref);
+    ASSERT_EQ(maxValue.max, 2);
+    // lower value in minAgg
+    auto aggregationResult = maxAgg.lower(memref);
+    ASSERT_EQ(aggregationResult, 2);
 }
 
 
