@@ -75,7 +75,7 @@ Value<> addExpression(Value<Int64> x) {
 TEST_F(FlounderExpressionExecutionTest, addI8Test) {
     Value<Int64> tempx = (int64_t) 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return addExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -120,7 +120,7 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Trace::traceFunctionWithReturn([tempPara]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempPara]() {
         return sumLoop(tempPara);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -157,7 +157,7 @@ Value<> longExpression(Value<Int64> i1) {
 TEST_F(FlounderExpressionExecutionTest, longExpressionTest) {
     Value<Int64> tempx = (int64_t) 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return longExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
@@ -182,7 +182,7 @@ Value<> ifThenCondition() {
 }
 
 TEST_F(FlounderExpressionExecutionTest, ifConditionTest) {
-    auto executionTrace = Trace::traceFunctionWithReturn([]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -210,7 +210,7 @@ Value<> ifThenElseCondition() {
 }
 
 TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionTest) {
-    auto executionTrace = Trace::traceFunctionWithReturn([]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -240,7 +240,7 @@ Value<> ifThenElseConditionParameter(Value<> x) {
 TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionParameterTests) {
     Value<Int32> tempx = (int32_t) 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return ifThenElseConditionParameter(tempx);
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -271,7 +271,7 @@ Value<> nestedIfThenElseCondition() {
 }
 
 TEST_F(FlounderExpressionExecutionTest, nestedIFThenElseConditionTest) {
-    auto executionTrace = Trace::traceFunctionWithReturn([]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -290,7 +290,7 @@ TEST_F(FlounderExpressionExecutionTest, nestedIFThenElseConditionTest) {
 
 /*
 TEST_F(FlounderExpressionExecutionTest, sumLoopTest) {
-    auto execution = Trace::traceFunctionWithReturn([]() {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -317,7 +317,7 @@ Value<> ifSumLoop() {
 }
 
 TEST_F(FlounderExpressionExecutionTest, ifSumLoopTest) {
-    auto execution = Trace::traceFunctionWithReturn([]() {
+    auto execution = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return ifSumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
@@ -340,7 +340,7 @@ TEST_F(FlounderExpressionExecutionTest, loadFunctionTest) {
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Trace::traceFunctionWithReturn([&tempPara]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return loadFunction(tempPara);
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -369,7 +369,7 @@ TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
     tempPara.load<Int64>();
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Trace::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Trace::traceFunction([&tempPara]() {
+    auto executionTrace = Trace::traceFunctionSymbolically([&tempPara]() {
         storeFunction(tempPara);
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -399,7 +399,7 @@ Value<> addIntFunction() {
 
 TEST_F(FlounderExpressionExecutionTest, addIntFunctionTest) {
 
-    auto executionTrace = Trace::traceFunctionWithReturn([]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return addIntFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -427,7 +427,7 @@ Value<> andIfFunction() {
 
 TEST_F(FlounderExpressionExecutionTest, andIfFunctionTest) {
 
-    auto executionTrace = Trace::traceFunctionWithReturn([]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return andIfFunction();
     });
     std::cout << *executionTrace.get() << std::endl;
@@ -453,7 +453,7 @@ Value<> int16AddExpression(Value<Int16> x) {
 TEST_F(FlounderExpressionExecutionTest, addI16Test) {
     Value<Int16> tempx = (int16_t) 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int16AddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -469,7 +469,7 @@ Value<> int32AddExpression(Value<Int32> x) {
 TEST_F(FlounderExpressionExecutionTest, addI32Test) {
     Value<Int32> tempx = 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int32AddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -485,7 +485,7 @@ Value<> int64AddExpression(Value<Int64> x) {
 TEST_F(FlounderExpressionExecutionTest, addI64Test) {
     Value<Int64> tempx = 0l;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return int64AddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -503,7 +503,7 @@ Value<> floatAddExpression(Value<Float> x) {
 TEST_F(FlounderExpressionExecutionTest, addFloatTest) {
     Value<Float> tempx = 0.0f;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return floatAddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -521,7 +521,7 @@ Value<> doubleAddExpression(Value<Double> x) {
 TEST_F(FlounderExpressionExecutionTest, addDobleTest) {
     Value<Double> tempx = 0.0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return doubleAddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -539,7 +539,7 @@ Value<> castFloatToDoubleAddExpression(Value<Float> x) {
 TEST_F(FlounderExpressionExecutionTest, castFloatToDoubleTest) {
     Value<Float> tempx = 0.0f;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castFloatToDoubleAddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -557,7 +557,7 @@ Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
 TEST_F(FlounderExpressionExecutionTest, castInt8ToInt64Test) {
     Value<Int8> tempx = (int8_t) 0;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
     });
     auto engine = prepate(executionTrace);
@@ -575,7 +575,7 @@ Value<> castInt8ToInt64AddExpression2(Value<> x) {
 TEST_F(FlounderExpressionExecutionTest, castInt8ToInt64Test2) {
     Value<Int8> tempx = (int8_t) 0 ;
     tempx.ref.blockId = -1;
-    auto executionTrace = Trace::traceFunctionWithReturn([tempx]() {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);
     });
     auto engine = prepate(executionTrace);
