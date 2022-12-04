@@ -18,8 +18,9 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/TraceUtil.hpp>
 #include <memory>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 namespace NES::Nautilus {
 
@@ -105,14 +106,17 @@ auto transformReturnValues(Arg argument) {
 
 class TextValue;
 template<typename T>
-requires std::is_same_v<TextValue*, T> auto createDefault();
+    requires std::is_same_v<TextValue*, T>
+auto createDefault();
 
 class BaseListValue;
 template<typename T>
-requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value auto createDefault();
+    requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
+auto createDefault();
 
 template<typename R>
-    requires std::is_fundamental_v<R> || std::is_same_v<void*, R> auto createDefault() {
+    requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
+auto createDefault() {
     if constexpr (std::is_same<R, int8_t>::value) {
         return Value<Int8>(std::make_unique<Int8>((int8_t) 0));
     } else if constexpr (std::is_same<R, int16_t>::value) {
@@ -144,12 +148,11 @@ template<typename R>
     }
 }
 
-void traceFunctionCall(Nautilus::Tracing::ValueRef resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments);
+void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments);
 
-template<typename R, typename... FunctionArguments, typename... ValueArguments>
-auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), ValueArguments... arguments) {
-
+template<typename... ValueArguments>
+auto getArgumentReferences(std::string functionName, void* fnptr, ValueArguments... arguments) {
     std::vector<Nautilus::Tracing::InputVariant> functionArgumentReferences = {
         Nautilus::Tracing::FunctionCallTarget(functionName, (void*) fnptr)};
     if constexpr (sizeof...(ValueArguments) > 0) {
@@ -157,20 +160,25 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
             functionArgumentReferences.emplace_back(p);
         }
     }
+    return functionArgumentReferences;
+}
 
+template<typename R, typename... FunctionArguments, typename... ValueArguments>
+auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), ValueArguments... arguments) {
     if constexpr (std::is_void_v<R>) {
-        if (!Nautilus::Tracing::isInSymbolicExecution()) {
+        if (Tracing::TraceUtil::inInterpreter()) {
             fnptr(transform(std::forward<ValueArguments>(arguments))...);
+        } else {
+            auto functionArgumentReferences = getArgumentReferences(functionName, (void*) fnptr, arguments...);
+            traceVoidFunctionCall(functionArgumentReferences);
         }
-        traceVoidFunctionCall(functionArgumentReferences);
     } else {
-        if (!Nautilus::Tracing::isInSymbolicExecution()) {
+        if (Tracing::TraceUtil::inInterpreter()) {
             auto functionResult = fnptr(transform(std::forward<ValueArguments>(arguments))...);
-            auto resultValue = transformReturnValues(functionResult);
-            traceFunctionCall(resultValue.ref, functionArgumentReferences);
-            return resultValue;
+            return transformReturnValues(functionResult);
         } else {
             auto resultValue = createDefault<R>();
+            auto functionArgumentReferences = getArgumentReferences(functionName, (void*) fnptr, arguments...);
             traceFunctionCall(resultValue.ref, functionArgumentReferences);
             return resultValue;
         }

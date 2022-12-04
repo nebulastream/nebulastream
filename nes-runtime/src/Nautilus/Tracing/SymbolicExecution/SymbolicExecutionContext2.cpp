@@ -12,23 +12,21 @@
     limitations under the License.
 */
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext2.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES::Nautilus::Tracing {
 
-SymbolicExecutionContext2::SymbolicExecutionContext2() {}
+SymbolicExecutionContext::SymbolicExecutionContext() {}
 
-bool SymbolicExecutionContext2::follow(TagRecorder*) {
+bool SymbolicExecutionContext::follow(TagRecorder*) {
     currentOperation++;
     auto operation = currentExecutionPath[currentOperation - 1];
     return get<0>(operation);
 }
 
-bool SymbolicExecutionContext2::record(TagRecorder* tr) {
+bool SymbolicExecutionContext::record(TagRecorder* tr) {
     auto tag = tr->createTag();
     auto foundTag = tagMap.find(tag);
     if (foundTag == tagMap.end()) {
@@ -56,7 +54,7 @@ bool SymbolicExecutionContext2::record(TagRecorder* tr) {
     }
 }
 
-bool SymbolicExecutionContext2::executeCMP(TagRecorder* tr) {
+bool SymbolicExecutionContext::executeCMP(TagRecorder* tr) {
     bool result = true;
     switch (currentMode) {
         case FOLLOW: {
@@ -74,8 +72,8 @@ bool SymbolicExecutionContext2::executeCMP(TagRecorder* tr) {
     };
 }
 
-bool SymbolicExecutionContext2::shouldContinue() { return iterations == 0 || !inflightExecutionPaths.empty(); }
-void SymbolicExecutionContext2::next() {
+bool SymbolicExecutionContext::shouldContinue() { return iterations == 0 || !inflightExecutionPaths.empty(); }
+void SymbolicExecutionContext::next() {
     // if this is the first iteration the execution context is already initialized
     if (iterations > 0) {
         auto& trace = inflightExecutionPaths.front();

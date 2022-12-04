@@ -51,7 +51,7 @@ Value<> int8AddExpression(Value<Int8> x) {
 TEST_P(ExpressionExecutionTest, addI8Test) {
     Value<Int8> tempx = (int8_t) 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int8AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -67,7 +67,7 @@ Value<> int16AddExpression(Value<Int16> x) {
 TEST_P(ExpressionExecutionTest, addI16Test) {
     Value<Int16> tempx = (int16_t) 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt16Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int16AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -84,7 +84,7 @@ Value<> int32AddExpression(Value<Int32> x) {
 TEST_P(ExpressionExecutionTest, addI32Test) {
     Value<Int32> tempx = 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt32Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int32AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -100,7 +100,7 @@ Value<> int64AddExpression(Value<Int64> x) {
 TEST_P(ExpressionExecutionTest, addI64Test) {
     Value<Int64> tempx = (int64_t) 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return int64AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -118,7 +118,7 @@ Value<> floatAddExpression(Value<Float> x) {
 TEST_P(ExpressionExecutionTest, addFloatTest) {
     Value<Float> tempx = 0.0f;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return floatAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -136,7 +136,7 @@ Value<> doubleAddExpression(Value<Double> x) {
 TEST_P(ExpressionExecutionTest, addDoubleTest) {
     Value<Double> tempx = 0.0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createDoubleStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return doubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -154,7 +154,7 @@ Value<> castFloatToDoubleAddExpression(Value<Float> x) {
 TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
     Value<Float> tempx = 0.0f;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createFloatStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return castFloatToDoubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -172,7 +172,7 @@ Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
 TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
     Value<Int8> tempx = (int8_t) 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return castInt8ToInt64AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
@@ -190,7 +190,7 @@ Value<> castInt8ToInt64AddExpression2(Value<> x) {
 TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2) {
     Value<Int8> tempx = (int8_t) 0;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt8Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return castInt8ToInt64AddExpression2(tempx);
     });
     auto engine = prepare(executionTrace);

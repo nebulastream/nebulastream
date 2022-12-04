@@ -98,7 +98,7 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
     wctxRefPCTX.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
     RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX);
 
-    auto execution = Nautilus::Tracing::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
+    auto execution = Nautilus::Tracing::traceFunction([&scan, &executionContext, &recordBuffer]() {
         scan.open(executionContext, recordBuffer);
         scan.close(executionContext, recordBuffer);
     });

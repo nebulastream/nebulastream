@@ -52,7 +52,7 @@ Value<> addIntFunction() {
 
 TEST_P(FunctionCompilationTest, addIntFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
@@ -66,7 +66,7 @@ Value<> returnConstFunction() { return FunctionCall<>("returnConst", returnConst
 
 TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
@@ -80,7 +80,7 @@ void voidExceptionFunction() { FunctionCall<>("voidException", voidException); }
 
 TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
@@ -98,7 +98,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
     Value<Int64> tempPara = Value<Int64>((int64_t) 0);
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);
