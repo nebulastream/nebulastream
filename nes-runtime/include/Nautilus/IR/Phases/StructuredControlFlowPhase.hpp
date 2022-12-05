@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 
+#include "Nautilus/IR/Operations/ConstIntOperation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
