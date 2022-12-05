@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,10 +52,10 @@ void traceAssignmentOperation(const Nautilus::Tracing::ValueRef& targetRef, cons
     }
 };
 
-inline __attribute__((always_inline)) void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
-                                                                const Nautilus::Tracing::ValueRef& resultRef,
-                                                                const Nautilus::Tracing::ValueRef& leftRef,
-                                                                const Nautilus::Tracing::ValueRef& rightRef) {
+void traceBinaryOperation(const Nautilus::Tracing::OpCode& op,
+                          const Nautilus::Tracing::ValueRef& resultRef,
+                          const Nautilus::Tracing::ValueRef& leftRef,
+                          const Nautilus::Tracing::ValueRef& rightRef) {
     if (auto ctx = Tracing::TraceContext::get()) {
         ctx->traceBinaryOperation(op, leftRef, rightRef, resultRef);
     }

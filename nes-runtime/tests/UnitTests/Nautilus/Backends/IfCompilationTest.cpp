@@ -210,15 +210,13 @@ Value<> deeplyNestedIfElseIfCondition() {
     return iw = iw + 2;
 }
 
-// Currently fails, because an empty block (Block 7) is created, during trace building.
-// Fix in #3021
-TEST_P(IfCompilationTest, DISABLED_deeplyNestedIfElseIfCondition) {
+TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 12);
+    ASSERT_EQ(function(), 17);
 }
 
 // Tests all registered compilation backends.
