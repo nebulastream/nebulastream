@@ -30,6 +30,15 @@ void BasicBlockInvocation::addArgument(OperationPtr argument) {
 
 void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.erase(operations.begin() + argumentIndex); }
 
+int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
+    for (uint64_t i = 0; i < operations.size(); i++) {
+        if (operations[i].lock() == arg) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
     std::vector<OperationPtr> arguments;
     for (auto& arg : this->operations) {

@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 
+#include "Nautilus/IR/Operations/ConstIntOperation.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -74,8 +75,10 @@ class StructuredControlFlowPhase {
          */
         void findLoopHeadBlocks(IR::BasicBlockPtr currentBlock);
 
-        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, std::stack<IR::BasicBlockPtr>& candidates, 
-                        std::unordered_set<std::string>& visitedBlocks, std::unordered_set<std::string>& loopHeadCandidates);
+        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, 
+                        std::stack<IR::BasicBlockPtr>& candidates, std::unordered_set<std::string>& visitedBlocks, 
+                        std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock,
+                        std::unordered_map<std::string, std::shared_ptr<Operations::ConstIntOperation>>& constantValues);
 
         /**
          * @brief Iterates over IR graph, and connects all if-operations with their corresponding merge-blocks.
