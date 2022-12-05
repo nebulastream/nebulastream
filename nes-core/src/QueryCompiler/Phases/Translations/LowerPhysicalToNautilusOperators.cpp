@@ -127,7 +127,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        // TODO 3250 change with a factory for different aggregation values
+        // TODO 3280 change with a factory for different aggregation values
         auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
 
         auto handler =
@@ -201,7 +201,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     // Currently only support a single aggregation and must be a Sum aggregation
-    // TODO 3250: Support other aggregation functions
+    // TODO 3280: Support other aggregation functions
     if (aggregations.size() != 1) {
         NES_NOT_IMPLEMENTED();
     } else {

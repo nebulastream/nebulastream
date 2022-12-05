@@ -24,7 +24,6 @@ class AvgAggregationFunction : public AggregationFunction {
     AvgAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
-    void lift(Nautilus::Value<Nautilus::MemRef> memrefCount, Nautilus::Value<Nautilus::MemRef> memrefSum, Nautilus::Value<> value);
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) override;
     Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
