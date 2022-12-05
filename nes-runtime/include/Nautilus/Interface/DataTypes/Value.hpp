@@ -21,10 +21,6 @@
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
-#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
-#include <Nautilus/Tracing/Trace/OpCode.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,15 +30,6 @@
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
-void TraceConstOperation(const AnyPtr& constValue, const Tracing::ValueRef& valueReference);
-void traceAssignmentOperation(const Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
-bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
-void traceBinaryOperation(const Tracing::OpCode& op,
-                          const Tracing::ValueRef& resultRef,
-                          const Tracing::ValueRef& leftRef,
-                          const Tracing::ValueRef& rightRef);
-void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
-void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef);
 
 class BaseValue {};
 
@@ -81,52 +68,68 @@ class Value : BaseValue {
     /*
      * Creates a Value<Int8> object from an std::int8_t.
      */
-    Value(int8_t value) : Value(std::make_shared<Int8>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int8_t value) : Value(std::make_shared<Int8>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<UInt8> object from an std::uint8_t.
      */
-    Value(uint8_t value) : Value(std::make_shared<UInt8>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(uint8_t value) : Value(std::make_shared<UInt8>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<Int16> object from an std::int16_t.
      */
-    Value(int16_t value) : Value(std::make_shared<Int16>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int16_t value) : Value(std::make_shared<Int16>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<UInt16> object from an std::uint16_t.
      */
-    Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(uint16_t value) : Value(std::make_shared<UInt16>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<Int32> object from an std::int32_t.
      */
-    Value(int32_t value) : Value(std::make_shared<Int32>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int32_t value) : Value(std::make_shared<Int32>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<UInt32> object from an std::uint32_t.
      */
-    Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(uint32_t value) : Value(std::make_shared<UInt32>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<Int64> object from an std::int64_t.
      */
-    Value(int64_t value) : Value(std::make_shared<Int64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(int64_t value) : Value(std::make_shared<Int64>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<UInt64> object from an std::uint64_t.
      */
-    Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(uint64_t value) : Value(std::make_shared<UInt64>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<Float> object from a float.
      */
-    Value(float value) : Value(Any::create<Float>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(float value) : Value(Any::create<Float>(value)) { Tracing::TraceUtil::TraceConstOperation(this->value, this->ref); };
 
     /*
      * Creates a Value<Double> object from a double.
      */
-    Value(double value) : Value(Any::create<Double>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(double value) : Value(Any::create<Double>(value)) { Tracing::TraceUtil::TraceConstOperation(this->value, this->ref); };
 
     template<typename T = ValueType, typename = std::enable_if_t<std::negation<std::is_same<T, MemRef>>::value>>
     Value(const char* value);
@@ -134,14 +137,16 @@ class Value : BaseValue {
     /*
      * Creates a Value<Boolean> object from a bool.
      */
-    Value(bool value) : Value(std::make_shared<Boolean>(value)) { TraceConstOperation(this->value, this->ref); };
+    Value(bool value) : Value(std::make_shared<Boolean>(value)) {
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
+    };
 
     /*
      * Creates a Value<MemRef> object from an std::int8_t*.
      */
     template<typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     Value(std::int8_t* value) : Value(std::make_shared<MemRef>(value)) {
-        TraceConstOperation(this->value, this->ref);
+        Tracing::TraceUtil::TraceConstOperation(this->value, this->ref);
     };
 
     Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
@@ -189,7 +194,7 @@ class Value : BaseValue {
      */
     template<class OType>
     Value& operator=(Value<OType>&& other) noexcept {
-        traceAssignmentOperation(this->ref, other.ref);
+        Tracing::TraceUtil::traceAssignmentOperation(this->ref, other.ref);
         this->value = cast<ValueType>(other.value);
         return *this;
     }
@@ -207,7 +212,7 @@ class Value : BaseValue {
         if (Tracing::TraceUtil::inTracer()) {
             auto result = std::make_shared<ResultType>((int64_t) 0);
             auto resultValue = Value<ResultType>(std::move(result));
-            traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
+            Tracing::TraceUtil::traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
             return resultValue;
         } else {
             auto result = ((MemRef*) this->value.get())->load<ResultType>();
@@ -226,7 +231,7 @@ class Value : BaseValue {
         if (Tracing::TraceUtil::inInterpreter()) {
             this->value->store(storeValue.getValue());
         } else {
-            traceStoreOperation(ref, storeValue.ref);
+            Tracing::TraceUtil::traceStoreOperation(ref, storeValue.ref);
         }
     }
 
@@ -250,7 +255,7 @@ class Value : BaseValue {
      * Otherwise returns the current boolean value if it is a boolean
      * @return bool.
      */
-    operator bool() { return traceBoolOperation(value, ref); };
+    operator bool() { return Tracing::TraceUtil::traceBoolOperation(value, ref); };
     ValueType* operator->() const { return value.get(); }
     ValueType& getValue() const { return *value.get(); };
 

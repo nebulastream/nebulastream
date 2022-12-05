@@ -14,6 +14,10 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+namespace NES::Nautilus::Tracing {
+class ValueRef;
+}
 
 namespace NES::Nautilus::Tracing::TraceUtil {
 
@@ -28,6 +32,16 @@ namespace NES::Nautilus::Tracing::TraceUtil {
  * @return {@code true} when executed in the tracer, {@code false} in compiled code.
  */
 [[maybe_unused, nodiscard]] bool inTracer();
+
+void TraceConstOperation(const AnyPtr& constValue, const Tracing::ValueRef& valueReference);
+void traceAssignmentOperation(const Tracing::ValueRef& targetRef, const Nautilus::Tracing::ValueRef& sourceRef);
+bool traceBoolOperation(const AnyPtr& boolValue, const Nautilus::Tracing::ValueRef& sourceRef);
+void traceBinaryOperation(const Tracing::OpCode& op,
+                          const Tracing::ValueRef& resultRef,
+                          const Tracing::ValueRef& leftRef,
+                          const Tracing::ValueRef& rightRef);
+void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& resultRef, const Tracing::ValueRef& inputRef);
+void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef);
 
 }// namespace NES::Nautilus::Tracing::TraceUtil
 

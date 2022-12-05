@@ -13,7 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
-
+#include <functional>
 namespace NES::Nautilus {
 
 class TimeStampInvocationPlugin : public InvocationPlugin {
