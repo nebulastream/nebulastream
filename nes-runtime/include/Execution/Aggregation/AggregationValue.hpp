@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP
 
 #include <cstdint>
+#include <numeric>
 namespace NES::Runtime::Execution::Aggregation {
 
 /**
@@ -39,10 +40,12 @@ struct CountAggregationValue : AggregationValue {
 };
 
 struct MinAggregationValue : AggregationValue {
+    // TODO 3280: Take the max from the logical type
     int64_t min = std::numeric_limits<int64_t>::max();
 };
 
 struct MaxAggregationValue : AggregationValue {
+    // TODO 3280: Take the min from the logical type
     int64_t max = std::numeric_limits<int64_t>::min();
 };
 

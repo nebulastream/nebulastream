@@ -83,25 +83,32 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
 
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, integerType);
+    DataTypePtr doubleType = DataTypeFactory::createDouble();
+    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
     auto avgValue = Aggregation::AvgAggregationValue();
-    auto memrefCount = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.count);
-    auto memrefsum = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.sum);
+//    auto memrefCount = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.count);
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
     // test lift
-    avgAgg.lift(memrefCount, memrefsum, incomingValue);
-    ASSERT_EQ(avgValue.count, 1);
-    ASSERT_EQ(avgValue.sum, 2);
+    avgAgg.lift(memref, incomingValue);
+    EXPECT_EQ(avgValue.count, 1);
+    EXPECT_EQ(avgValue.sum, 2);
 
     // test combine
-   /* avgAgg.combine(memref, memref);
-    ASSERT_EQ(avgValue.count, 2);
-    ASSERT_EQ(avgValue.sum, 4);
+  avgAgg.combine(memref, memref);
+    EXPECT_EQ(avgValue.count, 2);
+    EXPECT_EQ(avgValue.sum, 4);
 
     // test lower
     auto aggregationResult = avgAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);*/
+    EXPECT_EQ(aggregationResult, 2);
+
+    avgAgg.reset(memref);
+    EXPECT_EQ(avgValue.count, 0);
+    EXPECT_EQ(avgValue.sum, 0);
+
+
 }
 
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
