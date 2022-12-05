@@ -47,12 +47,12 @@ class Text final : public Nautilus::Any {
      * @param other text object
      * @return combination of two text object
      */
-    Value<Text> StringConcat(const Value<Text>& other) const;
+    Value<Text> concat(const Value<Text>& other) const;
 
     /**
-     * @brief exract a subtext object
-     * @param a text object, a index, a length for subtext
-     * @return text object
+     * @brief  Extract a subText of length len from the startIndex.Note that the start value of 1 refers to the first character of the Text
+     * @param  Value startIndex, Value len
+     * @return a subtext object
      */
     Value<Text> substring(Value<UInt32> ,Value<UInt32> ) const;
 

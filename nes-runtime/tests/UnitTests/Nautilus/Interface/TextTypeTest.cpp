@@ -77,13 +77,14 @@ TEST_F(TextTypeTest, subStringTest) {
     auto subtext2 = subtext1->substring((uint32_t) 2,(uint32_t) 2);
     auto subtext3 = Value<Text>("el");
     ASSERT_EQ(subtext2,subtext3);
+    //ASSERT_ANY_THROW(subtext1->substring((uint32_t)200,(uint32_t)200););
 }
 
 TEST_F(TextTypeTest, StringconcatTest) {
     auto concatTest1 = Value<Text>("Nebula");
     auto concatTest2 = Value<Text>("Stream");
-    auto concatTest3 = concatTest1->StringConcat(concatTest2);
-    auto concatTest4 = Value<Text>("NebulaStream");
-    ASSERT_EQ(concatTest3,concatTest4);
+    auto concatTest3 = Value<Text>("NebulaStream");
+    auto concatTest5 = concatTest1->concat(concatTest2);
+    ASSERT_EQ(concatTest5,concatTest3);
 }
 }// namespace NES::Nautilus
