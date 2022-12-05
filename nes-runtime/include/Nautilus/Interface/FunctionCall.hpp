@@ -19,6 +19,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 #include <memory>
 #include <cstdio>
 #include <unistd.h>
