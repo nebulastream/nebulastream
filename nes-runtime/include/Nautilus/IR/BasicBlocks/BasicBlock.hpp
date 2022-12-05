@@ -70,7 +70,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
     // void popOperation();
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
-
+  
   private:
     std::string identifier;
     uint32_t scopeLevel;

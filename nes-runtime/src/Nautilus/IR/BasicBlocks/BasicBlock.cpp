@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/Operation.hpp"
+#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -38,10 +38,11 @@ bool BasicBlock::isLoopHeaderBlock() { return numLoopBackEdges > 0; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
-uint64_t BasicBlock::getIndexOfArgument(std::shared_ptr<Operations::Operation> arg) {
+uint64_t BasicBlock::getIndexOfArgument(Operations::OperationPtr arg) {
     for (uint64_t i = 0; i < arguments.size(); i++) {
-        if (arguments[i] == arg)
+        if (arguments[i] == arg) {
             return i;
+        }
     }
     return -1;
 }
