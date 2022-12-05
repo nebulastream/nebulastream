@@ -9,8 +9,6 @@ void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
     // load
     auto oldValue = memref.load<Nautilus::Int64>();
     // compare
-    // TODO: make std::min(oldValue, value) possible?
-    // otherwise bithack for min/max
     auto newValue = (value < oldValue) ? value : oldValue;
     // store
     memref.store(newValue);
@@ -24,13 +22,13 @@ void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
 }
 
 Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3250 check the type
+    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
     return memref.load<Nautilus::Int64>();
 }
 
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::Int64>((int64_t) 0);
-    memref.store(zero);
+    auto minVal = Nautilus::Value<Nautilus::Int64>((int64_t) std::numeric_limits<int64_t>::max());
+    memref.store(minVal); // TODO 3280 check the type
 }
 
 }
