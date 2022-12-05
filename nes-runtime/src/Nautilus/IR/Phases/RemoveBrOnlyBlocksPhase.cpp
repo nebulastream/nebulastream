@@ -83,7 +83,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
     // removedBlock is used to remember all br-only-blocks that need to be removed as predecessors from the non-br-only-block.
     std::vector<std::weak_ptr<IR::BasicBlock>> newPredecessorBlocks;
     std::unordered_map<std::string, IR::BasicBlockPtr> removedBlocks;
-    // Iterate over all phaseed br-only-blocks and set the non-br-only-block as new target block of predecessors.
+    // Iterate over all passed br-only-blocks and set the non-br-only-block as new target block of predecessors.
     // Also, update all br- and if-operations to point to the non-br-block.
     for (auto brOnlyBlock : brOnlyBlocks) {
         removedBlocks.emplace(std::make_pair(brOnlyBlock->getIdentifier(), brOnlyBlock));

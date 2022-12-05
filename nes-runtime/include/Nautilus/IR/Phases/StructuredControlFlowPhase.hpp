@@ -85,7 +85,7 @@ class StructuredControlFlowPhase {
         void createIfOperations(IR::BasicBlockPtr currentBlock);
 
         /**
-         * @brief Checks if the given currentBlocks is a merge-block with open edges.
+         * @brief Checks if the given currentBlocks is a merge-block with open edges (open: not yet traversed).
          * 
          * @param currentBlock: Initially will be the body-block of the root operation.
          * @param ifOperations: A stack that contains all visited if-operations 
