@@ -40,6 +40,7 @@ class LoopOperation : public Operation {
     BasicBlockInvocation& getLoopHeadBlock();
     void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
     std::shared_ptr<LoopInfo> getLoopInfo();
+    void setLoopType(LoopOperation::LoopType loopType);
 
     std::string toString() override;
 

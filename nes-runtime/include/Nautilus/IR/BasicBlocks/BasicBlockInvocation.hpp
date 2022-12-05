@@ -25,6 +25,7 @@ class BasicBlockInvocation : public Operation {
     BasicBlockPtr getBlock();
     void addArgument(OperationPtr argument);
     void removeArgument(uint64_t argumentIndex);
+    int getOperationArgIndex(Operations::OperationPtr);
     std::vector<OperationPtr> getArguments();
     std::string toString() override;
 

@@ -21,6 +21,7 @@ LoopOperation::LoopOperation(LoopType loopType)
     : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
+void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
 
 BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }
 BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock; }
