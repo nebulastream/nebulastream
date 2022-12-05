@@ -37,7 +37,6 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
     findLoopHeadBlocks(rootOperation->getFunctionBasicBlock());
     createIfOperations(rootOperation->getFunctionBasicBlock());
-    // return std::move(ir);
 }
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchForLoopHeadBlocks(
