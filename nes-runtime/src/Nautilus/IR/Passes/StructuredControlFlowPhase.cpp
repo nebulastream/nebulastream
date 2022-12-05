@@ -149,10 +149,19 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchF
         // -> and it depends on the comparison types
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
         auto loopOp = std::make_shared<Operations::LoopOperation>(Operations::LoopOperation::LoopType::DefaultLoop);
+        loopOp->getLoopHeadBlock().setBlock(currentBlock);
+        loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
+        loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getBlock());
+        currentBlock->replaceTerminatorOperation(std::move(loopOp));
+        // Currently, we increase the number of loopBackEdges (default: 0) of the loop-header-block.
+        // Thus, after this phase, if a block has numLoopBackEdges > 0, it is a loop-header-block.
+        // More information will be added in the scope of issue #3169.
+        currentBlock->incrementNumLoopBackEdge();
+
+        // Counted Loop Detection
         if(!currentBlock->isLoopHeaderBlock() && currentBlock->getPredecessors().size() == 2) {
             // We do not support loops with iteration variables (vars that are manipulated in the loop) yet
             // At this point, we reached the loop-header-block coming from one of its loopEndBlocks
-
             // 1. get comparison-operation(compOp) from loop-header-block
             // Currently, we are not supporting >= and <=, since they are separated into 3 comparison operations.
             // -> We can detect <= and >= by checking if the CompareOp is an 'or' op
@@ -161,27 +170,22 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchF
                 // 2. store LHS and RHS from compOp) -> one is the lowerBound&inductionVar, the other is the upperBound
                 auto compareOp = std::static_pointer_cast<Operations::CompareOperation>(ifOp->getBooleanValue());
                 // 3. get the second-to-last operation from the loopEndBlock (incrementOp)
-                auto incrementOp = priorBlock->getOperations().at(priorBlock->getOperations().size() - 2);
-                // Todo need to apply checks:
-                // -> how to find out whether this is a counted loop?
-                // -> must be arithmetic function && must be yielded to loop-header and used in compare op
-                // todo make sure that its used in compareOp
-                if((incrementOp->getOperationType() == Operation::AddOp || incrementOp->getOperationType() == Operation::SubOp)
+                auto countOp = priorBlock->getOperations().at(priorBlock->getOperations().size() - 2);
+                if((countOp->getOperationType() == Operation::AddOp || countOp->getOperationType() == Operation::SubOp)
                     && compareOp->getComparator() < Operations::CompareOperation::Comparator::FOLT 
-                    && priorBlock->getTerminatorOp()->getOperationType() == Operation::BranchOp && 
-                    std::static_pointer_cast<Operations::BranchOperation>(
-                        priorBlock->getTerminatorOp())->getNextBlockInvocation().getOperationArgIndex(incrementOp) != -1) {
-                    
+                    && priorBlock->getTerminatorOp()->getOperationType() == Operation::BranchOp
+                    && std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp())
+                        ->getNextBlockInvocation().getOperationArgIndex(countOp) != -1) {               
                     // 4. find out the argument-index of the incrementOp (loopEndBlock argument in branchOp to loop-header-block)
                     auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp());
-                    auto inductionVarArgIndex = branchOp->getNextBlockInvocation().getOperationArgIndex(incrementOp);
+                    auto inductionVarArgIndex = branchOp->getNextBlockInvocation().getOperationArgIndex(countOp);
                     // 5. find out the corresponding argument name of the loop-header-block
                     auto loopInductionVarArg = currentBlock->getArguments().at(inductionVarArgIndex);
                     // 6. check whether LHS or RHS of compOp correspond to the argument name found in (2.)
                     std::shared_ptr<Operations::ConstIntOperation> inductionVar;
                     std::shared_ptr<Operations::ConstIntOperation> stopValue;
                     // OperationPtr stopValue;
-                    bool countedLoopDetected = true;
+                    // bool countedLoopDetected = true;
                     bool inductionVarLessThanSide = true;
                     if(compareOp->getLeftInput() == loopInductionVarArg) {
                         inductionVar = constantValues[compareOp->getLeftInput()->getIdentifier()];
@@ -206,139 +210,91 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchF
                             inductionVarLessThanSide = false;
                         } // else it must be greater
                     } else {
-                        countedLoopDetected = false;
+                        NES_DEBUG("Could not detect counted loop. The loop induction variable is not part of " << 
+                                    "the loop-header comparison operation.")
+                        return;
                     }
                     // 7. check incrementOp:
-                    if(countedLoopDetected) {
-                        std::shared_ptr<Operations::ConstIntOperation> stepSize;
-                        switch(incrementOp->getOperationType()) {
-                            case Operation::AddOp: {
-                                auto incrementOpAdd = std::static_pointer_cast<Operations::AddOperation>(incrementOp);
-                                stepSize = (constantValues[incrementOpAdd->getLeftInput()->getIdentifier()] == 
-                                            constantValues[loopInductionVarArg->getIdentifier()])
-                                    ? constantValues[incrementOpAdd->getRightInput()->getIdentifier()] 
-                                    : constantValues[incrementOpAdd->getLeftInput()->getIdentifier()];
-                                break;
-                            }
-                            case Operation::SubOp: {
-                                auto incrementOpAdd = std::static_pointer_cast<Operations::SubOperation>(incrementOp);
-                                stepSize = (constantValues[incrementOpAdd->getLeftInput()->getIdentifier()] == 
-                                            constantValues[loopInductionVarArg->getIdentifier()])
-                                    ? constantValues[incrementOpAdd->getRightInput()->getIdentifier()] 
-                                    : constantValues[incrementOpAdd->getLeftInput()->getIdentifier()];
-                                break;
-                            }
-                            // We do not support mul and div, because MLIR for-loop-ops require a fixed step size.
-                            default:
-                                NES_ERROR("StructuredControlFlowPass::checkBranchForLoopHeadBlocks: Could not create LoopInfo." <<
-                                        "Provided operation type: " << incrementOp->getOperationType() << "is not supported.");
-                                NES_NOT_IMPLEMENTED(); //Todo this throws exception. We might want to handle this case gracefully and simply abort checking for for-loops
-                                
+                    std::shared_ptr<Operations::ConstIntOperation> stepSize;
+                    switch(countOp->getOperationType()) {
+                        case Operation::AddOp: {
+                            auto incrementOpAdd = std::static_pointer_cast<Operations::AddOperation>(countOp);
+                            stepSize = (constantValues[incrementOpAdd->getLeftInput()->getIdentifier()] == 
+                                        constantValues[loopInductionVarArg->getIdentifier()])
+                                ? constantValues[incrementOpAdd->getRightInput()->getIdentifier()] 
+                                : constantValues[incrementOpAdd->getLeftInput()->getIdentifier()];
+                            break;
                         }
-                        // Todo stepsize && upperBound depends on comparison type, and on arithmetic function
-                        // Assumption: indVar(lowerBound) and upperBound are set up correctly
-                        // Assumption: MLIR SCF's upperBound is an open interval (0->3) means 3 steps, not 4 (correct!)
-                        // Fact: MLIR requires -index- types for lower- and upperBound. index types are
-                        // -> target-specific e.g. 32 or 64-bit 'ints' -> we do not account for e.g. float types
-                        // Problem: what if we add a negative number?
-                        // -> same for other arithmetic operations (div, sub, mul)
-                        // Solution: normalize function (normalizeLoopCondition)
-                        // -> takes: indVar, stopValue(upperBound), comparisonType, arithmeticFunction, stepSize
-                        // -> checks if sign of arithmeticFunction.LHS and/or arithmeticFunction.RHS is negative
-                        // ----> use it to determine whether the indVar and/or the stepSize is negative
-                        // -> 2 options: 
-                        // Todo do we need to check the comparison direction?
-                        //  -> indVar >= stopVal && indVar > stopVal -> decreasing
-                        //  -> indVar >= stopVal && indVar < stopVal -> will not loop
-                        //      1. either the indVar decreases towards the stopValue
-                        //      -> indVar >= stopValue && arithOp is (sub && stepSize is positive) or (add && stepSize is negative)
-                        //      -> lowerBound = stopValue; upperBound = indVar(+1); stepSize = stepSize * stepSizeIsPositive
-                        //      ----> upperBound = indVar + 1 if comparison not '>'
-                        //      2. or the indVar increases towards the stopValue
-                        //      -> indVar <= stopValue && arithOp is (sub && stepSize is negative) or (add && stepSize is positive)
-                        //      -> lowerBound = indVar; upperBound = stopValue; stepSize = stepSize * stepSizeIsPositive
-                        //      ----> upperBound = stopValue - 1 if comparison not '<'
-                        // !!! -> can only detect counted loop if countOperation is add or sub
-                        // Decreasing (indVar is reduced in each step -> upperBound=indVar, lowerBound = stopValue)
-                        // Todo can a loop be decreasing if indVar <= stopValue?
-                        // -> no
-                        // -> if indVar == stopValue -> could not detect loop
-
-                        auto countedLoopInfo = std::make_unique<CountedLoopInfo>();
-                        // Decreasing Case
-                        if(inductionVar->getConstantIntValue() > stopValue->getConstantIntValue()) {
-                            // Check if step size matches decreasing case
-                            if(!inductionVarLessThanSide &&
-                                ((incrementOp->getOperationType() == Operation::SubOp && stepSize->getConstantIntValue() >= 0)
-                                || (incrementOp->getOperationType() == Operation::AddOp && stepSize->getConstantIntValue() < 0))) {
-                                countedLoopInfo->lowerBound = stopValue->getConstantIntValue();
-                                countedLoopInfo->stepSize = stepSize->getConstantIntValue() * ( 1 - (2*(stepSize->getConstantIntValue() < 0)));
-                                countedLoopInfo->upperBound = inductionVar->getConstantIntValue() 
-                                    + ((compareOp->getComparator() != CompareOperation::ISGT) && (compareOp->getComparator() != CompareOperation::IUGT)
-                                        && (compareOp->getComparator() != CompareOperation::ISLT) && (compareOp->getComparator() != CompareOperation::IULT));
-                            } else {
-                                countedLoopDetected = false; //Todo add debug msg !! could increment edgeCounter first, and then add returns here
-                            }
-                        // Increasing Case
-                        } else if (inductionVar->getConstantIntValue() < stopValue->getConstantIntValue()) {
-                            // Check if step size matches decreasing case
-                            if(inductionVarLessThanSide &&
-                                ((incrementOp->getOperationType() == Operation::SubOp && stepSize->getConstantIntValue() <= 0)
-                                || (incrementOp->getOperationType() == Operation::AddOp && stepSize->getConstantIntValue() > 0))) {
-                                countedLoopInfo->lowerBound = inductionVar->getConstantIntValue();
-                                countedLoopInfo->stepSize = stepSize->getConstantIntValue() * ( 1 - (2*(stepSize->getConstantIntValue() < 0)));
-                                //Todo only checking for comparators one-sided
-                                // -> need to check GT if 
-                                countedLoopInfo->upperBound = stopValue->getConstantIntValue() 
-                                    + ((compareOp->getComparator() != CompareOperation::ISLT) && (compareOp->getComparator() != CompareOperation::IULT)
-                                        && (compareOp->getComparator() != CompareOperation::ISGT) && (compareOp->getComparator() != CompareOperation::IUGT));
-                            } else {
-                                countedLoopDetected = false; //Todo add debug msg
-                            }
-                        } else { 
-                            // induction variable == stop variable -> no loop can be detected
-                            countedLoopDetected = false; //Todo add debug msg
+                        case Operation::SubOp: {
+                            auto incrementOpAdd = std::static_pointer_cast<Operations::SubOperation>(countOp);
+                            stepSize = (constantValues[incrementOpAdd->getLeftInput()->getIdentifier()] == 
+                                        constantValues[loopInductionVarArg->getIdentifier()])
+                                ? constantValues[incrementOpAdd->getRightInput()->getIdentifier()] 
+                                : constantValues[incrementOpAdd->getLeftInput()->getIdentifier()];
+                            break;
                         }
-                        if(countedLoopDetected) {
-                            // countedLoopInfo->loopInitialIteratorArguments = ?;
-                            // countedLoopInfo->loopBodyIteratorArguments = ?;
-                            // countedLoopInfo->loopBodyInductionVariable = inductionVar;
-                            // Todo REMOVE body block and false block from countedLoopInfo
-                            // -> could also remove loopEndBlock
-                            // INSTEAD safe it directly in loopOperation
-                            // countedLoopInfo->loopBodyBlock = ifOp->getTrueBlockInvocation().getBlock();
-                            // countedLoopInfo->loopFalseBlock = ifOp->getFalseBlockInvocation().getBlock();
-                            countedLoopInfo->loopEndBlock = std::move(priorBlock);
-                            // Create LoopOperation with CountedLoopInfo
-                            loopOp->setLoopType(Operations::LoopOperation::LoopType::CountedLoop);
-                            loopOp->setLoopInfo(std::move(countedLoopInfo));
-                        } else {
-                            // loop-count-operation is not used in compare-operation. Cannot detect counted loop.
-                            NES_DEBUG("Could not detect counted loop.");
-                        }
-                    } else {
-                        // loop-count-operation is not used in compare-operation. Cannot detect counted loop.
-                        NES_DEBUG("Could not detect counted loop.");
+                        // We do not support mul and div, because MLIR for-loop-ops require a fixed step size.
+                        default:
+                            NES_DEBUG("Could not detect counted loop." <<
+                                    "Provided operation type: " << countOp->getOperationType() << "is not supported.");
+                            return;
                     }
+                    auto countedLoopInfo = std::make_unique<CountedLoopInfo>();
+                    // Decreasing Case
+                    if(inductionVar->getConstantIntValue() > stopValue->getConstantIntValue()) {
+                        // Check if step size matches decreasing case
+                        if(!inductionVarLessThanSide &&
+                            ((countOp->getOperationType() == Operation::SubOp && stepSize->getConstantIntValue() >= 0)
+                            || (countOp->getOperationType() == Operation::AddOp && stepSize->getConstantIntValue() < 0))) {
+                            countedLoopInfo->lowerBound = stopValue->getConstantIntValue();
+                            countedLoopInfo->stepSize = stepSize->getConstantIntValue() * ( 1 - (2*(stepSize->getConstantIntValue() < 0)));
+                            countedLoopInfo->upperBound = inductionVar->getConstantIntValue() 
+                                + ((compareOp->getComparator() != CompareOperation::ISGT) && (compareOp->getComparator() != CompareOperation::IUGT)
+                                    && (compareOp->getComparator() != CompareOperation::ISLT) && (compareOp->getComparator() != CompareOperation::IULT));
+                        } else {
+                            NES_DEBUG("Could not detect counted loop. Found decreasing loop (loop induction variable < loop stop variable), but " <<
+                                      "the step size is positive.");
+                            return;
+                        }
+                    // Increasing Case
+                    } else if (inductionVar->getConstantIntValue() < stopValue->getConstantIntValue()) {
+                        // Check if step size matches decreasing case
+                        if(inductionVarLessThanSide &&
+                            ((countOp->getOperationType() == Operation::SubOp && stepSize->getConstantIntValue() <= 0)
+                            || (countOp->getOperationType() == Operation::AddOp && stepSize->getConstantIntValue() > 0))) {
+                            countedLoopInfo->lowerBound = inductionVar->getConstantIntValue();
+                            countedLoopInfo->stepSize = stepSize->getConstantIntValue() * ( 1 - (2*(stepSize->getConstantIntValue() < 0)));
+                            countedLoopInfo->upperBound = stopValue->getConstantIntValue() 
+                                + ((compareOp->getComparator() != CompareOperation::ISLT) && (compareOp->getComparator() != CompareOperation::IULT)
+                                    && (compareOp->getComparator() != CompareOperation::ISGT) && (compareOp->getComparator() != CompareOperation::IUGT));
+                        } else {
+                            // countedLoopDetected = false; //Todo add debug msg
+                            NES_DEBUG("Could not detect counted loop. Found increasing loop (loop induction variable > loop stop variable), but " <<
+                                      "the step size is negative.");
+                            return;
+                        }
+                    } else { 
+                        NES_DEBUG("UpperBound == LowerBound; A loop container is not required.")
+                        return;
+                    }
+                    countedLoopInfo->loopEndBlock = std::move(priorBlock);
+                    // Create LoopOperation with CountedLoopInfo
+                    loopOp->setLoopType(Operations::LoopOperation::LoopType::CountedLoop);
+                    loopOp->setLoopInfo(std::move(countedLoopInfo));
                 } else {
                     // second-to-last-operation in loop-end-block either was no arithmetic operation or was an arithmetic
                     // operation, but is not yielded to loop header and used in compare op.
-                    NES_DEBUG("Could not detect counted loop.");
+                    NES_DEBUG("Could not detect counted loop. Possible reasons: \n" 
+                                << "1. The count-operation is not an addition or a subtraction."
+                                << "2. The loop-header comparison uses floating point types."
+                                << "3. The loop-end-block does not use a branch-operation to loop back"
+                                << "4. The result of the count-operation is not an argument of the loop-header.");
                 }
             } else {
                 // loop-header does not use a comparison operation for boolean value.
-                NES_DEBUG("Loop header without comparison operation not supported.");
+                NES_DEBUG("Loop header without comparison operation not supported. This currently includes '>=' and '<='");
             }
         }
-        // Todo we should at least convert the if-operation to a loop operation
-        loopOp->getLoopHeadBlock().setBlock(currentBlock);
-        loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
-        loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getBlock());
-        currentBlock->replaceTerminatorOperation(std::move(loopOp));
-        // Currently, we increase the number of loopBackEdges (default: 0) of the loop-header-block.
-        // Thus, after this phase, if a block has numLoopBackEdges > 0, it is a loop-header-block.
-        // More information will be added in the scope of issue #3169.
-        currentBlock->incrementNumLoopBackEdge();
     }
 }
 
