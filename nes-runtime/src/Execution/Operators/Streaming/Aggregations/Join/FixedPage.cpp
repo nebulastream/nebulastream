@@ -89,4 +89,5 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) {
 FixedPage::FixedPage(FixedPage* page) : sizeOfRecord(page->sizeOfRecord), data(page->data), pos(page->pos),
                                         capacity(page->capacity), bloomFilter(std::move(page->bloomFilter)) {}
 
+
 } // namespace NES::Runtime::Execution::Operators

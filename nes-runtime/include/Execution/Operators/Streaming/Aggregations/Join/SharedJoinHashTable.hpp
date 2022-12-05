@@ -44,6 +44,7 @@ class SharedJoinHashTable {
 
 
   public:
+    explicit SharedJoinHashTable(size_t numBuckets);
 
     /**
      * @brief inserts the pages into the bucket at the bucketPos
@@ -70,9 +71,9 @@ class SharedJoinHashTable {
 
 
   private:
-    std::array<std::atomic<InternalNode*>, NUM_PARTITIONS> bucketHeads;
-    std::array<std::atomic<size_t>, NUM_PARTITIONS> bucketNumItems;
-    std::array<std::atomic<size_t>, NUM_PARTITIONS> bucketNumPages;
+    std::vector<std::atomic<InternalNode*>> bucketHeads;
+    std::vector<std::atomic<size_t>> bucketNumItems;
+    std::vector<std::atomic<size_t>> bucketNumPages;
 };
 
 

@@ -23,7 +23,7 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
         if (++pos < pages.size()) {
             curPage = pages[pos];
         } else {
-            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, sizeOfRecord));
+            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
         }
         retPointer = curPage->append(hash);
     }
@@ -33,10 +33,13 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
 
 const std::vector<FixedPage*>& FixedPagesLinkedList::getPages() const { return pages; }
 
-FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord)
-    : tail(tail), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord) {
-    for (auto i = 0; i < NUM_PREALLOCATED_PAGES; ++i) {
-        pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord));
+FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress,
+                                           size_t sizeOfRecord, size_t pageSize)
+    : tail(tail), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
+
+    const auto numPreAllocatedPage = PREALLOCATED_SIZE / pageSize;
+    for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
+        pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
     }
     curPage = pages[0];
 }

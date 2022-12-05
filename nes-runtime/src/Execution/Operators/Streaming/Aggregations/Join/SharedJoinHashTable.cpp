@@ -18,6 +18,8 @@ limitations under the License.
 namespace NES::Runtime::Execution::Operators {
 
 
+
+
 void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
     auto& head = bucketHeads[bucketPos];
     auto& numItems = bucketNumItems[bucketPos];
@@ -53,5 +55,7 @@ size_t SharedJoinHashTable::getNumItems(size_t bucketPos) const {
 size_t SharedJoinHashTable::getNumPages(size_t bucketPos) const {
     return bucketNumPages[bucketPos].load();
 }
+
+SharedJoinHashTable::SharedJoinHashTable(size_t numBuckets) : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets) {}
 
 } // namespace NES::Runtime::Execution::Operators

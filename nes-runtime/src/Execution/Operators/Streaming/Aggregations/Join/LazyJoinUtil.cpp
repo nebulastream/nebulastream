@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -30,6 +30,7 @@
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::Util {
+
     uint64_t murmurHash(uint64_t key) {
         uint64_t hash = key;
 
