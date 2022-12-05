@@ -29,13 +29,14 @@ class DefaultLoopInfo : public LoopInfo {};
 
 class CountedLoopInfo : public LoopInfo {
   public:
-    OperationWPtr lowerBound;
-    OperationWPtr upperBound;
-    OperationWPtr stepSize;
+    uint64_t lowerBound;
+    uint64_t upperBound;
+    uint64_t stepSize;
     std::vector<OperationPtr> loopInitialIteratorArguments;
     std::vector<OperationPtr> loopBodyIteratorArguments;
-    OperationPtr loopBodyInductionVariable;
+    // OperationPtr loopBodyInductionVariable;
     BasicBlockPtr loopBodyBlock;
+    BasicBlockPtr loopFalseBlock;
     BasicBlockPtr loopEndBlock;
     bool isCountedLoop() override { return true; }
 };
