@@ -83,20 +83,69 @@ class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecut
     std::vector<TupleBuffer> emittedBuffers;
 };
 
+struct LazyJoinBuildHelper {
+    size_t pageSize = CHUNK_SIZE;
+    size_t numPartitions = NUM_PARTITIONS;
+    size_t numberOfTuplesToProduce;
+    size_t numberOfBuffersPerWorker;
+    size_t noWorkerThreads;
+    size_t joinSizeInByte;
+    size_t windowSize;
+    Operators::LazyJoinBuildPtr lazyJoinBuild;
+    std::string joinFieldName;
+    BufferManagerPtr bufferManager;
+    SchemaPtr schema;
+    LazyJoinOperatorTest* lazyJoinOperatorTest;
+};
 
-bool lazyJoinBuildAndCheck(size_t numberOfTuplesToProduce, Operators::LazyJoinBuildPtr lazyJoinBuild,
-                           LazyJoinOperatorHandlerPtr lazyJoinOpHandler, const std::string& joinFieldName,
-                           BufferManagerPtr bufferManager, SchemaPtr schema, ExecutionContext& executionContext) {
+bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
+
+    auto pageSize = buildHelper.pageSize;
+    auto numPartitions = buildHelper.numPartitions;
+    auto bufferManager = buildHelper.bufferManager;
+    auto schema = buildHelper.schema;
+    auto& joinFieldName = buildHelper.joinFieldName;
+    auto numberOfBuffersPerWorker = buildHelper.numberOfBuffersPerWorker;
+    auto noWorkerThreads = buildHelper.noWorkerThreads;
+    auto joinSizeInByte = buildHelper.joinSizeInByte;
+    auto windowSize = buildHelper.windowSize;
+    auto numberOfTuplesToProduce = buildHelper.numberOfTuplesToProduce;
+    auto lazyJoinBuild = buildHelper.lazyJoinBuild;
+    auto& lazyJoinOperatorTest = buildHelper.lazyJoinOperatorTest;
+
+    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bufferManager, numberOfBuffersPerWorker);
+    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(schema, schema,
+                                                                       joinFieldName, joinFieldName,
+                                                                       noWorkerThreads, noWorkerThreads,
+                                                                       noWorkerThreads, joinSizeInByte,
+                                                                       windowSize, pageSize, numPartitions);
+
+    auto pipelineContext = PipelineExecutionContext(-1,// mock pipeline id
+                                                    0, // mock query id
+                                                    nullptr,
+                                                    noWorkerThreads,
+                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    },
+                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer) {
+                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    },
+                                                    {lazyJoinOpHandler});
+
+
+    auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
+                                             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
+
+
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
         auto record = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 1)}, {"timestamp", Value<UInt64>(i)}});
         lazyJoinBuild->execute(executionContext, record);
 
-        // TODO talk with Philipp if this is the correct way to do this
         uint64_t joinKey = record.read(joinFieldName).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
         auto hashTable = lazyJoinOpHandler->getWindowToBeFilled().getLocalHashTable(/* workerThreadId*/ 0, /*isLeftSide*/ true);
-        auto bucket = hashTable.getBucketLinkedList(hash & MASK);
+        auto bucket = hashTable.getBucketLinkedList(hashTable.getBucketPos(hash));
 
         bool correctlyInserted = false;
         for (auto page : bucket->getPages()) {
@@ -105,11 +154,10 @@ bool lazyJoinBuildAndCheck(size_t numberOfTuplesToProduce, Operators::LazyJoinBu
                 auto bucketBuffer = Util::getBufferFromPointer(recordPtr, schema, bufferManager);
                 auto recordBuffer = Util::getBufferFromNautilus(record, schema, bufferManager);
 
-                NES_TRACE("\nBucketBuffer: " << Util::printTupleBufferAsCSV(bucketBuffer, schema)
-                                            << "\nRecordBuffer: " << Util::printTupleBufferAsCSV(recordBuffer, schema));
+                NES_DEBUG("\nBucketBuffer: " << Util::printTupleBufferAsCSV(bucketBuffer, schema)
+                              << "\nRecordBuffer: " << Util::printTupleBufferAsCSV(recordBuffer, schema));
 
                 if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), schema->getSchemaSizeInBytes()) == 0) {
-
                     correctlyInserted = true;
                     break;
                 }
@@ -125,25 +173,18 @@ bool lazyJoinBuildAndCheck(size_t numberOfTuplesToProduce, Operators::LazyJoinBu
 
 
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
+TEST_F(LazyJoinOperatorTest, joinBuildTestSingleThreaded) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
                           ->addField("f2_left", BasicType::UINT64)
                           ->addField("timestamp", BasicType::UINT64);
 
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField("f1_right", BasicType::UINT64)
-                          ->addField("f2_right", BasicType::UINT64)
-                          ->addField("timestamp", BasicType::UINT64);
-
-    auto leftMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bm->getBufferSize());
 
     const auto joinFieldNameLeft = "f2_left";
-    const auto joinFieldNameRight = "f2_right";
     const auto timeStampField = "timestamp";
     const auto noWorkerThreads = 1UL;
-    const auto joinSizeInByte = 16 * 1024 * 1024UL; // 16 GiB
+    const auto joinSizeInByte = 1 * 1024 * 1024UL;
     const auto numberOfBuffersPerWorker = 128UL;
     const auto numberOfTuplesToProduce = 100UL;
     const auto windowSize = 1000;
@@ -152,45 +193,107 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRowLayoutSingleThreaded) {
     auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
-    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
-                                                                       joinFieldNameLeft, joinFieldNameRight,
-                                                                       noWorkerThreads, noWorkerThreads,
-                                                                       noWorkerThreads,
-                                                                       joinSizeInByte, windowSize);
+    LazyJoinBuildHelper buildHelper = {
+        .pageSize = CHUNK_SIZE,
+        .numberOfTuplesToProduce = numberOfTuplesToProduce,
+        .numberOfBuffersPerWorker = numberOfBuffersPerWorker,
+        .noWorkerThreads = noWorkerThreads,
+        .joinSizeInByte = joinSizeInByte,
+        .windowSize = windowSize,
+        .lazyJoinBuild = lazyJoinBuild,
+        .joinFieldName = joinFieldNameLeft,
+        .bufferManager = bm,
+        .schema = leftSchema,
+        .lazyJoinOperatorTest = this
+    };
 
-    auto pipelineContext = PipelineExecutionContext( -1,// mock pipeline id
-                                                      0, // mock query id
-                                                      nullptr,
-                                                      noWorkerThreads,
-                                                      [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                                                          this->emittedBuffers.emplace_back(std::move(buffer));
-                                                      },
-                                                      [this](TupleBuffer& buffer) {
-                                                          this->emittedBuffers.emplace_back(std::move(buffer));
-                                                      },
-                                                      {lazyJoinOpHandler});
-
-    auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
-                                             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
-
-
-    ASSERT_TRUE(lazyJoinBuildAndCheck(numberOfTuplesToProduce, lazyJoinBuild, lazyJoinOpHandler, joinFieldNameLeft,
-                                      bm, leftSchema, executionContext));
+    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
 }
 
 TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
-    // set here the size of a fixedpage to only contain 2 tuples and then insert into a single bucket 100 tuples
-    // also set the number of buckets NUM_PARTITIONS to 1
-    NES_NOT_IMPLEMENTED();
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
+
+
+    const auto joinFieldNameLeft = "f2_left";
+    const auto timeStampField = "timestamp";
+    const auto noWorkerThreads = 1UL;
+    const auto joinSizeInByte = 1 * 1024 * 1024UL;
+    const auto numberOfBuffersPerWorker = 128UL;
+    const auto numberOfTuplesToProduce = 100UL;
+    const auto windowSize = 1000;
+
+    auto handlerIndex = 0;
+    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                    timeStampField, leftSchema);
+
+    LazyJoinBuildHelper buildHelper = {
+        .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
+        .numPartitions = 1,
+        .numberOfTuplesToProduce = numberOfTuplesToProduce,
+        .numberOfBuffersPerWorker = numberOfBuffersPerWorker,
+        .noWorkerThreads = noWorkerThreads,
+        .joinSizeInByte = joinSizeInByte,
+        .windowSize = windowSize,
+        .lazyJoinBuild = lazyJoinBuild,
+        .joinFieldName = joinFieldNameLeft,
+        .bufferManager = bm,
+        .schema = leftSchema,
+        .lazyJoinOperatorTest = this
+    };
+
+    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
 }
 
-TEST_F(LazyJoinOperatorTest, joinSinkTest) {
+TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindowSingleThreaded) {
+    // test here if multiple windows can be correctly build
+    // and this means setting the windowsize to 10 and then inserting  1000 tuples and testing if only the expected records
+    // are on the page
+
     // Activating and installing error listener
     auto runner = std::make_shared<TestRunner>();
     NES::Exceptions::installGlobalErrorListener(runner);
 
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
 
+
+    const auto joinFieldNameLeft = "f2_left";
+    const auto timeStampField = "timestamp";
+    const auto noWorkerThreads = 1UL;
+    const auto joinSizeInByte = 1 * 1024 * 1024UL;
+    const auto numberOfBuffersPerWorker = 128UL;
+    const auto numberOfTuplesToProduce = 100UL;
+    const auto windowSize = 10;
+
+    auto handlerIndex = 0;
+    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                    timeStampField, leftSchema);
+
+    LazyJoinBuildHelper buildHelper = {
+        .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
+        .numPartitions = 1,
+        .numberOfTuplesToProduce = numberOfTuplesToProduce,
+        .numberOfBuffersPerWorker = numberOfBuffersPerWorker,
+        .noWorkerThreads = noWorkerThreads,
+        .joinSizeInByte = joinSizeInByte,
+        .windowSize = windowSize,
+        .lazyJoinBuild = lazyJoinBuild,
+        .joinFieldName = joinFieldNameLeft,
+        .bufferManager = bm,
+        .schema = leftSchema,
+        .lazyJoinOperatorTest = this
+    };
+
+    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+}
+
+
+TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
                           ->addField("f2_left", BasicType::UINT64)
@@ -259,6 +362,14 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     }
 
 
+
+}
+
+TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleWindows) {
+    // test here if multiple windows can be correctly sinked together
+    // and this means setting the windowsize to 10 and then inserting  1000 tuples and testing if the expected output is being
+    // returned
+    NES_NOT_IMPLEMENTED();
 
 }
 

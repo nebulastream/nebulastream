@@ -29,15 +29,18 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  uint64_t counterFinishedBuildingStart,
                                                  uint64_t counterFinishedSinkStart,
                                                  size_t totalSizeForDataStructures,
-                                                 size_t windowSize)
+                                                 size_t windowSize,
+                                                 size_t pageSize,
+                                                 size_t numPartitions)
                                                     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
                                                     joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
                                                     counterFinishedSinkStart(counterFinishedSinkStart),
                                                     totalSizeForDataStructures(totalSizeForDataStructures),
-                                                    windowSize(windowSize){
+                                                    windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
 
-    size_t minRequiredSize = NUM_PARTITIONS * PREALLOCATED_SIZE;
+    NES_ASSERT2_FMT(0 != numPartitions, "NumPartitions is 0: " << numPartitions);
+    size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures, "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
 
 
@@ -63,11 +66,11 @@ void LazyJoinOperatorHandler::start(PipelineExecutionContextPtr,StateManagerPtr,
 void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG("stop LazyJoinOperatorHandler");
 }
+
 void LazyJoinOperatorHandler::createNewLocalHashTables() {
     lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
-                                           totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
-                                           joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp
-                                 );
+                                 totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
+                                 joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
 }
 
 void LazyJoinOperatorHandler::deleteWindow(size_t timeStamp) {
@@ -94,11 +97,14 @@ LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
 LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled() {
     return getWindow(lastTupleTimeStamp);
 }
+
 void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment) {
     lastTupleTimeStamp += increment;
 }
+
 size_t LazyJoinOperatorHandler::getWindowSize() const {
     return windowSize;
 }
+size_t LazyJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 } // namespace NES::Runtime::Execution

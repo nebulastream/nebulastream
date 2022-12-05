@@ -29,20 +29,18 @@ class LocalHashTable {
     explicit LocalHashTable(size_t sizeOfRecord,
                             size_t numPartitions,
                             std::atomic<uint64_t>& tail,
-                            size_t overrunAddress);
+                            size_t overrunAddress,
+                            size_t pageSize);
 
     uint8_t* insert(uint64_t key) const;
 
-    /**
-     * @brief
-     * @param bucketPos
-     * @return
-     */
     FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos) const;
+
+    size_t getBucketPos(uint64_t key) const;
 
   private:
     std::vector<FixedPagesLinkedList*> buckets;
-
+    size_t mask;
 
 };
 } // namespace NES::Runtime::Execution::Operators

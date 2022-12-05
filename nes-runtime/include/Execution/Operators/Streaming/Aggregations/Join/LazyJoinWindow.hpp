@@ -27,7 +27,7 @@ class LazyJoinWindow {
   public:
     explicit LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
                             size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                            size_t lastTupleTimeStamp);
+                            size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions);
     virtual ~LazyJoinWindow();
 
     Operators::LocalHashTable& getLocalHashTable(size_t index, bool leftSide);
