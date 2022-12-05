@@ -94,14 +94,9 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
                 break;
             }
         }
-//        auto ts = std::chrono::system_clock::now();
-//        auto timeNow = std::chrono::system_clock::to_time_t(ts);
-//        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
         NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
         NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
         NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
-//        storageFile << oldStorageSize - pq.size() << "\n";
-//        storageFile.flush();
     }
 }
 
