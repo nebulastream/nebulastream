@@ -60,13 +60,13 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto& localHashTable = opHandler->getWindowToBeFilled().getLocalHashTable(workerIdIndex, isLeftSide);
 
 
-    for (auto a = 0; a < NUM_PARTITIONS; ++a) {
+    for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
     }
 
     if (opHandler->getWindowToBeFilled().fetchSubBuild(1) == 1) {
         // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-        for (auto i = 0; i < NUM_PARTITIONS; ++i) {
+        for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
             auto partitionId = i + 1;
             auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(partitionId), 1, opHandler);
             pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));

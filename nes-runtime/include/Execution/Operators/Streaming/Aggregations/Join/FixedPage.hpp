@@ -29,7 +29,9 @@ namespace NES::Runtime::Execution::Operators {
  */
 class FixedPage{
   public:
-    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize = CHUNK_SIZE);
+    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize);
+
+    FixedPage() = default;
 
     FixedPage(FixedPage* page);
 
@@ -70,10 +72,10 @@ class FixedPage{
     void swap(FixedPage& lhs, FixedPage& rhs);
 
   private:
-    size_t sizeOfRecord;
-    uint8_t* data;
-    size_t pos;
-    size_t capacity;
+    size_t sizeOfRecord{0};
+    uint8_t* data{nullptr};
+    size_t pos{0};
+    size_t capacity{0};
     std::unique_ptr<BloomFilter> bloomFilter;
 };
 

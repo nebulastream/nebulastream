@@ -26,8 +26,7 @@
 
 namespace NES::Runtime::Execution {
 
-class LazyJoinOperatorHandler;
-using LazyJoinOperatorHandlerPtr = std::shared_ptr<LazyJoinOperatorHandler>;
+
 class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
 
@@ -40,7 +39,9 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
                                      uint64_t counterFinishedBuildingStart,
                                      uint64_t counterFinishedSinkStart,
                                      size_t totalSizeForDataStructures,
-                                     size_t windowSize);
+                                     size_t windowSize,
+                                     size_t pageSize = CHUNK_SIZE,
+                                     size_t numPartitions = NUM_PARTITIONS);
 
     SchemaPtr getJoinSchemaLeft() const;
     SchemaPtr getJoinSchemaRight() const;
@@ -68,6 +69,8 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
 
     size_t getWindowSize() const;
 
+    size_t getNumPartitions() const;
+
   private:
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
@@ -80,7 +83,8 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     size_t totalSizeForDataStructures;
     uint64_t lastTupleTimeStamp;
     size_t windowSize;
-
+    size_t pageSize;
+    size_t numPartitions;
 };
 
 } // namespace NES::Runtime::Execution::Operators

@@ -40,7 +40,10 @@ uint64_t LazyJoinWindow::fetchSubBuild(uint64_t sub) {
 
 LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
                                size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                               size_t lastTupleTimeStamp) : lastTupleTimeStamp(lastTupleTimeStamp) {
+                               size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
+                        : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
+      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), lastTupleTimeStamp(lastTupleTimeStamp)
+{
 
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
@@ -53,9 +56,11 @@ LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinish
     localHashTableRightSide.reserve(maxNoWorkerThreads);
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, NUM_PARTITIONS, tail, overrunAddress));
-        localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, NUM_PARTITIONS, tail, overrunAddress));
+        localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
+        localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
     }
+
+
 }
 
 LazyJoinWindow::~LazyJoinWindow() {

@@ -21,16 +21,26 @@ namespace NES::Runtime::Execution::Operators {
 LocalHashTable::LocalHashTable(size_t sizeOfRecord,
                                size_t numPartitions,
                                std::atomic<uint64_t>& tail,
-                               size_t overrunAddress) {
+                               size_t overrunAddress,
+                               size_t pageSize) {
     buckets.reserve(numPartitions);
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, sizeOfRecord));
+        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, sizeOfRecord, pageSize));
     }
+    mask = numPartitions - 1;
 }
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
     auto hashedKey = Util::murmurHash(key);
-    return buckets[hashedKey & MASK]->append(hashedKey);
+    return buckets[getBucketPos(hashedKey)]->append(hashedKey);
+}
+
+size_t LocalHashTable::getBucketPos(uint64_t key) const {
+    if (mask == 0) {
+        return 0;
+    }
+
+    return key % mask;
 }
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {

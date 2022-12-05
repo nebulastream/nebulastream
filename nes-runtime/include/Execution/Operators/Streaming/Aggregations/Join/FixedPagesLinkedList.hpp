@@ -25,7 +25,8 @@ namespace NES::Runtime::Execution::Operators {
  */
 class FixedPagesLinkedList{
   public:
-    FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord);
+    FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord,
+                         size_t pageSize);
 
     ~FixedPagesLinkedList();
 
@@ -40,6 +41,7 @@ class FixedPagesLinkedList{
     uint64_t overrunAddress;
     std::vector<FixedPage*> pages;
     size_t sizeOfRecord;
+    size_t pageSize;
 };
 }
 
