@@ -16,7 +16,7 @@
 #define NES_NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_
 namespace NES {
 /**
- * @brief Base class for all nes specific data types
+ * @brief Base class for all nes specific variable-sized data types
  */
 class BaseVariableSizeType {};
 
