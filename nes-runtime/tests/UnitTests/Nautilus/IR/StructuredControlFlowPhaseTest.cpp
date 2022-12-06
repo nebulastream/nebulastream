@@ -25,7 +25,6 @@
 #include <memory>
 #include <unordered_map>
 
-
 namespace NES::Nautilus {
 /**
  * @brief The StructuredControlFlowPhaseTest contains a battery of tests that all do the following:
@@ -71,12 +70,17 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         std::string correctMergeBlockId;
     };
     using CorrectBlockValuesPtr = std::unique_ptr<CorrectBlockValues>;
-    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks, 
-            std::string correctBlockId, uint32_t correctNumberOfBackLinks, std::string correctMergeBlockId) {
-        correctBlocks.emplace(std::pair{correctBlockId, std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, correctMergeBlockId})});
+    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks,
+                            std::string correctBlockId,
+                            uint32_t correctNumberOfBackLinks,
+                            std::string correctMergeBlockId) {
+        correctBlocks.emplace(
+            std::pair{correctBlockId,
+                      std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, correctMergeBlockId})});
     }
 
-    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock, const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
+    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock,
+                               const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
         std::vector<IR::BasicBlockPtr> candidates;
         std::unordered_set<std::string> visitedBlocks;
         candidates.push_back(currentBlock);
@@ -85,42 +89,44 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         do {
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = candidates.back();
-            if(correctBlocks.contains(currentBlock->getIdentifier())) {
-                auto ifOp =  std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-                backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-                if(!backLinksAreCorrect) {
-                    NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-                    << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+            if (correctBlocks.contains(currentBlock->getIdentifier())) {
+                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+                backLinksAreCorrect = currentBlock->getNumLoopBackEdges()
+                    == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                if (!backLinksAreCorrect) {
+                    NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -"
+                                          << currentBlock->getNumLoopBackEdges() << "- backLinks instead of: -"
+                                          << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
                 }
                 auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
-                if(!correctMergeBlockId.empty()) {
+                if (!correctMergeBlockId.empty()) {
                     mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
                 } else {
                     mergeBlocksAreCorrect = !ifOp->getMergeBlock();
                 }
-                if(!mergeBlocksAreCorrect) {
-                    NES_ERROR("\nMerge-Block mismatch for block " << currentBlock->getIdentifier() << ": " <<
-                    ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
-                    correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+                if (!mergeBlocksAreCorrect) {
+                    NES_ERROR("\nMerge-Block mismatch for block "
+                              << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier() << " instead of "
+                              << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
                 }
             }
             candidates.pop_back();
             auto terminatorOp = currentBlock->getTerminatorOp();
-            if(terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {   
+            if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                if(!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
                 }
             } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                if(!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
                 }
-                if(!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
+                if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
                 }
             }
-        } while(mergeBlocksAreCorrect && backLinksAreCorrect && !candidates.empty());
+        } while (mergeBlocksAreCorrect && backLinksAreCorrect && !candidates.empty());
         return mergeBlocksAreCorrect;
     }
 };
@@ -310,7 +316,7 @@ Value<> loopMergeBlockBeforeCorrespondingIfOperation_7() {
     Value agg = Value(0);
     Value limit = Value(1000);
     while (agg < limit) {
-        if(agg < 350) {
+        if (agg < 350) {
             agg = agg + 1;
         } else {
             agg = agg + 3;
@@ -329,13 +335,13 @@ TEST_P(StructuredControlFlowPhaseTest, 7_loopMergeBlockBeforeCorrespondingIfOper
 Value<> mergeLoopMergeBlockWithLoopFollowUp_8() {
     Value agg = Value(0);
     Value limit = Value(1000000);
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
         agg = agg + 3;
     }
     while (agg < limit) {
-        if(agg < 350) {
+        if (agg < 350) {
             agg = agg + 1;
         } else {
             agg = agg + 3;
@@ -360,17 +366,17 @@ Value<> LoopHeaderWithNineBackLinks_9() {
     Value agg = Value(0);
     Value limit = Value(1000);
     while (agg < limit) {
-        if(agg < 350) {
-            if(agg < 350) {
-                if(agg < 350) {
+        if (agg < 350) {
+            if (agg < 350) {
+                if (agg < 350) {
                     agg = agg + 1;
                 } else {
                     agg = agg + 3;
                 }
-                if(agg < 350) {
+                if (agg < 350) {
 
                 } else {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
                         agg = agg + 3;
@@ -378,27 +384,24 @@ Value<> LoopHeaderWithNineBackLinks_9() {
                     agg = agg + 4;
                 }
             } else {
-
             }
         } else {
-            if(agg < 350) {
-                if(agg < 350) {
-                    if(agg < 350) {
+            if (agg < 350) {
+                if (agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
                         agg = agg + 1;
                     }
                 } else {
-
                 }
             } else {
-                if(agg < 350) {
-                
+                if (agg < 350) {
+
                 } else {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
-
                     }
                 }
             }
@@ -429,7 +432,7 @@ TEST_P(StructuredControlFlowPhaseTest, 9_loopHeaderWithNineBackLinks) {
 Value<> mergeLoopBlock_10() {
     Value agg = Value(0);
     Value limit = Value(10);
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
         agg = agg + 3;
@@ -450,10 +453,10 @@ TEST_P(StructuredControlFlowPhaseTest, 10_mergeLoopBlock) {
 Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11() {
     Value agg = Value(0);
     Value limit = Value(1000000);
-    if(agg < 150) {
-            agg = agg + 1;
+    if (agg < 150) {
+        agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 1;
         } else {
             agg = agg + 1;
@@ -469,12 +472,12 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
                 agg = agg + 1;
             }
         }
-        if(agg < 150) {
+        if (agg < 150) {
 
         } else {//11
-            if(agg < 250) {
+            if (agg < 250) {
                 while (agg < limit) {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     }
                 }
@@ -482,16 +485,16 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
                     agg = agg + 1;
                 }
             }
-            if(agg < 450) {
+            if (agg < 450) {
                 agg = agg + 1;
             } else {
                 agg = agg + 2;
             }
-            if(agg < 550) {
+            if (agg < 550) {
                 agg = agg + 1;
             } else {
                 while (agg < limit) {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     }
                 }
@@ -508,7 +511,7 @@ TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNes
     createCorrectBlock(correctBlocks, "3", 0, "19");
     createCorrectBlock(correctBlocks, "9", 1, "");
     createCorrectBlock(correctBlocks, "18", 1, "");
-    createCorrectBlock(correctBlocks, "19", 0, "42"); //42 is merge block for many if-operations
+    createCorrectBlock(correctBlocks, "19", 0, "42");//42 is merge block for many if-operations
     createCorrectBlock(correctBlocks, "11", 0, "35");
     createCorrectBlock(correctBlocks, "44", 2, "");
     createCorrectBlock(correctBlocks, "22", 0, "44");
@@ -523,10 +526,9 @@ TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNes
 
 Value<> emptyIfElse_12() {
     Value agg = Value(0);
-    if(agg < 350) {
+    if (agg < 350) {
 
     } else {
-
     }
     return agg;
 }
@@ -534,16 +536,16 @@ TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
     auto ir = createTraceAndApplyPhases(&emptyIfElse_12);
     auto convertedIfOperation = ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp();
     ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
-    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp());
+    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(
+        ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp());
     ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "3");
 }
 
 Value<> MergeBlockRightAfterBranchSwitch_13() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-
     }
     return agg;
 }
@@ -556,11 +558,10 @@ TEST_P(StructuredControlFlowPhaseTest, 13_MergeBlockRightAfterBranchSwitch) {
 
 Value<> StartBlockIsMergeBlock_14() {
     Value agg = Value(0);
-    while(agg < 10) {
-        if(agg < 150) {
+    while (agg < 10) {
+        if (agg < 150) {
             agg = agg + 1;
         } else {
-
         }
     }
     return agg;
@@ -575,10 +576,10 @@ TEST_P(StructuredControlFlowPhaseTest, 14_StartBlockIsMergeBlock) {
 
 Value<> correctMergeBlockForwardingAfterFindingMergeBlocksOne_15() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 2;
         } else {
             agg = agg + 3;
@@ -589,10 +590,10 @@ Value<> correctMergeBlockForwardingAfterFindingMergeBlocksOne_15() {
 }
 Value<> correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 2;
         } else {
             agg = agg + 3;
@@ -622,7 +623,6 @@ Value<> OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_1
             if (agg > 18) {
                 agg = agg + 2;
             } else {
-
             }
         } else {
             agg = agg + 3;
@@ -643,10 +643,9 @@ Value<> NestedLoopWithFalseBranchPointingToParentLoopHeader_17() {
     Value agg = Value(0);
     Value limit = Value(10);
     while (agg < limit) {
-        if( agg < limit) {
-            agg = agg + 1;    
-        }
-        else {            
+        if (agg < limit) {
+            agg = agg + 1;
+        } else {
             for (Value start = 0; start < 10; start = start + 1) {
                 agg = agg + 1;
             }
@@ -662,8 +661,6 @@ TEST_P(StructuredControlFlowPhaseTest, 17_NestedLoopWithFalseBranchPointingToPar
     createCorrectBlock(correctBlocks, "8", 1, "");
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
-
-
 
 //==----------------------------------------------------------------==//
 //==------------------- TRACING/Printing BREAKERS ------------------==//
@@ -698,17 +695,17 @@ TEST_P(StructuredControlFlowPhaseTest, DISABLED_InterruptedMergeBlockForwarding)
 Value<> TracingBreaker() {
     Value agg = Value(0);
     Value limit = Value(10);
-    if(agg < 350) {
-         agg = agg + 1;
+    if (agg < 350) {
+        agg = agg + 1;
     }
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
-        if(agg < 350) {
-            if(agg < 350) { //the 'false' case of this if this if-operation has no operations -> Block_9
+        if (agg < 350) {
+            if (agg < 350) {//the 'false' case of this if this if-operation has no operations -> Block_9
                 agg = agg + 1;
             } else {
-                agg = agg + 2; // leads to empty block
+                agg = agg + 2;// leads to empty block
             }
         }
     }

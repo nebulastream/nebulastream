@@ -25,8 +25,8 @@ BasicBlock::BasicBlock(std::string identifier,
                        int32_t scopeLevel,
                        std::vector<Operations::OperationPtr> operations,
                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel), numLoopBackEdges(0),
-      operations(std::move(operations)), arguments(std::move(arguments)) {}
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), numLoopBackEdges(0), operations(std::move(operations)),
+      arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }

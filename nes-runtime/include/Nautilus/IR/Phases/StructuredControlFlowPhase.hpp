@@ -15,8 +15,8 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
@@ -40,7 +40,7 @@ class StructuredControlFlowPhase {
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-    private:
+  private:
     /**
      * @brief Internal context object contains phase logic and state.
      */
@@ -66,7 +66,6 @@ class StructuredControlFlowPhase {
         void process();
 
       private:
-
         /**
          * @brief Iterates over IR graph, finds all loop-header-blocks, and marks them.
          * 
@@ -74,8 +73,10 @@ class StructuredControlFlowPhase {
          */
         void findLoopHeadBlocks(IR::BasicBlockPtr currentBlock);
 
-        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, std::stack<IR::BasicBlockPtr>& candidates, 
-                        std::unordered_set<std::string>& visitedBlocks, std::unordered_set<std::string>& loopHeadCandidates);
+        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock,
+                                                 std::stack<IR::BasicBlockPtr>& candidates,
+                                                 std::unordered_set<std::string>& visitedBlocks,
+                                                 std::unordered_set<std::string>& loopHeadCandidates);
 
         /**
          * @brief Iterates over IR graph, and connects all if-operations with their corresponding merge-blocks.
@@ -94,11 +95,11 @@ class StructuredControlFlowPhase {
          * @param newVisit: Signals whether we reached the currentBlock via a new edge.
          * @return true, if the currentBlock is a merge-block with open edges, and false if not.
          */
-        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
-                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter, 
-                    bool newVisit,
-                    const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody);
+        bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock,
+                                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
+                                    std::unordered_map<std::string, uint32_t>& candidateEdgeCounter,
+                                    bool newVisit,
+                                    const std::unordered_set<IR::BasicBlockPtr>& loopBlockWithVisitedBody);
 
       private:
         std::shared_ptr<IR::IRGraph> ir;
@@ -106,5 +107,5 @@ class StructuredControlFlowPhase {
     };
 };
 
-}// namespace NES::Nautilus::Tracing
+}// namespace NES::Nautilus::IR
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
