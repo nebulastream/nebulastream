@@ -64,8 +64,6 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
     statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
     statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
-    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    storageFile << getStorageSize() << "\n";
 }
 
 void WorkerContext::printPropagationDelay(uint64_t timestamp) {
@@ -78,6 +76,8 @@ void WorkerContext::printPropagationDelay(uint64_t timestamp) {
     propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
     propagationFile << timestamp << ",";
     propagationFile << value.count() - timestamp << "\n";
+    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    storageFile << getStorageSize() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
