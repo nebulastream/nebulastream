@@ -23,27 +23,42 @@ namespace NES::Runtime::Execution::Aggregation {
  * Base class for aggregation Value
  */
 struct AggregationValue {
-     //int64_t count; // TODO add count to base class adjust MemRef (sumAggValue = memRefcount + offsite) clean that up and think about it
+     // TODO 3280: Do we need this? What parameters should be in the base class
 };
 
+/**
+ * Class for average aggregation Value, maintains sum and count to calc avg in the lower function
+ */
 struct AvgAggregationValue : AggregationValue {
     int64_t sum = 0;
     int64_t count = 0;
 };
 
+/**
+ * Class for sum aggregation Value, maintains the sum of all occurred tuples
+ */
 struct SumAggregationValue : AggregationValue {
     int64_t sum = 0;
 };
 
+/**
+ * Class for count aggregation Value, maintains the number of occurred tuples
+ */
 struct CountAggregationValue : AggregationValue {
     int64_t count = 0;
 };
 
+/**
+ * Class for min aggregation Value, maintains the min value of all occurred tuples
+ */
 struct MinAggregationValue : AggregationValue {
     // TODO 3280: Take the max from the logical type
     int64_t min = std::numeric_limits<int64_t>::max();
 };
 
+/**
+ * Class for max aggregation Value, maintains the max value of all occurred tuples
+ */
 struct MaxAggregationValue : AggregationValue {
     // TODO 3280: Take the min from the logical type
     int64_t max = std::numeric_limits<int64_t>::min();
