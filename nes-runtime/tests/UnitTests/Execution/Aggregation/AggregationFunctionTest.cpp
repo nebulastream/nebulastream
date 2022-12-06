@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -40,7 +41,9 @@ class AggregationFunctionTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
 
-// TODO 3250: doc
+/**
+ * Tests the lift, combine, lower and reset functions of the Sum Aggregation
+ */
 TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
@@ -59,8 +62,15 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     // test lower
     auto aggregationResult = sumAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 2);
+
+    // test reset
+    sumAgg.reset(memref);
+    EXPECT_EQ(sumValue.sum, 0);
 }
 
+/**
+ * Tests the lift, combine, lower and reset functions of the Count Aggregation
+ */
 TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
@@ -79,14 +89,20 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     // test lower
     auto aggregationResult = countAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 2);
+
+    // test reset
+    countAgg.reset(memref);
+    EXPECT_EQ(countValue.count, 0);
 }
 
+/**
+ * Tests the lift, combine, lower and reset functions of the Average Aggregation
+ */
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     DataTypePtr doubleType = DataTypeFactory::createDouble();
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
     auto avgValue = Aggregation::AvgAggregationValue();
-//    auto memrefCount = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue.count);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
@@ -104,13 +120,15 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     auto aggregationResult = avgAgg.lower(memref);
     EXPECT_EQ(aggregationResult, 2);
 
+    // test reset
     avgAgg.reset(memref);
     EXPECT_EQ(avgValue.count, 0);
     EXPECT_EQ(avgValue.sum, 0);
-
-
 }
 
+/**
+ * Tests the lift, combine, lower and reset functions of the Min Aggregation
+ */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
@@ -121,14 +139,23 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     // lift value in minAgg
     minAgg.lift(memref, incomingValue);
     ASSERT_EQ(minValue.min, incomingValue);
+
     // combine memrefs in minAgg
     minAgg.combine(memref, memref);
     ASSERT_EQ(minValue.min, 1);
+
     // lower value in minAgg
     auto aggregationResult = minAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 1);
+
+    // test reset
+    minAgg.reset(memref);
+    EXPECT_EQ(minValue.min, std::numeric_limits<int64_t>::max());
 }
 
+/**
+ * Tests the lift, combine, lower and reset functions of the Max Aggregation
+ */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
@@ -139,13 +166,18 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     // lift value in minAgg
     maxAgg.lift(memref, incomingValue);
     ASSERT_EQ(maxValue.max, incomingValue);
+
     // combine memrefs in minAgg
     maxAgg.combine(memref, memref);
     ASSERT_EQ(maxValue.max, 2);
+
     // lower value in minAgg
     auto aggregationResult = maxAgg.lower(memref);
     ASSERT_EQ(aggregationResult, 2);
-}
 
+    // test reset
+    maxAgg.reset(memref);
+    EXPECT_EQ(maxValue.max, std::numeric_limits<int64_t>::min());
+}
 
 }// namespace NES::Runtime::Execution::Expressions
