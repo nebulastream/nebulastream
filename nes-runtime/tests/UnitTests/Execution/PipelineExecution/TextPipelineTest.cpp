@@ -101,7 +101,6 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
         auto index2 = buffer.storeChildBuffer(varLengthBuffer2);
 
         dynamicBuffer[i]["f1"].write(index);
-       // dynamicBuffer[i]["f2"].write(index2);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
