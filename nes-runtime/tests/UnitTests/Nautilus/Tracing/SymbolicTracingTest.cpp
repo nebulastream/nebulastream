@@ -778,4 +778,35 @@ TEST_F(SymbolicTracingTest, deepLoop) {
     ASSERT_EQ(basicBlocks.size(), 61);
 }
 
+Value<> TracingBreaker() {
+    Value agg = Value(0);
+    Value limit = Value(10);
+    if(agg < 350) {
+        agg = agg + 1;
+    }
+    if(agg < 350) {
+        agg = agg + 1;
+    } else {
+        if(agg < 350) {
+            if(agg < 350) { //the 'false' case of this if this if-operation has no operations -> Block_9
+                agg = agg + 1;
+            } else {
+                agg = agg + 2; // leads to empty block
+            }
+        }
+    }
+    return agg;
+}
+
+TEST_F(SymbolicTracingTest, TracingBreaker) {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
+        TracingBreaker();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 13);
+}
+
 }// namespace NES::Nautilus::Tracing
