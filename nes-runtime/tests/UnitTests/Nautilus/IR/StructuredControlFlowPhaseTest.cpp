@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/Loop/LoopOperation.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
+#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -62,39 +63,76 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
         removeBrOnlyBlocksPhase.apply(ir);
+        loopDetectionPhase.apply(ir);
         structuredControlFlowPhase.apply(ir);
         return ir;
     }
-
+    /**
+     * @brief lowerBound, upperBound, stepSize, loopEndBlockId
+     */
+    struct CountedLoopInfo {
+        uint32_t lowerBound;
+        uint32_t upperBound;
+        uint32_t stepSize;
+        std::string loopEndBlockId;
+    };
+    using countedLoopInfoPtr = std::unique_ptr<CountedLoopInfo>;
     struct CorrectBlockValues {
         uint32_t correctNumberOfBackLinks;
+        std::unique_ptr<CountedLoopInfo> countedLoopInfo;
         std::string correctMergeBlockId;
     };
     using CorrectBlockValuesPtr = std::unique_ptr<CorrectBlockValues>;
-    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks,
-                            std::string correctBlockId,
-                            uint32_t correctNumberOfBackLinks,
-                            std::string correctMergeBlockId) {
-        correctBlocks.emplace(
-            std::pair{correctBlockId,
-                      std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, correctMergeBlockId})});
+    void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks, 
+            std::string correctBlockId, uint32_t correctNumberOfBackLinks, 
+            std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) { //Todo remove default -> adapt tests
+                correctBlocks.emplace(std::pair{correctBlockId, 
+                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, 
     }
 
-    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock,
-                               const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
+    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock, const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
         std::vector<IR::BasicBlockPtr> candidates;
         std::unordered_set<std::string> visitedBlocks;
         candidates.push_back(currentBlock);
         bool mergeBlocksAreCorrect = true;
+        bool loopInfoIsCorrect = true;
         bool backLinksAreCorrect = true;
         do {
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = candidates.back();
             auto terminatorOp = currentBlock->getTerminatorOp();
-            if(correctBlocks.contains(currentBlock->getIdentifier())) {
-                //Todo avoid double casting
-                if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
-                    auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
+            // if(correctBlocks.contains(currentBlock->getIdentifier())) {
+            //     if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
+            //         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
+            //         auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
+            //         if(!correctMergeBlockId.empty()) {
+            //             mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
+            //         } else {
+            //             mergeBlocksAreCorrect = !ifOp->getMergeBlock();
+            //         }
+            //         if(!mergeBlocksAreCorrect) {
+            //             NES_ERROR("\nMerge-Block mismatch for block " << currentBlock->getIdentifier() << ": " <<
+            //             ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
+            //             correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+            //         }
+            //     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
+            //         backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+            //         if(!backLinksAreCorrect) {
+            //             NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
+            //             << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+            //         }
+            //     }
+            // }
+            candidates.pop_back();
+            if(terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {   
+                auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
+                if(!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
+                    candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
+                }
+            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
+                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
+                // Check if operation for correctness.
+                if(correctBlocks.contains(currentBlock->getIdentifier())) {
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
                     if(!correctMergeBlockId.empty()) {
                         mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
@@ -106,25 +144,8 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                         ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
                         correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
                     }
-                } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
-                    // Todo check LoopInfo
-                    // auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
-                    backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-                    if(!backLinksAreCorrect) {
-                        NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-                        << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
-                    }
                 }
-            }
-            candidates.pop_back();
-            if(terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {   
-                auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
-                }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
-                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
+                if(!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
                     candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
                 }
                 if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
@@ -132,6 +153,38 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                 }
             } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
                 auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
+                // Check loop operation for correctness.
+                if(correctBlocks.contains(currentBlock->getIdentifier())) {
+                    // Todo check LoopInfo
+                    if(correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo) {
+                        loopInfoIsCorrect = loopOp->getLoopInfo() != nullptr;
+                        if(!loopInfoIsCorrect) {
+                            NES_ERROR("Loop operation should contain counted loop info.");
+                        } else {
+                            auto countedLoopInfo = std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
+                            loopInfoIsCorrect = countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
+                            loopInfoIsCorrect = countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
+                            loopInfoIsCorrect = countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
+                            if(!loopInfoIsCorrect) {
+                                NES_ERROR("Loop info set incorrectly. Check values: " << 
+                                             "LowerBound: " << countedLoopInfo->lowerBound << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
+                                             "UpperBound: " << countedLoopInfo->upperBound << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
+                                             "StepSize: " << countedLoopInfo->stepSize << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize
+                                             );
+                            }
+                        }
+                    } else {
+                        loopInfoIsCorrect = !(loopOp->getLoopType() != IR::Operations::LoopOperation::LoopType::DefaultLoop);
+                        if(!loopInfoIsCorrect) {
+                            NES_ERROR("\n Loop operation should be default loop, but is not.");
+                        }
+                    }
+                    backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                    if(!backLinksAreCorrect) {
+                        NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
+                        << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                    }
+                }
                 if(!visitedBlocks.contains(loopOp->getLoopFalseBlock().getBlock()->getIdentifier())) {
                     candidates.emplace_back(loopOp->getLoopFalseBlock().getBlock());
                 }
@@ -725,9 +778,7 @@ Value<> SimpleCountedLoop() {
 TEST_P(StructuredControlFlowPhaseTest, 18_SimpleCountedLoop) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     auto ir = createTraceAndApplyPhases(&SimpleCountedLoop);
-    // createCorrectBlock(correctBlocks, "9", 2, "");
-    // createCorrectBlock(correctBlocks, "1", 0, "9");
-    // createCorrectBlock(correctBlocks, "8", 1, "");
+    createCorrectBlock(correctBlocks, "3", 1, "", std::make_unique<CountedLoopInfo>(CountedLoopInfo{0, 10, 1, "1"}));
     ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
