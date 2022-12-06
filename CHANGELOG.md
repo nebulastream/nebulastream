@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.73](https://github.com/nebulastream/nebulastream/tree/v0.3.73) (2022-12-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.72...v0.3.73)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Add IF Operations [\#3167](https://github.com/nebulastream/nebulastream/issues/3167)
+
 ## [v0.3.72](https://github.com/nebulastream/nebulastream/tree/v0.3.72) (2022-11-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.71...v0.3.72)
