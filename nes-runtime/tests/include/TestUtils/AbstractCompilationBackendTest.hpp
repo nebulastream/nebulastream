@@ -16,6 +16,7 @@
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
+#include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
@@ -33,6 +34,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
+    Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));

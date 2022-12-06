@@ -21,6 +21,7 @@ LoopOperation::LoopOperation(LoopType loopType)
     : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
+// Todo leads to segfault
 void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
 
 BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }

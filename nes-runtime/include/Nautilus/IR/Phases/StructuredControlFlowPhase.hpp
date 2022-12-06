@@ -28,9 +28,8 @@ namespace NES::Nautilus::IR {
 
 /**
  * @brief This phase takes an IR graph with blocks that either have branch- or if-operations as terminator-operations.
- *        Subsequently, this phase detects which if-operations are loop operations, converts them and enriches them with
- *        relevant information. Furthermore, if-operations are matched with their correct corresponding merge-blocks,.
- *        Also if-operations are enriched with information on which blocks branch to the merge-blocks. 
+ *        Subsequently, this phase matches if-operations with their correct corresponding merge-blocks.
+ *        Also, if-operations are enriched with information on which blocks branch to the merge-blocks. 
  *        This is required to correctly create MLIR YieldOps.
  */
 class StructuredControlFlowPhase {
@@ -67,19 +66,6 @@ class StructuredControlFlowPhase {
         void process();
 
       private:
-
-        /**
-         * @brief Iterates over IR graph, finds all loop-header-blocks, and marks them.
-         * 
-         * @param currentBlock: Initially will be the body-block of the root operation.
-         */
-        void findLoopHeadBlocks(IR::BasicBlockPtr currentBlock);
-
-        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, 
-                        std::stack<IR::BasicBlockPtr>& candidates, std::unordered_set<std::string>& visitedBlocks, 
-                        std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock,
-                        std::unordered_map<std::string, std::shared_ptr<Operations::ConstIntOperation>>& constantValues);
-
         /**
          * @brief Iterates over IR graph, and connects all if-operations with their corresponding merge-blocks.
          * 
@@ -109,5 +95,5 @@ class StructuredControlFlowPhase {
     };
 };
 
-}// namespace NES::Nautilus::Tracing
+}// namespace NES::Nautilus::IR::StructuredControlFlowPhase
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_STRUCTUREDCONTROLFLOWPHASE_HPP_
