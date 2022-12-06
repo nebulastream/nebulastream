@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.74](https://github.com/nebulastream/nebulastream/tree/v0.3.74) (2022-12-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.73...v0.3.74)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Handle Text data types in Scan and Emit operator [\#3217](https://github.com/nebulastream/nebulastream/issues/3217)
+
 ## [v0.3.73](https://github.com/nebulastream/nebulastream/tree/v0.3.73) (2022-12-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.72...v0.3.73)
