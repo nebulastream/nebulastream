@@ -47,12 +47,12 @@ WorkerContext::~WorkerContext() {
     storageFile.close();
 }
 
-size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
-    auto iteratorPartitionId = this->storage.find(nesPartitionId);
-    if (iteratorPartitionId != this->storage.end()) {
-        return iteratorPartitionId->second.size();
+size_t WorkerContext::getStorageSize() {
+    size_t size = 0;
+    for (auto iteratorPartitionId: this->storage) {
+        size += iteratorPartitionId.second.size();
     }
-    return 0;
+    return size;
 }
 
 void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
@@ -64,6 +64,8 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
     statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
     statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
+    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    storageFile << getStorageSize() << "\n";
 }
 
 void WorkerContext::printPropagationDelay(uint64_t timestamp) {
@@ -112,15 +114,7 @@ void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    auto now = std::chrono::system_clock::now();
-    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
-    auto epoch = now_ms.time_since_epoch();
-    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
-    auto ts = std::chrono::system_clock::now();
-    auto timeNow = std::chrono::system_clock::to_time_t(ts);
     storage[nesPartitionId].push(buffer);
-    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    storageFile << getStorageSize(nesPartitionId) << "\n";
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {

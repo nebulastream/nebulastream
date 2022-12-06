@@ -135,7 +135,7 @@ class WorkerContext {
      * @brief This method reutrn buffer storage size
      * @return size
      */
-    size_t getStorageSize(Network::NesPartition nesPartitionId);
+    size_t getStorageSize();
 
     /**
      * @brief This method inserts a tuple buffer into the storage
