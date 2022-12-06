@@ -341,9 +341,9 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
 
-    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    //auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
     //engine->setup();
-    engine->run(wasm.first, wasm.second);
+    //engine->run(wasm.first, wasm.second);
 }
 
 Value<> tmpExpression(Value<Int32> y) {

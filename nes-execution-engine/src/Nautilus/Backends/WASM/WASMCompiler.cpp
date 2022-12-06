@@ -62,10 +62,10 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
             auto floatStamp = cast_if<IR::Types::FloatStamp>(inputArg->getStamp().get());
             if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
                 args.push_back(BinaryenTypeFloat64());
-                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt64());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeFloat64());
             } else {
                 args.push_back(BinaryenTypeFloat32());
-                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt32());
+                argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeFloat32());
             }
         }
         localVarMapping.setValue(inputArg->getIdentifier(), argExpression);
@@ -331,11 +331,25 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::MulOperati
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::DivOperation>& divOp, BinaryenExpressions& expressions) {
     auto left = expressions.getValue(divOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(divOp->getRightInput()->getIdentifier());
+    auto type = BinaryenExpressionGetType(left);
+    BinaryenExpressionRef div;
     if (divOp->getStamp()->isFloat()) {
-
+        if (type == BinaryenTypeFloat32()) {
+            div = BinaryenBinary(wasm, BinaryenDivFloat32(), left, right);
+        } else {
+            BinaryenExpressionPrint(left);
+            std::cout << type << std::endl;
+            div = BinaryenBinary(wasm, BinaryenDivFloat64(), left, right);
+        }
+    } else if (type == BinaryenTypeInt32()) {
+        div = BinaryenBinary(wasm, BinaryenDivSInt32(), left, right);
+    } else {
+        div = BinaryenBinary(wasm, BinaryenDivSInt64(), left, right);
     }
+    //TODO unsigned int BinaryenDivUInt32()
     consumed.emplace(divOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(divOp->getRightInput()->getIdentifier(), right);
+    expressions.setValue(divOp->getIdentifier(), div);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ProxyCallOperation>& proxyCallOp, BinaryenExpressions& expressions) {
