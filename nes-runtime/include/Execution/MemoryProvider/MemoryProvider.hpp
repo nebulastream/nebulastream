@@ -83,7 +83,7 @@ class MemoryProvider {
      * @return true if no projections (entire record accessed) or if field is in projections, else return false.
      */
     [[nodiscard]] bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                       Nautilus::Record::RecordFieldIdentifier fieldIndex) const;
+                                     Nautilus::Record::RecordFieldIdentifier fieldIndex) const;
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

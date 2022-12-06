@@ -14,8 +14,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Common/ExecutableType/BaseVariableSizeType.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <string>
 namespace NES::Nautilus {
 
