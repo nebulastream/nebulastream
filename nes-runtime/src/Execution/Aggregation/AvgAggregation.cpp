@@ -41,12 +41,12 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
     auto countLeft = countLeftMemref.load<Nautilus::Int64>();
 
     auto sumRight = memref2.load<Nautilus::Int64>();
-    auto countrightMemref = (memref2+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
-    auto countright = countrightMemref.load<Nautilus::Int64>();
+    auto countRightMemref = (memref2+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
+    auto countRight = countRightMemref.load<Nautilus::Int64>();
 
 
     auto tmpSum = sumLeft + sumRight;
-    auto tmpCount = countLeft + countright;
+    auto tmpCount = countLeft + countRight;
 
     memref1.store(tmpSum);
     countLeftMemref.store(tmpCount);
@@ -57,7 +57,6 @@ Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
 
     auto countMemref = (memref+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto count = countMemref.load<Nautilus::Int64>();
-
     auto finalVal = sum / count;
 
     return finalVal;
