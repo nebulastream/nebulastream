@@ -23,4 +23,6 @@ message(STATUS "Building benchmarks tests...")
 # Adding e2e tests
 #add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
 
+add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
+
 message(STATUS "Done building benchmarks tests")
