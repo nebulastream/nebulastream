@@ -76,8 +76,6 @@ void WorkerContext::printPropagationDelay(uint64_t timestamp) {
     propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
     propagationFile << timestamp << ",";
     propagationFile << value.count() - timestamp << "\n";
-    storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    storageFile << getStorageSize() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
@@ -118,6 +116,12 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         auto& [nesPar, pq] = *iteratorPartitionId;
@@ -134,6 +138,8 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
         NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
         NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
+        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+        storageFile << getStorageSize() << "\n";
     }
 }
 
