@@ -11,16 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Common/DataTypes/DataTypeFactory.hpp"
+
 #include <Execution/Aggregation/AggregationValue.hpp>
-#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <mutex>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -90,7 +88,6 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
             FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
         }
         FunctionCall("resetCount", resetCount, handler);
-
     }
     FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
 }

@@ -23,42 +23,46 @@ AvgAggregationFunction::AvgAggregationFunction(const DataTypePtr& inputType, con
 void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load memref
     auto oldSum = memref.load<Nautilus::Int64>();// TODO 3280 check the type
-
+    // calc the offset to get Memref of the count value
     auto countMemref = (memref+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto oldCount = countMemref.load<Nautilus::Int64>();
 
-    // add the value
+    // add the values
     auto newSum = oldSum + value;
     auto newCount = oldCount +1;
-    // put back to the memref
+    // put updated values back to the memref
     memref.store(newSum);
     countMemref.store(newCount);
 }
 
 void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+    // load memref1
     auto sumLeft = memref1.load<Nautilus::Int64>();
+    // calc the offset to get Memref of the count value
     auto countLeftMemref = (memref1+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto countLeft = countLeftMemref.load<Nautilus::Int64>();
-
+    // load memref2
     auto sumRight = memref2.load<Nautilus::Int64>();
+    // calc the offset to get Memref of the count value
     auto countRightMemref = (memref2+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto countRight = countRightMemref.load<Nautilus::Int64>();
 
-
+    // add the values
     auto tmpSum = sumLeft + sumRight;
     auto tmpCount = countLeft + countRight;
-
+    // put updated values back to the memref
     memref1.store(tmpSum);
     countLeftMemref.store(tmpCount);
 }
 
 Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
+    // load memrefs
     auto sum = memref.load<Nautilus::Int64>();// TODO 3280 check the type
-
     auto countMemref = (memref+offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto count = countMemref.load<Nautilus::Int64>();
+    // calc the average
     auto finalVal = sum / count;
-
+    // return the average
     return finalVal;
 }
 
