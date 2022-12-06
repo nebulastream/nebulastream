@@ -132,7 +132,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->logLevel= LogLevel::LOG_TRACE;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
-
+    client.publish(mqtt::make_message(TOPIC, R"({ "value": 1 })"));
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -153,7 +153,7 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
     EXPECT_TRUE(wrk1->start(false, true));
 
     // send some data
-    client.publish(mqtt::make_message(TOPIC, R"({ "value": 1 })"));
+    client.publish(mqtt::make_message(TOPIC, R"({ "value": 2 })"));
     //client.publish(mqtt::make_message(TOPIC, R"({ "type" : ['h','e','l','l','o','t','h','e','r','e'], "value": 2 })"));
     //client.publish(mqtt::make_message(TOPIC, R"({ "type" : ['g','e','n','e','r','a','l',' ','g','r'], "value": 3 })"));
     sleep(1);
@@ -165,11 +165,11 @@ TEST_F(LoRaWANProxySourceMQTTTest, LoRaWANProxySourceDeployOneWorkerWithSourceCo
         + R"(", "TEXT_FORMAT", "APPEND"));)";
     string query2 = R"(Query::from("stream").filter(Attribute("value") < 3).sink(PrintSinkDescriptor::create());)";
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    sleep(10);
-    //EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId,2));
+    sleep(5);
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId,1));
     NES_INFO("\n\n --------- CONTENT --------- \n\n");
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
