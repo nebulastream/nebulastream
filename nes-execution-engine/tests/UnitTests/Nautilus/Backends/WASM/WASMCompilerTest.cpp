@@ -341,10 +341,33 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     std::cout << ir->toString() << std::endl;
     auto wasm = wasmCompiler.lower(ir);
 
-    Backends::WASM::WASMRuntime engine;
-    engine.run(wasm.first, wasm.second);
+    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    //engine->setup();
+    engine->run(wasm.first, wasm.second);
 }
 
+Value<> tmpExpression(Value<Int32> y) {
+    int intV = 42;
+    int *x = &intV;
+    if (y == 5) {
+        *x = 11;
+    }
+    return *x;
+}
+
+TEST_F(WASMExpressionTest, tmpExpressionTest) {
+    Value<Int32> tempx = 6;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
+        return tmpExpression(tempx);
+    });
+    //std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+    wasmCompiler.lower(ir);
+}
 
 
 }// namespace NES::Nautilus

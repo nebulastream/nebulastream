@@ -129,8 +129,8 @@ class Query1Test : public testing::Test, public ::testing::WithParamInterface<st
 
 TEST_P(Query1Test, tpchQ1) {
     auto bm = std::make_shared<Runtime::BufferManager>();
-    auto lineitemBuffer = TPCHUtil::getLineitems("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
-    auto ordersBuffer = TPCHUtil::getOrders("/home/pgrulich/projects/tpch-dbgen/", bm, std::get<1>(this->GetParam()), true);
+    auto lineitemBuffer = TPCHUtil::getLineitems("/home/victor/tpch-dbgen/data/", bm, std::get<1>(this->GetParam()), true);
+    auto ordersBuffer = TPCHUtil::getOrders("/home/victor/tpch-dbgen/data/", bm, std::get<1>(this->GetParam()), true);
 
     auto runtimeWorkerContext = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
     Scan scan = Scan(lineitemBuffer.first);

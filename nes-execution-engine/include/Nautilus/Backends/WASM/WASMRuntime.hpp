@@ -26,18 +26,22 @@ class WASMRuntime {
     void run(size_t binaryLength, char *queryBinary);
 
   private:
+    //wasmtime::Engine engine;
     /*
     wasm_engine_t *engine;
     wasmtime_store_t *store;
     wasmtime_context_t *context;
-    const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-    wasmtime_instance_t queryInstance;
     wasmtime_error_t *error;
     wasm_trap_t *trap;
-    wasmtime_linker_t *linker;
-*/
-    void initWASI(wasi_config_t* wasiConfig);
-    void parseWASMFile(wasm_byte_vec_t* bytes, const char* filename);
+    wasi_config_t *wasiConfig;
+    */
+    const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
+    //wasmtime_instance_t queryInstance;
+    //wasmtime_linker_t *linker;
+    const char queryEntryName[8] = "execute";
+    //const char cpythonEntryName[7] = "_start";
+
+    std::string parseWASMFile(const char* fileName);
     void prepareCPython();
 };
 

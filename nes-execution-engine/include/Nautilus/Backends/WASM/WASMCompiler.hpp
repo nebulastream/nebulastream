@@ -53,7 +53,7 @@ class WASMCompiler {
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
     using BlockExpressions = Mapping<std::string, BinaryenExpressionRef>;
-    using ExpressionsInBlocks = Mapping<std::string, std::vector<BinaryenExpressionRef>>;
+    using ProxyFunctions = Mapping<std::string, std::vector<BinaryenType>>;
   private:
     /**
      * Binaryen module which generates the final wasm binary code
@@ -85,10 +85,6 @@ class WASMCompiler {
      */
     std::vector<std::tuple<std::string, std::string, BinaryenExpressionRef>> blockLinking;
     /**
-     * Contains all expressions inside the current block
-     */
-    BinaryenExpressions currentExpressions;
-    /**
      * Stores created blocks before we link them via branches
      */
     BlockExpressions blocks;
@@ -97,9 +93,10 @@ class WASMCompiler {
      */
     IR::BasicBlockPtr currentBlock;
     /**
-     * Mapping of blocks and their contents
+     * Proxy functions used. Contains the proxy function name as key and a vector with the parameter &
+     * return types as value => {param_1, ..., param_n, return}
      */
-    ExpressionsInBlocks blockExpressions;
+    ProxyFunctions proxyFunctions;
 
     int index;
     int argIndex;
@@ -138,7 +135,6 @@ class WASMCompiler {
     void genBody(BinaryenExpressions expressions);
     BinaryenExpressionRef generateBody();
     static BinaryenType getBinaryenType(const IR::Types::StampPtr& stampPtr);
-    BinaryenExpressionRef makeInt32(BinaryenModuleRef module, int x);
 };
 }// namespace NES::Nautilus::Backends::WASM
 
