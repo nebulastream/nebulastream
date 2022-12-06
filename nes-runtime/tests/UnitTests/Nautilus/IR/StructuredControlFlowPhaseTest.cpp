@@ -18,6 +18,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,7 +56,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
-        auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() {
+        auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() {
             return nautilusFunction();
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
