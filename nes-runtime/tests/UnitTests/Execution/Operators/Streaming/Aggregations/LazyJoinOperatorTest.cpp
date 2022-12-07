@@ -118,8 +118,7 @@ bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bufferManager, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(schema, schema,
                                                                        joinFieldName, joinFieldName,
-                                                                       noWorkerThreads, noWorkerThreads,
-                                                                       noWorkerThreads, joinSizeInByte,
+                                                                       noWorkerThreads, noWorkerThreads, joinSizeInByte,
                                                                        windowSize, pageSize, numPartitions);
 
     auto pipelineContext = PipelineExecutionContext(-1,// mock pipeline id
@@ -177,7 +176,7 @@ bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
 
 
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestSingleThreaded) {
+TEST_F(LazyJoinOperatorTest, joinBuildTest) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
@@ -213,6 +212,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestSingleThreaded) {
     };
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
 TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
@@ -251,6 +251,8 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     };
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+
+    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
 TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
@@ -283,6 +285,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
     };
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
 TEST_F(LazyJoinOperatorTest, joinSinkTest) {
@@ -314,7 +317,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
-                                                                       noWorkerThreads, noWorkerThreads,
+                                                                       noWorkerThreads,
                                                                        noWorkerThreads,
                                                                        joinSizeInByte, windowSize);
 
@@ -351,18 +354,29 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
         lazyJoinBuildRight->execute(executionContext, recordRight);
     }
 
-    NES_DEBUG("Performing the sink step for the lazyJoin");
-
+    NES_DEBUG("Performing the sink step for the lazyJoin for " << emittedBuffers.size() << " buffers!");
     for (auto tupleBuffer : emittedBuffers) {
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
         lazyJoinSink->open(executionContext, recordBuffer);
-
-        // Checking if the sink step is correct
-        NES_NOT_IMPLEMENTED();
     }
 
 
+    // Checking if all windows have been deleted
+    ASSERT_EQ(lazyJoinOpHandler->getNumActiveWindows(), 0);
 
+    here weiter machen mit dem checken, ob der join erfolgreich war. Idee ist, dass man hier selber einen NLJ baut und dann einfach nur checkt, ob die tuplebuffer wieder gleich sind mit memcpy
+    ASSERT_EQ();
+
+    // Checking if the sink step is correct
+    NES_NOT_IMPLEMENTED();
+
+}
+
+TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleBuckets) {
+    // test here if multiple buckets can be correctly sinked together
+    // and this means setting the window size to be larger than the no. tuples and the no. partitions to some large stuff
+
+    NES_NOT_IMPLEMENTED();
 }
 
 TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleWindows) {

@@ -27,7 +27,6 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  std::string joinFieldNameRight,
                                                  size_t maxNoWorkerThreads,
                                                  uint64_t counterFinishedBuildingStart,
-                                                 uint64_t counterFinishedSinkStart,
                                                  size_t totalSizeForDataStructures,
                                                  size_t windowSize,
                                                  size_t pageSize,
@@ -35,7 +34,7 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight),
                                                     joinFieldNameLeft(joinFieldNameLeft), joinFieldNameRight(joinFieldNameRight),
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
-                                                    counterFinishedSinkStart(counterFinishedSinkStart),
+                                                    counterFinishedSinkStart(numPartitions),
                                                     totalSizeForDataStructures(totalSizeForDataStructures),
                                                     lastTupleTimeStamp(windowSize - 1), windowSize(windowSize),
                                                     pageSize(pageSize), numPartitions(numPartitions) {
@@ -112,5 +111,9 @@ size_t LazyJoinOperatorHandler::getWindowSize() const {
     return windowSize;
 }
 size_t LazyJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
+
+size_t LazyJoinOperatorHandler::getNumActiveWindows() {
+    return lazyJoinWindows.size();
+}
 
 } // namespace NES::Runtime::Execution

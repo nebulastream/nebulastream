@@ -68,14 +68,12 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     if (opHandler->getWindowToBeFilled().fetchSubBuild(1) == 1) {
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
 
-            JoinPartitionIdTumpleStamp joinPartitionIdTupleStamp {
-                .partitionId = i,
-                .lastTupleTimeStamp = opHandler->getWindowToBeFilled().getLastTupleTimeStamp()
-            };
+            auto* joinPartitionIdTupleStamp = new JoinPartitionIdTumpleStamp;
+            joinPartitionIdTupleStamp->partitionId = i,
+            joinPartitionIdTupleStamp->lastTupleTimeStamp = opHandler->getWindowToBeFilled().getLastTupleTimeStamp();
 
-            think about if this is the correct way
-
-            auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(&joinPartitionIdTupleStamp),
+            // TODO ask Ventura and/or Philipp if I have to call somewhere explicitly a delete
+            auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(joinPartitionIdTupleStamp),
                                                            sizeof(struct JoinPartitionIdTumpleStamp), opHandler);
 
             pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
@@ -109,7 +107,6 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
     }
 
-
     auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableFunctionCall",
                                                        getLocalHashTableFunctionCall,
                                                        operatorHandlerMemRef,
@@ -125,6 +122,11 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef->add(int8FieldType);
+    }
+
+    if (record.read(timeStampField) == lastTupleWindowRef) {
+        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
+                               ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
     }
 
 }
