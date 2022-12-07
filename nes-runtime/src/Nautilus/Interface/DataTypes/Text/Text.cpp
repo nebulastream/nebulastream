@@ -40,7 +40,9 @@ Value<Boolean> Text::equals(const Value<Text>& other) const {
 }
 
 TextValue* textSubstring(const TextValue* text, uint32_t index, uint32_t len){
-    NES_ASSERT(text->length() >= index + len, "Text was not long enough");
+    if(text->length() < index + len){
+        NES_THROW_RUNTIME_ERROR("Text was not long enough");
+    }
     auto resultText = TextValue::create(len);
     uint32_t j = 0;
     for(uint32_t i=index-1; i<index+len-1; i++){
