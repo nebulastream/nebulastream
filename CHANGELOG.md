@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.75](https://github.com/nebulastream/nebulastream/tree/v0.3.75) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.74...v0.3.75)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support Common Aggregation Functions in Nautilus [\#3250](https://github.com/nebulastream/nebulastream/issues/3250)
+
 ## [v0.3.74](https://github.com/nebulastream/nebulastream/tree/v0.3.74) (2022-12-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.73...v0.3.74)
