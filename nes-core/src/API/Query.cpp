@@ -234,7 +234,7 @@ Query Query::from(const std::string& sourceName) {
 
 Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
     NES_DEBUG("Query: add projection to query");
-    this->queryPlan = QueryPlanBuilder::addProject(expressions, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
     return *this;
 }
 
