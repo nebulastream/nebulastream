@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_H_
-#define NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_H_
+#ifndef NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
+#define NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
 
 #include <API/QueryAPI.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
 #include <list>
 #include <map>
 #include <string>
