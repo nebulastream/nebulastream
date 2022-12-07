@@ -37,14 +37,14 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
                                                     counterFinishedSinkStart(counterFinishedSinkStart),
                                                     totalSizeForDataStructures(totalSizeForDataStructures),
-                                                    windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
+                                                    lastTupleTimeStamp(windowSize - 1), windowSize(windowSize),
+                                                    pageSize(pageSize), numPartitions(numPartitions) {
 
     NES_ASSERT2_FMT(0 != numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures, "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
 
-
-    createNewLocalHashTables();
+    createNewWindow();
 }
 
 
@@ -65,9 +65,11 @@ void LazyJoinOperatorHandler::start(PipelineExecutionContextPtr,StateManagerPtr,
 
 void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG("stop LazyJoinOperatorHandler");
+    // TODO ask Philipp, if I should delete here all windows
 }
 
-void LazyJoinOperatorHandler::createNewLocalHashTables() {
+void LazyJoinOperatorHandler::createNewWindow() {
+    NES_DEBUG("LazyJoinOperatorHandler: create a new window for the lazyjoin")
     lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
                                  totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
                                  joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
@@ -90,8 +92,12 @@ LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
         }
     }
 
-    NES_THROW_RUNTIME_ERROR("Could not find lazyJoinWindow");
+    NES_THROW_RUNTIME_ERROR("Could not find lazyJoinWindow for timestamp: " << timeStamp);
 
+}
+
+uint64_t LazyJoinOperatorHandler::getLastTupleTimeStamp() const {
+    return lastTupleTimeStamp;
 }
 
 LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled() {
