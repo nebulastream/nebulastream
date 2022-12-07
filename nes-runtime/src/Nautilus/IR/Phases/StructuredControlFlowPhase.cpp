@@ -217,7 +217,8 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 //  1. Are in their false-branches (their merge-block was pushed to the stack).
                 //  2. Have a corresponding merge-block on the stack that matches the currentBlock.
                 do {
-                    ifOperations.top()->ifOp->setMergeBlock(std::move(mergeBlocks.top()));
+                    auto mergeBlock = std::move(mergeBlocks.top());
+                    ifOperations.top()->ifOp->setMergeBlock(std::move(mergeBlock));
                     mergeBlocks.pop();
                     ifOperations.pop();
                 } while (!ifOperations.empty() && !ifOperations.top()->isTrueBranch && !mergeBlocks.empty()
