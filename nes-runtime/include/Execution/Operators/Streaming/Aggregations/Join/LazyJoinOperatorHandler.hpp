@@ -39,7 +39,6 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
                                      std::string joinFieldNameRight,
                                      size_t maxNoWorkerThreads,
                                      uint64_t counterFinishedBuildingStart,
-                                     uint64_t counterFinishedSinkStart,
                                      size_t totalSizeForDataStructures,
                                      size_t windowSize,
                                      size_t pageSize = CHUNK_SIZE,
@@ -64,6 +63,8 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     void deleteWindow(size_t timeStamp);
 
     LazyJoinWindow& getWindow(size_t timeStamp);
+
+    size_t getNumActiveWindows();
 
     LazyJoinWindow& getWindowToBeFilled();
 

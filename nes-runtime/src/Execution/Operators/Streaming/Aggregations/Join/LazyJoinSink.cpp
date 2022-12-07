@@ -127,8 +127,12 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
 
+    NES_DEBUG("Joining for partitionId: " << partitionId << " and timeStamp: " << lastTupleTimeStamp);
 
+    NES_DEBUG("Retrieving left hashtable");
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
+
+    NES_DEBUG("Retrieving right hashtable");
     auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
@@ -153,9 +157,9 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 
 
-    if (opHandler->getWindow(joinPartTimestamp->lastTupleTimeStamp).fetchSubSink(1) == 1) {
+    if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
         // delete the current hash table
-        opHandler->deleteWindow(joinPartTimestamp->lastTupleTimeStamp);
+        opHandler->deleteWindow(lastTupleTimeStamp);
     }
 
 
@@ -167,9 +171,8 @@ void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 //    auto timeStampPtr = recordBuffer.getBuffer()->add(sizeOfPartitionId);
 //    auto timeStamp = timeStampPtr->load<UInt64>()->getValue();
 
-    auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
-
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
 
     Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
                            joinPartitionTimestampPtr);
