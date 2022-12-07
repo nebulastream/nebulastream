@@ -29,6 +29,6 @@ class MaxAggregationFunction : public AggregationFunction {
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
 };
 
-}
+}// namespace NES::Runtime::Execution::Aggregation
 
 #endif//NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP

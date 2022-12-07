@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Aggregation {
  * Base class for aggregation Value
  */
 struct AggregationValue {
-     // TODO 3280: Do we need this? What parameters should be in the base class
+    // TODO 3280: Do we need this? What parameters should be in the base class
 };
 
 /**

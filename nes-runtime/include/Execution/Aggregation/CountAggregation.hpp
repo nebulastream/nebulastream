@@ -30,4 +30,4 @@ class CountAggregationFunction : public AggregationFunction {
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
-#endif //NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_COUNTAGGREGATION_HPP
+#endif//NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_COUNTAGGREGATION_HPP

@@ -33,11 +33,11 @@ class ThresholdWindow : public ExecutableOperator {
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
     ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
-                             uint64_t minCount,
-                             Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
-                             Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
-                             Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
-                             uint64_t operatorHandlerIndex)
+                    uint64_t minCount,
+                    Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
+                    Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
+                    Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
+                    uint64_t operatorHandlerIndex)
         : predicateExpression(std::move(predicateExpression)),
           aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
           aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)), minCount(minCount),
