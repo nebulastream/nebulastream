@@ -181,21 +181,23 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
     /**
      * @brief: checks if one of the sources for a binary operator is already part of either the left or right queryPlan that are composed by the binary operator, i.e., already added to the final queryPlan
-     * @param leftsource as string
-     * @param rightsource as string
+     * @param leftSourceName as string
+     * @param rightSourceName as string
      * @return the queryPlan to compose to the final queryPlan
      */
     QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
                                                       std::basic_string<char> rightSourceName);
 
   private:
+    // pointers to track relationship of AST elements while retrieving pattern specification
     int32_t sourceCounter = 0;
     int32_t currentOperatorPointer = -1;
     int32_t lastSeenSourcePtr = -1;
+    int32_t currentElementPointer = -1;
+
     NebulaPSLPattern pattern;
     int32_t nodeId = 0;
-    int32_t currentElementPointer = -1;
-    NES::QueryPlanPtr queryPlan = NES::QueryPlan::create();
+    NES::QueryPlanPtr queryPlanPtr = NES::QueryPlan::create();
     bool inWhere = false;
     bool leftFilter = true;
     std::string currentLeftExp;
