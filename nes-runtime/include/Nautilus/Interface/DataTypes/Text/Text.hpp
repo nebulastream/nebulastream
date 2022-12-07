@@ -54,7 +54,7 @@ class Text final : public Nautilus::Any {
      * @param  Value startIndex, Value len
      * @return a subtext object
      */
-    Value<Text> substring(Value<UInt32> ,Value<UInt32> ) const;
+    Value<Text> substring(Value<UInt32>, Value<UInt32>) const;
 
     /**
      * @brief Returns the number of characters of this text value.

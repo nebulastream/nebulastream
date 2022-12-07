@@ -39,31 +39,31 @@ Value<Boolean> Text::equals(const Value<Text>& other) const {
     return boolResult.as<Boolean>();
 }
 
-TextValue* textSubstring(const TextValue* text, uint32_t index, uint32_t len){
-    if(text->length() < index + len){
+TextValue* textSubstring(const TextValue* text, uint32_t index, uint32_t len) {
+    if (text->length() < index + len) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     auto resultText = TextValue::create(len);
     uint32_t j = 0;
-    for(uint32_t i=index-1; i<index+len-1; i++){
+    for (uint32_t i = index - 1; i < index + len - 1; i++) {
         resultText->str()[j] = text->c_str()[i];
         j++;
     }
     return resultText;
 }
-Value<Text> Text::substring(Value<UInt32> index,Value<UInt32> len) const {
+Value<Text> Text::substring(Value<UInt32> index, Value<UInt32> len) const {
     return FunctionCall<>("textSubstring", textSubstring, rawReference, index, len);
 }
 
-TextValue* textConcat(const TextValue* leftText, const TextValue* rightText){
+TextValue* textConcat(const TextValue* leftText, const TextValue* rightText) {
     uint32_t len = leftText->length() + rightText->length();
     auto resultText = TextValue::create(len);
     uint32_t i;
-    for(i=0;i<leftText->length(); i++){
+    for (i = 0; i < leftText->length(); i++) {
         resultText->str()[i] = leftText->c_str()[i];
     }
-    for(uint32_t k=0;k<rightText->length();k++){
-        resultText->str()[k+i] = rightText->c_str()[k];
+    for (uint32_t k = 0; k < rightText->length(); k++) {
+        resultText->str()[k + i] = rightText->c_str()[k];
     }
     return resultText;
 }
