@@ -55,38 +55,38 @@ class NebulaPSLPattern {
      * @brief updates the sourceName in case an alias is using in the FROM-Clause
      * @param sourcePair <K,V> containing the nodeId and the streamName
      */
-    void updateSource(const int32_t key, std::string streamName);
+    void updateSource(const int32_t key, std::string sourceName);
 
     /**
      * @brief inserts a new ExpressionNode (filter) to the list of parsed expressions (WHERE-clause)
      * @param expNode
      */
-    void addExpression(ExpressionNodePtr expNode);
+    void addExpression(ExpressionNodePtr expressionNodePtr);
 
     /**
      * @brief inserts a new Sink to the list of parsed sinks
      * @param sink
      */
-    void addSink(SinkDescriptorPtr sink);
+    void addSink(SinkDescriptorPtr sinkDescriptorPtr);
 
     /**
      * @brief inserts a new ExpressionItem (Projection Attribute) to the  list of specified output attributes
      * @param expressionItem
      */
-    void addProjectionField(ExpressionNodePtr expressionItem);
+    void addProjectionField(ExpressionNodePtr expressionNodePtr);
 
     /**
      * @brief inserts a new Operator from the PATTERN clause to the list of operators
      * @param opNode
      */
-    void addOperatorNode(NebulaPSLOperatorNode opNode);
+    void addOperatorNode(NebulaPSLOperatorNode operatorNode);
 
   private:
-    std::map<int32_t, std::string> sources;
+    std::map<int32_t, std::string> sourceList;
     std::map<int32_t, NebulaPSLOperatorNode> operatorList;// contains the operators from the PATTERN clause
-    std::list<ExpressionNodePtr> expressions;
+    std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinks;    // INTO
+    std::list<SinkDescriptorPtr> sinkList;    // INTO
     std::pair<std::string, int32_t> window;// WITHIN
 };
 
