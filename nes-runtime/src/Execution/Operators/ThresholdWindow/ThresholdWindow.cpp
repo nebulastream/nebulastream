@@ -66,7 +66,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto aggregationValueMemref = FunctionCall("getAggregationValue",getAggregationValue, handler);
+    auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler);
 
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {

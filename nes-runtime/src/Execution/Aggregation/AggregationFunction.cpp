@@ -20,4 +20,4 @@ AggregationFunction::AggregationFunction(DataTypePtr inputType, DataTypePtr fina
     : inputType(std::move(inputType)), finalType(std::move(finalType)) {}
 AggregationFunction::~AggregationFunction() = default;
 
-}// namespace NES::Runtime::Aggregation
+}// namespace NES::Runtime::Execution::Aggregation

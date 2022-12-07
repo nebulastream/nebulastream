@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Execution/Aggregation/CountAggregation.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
-#include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Aggregation/MinAggregation.hpp>
+#include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
+#include <Execution/Aggregation/MinAggregation.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -112,7 +112,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     EXPECT_EQ(avgValue.sum, 2);
 
     // test combine
-  avgAgg.combine(memref, memref);
+    avgAgg.combine(memref, memref);
     EXPECT_EQ(avgValue.count, 2);
     EXPECT_EQ(avgValue.sum, 4);
 
