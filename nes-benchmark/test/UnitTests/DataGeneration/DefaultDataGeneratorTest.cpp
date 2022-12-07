@@ -55,4 +55,4 @@ namespace NES::Benchmark::DataGeneration {
 
         ASSERT_EQ(nameDefault, expectedName);
     }
-}//namespace NES
+}//namespace NES::Benchmark::DataGeneration
