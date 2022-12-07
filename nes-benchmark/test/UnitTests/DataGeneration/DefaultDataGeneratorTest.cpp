@@ -12,7 +12,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-namespace NES {
+#include <DataGeneration/DefaultDataGenerator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
+#include <API/Schema.hpp>
+
+namespace NES::Benchmark::DataGeneration {
     class DefaultDataGeneratorTest : public testing::Test {
       public:
         /* Will be called before any test in this class are executed. */
@@ -34,7 +39,7 @@ namespace NES {
     TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
         auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
         auto schemaDefault = defaultDataGenerator->getSchema();
-        auto expectedSchema = Schema::create()
+        auto expectedSchema = NES::Schema::create()
                                   ->addField(createField("id", NES::UINT64))
                                   ->addField(createField("value", NES::UINT64))
                                   ->addField(createField("payload", NES::UINT64))
