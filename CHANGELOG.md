@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.76](https://github.com/nebulastream/nebulastream/tree/v0.3.76) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.75...v0.3.76)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add String concatenation & Substring expression [\#3183](https://github.com/nebulastream/nebulastream/issues/3183)
+
 ## [v0.3.75](https://github.com/nebulastream/nebulastream/tree/v0.3.75) (2022-12-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.74...v0.3.75)
