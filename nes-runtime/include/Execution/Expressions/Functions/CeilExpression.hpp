@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression mod the leftSubExpression with the rightSubExpression.
+* @brief This expression ceil the leftSubExpression
 */
 class CeilExpression : public Expression {
   public:
