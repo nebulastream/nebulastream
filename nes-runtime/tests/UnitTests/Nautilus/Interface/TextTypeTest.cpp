@@ -77,7 +77,11 @@ TEST_F(TextTypeTest, subStringTest) {
     auto subtext2 = subtext1->substring((uint32_t) 2,(uint32_t) 2);
     auto subtext3 = Value<Text>("el");
     ASSERT_EQ(subtext2,subtext3);
-    //ASSERT_ANY_THROW(subtext1->substring((uint32_t)200,(uint32_t)200););
+}
+
+TEST_F(TextTypeTest, subStringTestFail) {
+    auto subtext1 = Value<Text>("Hello");
+    ASSERT_ANY_THROW(subtext1->substring((uint32_t) 200,(uint32_t) 200));
 }
 
 TEST_F(TextTypeTest, StringconcatTest) {
