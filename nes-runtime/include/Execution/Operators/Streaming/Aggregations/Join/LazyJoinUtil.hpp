@@ -66,6 +66,12 @@ T* allocHugePages(size_t size) {
 }
 } // namespace detail
 
+namespace Operators {
+struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
+    size_t partitionId;
+    size_t lastTupleTimeStamp;
+};
+}
 
 namespace Util {
 /**

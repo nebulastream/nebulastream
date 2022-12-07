@@ -30,6 +30,8 @@ namespace NES::Runtime::Execution {
 class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
 
+
+
   public:
     explicit LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                      SchemaPtr joinSchemaRight,
@@ -57,7 +59,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     void recyclePooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
     void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
 
-    void createNewLocalHashTables();
+    void createNewWindow();
 
     void deleteWindow(size_t timeStamp);
 
@@ -70,6 +72,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     size_t getWindowSize() const;
 
     size_t getNumPartitions() const;
+    uint64_t getLastTupleTimeStamp() const;
 
   private:
     SchemaPtr joinSchemaLeft;
