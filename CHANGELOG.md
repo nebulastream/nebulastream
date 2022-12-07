@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.3.77](https://github.com/nebulastream/nebulastream/tree/v0.3.77) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.76...v0.3.77)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add floor\(x\) expression [\#3043](https://github.com/nebulastream/nebulastream/issues/3043)
+- \[DBPRO\] Add ceil\(x\) expression [\#3038](https://github.com/nebulastream/nebulastream/issues/3038)
+
 ## [v0.3.76](https://github.com/nebulastream/nebulastream/tree/v0.3.76) (2022-12-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.75...v0.3.76)
