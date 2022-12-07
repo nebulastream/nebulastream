@@ -15,6 +15,8 @@
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
+#include <cstddef>
+
 namespace NES::Runtime::Execution::Aggregation {
 
 AvgAggregationFunction::AvgAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
