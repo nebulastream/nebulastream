@@ -46,8 +46,7 @@ class NebulaPSLOperatorNode {
     void setMinMax(const std::pair<int, int>& minMax);
     int32_t getParentNodeId() const;
     void setParentNodeId(int32_t parentNodeId);
-    //const Query& getQuery() const;
-    //void setQuery(const Query& query);
+
   private:
     int32_t id;
     std::string eventName;
@@ -55,7 +54,6 @@ class NebulaPSLOperatorNode {
     int32_t leftChildId = -1;
     std::pair<int32_t, int32_t> minMax;
     int32_t parentNodeId = -1;
-    // NES::Query query = NES::Query(NULL);
 };
 
 }// namespace NES::Parsers
