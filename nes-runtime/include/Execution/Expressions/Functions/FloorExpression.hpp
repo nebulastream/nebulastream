@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-* @brief This expression mod the leftSubExpression.
+* @brief This expression floor the leftSubExpression.
 */
 class FloorExpression : public Expression {
   public:
