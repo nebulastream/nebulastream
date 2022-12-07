@@ -128,22 +128,25 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 }
 
 QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string& queryCodeSnippet) {
-    NES_DEBUG("QueryParsingService: received the following pattern string" + queryCodeSnippet);
     // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
-    antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
-    Parsers::NesCEPLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-    Parsers::NesCEPParser parser(&tokens);
-    Parsers::NesCEPParser::QueryContext* tree = parser.query();
-    NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
+    if(queryCodeSnippet.empty() || queryCodeSnippet.size() < 15){
+        NES_THROW_RUNTIME_ERROR("QueryParsingService::createPatternFromCodeString: The query is too short, make sure you provide at least a source (FROM) and a sink (INTO)");
+    }else {
+        antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
+        Parsers::NesCEPLexer lexer(&input);
+        antlr4::CommonTokenStream tokens(&lexer);
+        Parsers::NesCEPParser parser(&tokens);
+        Parsers::NesCEPParser::QueryContext* tree = parser.query();
+        NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string " + tree->toStringTree(&parser));
 
-    NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
-    Parsers::NesCEPQueryPlanCreator queryPlanCreator;
-    //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
-    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
-    auto queryPlan = queryPlanCreator.getQueryPlan();
-    NES_DEBUG("PatternParsingService: created the query from AST " + queryPlan->toString());
-    return queryPlan;
+        NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
+        Parsers::NesCEPQueryPlanCreator queryPlanCreator;
+        //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
+        antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
+        auto queryPlan = queryPlanCreator.getQueryPlan();
+        NES_DEBUG("PatternParsingService: created the query from AST " + queryPlan->toString());
+        return queryPlan;
+    }
 }
 
 }// namespace NES
