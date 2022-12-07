@@ -112,15 +112,20 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 }
 
 
-void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, size_t partitionId, size_t lastTupleTimeStamp) {
+void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, void* joinPartitionTimeStampPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
+    NES_ASSERT2_FMT(joinPartitionTimeStampPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
 
     auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
+    auto joinPartTimestamp = static_cast<JoinPartitionIdTumpleStamp*>(joinPartitionTimeStampPtr);
+
+    const auto partitionId = joinPartTimestamp->partitionId;
+    const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
 
 
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
@@ -148,25 +153,26 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, s
     }
 
 
-    if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
+    if (opHandler->getWindow(joinPartTimestamp->lastTupleTimeStamp).fetchSubSink(1) == 1) {
         // delete the current hash table
-        opHandler->deleteWindow(lastTupleTimeStamp);
+        opHandler->deleteWindow(joinPartTimestamp->lastTupleTimeStamp);
     }
 
 
 }
 
 void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
-    auto partitionId = recordBuffer.getBuffer().load<UInt64>() - 1;
+//    auto partitionId = recordBuffer.getBuffer().load<UInt64>() - 1;
+//    auto sizeOfPartitionId = Int8(sizeof(size_t));
+//    auto timeStampPtr = recordBuffer.getBuffer()->add(sizeOfPartitionId);
+//    auto timeStamp = timeStampPtr->load<UInt64>()->getValue();
 
-    auto sizeOfPartitionId = Int8(8);
-    auto timeStampPtr = recordBuffer.getBuffer()->add(sizeOfPartitionId);
-    auto timeStamp = timeStampPtr->load<UInt64>()->getValue();
+    auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
 
     Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
-                           partitionId.as<UInt64>(), Value<UInt64>(timeStamp));
+                           joinPartitionTimestampPtr);
 
 
 }

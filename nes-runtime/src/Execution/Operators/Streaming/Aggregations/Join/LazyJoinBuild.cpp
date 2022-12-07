@@ -46,7 +46,7 @@ void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
 }
 
 
-void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, size_t workerIdIndex, bool isLeftSide) {
+void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
@@ -57,39 +57,42 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     auto& sharedJoinHashTable = opHandler->getWindowToBeFilled().getSharedJoinHashTable(isLeftSide);
-    auto& localHashTable = opHandler->getWindowToBeFilled().getLocalHashTable(workerIdIndex, isLeftSide);
+    auto& localHashTable = opHandler->getWindowToBeFilled().getLocalHashTable(workerCtx->getId(), isLeftSide);
 
 
     for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
     }
 
+    // If the last thread/worker is done with building, then start the second phase (comparing buckets)
     if (opHandler->getWindowToBeFilled().fetchSubBuild(1) == 1) {
-        // If the last thread/worker is done with building, then start the second phase (comparing buckets)
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
-            auto partitionId = i + 1;
-            auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(partitionId), 1, opHandler);
+
+            JoinPartitionIdTumpleStamp joinPartitionIdTupleStamp {
+                .partitionId = i,
+                .lastTupleTimeStamp = opHandler->getWindowToBeFilled().getLastTupleTimeStamp()
+            };
+
+            think about if this is the correct way
+
+            auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(&joinPartitionIdTupleStamp),
+                                                           sizeof(struct JoinPartitionIdTumpleStamp), opHandler);
+
             pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
         }
 
-        opHandler->createNewLocalHashTables();
+
+        opHandler->incLastTupleTimeStamp(opHandler->getWindowSize());
+        opHandler->createNewWindow();
     }
-}
-
-
-void incrementLastTupleTimeStampRuntime(void* ptrOpHandler) {
-    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
-
-    opHandler->incLastTupleTimeStamp(opHandler->getWindowSize());
 }
 
 
 size_t getLastTupleWindow(void* ptrOpHandler) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
-    return opHandler->getWindowSize();
+    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    return opHandler->getLastTupleTimeStamp();
 }
 
 
@@ -98,21 +101,20 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef);
+
+
+    if (record.read(timeStampField) > lastTupleWindowRef) {
+        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
+                               ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
+    }
+
+
     auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableFunctionCall",
                                                        getLocalHashTableFunctionCall,
                                                        operatorHandlerMemRef,
                                                        ctx.getWorkerId(),
                                                        Value<Boolean>(isLeftSide));
-
-    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef);
-
-    if (record.read(timeStampField) >= lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
-                               ctx.getWorkerContext(), ctx.getWorkerId(), Value<Boolean>(isLeftSide));
-
-        Nautilus::FunctionCall("incrementLastTupleTimeStampRuntime", incrementLastTupleTimeStampRuntime, operatorHandlerMemRef);
-    }
-
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall, localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
