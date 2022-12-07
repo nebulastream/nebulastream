@@ -143,23 +143,23 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     /**
      * @brief this method creates the query from the NesPattern
      */
-    void createQueryFromPatternList();
+    QueryPlanPtr createQueryFromPatternList() const;
 
     /**
      * @brief this methods add all filter to the queryPlan
      */
-    void addFilters();
+    QueryPlanPtr addFilters(QueryPlanPtr queryPlanPtr) const;
 
     /**
      * @brief this methods parses the user-specified window information to TimeMeasures
      */
     std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                                int32_t timeUnit);
+                                                                                                int32_t timeUnit) const;
 
     /**
      * @brief this methods add all projections to the queryPlan
      */
-    void addProjections();
+    QueryPlanPtr addProjections(QueryPlanPtr queryPlanPtr) const;
 
     /**
      * @brief returns the parsed queryPlan
@@ -170,14 +170,14 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @brief: this function creates an artificial key for the binary operators AND and SEQ
      * @return the unique name of the key
      */
-    std::string keyAssignment(std::string keyName);
+    std::string keyAssignment(std::string keyName) const;
 
     /**
      * @brief: this function adds a binary operator to the query plan
      * @param operaterName the operator name
      * @param iterator the list of nodes from the ANTLR AST Tree
      */
-    void addBinaryOperatorToQueryPlan(std::string operaterName, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
+    QueryPlanPtr addBinaryOperatorToQueryPlan(std::string operaterName, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator, QueryPlanPtr queryPlanPtr) const;
 
     /**
      * @brief: checks if one of the sources for a binary operator is already part of either the left or right queryPlan that are composed by the binary operator, i.e., already added to the final queryPlan
@@ -186,7 +186,8 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @return the queryPlan to compose to the final queryPlan
      */
     QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
-                                                      std::basic_string<char> rightSourceName);
+                                                      std::basic_string<char> rightSourceName,
+                                                      QueryPlanPtr queryPlanPtr) const;
 
   private:
     // pointers to track relationship of AST elements while retrieving pattern specification
@@ -195,7 +196,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
     NebulaPSLPattern pattern;
     int32_t nodeId = 0;
-    NES::QueryPlanPtr queryPlanPtr = NES::QueryPlan::create();
     bool inWhere = false;
     bool leftFilter = true;
     std::string currentLeftExp;
