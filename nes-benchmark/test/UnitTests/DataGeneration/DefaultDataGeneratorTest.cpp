@@ -45,6 +45,7 @@ namespace NES::Benchmark::DataGeneration {
                                   ->addField(createField("payload", NES::UINT64))
                                   ->addField(createField("timestamp", NES::UINT64));
 
+        // TODO compare schema correctly
         ASSERT_EQ(schemaDefault, expectedSchema);
     }
 
@@ -54,5 +55,27 @@ namespace NES::Benchmark::DataGeneration {
         auto expectedName = "Uniform";
 
         ASSERT_EQ(nameDefault, expectedName);
+    }
+
+    TEST_F(DefaultDataGeneratorTest, toStringTest) {
+        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
+        auto stringDefault = defaultDataGenerator->toString();
+
+        // TODO expected string
+        auto expectedString = ;
+
+        ASSERT_EQ(stringDefault, expectedString);
+    }
+
+    TEST_F(DefaultDataGeneratorTest, createDataTest) {
+        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
+        // TODO data default
+        auto dataDefault = defaultDataGenerator->createData(100, sizeof(char));
+
+        // TODO expected Data
+        // how to expect random data?
+        auto expectedData = ;
+
+        ASSERT_EQ(dataDefault, expectedData);
     }
 }//namespace NES::Benchmark::DataGeneration
