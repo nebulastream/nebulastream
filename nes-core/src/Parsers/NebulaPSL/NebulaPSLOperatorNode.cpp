@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
 
 namespace NES::Parsers {
 // creates a instance of the Operator Node (for as AST Tree node) with a unique identifier

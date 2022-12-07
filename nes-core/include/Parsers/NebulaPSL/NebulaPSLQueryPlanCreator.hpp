@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H_
-#define NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H_
+#ifndef NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
+#define NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
@@ -27,8 +27,8 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NebulaPSLPattern.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLPattern.hpp>
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
 #include <string>
@@ -154,7 +154,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @brief this methods parses the user-specified window information to TimeMeasures
      */
     std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                                int32_t time);
+                                                                                                int32_t timeUnit);
 
     /**
      * @brief this methods add all projections to the query
@@ -174,19 +174,19 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
     /**
      * @brief: this function adds a binary operator to the query plan
-     * @param string the operater name
+     * @param operaterName the operator name
      * @param iterator the list of nodes from the ANTLR AST Tree
-     * @return the unique name of the key
      */
-    void addBinaryOperatorToQueryPlan(std::string string, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
+    void addBinaryOperatorToQueryPlan(std::string operaterName, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator);
 
     /**
-     * @brief: checks if one of the sources for a binary operator is already in the queryPlan
+     * @brief: checks if one of the sources for a binary operator is already part of either the left or right queryPlan that are composed by the binary operator, i.e., already added to the final queryPlan
      * @param leftsource as string
      * @param rightsource as string
-     * @return the right queryPlan
+     * @return the queryPlan to compose to the final queryPlan
      */
-    QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftsource, std::basic_string<char> rightsource);
+    QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
+                                                      std::basic_string<char> rightSourceName);
 
   private:
     int32_t sourceCounter = 0;
@@ -200,9 +200,8 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
-
 };
 
 }// namespace NES::Parsers
 
-#endif// NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_H_
+#endif// NES_CORE_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
