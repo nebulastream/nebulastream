@@ -36,8 +36,6 @@ namespace NES::Parsers {
 
 void NesCEPQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* context) {
     NES_DEBUG("NesCEPQueryPlanCreator : enterListEvents: init tree walk and initialize read out of AST ");
-    this->currentElementPointer = this->nodeId;
-    this->currentOperatorPointer = this->nodeId;
     this->nodeId++;
     NesCEPBaseListener::enterListEvents(context);
 }
@@ -49,7 +47,6 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
     this->lastSeenSourcePtr = sourceCounter;
     sourceCounter++;
     NES_DEBUG("NesCEPQueryPlanCreator : exitEventElem: inserted " + cxt->getStart()->getText() + " to sources");
-    this->currentElementPointer = this->nodeId;
     this->nodeId++;
     NesCEPBaseListener::exitEventElem(cxt);
 }
@@ -63,9 +60,7 @@ void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext*
     node.setLeftChildId(lastSeenSourcePtr);
     node.setRightChildId(lastSeenSourcePtr + 1);
     pattern.addOperatorNode(node);
-    // move pointers
-    currentOperatorPointer = nodeId;
-    this->currentElementPointer = nodeId;
+    // increase nodeId
     nodeId++;
     NesCEPBaseListener::exitOperatorRule(context);
 }
@@ -177,8 +172,6 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     }
     pattern.addOperatorNode(timeOperatorNode);
     //update pointer
-    currentOperatorPointer = nodeId;
-    this->currentElementPointer = nodeId;
     nodeId++;
     NesCEPBaseListener::enterQuantifiers(context);
 }
@@ -443,6 +436,7 @@ void NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string operaterNa
         }
     }
 }
+
 QueryPlanPtr NesCEPQueryPlanCreator::checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
                                                                           std::basic_string<char> rightSourceName) {
     QueryPlanPtr rightQueryPlan = nullptr;

@@ -146,7 +146,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     void createQueryFromPatternList();
 
     /**
-     * @brief this methods add all filter to the query
+     * @brief this methods add all filter to the queryPlan
      */
     void addFilters();
 
@@ -157,7 +157,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
                                                                                                 int32_t timeUnit);
 
     /**
-     * @brief this methods add all projections to the query
+     * @brief this methods add all projections to the queryPlan
      */
     void addProjections();
 
@@ -191,9 +191,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
   private:
     // pointers to track relationship of AST elements while retrieving pattern specification
     int32_t sourceCounter = 0;
-    int32_t currentOperatorPointer = -1;
     int32_t lastSeenSourcePtr = -1;
-    int32_t currentElementPointer = -1;
 
     NebulaPSLPattern pattern;
     int32_t nodeId = 0;
