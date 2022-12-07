@@ -64,7 +64,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
         auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
         QueryPlanPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
-        filterQuery = QueryPlanBuilder::addSinkeNode(filterQuery, FileSinkDescriptor::create(""));
+        filterQuery = QueryPlanBuilder::addSink(filterQuery, FileSinkDescriptor::create(""));
         semanticQueryValidation->validate(filterQuery);
     }
 

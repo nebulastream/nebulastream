@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NebulaPSLPattern.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLPattern.hpp>
 
 namespace NES::Parsers {
 

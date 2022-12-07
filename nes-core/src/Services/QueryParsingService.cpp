@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "ANTLRInputStream.h"
+#include <ANTLRInputStream.h>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -20,16 +20,13 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
+#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <log4cxx/helpers/exception.h>
-#include <sstream>
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
-#include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.h>
-#include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
-#include <antlr4-runtime/ANTLRInputStream.h>
 
 namespace NES {
 

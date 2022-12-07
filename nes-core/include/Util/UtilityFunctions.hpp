@@ -241,11 +241,11 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
 
 /**
       * @brief: Update the Source names by sorting and then concatenating the source names from the sub- and query plan
-      * @param string queryPlanSourceConsumed
-      * @param string subQueryPlanSourceConsumed
+      * @param string consumed sources of the current queryPlan
+      * @param string consumed sources of the subQueryPlan
       * @return string with new source name
       */
-std::string updateSourceName(std::string basic_string_1, std::string basic_string_2);
+std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
 
 /**
  * Partition a vector in n chunks, e.g., ([1, 2, 3, 4, 5], 3) -> [[1, 2], [3, 4], [5]]
