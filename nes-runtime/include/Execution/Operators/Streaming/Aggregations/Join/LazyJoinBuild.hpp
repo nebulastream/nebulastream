@@ -39,6 +39,8 @@ class LazyJoinBuild : public ExecutableOperator {
 
 
 
+
+
   private:
     uint64_t handlerIndex;
     bool isLeftSide;

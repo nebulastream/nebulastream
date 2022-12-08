@@ -346,9 +346,27 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
+    std::vector<std::vector<Nautilus::Record>> leftRecords(std::ceil((double)numberOfTuplesToProduce / windowSize));
+    std::vector<std::vector<Nautilus::Record>> rightRecords(std::ceil((double)numberOfTuplesToProduce / windowSize));
+
+    uint64_t lastTupleTimeStampWindow = windowSize - 1;
+    for (auto i = 0UL, curWindow = 0UL; i < numberOfTuplesToProduce; ++i) {
         auto recordLeft = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
         auto recordRight = Nautilus::Record({{"f1_right", Value<UInt64>(i)}, {"f2_right", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
+
+        if (recordRight.read(timeStampField) > lastTupleTimeStampWindow) {
+            curWindow += 1;
+            lastTupleTimeStampWindow += windowSize;
+        }
+
+        leftRecords[curWindow].push_back(recordLeft);
+        rightRecords[curWindow].push_back(recordRight);
+
+        if (recordRight.read(timeStampField) == lastTupleTimeStampWindow) {
+            curWindow += 1;
+            lastTupleTimeStampWindow += windowSize;
+        }
+
 
         lazyJoinBuildLeft->execute(executionContext, recordLeft);
         lazyJoinBuildRight->execute(executionContext, recordRight);
@@ -360,16 +378,52 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
         lazyJoinSink->open(executionContext, recordBuffer);
     }
 
+    /* Checking if all windows have been deleted except for one.
+     * We require always one window as we do not know here if we have to take care of more tuples*/
+    ASSERT_EQ(lazyJoinOpHandler->getNumActiveWindows(), 1);
 
-    // Checking if all windows have been deleted
-    ASSERT_EQ(lazyJoinOpHandler->getNumActiveWindows(), 0);
+    auto removedBuffer = 0;
+    for (auto curWindow = 0UL; curWindow < leftRecords.size(); ++curWindow) {
+        for (auto& leftRecord : leftRecords[curWindow]) {
+            for (auto& rightRecord : rightRecords[curWindow]) {
+                if (leftRecord.read(joinFieldNameLeft) == rightRecord.read(joinFieldNameRight)) {
+                    // We expect to have at least one more buffer that was created by our join
+                    ASSERT_TRUE(emittedBuffers.size() > 0);
 
-    here weiter machen mit dem checken, ob der join erfolgreich war. Idee ist, dass man hier selber einen NLJ baut und dann einfach nur checkt, ob die tuplebuffer wieder gleich sind mit memcpy
-    ASSERT_EQ();
 
-    // Checking if the sink step is correct
-    NES_NOT_IMPLEMENTED();
+                    auto buffer = bm->getBufferBlocking();
+                    int8_t* bufferPtr = (int8_t*) buffer.getBuffer();
 
+                    auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
+                    keyRef.store(leftRecord.read(joinFieldNameLeft));
+
+                    auto const fieldType = physicalDataTypeFactory.getPhysicalType(leftSchema->get(joinFieldNameLeft)->getDataType());
+                    bufferPtr += fieldType->size();
+
+                    Util::writeNautilusRecord(bufferPtr, leftRecord, leftSchema, bm);
+                    Util::writeNautilusRecord(bufferPtr + leftSchema->getSchemaSizeInBytes(),
+                                              rightRecord, rightSchema, bm);
+
+                    auto sizeJoinedTuple = bufferPtr - (int8_t*) buffer.getBuffer();
+
+                    bool foundBuffer;
+                    for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
+                        if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple) == 0) {
+                            foundBuffer = true;
+                            emittedBuffers.erase(tupleBufferIt);
+                            NES_DEBUG("Removing buffer #" << removedBuffer << " of size " << sizeJoinedTuple);
+                            ++removedBuffer;
+                            break;
+                        }
+                    }
+                    ASSERT_TRUE(foundBuffer);
+                }
+            }
+        }
+    }
+
+    // Make sure that after we have joined all records together, we have not created more records than
+    ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleBuckets) {

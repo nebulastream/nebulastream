@@ -94,6 +94,7 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, 
 
 Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
+void writeNautilusRecord(int8_t* bufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 
 } // namespace Util

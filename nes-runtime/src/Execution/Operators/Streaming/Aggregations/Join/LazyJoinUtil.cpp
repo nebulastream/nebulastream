@@ -18,6 +18,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -26,6 +27,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -58,11 +60,7 @@ namespace NES::Runtime::Execution::Util {
         return buffer;
     }
 
-    Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
-        auto buffer = bufferManager->getBufferBlocking();
-        int8_t* bufferPtr = (int8_t *)buffer.getBuffer();
-
-
+    void writeNautilusRecord(int8_t* bufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
             auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
             auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
@@ -70,14 +68,21 @@ namespace NES::Runtime::Execution::Util {
             memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
 
         } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-            auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-            auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+            auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+            auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
             memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
 
         } else {
             NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
         }
+    }
+
+    Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        auto buffer = bufferManager->getBufferBlocking();
+        int8_t* bufferPtr = (int8_t *)buffer.getBuffer();
+
+        writeNautilusRecord(bufferPtr, nautilusRecord, schema, bufferManager);
 
         buffer.setNumberOfTuples(1);
         return buffer;
@@ -102,12 +107,6 @@ namespace NES::Runtime::Execution::Util {
                 }
                 offset += fieldSize;
             }
-            //        #ifdef TFDEF
-            //        auto ts = std::chrono::system_clock::now();
-            //        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            //                                 ts.time_since_epoch()).count();
-            //        ss << "," << std::to_string(expulsionTime);
-            //        #endif
             ss << std::endl;
         }
         return ss.str();
