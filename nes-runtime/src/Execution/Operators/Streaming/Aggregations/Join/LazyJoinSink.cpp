@@ -89,7 +89,6 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
                         // TODO ask Philipp if I should support columnar layout as the current implementation does not support it
 
-
                         auto buffer = workerCtx->allocateTupleBuffer();
                         auto bufferPtr = buffer.getBuffer<uint8_t>();
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
@@ -127,12 +126,12 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
 
-    NES_DEBUG("Joining for partitionId: " << partitionId << " and timeStamp: " << lastTupleTimeStamp);
+//    NES_DEBUG("Joining for partitionId: " << partitionId << " and timeStamp: " << lastTupleTimeStamp);
 
-    NES_DEBUG("Retrieving left hashtable");
+//    NES_DEBUG("Retrieving left hashtable");
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
 
-    NES_DEBUG("Retrieving right hashtable");
+//    NES_DEBUG("Retrieving right hashtable");
     auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);

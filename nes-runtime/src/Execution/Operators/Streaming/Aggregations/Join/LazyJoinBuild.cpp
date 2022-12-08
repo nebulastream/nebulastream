@@ -124,10 +124,10 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef = entryMemRef->add(int8FieldType);
     }
 
-    if (record.read(timeStampField) == lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
-                               ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
-    }
+//    if (record.read(timeStampField) == lastTupleWindowRef) {
+//        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
+//                               ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
+//    }
 
 }
 
