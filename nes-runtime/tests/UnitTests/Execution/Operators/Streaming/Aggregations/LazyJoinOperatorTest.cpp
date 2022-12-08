@@ -139,7 +139,7 @@ bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
 
 
     // Execute record and thus fill the hash table
-    for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
+    for (auto i = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
         auto record = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 1)}, {"timestamp", Value<UInt64>(i)}});
         lazyJoinBuild->execute(executionContext, record);
 
@@ -361,11 +361,6 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
 
         leftRecords[curWindow].push_back(recordLeft);
         rightRecords[curWindow].push_back(recordRight);
-
-        if (recordRight.read(timeStampField) == lastTupleTimeStampWindow) {
-            curWindow += 1;
-            lastTupleTimeStampWindow += windowSize;
-        }
 
 
         lazyJoinBuildLeft->execute(executionContext, recordLeft);
