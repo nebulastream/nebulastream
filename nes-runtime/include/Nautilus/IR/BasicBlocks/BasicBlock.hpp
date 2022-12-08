@@ -35,6 +35,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
                         std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
+    void setIdentifier(std::string identifier);
     [[nodiscard]] uint32_t getScopeLevel();
     void setScopeLevel(uint32_t scopeLevel);
 
@@ -69,6 +70,13 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
     void popOperation();
+    
+    /**
+     * @brief Depending on the terminator operation, returns one(branch) or two (if/loop) or zero(return) next blocks.
+     * 
+     * @return first next block (empty if return), second next block (empty if branch or return)
+     */
+    [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
 
   private:
     std::string identifier;
