@@ -12,10 +12,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <API/Schema.hpp>
+#include <random>
 
 namespace NES::Benchmark::DataGeneration {
     class DefaultDataGeneratorTest : public testing::Test {
@@ -58,22 +59,34 @@ namespace NES::Benchmark::DataGeneration {
     }
 
     TEST_F(DefaultDataGeneratorTest, toStringTest) {
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
+        auto minValue = 0;
+        auto maxValue = 1000;
+        std::ostringstream oss;
+
+        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
         auto stringDefault = defaultDataGenerator->toString();
 
-        // TODO expected string
-        auto expectedString = ;
+        oss << defaultDataGenerator->getName() << " (" << minValue << ", " << maxValue << ")";
+        auto expectedString = oss.str();
 
         ASSERT_EQ(stringDefault, expectedString);
     }
 
     TEST_F(DefaultDataGeneratorTest, createDataTest) {
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
-        // TODO data default
-        auto dataDefault = defaultDataGenerator->createData(100, sizeof(char));
+        auto minValue = 0;
+        auto maxValue = 1000;
+        auto numberOfBuffers = 1000;
+
+        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        defaultDataGenerator->setBufferManager(bufferManager);
+        auto dataDefault = defaultDataGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
 
         // TODO expected Data
-        // how to expect random data?
+        std::random_device randDev;
+        std::mt19937 generator(randDev());
+        std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
+
         auto expectedData = ;
 
         ASSERT_EQ(dataDefault, expectedData);
