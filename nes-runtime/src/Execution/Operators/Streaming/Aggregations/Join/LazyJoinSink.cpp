@@ -81,22 +81,22 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                 for (auto j = 0UL; j < rhsLen; ++j) {
                     auto rhsRecordPtr = rhsPage[j];
-                    auto rhsRecordKeyPtr =
-                        getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
+                    auto rhsRecordKeyPtr = getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
                     if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
                         ++joinedTuples;
 
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
-                        // TODO ask Philipp if I should support columnar layout as the current implementation does not support it
+                        // TODO ask Philipp if I should support columnar layout as this implementation does not support it
 
                         auto buffer = workerCtx->allocateTupleBuffer();
-                        auto bufferPtr = buffer.getBuffer<uint8_t>();
+                        auto bufferPtr = buffer.getBuffer();
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
                         auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
+                        buffer.setNumberOfTuples(1);
 
                         pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
                     }
@@ -126,12 +126,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
 
-//    NES_DEBUG("Joining for partitionId: " << partitionId << " and timeStamp: " << lastTupleTimeStamp);
-
-//    NES_DEBUG("Retrieving left hashtable");
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
-
-//    NES_DEBUG("Retrieving right hashtable");
     auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);

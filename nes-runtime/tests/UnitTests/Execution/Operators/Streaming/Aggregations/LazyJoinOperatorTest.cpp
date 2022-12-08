@@ -313,13 +313,14 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     const auto numberOfBuffersPerWorker = 128UL;
     const auto numberOfTuplesToProduce = 100UL;
     const auto windowSize = 2;
+    const auto numPartitions = 4;
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
                                                                        noWorkerThreads,
                                                                        noWorkerThreads,
-                                                                       joinSizeInByte, windowSize);
+                                                                       joinSizeInByte, windowSize, CHUNK_SIZE, numPartitions);
 
     auto pipelineContext = PipelineExecutionContext(0,// mock pipeline id
                                                     1, // mock query id
@@ -351,8 +352,8 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
 
     uint64_t lastTupleTimeStampWindow = windowSize - 1;
     for (auto i = 0UL, curWindow = 0UL; i < numberOfTuplesToProduce; ++i) {
-        auto recordLeft = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
-        auto recordRight = Nautilus::Record({{"f1_right", Value<UInt64>(i)}, {"f2_right", Value<UInt64>(i % 10)}, {"timestamp", Value<UInt64>(i)}});
+        auto recordLeft = Nautilus::Record({{"f1_left", Value<UInt64>(i)}, {"f2_left", Value<UInt64>((i % 10) + 10)}, {"timestamp", Value<UInt64>(i)}});
+        auto recordRight = Nautilus::Record({{"f1_right", Value<UInt64>(i+1000)}, {"f2_right", Value<UInt64>((i % 10) + 10)}, {"timestamp", Value<UInt64>(i)}});
 
         if (recordRight.read(timeStampField) > lastTupleTimeStampWindow) {
             curWindow += 1;
@@ -368,14 +369,20 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     }
 
     NES_DEBUG("Performing the sink step for the lazyJoin for " << emittedBuffers.size() << " buffers!");
+    auto numberOfEmittedBuffersBuild = emittedBuffers.size();
     for (auto tupleBuffer : emittedBuffers) {
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
         lazyJoinSink->open(executionContext, recordBuffer);
     }
 
+    // Delete all buffers that have been emitted from the build phase
+    emittedBuffers.erase(emittedBuffers.begin(), emittedBuffers.begin() + numberOfEmittedBuffersBuild);
+
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
     ASSERT_EQ(lazyJoinOpHandler->getNumActiveWindows(), 1);
+
+    we do not join any tuples... check why
 
     auto removedBuffer = 0;
     for (auto curWindow = 0UL; curWindow < leftRecords.size(); ++curWindow) {
@@ -399,10 +406,23 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
                     Util::writeNautilusRecord(bufferPtr + leftSchema->getSchemaSizeInBytes(),
                                               rightRecord, rightSchema, bm);
 
-                    auto sizeJoinedTuple = bufferPtr - (int8_t*) buffer.getBuffer();
+                    buffer.setNumberOfTuples(1);
+
+                    SchemaPtr joinSchema = Schema::create(leftSchema->getLayoutType());
+                    joinSchema->addField(leftSchema->get(joinFieldNameLeft));
+                    joinSchema->copyFields(leftSchema);
+                    joinSchema->copyFields(rightSchema);
+                    NES_DEBUG("Created join test buffer = " << Util::printTupleBufferAsCSV(buffer, joinSchema));
+
+                    auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
+
+
 
                     bool foundBuffer;
                     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
+                        tupleBufferIt->setNumberOfTuples(1);
+                        NES_DEBUG("Checking if join test buffer is equal to buffer = " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
+
                         if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple) == 0) {
                             foundBuffer = true;
                             emittedBuffers.erase(tupleBufferIt);
