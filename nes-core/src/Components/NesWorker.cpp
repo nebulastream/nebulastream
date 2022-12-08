@@ -244,11 +244,11 @@ bool NesWorker::stop(bool) {
         if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
             if (trajectoryPredictor) {
                 trajectoryPredictor->stopReconnectPlanning();
-                NES_DEBUG("triggered stopping of reconnect planner thread");
+                NES_TRACE("triggered stopping of reconnect planner thread");
             }
             if (reconnectConfigurator) {
                 reconnectConfigurator->stopPeriodicUpdating();
-                NES_DEBUG("triggered stopping of location update push thread");
+                NES_TRACE("triggered stopping of location update push thread");
             }
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
