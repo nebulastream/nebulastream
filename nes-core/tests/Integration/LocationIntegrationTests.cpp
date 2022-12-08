@@ -67,6 +67,14 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         return casted->getCoordinates();
     }
 
+    /**
+     * @brief wait until the topology contains the expected number of nodes so we can rely on these nodes being present for
+     * the rest of the test
+     * @param timeoutSeconds time to wait before aborting
+     * @param nodes expected number of nodes
+     * @param topology  the topology object to query
+     * @return true if expected number of nodes was reached. false in case of timeout before number was reached
+     */
     static bool waitForNodes(int timeoutSeconds, size_t nodes, TopologyPtr topology) {
         size_t numberOfNodes = 0;
         for (int i = 0; i < timeoutSeconds; ++i) {
@@ -76,11 +84,17 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
             if (numberOfNodes == nodes) {
                 break;
             }
-            sleep(1);
         }
         return numberOfNodes == nodes;
     }
 
+    /**
+     * @brief check if two location objects latitudes and longitudes do not differ more than the specified error
+     * @param location1
+     * @param location2
+     * @param error the tolerated difference in latitute or longitude specified in degrees
+     * @return true if location1 and location2 do not differ more then the specified degrees in latitiude of logintude
+     */
     static bool isClose(NES::Spatial::Index::Experimental::Location location1, NES::Spatial::Index::Experimental::Location location2, double error) {
         if (std::abs(location1.getLatitude() - location2.getLatitude()) > error) {
             return false;
