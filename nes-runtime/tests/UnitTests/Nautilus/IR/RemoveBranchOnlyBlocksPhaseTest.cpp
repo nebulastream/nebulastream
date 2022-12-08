@@ -26,7 +26,6 @@
 #include <memory>
 #include <unordered_map>
 
-using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
 class RemoveBranchOnlyBlocksPhaseTest : public testing::Test, public AbstractCompilationBackendTest {
@@ -53,7 +52,8 @@ class RemoveBranchOnlyBlocksPhaseTest : public testing::Test, public AbstractCom
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
-        return removeBrOnlyBlocksPhase.apply(ir);
+        removeBrOnlyBlocksPhase.apply(ir);
+        return ir;
     }
 
     /**

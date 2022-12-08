@@ -11,19 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <mutex>
 
 namespace NES::Runtime::Execution::Operators {
 
-extern "C" void addToSumAggregate(void* state, int64_t valueToAdd) {
+extern "C" void incrementCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    handler->sum = handler->sum + valueToAdd;
     handler->recordCount++;
 }
 
@@ -42,14 +42,9 @@ extern "C" uint64_t getRecordCount(void* state) {
     return handler->recordCount;
 }
 
-extern "C" void setSumAggregate(void* state, int64_t valueToSet) {
+extern "C" void resetCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    handler->sum = valueToSet;
-}
-
-extern "C" int64_t getSumAggregate(void* state) {
-    auto handler = (ThresholdWindowOperatorHandler*) state;
-    return handler->sum;
+    handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
@@ -62,30 +57,37 @@ extern "C" void unlockWindowHandler(void* state) {
     handler->mutex.unlock();
 }
 
+extern "C" void* getAggregationValue(void* state) {
+    auto handler = (ThresholdWindowOperatorHandler*) state;
+    return (void*) handler->AggregationValue.get();
+}
+
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
+    auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler);
+
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
         auto aggregatedValue = aggregatedFieldAccessExpression->execute(record);
-        FunctionCall("addToSumAggregate", addToSumAggregate, handler, aggregatedValue.as<Int64>());
+        FunctionCall("incrementCount", incrementCount, handler);
+        aggregationFunction->lift(aggregationValueMemref, aggregatedValue);
         FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
         if (isWindowOpen) {
             auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
             if (recordCount >= minCount) {
-                auto sumAggregation = FunctionCall("getSumAggregate", getSumAggregate, handler);
-                auto aggregationResult = Record({{aggregationResultFieldIdentifier, sumAggregation}});
-                FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
-                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
-                child->execute(ctx, aggregationResult);
-            } else {
-                FunctionCall("setSumAggregate", setSumAggregate, handler, Value<Int64>((int64_t) 0));
-                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
+                auto aggregationResult = aggregationFunction->lower(aggregationValueMemref);
+                auto resultRecord = Record({{aggregationResultFieldIdentifier, aggregationResult}});
+
+                child->execute(ctx, resultRecord);
             }
+            aggregationFunction->reset(aggregationValueMemref);
+            FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
         }
+        FunctionCall("resetCount", resetCount, handler);
     }
     FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
 }

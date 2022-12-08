@@ -19,30 +19,63 @@
 
 namespace NES::Nautilus {
 
-template<>
-auto transformReturnValues(TextValue* value) {
+Value<Text> transformReturnValues(TextValue* value) {
     auto textRef = TypedRef<TextValue>(value);
     return Value<Text>(std::make_unique<Text>(textRef));
 }
 
 Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
 
-bool textEquals(const TextValue* leftText, const TextValue* rightText) {
+int64_t textEquals(const TextValue* leftText, const TextValue* rightText) {
     if (leftText->length() != rightText->length()) {
         return false;
     }
-    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length()) == 0;
+    return std::memcmp(leftText->c_str(), rightText->c_str(), leftText->length());
 }
 
 Value<Boolean> Text::equals(const Value<Text>& other) const {
-    return FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
+    Value<Int64> result = FunctionCall<>("textEquals", textEquals, rawReference, other.value->rawReference);
+    auto boolResult = result == Value<Int64>((int64_t) 0);
+    return boolResult.as<Boolean>();
+}
+
+TextValue* textSubstring(const TextValue* text, uint32_t index, uint32_t len) {
+    if (text->length() < index + len) {
+        NES_THROW_RUNTIME_ERROR("Text was not long enough");
+    }
+    auto resultText = TextValue::create(len);
+    uint32_t j = 0;
+    for (uint32_t i = index - 1; i < index + len - 1; i++) {
+        resultText->str()[j] = text->c_str()[i];
+        j++;
+    }
+    return resultText;
+}
+Value<Text> Text::substring(Value<UInt32> index, Value<UInt32> len) const {
+    return FunctionCall<>("textSubstring", textSubstring, rawReference, index, len);
+}
+
+TextValue* textConcat(const TextValue* leftText, const TextValue* rightText) {
+    uint32_t len = leftText->length() + rightText->length();
+    auto resultText = TextValue::create(len);
+    uint32_t i;
+    for (i = 0; i < leftText->length(); i++) {
+        resultText->str()[i] = leftText->c_str()[i];
+    }
+    for (uint32_t k = 0; k < rightText->length(); k++) {
+        resultText->str()[k + i] = rightText->c_str()[k];
+    }
+    return resultText;
+}
+Value<Text> Text::concat(const Value<Text>& other) const {
+    return FunctionCall<>("textConcat", textConcat, rawReference, other.value->rawReference);
 }
 
 uint32_t TextGetLength(const TextValue* text) { return text->length(); }
 
 const Value<UInt32> Text::length() const { return FunctionCall<>("textGetLength", TextGetLength, rawReference); }
 
-AnyPtr Text::copy() { return NES::Nautilus::AnyPtr(); }
+AnyPtr Text::copy() { return std::make_shared<Text>(rawReference); }
 
 int8_t readTextIndex(const TextValue* text, uint32_t index) { return text->c_str()[index]; }
 

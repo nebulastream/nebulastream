@@ -14,6 +14,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 
+#include <Common/ExecutableType/BaseVariableSizeType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <string>
 namespace NES::Nautilus {
@@ -24,7 +25,7 @@ namespace NES::Nautilus {
  * Physical layout:
  * | ----- size 4 byte ----- | ----- variable length char*
  */
-class TextValue final {
+class TextValue final : public BaseVariableSizeType {
   public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     /**
@@ -36,10 +37,26 @@ class TextValue final {
 
     /**
      * @brief Creates a new TextValue from a string
-     * @param string
+     * @param string content
      * @return TextValue*
      */
     static TextValue* create(const std::string& string);
+
+    /**
+     * @brief Creates a new TextValue from a string on a specific tuple buffer
+     * @param buffer that is used to create the text
+     * @param size in characters
+     * @return TextValue*
+     */
+    static TextValue* create(Runtime::TupleBuffer& buffer, uint32_t size);
+
+    /**
+     * @brief Creates a new TextValue from a string on a specific tuple buffer
+     * @param buffer that is used to create the text
+     * @param string content
+     * @return TextValue*
+     */
+    static TextValue* create(Runtime::TupleBuffer& buffer, const std::string& string);
 
     /**
      * @brief Loads a text value from a tuple buffer.
@@ -53,19 +70,25 @@ class TextValue final {
      * @brief Returns the length in the number of characters of the text value
      * @return int32_t
      */
-    uint32_t length() const;
+    [[nodiscard]] uint32_t length() const;
 
     /**
      * @brief Returns the char* to the text.
      * @return char*
      */
-    char* str();
+    [[nodiscard]] char* str();
 
     /**
      * @brief Returns the const char* to the text.
      * @return const char*
      */
-    const char* c_str() const;
+    [[nodiscard]] const char* c_str() const;
+
+    /**
+     * @brief Retrieves the underling buffer of this text value.
+     * @return Runtime::TupleBuffer
+     */
+    [[nodiscard]] Runtime::TupleBuffer getBuffer() const;
 
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.
@@ -73,6 +96,7 @@ class TextValue final {
     ~TextValue();
 
   private:
+    static Runtime::TupleBuffer allocateBuffer(uint32_t size);
     /**
      * @brief Private constructor to initialize a new text
      * @param size

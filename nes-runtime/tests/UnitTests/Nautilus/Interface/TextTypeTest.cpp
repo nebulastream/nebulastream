@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
 namespace NES::Nautilus {
 
 class TextTypeTest : public testing::Test {
@@ -71,4 +72,23 @@ TEST_F(TextTypeTest, createTextTest) {
     ASSERT_EQ(textValue, textValue4);
 }
 
+TEST_F(TextTypeTest, subStringTest) {
+    auto subtext1 = Value<Text>("Hello");
+    auto subtext2 = subtext1->substring((uint32_t) 2, (uint32_t) 2);
+    auto subtext3 = Value<Text>("el");
+    ASSERT_EQ(subtext2, subtext3);
+}
+
+TEST_F(TextTypeTest, subStringTestFail) {
+    auto subtext1 = Value<Text>("Hello");
+    ASSERT_ANY_THROW(subtext1->substring((uint32_t) 200, (uint32_t) 200));
+}
+
+TEST_F(TextTypeTest, StringconcatTest) {
+    auto concatTest1 = Value<Text>("Nebula");
+    auto concatTest2 = Value<Text>("Stream");
+    auto concatTest3 = Value<Text>("NebulaStream");
+    auto concatTest5 = concatTest1->concat(concatTest2);
+    ASSERT_EQ(concatTest5, concatTest3);
+}
 }// namespace NES::Nautilus

@@ -13,6 +13,7 @@
 
 add_subdirectory(Expressions)
 add_subdirectory(Operators)
+add_subdirectory(Aggregation)
 add_subdirectory(PipelineExecution)
 
 

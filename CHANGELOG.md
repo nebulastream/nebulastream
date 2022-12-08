@@ -1,5 +1,46 @@
 # Changelog
 
+## [v0.3.77](https://github.com/nebulastream/nebulastream/tree/v0.3.77) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.76...v0.3.77)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add floor\(x\) expression [\#3043](https://github.com/nebulastream/nebulastream/issues/3043)
+- \[DBPRO\] Add ceil\(x\) expression [\#3038](https://github.com/nebulastream/nebulastream/issues/3038)
+
+## [v0.3.76](https://github.com/nebulastream/nebulastream/tree/v0.3.76) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.75...v0.3.76)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add String concatenation & Substring expression [\#3183](https://github.com/nebulastream/nebulastream/issues/3183)
+
+## [v0.3.75](https://github.com/nebulastream/nebulastream/tree/v0.3.75) (2022-12-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.74...v0.3.75)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support Common Aggregation Functions in Nautilus [\#3250](https://github.com/nebulastream/nebulastream/issues/3250)
+
+## [v0.3.74](https://github.com/nebulastream/nebulastream/tree/v0.3.74) (2022-12-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.73...v0.3.74)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Handle Text data types in Scan and Emit operator [\#3217](https://github.com/nebulastream/nebulastream/issues/3217)
+
+## [v0.3.73](https://github.com/nebulastream/nebulastream/tree/v0.3.73) (2022-12-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.72...v0.3.73)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Add IF Operations [\#3167](https://github.com/nebulastream/nebulastream/issues/3167)
+
 ## [v0.3.72](https://github.com/nebulastream/nebulastream/tree/v0.3.72) (2022-11-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.71...v0.3.72)

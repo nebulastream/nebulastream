@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::MemoryProvider {
 /**
  * @brief Implements MemoryProvider. Provides row-wise memory access.
  */
-class RowMemoryProvider : public MemoryProvider {
+class RowMemoryProvider final : public MemoryProvider {
   public:
     /**
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
@@ -33,14 +33,15 @@ class RowMemoryProvider : public MemoryProvider {
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          Nautilus::Value<Nautilus::MemRef> bufferAddress,
-                          Nautilus::Value<Nautilus::UInt64> recordIndex) override;
+                          Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+                          Nautilus::Value<Nautilus::UInt64>& recordIndex) const override;
 
-    void write(Nautilus::Value<NES::Nautilus::UInt64> recordIndex,
-               Nautilus::Value<Nautilus::MemRef> bufferAddress,
-               NES::Nautilus::Record& rec) override;
+    void write(Nautilus::Value<NES::Nautilus::UInt64>& recordIndex,
+               Nautilus::Value<Nautilus::MemRef>& bufferAddress,
+               NES::Nautilus::Record& rec) const override;
 
   private:
+    Nautilus::Value<Nautilus::MemRef> calculateFieldAddress(Nautilus::Value<>& recordOffset, uint64_t fieldIndex) const;
     const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };
 
