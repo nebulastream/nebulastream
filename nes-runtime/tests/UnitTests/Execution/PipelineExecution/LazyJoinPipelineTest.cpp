@@ -1,25 +1,18 @@
-//
-// Created by nils on 11/29/22.
-//
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-// Create here a vector of tuples that contains all of the join tuples
-std::vector<Nautilus::Record> joinBuffers;
-for (auto i = 0UL; i < numberOfTuplesToProduce; ++i) {
-    auto recordLeft = Nautilus::Record({{"f1_left", Value<>(i)}, {"f2_left", Value<>(i % 10)}, {"timestamp", Value<>(i)}});
-    for (auto j = 0UL; j < numberOfTuplesToProduce; ++j) {
-        auto recordRight = Nautilus::Record({{"f1_right", Value<>(i)}, {"f2_right", Value<>(i % 10)}, {"timestamp", Value<>(i)}});
-        if (recordLeft.read(joinFieldNameLeft) == recordRight.read(joinFieldNameRight)) {
-            auto joinedRecord = Nautilus::Record();
-            joinedRecord.write(joinFieldNameLeft, recordLeft.read(joinFieldNameLeft));
+        https://www.apache.org/licenses/LICENSE-2.0
 
-            for (auto& field : recordLeft.getAllFields()) {
-                joinedRecord.write(field, recordLeft.read(field));
-            }
-            for (auto& field : recordRight.getAllFields()) {
-                joinedRecord.write(field, recordRight.read(field));
-            }
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 
-            joinBuffers.emplace_back(joinedRecord);
-        }
-    }
-}
+namespace NES::Runtime::Execution {
+    
+
+} // namespace NES::Runtime::Execution
