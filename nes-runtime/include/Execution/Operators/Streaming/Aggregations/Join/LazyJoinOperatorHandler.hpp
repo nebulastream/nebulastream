@@ -58,7 +58,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     void recyclePooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
     void recycleUnpooledBuffer(NES::Runtime::detail::MemorySegment* buffer) override;
 
-    void createNewWindow();
+    void createNewWindow(bool isLeftSide);
 
     void deleteWindow(size_t timeStamp);
 
@@ -66,14 +66,16 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
 
     size_t getNumActiveWindows();
 
-    LazyJoinWindow& getWindowToBeFilled();
+    LazyJoinWindow& getWindowToBeFilled(bool isLeftSide);
 
-    void incLastTupleTimeStamp(uint64_t increment);
+    void incLastTupleTimeStamp(uint64_t increment, bool isLeftSide);
 
     size_t getWindowSize() const;
 
     size_t getNumPartitions() const;
-    uint64_t getLastTupleTimeStamp() const;
+    uint64_t getLastTupleTimeStamp(bool isLeftSide) const;
+
+    bool checkWindowExists(size_t timeStamp);
 
   private:
     SchemaPtr joinSchemaLeft;
@@ -85,7 +87,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
     size_t totalSizeForDataStructures;
-    uint64_t lastTupleTimeStamp;
+    uint64_t lastTupleTimeStampLeft, lastTupleTimeStampRight;
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;

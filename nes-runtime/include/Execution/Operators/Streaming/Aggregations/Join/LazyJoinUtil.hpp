@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution {
 static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 static constexpr auto CHUNK_SIZE = 128;
 static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
-static constexpr auto NUM_PARTITIONS = 512;
+static constexpr auto NUM_PARTITIONS = 16;
 
 namespace detail {
 
