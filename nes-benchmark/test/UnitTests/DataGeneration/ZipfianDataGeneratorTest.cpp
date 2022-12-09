@@ -13,9 +13,14 @@ limitations under the License.
 */
 
 #include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <Util/ZipfianGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <API/Schema.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <random>
+#include <vector>
 
 namespace NES::Benchmark::DataGeneration {
     class ZipfianDataGeneratorTest : public testing::Test {
@@ -37,13 +42,12 @@ namespace NES::Benchmark::DataGeneration {
     };
 
     TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
-        auto alpha = 0;
+        auto alpha = 0.9;
         auto minValue = 0;
         auto maxValue = 1000;
         bool equal = false;
 
         auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-        // how to use private getSchema() function
         auto schemaDefault = zipfianDataGenerator->getSchema();
 
         auto expectedSchema = NES::Schema::create()
@@ -60,12 +64,11 @@ namespace NES::Benchmark::DataGeneration {
     }
 
     TEST_F(ZipfianDataGeneratorTest, getNameTest) {
-        auto alpha = 0;
+        auto alpha = 0.9;
         auto minValue = 0;
         auto maxValue = 1000;
 
         auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-        // how to use private getName() function
         auto nameDefault = zipfianDataGenerator->getName();
 
         auto expectedName = "Zipfian";
@@ -74,16 +77,14 @@ namespace NES::Benchmark::DataGeneration {
     }
 
     TEST_F(ZipfianDataGeneratorTest, toStringTest) {
-        auto alpha = 0;
+        auto alpha = 0.9;
         auto minValue = 0;
         auto maxValue = 1000;
         std::ostringstream oss;
 
         auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-        // how to use private toString() function
         auto stringDefault = zipfianDataGenerator->toString();
 
-        // how to use private getName() function
         oss << zipfianDataGenerator->getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
         auto expectedString = oss.str();
 
@@ -91,17 +92,49 @@ namespace NES::Benchmark::DataGeneration {
     }
 
     TEST_F(ZipfianDataGeneratorTest, createDataTest) {
-        auto alpha = 0;
+        auto alpha = 0.9;
         auto minValue = 0;
         auto maxValue = 1000;
+        size_t numberOfBuffers = 10;
 
         auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-        // TODO data default
-        auto dataDefault = zipfianDataGenerator->createData(100, sizeof(char));
+        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        zipfianDataGenerator->setBufferManager(bufferManager);
+        auto dataDefault = zipfianDataGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
 
-        // TODO expected Data
-        auto expectedData = ;
+        std::vector<Runtime::TupleBuffer> expectedData;
+        expectedData.reserve(numberOfBuffers);
 
-        ASSERT_EQ(dataDefault, expectedData);
+        auto memoryLayout = zipfianDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            std::mt19937 generator(GENERATOR_SEED_ZIPFIAN);
+            ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                auto value = zipfianGenerator(generator);
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            expectedData.emplace_back(bufferRef);
+        }
+
+        ASSERT_EQ(dataDefault.size(), expectedData.size());
+
+        for (uint64_t i = 0; i < dataDefault.size(); ++i) {
+            auto dataBuffer = dataDefault[i];
+            auto expectedBuffer = expectedData[i];
+
+            ASSERT_EQ(dataBuffer.getBufferSize(), expectedBuffer.getBufferSize());
+            ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()) == 0);
+        }
     }
 }//namespace NES::Benchmark::DataGeneration
