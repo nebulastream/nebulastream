@@ -22,19 +22,31 @@
 namespace NES {
 
 namespace detail {
-spdlog::logger createLogger();
+/**
+ * @brief Creates an empty logger that writes to /dev/null
+ * @return
+ */
 spdlog::logger createEmptyLogger();
 }// namespace detail
 
 namespace Logger {
+/**
+ * @brief Setups the logging using a file path for the filesystem logging and a logging level
+ * @param logFileName
+ * @param level
+ */
 void setupLogging(const std::string& logFileName, LogLevel level);
 }
 
 class NesLogger {
   private:
-    using format_string_type = fmt::basic_string_view<char>;
 
   public:
+    /**
+     * @brief Configures this NesLogger using a file path for the filesystem logging and a logging level
+     * @param logFileName
+     * @param level
+     */
     void configure(const std::string& logFileName, LogLevel level);
 
     ~NesLogger() {
@@ -50,42 +62,103 @@ class NesLogger {
 
   private:
   public:
+    /**
+     * @brief Logs a tracing message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void trace(spdlog::source_loc&& loc, fmt::format_string<arguments...>&& format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::trace, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief Logs a warning message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void warn(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief Logs a fatal error message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void fatal(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief Logs an info message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::info, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief Logs a debug message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void debug(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::debug, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief Logs an error message using a format, a source location, and a set of arguments to display
+     * @tparam arguments
+     * @param loc
+     * @param format
+     * @param args
+     * @return
+     */
     template<typename... arguments>
     constexpr inline void error(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
         impl.log(std::move(loc), spdlog::level::err, std::move(format), std::forward<arguments>(args)...);
     }
 
+    /**
+     * @brief flushes the current log to filesystem
+     */
     void flush() { impl.flush(); }
 
+    /**
+     * @brief forcefully flushes the current log to filesystem
+     */
     void forceFlush();
 
+    /**
+     * @brief get the current logging level
+     */
     inline LogLevel getCurrentLogLevel() const noexcept { return currentLogLevel; }
 
+    /**
+     * @brief change the current logging level to a new level
+     * @param newLevel
+     */
      void changeLogLevel(LogLevel newLevel);
 
   public:

@@ -59,10 +59,16 @@ constexpr uint64_t getLogLevel(const LogLevel value) { return magic_enum::enum_i
  */
 constexpr auto getLogName(const LogLevel value) { return magic_enum::enum_name(value); }
 
+/**
+ * @brief LogCaller is our compile-time trampoline to invoke the NesLogger method for the desired level of logging L
+ * @tparam L the level of logging
+ */
 template<LogLevel L>
 struct LogCaller {
     template<typename... arguments>
-    constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...) {}
+    constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...) {
+        static_assert(false, "This should not compile");
+    }
 };
 
 template<>
