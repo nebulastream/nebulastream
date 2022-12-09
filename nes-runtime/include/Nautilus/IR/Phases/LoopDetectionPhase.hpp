@@ -14,7 +14,6 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 
-// Todo forward refs?
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -82,18 +81,32 @@ class LoopDetectionPhase {
          */
         void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, 
                         std::stack<IR::BasicBlockPtr>& ifBlocks, std::unordered_set<std::string>& visitedBlocks, 
-                        std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock,
-                        std::unordered_map<std::string, std::shared_ptr<Operations::ConstIntOperation>>& constantValues);
+                        std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock);
+
         /**
-         * @brief We check all blocks for constant int operations which might represent the lower- or upperBound or the 
-         *        stepSize of loop-operations. We also keep constant value forwarding between blocks.
+         * @brief Checks the loop-header-block and block that appears in front of the loop-header-block in the control 
+         * flow (from root) for constant values that represent the loop-iteration-variable and/or the upperBound.
          * 
-         * @param currentBlock: The block that we are currently checking for constant int operations.
-         * @param constantValues: An auxiliary hash map that allows us to keep track of all constant int operations
-         *                        and their argument names.
+         * @param loopHeaderBlock: The loopHeaderBlock can contain the definition for the upperBound.
+         * @param loopBeforeBlock: The loopBeforeBlock can contain the definition of the loop-iteration-variable and 
+         *                          the definition of the upperBound.
+         * @param compareOp: Contains the loop-induction-variable, and the upperBound as inputs.
+         * @return A pair that may contain the values for the loop-induction-variable and the upperBound. 
+         *         However, the pair might also contain nullptrs, which we must handle.
          */
-        void findAndAddConstantOperations(BasicBlockPtr& currentBlock, 
-                        std::unordered_map<std::string, std::shared_ptr<Operations::ConstIntOperation>>& constantValues);
+        std::pair<std::shared_ptr<IR::Operations::ConstIntOperation>, std::shared_ptr<IR::Operations::ConstIntOperation>>
+        getCompareOpConstants(const BasicBlockPtr& loopHeaderBlock, const BasicBlockPtr& loopBeforeBlock, 
+                      const std::shared_ptr<Operations::CompareOperation>& compareOp);
+
+        /**
+         * @brief Check the loopEndBlock for a constant operation that matches the step size used in countOp.
+         * 
+         * @param loopEndBlock: We currently assume that the step size is defined as constant in the loopEndBlock.
+         * @param countOp: The stepSize is used to increment the loop-induction-variable in the countOp.
+         * @return std::shared_ptr<IR::Operations::ConstIntOperation>: stepSize
+         */
+        std::shared_ptr<IR::Operations::ConstIntOperation> 
+        inline getStepSize(const BasicBlockPtr& loopEndBlock, const Operations::OperationPtr& countOp);
       private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;

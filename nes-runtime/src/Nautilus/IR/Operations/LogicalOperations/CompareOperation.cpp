@@ -29,6 +29,31 @@ OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
+bool CompareOperation::isLessThan() {
+    return (comparator == ISLT || comparator == IULT);
+}
+bool CompareOperation::isLessEqual() {
+    return (comparator == ISLE || comparator == IULE);
+}
+bool CompareOperation::isGreaterThan() {
+    return (comparator == ISGT || comparator == IUGT);
+}
+bool CompareOperation::isGreaterEqual() {
+    return (comparator == ISGE || comparator == IUGE);
+}
+bool CompareOperation::isEquals() {
+    return (comparator == IEQ);
+}
+bool CompareOperation::isLessThanOrGreaterThan() {
+    return isLessThan() || isGreaterThan();
+}
+bool CompareOperation::isLess() {
+    return isLessThan() || isLessEqual();
+}
+bool CompareOperation::isGreater() {
+    return isGreaterThan() || isGreaterEqual();
+}
+
 std::string CompareOperation::toString() {
     std::string comperator;
     switch (comparator) {

@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
 
+#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
 #include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
