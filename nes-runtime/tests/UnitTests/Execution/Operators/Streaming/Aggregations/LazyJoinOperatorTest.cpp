@@ -30,30 +30,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Exceptions/ErrorListener.hpp>
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution {
-
-class TestRunner : public NES::Exceptions::ErrorListener {
-  public:
-    void onFatalError(int signalNumber, std::string callStack) override {
-        std::ostringstream fatalErrorMessage;
-        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                          << callStack;
-
-        NES_FATAL_ERROR(fatalErrorMessage.str());
-        std::cerr << fatalErrorMessage.str() << std::endl;
-    }
-
-    void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
-        std::ostringstream fatalExceptionMessage;
-        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
-
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
-        std::cerr << fatalExceptionMessage.str() << std::endl;
-    }
-};
 
 
 class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecutionTest {
@@ -193,6 +172,26 @@ struct LazyJoinSinkHelper {
     LazyJoinOperatorTest* lazyJoinOperatorTest;
 };
 
+bool checkIfBufferFoundAndRemove(LazyJoinOperatorTest* lazyJoinOperatorTest,
+                        Runtime::TupleBuffer buffer,
+                        size_t sizeJoinedTuple,
+                        SchemaPtr joinSchema,
+                        uint64_t& removedBuffer) {
+    bool foundBuffer = false;
+    NES_DEBUG("NLJ buffer = " << Util::printTupleBufferAsCSV(buffer, joinSchema));
+    for (auto tupleBufferIt = lazyJoinOperatorTest->emittedBuffers.begin(); tupleBufferIt != lazyJoinOperatorTest->emittedBuffers.end(); ++tupleBufferIt) {
+        NES_DEBUG("Comparing versus = " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
+        if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple * buffer.getNumberOfTuples()) == 0) {
+            NES_DEBUG("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
+            lazyJoinOperatorTest->emittedBuffers.erase(tupleBufferIt);
+            foundBuffer = true;
+            removedBuffer += 1;
+            break;
+        }
+    }
+    return foundBuffer;
+}
+
 bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, lazyJoinSinkHelper.bufferManager,
@@ -236,8 +235,8 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
 
 
 
-    std::vector<std::vector<Nautilus::Record>> leftRecords(std::ceil((double)lazyJoinSinkHelper.numberOfTuplesToProduce / lazyJoinSinkHelper.windowSize) + 1);
-    std::vector<std::vector<Nautilus::Record>> rightRecords(std::ceil((double)lazyJoinSinkHelper.numberOfTuplesToProduce / lazyJoinSinkHelper.windowSize) + 1);
+    std::vector<std::vector<Nautilus::Record>> leftRecords;
+    std::vector<std::vector<Nautilus::Record>> rightRecords;
 
     uint64_t lastTupleTimeStampWindow = lazyJoinSinkHelper.windowSize - 1;
     std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
@@ -249,11 +248,11 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
                                              {lazyJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>(i)}});
 
         if (recordRight.read(lazyJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
-            leftRecords.emplace_back(tmpRecordsLeft);
-            rightRecords.emplace_back(tmpRecordsRight);
+            leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
+            rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
-            tmpRecordsLeft.clear();
-            tmpRecordsRight.clear();
+            tmpRecordsLeft = std::vector<Nautilus::Record>();
+            tmpRecordsRight = std::vector<Nautilus::Record>();
 
             lastTupleTimeStampWindow += lazyJoinSinkHelper.windowSize;
         }
@@ -278,14 +277,25 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
     lazyJoinOperatorTest->emittedBuffers.erase(lazyJoinOperatorTest->emittedBuffers.begin(),
                                                lazyJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
+    SchemaPtr joinSchema = Schema::create(lazyJoinSinkHelper.leftSchema->getLayoutType());
+    joinSchema->addField(lazyJoinSinkHelper.leftSchema->get(lazyJoinSinkHelper.joinFieldNameLeft));
+    joinSchema->copyFields(lazyJoinSinkHelper.leftSchema);
+    joinSchema->copyFields(lazyJoinSinkHelper.rightSchema);
+
+
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
     if (lazyJoinOpHandler->getNumActiveWindows() != 1) {
         return false;
     }
 
-    auto removedBuffer = 0;
+    auto removedBuffer = 0UL;
+    auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
+    auto buffer = lazyJoinSinkHelper.bufferManager->getBufferBlocking();
+    auto tuplePerBuffer = lazyJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
+
     for (auto curWindow = 0UL; curWindow < leftRecords.size(); ++curWindow) {
+        auto numberOfTuplesInBuffer = 0UL;
         for (auto& leftRecord : leftRecords[curWindow]) {
             for (auto& rightRecord : rightRecords[curWindow]) {
                 if (leftRecord.read(lazyJoinSinkHelper.joinFieldNameLeft) == rightRecord.read(lazyJoinSinkHelper.joinFieldNameRight)) {
@@ -294,10 +304,7 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
                         return false;
                     }
 
-
-                    auto buffer = lazyJoinSinkHelper.bufferManager->getBufferBlocking();
-                    int8_t* bufferPtr = (int8_t*) buffer.getBuffer();
-
+                    int8_t* bufferPtr = (int8_t*) buffer.getBuffer() + numberOfTuplesInBuffer * sizeJoinedTuple;
                     auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
                     keyRef.store(leftRecord.read(lazyJoinSinkHelper.joinFieldNameLeft));
 
@@ -308,32 +315,29 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
                     Util::writeNautilusRecord(bufferPtr, leftRecord, lazyJoinSinkHelper.leftSchema, lazyJoinSinkHelper.bufferManager);
                     Util::writeNautilusRecord(bufferPtr + lazyJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
                                               rightRecord, lazyJoinSinkHelper.rightSchema, lazyJoinSinkHelper.bufferManager);
-                    buffer.setNumberOfTuples(1);
+                    numberOfTuplesInBuffer += 1;
+                    buffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
-                    SchemaPtr joinSchema = Schema::create(lazyJoinSinkHelper.leftSchema->getLayoutType());
-                    joinSchema->addField(lazyJoinSinkHelper.leftSchema->get(lazyJoinSinkHelper.joinFieldNameLeft));
-                    joinSchema->copyFields(lazyJoinSinkHelper.leftSchema);
-                    joinSchema->copyFields(lazyJoinSinkHelper.rightSchema);
-                    NES_DEBUG("Created join test buffer = " << Util::printTupleBufferAsCSV(buffer, joinSchema));
+                    if (numberOfTuplesInBuffer >= tuplePerBuffer) {
+                        bool foundBuffer = checkIfBufferFoundAndRemove(lazyJoinOperatorTest, buffer, sizeJoinedTuple,
+                                                                       joinSchema, removedBuffer);
 
-                    auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
-
-                    bool foundBuffer = false;
-                    for (auto tupleBufferIt = lazyJoinOperatorTest->emittedBuffers.begin(); tupleBufferIt != lazyJoinOperatorTest->emittedBuffers.end(); ++tupleBufferIt) {
-                        tupleBufferIt->setNumberOfTuples(1);
-
-                        if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple) == 0) {
-                            foundBuffer = true;
-                            NES_DEBUG("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
-                            lazyJoinOperatorTest->emittedBuffers.erase(tupleBufferIt);
-                            ++removedBuffer;
-                            break;
+                        if (!foundBuffer) {
+                            return false;
                         }
-                    }
-                    if (!foundBuffer) {
-                        return false;
+
+                        numberOfTuplesInBuffer = 0;
+                        buffer = lazyJoinSinkHelper.bufferManager->getBufferBlocking();
                     }
                 }
+            }
+        }
+
+        if (numberOfTuplesInBuffer > 0) {
+            bool foundBuffer = checkIfBufferFoundAndRemove(lazyJoinOperatorTest, buffer, sizeJoinedTuple,
+                                                           joinSchema, removedBuffer);
+            if (!foundBuffer) {
+                return false;
             }
         }
     }
@@ -492,10 +496,6 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
 }
 
 TEST_F(LazyJoinOperatorTest, joinSinkTest) {
-
-    // Activating and installing error listener
-    auto runner = std::make_shared<TestRunner>();
-    NES::Exceptions::installGlobalErrorListener(runner);
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
