@@ -22,6 +22,7 @@ limitations under the License.
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <random>
+#include <vector>
 
 namespace NES::Benchmark::DataGeneration {
     class DefaultDataGeneratorTest : public testing::Test {
@@ -133,7 +134,7 @@ namespace NES::Benchmark::DataGeneration {
             auto expectedBuffer = expectedData[i];
 
             ASSERT_EQ(dataBuffer.getBufferSize(), expectedBuffer.getBufferSize());
-            ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()));
+            ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()) == 0);
         }
     }
 }//namespace NES::Benchmark::DataGeneration
