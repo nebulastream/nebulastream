@@ -423,10 +423,10 @@ void DataSource::runningRoutineWithGatheringInterval() {
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
 
-                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                if (NesLogger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
                     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-                    NES_TRACE("DataSource produced buffer content=" << buffer.toString(schema));
+                    NES_TRACE2("DataSource produced buffer content={}", buffer.toString(schema));
                 }
 
                 emitWorkFromSource(buf);
@@ -495,7 +495,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
 
-                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                if (NesLogger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
                     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
                     NES_TRACE("DataSource produced buffer content=" << buffer.toString(schema));

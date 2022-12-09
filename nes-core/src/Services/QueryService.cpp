@@ -93,7 +93,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 QueryId QueryService::addQueryRequest(const std::string& queryString,
@@ -140,7 +140,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {

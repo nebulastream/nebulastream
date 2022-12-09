@@ -13,7 +13,7 @@
 */
 #ifndef NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
 #define NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
-
+#include <cstring>
 // The following provides a polyfill for the source location standard. On not supported platforms it will return a empty result.
 #if __cplusplus > 201703L && __has_builtin(__builtin_source_location) && __has_include(<source_location>)
 #include <source_location>
@@ -54,5 +54,4 @@ struct source_location {
 };
 }// namespace std
 #endif
-
 #endif// NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_

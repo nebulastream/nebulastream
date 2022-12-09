@@ -105,7 +105,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
     running = true;
 
     /* spawn threads */
-    NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
+    NES_DEBUG2("Threadpool: Spawning {} threads", numThreads);
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier, &threadToQueueMapping]() {
             setThreadName("Wrk-%d-%d", nodeId, i);

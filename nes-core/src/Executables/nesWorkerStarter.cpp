@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
 
-        NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
+        NesLogger::getInstance().changeLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));

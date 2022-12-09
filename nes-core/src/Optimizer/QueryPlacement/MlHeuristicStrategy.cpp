@@ -159,7 +159,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
                 NES_ERROR("MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
@@ -227,7 +227,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                           "operatorId: "
                           << operatorNode->getId());
                 topology->print();
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
             }
 
@@ -242,7 +242,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                     NES_ERROR(
                         "MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
-                    throw log4cxx::helpers::Exception(
+                    throw Exceptions::RuntimeException(
 
                         "MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
@@ -250,7 +250,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
-                    throw log4cxx::helpers::Exception(
+                    throw Exceptions::RuntimeException(
                         "MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
                 }
             }
@@ -338,7 +338,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("MlHeuristicStrategy: No node available for further placement of operators");
-            throw log4cxx::helpers::Exception("MlHeuristicStrategy: No node available for further placement of operators");
+            throw Exceptions::RuntimeException("MlHeuristicStrategy: No node available for further placement of operators");
         }
 
         NES_TRACE("MlHeuristicStrategy: Pinn operator to the candidate topology node.");

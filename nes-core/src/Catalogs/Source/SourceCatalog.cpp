@@ -33,7 +33,7 @@ void SourceCatalog::addDefaultSources() {
     bool success = addLogicalSource("default_logical", schema);
     if (!success) {
         NES_ERROR("SourceCatalog::addDefaultSources: error while add default_logical");
-        throw log4cxx::helpers::Exception("Error while addDefaultSources SourceCatalog");
+        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
 
     //TODO I think we should get rid of this soon
@@ -57,7 +57,7 @@ void SourceCatalog::addDefaultSources() {
     bool success2 = addLogicalSource("exdra", schemaExdra);
     if (!success2) {
         NES_ERROR("SourceCatalog::addDefaultSources: error while adding exdra logical source");
-        throw log4cxx::helpers::Exception("Error while addDefaultSources SourceCatalog");
+        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
 
     //    SchemaPtr iris = Schema::create()
@@ -71,7 +71,7 @@ void SourceCatalog::addDefaultSources() {
     //    bool success3 = addLogicalSource("iris", iris);
     //    if (!success3) {
     //        NES_ERROR("SourceCatalog::addDefaultSources: error while adding iris logical source");
-    //        throw log4cxx::helpers::Exception("Error while addDefaultSources SourceCatalog");
+    //        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     //    }
 }
 
@@ -257,7 +257,7 @@ LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::stri
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
     NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists " << logicalSourceName);
-    throw log4cxx::helpers::Exception("Required source does not exists " + logicalSourceName);
+    throw Exceptions::RuntimeException("Required source does not exists " + logicalSourceName);
 }
 
 bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) {

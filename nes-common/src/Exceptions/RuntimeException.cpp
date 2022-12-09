@@ -14,13 +14,21 @@
 
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
+
+namespace fmt {
+template<>
+struct formatter<std::source_location> : formatter<std::string> {
+    auto format(const std::source_location& loc, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}:{} {}", loc.file_name(), loc.line(), loc.function_name());
+    }
+};
+}// namespace fmt
 
 namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
     : errorMessage(std::move(msg)) {
-    Logger::getInstance()->log(LogLevel::LOG_ERROR, errorMessage, location);
+    NES_ERROR2("{} at {}", errorMessage, location);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }

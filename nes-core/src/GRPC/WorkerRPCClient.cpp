@@ -58,7 +58,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     NES_DEBUG(" WorkerRPCClient::registerQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::registerQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
 bool WorkerRPCClient::registerQueryAsync(const std::string& address,
@@ -202,7 +202,7 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryI
     NES_DEBUG(" WorkerRPCClient::unregisterQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::unregisterQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
 }
 
 bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
@@ -226,7 +226,7 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     NES_DEBUG(" WorkerRPCClient::startQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::startQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
 bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
@@ -282,7 +282,7 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
     NES_ERROR(" WorkerRPCClient::markQueryForStop "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
 bool WorkerRPCClient::stopQueryAsync(const std::string& address,
@@ -397,7 +397,7 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
+        throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
     return false;
 }
@@ -427,7 +427,7 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
         NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
+        throw Exceptions::RuntimeException("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
 
