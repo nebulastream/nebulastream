@@ -66,6 +66,13 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
     size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
+    auto sizeOfJoinedTuple = sizeOfKey + operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes() +
+                             operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
+
+    auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
+    auto numberOfTuplesInBuffer = 0UL;
+    auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
+
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
@@ -87,24 +94,31 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
                         // TODO ask Philipp if I should support columnar layout as this implementation does not support it
-                        // TODO do not allocate a tuple buffer for each record, rather fill each tuple buffer to the brim
 
-                        auto buffer = workerCtx->allocateTupleBuffer();
-                        auto bufferPtr = buffer.getBuffer();
+                        auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
                         auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
-                        buffer.setNumberOfTuples(1);
 
-                        pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
+                        numberOfTuplesInBuffer += 1;
+                        currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+                        if (numberOfTuplesInBuffer >= tuplePerBuffer) {
+                            pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
+
+                            numberOfTuplesInBuffer = 0;
+                            currentTupleBuffer = workerCtx->allocateTupleBuffer();
+                        }
                     }
                 }
             }
-
         }
+    }
+
+    if (numberOfTuplesInBuffer > 0) {
+        pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
     }
 
 
