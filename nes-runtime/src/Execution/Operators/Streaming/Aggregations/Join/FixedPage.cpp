@@ -78,7 +78,9 @@ FixedPage& FixedPage::operator=(FixedPage&& that) {
     return *this;
 }
 
-void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) {
+
+
+void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
     std::swap(lhs.data, rhs.data);
     std::swap(lhs.pos, rhs.pos);

@@ -69,7 +69,7 @@ class FixedPage{
     size_t size() const;
 
   private:
-    void swap(FixedPage& lhs, FixedPage& rhs);
+    void swap(FixedPage& lhs, FixedPage& rhs) noexcept;
 
   private:
     size_t sizeOfRecord{0};

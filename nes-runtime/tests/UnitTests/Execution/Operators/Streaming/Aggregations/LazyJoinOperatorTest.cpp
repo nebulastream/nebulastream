@@ -100,6 +100,8 @@ struct LazyJoinBuildHelper {
     bool isLeftSide;
 };
 
+
+
 bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
 
     auto pageSize = buildHelper.pageSize;
@@ -347,14 +349,16 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     const auto joinSizeInByte = 1 * 1024 * 1024UL;
     const auto numberOfBuffersPerWorker = 128UL;
     const auto numberOfTuplesToProduce = 100UL;
-    const auto windowSize = 2;
-    const auto numPartitions = 4;
+    const auto windowSize = 10;
+    const auto numPartitions = 2;
+    const auto numSourcesLeft = 1;
+    const auto numSourcesRight = 1;
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bm, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
                                                                        noWorkerThreads,
-                                                                       noWorkerThreads,
+                                                                       numSourcesLeft + numSourcesRight,
                                                                        joinSizeInByte, windowSize, CHUNK_SIZE, numPartitions);
 
     auto pipelineContext = PipelineExecutionContext(0,// mock pipeline id
@@ -380,12 +384,14 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
                                                                     timeStampField, rightSchema);
     auto lazyJoinSink = std::make_shared<Operators::LazyJoinSink>(handlerIndex);
 
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    std::vector<std::vector<Nautilus::Record>> leftRecords(std::ceil((double)numberOfTuplesToProduce / windowSize));
-    std::vector<std::vector<Nautilus::Record>> rightRecords(std::ceil((double)numberOfTuplesToProduce / windowSize));
+
+    std::vector<std::vector<Nautilus::Record>> leftRecords(std::ceil((double)numberOfTuplesToProduce / windowSize) + 1);
+    std::vector<std::vector<Nautilus::Record>> rightRecords(std::ceil((double)numberOfTuplesToProduce / windowSize) + 1);
 
     uint64_t lastTupleTimeStampWindow = windowSize - 1;
+    std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
+
     for (auto i = 0UL, curWindow = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
         auto recordLeft = Nautilus::Record({{leftSchema->get(0)->getName(), Value<UInt64>(i)}, {leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
                                             {leftSchema->get(2)->getName(), Value<UInt64>(i)}});
@@ -393,27 +399,36 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
                                              {rightSchema->get(2)->getName(), Value<UInt64>(i)}});
 
         if (recordRight.read(timeStampField) > lastTupleTimeStampWindow) {
-            curWindow += 1;
+            leftRecords.emplace_back(tmpRecordsLeft);
+            rightRecords.emplace_back(tmpRecordsRight);
+
+            tmpRecordsLeft.clear();
+            tmpRecordsRight.clear();
+
             lastTupleTimeStampWindow += windowSize;
         }
 
-        leftRecords[curWindow].push_back(recordLeft);
-        rightRecords[curWindow].push_back(recordRight);
+        tmpRecordsLeft.emplace_back(recordLeft);
+        tmpRecordsRight.emplace_back(recordRight);
 
 
-        lazyJoinBuildRight->execute(executionContext, recordRight);
         lazyJoinBuildLeft->execute(executionContext, recordLeft);
+        lazyJoinBuildRight->execute(executionContext, recordRight);
     }
 
     NES_DEBUG("Performing the sink step for the lazyJoin for " << emittedBuffers.size() << " buffers!");
     auto numberOfEmittedBuffersBuild = emittedBuffers.size();
-    for (auto tupleBuffer : emittedBuffers) {
+    for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
+        auto tupleBuffer = emittedBuffers[cnt];
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
         lazyJoinSink->open(executionContext, recordBuffer);
+        NES_DEBUG("emittedBuffers.size() is now " << emittedBuffers.size());
     }
 
     // Delete all buffers that have been emitted from the build phase
     emittedBuffers.erase(emittedBuffers.begin(), emittedBuffers.begin() + numberOfEmittedBuffersBuild);
+    NES_DEBUG("After remove emittedBuffers.size() is now " << emittedBuffers.size());
+
 
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
@@ -434,13 +449,13 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
                     auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
                     keyRef.store(leftRecord.read(joinFieldNameLeft));
 
+                    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
                     auto const fieldType = physicalDataTypeFactory.getPhysicalType(leftSchema->get(joinFieldNameLeft)->getDataType());
                     bufferPtr += fieldType->size();
 
                     Util::writeNautilusRecord(bufferPtr, leftRecord, leftSchema, bm);
                     Util::writeNautilusRecord(bufferPtr + leftSchema->getSchemaSizeInBytes(),
                                               rightRecord, rightSchema, bm);
-
                     buffer.setNumberOfTuples(1);
 
                     SchemaPtr joinSchema = Schema::create(leftSchema->getLayoutType());
@@ -460,8 +475,8 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
 
                         if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple) == 0) {
                             foundBuffer = true;
+                            NES_DEBUG("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
                             emittedBuffers.erase(tupleBufferIt);
-                            NES_DEBUG("Removing buffer #" << removedBuffer << " of size " << sizeJoinedTuple);
                             ++removedBuffer;
                             break;
                         }
@@ -472,7 +487,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
         }
     }
 
-    // Make sure that after we have joined all records together, we have not created more records than
+    // Make sure that after we have joined all records together
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
