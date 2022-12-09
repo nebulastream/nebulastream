@@ -47,8 +47,8 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        std::random_device randDev;
-        std::mt19937 generator(randDev());
+        // using seed to generate a predictable sequence of values for DefaultDataGeneratorTest
+        std::mt19937 generator(GENERATOR_SEED_ZIPFIAN);
         ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
 
         /* This branch is solely for performance reasons.
