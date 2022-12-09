@@ -146,7 +146,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
-        throw log4cxx::helpers::Exception("NesWorker error while starting node engine");
+        throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
     NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":"

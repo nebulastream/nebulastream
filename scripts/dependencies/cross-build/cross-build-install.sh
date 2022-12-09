@@ -57,7 +57,6 @@ sudo apt-get install -qq --no-install-recommends \
   libedit-dev:arm64 \
   libdwarf-dev:arm64 \
   libdw-dev:arm64 \
-  liblog4cxx-dev:arm64 \
   libssl-dev:arm64 \
   libeigen3-dev:arm64 \
   libzmqpp-dev:arm64 \

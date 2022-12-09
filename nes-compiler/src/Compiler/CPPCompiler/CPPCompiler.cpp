@@ -92,7 +92,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-o" + libraryFileName);
 
     // the log level of the compiled code is the same as the currently selected log level of the runtime.
-    auto logLevel = getLogLevel(Logger::getInstance()->getCurrentLogLevel());
+    auto logLevel = getLogLevel(NesLogger::getInstance().getCurrentLogLevel());
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
 #ifdef TFDEF

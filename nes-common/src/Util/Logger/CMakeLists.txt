@@ -13,7 +13,6 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        Logger.cpp
-        LoggerDetails.cpp
+        NesLogger.cpp
 )
 

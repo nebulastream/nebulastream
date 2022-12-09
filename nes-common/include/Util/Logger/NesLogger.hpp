@@ -15,71 +15,85 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 
-
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <Util/Logger/LogLevel.hpp>
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 namespace NES {
 
 namespace detail {
-spdlog::logger create_logger();
-}  // namespace detail
+spdlog::logger createLogger();
+spdlog::logger createEmptyLogger();
+}// namespace detail
 
-class logger {
+namespace Logger {
+void setupLogging(const std::string& logFileName, LogLevel level);
+}
+
+class NesLogger {
   private:
     using format_string_type = fmt::basic_string_view<char>;
 
-  private:
-    logger() : _logger(detail::create_logger()) {}
+  public:
+    void configure(const std::string& logFileName, LogLevel level);
 
-    ~logger() {
-        _logger.flush();
+    ~NesLogger() {
+        forceFlush();
         spdlog::shutdown();
     }
 
-  public:
-    logger(const logger&) = delete;
+    NesLogger() : impl(detail::createEmptyLogger()) {}
 
-    void operator=(const logger&) = delete;
+    NesLogger(const NesLogger&) = delete;
 
-  private:
-  public:
-    template <typename... arguments>
-    inline void trace(format_string_type format, arguments&&... args) {
-        _logger.trace(format, std::forward<arguments>(args)...);
-    }
-
-    template <typename... arguments>
-    inline void info(format_string_type format, arguments&&... args) {
-        _logger.info(format, std::forward<arguments>(args)...);
-    }
-
-    template <typename... arguments>
-    inline void debug(format_string_type format, arguments&&... args) {
-        _logger.debug(format, std::forward<arguments>(args)...);
-    }
-
-    template <typename... arguments>
-    inline void error(format_string_type format, arguments&&... args) {
-        _logger.error(format, std::forward<arguments>(args)...);
-    }
-
-    void flush() { _logger.flush(); }
-
-    void force_flush() {
-        for (auto& sink : _logger.sinks()) {
-            sink->flush();
-        }
-        _logger.flush();
-    }
-
-  public:
-    static logger& instance();
+    void operator=(const NesLogger&) = delete;
 
   private:
-    spdlog::logger _logger;
+  public:
+    template<typename... arguments>
+    constexpr inline void trace(spdlog::source_loc&& loc, fmt::format_string<arguments...>&& format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::trace, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    template<typename... arguments>
+    constexpr inline void warn(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    template<typename... arguments>
+    constexpr inline void fatal(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    template<typename... arguments>
+    constexpr inline void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::info, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    template<typename... arguments>
+    constexpr inline void debug(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::debug, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    template<typename... arguments>
+    constexpr inline void error(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
+        impl.log(std::move(loc), spdlog::level::err, std::move(format), std::forward<arguments>(args)...);
+    }
+
+    void flush() { impl.flush(); }
+
+    void forceFlush();
+
+    inline LogLevel getCurrentLogLevel() const noexcept { return currentLogLevel; }
+
+     void changeLogLevel(LogLevel newLevel);
+
+  public:
+    static NesLogger& getInstance();// singleton is ok here
+
+  private:
+    spdlog::logger impl;
+    LogLevel currentLogLevel = LogLevel::LOG_INFO;
 };
-
-
+}// namespace NES
 #endif//NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_

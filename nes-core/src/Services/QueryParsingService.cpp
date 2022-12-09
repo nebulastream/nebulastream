@@ -122,8 +122,8 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
         NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
         throw;
     } catch (...) {
-        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet);
-        throw log4cxx::helpers::Exception("Failed to create the query from input code string");
+        NES_ERROR2("QueryParsingService: Failed to create the query from input code string: {}", queryCodeSnippet);
+        throw Exceptions::RuntimeException("Failed to create the query from input code string");
     }
 }
 
