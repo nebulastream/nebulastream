@@ -57,6 +57,8 @@ LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinish
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
         localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
+    }
+    for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
         localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
     }
 
