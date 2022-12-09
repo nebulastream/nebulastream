@@ -110,7 +110,7 @@ namespace NES::Benchmark::DataGeneration {
 
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-            std::mt19937 generator(GENERATOR_SEED);
+            std::mt19937 generator(GENERATOR_SEED_DEFAULT);
             std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
             for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
