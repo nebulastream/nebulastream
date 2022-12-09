@@ -74,19 +74,19 @@ class DataGenerator {
          */
     static DataGeneratorPtr createGeneratorByName(std::string name, Yaml::Node generatorNode);
 
-  protected:
-    /**
-         * @brief allocates a buffer from the bufferManager
-         * @return TupleBuffer
-         */
-    Runtime::TupleBuffer allocateBuffer();
-
     /**
          * @brief
          * @param bufferSize
          * @return
          */
     Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
+
+  protected:
+    /**
+         * @brief allocates a buffer from the bufferManager
+         * @return TupleBuffer
+         */
+    Runtime::TupleBuffer allocateBuffer();
 
   private:
     Runtime::BufferManagerPtr bufferManager;
