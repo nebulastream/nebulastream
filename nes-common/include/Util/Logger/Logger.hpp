@@ -67,7 +67,7 @@ template<LogLevel L>
 struct LogCaller {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...) {
-        static_assert(false, "This should not compile");
+        // nop
     }
 };
 
