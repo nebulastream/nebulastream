@@ -41,7 +41,7 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
     NES_INFO("Zipfian source mode");
 
     // Prints every five percent the current progress
-    uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
+    uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
         Runtime::TupleBuffer bufferRef = allocateBuffer();
