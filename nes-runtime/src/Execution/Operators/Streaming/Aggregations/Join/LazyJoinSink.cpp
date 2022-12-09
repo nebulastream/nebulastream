@@ -160,10 +160,6 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
 }
 
 void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
-//    auto partitionId = recordBuffer.getBuffer().load<UInt64>() - 1;
-//    auto sizeOfPartitionId = Int8(sizeof(size_t));
-//    auto timeStampPtr = recordBuffer.getBuffer()->add(sizeOfPartitionId);
-//    auto timeStamp = timeStampPtr->load<UInt64>()->getValue();
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
