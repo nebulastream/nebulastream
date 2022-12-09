@@ -18,6 +18,8 @@
 #include <DataGeneration/DataGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
+auto constexpr GENERATOR_SEED = 848566;
+
 class DefaultDataGenerator : public DataGenerator {
   public:
     /**
