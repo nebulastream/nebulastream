@@ -18,13 +18,14 @@
 #include <DataGeneration/DataGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {
+auto constexpr GENERATOR_SEED_ZIPFIAN = 848566;
 
 class ZipfianDataGenerator : public DataGenerator {
 
   public:
     explicit ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue);
 
-  private:
+  public:
     /**
          * @brief creates Zipfian data with the schema "id, value, payload, timestamp"
          * the id, payload, and timestamp are just counters that increment whereas the value gets drawn
