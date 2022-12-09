@@ -34,7 +34,7 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(&opHandler->getWindowToBeFilled().getLocalHashTable(index, isLeftSide));
+    return static_cast<void*>(&opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
 }
 
 
@@ -56,8 +56,8 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    auto& sharedJoinHashTable = opHandler->getWindowToBeFilled().getSharedJoinHashTable(isLeftSide);
-    auto& localHashTable = opHandler->getWindowToBeFilled().getLocalHashTable(workerCtx->getId(), isLeftSide);
+    auto& sharedJoinHashTable = opHandler->getWindowToBeFilled(isLeftSide).getSharedJoinHashTable(isLeftSide);
+    auto& localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
 
 
     for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
@@ -65,12 +65,12 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     }
 
     // If the last thread/worker is done with building, then start the second phase (comparing buckets)
-    if (opHandler->getWindowToBeFilled().fetchSubBuild(1) == 1) {
+    if (opHandler->getWindowToBeFilled(isLeftSide).fetchSubBuild(1) == 1) {
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
 
             auto* joinPartitionIdTupleStamp = new JoinPartitionIdTumpleStamp;
             joinPartitionIdTupleStamp->partitionId = i,
-            joinPartitionIdTupleStamp->lastTupleTimeStamp = opHandler->getWindowToBeFilled().getLastTupleTimeStamp();
+            joinPartitionIdTupleStamp->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getLastTupleTimeStamp();
 
             // TODO ask Ventura and/or Philipp if I have to call somewhere explicitly a delete
             auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(joinPartitionIdTupleStamp),
@@ -80,17 +80,17 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
         }
 
 
-        opHandler->incLastTupleTimeStamp(opHandler->getWindowSize());
-        opHandler->createNewWindow();
     }
+    opHandler->incLastTupleTimeStamp(opHandler->getWindowSize(), isLeftSide);
+    opHandler->createNewWindow(isLeftSide);
 }
 
 
-size_t getLastTupleWindow(void* ptrOpHandler) {
+size_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
-    return opHandler->getLastTupleTimeStamp();
+    return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
 
@@ -99,7 +99,8 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef);
+    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow,
+                                                     operatorHandlerMemRef, Value<Boolean>(isLeftSide));
 
 
     if (record.read(timeStampField) > lastTupleWindowRef) {

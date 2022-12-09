@@ -36,14 +36,16 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                     maxNoWorkerThreads(maxNoWorkerThreads), counterFinishedBuildingStart(counterFinishedBuildingStart),
                                                     counterFinishedSinkStart(numPartitions),
                                                     totalSizeForDataStructures(totalSizeForDataStructures),
-                                                    lastTupleTimeStamp(windowSize - 1), windowSize(windowSize),
+                                                    lastTupleTimeStampLeft(windowSize - 1), lastTupleTimeStampRight(windowSize - 1),
+                                                    windowSize(windowSize),
                                                     pageSize(pageSize), numPartitions(numPartitions) {
 
     NES_ASSERT2_FMT(0 != numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures, "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
 
-    createNewWindow();
+    // It does not matter here if we put true or false as a parameter
+    createNewWindow(/* isLeftSide*/ true);
 }
 
 
@@ -67,8 +69,14 @@ void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContex
     // TODO ask Philipp, if I should delete here all windows
 }
 
-void LazyJoinOperatorHandler::createNewWindow() {
-    NES_DEBUG("LazyJoinOperatorHandler: create a new window for the lazyjoin")
+void LazyJoinOperatorHandler::createNewWindow(bool isLeftSide) {
+
+    auto lastTupleTimeStamp = getLastTupleTimeStamp(isLeftSide);
+    if (checkWindowExists(lastTupleTimeStamp)) {
+        return;
+    }
+
+    NES_DEBUG("LazyJoinOperatorHandler: create a new window for the lazyjoin");
     lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
                                  totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
                                  joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
@@ -81,7 +89,16 @@ void LazyJoinOperatorHandler::deleteWindow(size_t timeStamp) {
             break;
         }
     }
+}
 
+bool LazyJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
+    for (auto& lazyJoinWindow : lazyJoinWindows) {
+        if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
@@ -95,17 +112,30 @@ LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
 
 }
 
-uint64_t LazyJoinOperatorHandler::getLastTupleTimeStamp() const {
-    return lastTupleTimeStamp;
+uint64_t LazyJoinOperatorHandler::getLastTupleTimeStamp(bool isLeftSide) const {
+    if (isLeftSide) {
+        return lastTupleTimeStampLeft;
+    } else {
+        return lastTupleTimeStampRight;
+    }
 }
 
-LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled() {
-    return getWindow(lastTupleTimeStamp);
+LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled(bool isLeftSide) {
+    if (isLeftSide) {
+        return getWindow(lastTupleTimeStampLeft);
+    } else {
+        return getWindow(lastTupleTimeStampRight);
+    }
 }
 
-void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment) {
-    lastTupleTimeStamp += increment;
+void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool isLeftSide) {
+    if (isLeftSide) {
+        lastTupleTimeStampLeft += increment;
+    } else {
+        lastTupleTimeStampRight += increment;
+    }
 }
+
 
 size_t LazyJoinOperatorHandler::getWindowSize() const {
     return windowSize;

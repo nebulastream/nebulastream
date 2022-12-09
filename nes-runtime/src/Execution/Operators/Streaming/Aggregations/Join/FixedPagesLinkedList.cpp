@@ -38,6 +38,8 @@ FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t
     : tail(tail), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
     const auto numPreAllocatedPage = PREALLOCATED_SIZE / pageSize;
+    NES_ASSERT2_FMT(numPreAllocatedPage > 0, "numPreAllocatedPage is 0");
+
     for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
         pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
     }

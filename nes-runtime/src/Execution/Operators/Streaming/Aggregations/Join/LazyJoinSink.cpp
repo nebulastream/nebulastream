@@ -87,6 +87,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
                         // TODO ask Philipp if I should support columnar layout as this implementation does not support it
+                        // TODO do not allocate a tuple buffer for each record, rather fill each tuple buffer to the brim
 
                         auto buffer = workerCtx->allocateTupleBuffer();
                         auto bufferPtr = buffer.getBuffer();
@@ -144,7 +145,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 
     if (joinedTuples) {
-        NES_DEBUG("Worker " << workerCtx->getId() << " got " << partitionId << " joined #tuple=" << joinedTuples);
+        NES_DEBUG("Worker " << workerCtx->getId() << " got partitionId " << partitionId << " joined #tuple=" << joinedTuples);
         NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
                         "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
                                                           << (leftBucketSize * rightBucketSize));
@@ -155,8 +156,6 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
         // delete the current hash table
         opHandler->deleteWindow(lastTupleTimeStamp);
     }
-
-
 }
 
 void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
