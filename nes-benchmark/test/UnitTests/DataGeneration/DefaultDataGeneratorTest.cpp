@@ -92,7 +92,7 @@ namespace NES::Benchmark::DataGeneration {
     TEST_F(DefaultDataGeneratorTest, createDataTest) {
         auto minValue = 0;
         auto maxValue = 1000;
-        size_t numberOfBuffers = 1000;
+        size_t numberOfBuffers = 10;
 
         auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
         auto bufferManager =  std::make_shared<Runtime::BufferManager>();
@@ -102,7 +102,6 @@ namespace NES::Benchmark::DataGeneration {
         std::vector<Runtime::TupleBuffer> expectedData;
         expectedData.reserve(numberOfBuffers);
 
-        // how to use private getMemoryLayout() function
         auto memoryLayout = defaultDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -112,7 +111,7 @@ namespace NES::Benchmark::DataGeneration {
 
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-            std::mt19937 generator(42);
+            std::mt19937 generator(GENERATOR_SEED);
             std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
             for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
@@ -127,7 +126,14 @@ namespace NES::Benchmark::DataGeneration {
             expectedData.emplace_back(bufferRef);
         }
 
-        // doesn't work though operator== is defined in stl_vector.h
-        ASSERT_EQ(dataDefault, expectedData);
+        ASSERT_EQ(dataDefault.size(), expectedData.size());
+
+        for (uint64_t i = 0; i < dataDefault.size(); ++i) {
+            auto dataBuffer = dataDefault[i];
+            auto expectedBuffer = expectedData[i];
+
+            ASSERT_EQ(dataBuffer.getBufferSize(), expectedBuffer.getBufferSize());
+            ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()));
+        }
     }
 }//namespace NES::Benchmark::DataGeneration
