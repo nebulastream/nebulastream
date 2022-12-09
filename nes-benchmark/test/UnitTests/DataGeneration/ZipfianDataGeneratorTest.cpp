@@ -37,43 +37,69 @@ namespace NES::Benchmark::DataGeneration {
     };
 
     TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(/* alpha */ 0, /* minValue */ 0, /* maxValue */ 1000);
+        auto alpha = 0;
+        auto minValue = 0;
+        auto maxValue = 1000;
+        bool equal = false;
+
+        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        // how to use private getSchema() function
         auto schemaDefault = zipfianDataGenerator->getSchema();
+
         auto expectedSchema = NES::Schema::create()
                                   ->addField(createField("id", NES::UINT64))
                                   ->addField(createField("value", NES::UINT64))
                                   ->addField(createField("payload", NES::UINT64))
                                   ->addField(createField("timestamp", NES::UINT64));
 
-        // TODO compare schema correctly
-        ASSERT_EQ(schemaDefault, expectedSchema);
+        if (expectedSchema->equals(schemaDefault, true)) {
+            equal = true;
+        }
+
+        ASSERT_EQ(equal, true);
     }
 
     TEST_F(ZipfianDataGeneratorTest, getNameTest) {
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(/* alpha */ 0, /* minValue */ 0, /* maxValue */ 1000);
+        auto alpha = 0;
+        auto minValue = 0;
+        auto maxValue = 1000;
+
+        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        // how to use private getName() function
         auto nameDefault = zipfianDataGenerator->getName();
+
         auto expectedName = "Zipfian";
 
         ASSERT_EQ(nameDefault, expectedName);
     }
 
     TEST_F(ZipfianDataGeneratorTest, toStringTest) {
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(/* alpha */ 0, /* minValue */ 0, /* maxValue */ 1000);
+        auto alpha = 0;
+        auto minValue = 0;
+        auto maxValue = 1000;
+        std::ostringstream oss;
+
+        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        // how to use private toString() function
         auto stringDefault = zipfianDataGenerator->toString();
 
-        // TODO expected string
-        auto expectedString = ;
+        // how to use private getName() function
+        oss << zipfianDataGenerator->getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
+        auto expectedString = oss.str();
 
         ASSERT_EQ(stringDefault, expectedString);
     }
 
     TEST_F(ZipfianDataGeneratorTest, createDataTest) {
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(/* alpha */ 0, /* minValue */ 0, /* maxValue */ 1000);
+        auto alpha = 0;
+        auto minValue = 0;
+        auto maxValue = 1000;
+
+        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
         // TODO data default
         auto dataDefault = zipfianDataGenerator->createData(100, sizeof(char));
 
         // TODO expected Data
-        // how to expect random data?
         auto expectedData = ;
 
         ASSERT_EQ(dataDefault, expectedData);
