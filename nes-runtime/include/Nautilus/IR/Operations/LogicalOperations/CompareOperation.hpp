@@ -47,6 +47,14 @@ class CompareOperation : public Operation {
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
     Comparator getComparator();
+    bool isLessThan();
+    bool isLessEqual();
+    bool isGreaterThan();
+    bool isGreaterEqual();
+    bool isEquals();
+    bool isLessThanOrGreaterThan();
+    bool isLess();
+    bool isGreater();
 
     std::string toString() override;
 

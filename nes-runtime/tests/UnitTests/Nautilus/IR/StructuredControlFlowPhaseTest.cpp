@@ -12,21 +12,24 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
+#include <string>
 #include <unordered_map>
-
 
 namespace NES::Nautilus {
 /**
@@ -57,18 +60,21 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
+    std::vector<IR::BasicBlockPtr> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
         auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() {
             return nautilusFunction();
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
+        auto dpsSortedGraphNodes = enumerateIRForTests(ir);
         removeBrOnlyBlocksPhase.apply(ir);
         loopDetectionPhase.apply(ir);
         structuredControlFlowPhase.apply(ir);
-        return ir;
+        // return enumerateIRForTests(ir);
+        return dpsSortedGraphNodes;
     }
-    /**
+
+      /**
      * @brief lowerBound, upperBound, stepSize, loopEndBlockId
      */
     struct CountedLoopInfo {
@@ -78,6 +84,10 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         std::string loopEndBlockId;
     };
     using countedLoopInfoPtr = std::unique_ptr<CountedLoopInfo>;
+    countedLoopInfoPtr createCorrectCountedLoopInfo(uint32_t lowerBound, uint32_t upperBound, uint32_t stepSize, std::string loopEndBlockId) {
+        return std::make_unique<CountedLoopInfo>(CountedLoopInfo{lowerBound, upperBound, stepSize, loopEndBlockId});
+    }
+
     struct CorrectBlockValues {
         uint32_t correctNumberOfBackLinks;
         std::unique_ptr<CountedLoopInfo> countedLoopInfo;
@@ -86,116 +96,140 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
     using CorrectBlockValuesPtr = std::unique_ptr<CorrectBlockValues>;
     void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks, 
             std::string correctBlockId, uint32_t correctNumberOfBackLinks, 
-            std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) { //Todo remove default -> adapt tests
+            std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) {
                 correctBlocks.emplace(std::pair{correctBlockId, 
                     std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, 
                         std::move(countedLoopInfo), correctMergeBlockId})});
     }
 
-    bool checkIRForCorrectness(IR::BasicBlockPtr currentBlock, const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
-        std::vector<IR::BasicBlockPtr> candidates;
-        std::unordered_set<std::string> visitedBlocks;
-        candidates.push_back(currentBlock);
+    /**
+     * @brief Takes a graph IR, enumerates all blocks depth-first, and returns a vector containing all blocks.
+     * 
+     * @param ir: Graph ir that is traversed depth-first-search (dps).
+     * @return std::vector<IR::BasicBlockPtr>: A vector containing all blocks of the ir-graph sorted by dps.
+     */
+    std::vector<IR::BasicBlockPtr> enumerateIRForTests(std::shared_ptr<IR::IRGraph> ir) {
+        std::stack<IR::BasicBlockPtr> newBlocks;
+        std::unordered_set<IR::BasicBlock*> visitedBlocks;
+        std::vector<IR::BasicBlockPtr> dpsSortedIRGraph;
+    
+        uint32_t currentId = 0;
+        newBlocks.emplace(ir->getRootOperation()->getFunctionBasicBlock());
+        do {
+            visitedBlocks.emplace(newBlocks.top().get());
+            newBlocks.top()->setIdentifier(std::to_string(currentId));
+            ++currentId;
+            dpsSortedIRGraph.emplace_back(newBlocks.top());
+            auto nextBlocks = newBlocks.top()->getNextBlocks();
+            newBlocks.pop();
+            if(nextBlocks.second && !visitedBlocks.contains(nextBlocks.first.get())) {
+                newBlocks.emplace(nextBlocks.second);
+            }
+            if(nextBlocks.first && !visitedBlocks.contains(nextBlocks.first.get())) {
+                newBlocks.emplace(nextBlocks.first);
+            }
+        } while (!newBlocks.empty());
+        return dpsSortedIRGraph;
+    }
+
+    bool checkIRForCorrectness(const std::vector<IR::BasicBlockPtr>& dpsSortedBlocks,
+                               const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
         bool mergeBlocksAreCorrect = true;
         bool loopInfoIsCorrect = true;
         bool backLinksAreCorrect = true;
-        do {
-            visitedBlocks.emplace(currentBlock->getIdentifier());
-            currentBlock = candidates.back();
-            auto terminatorOp = currentBlock->getTerminatorOp();
-            // if(correctBlocks.contains(currentBlock->getIdentifier())) {
-            //     if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
-            //         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-            //         auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
-            //         if(!correctMergeBlockId.empty()) {
-            //             mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
-            //         } else {
-            //             mergeBlocksAreCorrect = !ifOp->getMergeBlock();
-            //         }
-            //         if(!mergeBlocksAreCorrect) {
-            //             NES_ERROR("\nMerge-Block mismatch for block " << currentBlock->getIdentifier() << ": " <<
-            //             ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
-            //             correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
-            //         }
-            //     } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
-            //         backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-            //         if(!backLinksAreCorrect) {
-            //             NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-            //             << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
-            //         }
-            //     }
-            // }
-            candidates.pop_back();
-            if(terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {   
-                auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-                if(!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(branchOp->getNextBlockInvocation().getBlock());
-                }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
-                auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                // Check if operation for correctness.
-                if(correctBlocks.contains(currentBlock->getIdentifier())) {
+        uint32_t numCheckedBlocks = 0;
+        for(auto currentBlock : dpsSortedBlocks) {
+            if(currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
+                // Check that the currentBlock is actually part of the solution set.
+                if (correctBlocks.contains(currentBlock->getIdentifier())) {
+                    auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
+                    // Check that the merge-block id is set correctly, if the if-operation has a merge-block.
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
-                    if(!correctMergeBlockId.empty()) {
-                        mergeBlocksAreCorrect = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
-                    } else {
-                        mergeBlocksAreCorrect = !ifOp->getMergeBlock();
-                    }
-                    if(!mergeBlocksAreCorrect) {
-                        NES_ERROR("\nMerge-Block mismatch for block " << currentBlock->getIdentifier() << ": " <<
-                        ifOp->getMergeBlock()->getIdentifier() << " instead of " <<
-                        correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
-                    }
-                }
-                if(!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(ifOp->getFalseBlockInvocation().getBlock());
-                }
-                if(!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(ifOp->getTrueBlockInvocation().getBlock());
-                }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::LoopOp) {
-                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
-                // Check loop operation for correctness.
-                if(correctBlocks.contains(currentBlock->getIdentifier())) {
-                    // Todo check LoopInfo
-                    if(correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo) {
-                        loopInfoIsCorrect = loopOp->getLoopInfo() != nullptr;
-                        if(!loopInfoIsCorrect) {
-                            NES_ERROR("Loop operation should contain counted loop info.");
+                    if (!correctMergeBlockId.empty()) {
+                        if(!ifOp->getMergeBlock()) {
+                            NES_ERROR("CurrentBlock: " << currentBlock->getIdentifier() << " did not contain a merge block" <<
+                                        " even though the solution suggest it has a merge-block with id: " << correctMergeBlockId);
+                            mergeBlocksAreCorrect = false;
                         } else {
-                            auto countedLoopInfo = std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
-                            loopInfoIsCorrect = countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
-                            loopInfoIsCorrect = countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
-                            loopInfoIsCorrect = countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
-                            if(!loopInfoIsCorrect) {
-                                NES_ERROR("Loop info set incorrectly. Check values: " << 
-                                             "LowerBound: " << countedLoopInfo->lowerBound << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
-                                             "UpperBound: " << countedLoopInfo->upperBound << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
-                                             "StepSize: " << countedLoopInfo->stepSize << "vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize
-                                             );
+                            bool correctMergeBlock = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
+                            mergeBlocksAreCorrect &= correctMergeBlock;
+                            if(!correctMergeBlock) {
+                                NES_ERROR("\nMerge-Block mismatch for block "
+                                    << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier() << " instead of "
+                                    << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
                             }
                         }
                     } else {
-                        loopInfoIsCorrect = !(loopOp->getLoopType() != IR::Operations::LoopOperation::LoopType::DefaultLoop);
-                        if(!loopInfoIsCorrect) {
-                            NES_ERROR("\n Loop operation should be default loop, but is not.");
+                        bool noMergeBlockCorrectlySet = !ifOp->getMergeBlock();
+                        mergeBlocksAreCorrect &= noMergeBlockCorrectlySet;
+                        if(!noMergeBlockCorrectlySet) {
+                            NES_ERROR("The current merge block: " << currentBlock->getIdentifier() 
+                            << " contains a merge-block with id: " << ifOp->getMergeBlock()->getIdentifier() << 
+                            ", even though it should not contain a merge-block.");
                         }
                     }
-                    backLinksAreCorrect = currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
-                    if(!backLinksAreCorrect) {
-                        NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-                        << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                } else {
+                    mergeBlocksAreCorrect = false;
+                    NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
+                                << " was not part of solution set(correctBlocks), but it contains an if-operation.");
+                }
+                ++numCheckedBlocks;
+            } else if(currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp) {
+                    auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
+                    // Check loop operation for correctness.
+                    if(correctBlocks.contains(currentBlock->getIdentifier())) {
+                        if(correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo) {
+                            loopInfoIsCorrect = loopOp->getLoopInfo() != nullptr;
+                            if(!loopInfoIsCorrect) {
+                                NES_ERROR("Loop operation in block: " << currentBlock->getIdentifier() << " should -not- contain counted loop info.");
+                            } else {
+                                auto countedLoopInfo = std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopOp->getLoopInfo());
+                                loopInfoIsCorrect &= countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
+                                loopInfoIsCorrect &= countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
+                                loopInfoIsCorrect &= countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
+                                loopInfoIsCorrect &= countedLoopInfo->loopEndBlock->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
+                                if(!loopInfoIsCorrect) {
+                                    NES_ERROR("Loop info set incorrectly. Check values: " << 
+                                                "LowerBound: " << countedLoopInfo->lowerBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
+                                                ", UpperBound: " << countedLoopInfo->upperBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
+                                                ", StepSize: " << countedLoopInfo->stepSize << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize <<
+                                                ", LoopEndBlock: " << countedLoopInfo->loopEndBlock->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
+                                                );
+                                }
+                            }
+                        } else {
+                            bool loopIsDefaultLoop = (loopOp->getLoopType() == IR::Operations::LoopOperation::LoopType::DefaultLoop);
+                            loopInfoIsCorrect &= loopIsDefaultLoop;
+                            if(!loopIsDefaultLoop) {
+                                NES_ERROR("\n Loop operation in block: " << currentBlock->getIdentifier() << " should be default loop, but is not.");
+                            }
+                        }
+                        // Check that the number of loop back edges is set correctly.
+                        backLinksAreCorrect &= currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                        if(!backLinksAreCorrect) {
+                            NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
+                            << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                        }
+                    } else {
+                        mergeBlocksAreCorrect = false;
+                        NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
+                                    << " was not part of solution set(correctBlocks), but it contains a loop-operation.");
                     }
-                }
-                if(!visitedBlocks.contains(loopOp->getLoopFalseBlock().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(loopOp->getLoopFalseBlock().getBlock());
-                }
-                if(!visitedBlocks.contains(loopOp->getLoopBodyBlock().getBlock()->getIdentifier())) {
-                    candidates.emplace_back(loopOp->getLoopBodyBlock().getBlock());
+                    ++numCheckedBlocks;
+                } else {
+                    if (correctBlocks.contains(currentBlock->getIdentifier())) {
+                        mergeBlocksAreCorrect = false;
+                        NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
+                                    << " was part of solution set(correctBlocks), but it does not contain an if-operation.");
                 }
             }
-        } while(mergeBlocksAreCorrect && backLinksAreCorrect && !candidates.empty());
-        return mergeBlocksAreCorrect;
+        }
+        bool numCheckedBlocksMatchesNumCorrectBlocks = numCheckedBlocks == correctBlocks.size();
+        if(!numCheckedBlocksMatchesNumCorrectBlocks) {
+            NES_ERROR("The number of checked IR blocks " << numCheckedBlocks
+                        << " does not match the number of given 'correctBlocks': " << correctBlocks.size());
+        }
+        return mergeBlocksAreCorrect && loopInfoIsCorrect && backLinksAreCorrect;
     }
 };
 
@@ -222,13 +256,13 @@ Value<> threeIfOperationsOneNestedThreeMergeBlocks_1() {
     agg = agg + 1;
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_1_threeIfOperationsOneNestedThreeMergeBlocks) {
+TEST_P(StructuredControlFlowPhaseTest, 1_threeIfOperationsOneNestedThreeMergeBlocks) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "7");
-    createCorrectBlock(correctBlocks, "3", 0, "9");
-    createCorrectBlock(correctBlocks, "7", 0, "8");
-    auto ir = createTraceAndApplyPhases(&threeIfOperationsOneNestedThreeMergeBlocks_1);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "2");
+    createCorrectBlock(correctBlocks, "2", 0, "6");
+    createCorrectBlock(correctBlocks, "3", 0, "5");
+    auto dpsSortedGraphNodes = createTraceAndApplyPhases(&threeIfOperationsOneNestedThreeMergeBlocks_1);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedGraphNodes, correctBlocks), true);
 }
 
 Value<> doubleVerticalDiamondInTrueBranch_2() {
@@ -250,13 +284,13 @@ Value<> doubleVerticalDiamondInTrueBranch_2() {
     agg = agg + 1;
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_2_doubleVerticalDiamondInTrueBranch) {
+TEST_P(StructuredControlFlowPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "9");
-    createCorrectBlock(correctBlocks, "1", 0, "8");
-    createCorrectBlock(correctBlocks, "8", 0, "9");
-    auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "6");
+    createCorrectBlock(correctBlocks, "1", 0, "3");
+    createCorrectBlock(correctBlocks, "3", 0, "6");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3() {
@@ -281,14 +315,15 @@ Value<> doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_3_doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock) {
+// Breaks in release mode.
+TEST_P(StructuredControlFlowPhaseTest, 3_doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "12");
-    createCorrectBlock(correctBlocks, "1", 0, "12");
-    createCorrectBlock(correctBlocks, "2", 0, "12");
-    createCorrectBlock(correctBlocks, "12", 0, "11");
-    auto ir = createTraceAndApplyPhases(&doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "5");
+    createCorrectBlock(correctBlocks, "1", 0, "5");
+    createCorrectBlock(correctBlocks, "5", 0, "7");
+    createCorrectBlock(correctBlocks, "10", 0, "5");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4() {
@@ -309,18 +344,17 @@ Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4() {
     agg = agg + 1;
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_4_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo) {
+TEST_P(StructuredControlFlowPhaseTest, 4_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "9");
-    createCorrectBlock(correctBlocks, "1", 0, "9");
-    createCorrectBlock(correctBlocks, "4", 0, "9");
-    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "5");
+    createCorrectBlock(correctBlocks, "1", 0, "5");
+    createCorrectBlock(correctBlocks, "6", 0, "5");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwo_4);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5() {
     Value agg = Value(0);
-    Value limit = Value(0);
     if (agg < 50) {
         if (agg > 60) {
             agg = agg + 1000;
@@ -334,24 +368,24 @@ Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHe
     } else {
         agg = agg + 100000;
     }
-    for (Value j = 0; j < agg; j = j + 1) {
+    Value limit = Value(10);
+    for (Value j = 0; j < limit; j = j + 1) {
         agg = agg + 1;
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_5_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader) {
+TEST_P(StructuredControlFlowPhaseTest, 5_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "12");
-    createCorrectBlock(correctBlocks, "1", 0, "12");
-    createCorrectBlock(correctBlocks, "4", 0, "12");
-    createCorrectBlock(correctBlocks, "7", 1, "");
-    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "5");
+    createCorrectBlock(correctBlocks, "1", 0, "5");
+    createCorrectBlock(correctBlocks, "6", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "7"));
+    createCorrectBlock(correctBlocks, "9", 0, "5");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6() {
     Value agg = Value(0);
-    Value limit = Value(1000000);
     if (agg < 50) {
         if (agg > 60) {
             agg = agg + 1000;
@@ -365,26 +399,29 @@ Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6() {
     } else {
         agg = agg + 100000;
     }
-    while (agg < limit) {
-        agg = agg + 1;
+    Value start = Value(1);
+    Value limit = Value(1000000);
+    while (start < limit) {
+        agg = agg + 3;
+        start = start + 2;
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_6_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader) {
+TEST_P(StructuredControlFlowPhaseTest, 6_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "12");
-    createCorrectBlock(correctBlocks, "1", 0, "12");
-    createCorrectBlock(correctBlocks, "4", 0, "12");
-    createCorrectBlock(correctBlocks, "12", 1, "");
-    auto ir = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "5");
+    createCorrectBlock(correctBlocks, "1", 0, "5");
+    createCorrectBlock(correctBlocks, "6", 1, "", createCorrectCountedLoopInfo(1, 1000000, 2, "7"));
+    createCorrectBlock(correctBlocks, "9", 0, "5");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsLoopHeader_6);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> loopMergeBlockBeforeCorrespondingIfOperation_7() {
     Value agg = Value(0);
     Value limit = Value(1000);
     while (agg < limit) {
-        if(agg < 350) {
+        if (agg < 350) {
             agg = agg + 1;
         } else {
             agg = agg + 3;
@@ -392,59 +429,62 @@ Value<> loopMergeBlockBeforeCorrespondingIfOperation_7() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_7_loopMergeBlockBeforeCorrespondingIfOperation) {
+TEST_P(StructuredControlFlowPhaseTest, 7_loopMergeBlockBeforeCorrespondingIfOperation) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "6", 2, "");
-    createCorrectBlock(correctBlocks, "1", 0, "6");
-    auto ir = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_7);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "2", 2, "");
+    createCorrectBlock(correctBlocks, "3", 0, "2");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&loopMergeBlockBeforeCorrespondingIfOperation_7);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> mergeLoopMergeBlockWithLoopFollowUp_8() {
     Value agg = Value(0);
     Value limit = Value(1000000);
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
         agg = agg + 3;
     }
     while (agg < limit) {
-        if(agg < 350) {
+        if (agg < 350) {
             agg = agg + 1;
         } else {
             agg = agg + 3;
         }
     }
-    while (agg < limit) {
+    Value start = Value(0);
+    Value limit2 = Value(1000);
+    while (start < limit2) {
         agg = agg + 4;
+        start  = start + 1;
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_8_mergeLoopMergeBlockWithLoopFollowUp) {
+TEST_P(StructuredControlFlowPhaseTest, 8_mergeLoopMergeBlockWithLoopFollowUp) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "12");
-    createCorrectBlock(correctBlocks, "3", 0, "12");
-    createCorrectBlock(correctBlocks, "12", 2, "");
-    createCorrectBlock(correctBlocks, "10", 1, "");
-    auto ir = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_8);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "4");
+    createCorrectBlock(correctBlocks, "4", 2, "");
+    createCorrectBlock(correctBlocks, "5", 0, "4");
+    createCorrectBlock(correctBlocks, "9", 1, "", createCorrectCountedLoopInfo(0, 1000, 1, "10"));
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&mergeLoopMergeBlockWithLoopFollowUp_8);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> LoopHeaderWithNineBackLinks_9() {
     Value agg = Value(0);
-    Value limit = Value(1000);
-    while (agg < limit) {
-        if(agg < 350) {
-            if(agg < 350) {
-                if(agg < 350) {
+    Value upperBound1 = Value(1000);
+    while (agg < upperBound1) {
+        if (agg < 350) {
+            if (agg < 350) {
+                if (agg < 350) {
                     agg = agg + 1;
                 } else {
                     agg = agg + 3;
                 }
-                if(agg < 350) {
+                if (agg < 350) {
 
                 } else {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
                         agg = agg + 3;
@@ -452,58 +492,59 @@ Value<> LoopHeaderWithNineBackLinks_9() {
                     agg = agg + 4;
                 }
             } else {
-
             }
         } else {
-            if(agg < 350) {
-                if(agg < 350) {
-                    if(agg < 350) {
+            if (agg < 350) {
+                if (agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
                         agg = agg + 1;
                     }
                 } else {
-
                 }
             } else {
-                if(agg < 350) {
-                
+                if (agg < 350) {
+
                 } else {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     } else {
-
                     }
                 }
             }
         }
     }
-    while (agg < limit) {
+    Value inductionVar2 = Value(0);
+    Value upperBound2 = Value(1000);
+    while (inductionVar2 < upperBound2) {
         agg = agg + 4;
+        inductionVar2 = inductionVar2 + 2;
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_9_loopHeaderWithNineBackLinks) {
+TEST_P(StructuredControlFlowPhaseTest, 9_loopHeaderWithNineBackLinks) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "36", 9, "");
-    createCorrectBlock(correctBlocks, "1", 0, "36");
-    createCorrectBlock(correctBlocks, "3", 0, "36");
-    createCorrectBlock(correctBlocks, "4", 0, "36");
-    createCorrectBlock(correctBlocks, "5", 0, "23");
-    createCorrectBlock(correctBlocks, "10", 0, "27");
-    createCorrectBlock(correctBlocks, "14", 1, "");
-    createCorrectBlock(correctBlocks, "16", 0, "36");
-    createCorrectBlock(correctBlocks, "17", 0, "36");
-    createCorrectBlock(correctBlocks, "15", 0, "36");
-    createCorrectBlock(correctBlocks, "29", 0, "36");
-    auto ir = createTraceAndApplyPhases(&LoopHeaderWithNineBackLinks_9);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "9", 9, "");
+    createCorrectBlock(correctBlocks, "10", 0, "9");
+    createCorrectBlock(correctBlocks, "11", 0, "9");
+    createCorrectBlock(correctBlocks, "12", 0, "14");
+    createCorrectBlock(correctBlocks, "14", 0, "9");
+    createCorrectBlock(correctBlocks, "16", 0, "18");
+    createCorrectBlock(correctBlocks, "22", 0, "9");
+    createCorrectBlock(correctBlocks, "23", 0, "9");
+    createCorrectBlock(correctBlocks, "24", 0, "9");
+    createCorrectBlock(correctBlocks, "28", 0, "9");
+    createCorrectBlock(correctBlocks, "30", 0, "9");
+    createCorrectBlock(correctBlocks, "34", 1, "", createCorrectCountedLoopInfo(0, 1000, 2, "35"));
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&LoopHeaderWithNineBackLinks_9);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> mergeLoopBlock_10() {
     Value agg = Value(0);
     Value limit = Value(10);
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
         agg = agg + 3;
@@ -513,146 +554,146 @@ Value<> mergeLoopBlock_10() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_10_mergeLoopBlock) {
+TEST_P(StructuredControlFlowPhaseTest, 10_mergeLoopBlock) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "6");
-    createCorrectBlock(correctBlocks, "6", 1, "");
-    auto ir = createTraceAndApplyPhases(&mergeLoopBlock_10);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "3");
+    createCorrectBlock(correctBlocks, "3", 1, "");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&mergeLoopBlock_10);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11() {
     Value agg = Value(0);
     Value limit = Value(1000000);
-    if(agg < 150) {
-            agg = agg + 1;
+    if (agg < 150) {
+        agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 1;
         } else {
             agg = agg + 1;
         }
     }
     for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) {
-            while (agg < limit) {
+        if (agg < 50) { //3
+            while (agg < limit) { //9
                 agg = agg + 1;
             }
         } else {
-            for (Value start = 0; start < 10; start = start + 1) {
+            for (Value start = 0; start < 100; start = start + 1) {
                 agg = agg + 1;
             }
         }
-        if(agg < 150) {
+        if (agg < 150) { //16
 
-        } else {//11
-            if(agg < 250) {
+        } else {
+            if (agg < 250) {
                 while (agg < limit) {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     }
                 }
-                for (Value start = 0; start < 10; start = start + 1) {
+                for (Value start = 0; start < 1000; start = start + 1) {
                     agg = agg + 1;
                 }
             }
-            if(agg < 450) {
+            if (agg < 450) {
                 agg = agg + 1;
             } else {
                 agg = agg + 2;
             }
-            if(agg < 550) {
+            if (agg < 550) {
                 agg = agg + 1;
             } else {
                 while (agg < limit) {
-                    if(agg < 350) {
+                    if (agg < 350) {
                         agg = agg + 1;
                     }
                 }
             }
         }
+        // 41
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_11_IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops) {
+// Breaks in release mode.
+TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    createCorrectBlock(correctBlocks, "0", 0, "43");
-    createCorrectBlock(correctBlocks, "2", 0, "43");
-    createCorrectBlock(correctBlocks, "12", 1, "");
-    createCorrectBlock(correctBlocks, "3", 0, "19");
-    createCorrectBlock(correctBlocks, "9", 1, "");
-    createCorrectBlock(correctBlocks, "18", 1, "");
-    createCorrectBlock(correctBlocks, "19", 0, "42"); //42 is merge block for many if-operations
-    createCorrectBlock(correctBlocks, "11", 0, "35");
-    createCorrectBlock(correctBlocks, "44", 2, "");
-    createCorrectBlock(correctBlocks, "22", 0, "44");
-    createCorrectBlock(correctBlocks, "29", 1, "");
-    createCorrectBlock(correctBlocks, "35", 0, "36");
-    createCorrectBlock(correctBlocks, "36", 0, "42");
-    createCorrectBlock(correctBlocks, "45", 2, "");
-    createCorrectBlock(correctBlocks, "37", 0, "45");
-    auto ir = createTraceAndApplyPhases(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    createCorrectBlock(correctBlocks, "0", 0, "3");
+    createCorrectBlock(correctBlocks, "4", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "13"));
+    createCorrectBlock(correctBlocks, "5", 0, "10");
+    createCorrectBlock(correctBlocks, "7", 1, "");
+    createCorrectBlock(correctBlocks, "10", 0, "13");
+    createCorrectBlock(correctBlocks, "14", 0, "25");
+    createCorrectBlock(correctBlocks, "17", 2, "");
+    createCorrectBlock(correctBlocks, "25", 0, "27");
+    createCorrectBlock(correctBlocks, "18", 0, "17");
+    createCorrectBlock(correctBlocks, "27", 0, "13");
+    createCorrectBlock(correctBlocks, "22", 1, "", createCorrectCountedLoopInfo(0, 1000, 1, "23"));
+    createCorrectBlock(correctBlocks, "31", 2, "");
+    createCorrectBlock(correctBlocks, "32", 0, "31");
+    createCorrectBlock(correctBlocks, "39", 1, "", createCorrectCountedLoopInfo(0, 100, 1, "40"));
+    createCorrectBlock(correctBlocks, "43", 0, "3");
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> emptyIfElse_12() {
     Value agg = Value(0);
-    if(agg < 350) {
+    if (agg < 350) {
 
     } else {
-
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_12_emptyIfElse) {
-    auto ir = createTraceAndApplyPhases(&emptyIfElse_12);
-    auto convertedIfOperation = ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp();
+TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&emptyIfElse_12);
+    auto convertedIfOperation = dpsSortedBlocks.at(0)->getTerminatorOp();
     ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
-    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp());
-    ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "3");
+    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(
+        dpsSortedBlocks.at(0)->getTerminatorOp());
+    ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "2");
 }
 
 Value<> MergeBlockRightAfterBranchSwitch_13() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_13_MergeBlockRightAfterBranchSwitch) {
+TEST_P(StructuredControlFlowPhaseTest, 13_MergeBlockRightAfterBranchSwitch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&MergeBlockRightAfterBranchSwitch_13);
-    createCorrectBlock(correctBlocks, "0", 0, "3");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&MergeBlockRightAfterBranchSwitch_13);
+    createCorrectBlock(correctBlocks, "0", 0, "2");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> StartBlockIsMergeBlock_14() {
     Value agg = Value(0);
-    while(agg < 10) {
-        if(agg < 150) {
+    while (agg < 10) {
+        if (agg < 150) {
             agg = agg + 1;
         } else {
-
         }
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_14_StartBlockIsMergeBlock) {
+TEST_P(StructuredControlFlowPhaseTest, 14_StartBlockIsMergeBlock) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&StartBlockIsMergeBlock_14);
-    createCorrectBlock(correctBlocks, "6", 2, "");
-    createCorrectBlock(correctBlocks, "1", 0, "6");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&StartBlockIsMergeBlock_14);
+    createCorrectBlock(correctBlocks, "2", 2, "");
+    createCorrectBlock(correctBlocks, "3", 0, "2");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> correctMergeBlockForwardingAfterFindingMergeBlocksOne_15() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 2;
         } else {
             agg = agg + 3;
@@ -663,10 +704,10 @@ Value<> correctMergeBlockForwardingAfterFindingMergeBlocksOne_15() {
 }
 Value<> correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15() {
     Value agg = Value(0);
-    if(agg < 150) {
+    if (agg < 150) {
         agg = agg + 1;
     } else {
-        if(agg < 150) {
+        if (agg < 150) {
             agg = agg + 2;
         } else {
             agg = agg + 3;
@@ -674,17 +715,17 @@ Value<> correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_15_correctMergeBlockForwardingAfterFindingMergeBlocks) {
+TEST_P(StructuredControlFlowPhaseTest, 15_correctMergeBlockForwardingAfterFindingMergeBlocks) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksOne_15);
-    createCorrectBlock(correctBlocks, "0", 0, "5");
-    createCorrectBlock(correctBlocks, "2", 0, "6");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksOne_15);
+    createCorrectBlock(correctBlocks, "0", 0, "2");
+    createCorrectBlock(correctBlocks, "3", 0, "5");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
     correctBlocks.clear();
-    ir = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15);
-    createCorrectBlock(correctBlocks, "0", 0, "6");
-    createCorrectBlock(correctBlocks, "2", 0, "6");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    dpsSortedBlocks = createTraceAndApplyPhases(&correctMergeBlockForwardingAfterFindingMergeBlocksTwo_15);
+    createCorrectBlock(correctBlocks, "0", 0, "3");
+    createCorrectBlock(correctBlocks, "4", 0, "3");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_16() {
@@ -696,7 +737,6 @@ Value<> OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_1
             if (agg > 18) {
                 agg = agg + 2;
             } else {
-
             }
         } else {
             agg = agg + 3;
@@ -704,23 +744,22 @@ Value<> OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_1
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_16_OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch) {
+TEST_P(StructuredControlFlowPhaseTest, 16_OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_16);
-    createCorrectBlock(correctBlocks, "0", 0, "9");
-    createCorrectBlock(correctBlocks, "2", 0, "9");
-    createCorrectBlock(correctBlocks, "3", 0, "9");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&OneMergeBlockThreeIfOperationsFalseBranchIntoTrueBranchIntoFalseBranch_16);
+    createCorrectBlock(correctBlocks, "0", 0, "4");
+    createCorrectBlock(correctBlocks, "5", 0, "4");
+    createCorrectBlock(correctBlocks, "6", 0, "4");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> NestedLoopWithFalseBranchPointingToParentLoopHeader_17() {
     Value agg = Value(0);
     Value limit = Value(10);
     while (agg < limit) {
-        if( agg < limit) {
-            agg = agg + 1;    
-        }
-        else {            
+        if (agg < limit) {
+            agg = agg + 1;
+        } else {
             for (Value start = 0; start < 10; start = start + 1) {
                 agg = agg + 1;
             }
@@ -728,76 +767,16 @@ Value<> NestedLoopWithFalseBranchPointingToParentLoopHeader_17() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_17_NestedLoopWithFalseBranchPointingToParentLoopHeader) {
+TEST_P(StructuredControlFlowPhaseTest, 17_NestedLoopWithFalseBranchPointingToParentLoopHeader) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&NestedLoopWithFalseBranchPointingToParentLoopHeader_17);
-    createCorrectBlock(correctBlocks, "9", 2, "");
-    createCorrectBlock(correctBlocks, "1", 0, "9");
-    createCorrectBlock(correctBlocks, "8", 1, "");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&NestedLoopWithFalseBranchPointingToParentLoopHeader_17);
+    createCorrectBlock(correctBlocks, "2", 2, "");
+    createCorrectBlock(correctBlocks, "3", 0, "2");
+    createCorrectBlock(correctBlocks, "6", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "7"));
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
-Value<> SimpleCountedLoop() {
-    Value agg = Value(2);
-    Value stepSize = Value(-1);
-    // for (Value start = Value(0); start < 10; start = start + 1) {
-    //     agg = agg + 1;
-    // }
-    // Increasing with smaller equals
-    // for (Value start = Value(0); start < 10; start = start + 1) {
-    //     agg = agg + 1;
-    // }
-    // for (Value start = Value(0); start < 10; start = start + 1) {
-    //     agg = agg + 1;
-    // }
-    // Increasing with addition
-    // for (Value start = Value(0); 10 > start; start = 1 + start) {
-    //     agg = agg + 1;
-    // }
-    // Increasing with subtraction
-    // for (Value start = Value(0); start < 10; start = start - stepSize) {
-    //     agg = agg + 1;
-    // }
-
-    // Decreasing with subtraction
-    // for (Value start = Value(10); start > 0; start = start - 1) {
-    //     agg = agg + 1;
-    // }
-    // Decreasing with addition
-    // for (Value start = Value(10); start > 0; start = start + stepSize) {
-    //     agg = agg + 1;
-    // }
-    // Todo handle edge cases: e.g. start = limit
-    // Value agg = Value(2);
-    // Value start = Value(0);
-    // Value limit = Value(10);
-    // Value stepSize = Value(1);
-    // for (; limit > start; start = stepSize + start) {
-    //     agg = agg + 1;
-    // }
-    // return agg;
-    // Value agg = Value(2);
-    Value start = Value(0);
-    while(start < 10) {
-        agg = agg + 1;
-        start = start + 1;
-    }
-    return agg;
-}
-TEST_P(StructuredControlFlowPhaseTest, 18_SimpleCountedLoop) {
-    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&SimpleCountedLoop);
-    createCorrectBlock(correctBlocks, "3", 1, "", std::make_unique<CountedLoopInfo>(CountedLoopInfo{0, 10, 1, "1"}));
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
-}
-
-
-
-//==----------------------------------------------------------------==//
-//==------------------- TRACING/Printing BREAKERS ------------------==//
-//==----------------------------------------------------------------==//
-// Todo breaks tracing (empty block created), addressed by #3021
-Value<> InterruptedMergeBlockForwarding() {
+Value<> InterruptedMergeBlockForwarding_18() {
     Value agg = Value(0);
     if (agg < 50) {
         agg = agg + 1;
@@ -812,44 +791,304 @@ Value<> InterruptedMergeBlockForwarding() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_DISABLED_InterruptedMergeBlockForwarding) {
+// Will be fixed in #3017
+TEST_P(StructuredControlFlowPhaseTest, DISABLED_18_InterruptedMergeBlockForwarding) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding);
-    // createCorrectBlock(correctBlocks, "0", 0, "11");
-    // createCorrectBlock(correctBlocks, "2", 0, "11");
-    // createCorrectBlock(correctBlocks, "3", 0, "11");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&InterruptedMergeBlockForwarding_18);
+    createCorrectBlock(correctBlocks, "0", 0, "4");
+    createCorrectBlock(correctBlocks, "5", 0, "4");
+    createCorrectBlock(correctBlocks, "7", 0, "4");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
-// Todo breaks tracing (empty block created), addressed by #3021
-// -> leads to block without operations
-Value<> TracingBreaker() {
+Value<> TracingBreaker_19() {
     Value agg = Value(0);
     Value limit = Value(10);
-    if(agg < 350) {
-         agg = agg + 1;
+    if (agg < 350) {
+        agg = agg + 1;
     }
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
-        if(agg < 350) {
-            if(agg < 350) { //the 'false' case of this if this if-operation has no operations -> Block_9
+        if (agg < 350) {
+            if (agg < 350) {//the 'false' case of this if this if-operation has no operations -> Block_9
                 agg = agg + 1;
             } else {
-                agg = agg + 2; // leads to empty block
+                agg = agg + 2;// leads to empty block
             }
         }
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, DISABLED_DISABLED_TracingBreaker) {
+// Will be fixed in #3017
+TEST_P(StructuredControlFlowPhaseTest, DISABLED_19_TracingBreaker) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    auto ir = createTraceAndApplyPhases(&TracingBreaker);
-    createCorrectBlock(correctBlocks, "0", 0, "5");
-    createCorrectBlock(correctBlocks, "5", 0, "11");
-    createCorrectBlock(correctBlocks, "4", 0, "11");
-    createCorrectBlock(correctBlocks, "6", 0, "11");
-    ASSERT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&TracingBreaker_19);
+    createCorrectBlock(correctBlocks, "0", 0, "2");
+    createCorrectBlock(correctBlocks, "2", 0, "6");
+    createCorrectBlock(correctBlocks, "7", 0, "6");
+    createCorrectBlock(correctBlocks, "8", 0, "6");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+}
+
+Value<> DebugVsRelease_20() {
+    Value agg = Value(0);
+    Value limit = Value(10);
+    if (agg < 350) {
+        agg = agg + 1;
+    }
+    if (agg < 350) {
+        agg = agg + 1;
+    }
+    return agg;
+}
+TEST_P(StructuredControlFlowPhaseTest, 20_DebugVsRelease) {
+    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&DebugVsRelease_20);
+    createCorrectBlock(correctBlocks, "0", 0, "2");
+    createCorrectBlock(correctBlocks, "2", 0, "4");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+}
+
+Value<> ExtensiveCountedLoopDetection_21() {
+    Value agg = Value(2);
+    // 1. Standard for loop.
+    for (Value lowerBound = Value(0); lowerBound < 10; lowerBound = lowerBound + 1) {
+        agg = agg + 1;
+    }
+    // 2. for loop, but condition is flipped.
+    for (Value lowerBound = Value(0); 10 > lowerBound; lowerBound = lowerBound + 2) {
+        agg = agg + 1;
+    }
+    // 3. for loop, but addition order is flipped.
+    for (Value lowerBound = Value(0); lowerBound < 10; lowerBound = 3 + lowerBound) {
+        agg = agg + 1;
+    }
+    // 4. for loop, but condition, and addition order are flipped.
+    for (Value lowerBound = Value(0); 10 > lowerBound; lowerBound = 4 + lowerBound) {
+        agg = agg + 1;
+    }
+    // 5. for loop, but the induction variable is defined outside of the loop.
+    Value lowerBound_5 = Value(0);
+    for (; lowerBound_5 < 10; lowerBound_5 = lowerBound_5 + 5) {
+        agg = agg + 1;
+    }
+    // 6. for loop, but the induction variable, and the upperBound are defined outside of the loop.
+    Value lowerBound_6 = Value(0);
+    Value upperBound_6 = Value(10);
+    for (; lowerBound_6 < upperBound_6; lowerBound_6 = lowerBound_6 + 6) {
+        agg = agg + 1;
+    }
+    // 7. for loop, but the induction variable, and the upperBound are defined outside of the loop, 
+    //    and the condition and add operations are flipped.
+    Value lowerBound_7 = Value(0);
+    Value upperBound_7 = Value(10);
+    for (; upperBound_7 > lowerBound_7; lowerBound_7 = 7 + lowerBound_7) {
+        agg = agg + 1;
+    }
+    // 8. while loop counted
+    Value lowerBound_8 = Value(0);
+    while(lowerBound_8 < 10) {
+        agg = agg + 1;
+        lowerBound_8 = lowerBound_8 + 8;
+    }
+    // 9. while loop counted, but upperBound is defined outside
+    Value lowerBound_9 = Value(0);
+    Value upperBound_9 = Value(10);
+    while(lowerBound_9 < upperBound_9) {
+        agg = agg + 1;
+        lowerBound_9 = lowerBound_9 + 9;
+    }
+    // 10. while loop counted, but upperBound is defined outside, and condition is flipped
+    Value lowerBound_10 = Value(0);
+    Value upperBound_10 = Value(10);
+    while(upperBound_10 > lowerBound_10) {
+        agg = agg + 1;
+        lowerBound_10 = lowerBound_10 + 10;
+    }
+    return agg;
+}
+TEST_P(StructuredControlFlowPhaseTest, 21_ExtensiveCountedLoopDetection) {
+    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&ExtensiveCountedLoopDetection_21);
+    createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "2"));
+    createCorrectBlock(correctBlocks, "4", 1, "", createCorrectCountedLoopInfo(0, 10, 2, "5"));
+    createCorrectBlock(correctBlocks, "7", 1, "", createCorrectCountedLoopInfo(0, 10, 3, "8"));
+    createCorrectBlock(correctBlocks, "10", 1, "", createCorrectCountedLoopInfo(0, 10, 4, "11"));
+    createCorrectBlock(correctBlocks, "13", 1, "", createCorrectCountedLoopInfo(0, 10, 5, "14"));
+    createCorrectBlock(correctBlocks, "16", 1, "", createCorrectCountedLoopInfo(0, 10, 6, "17"));
+    createCorrectBlock(correctBlocks, "19", 1, "", createCorrectCountedLoopInfo(0, 10, 7, "20"));
+    createCorrectBlock(correctBlocks, "22", 1, "", createCorrectCountedLoopInfo(0, 10, 8, "23"));
+    createCorrectBlock(correctBlocks, "25", 1, "", createCorrectCountedLoopInfo(0, 10, 9, "26"));
+    createCorrectBlock(correctBlocks, "28", 1, "", createCorrectCountedLoopInfo(0, 10, 10, "29"));
+    // createCorrectBlock(correctBlocks, "31", 1, "");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+}
+
+Value<> NonCountedLoopCases_22() {
+    Value agg = Value(2);
+    // 1. while loop counted, but condition for lowerBound vs upperBound is wrong.
+    Value lowerBound_1 = Value(0);
+    Value upperBound_1 = Value(10);
+    while(upperBound_1 < lowerBound_1) {
+        agg = agg + 1;
+        lowerBound_1 = lowerBound_1 + 1;
+    }
+    // 2. while loop counted, but an old value is used in the loop condition.
+    Value lowerBound_2 = Value(0);
+    Value upperBound_2 = Value(10);
+    while(lowerBound_1 < upperBound_2) { //<- using lowerBound_1, which is passed through several blocks before.
+        agg = agg + 1;
+        lowerBound_2 = lowerBound_2 + 2;
+    }
+    // 3. while loop counted, but the stepSize is not defined in the loopEndBlock.
+    Value lowerBound_3 = Value(0);
+    Value upperBound_3 = Value(10);
+    Value stepSize_3 = Value(1);
+    while(lowerBound_3 < upperBound_3) {
+        agg = agg + 1;
+        lowerBound_3 = lowerBound_3 + stepSize_3;
+    }
+    // 4. for loop, but the inductionVar is decreased.
+    Value lowerBound = Value(10);
+    for (; lowerBound > 0; lowerBound = lowerBound - 1) {
+        agg = agg + 1;
+    }
+    return agg;
+}
+TEST_P(StructuredControlFlowPhaseTest, 22_ExtensiveCountedLoopDetection) {
+    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&NonCountedLoopCases_22);
+    createCorrectBlock(correctBlocks, "1", 1, "");
+    createCorrectBlock(correctBlocks, "4", 1, "");
+    createCorrectBlock(correctBlocks, "7", 1, "");
+    createCorrectBlock(correctBlocks, "10", 1, "");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+}
+
+Value<> twoCountedLoopsOneLargeOneSmall_23() {
+    Value agg = Value(0);
+    Value upperBound1 = Value(1000);
+    for(Value inductionVar1 = Value(0); inductionVar1 < upperBound1; inductionVar1 = inductionVar1 + 1) {
+        if (agg < 350) {
+            if (agg < 350) {
+                if (agg < 350) {
+                    agg = agg + 1;
+                } else {
+                    agg = agg + 3;
+                }
+                if (agg < 350) {
+
+                } else {
+                    if (agg < 350) {
+                        agg = agg + 1;
+                    } else {
+                        agg = agg + 3;
+                    }
+                    agg = agg + 4;
+                }
+            } else {
+            }
+        } else {
+            if (agg < 350) {
+                if (agg < 350) {
+                    if (agg < 350) {
+                        agg = agg + 1;
+                    } else {
+                        agg = agg + 1;
+                    }
+                } else {
+                }
+            } else {
+                if (agg < 350) {
+
+                } else {
+                    if (agg < 350) {
+                        agg = agg + 1;
+                    } else {
+                    }
+                }
+            }
+        }
+    }
+    Value inductionVar2 = Value(0);
+    Value upperBound2 = Value(1000);
+    while (inductionVar2 < upperBound2) {
+        agg = agg + 4;
+        inductionVar2 = inductionVar2 + 2;
+    }
+    return agg;
+}
+TEST_P(StructuredControlFlowPhaseTest, twoCountedLoopsOneLargeOneSmall) {
+    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
+    createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 1000, 1, "15"));
+    createCorrectBlock(correctBlocks, "2", 0, "15");
+    createCorrectBlock(correctBlocks, "3", 0, "15");
+    createCorrectBlock(correctBlocks, "4", 0, "6");
+    createCorrectBlock(correctBlocks, "6", 0, "15");
+
+    createCorrectBlock(correctBlocks, "16", 0, "18");
+    createCorrectBlock(correctBlocks, "22", 0, "15");
+    createCorrectBlock(correctBlocks, "23", 0, "15");
+    createCorrectBlock(correctBlocks, "24", 0, "15");
+    createCorrectBlock(correctBlocks, "28", 0, "15");
+    createCorrectBlock(correctBlocks, "30", 0, "15");
+    createCorrectBlock(correctBlocks, "34", 1, "", createCorrectCountedLoopInfo(0, 1000, 2, "35"));
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&twoCountedLoopsOneLargeOneSmall_23);
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+}
+
+Value<> DetectCountedLoopsWithEqualInComparison_23() {
+    Value agg = Value(2);
+    // 1. Counted for loop with smaller equals in condition.
+    for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1) {
+        agg = agg + 1;
+    }
+    // 2. Counted for loop with smaller equals in condition, but condition is flipped.
+    Value inductionVar_1 = Value(0);
+    Value upperBound_2 = Value(10);
+    for (; upperBound_2 >= inductionVar_1; inductionVar_1 = inductionVar_1 + 2) {
+        agg = agg + 1;
+    }
+    // 3. Counted while loop with smaller equals in condition.
+    Value inductionVar_3 = Value(0);
+    Value upperBound_3 = Value(10);
+    while (inductionVar_3 <= upperBound_3) {
+        agg = agg + 4;
+        inductionVar_3 = inductionVar_3 + 3;
+    }
+    // 4. Counted for loop with smaller equals condition, but condition is complex (not supported).
+    Value inductionVar_4 = Value(0);
+    Value otherBound_4 = Value(1);
+    for (; (inductionVar_4 + 10) <= (inductionVar_4 - otherBound_4); inductionVar_4 = inductionVar_4 + 1) {
+        agg = agg + 1;
+    }
+    // 5. Smaller equals, but the comparison order of '<=', which is (<,==,or) is faked.
+    Value otherBound_5 = Value(1);
+    for (Value lowerBound = Value(0); lowerBound < 10 || lowerBound == otherBound_5; lowerBound = lowerBound + 1) {
+        agg = agg + 1;
+    }
+    // 6. Counted for loop not equals(!=) in condition (not supported).
+    for (Value inductionVar_6 = Value(0); inductionVar_6 != 10; inductionVar_6 = inductionVar_6 + 1) {
+        agg = agg + 1;
+    }
+    // 7. Counted for loop with equals (==) in condition (not supported).
+    for (Value inductionVar_8 = Value(0); inductionVar_8 == 10; inductionVar_8 = inductionVar_8 + 1) {
+        agg = agg + 1;
+    }
+    return agg;
+}
+TEST_P(StructuredControlFlowPhaseTest, 23_DetectCountedLoopsWithEqualInComparison) {
+    std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
+    auto dpsSortedBlocks = createTraceAndApplyPhases(&DetectCountedLoopsWithEqualInComparison_23);
+    createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 11, 1, "2"));
+    createCorrectBlock(correctBlocks, "4", 1, "", createCorrectCountedLoopInfo(0, 11, 2, "5"));
+    createCorrectBlock(correctBlocks, "7", 1, "", createCorrectCountedLoopInfo(0, 11, 3, "8"));
+    createCorrectBlock(correctBlocks, "10", 1, "");
+    createCorrectBlock(correctBlocks, "13", 1, "");
+    createCorrectBlock(correctBlocks, "16", 1, "");
+    createCorrectBlock(correctBlocks, "19", 1, "");
+    ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 // Tests all registered compilation backends.
