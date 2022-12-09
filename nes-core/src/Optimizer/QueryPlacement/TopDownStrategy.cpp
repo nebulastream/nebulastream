@@ -94,7 +94,7 @@ void TopDownStrategy::pinOperators(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedDownStreamOperator->getId())) {
                 NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedDownStreamOperator, candidateTopologyNode, pinnedUpStreamOperators);
@@ -137,7 +137,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
             if (!candidateTopologyNode) {
                 NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                           << operatorNode->toString());
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                     + operatorNode->toString());
             }
@@ -152,14 +152,14 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                 } else {
                     NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
                               "placed.");
-                    throw log4cxx::helpers::Exception(
+                    throw Exceptions::RuntimeException(
                         "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
                         "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                    throw log4cxx::helpers::Exception(
+                    throw Exceptions::RuntimeException(
                         "TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
             }
@@ -183,7 +183,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("TopDownStrategy: No node available for further placement of operators");
-            throw log4cxx::helpers::Exception("TopDownStrategy: No node available for further placement of operators");
+            throw Exceptions::RuntimeException("TopDownStrategy: No node available for further placement of operators");
         }
 
         //Pin the operator to the candidate node and mark as placed
@@ -254,7 +254,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForUpStreamOperato
     if (upStreamTopologyNodes.empty()) {
         NES_ERROR("TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
                   "candidate operator");
-        throw log4cxx::helpers::Exception(
+        throw Exceptions::RuntimeException(
             "TopDownStrategy::getTopologyNodesForUpStreamOperators: Unable to find the upStreamOperators operators to the "
             "candidate operator");
     }

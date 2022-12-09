@@ -28,7 +28,6 @@
 #include <filesystem>
 #include <fstream>
 #include <health.grpc.pb.h>
-#include <log4cxx/helpers/exception.h>
 #include <string>
 namespace NES {
 
@@ -280,7 +279,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     std::filesystem::path path{filePath.c_str()};
     if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
         NES_ERROR("CoordinatorRPCClient: file does not exits");
-        throw log4cxx::helpers::Exception("files does not exist");
+        throw Exceptions::RuntimeException("files does not exist");
     }
 
     /* Read file from file system. */

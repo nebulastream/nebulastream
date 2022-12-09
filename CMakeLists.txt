@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v25)
+set(VCPKG_BINARY_VERSION v27)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -280,6 +280,10 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 # folly and cpprestsdk relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
+# spdlog
+find_package(spdlog REQUIRED)
+set(LIBRARIES ${LIBRARIES} spdlog::spdlog)
+
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
 message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
@@ -358,15 +362,6 @@ if (NOT ${Z3_FOUND})
 endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
-
-# Log4cc
-find_package(log4cxx CONFIG REQUIRED)
-if (NOT ${log4cxx})
-    message(FATAL_ERROR "Unable to find log4cxx")
-endif ()
-include_directories(${Log4cxx_INCLUDE_DIR})
-set(LIBRARIES ${LIBRARIES} log4cxx)
-message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
 
 # Backward
 include(cmake/BackwardConfig.cmake)

@@ -43,7 +43,7 @@ int main(int argc, const char* argv[]) {
         NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create(argc, argv);
 
-        NES::Logger::getInstance()->setLogLevel(coordinatorConfig->logLevel.getValue());
+        NesLogger::getInstance().changeLogLevel(coordinatorConfig->logLevel.getValue());
 
         NES_INFO("start coordinator with " << coordinatorConfig->toString());
 

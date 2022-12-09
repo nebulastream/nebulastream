@@ -72,7 +72,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                 + pinnedOperator->toString());
         }
@@ -89,7 +89,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : downStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                 + pinnedOperator->toString());
         }
@@ -107,7 +107,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     std::vector<TopologyNodePtr> selectedTopologyForPlacement =
         topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
     if (selectedTopologyForPlacement.empty()) {
-        throw log4cxx::helpers::Exception("BasePlacementStrategy: Could not find the path for placement.");
+        throw Exceptions::RuntimeException("BasePlacementStrategy: Could not find the path for placement.");
     }
 
     //4. Map nodes in the selected topology by their ids.
@@ -137,7 +137,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
         NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << pinnedNodeId);
         if (topologyMap.find(pinnedNodeId) == topologyMap.end()) {
             NES_ERROR("BasePlacementStrategy: Topology node with id " << pinnedNodeId << " not considered for the placement.");
-            throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(pinnedNodeId)
+            throw Exceptions::RuntimeException("BasePlacementStrategy: Topology node with id " + std::to_string(pinnedNodeId)
                                               + " not considered for the placement.");
         }
         auto pinnedNode = topologyMap[pinnedNodeId];
@@ -223,7 +223,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
             NES_TRACE("BasePlacementStrategy: Add the query plan to the candidate execution node.");
             if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
                 NES_ERROR("BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "BasePlacementStrategy: failed to create a new QuerySubPlan execution node for query.");
             }
             NES_TRACE("BasePlacementStrategy: Update the global execution plan with candidate execution node");
@@ -284,13 +284,13 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
 
     if (found == topologyMap.end()) {
         NES_ERROR("BasePlacementStrategy: Topology node with id " << nodeId << " not considered for the placement.");
-        throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
+        throw Exceptions::RuntimeException("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
                                           + " not considered for the placement.");
     }
 
     if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId)) {
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-        throw log4cxx::helpers::Exception(
+        throw Exceptions::RuntimeException(
             "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
     }
     return found->second;
@@ -448,7 +448,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_ERROR("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for the "
                                   "child operator");
-                        throw log4cxx::helpers::Exception(
+                        throw Exceptions::RuntimeException(
                             "BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for "
                             "the child operator");
                     }
@@ -475,7 +475,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_WARNING("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator for "
                                     "the parent operator");
-                        throw log4cxx::helpers::Exception(
+                        throw Exceptions::RuntimeException(
                             "BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
                             "for the parent operator");
                     }
@@ -557,7 +557,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                                   return downStreamQuerySubPlanId == querySubPlan->getQuerySubPlanId();
                                               });
                     if (found == querySubPlans.end()) {
-                        throw log4cxx::helpers::Exception(
+                        throw Exceptions::RuntimeException(
                             "BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
                     }
                     querySubPlans.erase(found);
@@ -587,7 +587,7 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNo
         if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(executionNode->getId())) {
             if (!globalExecutionPlan->addExecutionNodeAsRoot(executionNode)) {
                 NES_ERROR("BasePlacementStrategy: failed to add execution node as root");
-                throw log4cxx::helpers::Exception("BasePlacementStrategy: failed to add execution node as root");
+                throw Exceptions::RuntimeException("BasePlacementStrategy: failed to add execution node as root");
             }
         }
     }
