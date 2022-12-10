@@ -68,6 +68,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     if (opHandler->getWindowToBeFilled(isLeftSide).fetchSubBuild(1) == 1) {
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
 
+
             auto* joinPartitionIdTupleStamp = new JoinPartitionIdTumpleStamp;
             joinPartitionIdTupleStamp->partitionId = i,
             joinPartitionIdTupleStamp->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getLastTupleTimeStamp();
