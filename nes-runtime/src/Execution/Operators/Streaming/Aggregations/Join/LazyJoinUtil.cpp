@@ -26,23 +26,26 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution::Util {
 
     uint64_t murmurHash(uint64_t key) {
-        uint64_t hash = key;
+//        uint64_t hash = key;
+//
+//        hash ^= hash >> 33;
+//        hash *= UINT64_C(0xff51afd7ed558ccd);
+//        hash ^= hash >> 33;
+//        hash *= UINT64_C(0xc4ceb9fe1a85ec53);
+//        hash ^= hash >> 33;
+//
+//        return hash;
 
-        hash ^= hash >> 33;
-        hash *= UINT64_C(0xff51afd7ed558ccd);
-        hash ^= hash >> 33;
-        hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-        hash ^= hash >> 33;
-
-        return hash;
+        return key;
     }
 
     Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager) {
@@ -76,6 +79,66 @@ namespace NES::Runtime::Execution::Util {
         } else {
             NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
         }
+    }
+
+    std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers, SchemaPtr schema,
+                                                             const std::string& timeStampFieldName,
+                                                             BufferManagerPtr bufferManager,
+                                                             uint64_t windowSize) {
+        if (buffers.size() == 0) {
+            return std::vector<Runtime::TupleBuffer>();
+        }
+
+        if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+            NES_FATAL_ERROR("Column layout is not support for this function currently");
+        }
+
+        NES_INFO("Merging buffers together!");
+
+        std::vector<Runtime::TupleBuffer> retVector;
+
+        auto curBuffer = bufferManager->getBufferBlocking();
+        auto numberOfTuplesInBuffer = 0UL;
+        auto lastTimeStamp = windowSize - 1;
+        for (auto buf : buffers) {
+            auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+            auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
+
+            for (auto curTuple = 0UL; curTuple < dynamicTupleBuffer.getNumberOfTuples(); ++curTuple) {
+                if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp ||
+                    numberOfTuplesInBuffer >= memoryLayout->getCapacity()) {
+
+                    if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
+                        lastTimeStamp += windowSize;
+                    }
+
+
+                    curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+                    NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
+                    retVector.emplace_back(std::move(curBuffer));
+
+
+
+                    curBuffer = bufferManager->getBufferBlocking();
+                    numberOfTuplesInBuffer = 0;
+                }
+
+                memcpy(curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
+                       buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple, schema->getSchemaSizeInBytes());
+                numberOfTuplesInBuffer += 1;
+                curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+
+                NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
+            }
+        }
+
+        if (numberOfTuplesInBuffer > 0) {
+            curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+            NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
+            retVector.emplace_back(std::move(curBuffer));
+        }
+
+        return retVector;
     }
 
     Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {

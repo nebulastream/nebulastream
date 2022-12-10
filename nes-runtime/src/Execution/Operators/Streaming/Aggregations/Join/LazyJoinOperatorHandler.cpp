@@ -142,8 +142,6 @@ size_t LazyJoinOperatorHandler::getWindowSize() const {
 }
 size_t LazyJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
-size_t LazyJoinOperatorHandler::getNumActiveWindows() {
-    return lazyJoinWindows.size();
-}
+size_t LazyJoinOperatorHandler::getNumActiveWindows() { return lazyJoinWindows.size(); }
 
 } // namespace NES::Runtime::Execution
