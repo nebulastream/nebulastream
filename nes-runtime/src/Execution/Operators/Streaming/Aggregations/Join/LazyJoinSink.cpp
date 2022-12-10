@@ -63,15 +63,18 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                    std::vector<FixedPage>&& buildSide) {
 
     size_t joinedTuples = 0;
-
     size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
-
     auto sizeOfJoinedTuple = sizeOfKey + operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes() +
                              operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
     auto numberOfTuplesInBuffer = 0UL;
     auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
+
+    SchemaPtr joinSchema = Schema::create(operatorHandler->getJoinSchemaLeft()->getLayoutType());
+    joinSchema->addField(operatorHandler->getJoinSchemaLeft()->get(operatorHandler->getJoinFieldNameLeft()));
+    joinSchema->copyFields(operatorHandler->getJoinSchemaLeft());
+    joinSchema->copyFields(operatorHandler->getJoinSchemaRight());
 
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
@@ -105,8 +108,11 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                         numberOfTuplesInBuffer += 1;
                         currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
+
+
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
+                            NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
 
                             numberOfTuplesInBuffer = 0;
                             currentTupleBuffer = workerCtx->allocateTupleBuffer();
@@ -119,6 +125,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
     if (numberOfTuplesInBuffer > 0) {
         pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
+        NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
     }
 
 
@@ -140,6 +147,8 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
 
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
+
+    NES_DEBUG("Joining for partition " << partitionId << " and lastTupleTimeStamp " << lastTupleTimeStamp);
 
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
     auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);

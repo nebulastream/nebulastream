@@ -96,6 +96,18 @@ Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, Sche
 
 void writeNautilusRecord(int8_t* bufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
+/**
+ * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
+ * contain as much tuples as possible. Additionally, there are only tuples in a buffer that belong to the same window
+ * @param buffers
+ * @param schema
+ * @param timeStampFieldName
+ * @param bufferManager
+ * @return buffer of tuples
+ */
+std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers, SchemaPtr schema,
+                                                         const std::string& timeStampFieldName, BufferManagerPtr bufferManager,
+                                                         uint64_t windowSize);
 
 } // namespace Util
 } // namespace NES::Runtime::Execution
