@@ -18,6 +18,9 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -79,7 +82,31 @@ class LazyJoinPipelineTest : public testing::Test, public AbstractPipelineExecut
 
 
 TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
-//    erstmal die unit test umschrieben und den joinsink, so dass nicht immer ein ganzer buffer benutzt wird für einen tuple
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("f1_right", BasicType::UINT64)
+                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+
+    auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
+    auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
+
+    hier weiter machen mit dem erstellen der pipeline
+
+    auto buildLeft = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true,
+                                                                        lazyJoinSinkHelper.joinFieldNameLeft,
+                                                                        lazyJoinSinkHelper.timeStampField,
+                                                                        lazyJoinSinkHelper.leftSchema);
+    auto buildRight = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ false,
+                                                                 lazyJoinSinkHelper.joinFieldNameRight,
+                                                                 lazyJoinSinkHelper.timeStampField,
+                                                                 lazyJoinSinkHelper.rightSchema);
+
+
     NES_NOT_IMPLEMENTED();
 }
 
