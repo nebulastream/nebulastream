@@ -633,7 +633,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 
     EXPECT_THROW(
         TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(),
-        log4cxx::helpers::Exception);
+        std::exception);
 }
 
 /*

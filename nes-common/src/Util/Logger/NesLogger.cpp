@@ -23,6 +23,9 @@ void setupLogging(const std::string& logFileName, LogLevel level) { NesLogger::g
 }// namespace Logger
 
 namespace detail {
+static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
+static constexpr auto DEV_NULL = "/dev/null";
+static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%# %!] %v%$";
 
 auto toSpdlogLevel(LogLevel level) {
     auto spdlogLevel = spdlog::level::info;
@@ -59,8 +62,8 @@ auto toSpdlogLevel(LogLevel level) {
 }
 
 auto createEmptyLogger() -> spdlog::logger {
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_st>("/dev/null");
-    spdlog::logger logger = spdlog::logger("nes_dummy", {sink});
+    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL);
+    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {sink});
     return logger;
 }
 
@@ -74,10 +77,10 @@ auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
     console_sink->set_color_mode(spdlog::color_mode::always);
     file_sink->set_level(spdlogLevel);
 
-    console_sink->set_pattern("%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%# %!] %v%$");
-    file_sink->set_pattern("%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%# %!] %v%$");
+    console_sink->set_pattern(SPDLOG_PATTERN);
+    file_sink->set_pattern(SPDLOG_PATTERN);
 
-    spdlog::logger logger = spdlog::logger("nes_logger", {console_sink, file_sink});
+    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {console_sink, file_sink});
 
     logger.set_level(spdlogLevel);
 #ifdef NES_DEBUG_MODE
