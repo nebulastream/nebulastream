@@ -14,10 +14,10 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
-#include <Nautilus/Tracing/Tag.hpp>
-#include <Nautilus/Tracing/TagRecorder.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
@@ -34,10 +34,10 @@ namespace NES::Nautilus::Tracing {
 class TraceContext {
   public:
     static TraceContext* get();
-    static TraceContext* initialize();
+    static TraceContext* initialize(TagRecorder& tagRecorder);
     static void terminate();
-    TraceContext();
-    void initializeTraceIteration(std::unique_ptr<TagRecorder> tagRecorder);
+    TraceContext(TagRecorder& tagRecorder);
+    void initializeTraceIteration();
     void addTraceArgument(const ValueRef& argument);
     void traceConstOperation(const ValueRef& valueReference, const AnyPtr& constValue);
     void traceUnaryOperation(const OpCode& op, const ValueRef& inputRef, const ValueRef& resultRef);
@@ -50,21 +50,22 @@ class TraceContext {
     bool traceCMP(const ValueRef& inputRef);
     ValueRef createNextRef(Nautilus::IR::Types::StampPtr type);
     std::shared_ptr<ExecutionTrace> apply(const std::function<ValueRef()>& function);
-    virtual ~TraceContext(){};
+    virtual ~TraceContext() = default;
     std::shared_ptr<ExecutionTrace> getExecutionTrace() { return executionTrace; }
 
   private:
     bool isExpectedOperation(const OpCode& op);
     void incrementOperationCounter();
-    std::unique_ptr<TagRecorder> tagRecorder;
+    TagRecorder& tagRecorder;
     std::shared_ptr<ExecutionTrace> executionTrace;
-    std::unique_ptr<SymbolicExecutionContext> symbolicExecutionContext;
+    SymbolicExecutionContext symbolicExecutionContext;
     uint64_t currentOperationCounter = 0;
 };
 
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
-    auto ctx = TraceContext::initialize();
+    auto tr = TagRecorder::createTagRecorder();
+    auto ctx = TraceContext::initialize(tr);
     auto result = ctx->apply([&func] {
         func();
         return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
@@ -75,7 +76,8 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
 
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor func) {
-    auto ctx = TraceContext::initialize();
+    auto tr = TagRecorder::createTagRecorder();
+    auto ctx = TraceContext::initialize(tr);
     auto result = ctx->apply([&func] {
         auto res = func();
         return res.ref;

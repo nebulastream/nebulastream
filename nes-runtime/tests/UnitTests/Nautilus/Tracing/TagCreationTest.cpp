@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Exceptions/TagCreationException.hpp>
-#include <Nautilus/Tracing/TagRecorder.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -48,31 +48,33 @@ TEST_F(TagCreationTest, tagCreation) {
     ASSERT_NE(tag1, tag2);
 }
 
-void createTagFunction(TagRecorder& tr, std::unordered_set<Tag, Tag::TagHasher>& tags, int i) {
-    tags.emplace(tr.createTag());
+void createTagFunction(TagRecorder& tr, std::unordered_set<Tag*>& tags, int i) {
     if (i != 0) {
         createTagFunction(tr, tags, i - 1);
+        auto tag = tr.createTag();
+        tags.emplace(tag);
     }
 }
 
 TEST_F(TagCreationTest, recursiveCreateTag) {
     auto tr = TagRecorder::createTagRecorder();
-    std::unordered_set<Tag, Tag::TagHasher> tagMap;
+    std::unordered_set<Tag*> tagMap;
+#pragma clang loop unroll(disable)
     for (auto i = 0; i < 10; i++) {
-        createTagFunction(tr, tagMap, 9);
+        createTagFunction(tr, tagMap, 10);
     }
     ASSERT_EQ(tagMap.size(), 10);
 }
 
 TEST_F(TagCreationTest, deepRecursiveCreateTag) {
     auto tr = TagRecorder::createTagRecorder();
-    std::unordered_set<Tag, Tag::TagHasher> tagMap;
+    std::unordered_set<Tag*> tagMap;
     ASSERT_THROW(createTagFunction(tr, tagMap, 50), TagCreationException);
 }
 
 TEST_F(TagCreationTest, tagCreationLoop) {
     auto tr = TagRecorder::createTagRecorder();
-    std::unordered_map<Tag, bool, Tag::TagHasher> tagMap;
+    std::unordered_map<Tag*, bool> tagMap;
     for (auto i = 0; i < 1000000; i++) {
         auto x = tr.createTag();
         tagMap.emplace(x, true);

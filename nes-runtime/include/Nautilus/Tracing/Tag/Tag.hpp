@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_HPP_
 
+#include <Nautilus/Util/Trie.hpp>
 #include <memory>
 #include <ostream>
 #include <vector>
@@ -25,47 +26,25 @@ namespace NES::Nautilus::Tracing {
  * @brief The tag address references a function on the callstack.
  */
 using TagAddress = uint64_t;
+using Tag = TrieNode<TagAddress>;
 
 /**
  * @brief The tag identifies a specific executed operation in the interpreter.
  * It is represented by a list of all stack frame addresses between the operation and the execution root.
  */
-class Tag {
+class TagVector {
   public:
-    static constexpr uint64_t MAX_TAG_SIZE = 20;
     /**
      * @brief Constructor to create a new tag.
      * @param addresses
      */
-    Tag(const std::vector<TagAddress>& addresses);
-    /**
-     * @brief The hasher enables to leverage the tag in a std::map
-     */
-    class TagHasher {
-      public:
-        std::size_t operator()(const Tag& k) const;
-    };
-
-    /**
-     * @brief Creates a new, which represents the current operation.
-     * @param startAddress
-     * @return Tag
-     */
-    static Tag createTag(TagAddress startAddress);
-
-    /**
-     * @brief Returns the return address of the root operation
-     * @return TagAddress
-     */
-    static TagAddress createCurrentAddress();
-    bool operator==(const Tag& other) const;
-    friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
-
+    TagVector(const std::vector<TagAddress>& addresses);
+    bool operator==(const TagVector& other) const;
+    friend std::ostream& operator<<(std::ostream& os, const TagVector& tag);
     const std::vector<TagAddress>& getAddresses();
 
   private:
-    const std::vector<TagAddress> addresses;
-    friend TagHasher;
+    std::vector<TagAddress> addresses;
 };
 
 }// namespace NES::Nautilus::Tracing

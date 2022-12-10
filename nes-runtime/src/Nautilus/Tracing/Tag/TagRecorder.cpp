@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Nautilus/Tracing/TagRecorder.hpp>
 #include <Nautilus/Exceptions/TagCreationException.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <execinfo.h>
 
 namespace NES::Nautilus::Tracing {
 TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress) {}
 
-Tag TagRecorder::createBaseTag() {
+TagVector TagRecorder::createBaseTag() {
     void* tagBuffer[MAX_TAG_SIZE];
     int size = backtrace(tagBuffer, MAX_TAG_SIZE);
     std::vector<TagAddress> addresses;
@@ -29,7 +29,7 @@ Tag TagRecorder::createBaseTag() {
     return {addresses};
 }
 
-TagAddress TagRecorder::getBaseAddress(Tag& tag1, Tag& tag2) {
+TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
     auto& tag1Addresses = tag1.getAddresses();
     auto& tag2Addresses = tag2.getAddresses();
     auto size = std::min(tag1Addresses.size(), tag2Addresses.size());
@@ -48,20 +48,17 @@ TagAddress TagRecorder::getBaseAddress(Tag& tag1, Tag& tag2) {
 
 void* getReturnAddress(uint32_t offset);
 
-Tag TagRecorder::createReferenceTag(TagAddress startAddress) {
-    std::vector<TagAddress> addresses;
+Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
+    auto* currentTagNode = &rootTagThreeNode;
     for (size_t i = 0; i <= MAX_TAG_SIZE; i++) {
         auto tagAddress = (TagAddress) getReturnAddress(i);
         if (tagAddress == startAddress) {
-            break;
+            return currentTagNode;
         }
-        addresses.emplace_back(tagAddress);
+        currentTagNode = currentTagNode->append(tagAddress);
     }
-    if (addresses.size() == MAX_TAG_SIZE) {
-        throw TagCreationException("Stack is too deep. This could indicate the use of recursive control-flow,"
-                                   " which is not supported in Nautilus code.");
-    }
-    return {addresses};
+    throw TagCreationException("Stack is too deep. This could indicate the use of recursive control-flow,"
+                               " which is not supported in Nautilus code.");
 }
 
 void* getReturnAddress(uint32_t offset)
