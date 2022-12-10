@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Tracing/Tag.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <ostream>
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
@@ -23,14 +23,17 @@ namespace NES::Nautilus::Tracing {
  */
 class SymbolicExecutionPath {
   public:
-    void append(bool outcome, Tag& tag);
-    std::tuple<bool, Tag> operator[](uint64_t size);
+    void append(bool outcome);
+    std::tuple<bool> operator[](uint64_t size);
     uint64_t getSize();
     friend std::ostream& operator<<(std::ostream& os, const SymbolicExecutionPath& path);
-    [[maybe_unused]] std::vector<std::tuple<bool, Tag>>& getPath();
+    [[maybe_unused]] std::vector<bool>& getPath();
+    [[nodiscard]] const Tag* getFinalTag() const;
+    void setFinalTag(const Tag* finalTag);
 
   private:
-    std::vector<std::tuple<bool, Tag>> path;
+    std::vector<bool> path;
+    const Tag* finalTag;
 };
 
 }// namespace NES::Nautilus::Tracing

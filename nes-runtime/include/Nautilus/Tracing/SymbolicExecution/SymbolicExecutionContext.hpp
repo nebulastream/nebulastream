@@ -13,10 +13,10 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
+#include "Nautilus/Tracing/Tag/Tag.hpp"
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
-#include <Nautilus/Tracing/Tag.hpp>
-#include <Nautilus/Tracing/TagRecorder.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <functional>
 #include <list>
@@ -41,13 +41,13 @@ class SymbolicExecutionContext {
      * Depending on all previous executions this function determines if a branch should be explored or not.
      * @return the return value of this branch
      */
-    bool executeCMP(TagRecorder* tr);
+    bool executeCMP(TagRecorder& tr);
     bool shouldContinue();
     void next();
+    uint64_t getIterations() const;
 
   private:
-    bool follow(TagRecorder* tr);
-    bool record(TagRecorder* tr);
+    bool record(TagRecorder& tr);
 
   private:
     /**
@@ -56,7 +56,7 @@ class SymbolicExecutionContext {
      */
     enum MODE : int8_t { FOLLOW, RECORD };
     enum TagState : int8_t { FirstVisit, SecondVisit };
-    std::unordered_map<Tag, TagState, Tag::TagHasher> tagMap;
+    std::unordered_map<const Tag*, TagState> tagMap;
     std::list<SymbolicExecutionPath> inflightExecutionPaths;
     MODE currentMode = RECORD;
     SymbolicExecutionPath currentExecutionPath = SymbolicExecutionPath();

@@ -14,17 +14,16 @@
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <folly/SingletonThreadLocal.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {
 
 static thread_local TraceContext* traceContext;
 TraceContext* TraceContext::get() { return traceContext; }
 
-TraceContext* TraceContext::initialize() {
-    traceContext = new TraceContext();
+TraceContext* TraceContext::initialize(TagRecorder& tagRecorder) {
+    traceContext = new TraceContext(tagRecorder);
     return traceContext;
 }
 
@@ -33,17 +32,15 @@ void TraceContext::terminate() {
     traceContext = nullptr;
 }
 
-TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
-    this->symbolicExecutionContext = std::make_unique<SymbolicExecutionContext>();
-};
+TraceContext::TraceContext(TagRecorder& tagRecorder)
+    : tagRecorder(tagRecorder), executionTrace(std::make_unique<ExecutionTrace>()), symbolicExecutionContext(){};
 
-void TraceContext::initializeTraceIteration(std::unique_ptr<TagRecorder> tagRecorder) {
+void TraceContext::initializeTraceIteration() {
     executionTrace->setCurrentBlock(0);
     currentOperationCounter = 0;
     executionTrace->tagMap.merge(executionTrace->localTagMap);
     executionTrace->localTagMap.clear();
-    symbolicExecutionContext->next();
-    this->tagRecorder = std::move(tagRecorder);
+    symbolicExecutionContext.next();
 }
 
 void TraceContext::traceBinaryOperation(const OpCode& op,
@@ -53,16 +50,13 @@ void TraceContext::traceBinaryOperation(const OpCode& op,
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(op)) {
-        auto tag = tagRecorder->createTag();
-        // NES_TRACE(magic_enum::enum_name<OpCode>(operation.op) << " tag: " << tag);
-        if (op != ASSIGN) {
-            if (auto ref = executionTrace->findKnownOperation(tag)) {
-                if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
-                    auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
-                    auto mergeOperation = mergeBlock.operations.front();
-                    currentOperationCounter = 1;
-                    return;
-                }
+        auto tag = tagRecorder.createTag();
+        if (auto ref = executionTrace->findKnownOperation(tag)) {
+            if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
+                auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
+                auto mergeOperation = mergeBlock.operations.front();
+                currentOperationCounter = 1;
+                return;
             }
         }
         auto operation = Nautilus::Tracing::TraceOperation(op, resultRef, {leftRef, rightRef});
@@ -74,7 +68,7 @@ void TraceContext::traceBinaryOperation(const OpCode& op,
 
 void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
     if (!isExpectedOperation(RETURN)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -99,7 +93,7 @@ void TraceContext::traceConstOperation(const ValueRef& ref, const AnyPtr& consta
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(CONST)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -120,7 +114,7 @@ void TraceContext::traceFunctionCall(const std::vector<Nautilus::Tracing::InputV
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(CALL)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -141,7 +135,7 @@ void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef) 
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(STORE)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -162,7 +156,7 @@ void TraceContext::traceFunctionCall(const ValueRef& resultRef, const std::vecto
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(CALL)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -183,7 +177,7 @@ void TraceContext::traceAssignmentOperation(const ValueRef& targetRef, const Val
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(ASSIGN)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::ASSIGN, targetRef, {sourceRef});
         executionTrace->addOperation(operation);
         executionTrace->localTagMap.emplace(tag, operation.operationRef);
@@ -197,7 +191,7 @@ void TraceContext::traceUnaryOperation(const OpCode& op, const ValueRef& input, 
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(op)) {
-        auto tag = tagRecorder->createTag();
+        auto tag = tagRecorder.createTag();
         if (auto ref = executionTrace->findKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -231,7 +225,7 @@ bool TraceContext::traceCMP(const ValueRef& valueRef) {
         falseBlock = std::get<BlockRef>(operation.input[1]).block;
     }
 
-    auto result = symbolicExecutionContext->executeCMP(this->tagRecorder.get());
+    auto result = symbolicExecutionContext.executeCMP(this->tagRecorder);
 
     // set next block
     if (result) {
@@ -265,16 +259,15 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode) {
 }
 
 std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nautilus::Tracing::ValueRef()>& function) {
-    auto tr = TagRecorder::createTagRecorder();
-    while (symbolicExecutionContext->shouldContinue()) {
+    while (symbolicExecutionContext.shouldContinue()) {
         try {
-            initializeTraceIteration(std::make_unique<TagRecorder>(tr));
+            initializeTraceIteration();
             auto result = function();
             traceReturnOperation(result);
         } catch (const TraceTerminationException& ex) {
         }
     }
-
+    NES_DEBUG("Iterations:" << symbolicExecutionContext.getIterations());
     return executionTrace;
 }
 

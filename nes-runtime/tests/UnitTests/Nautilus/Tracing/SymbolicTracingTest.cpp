@@ -18,7 +18,6 @@
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -110,7 +109,6 @@ TEST_F(SymbolicTracingTest, logicalNegateTest) {
     ASSERT_EQ(block0.operations[1].op, Nautilus::Tracing::NEGATE);
     ASSERT_EQ(block0.operations[2].op, Nautilus::Tracing::RETURN);
 }
-
 
 void logicalExpressionLessThan() {
     Value iw = Value(1);
@@ -661,7 +659,7 @@ void nestedLoop() {
     }
 }
 
-TEST_F(SymbolicTracingTest, nestedLoop) {
+TEST_F(SymbolicTracingTest, nestedLoopTest) {
     auto execution = Nautilus::Tracing::traceFunction([]() {
         nestedLoop();
     });
@@ -687,7 +685,7 @@ void nestedLoopIf() {
     }
 }
 
-TEST_F(SymbolicTracingTest, nestedLoopIf) {
+TEST_F(SymbolicTracingTest, nestedLoopIfTest) {
     auto execution = Nautilus::Tracing::traceFunction([]() {
         nestedLoopIf();
     });
@@ -696,6 +694,29 @@ TEST_F(SymbolicTracingTest, nestedLoopIf) {
     auto basicBlocks = execution->getBlocks();
     std::cout << *execution.get() << std::endl;
     ASSERT_EQ(basicBlocks.size(), 10);
+}
+
+void loopWithBreak() {
+    Value agg = Value(0);
+    Value i = Value(0);
+    Value end = Value(300);
+    for (; i < end; i = i + 1) {
+        if (agg == 42) {
+            break;
+        }
+        agg = agg + 1;
+    }
+}
+
+TEST_F(SymbolicTracingTest, loopWithBreakTest) {
+    auto execution = Nautilus::Tracing::traceFunction([]() {
+        loopWithBreak();
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    std::cout << *execution.get() << std::endl;
+    ASSERT_EQ(basicBlocks.size(), 7);
 }
 
 Value<> f2(Value<> x) {
@@ -710,7 +731,7 @@ void f1() {
     agg = f2(agg) + 42;
 }
 
-TEST_F(SymbolicTracingTest, nestedFunctionCall) {
+TEST_F(SymbolicTracingTest, nestedFunctionCallTest) {
     auto execution = Nautilus::Tracing::traceFunction([]() {
         f1();
     });
@@ -767,10 +788,12 @@ void deepLoop() {
     }
 }
 
-TEST_F(SymbolicTracingTest, deepLoop) {
+TEST_F(SymbolicTracingTest, deepLoopTest) {
+
     auto execution = Nautilus::Tracing::traceFunction([]() {
         deepLoop();
     });
+
     std::cout << execution << std::endl;
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
@@ -781,32 +804,43 @@ TEST_F(SymbolicTracingTest, deepLoop) {
 Value<> TracingBreaker() {
     Value agg = Value(0);
     Value limit = Value(10);
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     }
-    if(agg < 350) {
+    if (agg < 350) {
         agg = agg + 1;
     } else {
-        if(agg < 350) {
-            if(agg < 350) { //the 'false' case of this if this if-operation has no operations -> Block_9
-                agg = agg + 1;
+        if (agg < 350) {
+            if (agg < 350) {//the 'false' case of this if this if-operation has no operations -> Block_9
+                            // agg = agg + 1;
             } else {
-                agg = agg + 2; // leads to empty block
+                //    agg = agg + 2;// leads to empty block
             }
         }
     }
     return agg;
 }
 
-TEST_F(SymbolicTracingTest, TracingBreaker) {
+TEST_F(SymbolicTracingTest, tracingBreakerTest) {
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     auto execution = Nautilus::Tracing::traceFunction([]() {
         TracingBreaker();
     });
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]"
+              << std::endl;
+    /*
+     *
+
     std::cout << execution << std::endl;
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     std::cout << *execution.get() << std::endl;
     ASSERT_EQ(basicBlocks.size(), 13);
+     */
 }
 
 }// namespace NES::Nautilus::Tracing
