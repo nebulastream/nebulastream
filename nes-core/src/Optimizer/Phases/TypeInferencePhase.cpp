@@ -84,7 +84,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         }
         NES_DEBUG("TypeInferencePhase: we inferred all schemas");
         return queryPlan;
-    } catch (log4cxx::helpers::Exception& e) {
+    } catch (std::exception& e) {
         NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase " << e.what());
         auto queryId = queryPlan->getQueryId();
         throw TypeInferenceException(queryId, e.what());

@@ -54,7 +54,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlan) {
         NES_DEBUG("GlobalQueryPlanTest: create an empty global query plan");
         GlobalQueryPlanPtr globalQueryPlan = GlobalQueryPlan::create();
         SUCCEED();
-    } catch (log4cxx::helpers::Exception ex) {
+    } catch (std::exception ex) {
         FAIL();
     }
 }
@@ -69,7 +69,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanAndAddingQueryPlanWithEmptyId)
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without id to the global query plan");
     QueryPlanPtr queryPlan = QueryPlan::create();
     //Assert
-    EXPECT_THROW(globalQueryPlan->addQueryPlan(queryPlan), log4cxx::helpers::Exception);
+    EXPECT_THROW(globalQueryPlan->addQueryPlan(queryPlan), std::exception);
 }
 
 /**
@@ -106,7 +106,7 @@ TEST_F(GlobalQueryPlanTest, testNewGlobalQueryPlanByAddingSameQueryPlanTwice) {
     plan->setQueryId(1);
     globalQueryPlan->createNewSharedQueryPlan(plan);
     //Assert
-    EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), log4cxx::helpers::Exception);
+    EXPECT_THROW(globalQueryPlan->addQueryPlan(plan), std::exception);
 }
 
 /**
