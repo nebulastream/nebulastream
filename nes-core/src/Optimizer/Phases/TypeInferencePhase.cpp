@@ -21,7 +21,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 namespace NES::Optimizer {
 

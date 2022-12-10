@@ -39,23 +39,23 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::T
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup QueryCatalogServiceTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup QueryCatalogServiceTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("QueryCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
-        std::cout << "Setup QueryCatalogServiceTest test case." << std::endl;
+        NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down QueryCatalogServiceTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down QueryCatalogServiceTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryCatalogServiceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down QueryCatalogServiceTest test class."); }
 };
 
 TEST_F(QueryCatalogServiceTest, testAddNewQuery) {

@@ -43,7 +43,7 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <exception>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 #include <z3++.h>
 

@@ -29,17 +29,17 @@ class LoopCompilationTest : public testing::Test, public AbstractCompilationBack
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TraceTest test class." << std::endl;
+        NES_DEBUG("Setup TraceTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+    void SetUp() override { NES_DEBUG("Setup TraceTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down TraceTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down TraceTest test class."); }
 };
 
 Value<> sumLoop(int upperLimit) {

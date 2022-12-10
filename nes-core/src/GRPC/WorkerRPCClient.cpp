@@ -26,7 +26,7 @@
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
-#include <log4cxx/helpers/exception.h>
+
 
 namespace NES {
 

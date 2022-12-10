@@ -63,7 +63,7 @@ std::string demangleToBaseName(const std::string& functionName) {
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
     bool Recursive = true;
-    std::cout << "Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE << std::endl;
+    NES_DEBUG("Start Extraction proxy functions from: " << IR_FILE_DIR << "/" << IR_FILE_FILE);
     LLVMContext Context;
 
     // Use lazy loading, since we only care about selected global values.
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
     Passes.add(createStripDeadPrototypesPass());// Remove dead func decls
     // Passes.add(createFunctionInliningPass());    // Inline function definitions
 
-    std::cout << "Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR << std::endl;
+    NES_DEBUG("Generate proxy functions file at : " << PROXY_FUNCTIONS_RESULT_DIR);
     std::error_code EC;
     ToolOutputFile Out(std::string(PROXY_FUNCTIONS_RESULT_DIR), EC, sys::fs::OF_None);
     if (EC) {

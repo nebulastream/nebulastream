@@ -60,12 +60,12 @@ CompilationBasedPipelineExecutionEngine::compile(std::shared_ptr<PhysicalOperato
         rootOperator->close(executionContext, recordBuffer);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace.get() << std::endl;
+    NES_DEBUG(*executionTrace.get());
     timer.snapshot("TraceGeneration");
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("NESIRGeneration");
-    std::cout << ir->toString() << std::endl;
-    std::cout << timer << std::endl;
+    NES_DEBUG(ir->toString());
+    NES_DEBUG(timer);
     //ir = loopInferencePhase.apply(ir);
 
     return backend->compile(pipelineContext, physicalOperatorPipeline, ir);

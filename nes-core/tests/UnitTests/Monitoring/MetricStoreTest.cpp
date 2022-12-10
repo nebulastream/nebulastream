@@ -43,11 +43,11 @@ class MetricStoreTest : public Testing::NESBaseTest {
         NES_INFO("ResourcesReaderTest: Setup MetricStoreTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "MetricStoreTest: Tear down MetricStoreTest class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("MetricStoreTest: Tear down MetricStoreTest class."); }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        std::cout << "MetricStoreTest: Setup MetricStoreTest test case." << std::endl;
+        NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
@@ -55,7 +55,7 @@ class MetricStoreTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override { std::cout << "MetricStoreTest: Tear down MetricStoreTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("MetricStoreTest: Tear down MetricStoreTest test case."); }
 };
 
 TEST_F(MetricStoreTest, testNewestEntryMetricStore) {

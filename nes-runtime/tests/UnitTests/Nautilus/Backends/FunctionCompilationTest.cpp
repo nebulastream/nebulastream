@@ -29,7 +29,7 @@ class FunctionCompilationTest : public testing::Test, public AbstractCompilation
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FunctionCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup FunctionCompilationTest test class." << std::endl;
+        NES_DEBUG("Setup FunctionCompilationTest test class.");
     }
 
     /* Will be called before a test is executed. */

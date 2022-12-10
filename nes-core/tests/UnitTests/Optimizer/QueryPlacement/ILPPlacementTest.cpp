@@ -59,12 +59,12 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup ILPPlacementTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ILPPlacementTest test case." << std::endl;
+        NES_DEBUG("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -78,10 +78,10 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Setup ILPPlacementTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Setup ILPPlacementTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ILPPlacementTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down ILPPlacementTest test class."); }
 
     void setupTopologyAndSourceCatalogForILP() {
 
@@ -227,16 +227,16 @@ TEST_F(ILPPlacementTest, Z3Test) {
     while (true) {
         if (sat == opt.check()) {
             model m = opt.get_model();
-            std::cout << m << std::endl;
-            std::cout << "-------------------------------" << std::endl;
+            NES_DEBUG(m);
+            NES_DEBUG("-------------------------------");
             if (m.eval(P21).get_numeral_int() == 1) {
-                std::cout << "Operator on Node 1" << std::endl;
+                NES_DEBUG("Operator on Node 1");
             } else if (m.eval(P22).get_numeral_int() == 1) {
-                std::cout << "Operator on Node 2" << std::endl;
+                NES_DEBUG("Operator on Node 2");
             } else if (m.eval(P23).get_numeral_int() == 1) {
-                std::cout << "Operator on Node 3" << std::endl;
+                NES_DEBUG("Operator on Node 3");
             }
-            std::cout << "-------------------------------" << std::endl;
+            NES_DEBUG("-------------------------------");
             break;
         } else {
             break;

@@ -99,7 +99,7 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
     TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4);
 
-    std::cout << "topo=" << topology->toString() << std::endl;
+    NES_DEBUG("topo=" << topology->toString());
 
     auto csvSourceType = CSVSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
@@ -150,12 +150,12 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    std::cout << " plan before=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before=" << queryPlan->toString());
     // Execute
 
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
-    std::cout << " plan after=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan after=" << queryPlan->toString());
     auto windowOps = queryPlan->getOperatorByType<CentralWindowOperator>();
     ASSERT_EQ(windowOps.size(), 1u);
 }
@@ -176,14 +176,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
-    std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before log expand=" << queryPlan->toString());
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
-    std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan after log expand=" << queryPlan->toString());
 
-    std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before window distr=" << queryPlan->toString());
     updatedPlan = distributeWindowRule->apply(queryPlan);
-    std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan after window distr=" << queryPlan->toString());
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
     ASSERT_EQ(compOps.size(), 1u);
@@ -209,14 +209,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog)->execute(queryPlan);
-    std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before log expand=" << queryPlan->toString());
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
-    std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan after log expand=" << queryPlan->toString());
 
-    std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before window distr=" << queryPlan->toString());
     updatedPlan = distributeWindowRule->apply(queryPlan);
-    std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan after window distr=" << queryPlan->toString());
 
     auto compOps = queryPlan->getOperatorByType<WindowComputationOperator>();
     ASSERT_EQ(compOps.size(), 1u);

@@ -36,7 +36,7 @@
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <string>
 #include <utility>
 

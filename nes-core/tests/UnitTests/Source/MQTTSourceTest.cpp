@@ -143,7 +143,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
-    std::cout << mqttSource->toString() << std::endl;
+    NES_DEBUG(mqttSource->toString());
 
     SUCCEED();
 }

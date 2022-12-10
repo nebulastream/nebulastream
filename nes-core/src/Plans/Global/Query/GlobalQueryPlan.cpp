@@ -18,7 +18,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <log4cxx/helpers/exception.h>
+
 namespace NES {
 
 GlobalQueryPlan::GlobalQueryPlan() = default;

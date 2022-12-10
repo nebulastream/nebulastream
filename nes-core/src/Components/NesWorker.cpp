@@ -44,7 +44,7 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 using namespace std;

@@ -32,7 +32,7 @@
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Optimizer {

@@ -108,7 +108,7 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -795,14 +795,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     for (auto& [key, val] : stateVar->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);
         for (auto& slice : val->getSliceMetadata()) {
-            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
+            NES_DEBUG("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
             results.push_back(slice.getStartTs());
             results.push_back(slice.getEndTs());
         }
         for (auto& agg : val->getPartialAggregates()) {
-            std::cout << "key=" << key << std::endl;
+            NES_DEBUG("key=" << key);
             results.push_back(key);
-            std::cout << "value=" << agg << std::endl;
+            NES_DEBUG("value=" << agg);
             results.push_back(agg);
         }
     }

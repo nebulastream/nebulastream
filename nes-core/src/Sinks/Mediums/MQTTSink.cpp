@@ -67,7 +67,6 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                                         ? NANO_TO_MILLI_SECONDS_MULTIPLIER
                                         : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds)
                                            | (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
-    //    std::cout << "DELAY: " << minDelayBetweenSends.count();
 
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
     NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);

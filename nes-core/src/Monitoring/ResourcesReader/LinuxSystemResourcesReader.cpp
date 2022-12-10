@@ -25,7 +25,7 @@
 #include <chrono>
 #include <fstream>
 #include <iterator>
-#include <log4cxx/helpers/exception.h>
+
 #include <string>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>

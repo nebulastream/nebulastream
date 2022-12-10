@@ -23,16 +23,16 @@ namespace NES::Windowing::Experimental {
 class WindowAssignerTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup WindowAssignerTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup WindowAssignerTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("WindowAssignerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup WindowAssignerTest test case." << std::endl;
+        NES_DEBUG("Setup WindowAssignerTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down KeyedSliceTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down KeyedSliceTest test case."); }
 
   public:
 };
