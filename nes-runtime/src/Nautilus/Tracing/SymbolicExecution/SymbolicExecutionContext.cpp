@@ -20,21 +20,21 @@ namespace NES::Nautilus::Tracing {
 
 SymbolicExecutionContext::SymbolicExecutionContext() {}
 
-bool SymbolicExecutionContext::follow(TagRecorder*) {
-    currentOperation++;
-    auto operation = currentExecutionPath[currentOperation - 1];
-    return get<0>(operation);
-}
+bool SymbolicExecutionContext::record(TagRecorder& tr) {
+    // special case if we are currently in the follow mode, we switch to record and change the last decision in this execution path.
+    if (currentMode == FOLLOW) {
+        currentMode = RECORD;
+        currentExecutionPath.getPath().pop_back();
+    }
 
-bool SymbolicExecutionContext::record(TagRecorder* tr) {
-    auto tag = tr->createTag();
+    auto tag = tr.createTag();
     auto foundTag = tagMap.find(tag);
     if (foundTag == tagMap.end()) {
         // If was not visited yet -> store the execution trace and return true.
         tagMap.emplace(tag, FirstVisit);
+        currentExecutionPath.append(true);
+        currentExecutionPath.setFinalTag(tag);
         inflightExecutionPaths.emplace_back(currentExecutionPath);
-        currentExecutionPath.append(true, tag);
-        currentOperation++;
         return true;
     }
     // The tag already exists in the tag map.
@@ -43,36 +43,49 @@ bool SymbolicExecutionContext::record(TagRecorder* tr) {
         case FirstVisit: {
             // Tag is in FirstVisit state. Thus, it was visited one time -> so we visit the false case.
             foundTag->second = SecondVisit;
-            currentExecutionPath.append(false, tag);
-            currentOperation++;
+            currentExecutionPath.append(false);
             return false;
         };
         case SecondVisit: {
             // The tag is in SecondVisit state -> terminate execution.
+            NES_DEBUG("Trace: early terminate via exception.");
             throw TraceTerminationException();
         };
     }
 }
 
-bool SymbolicExecutionContext::executeCMP(TagRecorder* tr) {
-    bool result = true;
-    switch (currentMode) {
-        case FOLLOW: {
-            // check if current operation is the last operation -> transfer to record.
-            if (currentExecutionPath.getPath().empty() || currentOperation == currentExecutionPath.getSize()) {
-                currentMode = RECORD;
-                return record(tr);
-            } else {
-                return follow(tr);
-            }
-        };
-        case RECORD: {
-            return record(tr);
-        };
-    };
+bool SymbolicExecutionContext::executeCMP(TagRecorder& tr) {
+    currentOperation++;
+    if (currentMode == FOLLOW && currentOperation < currentExecutionPath.getSize()) {
+        auto operation = currentExecutionPath[currentOperation - 1];
+        return get<0>(operation);
+    } else {
+        return record(tr);
+    }
 }
 
-bool SymbolicExecutionContext::shouldContinue() { return iterations == 0 || !inflightExecutionPaths.empty(); }
+bool SymbolicExecutionContext::shouldContinue() {
+    if (iterations == 0) {
+        return true;
+    }
+    while (!inflightExecutionPaths.empty()) {
+        auto& trace = inflightExecutionPaths.front();
+        auto& nextTracePath = trace.getPath();
+        if (nextTracePath.empty()) {
+            return true;
+        }
+        auto element = tagMap.find(trace.getFinalTag());
+        NES_ASSERT(element != tagMap.end(), "the tag should exists at this point");
+        if (element->second == FirstVisit) {
+            return true;
+        } else if (element->second == SecondVisit) {
+            // the target tag of this path was already visited two times, so tracing can skip it.
+            NES_DEBUG("Skip tag " << element->first);
+            inflightExecutionPaths.pop_front();
+        }
+    };
+    return false;
+}
 void SymbolicExecutionContext::next() {
     // if this is the first iteration the execution context is already initialized
     if (iterations > 0) {
@@ -84,5 +97,6 @@ void SymbolicExecutionContext::next() {
     }
     iterations++;
 }
+uint64_t SymbolicExecutionContext::getIterations() const { return iterations; }
 
 }// namespace NES::Nautilus::Tracing

@@ -13,12 +13,6 @@
 
 
 add_source_files(nes-runtime
-        ValueRef.cpp
-        TraceContext.cpp
-        TraceUtil.cpp
+        Tag.cpp
+        TagRecorder.cpp
         )
-
-add_subdirectory(Phases)
-add_subdirectory(SymbolicExecution)
-add_subdirectory(Trace)
-add_subdirectory(Tag)

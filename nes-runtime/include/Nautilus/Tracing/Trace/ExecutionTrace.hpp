@@ -13,7 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
-#include <Nautilus/Tracing/Tag.hpp>
+
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <memory>
 #include <unordered_map>
@@ -39,18 +40,14 @@ class ExecutionTrace {
     bool hasNextOperation() { return currentBlock; }
 
     void setCurrentBlock(uint32_t index) { currentBlock = index; }
-    void traceCMP(TraceOperation& operation);
-    ValueRef findReference(ValueRef ref, const ValueRef value);
-    void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
-    ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
 
-    std::shared_ptr<OperationRef> findKnownOperation(Tag& tag);
+    std::shared_ptr<OperationRef> findKnownOperation(const Tag* tag);
 
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> tagMap;
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> localTagMap;
+    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> tagMap;
+    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> localTagMap;
 
     std::shared_ptr<OperationRef> returnRef;
     std::vector<ValueRef> getArguments();
