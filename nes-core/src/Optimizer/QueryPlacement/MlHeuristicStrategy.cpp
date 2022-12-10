@@ -77,7 +77,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (log4cxx::helpers::Exception& ex) {
+    } catch (std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
