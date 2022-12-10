@@ -18,7 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <cstring>
-#include <log4cxx/helpers/exception.h>
+
 #include <sstream>
 #include <string>
 #include <utility>

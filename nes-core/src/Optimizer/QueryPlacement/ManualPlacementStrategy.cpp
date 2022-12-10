@@ -24,7 +24,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Optimizer {

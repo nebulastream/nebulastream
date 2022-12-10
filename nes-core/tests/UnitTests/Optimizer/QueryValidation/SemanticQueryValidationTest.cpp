@@ -52,7 +52,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
 
     void TearDown() override { NES_INFO("Tear down SemanticQueryValidationTest class."); }
 
-    static void PrintQString(const std::string& s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
 
     void CallValidation(const std::string& queryString) {
         PrintQString(queryString);

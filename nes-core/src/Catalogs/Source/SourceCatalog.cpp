@@ -21,7 +21,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Catalogs::Source {

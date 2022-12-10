@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSourceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down ConvertLogicalToPhysicalSourceTest test class."); }
 
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");

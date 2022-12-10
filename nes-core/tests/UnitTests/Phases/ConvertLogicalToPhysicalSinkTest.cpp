@@ -38,7 +38,7 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<t
         NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down ConvertLogicalToPhysicalSinkTest test class."); }
 
     void SetUp() override {
         auto defaultSourceType = DefaultSourceType::create();

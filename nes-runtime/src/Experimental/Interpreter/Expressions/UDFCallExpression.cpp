@@ -47,7 +47,7 @@ UDFCallExpression::UDFCallExpression(std::vector<ExpressionPtr> arguments,
         //delete options;    // we then no longer need the initialisation options.
         if (rc != JNI_OK) {
             // TO DO: error processing...
-            std::cout << "rc != JNI_OK --> " << rc << std::endl;
+            NES_DEBUG("rc != JNI_OK --> " << rc);
             exit(EXIT_FAILURE);
         }
     }

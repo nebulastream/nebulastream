@@ -23,6 +23,7 @@
 *
 */
 
+#include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <cstdio>
 #include <fstream>
@@ -1528,13 +1529,13 @@ class ParseImp {
                     scalarValue.replace(i, 1, "\\n");
                     i += 2;
                 }
-                std::cout << scalarValue << std::endl;
+                NES_DEBUG(scalarValue);
             } else if (pLine->Type == Node::MapType) {
-                std::cout << pLine->Data + ":" << std::endl;
+                NES_DEBUG(pLine->Data + ":");
             } else if (pLine->Type == Node::SequenceType) {
-                std::cout << "-" << std::endl;
+                NES_DEBUG("-");
             } else {
-                std::cout << "> UNKOWN TYPE <" << std::endl;
+                NES_DEBUG("> UNKOWN TYPE <");
             }
         }
     }

@@ -32,7 +32,7 @@ void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirM
     if (!mlirFilepath.empty()) {
         fileStream.write(mlirString.c_str(), mlirString.length());
     }
-    std::cout << mlirString.c_str() << std::endl;
+    NES_DEBUG(mlirString.c_str());
 }
 
 int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& moduleString) {

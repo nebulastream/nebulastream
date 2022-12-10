@@ -112,6 +112,7 @@ void NesLogger::changeLogLevel(LogLevel newLevel) {
         sink->set_level(spdNewLogLevel);
     }
     impl.set_level(spdNewLogLevel);
+    std::swap(newLevel, currentLogLevel);
 }
 
 NesLogger& NesLogger::getInstance() {

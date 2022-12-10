@@ -29,7 +29,7 @@
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
-#include <log4cxx/helpers/exception.h>
+
 #include <type_traits>
 #include <utility>
 

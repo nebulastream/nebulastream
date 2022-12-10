@@ -43,7 +43,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
-    std::cout << "E2EBase: Start coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
@@ -51,7 +51,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
-    std::cout << "E2EBase: Start worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->workerHealthCheckWaitTime = 1;
@@ -114,20 +114,20 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
         NES_ERROR("query was not stopped within 30 sec");
     }
 
-    std::cout << "E2EBase: Stop worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    std::cout << "E2EBase: Test finished" << std::endl;
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
 
-    std::cout << "E2EBase: Start coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
@@ -135,7 +135,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
-    std::cout << "E2EBase: Start worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
 
@@ -204,14 +204,14 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
         NES_ERROR("query 2 was not stopped within 30 sec");
     }
 
-    std::cout << "E2EBase: Stop worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     NES_ASSERT(retStopWrk1, "retStopWrk1");
 
-    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     NES_ASSERT(retStopCord, "retStopCord");
-    std::cout << "E2EBase: Test finished" << std::endl;
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
@@ -224,7 +224,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     //    coordinatorConfig->worker.bufferSizeInBytes=(524288);
     coordinatorConfig->worker.numWorkerThreads = 4;
 
-    std::cout << "E2EBase: Start coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Start coordinator");
 
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
@@ -276,10 +276,10 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
         NES_ERROR("query was not stopped within 30 sec");
     }
 
-    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    std::cout << "E2EBase: Test finished" << std::endl;
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 }// namespace NES

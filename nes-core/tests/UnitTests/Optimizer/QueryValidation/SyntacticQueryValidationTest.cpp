@@ -36,7 +36,7 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testi
     }
     void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
-    static void PrintQString(const std::string& s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
 
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);

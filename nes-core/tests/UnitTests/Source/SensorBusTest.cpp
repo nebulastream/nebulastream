@@ -55,7 +55,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling<testing::Test> {
         NES_INFO("Setup SourceBusTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down NetworkStackTest class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down NetworkStackTest class."); }
 
     /**
    * Assume file descriptor will be in /dev/i2c-1.

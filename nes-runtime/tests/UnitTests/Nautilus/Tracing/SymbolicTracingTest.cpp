@@ -30,17 +30,17 @@ class SymbolicTracingTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SymbolicExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup SymbolicExecutionTest test class." << std::endl;
+        NES_DEBUG("Setup SymbolicExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup SymbolicExecutionTest test case." << std::endl; }
+    void SetUp() override { NES_DEBUG("Setup SymbolicExecutionTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down SymbolicExecutionTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down SymbolicExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down SymbolicExecutionTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down SymbolicExecutionTest test class."); }
 };
 
 TEST_F(SymbolicTracingTest, assignmentOperatorTest) {

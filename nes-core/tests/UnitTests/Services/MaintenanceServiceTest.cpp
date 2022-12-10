@@ -35,12 +35,12 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
     RequestQueuePtr nesRequestQueue;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup MaintenanceService test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup MaintenanceService test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MaintenanceService test case." << std::endl;
+        NES_DEBUG("Setup MaintenanceService test case.");
         topology = Topology::create();
         TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
         topology->setAsRoot(root);
@@ -49,10 +49,10 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down MaintenanceService test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down MaintenanceService test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down MaintenanceService test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down MaintenanceService test class."); }
 
     std::string ip = "127.0.0.1";
     uint32_t grpcPort = 1;

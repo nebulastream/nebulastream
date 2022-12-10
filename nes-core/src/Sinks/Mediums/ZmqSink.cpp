@@ -16,7 +16,7 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
-#include <log4cxx/helpers/exception.h>
+
 #include <memory>
 #include <sstream>
 #include <string>

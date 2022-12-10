@@ -185,7 +185,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
-    std::cout << " plan before=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before=" << queryPlan->toString());
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
@@ -230,7 +230,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnar
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
-    std::cout << " plan before=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before=" << queryPlan->toString());
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = originIdInferenceRule->execute(updatedQueryPlan);
@@ -276,7 +276,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
 
-    std::cout << " plan before=" << queryPlan->toString() << std::endl;
+    NES_DEBUG(" plan before=" << queryPlan->toString());
 
     auto updatedPlan = originIdInferenceRule->execute(queryPlan);
 

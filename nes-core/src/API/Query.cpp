@@ -337,7 +337,7 @@ Query& Query::inferModel(const std::string model,
     }
 
     OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
-    NES_DEBUG("Query::inferModel: Current Operator: " << op->toString());
+    NES_DEBUG2("Query::inferModel: Current Operator: {}", op->toString());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

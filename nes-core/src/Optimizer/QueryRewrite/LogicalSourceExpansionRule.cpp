@@ -28,7 +28,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Optimizer {

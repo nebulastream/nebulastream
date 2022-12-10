@@ -39,7 +39,7 @@ class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down UpdateTopologyRemoteTest test class."); }
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {

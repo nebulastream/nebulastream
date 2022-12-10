@@ -100,7 +100,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       0,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    std::cout << zmq_source->toString() << std::endl;
+    NES_DEBUG(zmq_source->toString());
     // bufferManager->resizeFixedBufferSize(testDataSize);
 
     // Start thread for receiving the data.
@@ -159,7 +159,7 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
   auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
   auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  std::cout << zmq_sink->toString() << std::endl;
+  NES_DEBUG(zmq_sink->toString());
 
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[testDataSize];
@@ -225,11 +225,11 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkToSource) {
 
   // Create ZeroMQ Data Sink.
   auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  std::cout << zmq_sink->toString() << std::endl;
+  NES_DEBUG(zmq_sink->toString());
 
   // Create ZeroMQ Data Source.
   auto zmq_source = createZmqSource(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
-  std::cout << zmq_source->toString() << std::endl;
+  NES_DEBUG(zmq_source->toString());
 
   // Start thread for receivingh the data.
   bool receiving_finished = false;
