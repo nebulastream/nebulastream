@@ -32,18 +32,20 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
  * @param replacement std::string
  * @return std::string
  */
-std::string regex_replace(std::string text, std::regex regex, std::string replacement) { return std::regex_replace(text, regex, replacement) ; } // Ask: Alle 5 Parameter gewünscht?
+Value<Text> regex_replace(Value<Text> text, Value<Text> regex, Value<Text> replacement) { return std::regex_replace(text, regex, replacement) ; } // Ask: Alle 5 Parameter gewünscht?
 
-Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
+Value<Text> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
-    Value leftValue = leftSubExpression->execute(record);
+    Value<Text> leftValue = leftSubExpression->execute(record);
     // Evaluate the left sub expression and retrieve the value.
-    Value midValue = midSubExpression->execute(record);
+    Value<Text> midValue = midSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.
-    Value rightValue = rightSubExpression->execute(record);
+    Value<Text> rightValue = rightSubExpression->execute(record);
 
     // Ask: Fallunterscheidung notwendig? std::string oder TextValue
-
+    if (leftValue->isEquals(NES::DataTypePtr Val ue<Text>) && midValue->isEquals(Value<Text>) && rightValue->isEquals(Value<Text>)) {
+        leftValue->
+    }
     // As we don't know the exact type of value here, we have to check the type and then call the function.
     // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
     // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
