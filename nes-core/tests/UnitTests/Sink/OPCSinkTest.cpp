@@ -133,7 +133,7 @@ class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
         writeVariable(server);
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
-        std::cout << " retval is=" << retval << std::endl;
+        NES_DEBUG(" retval is=" << retval);
         UA_Server_delete(server);
     }
 
@@ -164,7 +164,7 @@ TEST_F(OPCSinkTest, OPCSourcePrint) {
     std::string expected =
         "OPC_SINK(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the answer. ";
     EXPECT_EQ(opcSink->toString(), expected);
-    std::cout << opcSink->toString() << std::endl;
+    NES_DEBUG(opcSink->toString());
     SUCCEED();
 }
 

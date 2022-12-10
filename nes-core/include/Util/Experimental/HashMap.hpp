@@ -176,7 +176,7 @@ class Hashmap {
                     current = current->next;
                     counter++;
                 }
-                std::cout << "pos: " << e << " length: " << counter << std::endl;
+                NES_DEBUG("pos: " << e << " length: " << counter);
             };
         }
     }

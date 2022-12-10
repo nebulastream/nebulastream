@@ -176,7 +176,7 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     /*
    std::string json_string;
    google::protobuf::util::MessageToJsonString(type, &json_string);
-   std::cout << json_string << std::endl;
+   NES_DEBUG(json_string);
    */
 }
 
@@ -253,7 +253,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto options = google::protobuf::util::JsonOptions();
         options.add_whitespace = true;
         google::protobuf::util::MessageToJsonString(*serializedSourceDescriptor, &json_string, options);
-        std::cout << json_string << std::endl;
+        NES_DEBUG(json_string);
     }
 
     {

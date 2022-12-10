@@ -30,19 +30,19 @@ using OriginId = uint64_t;
 class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup LockFreeWatermarkManagerTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup LockFreeWatermarkManagerTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("LockFreeWatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup LockFreeWatermarkManagerTest test case." << std::endl;
+        NES_DEBUG("Setup LockFreeWatermarkManagerTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down LockFreeWatermarkManagerTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down LockFreeWatermarkManagerTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down LockFreeWatermarkManagerTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down LockFreeWatermarkManagerTest test class."); }
 };
 
 TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
@@ -187,9 +187,9 @@ TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterOutofOrderTest)
     vec.emplace_back(std::make_unique<Slice>(10));
     vec.emplace_back(std::make_unique<Slice>(12));
     auto& s = vec[0];
-    std::cout << s->start << std::endl;
+    NES_DEBUG(s->start);
     auto s2 = std::move(vec[0]);
-    std::cout << s2->start << std::endl;
+    NES_DEBUG(s2->start);
 }
 
 }// namespace NES

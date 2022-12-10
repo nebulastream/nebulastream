@@ -29,7 +29,7 @@ class IfCompilationTest : public testing::Test, public AbstractCompilationBacken
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("IfCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup IfCompilationTest test class." << std::endl;
+        NES_DEBUG("Setup IfCompilationTest test class.");
     }
 
     /* Will be called before a test is executed. */

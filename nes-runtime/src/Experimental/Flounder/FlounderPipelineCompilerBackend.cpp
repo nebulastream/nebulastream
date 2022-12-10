@@ -24,7 +24,7 @@ FlounderPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Run
                                          std::shared_ptr<IR::NESIR> ir) {
     Timer timer("CompilationBasedPipelineExecutionEngine");
     timer.start();
-    //std::cout << ir->toString() << std::endl;
+    //NES_DEBUG(ir->toString());
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     timer.snapshot("Flounder generation");

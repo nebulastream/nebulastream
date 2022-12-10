@@ -91,7 +91,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buf);
 
     std::string result = dynamicTupleBuffer.toString(s);
-    std::cout << "RES=" << result << std::endl;
+    NES_DEBUG("RES=" << result);
     NES_DEBUG("Reference size=" << reference.size() << " content=\n" << reference);
     NES_DEBUG("Result size=" << result.size() << " content=\n" << result);
     NES_DEBUG("----");

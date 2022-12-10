@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <log4cxx/helpers/exception.h>
+
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {

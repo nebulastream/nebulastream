@@ -142,7 +142,7 @@ TEST_F(TCPSourceTest, TCPSourcePrint) {
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
-    std::cout << mqttSource->toString() << std::endl;
+    NES_DEBUG(mqttSource->toString());
 
     SUCCEED();
 }

@@ -24,7 +24,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <log4cxx/helpers/exception.h>
+
 
 using namespace NES;
 

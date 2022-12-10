@@ -21,7 +21,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 #include <vector>
 

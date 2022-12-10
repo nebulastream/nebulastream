@@ -35,12 +35,12 @@ namespace NES {
 class KeyedEventTimeWindowHandlerTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup KeyedEventTimeWindowHandlerTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup KeyedEventTimeWindowHandlerTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("KeyedEventTimeWindowHandlerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup KeyedEventTimeWindowHandlerTest test case." << std::endl;
+        NES_DEBUG("Setup KeyedEventTimeWindowHandlerTest test case.");
         size_t keySize = 8;
         size_t valueSize = 8;
         size_t nrEntries = 100;
@@ -49,7 +49,7 @@ class KeyedEventTimeWindowHandlerTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down KeyedEventTimeWindowHandlerTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down KeyedEventTimeWindowHandlerTest test case."); }
 
   public:
     std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory;

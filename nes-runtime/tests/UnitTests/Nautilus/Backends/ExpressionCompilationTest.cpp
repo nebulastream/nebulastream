@@ -31,7 +31,7 @@ class ExpressionExecutionTest : public testing::Test, public AbstractCompilation
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ExpressionExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ExpressionExecutionTest test class." << std::endl;
+        NES_DEBUG("Setup ExpressionExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */

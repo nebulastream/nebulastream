@@ -24,12 +24,12 @@ namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStoreTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup KeyedThreadLocalSliceStoreTest test class." << std::endl; }
+    static void SetUpTestCase() { NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::Logger::setupLogging("KeyedThreadLocalSliceStoreTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup KeyedThreadLocalSliceStoreTest test case." << std::endl;
+        NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test case.");
         auto bufferManager = std::make_shared<Runtime::BufferManager>();
         size_t keySize = 8;
         size_t valueSize = 8;
@@ -38,7 +38,7 @@ class KeyedThreadLocalSliceStoreTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down KeyedSliceTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down KeyedSliceTest test case."); }
 
   public:
     std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory;

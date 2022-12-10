@@ -1546,7 +1546,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->numSourceLocalBuffersDefault,
                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
-    std::cout << int_schema->toString() << std::endl;
+    NES_DEBUG(int_schema->toString());
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1909,14 +1909,14 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    std::cout << "E2EBase: Start coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Start coordinator");
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
-    std::cout << "E2EBase: Start worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
     wrkConf->bufferSizeInBytes = (72);
@@ -2035,14 +2035,14 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    std::cout << "E2EBase: Stop worker 1" << std::endl;
+    NES_DEBUG("E2EBase: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     ASSERT_TRUE(retStopWrk1);
 
-    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    NES_DEBUG("E2EBase: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     ASSERT_TRUE(retStopCord);
-    std::cout << "E2EBase: Test finished" << std::endl;
+    NES_DEBUG("E2EBase: Test finished");
 }
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {

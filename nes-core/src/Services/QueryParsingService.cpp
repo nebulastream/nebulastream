@@ -26,7 +26,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <log4cxx/helpers/exception.h>
+#include <sstream>
 
 namespace NES {
 

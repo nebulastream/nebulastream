@@ -365,7 +365,6 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       0,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    ////std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
     bool receiving_finished = false;

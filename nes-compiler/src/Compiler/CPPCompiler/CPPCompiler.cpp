@@ -77,6 +77,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-shared");
     compilationFlags.addFlag("-g");
 
+    compilationFlags.addFlag("-L/local-ssd/ventura/nes/cmake-build-debug-rdma-60/nes-dependencies-v23_spdlog-x64-linux-nes/installed/x64-linux-nes/lib/ -lfmt -lspdlog");
+
     // add header
     for (auto libPaths : runtimePathConfig.libPaths) {
         compilationFlags.addFlag(std::string("-L") + libPaths);
@@ -89,6 +91,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     for (auto includePath : runtimePathConfig.includePaths) {
         compilationFlags.addFlag("-I" + includePath);
     }
+
     compilationFlags.addFlag("-o" + libraryFileName);
 
     // the log level of the compiled code is the same as the currently selected log level of the runtime.
@@ -126,7 +129,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
         compilerCall << arg << " ";
     }
     NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
-    std::cout << "Compiler: compile with: '" << compilerCall.str() << "'" << std::endl;
+    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];

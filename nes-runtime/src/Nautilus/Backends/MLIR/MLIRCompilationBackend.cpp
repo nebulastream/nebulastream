@@ -24,6 +24,8 @@
 
 namespace NES::Nautilus::Backends::MLIR {
 
+// TODO consider removing this singleton
+// this makes nes crash if the logger singleton is destroyed before MLIRCompilationBackend object as its dtor prints
 [[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
 
 std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir) {
@@ -54,6 +56,5 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(std::shared_ptr<IR::
     timer.snapshot("MLIRGeneration");
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }
-MLIRCompilationBackend::~MLIRCompilationBackend() { std::cout << "Shutdown MLIRCompilationBackend" << std::endl; }
 
 }// namespace NES::Nautilus::Backends::MLIR
