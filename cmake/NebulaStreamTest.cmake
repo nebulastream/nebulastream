@@ -44,10 +44,10 @@ endfunction()
 #if (CMAKE_CXX_CPPCHECK)
 #    list(
 #            APPEND CMAKE_CXX_CPPCHECK
-#            "--enable=warning"
+#            "--enable=all"
 #            "--inconclusive"
-#            "--force"
 #            "--inline-suppr"
-#            "--suppressions-list=${CMAKE_SOURCE_DIR}/CppCheckSuppressions.txt"
+#            "--quiet"
+#            "--template='{file}:{line}: warning: {id} ({severity}): {message}'"
 #    )
 #endif()
