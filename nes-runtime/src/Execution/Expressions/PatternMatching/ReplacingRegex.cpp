@@ -33,14 +33,17 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
  * @param replacement std::string
  * @return std::string
  */
-TextValue* regex_replace(Value<Text>& text, Value<Text>& reg, Value<Text>& replacement) {
+TextValue* regex_replace(TextValue* text, TextValue* reg, TextValue* replacement) {
 
-    std::string strText = text->toString();
+    std::shared_ptr<char> p(text->str(), &free);
+    std::string strText (p.get());
 
-    std::string strRegex = reg->toString();
+    std::shared_ptr<char> q(reg->str(), &free);
+    std::string strRegex (q.get());
     std::regex tempRegex (strRegex);
 
-    std::string strReplacement = replacement->toString();
+    std::shared_ptr<char> r(replacement->str(), &free);
+    std::string strReplacement (r.get());
 
     std::string strReplaced = std::regex_replace(strText, tempRegex, strReplacement);
 
@@ -50,17 +53,17 @@ TextValue* regex_replace(Value<Text>& text, Value<Text>& reg, Value<Text>& repla
 
 Value<Text> ReplacingRegex::executeT(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
-    Value templeftValue = leftSubExpression->execute(record);
-    Value<Text> leftValue = Value(templeftValue);
+    Value<Text> leftValue = leftSubExpression->executeT(record);
+    //Value<Text> leftValue = Value(templeftValue);
     // Evaluate the left sub expression and retrieve the value.
-    Value tempmidValue = midSubExpression->execute(record);
-    Value<Text> midValue = Value(tempmidValue);
+    Value<Text> midValue = midSubExpression->executeT(record);
+    //Value<Text> midValue = Value(tempmidValue);
     // Evaluate the right sub expression and retrieve the value.
-    Value temprightValue = rightSubExpression->execute(record);
-    Value<Text> rightValue = Value(temprightValue);
+    Value<Text> rightValue = rightSubExpression->executeT(record);
+    //Value<Text> rightValue = Value(temprightValue);
 
 
-    return FunctionCall<>("regex_replace", regex_replace, leftValue.ref , midValue.ref, rightValue.ref);
+    return FunctionCall<>("regex_replace", regex_replace, leftValue->getReference(), midValue->getReference(), rightValue->getReference());
     //return FunctionCall<>("regex_replace", regex_replace, leftValue, midValue, rightValue);
 
     // Ask: Fallunterscheidung notwendig? std::string oder TextValue
