@@ -12,8 +12,9 @@
     limitations under the License.
 */
 #include <Execution/Expressions/PatternMatching/ReplacingRegex.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
 #include <regex>
 #include <string>
 
@@ -32,50 +33,46 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
  * @param replacement std::string
  * @return std::string
  */
-Value<Text> regex_replace(Value<Text> text, Value<Text> regex, Value<Text> replacement) { return std::regex_replace(text, regex, replacement) ; } // Ask: Alle 5 Parameter gewünscht?
+TextValue* regex_replace(Value<Text>& text, Value<Text>& reg, Value<Text>& replacement) {
 
-Value<Text> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
+    std::string strText = text->toString();
+
+    std::string strRegex = reg->toString();
+    std::regex tempRegex (strRegex);
+
+    std::string strReplacement = replacement->toString();
+
+    std::string strReplaced = std::regex_replace(strText, tempRegex, strReplacement);
+
+    return TextValue::create(strReplaced);
+
+} // Ask: Alle 5 Parameter gewünscht?
+
+Value<Text> ReplacingRegex::executeT(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
-    Value<Text> leftValue = leftSubExpression->execute(record);
+    Value templeftValue = leftSubExpression->execute(record);
+    Value<Text> leftValue = Value(templeftValue);
     // Evaluate the left sub expression and retrieve the value.
-    Value<Text> midValue = midSubExpression->execute(record);
+    Value tempmidValue = midSubExpression->execute(record);
+    Value<Text> midValue = Value(tempmidValue);
     // Evaluate the right sub expression and retrieve the value.
-    Value<Text> rightValue = rightSubExpression->execute(record);
+    Value temprightValue = rightSubExpression->execute(record);
+    Value<Text> rightValue = Value(temprightValue);
+
+
+    return FunctionCall<>("regex_replace", regex_replace, leftValue.ref , midValue.ref, rightValue.ref);
+    //return FunctionCall<>("regex_replace", regex_replace, leftValue, midValue, rightValue);
 
     // Ask: Fallunterscheidung notwendig? std::string oder TextValue
-    if (leftValue->isEquals(NES::DataTypePtr Val ue<Text>) && midValue->isEquals(Value<Text>) && rightValue->isEquals(Value<Text>)) {
-        leftValue->
-    }
+//    if (leftValue.value->isText() && midValue.value->isText() && rightValue.value->isText()) {
+//        return FunctionCall<>("regex_replace", regex_replace, leftValue.ref , midValue.ref, rightValue.ref);
+//    }
     // As we don't know the exact type of value here, we have to check the type and then call the function.
     // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
     // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Int8>() && rightValue->isType<Int8>()) {
-        // call the calculateMax function with the correct type
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int8>(), rightValue.as<Int8>());
-    } else if (leftValue->isType<Int16>() && rightValue->isType<Int16>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int16>(), rightValue.as<Int16>());
-    } else if (leftValue->isType<Int32>() && rightValue->isType<Int32>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int32>(), rightValue.as<Int32>());
-    } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int64>(), rightValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>() && rightValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt8>(), rightValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>() && rightValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt16>(), rightValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>() && rightValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt32>(), rightValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>() && rightValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt64>(), rightValue.as<UInt64>());
-    } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Float>(), rightValue.as<Float>());
-    } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
-        return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Double>(), rightValue.as<Double>());
-    } else {
-        // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
-    }
+
 }
 
 }// namespace NES::Runtime::Execution::Expressions

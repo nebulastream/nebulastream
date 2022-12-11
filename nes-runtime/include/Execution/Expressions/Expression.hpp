@@ -13,6 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
 
@@ -38,6 +39,7 @@ class Expression {
      * @return Value<>
      */
     virtual Value<> execute(Record& record) const = 0;
+    virtual Value<Text> executeT(Record& record) const = 0;
     virtual ~Expression() = default;
 };
 
