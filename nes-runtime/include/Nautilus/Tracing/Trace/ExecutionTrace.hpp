@@ -42,12 +42,8 @@ class ExecutionTrace {
     void setCurrentBlock(uint32_t index) { currentBlock = index; }
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
 
-    std::shared_ptr<OperationRef> findKnownOperation(const Tag* tag);
-
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> tagMap;
-    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> localTagMap;
 
     std::shared_ptr<OperationRef> returnRef;
     std::vector<ValueRef> getArguments();

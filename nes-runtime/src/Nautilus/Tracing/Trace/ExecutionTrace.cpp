@@ -18,7 +18,7 @@
 
 namespace NES::Nautilus::Tracing {
 
-ExecutionTrace::ExecutionTrace() : tagMap(), blocks() { createBlock(); };
+ExecutionTrace::ExecutionTrace() : blocks() { createBlock(); };
 
 void ExecutionTrace::addOperation(TraceOperation& operation) {
     if (blocks.empty()) {
@@ -48,15 +48,6 @@ uint32_t ExecutionTrace::createBlock() {
     }
     blocks.emplace_back(blocks.size());
     return blocks.size() - 1;
-}
-
-std::shared_ptr<OperationRef> ExecutionTrace::findKnownOperation(const Tag* tag) {
-    if (tagMap.contains(tag)) {
-        return tagMap.find(tag)->second;
-    } else if (localTagMap.contains(tag)) {
-        return localTagMap.find(tag)->second;
-    }
-    return nullptr;
 }
 
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
