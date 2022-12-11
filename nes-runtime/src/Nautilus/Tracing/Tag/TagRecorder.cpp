@@ -48,6 +48,8 @@ TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
 
 void* getReturnAddress(uint32_t offset);
 
+// backtrace it not defined on musl.
+#ifndef HOST_IS_MUSL
 Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
     auto* currentTagNode = &rootTagThreeNode;
     for (size_t i = 0; i <= MAX_TAG_SIZE; i++) {
@@ -60,6 +62,9 @@ Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
     throw TagCreationException("Stack is too deep. This could indicate the use of recursive control-flow,"
                                " which is not supported in Nautilus code.");
 }
+#else
+Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
+#endif
 
 void* getReturnAddress(uint32_t offset)
 #pragma GCC diagnostic ignored "-Wframe-address"
