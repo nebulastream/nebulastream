@@ -115,7 +115,7 @@ TEST_F(TextTypeTest, replaceTest) {
     auto replaceTest4 = Value<Text>("xnewxnew");
     auto test1 = replaceTest1->replace(replaceTest2, replaceTest3);
     ASSERT_EQ(test1, replaceTest4);
-   // ASSERT_ANY_THROW(replaceTest2->replace(replaceTest3, replaceTest4););
+    // ASSERT_ANY_THROW(replaceTest2->replace(replaceTest3, replaceTest4););
 }
 
 TEST_F(TextTypeTest, subStringTest) {
