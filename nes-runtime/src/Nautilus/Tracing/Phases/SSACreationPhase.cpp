@@ -14,7 +14,6 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {

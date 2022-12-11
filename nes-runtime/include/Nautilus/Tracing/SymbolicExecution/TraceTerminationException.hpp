@@ -17,6 +17,10 @@
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Nautilus {
 
+/**
+ * @brief This exceptions indicates the termination of an symbolic execution.
+ * This exception should never be used, to indicate errors to the runtime.
+ */
 class TraceTerminationException final : public std::exception {
   public:
     explicit TraceTerminationException() : std::exception(){};
