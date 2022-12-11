@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.78](https://github.com/nebulastream/nebulastream/tree/v0.3.78) (2022-12-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.77...v0.3.78)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add position & prefix & replace & repeat & reverse & split expression [\#3195](https://github.com/nebulastream/nebulastream/issues/3195)
+
 ## [v0.3.77](https://github.com/nebulastream/nebulastream/tree/v0.3.77) (2022-12-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.76...v0.3.77)
