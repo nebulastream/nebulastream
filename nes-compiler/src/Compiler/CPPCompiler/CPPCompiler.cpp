@@ -77,8 +77,6 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-shared");
     compilationFlags.addFlag("-g");
 
-    compilationFlags.addFlag("-L/local-ssd/ventura/nes/cmake-build-debug-rdma-60/nes-dependencies-v23_spdlog-x64-linux-nes/installed/x64-linux-nes/lib/ -lfmt -lspdlog");
-
     // add header
     for (auto libPaths : runtimePathConfig.libPaths) {
         compilationFlags.addFlag(std::string("-L") + libPaths);
@@ -96,7 +94,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     // the log level of the compiled code is the same as the currently selected log level of the runtime.
     auto logLevel = getLogLevel(NesLogger::getInstance().getCurrentLogLevel());
-    compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
+    compilationFlags.addFlag("-DFMT_HEADER_ONLY -DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
 #ifdef TFDEF
     compilationFlags.addFlag("-DTFDEF=1");
