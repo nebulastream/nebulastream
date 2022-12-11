@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-#include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -608,7 +607,6 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 }
 
 TEST_F(LocationIntegrationTests, testReconnecting) {
-    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     NES_INFO("start coordinator")
@@ -912,7 +910,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 }
 
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
-    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     NES_INFO("start coordinator")
