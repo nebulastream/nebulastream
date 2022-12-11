@@ -12,13 +12,12 @@
     limitations under the License.
 */
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES::Nautilus::Tracing {
-
-SymbolicExecutionContext::SymbolicExecutionContext() = default;
 
 bool SymbolicExecutionContext::record(TagRecorder& tr) {
     // special case if we are currently in the follow mode, we switch to record and change the last decision in this execution path.

@@ -20,6 +20,10 @@
 
 namespace NES::Nautilus::Tracing {
 
+/**
+ * Create thread_local variable to store the trace context.
+ * The trace context can always be thread local, as tracable code can never span multiple threads.
+ */
 static thread_local TraceContext* traceContext;
 TraceContext* TraceContext::get() { return traceContext; }
 
