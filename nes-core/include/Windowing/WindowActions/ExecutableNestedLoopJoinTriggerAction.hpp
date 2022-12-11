@@ -121,7 +121,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             tupleBuffer.setOriginId(this->originId);
             tupleBuffer.setWatermark(currentWatermark);
 
-            if (NesLogger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+            if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction "

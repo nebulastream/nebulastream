@@ -11,21 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Logger/NesLogger.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace NES {
 
 namespace Logger {
-void setupLogging(const std::string& logFileName, LogLevel level) { NesLogger::getInstance().configure(logFileName, level); }
+
+void setupLogging(const std::string& logFileName, LogLevel level) { Logger::getInstance().configure(logFileName, level); }
+
+detail::Logger& getInstance() {
+    static detail::Logger singleton;
+
+    return singleton;
+}
 }// namespace Logger
 
 namespace detail {
 static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
-static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%# %!] %v%$";
+static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
 
 auto toSpdlogLevel(LogLevel level) {
     auto spdlogLevel = spdlog::level::info;
@@ -68,19 +76,19 @@ auto createEmptyLogger() -> spdlog::logger {
 }
 
 auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
-    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(loggerPath, true);
+    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(loggerPath, true);
 
     auto spdlogLevel = toSpdlogLevel(level);
 
-    console_sink->set_level(spdlogLevel);
-    console_sink->set_color_mode(spdlog::color_mode::always);
-    file_sink->set_level(spdlogLevel);
+    consoleSink->set_level(spdlogLevel);
+    consoleSink->set_color_mode(spdlog::color_mode::always);
+    fileSink->set_level(spdlogLevel);
 
-    console_sink->set_pattern(SPDLOG_PATTERN);
-    file_sink->set_pattern(SPDLOG_PATTERN);
+    consoleSink->set_pattern(SPDLOG_PATTERN);
+    fileSink->set_pattern(SPDLOG_PATTERN);
 
-    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {console_sink, file_sink});
+    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {consoleSink, fileSink});
 
     logger.set_level(spdlogLevel);
 #ifdef NES_DEBUG_MODE
@@ -91,22 +99,21 @@ auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
 
     return logger;
 }
-}// namespace detail
 
-void NesLogger::forceFlush() {
+void Logger::forceFlush() {
     for (auto& sink : impl.sinks()) {
         sink->flush();
     }
     impl.flush();
 }
 
-void NesLogger::configure(const std::string& logFileName, LogLevel level) {
+void Logger::configure(const std::string& logFileName, LogLevel level) {
     auto configuredLogger = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
 }
 
-void NesLogger::changeLogLevel(LogLevel newLevel) {
+void Logger::changeLogLevel(LogLevel newLevel) {
     auto spdNewLogLevel = detail::toSpdlogLevel(newLevel);
     for (auto& sink : impl.sinks()) {
         sink->set_level(spdNewLogLevel);
@@ -115,9 +122,5 @@ void NesLogger::changeLogLevel(LogLevel newLevel) {
     std::swap(newLevel, currentLogLevel);
 }
 
-NesLogger& NesLogger::getInstance() {
-    static NesLogger singleton;
-
-    return singleton;
-}
+}// namespace detail
 }// namespace NES

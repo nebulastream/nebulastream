@@ -15,7 +15,7 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 
-#include <Util/Logger/LogLevel.hpp>
+#include "Util/Logger/LogLevel.hpp"
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
@@ -29,36 +29,26 @@ namespace detail {
 spdlog::logger createEmptyLogger();
 }// namespace detail
 
-namespace Logger {
-/**
- * @brief Setups the logging using a file path for the filesystem logging and a logging level
- * @param logFileName
- * @param level
- */
-void setupLogging(const std::string& logFileName, LogLevel level);
-}
-
-class NesLogger {
-  private:
-
+namespace detail {
+class Logger {
   public:
     /**
-     * @brief Configures this NesLogger using a file path for the filesystem logging and a logging level
+     * @brief Configures this Logger using a file path for the filesystem logging and a logging level
      * @param logFileName
      * @param level
      */
     void configure(const std::string& logFileName, LogLevel level);
 
-    ~NesLogger() {
+    ~Logger() {
         forceFlush();
         spdlog::shutdown();
     }
 
-    NesLogger() : impl(detail::createEmptyLogger()) {}
+    Logger() : impl(detail::createEmptyLogger()) {}
 
-    NesLogger(const NesLogger&) = delete;
+    Logger(const Logger&) = delete;
 
-    void operator=(const NesLogger&) = delete;
+    void operator=(const Logger&) = delete;
 
   private:
   public:
@@ -159,14 +149,24 @@ class NesLogger {
      * @brief change the current logging level to a new level
      * @param newLevel
      */
-     void changeLogLevel(LogLevel newLevel);
-
-  public:
-    static NesLogger& getInstance();// singleton is ok here
+    void changeLogLevel(LogLevel newLevel);
 
   private:
     spdlog::logger impl;
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
 };
+}// namespace detail
+
+namespace Logger {
+/**
+ * @brief Setups the logging using a file path for the filesystem logging and a logging level
+ * @param logFileName
+ * @param level
+ */
+void setupLogging(const std::string& logFileName, LogLevel level);
+
+detail::Logger& getInstance();// singleton is ok here
+}// namespace Logger
+
 }// namespace NES
 #endif//NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
