@@ -88,32 +88,18 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
     for (auto& buffer : dataBuffers) {
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];
-
-//        std::string configString = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" sampleRate: 6000"
-//                                   " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 5000"
-//                                   " - memory: attributes: \"FREE_RAM\" sampleRate: 4000"
-//                                   " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, rMulticast, "
-//                                   "tBytes, tPackets, tErrs, tDrop, tFifo, tColls, tCarrier, tCompressed\" ";
-//        web::json::value configurationMonitoringJson =
-//            Monitoring::MetricUtils::parseMonitoringConfigStringToJson(configString);
-//
-//        Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::setSchemaJson(configurationMonitoringJson);
-
-
-        //        Monitoring::MonitoringManagerPtr monitoringManager = metricStore->getMonitoringManager();
-//        NES_DEBUG("MonitoringSink: write data: get monitoringplan for node " + std::to_string(nodeId));
-        Monitoring::MonitoringPlanPtr monitoringPlan = monitoringManager->getMonitoringPlan(nodeId);
-//        NES_DEBUG("MonitoringSink: write data: metric types of monitoring plan" + monitoringPlan->toString());
-//        NES_DEBUG("MonitoringSink: write data: collectorType: " + Monitoring::toString(collectorType))
-        Monitoring::MetricType metricType = Monitoring::MetricUtils::getMetricTypeFromCollectorType(collectorType);
-//        NES_DEBUG("MonitoringSink: write data: metricType " + Monitoring::toString(metricType));
-        SchemaPtr schema = monitoringPlan->getSchema(metricType);
         Monitoring::MetricPtr parsedMetric;
-        if (schema) {
-//            NES_DEBUG("MonitoringSink: write data: print schema for node " + std::to_string(nodeId) + "\n"+ schema->toString());
-            parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorTypeAndSchema(collectorType, schema);
+
+        if (monitoringManager != nullptr) {
+            Monitoring::MonitoringPlanPtr monitoringPlan = monitoringManager->getMonitoringPlan(nodeId);
+            Monitoring::MetricType metricType = Monitoring::MetricUtils::getMetricTypeFromCollectorType(collectorType);
+            SchemaPtr schema = monitoringPlan->getSchema(metricType);
+            if (schema) {
+                parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorTypeAndSchema(collectorType, schema);
+            } else {
+                parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
+            }
         } else {
-//            NES_DEBUG("MonitoringSink: write data: no fitting metrictype in monitoring plan: " + Monitoring::toString(metricType));
             parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
         }
 
