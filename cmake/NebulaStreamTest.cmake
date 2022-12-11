@@ -39,15 +39,3 @@ function(instrument_codebase)
         target_code_coverage(nes-data-types PUBLIC AUTO)
     endif ()
 endfunction()
-
-#find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
-#if (CMAKE_CXX_CPPCHECK)
-#    list(
-#            APPEND CMAKE_CXX_CPPCHECK
-#            "--enable=all"
-#            "--inconclusive"
-#            "--inline-suppr"
-#            "--quiet"
-#            "--template='{file}:{line}: warning: {id} ({severity}): {message}'"
-#    )
-#endif()
