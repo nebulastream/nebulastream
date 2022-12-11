@@ -25,6 +25,7 @@ limitations under the License.
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
 #include <nlohmann/json.hpp>
