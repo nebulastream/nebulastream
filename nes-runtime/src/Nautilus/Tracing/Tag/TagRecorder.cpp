@@ -48,8 +48,8 @@ TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
 
 void* getReturnAddress(uint32_t offset);
 
-// backtrace it not defined on musl.
-#ifndef HOST_IS_MUSL
+// check if gnu backtrace is available.
+#ifdef BACKWARD_HAS_BACKTRACE
 Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
     auto* currentTagNode = &rootTagThreeNode;
     for (size_t i = 0; i <= MAX_TAG_SIZE; i++) {
