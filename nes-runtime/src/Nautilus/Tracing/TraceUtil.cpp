@@ -69,7 +69,7 @@ void traceUnaryOperation(const Nautilus::Tracing::OpCode& op,
     }
 }
 
-void TraceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
+void traceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::ValueRef& valueReference) {
     if (auto ctx = Tracing::TraceContext::get()) {
         ctx->traceConstOperation(valueReference, constValue);
     }

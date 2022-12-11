@@ -18,7 +18,7 @@
 #include <utility>
 namespace NES::Nautilus::Tracing {
 
-SymbolicExecutionContext::SymbolicExecutionContext() {}
+SymbolicExecutionContext::SymbolicExecutionContext() = default;
 
 bool SymbolicExecutionContext::record(TagRecorder& tr) {
     // special case if we are currently in the follow mode, we switch to record and change the last decision in this execution path.
@@ -87,6 +87,9 @@ bool SymbolicExecutionContext::shouldContinue() {
     return false;
 }
 void SymbolicExecutionContext::next() {
+    if (iterations >= MAX_ITERATIONS) {
+        NES_THROW_RUNTIME_ERROR("Tracing got lost and reached the max number of iterations.");
+    }
     // if this is the first iteration the execution context is already initialized
     if (iterations > 0) {
         auto& trace = inflightExecutionPaths.front();
