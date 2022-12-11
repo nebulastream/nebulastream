@@ -13,18 +13,12 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT2_HPP_
-#include "Nautilus/Tracing/Tag/Tag.hpp"
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
-#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <Nautilus/Tracing/ValueRef.hpp>
-#include <functional>
+#include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <list>
-#include <unordered_set>
+#include <unordered_map>
 namespace NES::Nautilus::Tracing {
-class SymbolicExecutionPath;
-class ExecutionTrace;
-class ValueRef;
+class TagRecorder;
 
 /**
  * @brief The symbolic execution context supports the symbolic execution of functions.
@@ -34,8 +28,6 @@ class SymbolicExecutionContext {
   public:
     // The number of iterations we want to spend maximally to explore executions.
     static const uint64_t MAX_ITERATIONS = 100000;
-    SymbolicExecutionContext();
-
     /**
      * @brief Performs a symbolic execution of a CMP operation.
      * Depending on all previous executions this function determines if a branch should be explored or not.

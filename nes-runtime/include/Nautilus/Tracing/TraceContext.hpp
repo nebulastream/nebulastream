@@ -17,8 +17,9 @@
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <functional>
 #include <memory>
 
@@ -29,6 +30,7 @@ typedef std::shared_ptr<Any> AnyPtr;
 
 namespace NES::Nautilus::Tracing {
 class OperationRef;
+class ExecutionTrace;
 
 /**
  * @brief The trace context manages a thread local instance to record a symbolic execution trace of a given Nautilus function.
