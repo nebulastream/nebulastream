@@ -60,21 +60,4 @@ TEST_F(CompilationCacheTest, cacheSource) {
     ASSERT_TRUE(compilationCache.contains(sourceCode));
 }
 
-/**
-
- void* create_hash_index(....);
- void* create_circular_buffer(....); { head, tail}
-
-void* find_hash_entry(hash_value, index); // returns a pointer wihtin the CB or tells you it's empty
-
-
-if (it's null) {
-    // cb.tail += kv
-
- }
-
-
-
-
- */
 }// namespace NES::Compiler
