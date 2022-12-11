@@ -50,6 +50,23 @@ class BinaryExpressionWrapper {
     std::shared_ptr<ExpressionType> expression;
 };
 
+template<typename ExpressionType>
+class TernaryExpressionWrapper {
+  public:
+    TernaryExpressionWrapper() {
+        auto leftExpression = std::make_shared<ReadFieldExpression>("left");
+        auto midExpression = std::make_shared<ReadFieldExpression>("mid");
+        auto rightExpression = std::make_shared<ReadFieldExpression>("right");
+        expression = std::make_shared<ExpressionType>(leftExpression, midExpression, rightExpression);
+    }
+    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> mid,Nautilus::Value<> right) {
+        auto record = Record({{"left", left}, {"mid", mid},{"right", right}});
+        return expression->execute(record);
+    }
+
+    std::shared_ptr<ExpressionType> expression;
+};
+
 }// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_

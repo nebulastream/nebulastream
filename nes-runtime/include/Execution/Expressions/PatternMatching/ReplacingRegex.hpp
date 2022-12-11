@@ -15,7 +15,7 @@
 #ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_
 #define NES_NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_PATTERNMATCHING_REPLACINGREGEX_HPP_
 
-#include "Common/DataTypes/Text.hpp"
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Expressions {
 class ReplacingRegex : public Expression {
   public:
     ReplacingRegex(const ExpressionPtr& leftSubExpression, const ExpressionPtr& midSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<Text> execute(Record& record) const override;
+    Value<Text> executeT(Record& record) const override;
   private:
     const  ExpressionPtr leftSubExpression;
     const  ExpressionPtr midSubExpression;

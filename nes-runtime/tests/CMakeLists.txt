@@ -13,6 +13,7 @@
 
 include(ExternalProject)
 
+<<<<<<< HEAD
 function(add_nes_runtime_test)
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
@@ -27,6 +28,9 @@ endfunction()
 
 
 add_library(nes-runtime-tests INTERFACE)
+=======
+add_library(nes-runtime-tests INTERFACE UnitTests/Execution/Expressions/PatternMatching/ReplacingRegexTest.cpp)
+>>>>>>> interim2
 target_include_directories(nes-runtime-tests INTERFACE "./include/")
 target_link_libraries(nes-runtime-tests INTERFACE nes-runtime nes-tests-util)
 
