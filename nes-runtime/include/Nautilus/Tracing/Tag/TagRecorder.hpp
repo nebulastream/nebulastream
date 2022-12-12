@@ -24,7 +24,7 @@ namespace NES::Nautilus::Tracing {
  */
 class TagRecorder final {
   public:
-    static constexpr size_t MAX_TAG_SIZE = 30;
+    static constexpr size_t MAX_TAG_SIZE = 60;
     /**
      * @brief Factory to create a new tag recorder.
      * @return TagRecorder
