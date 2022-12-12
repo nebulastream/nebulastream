@@ -70,7 +70,7 @@ TEST_F(TagCreationTest, recursiveCreateTag) {
 TEST_F(TagCreationTest, deepRecursiveCreateTag) {
     auto tr = TagRecorder::createTagRecorder();
     std::unordered_set<Tag*> tagMap;
-    ASSERT_THROW(createTagFunction(tr, tagMap, 50), TagCreationException);
+    ASSERT_THROW(createTagFunction(tr, tagMap, 100), TagCreationException);
 }
 
 TEST_F(TagCreationTest, tagCreationLoop) {
