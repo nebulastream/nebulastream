@@ -160,6 +160,7 @@ endif ()
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
+    add_subdirectory(benchmark)
     message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")
