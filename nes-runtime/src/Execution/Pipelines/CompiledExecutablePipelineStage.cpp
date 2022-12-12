@@ -65,6 +65,7 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     });
 
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    NES_DEBUG(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     NES_DEBUG(*executionTrace.get());
     timer.snapshot("TraceGeneration");

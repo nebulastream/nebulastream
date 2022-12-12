@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace NES::Nautilus::Tracing {
 

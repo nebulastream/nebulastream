@@ -88,15 +88,15 @@ void TraceContext::traceFunctionCall(const std::vector<Nautilus::Tracing::InputV
     });
 }
 
-void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef) {
-    trace(CALL, [&]() {
-        return Nautilus::Tracing::TraceOperation(STORE, {memref, valueRef});
-    });
-}
-
 void TraceContext::traceFunctionCall(const ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
     trace(CALL, [&]() {
         return Nautilus::Tracing::TraceOperation(CALL, resultRef, arguments);
+    });
+}
+
+void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef) {
+    trace(STORE, [&]() {
+        return Nautilus::Tracing::TraceOperation(STORE, {memref, valueRef});
     });
 }
 
