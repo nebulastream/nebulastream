@@ -17,6 +17,7 @@ limitations under the License.
 #include <Nautilus/Interface/Record.hpp>
 #include <jni.h>
 #include <utility>
+#include "boost/filesystem.hpp"
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,7 +30,7 @@ inline void jniErrorCheck(void* operatorPtr) {
     if (mapUDF->getEnvironment()->ExceptionOccurred()) {
         // print the stack trace
         mapUDF->getEnvironment()->ExceptionDescribe();
-        NES_FATAL_ERROR("An error occured during a map java UDF execution");
+        NES_FATAL_ERROR("An error occurred during a map java UDF execution");
         exit(EXIT_FAILURE);
     }
 }
@@ -48,30 +49,49 @@ void loadClassesFromByteList(void* operatorPtr, const std::unordered_map<std::st
     }
 }
 
+
+jobject _deserializeInstance(void* operatorPtr, void* object) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto clazz = mapUDF->getEnvironment()->FindClass("MapJavaUdfUtils");
+    jniErrorCheck(mapUDF);
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
+    jniErrorCheck(mapUDF);
+    auto obj = mapUDF->getEnvironment()->CallStaticObjectMethod(clazz, mid, object);
+    jniErrorCheck(mapUDF);
+    return obj;
+}
+
 /**
  * Deserialize the instance using the helper deserialize java function in MapJavaUdfUtils
  * @param operatorPtr
  * @return jobject
  */
-// https://docs.oracle.com/javase/8/docs/platform/serialization/spec/input.html
-jobject loadSerializedInstance(void* operatorPtr) {
+jobject _deserializeInstance(void* operatorPtr) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    return _deserializeInstance(operatorPtr, (void *)mapUDF->getSerializedInstance().data());
+}
+
+
+jobject _serializeInstance(void* operatorPtr, jobject object) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto clazz = mapUDF->getEnvironment()->FindClass("MapJavaUdfUtils");
     jniErrorCheck(mapUDF);
-    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer)Ljava/lang/Object");
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "serialize", "(Ljava/lang/Object;)Ljava/nio/ByteBuffer;");
     jniErrorCheck(mapUDF);
-    auto obj = mapUDF->getEnvironment()->CallStaticObjectMethod(clazz, mid);
+    auto obj = mapUDF->getEnvironment()->CallStaticObjectMethod(clazz, mid, object);
     jniErrorCheck(mapUDF);
     return obj;
-
-    //auto mapUDF = (MapJavaUdf*) operatorPtr;
-    // create NewDirectByteBuffer in JNI which takes the byte buffer
-    //jobject buffer = mapUDF->getEnvironment()->NewDirectByteBuffer(operatorPtr->, jlong capacity);
-    // Call bytearrayinputstream(byte[])
-    // Call ObjectInputStream(InputStream in)
-    // Call ObjectInputStream.readObject()
-    // load with class path?
 }
+
+jobject MapJavaUdf::deserializeInstance(jobject object) {
+    return _deserializeInstance(static_cast<void*>(this), object);
+}
+
+jobject MapJavaUdf::serializeInstance(jobject object) {
+    return _serializeInstance(static_cast<void*>(this), object);
+}
+
+inline bool dirExists(const std::string& name) { return boost::filesystem::exists(name.c_str()); }
 
 MapJavaUdf::MapJavaUdf(const std::string& className,
                        const std::string& methodName,
@@ -86,10 +106,17 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
       byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema), outputSchema(outputSchema) {
     // Start VM
     if (jvm == nullptr) {
+        // Sanity check javaPath
+        if (!dirExists(javaPath)) {
+            NES_FATAL_ERROR("jarPath not valid!");
+            exit(EXIT_FAILURE);
+        }
+
         // init java vm arguments
         JavaVMInitArgs vm_args;             // Initialization arguments
-        auto* options = new JavaVMOption[2];// JVM invocation options
-        options[0].optionString = (char*) ("-Djava.class.path=" + javaPath).c_str();
+        auto* options = new JavaVMOption[3];// JVM invocation options
+        std::string classPathOpt = std::string("-Djava.class.path=") + javaPath;
+        options[0].optionString = (char*) classPathOpt.c_str();
         options[1].optionString = (char*) "-verbose:jni";
         options[2].optionString = (char*) "-verbose:class";// where to find java .class
         vm_args.nOptions = 3;                              // number of options
@@ -101,13 +128,13 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
         if (rc == JNI_OK) {
             NES_TRACE("Java VM startup was successful");
         } else if (rc == JNI_ERR) {
-            NES_FATAL_ERROR("An unknown error occured during Java VM startup!");
+            NES_FATAL_ERROR("An unknown error occurred during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_EDETACHED) {
             NES_FATAL_ERROR("Thread detached from the VM during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_EVERSION) {
-            NES_FATAL_ERROR("A JNI version error occured during Java VM startup!");
+            NES_FATAL_ERROR("A JNI version error occurred during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_ENOMEM) {
             NES_FATAL_ERROR("Not enough memory during Java VM startup!");
@@ -143,13 +170,13 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
         if (rc == JNI_OK) {
             NES_TRACE("Java VM startup was successful");
         } else if (rc == JNI_ERR) {
-            NES_FATAL_ERROR("An unknown error occured during Java VM startup!");
+            NES_FATAL_ERROR("An unknown error occurred during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_EDETACHED) {
             NES_FATAL_ERROR("Thread detached from the VM during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_EVERSION) {
-            NES_FATAL_ERROR("A JNI version error occured during Java VM startup!");
+            NES_FATAL_ERROR("A JNI version error occurred during Java VM startup!");
             exit(EXIT_FAILURE);
         } else if (rc == JNI_ENOMEM) {
             NES_FATAL_ERROR("Not enough memory during Java VM startup!");
@@ -280,11 +307,11 @@ std::string getStringField(void* operatorPtr, void* pojoClassPtr, void* pojoObje
     jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "Ljava.lang.String");
     jstring value = (jstring) mapUDF->getEnvironment()->GetObjectField(pojo, id);
     jniErrorCheck(mapUDF);
-    int lenght = 1; // TODO derrive lenght
+    int length = 1; // TODO derive length
     jboolean isCopy;
     const char *convertedValue = mapUDF->getEnvironment()->GetStringUTFChars(value, &isCopy);
     jniErrorCheck(mapUDF);
-    return std::string(convertedValue, lenght);
+    return std::string(convertedValue, length);
 }
 
 // TODO: Build a wrapper around field access
@@ -314,7 +341,7 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
 
     // load instance
-    jobject instance = loadSerializedInstance(operatorPtr);
+    jobject instance = _deserializeInstance(operatorPtr);
 
     // find class implementing the map udf
     jclass c1 = mapUDF->getEnvironment()->FindClass(mapUDF->getClassName().c_str());
@@ -422,18 +449,26 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
 
     // Write result into result record
     auto result = new Record();
-    //if not primitive typexecute {
-    for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
-        auto field = outputSchema->fields[i];
+
+    // Loading record values into java objects
+    // 1. If the input schema contains only one field we have a primitive type (String, Integer, ..)
+    // 2. Otherwise we have a plain old java object containing the multiple primitive types
+    if (inputSchema->fields.size() == 1) {
+        // 1. Primitive type as map input
+        auto field = inputSchema->fields[0];
         auto fieldName = field->getName();
 
         if (field->getDataType()->isInteger()) {
             Value<> val =
-                FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(0));
             result->write(fieldName, val);
         } else if (field->getDataType()->isFloat()) {
-            Value<> val =
-                FunctionCall<>("getFloatField", getFloatField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+            Value<> val = FunctionCall<>("getFloatField",
+                                         getFloatField,
+                                         thisOperatorPtr,
+                                         outputClassPtr,
+                                         outputPojoPtr,
+                                         Value<Int32>(0));
             result->write(fieldName, val);
         } else if (field->getDataType()->isBoolean()) {
             Value<> val = FunctionCall<>("getBooleanField",
@@ -441,11 +476,46 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                                          thisOperatorPtr,
                                          outputClassPtr,
                                          outputPojoPtr,
-                                         Value<Int32>(i));
+                                         Value<Int32>(0));
             result->write(fieldName, val);
+        } else if (field->getDataType()->isText()) {
+            /*FunctionCall<>("setStringField",
+                           setStringField,
+                           thisOperatorPtr,
+                           inputClassPtr,
+                           inputPojoPtr,
+                           Value<Int32>(0),
+                           record.read(fieldName).as<TextValue>());*/
+        }
+    } else {
+        // 2. Plain old java object as map input
+        for (int i = 0; i < (int) outputSchema->fields.size(); i++) {
+            auto field = outputSchema->fields[i];
+            auto fieldName = field->getName();
+
+            if (field->getDataType()->isInteger()) {
+                Value<> val =
+                    FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                result->write(fieldName, val);
+            } else if (field->getDataType()->isFloat()) {
+                Value<> val = FunctionCall<>("getFloatField",
+                                             getFloatField,
+                                             thisOperatorPtr,
+                                             outputClassPtr,
+                                             outputPojoPtr,
+                                             Value<Int32>(i));
+                result->write(fieldName, val);
+            } else if (field->getDataType()->isBoolean()) {
+                Value<> val = FunctionCall<>("getBooleanField",
+                                             getBooleanField,
+                                             thisOperatorPtr,
+                                             outputClassPtr,
+                                             outputPojoPtr,
+                                             Value<Int32>(i));
+                result->write(fieldName, val);
+            }
         }
     }
-    // else
 
     // relase objects auch strings in pojo
 
