@@ -68,16 +68,18 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     NES_DEBUG(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     NES_DEBUG(*executionTrace.get());
-    timer.snapshot("TraceGeneration");
+    timer.snapshot("Trace Generation");
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
-    timer.snapshot("NESIRGeneration");
+    timer.snapshot("NESIR Generation");
     NES_DEBUG(ir->toString());
-    NES_DEBUG(timer);
+
 
     auto& compilationBackend = Nautilus::Backends::CompilationBackendRegistry::getPlugin("MLIR");
     auto executable = compilationBackend->compile(ir);
+    timer.snapshot("MLIR Compilation");
+    NES_DEBUG(timer);
     return executable;
 }
 
