@@ -19,6 +19,8 @@
 namespace NES::Nautilus::Tracing {
 TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress) {}
 
+// check if gnu backtrace is available.
+#ifdef BACKWARD_HAS_BACKTRACE
 TagVector TagRecorder::createBaseTag() {
     void* tagBuffer[MAX_TAG_SIZE];
     int size = backtrace(tagBuffer, MAX_TAG_SIZE);
@@ -28,6 +30,9 @@ TagVector TagRecorder::createBaseTag() {
     }
     return {addresses};
 }
+#else
+Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
+#endif
 
 TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
     auto& tag1Addresses = tag1.getAddresses();
@@ -48,8 +53,6 @@ TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
 
 void* getReturnAddress(uint32_t offset);
 
-// check if gnu backtrace is available.
-#ifdef BACKWARD_HAS_BACKTRACE
 Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
     auto* currentTagNode = &rootTagThreeNode;
     for (size_t i = 0; i <= MAX_TAG_SIZE; i++) {
@@ -62,9 +65,6 @@ Tag* TagRecorder::createReferenceTag(TagAddress startAddress) {
     throw TagCreationException("Stack is too deep. This could indicate the use of recursive control-flow,"
                                " which is not supported in Nautilus code.");
 }
-#else
-Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
-#endif
 
 void* getReturnAddress(uint32_t offset)
 #pragma GCC diagnostic ignored "-Wframe-address"
@@ -101,6 +101,36 @@ void* getReturnAddress(uint32_t offset)
         case 28: return __builtin_return_address(28 + 1);
         case 29: return __builtin_return_address(29 + 1);
         case 30: return __builtin_return_address(30 + 1);
+        case 31: return __builtin_return_address(31 + 1);
+        case 32: return __builtin_return_address(32 + 1);
+        case 33: return __builtin_return_address(33 + 1);
+        case 34: return __builtin_return_address(34 + 1);
+        case 35: return __builtin_return_address(35 + 1);
+        case 36: return __builtin_return_address(36 + 1);
+        case 37: return __builtin_return_address(37 + 1);
+        case 38: return __builtin_return_address(38 + 1);
+        case 39: return __builtin_return_address(39 + 1);
+        case 40: return __builtin_return_address(40 + 1);
+        case 41: return __builtin_return_address(41 + 1);
+        case 42: return __builtin_return_address(42 + 1);
+        case 43: return __builtin_return_address(43 + 1);
+        case 44: return __builtin_return_address(44 + 1);
+        case 45: return __builtin_return_address(45 + 1);
+        case 46: return __builtin_return_address(46 + 1);
+        case 47: return __builtin_return_address(47 + 1);
+        case 48: return __builtin_return_address(48 + 1);
+        case 49: return __builtin_return_address(49 + 1);
+        case 50: return __builtin_return_address(50 + 1);
+        case 51: return __builtin_return_address(51 + 1);
+        case 52: return __builtin_return_address(52 + 1);
+        case 53: return __builtin_return_address(53 + 1);
+        case 54: return __builtin_return_address(54 + 1);
+        case 55: return __builtin_return_address(55 + 1);
+        case 56: return __builtin_return_address(56 + 1);
+        case 57: return __builtin_return_address(57 + 1);
+        case 58: return __builtin_return_address(58 + 1);
+        case 59: return __builtin_return_address(59 + 1);
+        case 60: return __builtin_return_address(60 + 1);
         default: return nullptr;
     }
 }
