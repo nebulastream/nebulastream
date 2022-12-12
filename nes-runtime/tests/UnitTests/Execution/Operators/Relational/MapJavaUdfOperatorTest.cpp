@@ -14,7 +14,6 @@ limitations under the License.
 
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -42,15 +41,46 @@ class MapJavaUdfOperatorTest : public testing::Test {
 };
 
 /**
-* @brief Tests test 123
+* @brief Test proper functioning of serialization
+*/
+TEST_F(MapJavaUdfOperatorTest, DeserializationTest) {
+    std::string path = "/home/amichalke/workspace/nebulastream/nebulastream-java-client/";
+
+    auto intialValue = 42;
+    auto map = MapJavaUdf("", "", "", "", { }, { }, Schema::create(), Schema::create(), path);
+    jclass clazz = map.getEnvironment()->FindClass("java/lang/Integer");
+    auto initMid = map.getEnvironment()->GetMethodID(clazz, "<init>", "(I)V");
+    auto obj = map.getEnvironment()->NewObject(clazz, initMid, intialValue); // init Integer object with 1
+    auto serialized  = map.serializeInstance(obj);
+    auto deserialized = map.deserializeInstance(serialized);
+    auto valueMid = map.getEnvironment()->GetMethodID(clazz, "intValue", "()I");
+    jint value = map.getEnvironment()->CallIntMethod(deserialized, valueMid);
+    ASSERT_EQ((int) value, intialValue);
+}
+
+/**
+* @brief test default class loading
 */
 TEST_F(MapJavaUdfOperatorTest, ClassLoaderTest) {
-    const std::string path = "/home/amichalke/nebulastream/udf";
-    auto map = MapJavaUdf(path);
+    std::string path = "/home/amichalke/workspace/nebulastream/nebulastream-java-client/";
+    SchemaPtr input = Schema::create();
+    SchemaPtr output = Schema::create();
+    std::string method = "map"; // add pkg?
+    std::string clazz = "DummyRichMapFunction"; // add pkg
+    std::string inputProxy = "java/lang/Integer";
+    std::string outputProxy = "java/lang/Integer";
+
+    auto map = MapJavaUdf(clazz, method, inputProxy, outputProxy, { }, { }, input, output, path);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
     auto record = Record({{"id", Value<>(10)}, {"value", Value<>(12)}});
     map.execute(ctx, record);
+}
+
+/**
+* @brief Test custom class loader
+*/
+TEST_F(MapJavaUdfOperatorTest, CustomClassLoaderTest) {
 }
 }// namespace NES::Runtime::Execution::Operators

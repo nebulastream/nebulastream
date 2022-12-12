@@ -108,7 +108,7 @@ class MapJavaUdf : public ExecutableOperator {
     std::string getClassName() { return className; };
 
     /**
-    * Return the name of the method inplementing the udf
+    * Return the name of the method implementing the udf
     * @return std::string
     */
     std::string getMethodName() { return methodName; };
@@ -126,10 +126,22 @@ class MapJavaUdf : public ExecutableOperator {
     std::string getOutputProxyName() { return outputProxyName; };
 
     /**
-     * Retrun the serialized instance of the class implementing the UDF
+     * Return the serialized instance of the class implementing the UDF
      * @return
      */
     std::vector<char> getSerializedInstance() { return serializedInstance; };
+
+    /**
+     * For test purposes
+     * @return
+     */
+    jobject deserializeInstance(jobject object);
+
+    /**
+     * For test purposes
+     * @return
+     */
+    jobject serializeInstance(jobject object);
 
   private:
     std::string className;
@@ -144,8 +156,8 @@ class MapJavaUdf : public ExecutableOperator {
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 
-    JavaVM* jvm;
-    JNIEnv* env;
+    JavaVM* jvm = nullptr;
+    JNIEnv* env = nullptr;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
