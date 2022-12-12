@@ -47,7 +47,7 @@ jobs:
         id: checkUserMember
         with:
           username: ${{ github.actor }}
-          team: 'NebulaStream'
+          team: 'NebulaStream-Admins'
           GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: verify-run-privilage
         if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'workflow_dispatch'
