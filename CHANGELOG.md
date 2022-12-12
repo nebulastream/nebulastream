@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.1](https://github.com/nebulastream/nebulastream/tree/v0.4.1) (2022-12-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.0...v0.4.1)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot deserialize window operator from Protobuf message from client [\#3273](https://github.com/nebulastream/nebulastream/issues/3273)
+
+## [v0.4.0](https://github.com/nebulastream/nebulastream/tree/v0.4.0) (2022-12-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.78...v0.4.0)
+
 ## [v0.3.78](https://github.com/nebulastream/nebulastream/tree/v0.3.78) (2022-12-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.3.77...v0.3.78)
