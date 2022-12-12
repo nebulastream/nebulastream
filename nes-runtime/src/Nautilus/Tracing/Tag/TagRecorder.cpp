@@ -31,7 +31,7 @@ TagVector TagRecorder::createBaseTag() {
     return {addresses};
 }
 #else
-Tag Tag::createTag(uint64_t) { NES_NOT_IMPLEMENTED(); }
+TagVector TagRecorder::createBaseTag() { NES_NOT_IMPLEMENTED(); }
 #endif
 
 TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2) {
