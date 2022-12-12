@@ -20,7 +20,7 @@ namespace NES::Nautilus::Tracing {
 TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress) {}
 
 // check if gnu backtrace is available.
-#ifdef BACKWARD_HAS_BACKTRACE
+#if defined(BACKWARD_HAS_BACKTRACE) & !defined(HOST_IS_MUSL)
 TagVector TagRecorder::createBaseTag() {
     void* tagBuffer[MAX_TAG_SIZE];
     int size = backtrace(tagBuffer, MAX_TAG_SIZE);
