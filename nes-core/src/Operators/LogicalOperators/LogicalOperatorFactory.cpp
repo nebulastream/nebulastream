@@ -33,6 +33,7 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 
 namespace NES {
@@ -128,6 +129,11 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOpera
 LogicalUnaryOperatorNodePtr
 LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations, const uint64_t maxIterations, OperatorId id) {
     return std::make_shared<IterationLogicalOperatorNode>(minIterations, maxIterations, id);
+}
+
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapJavaUdfLogicalOperator(
+    const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id) {
+    return std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 
 }// namespace NES
