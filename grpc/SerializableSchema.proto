@@ -13,19 +13,26 @@
 */
 
 syntax = "proto3";
-import "SerializableSchema.proto";
+import "SerializableExpression.proto";
 package NES;
 
-message JavaUdfDescriptorMessage {
-  message JavaUdfClassDefinition {
-    string class_name = 1;
-    bytes byte_code = 2;
+/**
+The serializable wrapper for a schema object
+ */
+message SerializableSchema{
+  repeated SerializableField fields = 1;
+  enum MemoryLayoutType {
+    ROW_LAYOUT = 0;
+    COL_LAYOUT = 1;
   }
-
-  string udf_class_name = 1;
-  string udf_method_name = 2;
-  bytes serialized_instance = 3;
-  repeated JavaUdfClassDefinition classes = 4;
-  SerializableSchema outputSchema = 5;
+  MemoryLayoutType layoutType = 2;
 }
 
+/**
+The serializable wrapper for a schema object and its name
+ */
+message SerializableNamedSchema{
+
+  string sourceName = 1;
+  SerializableSchema schema = 2;
+}

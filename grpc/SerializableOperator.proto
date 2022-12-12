@@ -15,29 +15,10 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
+import "SerializableSchema.proto";
+import "JavaUdfDescriptorMessage.proto";
 package NES;
 
-
-/**
-The serializable wrapper for a schema object
- */
-message SerializableSchema{
-  repeated SerializableField fields = 1;
-  enum MemoryLayoutType {
-    ROW_LAYOUT = 0;
-    COL_LAYOUT = 1;
-  }
-  MemoryLayoutType layoutType = 2;
-}
-
-/**
-The serializable wrapper for a schema object and its name
- */
-message SerializableNamedSchema{
-
-  string sourceName = 1;
-  SerializableSchema schema = 2;
-}
 
 /**
 The serializable wrapper for the nes partition object
@@ -587,6 +568,13 @@ message SerializableOperator{
     SerializableExpression probeSchema = 4;
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
+  }
+
+  /**
+    Information to serialize a Map operator with a Java UDF.
+   */
+  message MapJavaUdfDetails {
+      JavaUdfDescriptorMessage javaUdfDescriptor = 1;
   }
 
   google.protobuf.Any details = 1;
