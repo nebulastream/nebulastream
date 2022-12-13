@@ -116,8 +116,8 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterInPredicate(NesCEPParser::InPredicateContext* ctx) = 0;
     virtual void exitInPredicate(NesCEPParser::InPredicateContext* ctx) = 0;
 
-    virtual void enterBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
-    virtual void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
+    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
+    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
 
     virtual void enterIsNullPredicate(NesCEPParser::IsNullPredicateContext* ctx) = 0;
     virtual void exitIsNullPredicate(NesCEPParser::IsNullPredicateContext* ctx) = 0;
