@@ -157,10 +157,15 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     target_link_libraries(nes-runtime PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/lib/fmt/src/fmt-external-build/libfmt.so)
 endif ()
 
+if (NES_RUNTIME_BENCHMARKS)
+    # Add tests with command
+    add_subdirectory(benchmark)
+    message(STATUS "Runtime benchmarks are enabled")
+endif ()
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
-    add_subdirectory(benchmark)
     message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")

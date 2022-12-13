@@ -17,7 +17,6 @@
 namespace NES::Nautilus::Tracing {
 TagVector::TagVector(const std::vector<TagAddress>& addresses) : addresses(addresses) {}
 
-bool TagVector::operator==(const TagVector& other) const { return other.addresses == addresses; }
 
 std::ostream& operator<<(std::ostream& os, const TagVector& tag) {
     os << "addresses: [";

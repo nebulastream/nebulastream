@@ -34,7 +34,7 @@ class TrieNode {
      * @param value
      * @return TrieNode<T>*
      */
-    TrieNode<T>* append(T value) {
+    TrieNode<T>* append(T& value) {
         auto found = std::find_if(children.begin(), children.end(), [value](std::unique_ptr<TrieNode<T>>& x) {
             return x->content == value;
         });

@@ -34,27 +34,27 @@ class TagRecorder final {
         auto referenceTag1 = createBaseTag();
         auto referenceTag2 = createBaseTag();
         auto baseAddress = getBaseAddress(referenceTag1, referenceTag2);
-        return {baseAddress};
+        return TagRecorder(baseAddress);
     }
     /**
      * @brief Derive the tag of a specific instruction and returns the tag pointer, which uniquely identifies this instruction.
      * @return Tag*
      */
     [[nodiscard]] inline __attribute__((always_inline)) Tag* createTag() { return this->createReferenceTag(startAddress); }
-    ~TagRecorder() = default;
+
   private:
     /**
      * @brief Create a new tag recorder with a fixed start address.
      * @param startAddress
      */
-    TagRecorder(TagAddress startAddress);
+    explicit TagRecorder(TagAddress startAddress);
     static TagAddress getBaseAddress(TagVector& tag1, TagVector& tag2);
     static TagVector createBaseTag();
     Tag* createReferenceTag(TagAddress startAddress);
     // The start address, which is used as the start to calculate tags for sub instructions.
     const TagAddress startAddress;
     // The tag recorder stores the individual tags in a trie of addresses, to minimize space consumption.
-    Tag rootTagThreeNode;
+    Tag rootTagThreeNode = Tag();
 };
 }// namespace NES::Nautilus::Tracing
 
