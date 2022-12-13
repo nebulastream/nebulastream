@@ -98,8 +98,9 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
             std::string correctBlockId, uint32_t correctNumberOfBackLinks, 
             std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) {
                 correctBlocks.emplace(std::pair{correctBlockId, 
-                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, 
+                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, std::move(countedLoopInfo), correctMergeBlockId})});
     }
+
 
     /**
      * @brief Takes a graph IR, enumerates all blocks depth-first, and returns a vector containing all blocks.
@@ -186,13 +187,13 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                                 loopInfoIsCorrect &= countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
                                 loopInfoIsCorrect &= countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
                                 loopInfoIsCorrect &= countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
-                                loopInfoIsCorrect &= countedLoopInfo->loopEndBlock->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
+                                loopInfoIsCorrect &= loopOp->getLoopEndBlock().getBlock()->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
                                 if(!loopInfoIsCorrect) {
                                     NES_ERROR("Loop info set incorrectly. Check values: " << 
                                                 "LowerBound: " << countedLoopInfo->lowerBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
                                                 ", UpperBound: " << countedLoopInfo->upperBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
                                                 ", StepSize: " << countedLoopInfo->stepSize << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize <<
-                                                ", LoopEndBlock: " << countedLoopInfo->loopEndBlock->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
+                                                ", LoopEndBlock: " << loopOp->getLoopEndBlock().getBlock()->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
                                                 );
                                 }
                             }
@@ -266,16 +267,17 @@ TEST_P(StructuredControlFlowPhaseTest, 1_threeIfOperationsOneNestedThreeMergeBlo
 
 Value<> doubleVerticalDiamondInTrueBranch_2() {
     Value agg = Value(0);
+    Value agg2 = Value(0);
     if (agg < 50) {
         if (agg < 40) {
-            agg = agg + 10;
+            agg2 = agg2 + 10;
         } else {
             agg = agg + 100;
         }
         if (agg > 60) {
             agg = agg + 1000;
         } else {
-            agg = agg + 10000;
+            agg2 = agg2 + 10000;
         }
     } else {
         agg = agg + 100000;

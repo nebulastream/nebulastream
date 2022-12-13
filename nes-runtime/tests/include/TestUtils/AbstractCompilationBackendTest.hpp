@@ -15,6 +15,7 @@
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
 
+#include <Nautilus/IR/Phases/ValueScopingPhase.hpp>
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
@@ -37,6 +38,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
+    Nautilus::IR::ValueScopingPhase valueScopingPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         NES_DEBUG(*executionTrace.get());
