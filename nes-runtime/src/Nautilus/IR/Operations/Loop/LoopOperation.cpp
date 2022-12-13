@@ -29,6 +29,7 @@ BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock
 // void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
 // void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
+BasicBlockInvocation& LoopOperation::getLoopEndBlock() { return loopEndBlock; }
 
 void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loopInfo = loopInfo; }
 
