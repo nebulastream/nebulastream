@@ -18,10 +18,10 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
-#include <memory>
+#include <Nautilus/Tracing/TraceUtil.hpp>
 #include <cstdio>
+#include <memory>
 #include <unistd.h>
 namespace NES::Nautilus {
 
@@ -155,7 +155,7 @@ void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& a
 template<typename... ValueArguments>
 auto getArgumentReferences(std::string functionName, void* fnptr, ValueArguments... arguments) {
     std::vector<Nautilus::Tracing::InputVariant> functionArgumentReferences = {
-        Nautilus::Tracing::FunctionCallTarget(functionName, (void*) fnptr)};
+        Nautilus::Tracing::FunctionCallTarget(functionName, fnptr)};
     if constexpr (sizeof...(ValueArguments) > 0) {
         for (const Nautilus::Tracing::InputVariant& p : {getRefs(arguments)...}) {
             functionArgumentReferences.emplace_back(p);

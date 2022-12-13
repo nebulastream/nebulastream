@@ -39,7 +39,6 @@ class TagVector {
      * @param addresses
      */
     TagVector(const std::vector<TagAddress>& addresses);
-    bool operator==(const TagVector& other) const;
     friend std::ostream& operator<<(std::ostream& os, const TagVector& tag);
     const std::vector<TagAddress>& getAddresses();
 

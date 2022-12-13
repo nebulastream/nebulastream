@@ -34,11 +34,27 @@ class SymbolicExecutionContext {
      * @return the return value of this branch
      */
     bool executeCMP(TagRecorder& tr);
+    /**
+     * @brief Check if we should continue the symbolic execution or if we evaluated all possible execution passes.
+     * @return false if all execution passes trough a function have been evaluated.
+     */
     bool shouldContinue();
+    /**
+     * @brief Initializes the next iteration of the symbolic execution.
+     */
     void next();
+    /**
+     * @brief Returns the number of iterations of symbolic execution.
+     * @return uint64_t
+     */
     uint64_t getIterations() const;
 
   private:
+    /**
+     * @brief Records a new cmp operation
+     * @param tr TagRecorder
+     * @return
+     */
     bool record(TagRecorder& tr);
 
   private:
@@ -46,8 +62,13 @@ class SymbolicExecutionContext {
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.
      */
-    enum MODE : int8_t { FOLLOW, RECORD };
-    enum TagState : int8_t { FirstVisit, SecondVisit };
+    enum MODE : const int8_t { FOLLOW, RECORD };
+    /**
+     * @brief Tag state
+     * This indicates if we visited a specific tag one or two times.
+     * If we already visited it two times, we can skip any further executions at this point.
+     */
+    enum TagState : const int8_t { FirstVisit, SecondVisit };
     std::unordered_map<const Tag*, TagState> tagMap;
     std::list<SymbolicExecutionPath> inflightExecutionPaths;
     MODE currentMode = RECORD;
