@@ -63,8 +63,8 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
         auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
         sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
@@ -185,8 +185,8 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
     auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
@@ -210,8 +210,8 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
     auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
     sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);

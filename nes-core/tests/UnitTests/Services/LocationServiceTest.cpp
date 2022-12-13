@@ -77,8 +77,8 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
@@ -143,7 +143,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
 
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0, properties);
@@ -240,7 +240,7 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
     service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
 
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes

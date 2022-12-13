@@ -54,14 +54,14 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto slots = registrationRequest->numberofslots();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    workerProperties[MAINTENANCE] = false; //During registration, we assume the node is not under maintenance
-    workerProperties[TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
-    workerProperties[JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
-    workerProperties[SPATIAL_SUPPORT] =
+    workerProperties[NES::Worker::Properties::MAINTENANCE] = false; //During registration, we assume the node is not under maintenance
+    workerProperties[NES::Worker::Configuration::TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
+    workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
+    workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
     NES::Spatial::Index::Experimental::Location location(registrationRequest->geolocation().lat(),
                                                          registrationRequest->geolocation().lng());
-    workerProperties[LOCATION] = location;
+    workerProperties[NES::Worker::Properties::LOCATION] = location;
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
     uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
@@ -69,7 +69,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto registrationMetrics =
         std::make_shared<Monitoring::Metric>(Monitoring::RegistrationMetrics(registrationRequest->registrationmetrics()),
                                              Monitoring::MetricType::RegistrationMetric);
-    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().workerId = workerId;
+    registrationMetrics->getValue<Monitoring::RegistrationMetrics>().nodeId = workerId;
     monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
     if (workerId != 0) {
@@ -86,9 +86,9 @@ Status
 CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
-    bool success = topologyManagerService->unregisterNode(request->id());
+    bool success = topologyManagerService->unregisterNode(request->workerid());
     if (success) {
-        monitoringManager->removeMonitoringNode(request->id());
+        monitoringManager->removeMonitoringNode(request->workerid());
         NES_DEBUG("CoordinatorRPCServer::UnregisterNode: sensor successfully removed");
         reply->set_success(true);
         return Status::OK;
@@ -102,7 +102,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request =" << request);
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     for (const auto& physicalSourceDefinition : request->physicalsources()) {
         bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
@@ -123,7 +123,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
                                                       UnregisterPhysicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request =" << request);
 
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     bool success =
         sourceCatalogService->unregisterPhysicalSource(physicalNode, request->physicalsourcename(), request->logicalsourcename());
 
@@ -360,7 +360,7 @@ Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
     auto coordinates = request->geolocation();
     NES_DEBUG("Coordinator received location update from node with id "
-              << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
+              << request->workerid() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
               << request->time());
     //todo #2862: update coordinator trajectory prediction
     reply->set_success(true);
