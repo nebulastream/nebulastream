@@ -132,7 +132,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * returns 500 for internal server errors
      */
     ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
-        auto udfCatalog = this->udfCatalog;
         try {
             // Convert protobuf message contents to JavaUdfDescriptor.
             std::string body = request.getValue("");
