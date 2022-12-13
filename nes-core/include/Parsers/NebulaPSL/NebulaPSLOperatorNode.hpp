@@ -37,7 +37,7 @@ class NebulaPSLOperatorNode {
     int32_t getId() const;
     void setId(int32_t id);
     const std::string& getOperatorName() const;
-    void setOperatorName(const std::string& eventName);
+    void setOperatorName(const std::string& operatorName);
     int32_t getRightChildId() const;
     void setRightChildId(int32_t rightChildId);
     int32_t getLeftChildId() const;

@@ -37,13 +37,13 @@ void NebulaPSLPattern::setWindow(const std::pair<std::string, int32_t>& window) 
 // methods to update the clauses maps/lists
 void NebulaPSLPattern::addSource(std::pair<int32_t, std::basic_string<char>> sourcePair) { this->sourceList.insert(sourcePair); }
 void NebulaPSLPattern::updateSource(const int32_t key, std::string sourceName) { this->sourceList[key] = sourceName; }
-void NebulaPSLPattern::addExpression(ExpressionNodePtr expressionNodePtr) {
+void NebulaPSLPattern::addExpression(ExpressionNodePtr expressionNode) {
     auto pos = this->expressionList.begin();
-    this->expressionList.insert(pos, expressionNodePtr);
+    this->expressionList.insert(pos, expressionNode);
 }
-void NebulaPSLPattern::addSink(SinkDescriptorPtr sinkDescriptorPtr) { this->sinkList.push_back(sinkDescriptorPtr); }
-void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionNodePtr) {
-    this->projectionFields.push_back(expressionNodePtr);
+void NebulaPSLPattern::addSink(SinkDescriptorPtr sinkDescriptor) { this->sinkList.push_back(sinkDescriptor); }
+void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionNode) {
+    this->projectionFields.push_back(expressionNode);
 }
 void NebulaPSLPattern::addOperatorNode(NebulaPSLOperatorNode operatorNode) {
     this->operatorList.insert(std::pair<uint32_t, NebulaPSLOperatorNode>(operatorNode.getId(), operatorNode));

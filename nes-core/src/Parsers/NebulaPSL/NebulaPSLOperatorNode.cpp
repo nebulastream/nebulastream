@@ -21,7 +21,7 @@ NebulaPSLOperatorNode::NebulaPSLOperatorNode(int32_t id) { this->id = id; }
 int32_t NebulaPSLOperatorNode::getId() const { return this->id; }
 void NebulaPSLOperatorNode::setId(int32_t id) { this->id = id; }
 const std::string& NebulaPSLOperatorNode::getOperatorName() const { return this->operatorName; }
-void NebulaPSLOperatorNode::setOperatorName(const std::string& eventName) { this->operatorName = eventName; }
+void NebulaPSLOperatorNode::setOperatorName(const std::string& operatorName) { this->operatorName = operatorName; }
 int32_t NebulaPSLOperatorNode::getRightChildId() const { return this->rightChildId; }
 void NebulaPSLOperatorNode::setRightChildId(int32_t rightChildId) { this->rightChildId = rightChildId; }
 int32_t NebulaPSLOperatorNode::getLeftChildId() const { return this->leftChildId; }
