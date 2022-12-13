@@ -28,8 +28,10 @@
 #include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <fstream>
-#include <health.grpc.pb.h>
+#include <Health.grpc.pb.h>
+#include <log4cxx/helpers/exception.h>
 #include <string>
+
 namespace NES {
 
 namespace detail {
@@ -169,7 +171,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
               << physicalSources.size() << " physical sources to register for worker with id " << workerId);
 
     RegisterPhysicalSourcesRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
 
     for (const auto& physicalSource : physicalSources) {
         PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsources();
@@ -204,7 +206,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     RegisterLogicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
     request.set_sourceschema(fileContent);
     NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request=" << request.DebugString());
@@ -222,7 +224,7 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSo
     NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source" << physicalSourceName << " from logical source ");
 
     UnregisterPhysicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_physicalsourcename(physicalSourceName);
     request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request=" << request.DebugString());
@@ -240,7 +242,7 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
     NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source" << logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request=" << request.DebugString());
 
@@ -350,7 +352,7 @@ bool CoordinatorRPCClient::unregisterNode() {
     NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId=" << workerId);
 
     UnregisterWorkerRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     NES_DEBUG("CoordinatorRPCClient::unregisterNode request=" << request.DebugString());
 
     class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
@@ -607,12 +609,13 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, Spatial::Index::Experimental::WaypointPtr locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(uint64_t workerId,
+                                              Spatial::Index::Experimental::WaypointPtr locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
 
-    request.set_id(nodeId);
+    request.set_workerid(workerId);
 
     GeoLocation* coordinates = request.mutable_geolocation();
     coordinates->set_lat(locationUpdate->getLocation()->getLatitude());

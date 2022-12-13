@@ -66,8 +66,8 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
         //Setup source catalog
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
         auto defaultSourceType = DefaultSourceType::create();
@@ -379,8 +379,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto logicalSource = sourceCatalog->getLogicalSource("example");
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto physicalSource = PhysicalSource::create("example", "test1");

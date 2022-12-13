@@ -84,8 +84,8 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         std::vector<int> sources{8, 9, 10, 11, 12};
 
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
         std::vector<TopologyNodePtr> nodes;
         for (int i = 0; i < (int) resources.size(); i++) {
             nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i], properties));
