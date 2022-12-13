@@ -25,7 +25,7 @@ class UdfSerializationUtil {
     static void serializeJavaUdfDescriptor(const Catalogs::UDF::JavaUdfDescriptor& javaUdfDescriptor,
                                            JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
 
-    static Catalogs::UDF::JavaUdfDescriptorPtr deserializeJavaUdfDescriptor(JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
+    static Catalogs::UDF::JavaUdfDescriptorPtr deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
 };
 
 }// namespace NES

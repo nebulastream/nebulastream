@@ -37,7 +37,7 @@ void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaU
 }
 
 Catalogs::UDF::JavaUdfDescriptorPtr
-UdfSerializationUtil::deserializeJavaUdfDescriptor(JavaUdfDescriptorMessage& javaUdfDescriptorMessage) {
+UdfSerializationUtil::deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessage& javaUdfDescriptorMessage) {
     // C++ represents the bytes type of serialized_instance and byte_code as std::strings
     // which have to be converted to typed byte arrays.
     auto serializedInstance = Catalogs::UDF::JavaSerializedInstance{javaUdfDescriptorMessage.serialized_instance().begin(),
@@ -50,7 +50,7 @@ UdfSerializationUtil::deserializeJavaUdfDescriptor(JavaUdfDescriptorMessage& jav
              Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
     }
     // Deserialize the output schema.
-    auto outputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.mutable_outputschema());
+    auto outputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.outputschema());
     // Create Java UDF descriptor.
     return Catalogs::UDF::JavaUdfDescriptor::create(javaUdfDescriptorMessage.udf_class_name(),
                                                     javaUdfDescriptorMessage.udf_method_name(),
