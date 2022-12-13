@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstdint>
+#include <algorithm>
 #include <memory>
 #include <utility>
 
