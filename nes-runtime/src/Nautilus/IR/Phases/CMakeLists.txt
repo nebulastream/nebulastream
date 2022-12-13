@@ -16,5 +16,4 @@ add_source_files(nes-runtime
         RemoveBrOnlyBlocksPhase.cpp
         StructuredControlFlowPhase.cpp
         LoopDetectionPhase.cpp
-        ValueScopingPhase.cpp
         )
