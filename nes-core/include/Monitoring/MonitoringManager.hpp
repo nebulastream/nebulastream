@@ -103,10 +103,19 @@ class MonitoringManager {
     //  -- dtor --
     ~MonitoringManager();
 
-    //TODO: Beschreibung
+    /**
+     * @brief Registers a monitoring plan of a node at the monitoringPlanMap
+     * @param nodeId
+     * @param monitoringPlan
+     * @return True, if registration was succesful
+     */
     bool registerMonitoringPlans(const uint64_t& nodeId, const MonitoringPlanPtr& monitoringPlan);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Registers a logical source name at the deployedMonitoringQueries
+     * @param logicalSourceName
+     * @return True, if registration was succesful
+     */
     bool insertLogicalSource (std::string logicalSourceName);
 
     /**
