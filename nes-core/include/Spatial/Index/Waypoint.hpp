@@ -13,10 +13,10 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
-#include <Util/TimeMeasurement.hpp>
-#include <optional>
 #include <Spatial/Index/Location.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <memory>
+#include <optional>
 
 namespace NES::Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
@@ -63,6 +63,6 @@ class Waypoint {
     LocationPtr location;
     std::optional<Timestamp> timestamp;
 };
-}
+}// namespace NES::Spatial::Index::Experimental
 
 #endif//NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_

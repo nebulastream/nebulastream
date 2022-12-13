@@ -18,12 +18,12 @@
 #include <Common/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
 #include <thread>
-#include <Util/TimeMeasurement.hpp>
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;

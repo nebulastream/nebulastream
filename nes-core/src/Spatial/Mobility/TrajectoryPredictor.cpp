@@ -204,14 +204,15 @@ void TrajectoryPredictor::startReconnectPlanning() {
 #ifdef S2DEF
     updateDownloadedNodeIndex(locationProvider->getCurrentWaypoint()->getLocation());
     //fill up the buffer before starting to calculate path
-    while(locationBuffer.size() < locationBufferSize) {
+    while (locationBuffer.size() < locationBufferSize) {
         auto currentLocation = locationProvider->getCurrentWaypoint();
         if (!locationBuffer.empty() && *currentLocation->getLocation() == *locationBuffer.back()->getLocation()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
             continue;
         }
         locationBuffer.push_back(currentLocation);
-        NES_DEBUG("added: " << locationBuffer.back()->getLocation()->toString() << ", " << locationBuffer.back()->getTimestamp().value());
+        NES_DEBUG("added: " << locationBuffer.back()->getLocation()->toString() << ", "
+                            << locationBuffer.back()->getTimestamp().value());
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval * locationBufferSaveRate));
     }
     NES_TRACE("Location buffer is filled");
@@ -313,8 +314,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
 #endif
 }
 
-void TrajectoryPredictor::reconnect(uint64_t newParentId,
-                                    const Spatial::Index::Experimental::WaypointPtr& ownLocation) {
+void TrajectoryPredictor::reconnect(uint64_t newParentId, const Spatial::Index::Experimental::WaypointPtr& ownLocation) {
     std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
     //todo #2918: pass pointer here
     reconnectConfigurator->reconnect(parentId, newParentId);
@@ -512,9 +512,9 @@ void TrajectoryPredictor::scheduleReconnects() {
     auto currentParentPathCoverageEnd = reconnectionPointTuple.first;
 
     //find the expected time of arrival at the end of coverage of our current parent
-    remainingTime =
-        S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.back()->getLocation()), currentParentPathCoverageEnd)
-            .degrees()
+    remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.back()->getLocation()),
+                            currentParentPathCoverageEnd)
+                        .degrees()
         / bufferAverageMovementSpeed;
     auto endOfCoverageETA = locationBuffer.back()->getTimestamp().value() + remainingTime;
 

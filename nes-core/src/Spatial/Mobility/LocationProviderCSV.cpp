@@ -63,8 +63,8 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
         auto waypoint = std::make_shared<Index::Experimental::Waypoint>(
-                               Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString)),
-                           time);
+            Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString)),
+            time);
         waypoints.push_back(waypoint);
     }
     if (waypoints.empty()) {
@@ -72,7 +72,8 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
         exit(EXIT_FAILURE);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
-    NES_DEBUG("first timestamp is " << waypoints.front()->getTimestamp().value() << ", last timestamp is " << waypoints.back()->getTimestamp().value())
+    NES_DEBUG("first timestamp is " << waypoints.front()->getTimestamp().value() << ", last timestamp is "
+                                    << waypoints.back()->getTimestamp().value())
     //set first csv entry as the next wypoint
 }
 
@@ -94,14 +95,13 @@ Index::Experimental::WaypointPtr LocationProviderCSV::getCurrentWaypoint() {
     //find the last point behind us on the way
     auto prevWaypoint = nextWaypoint - 1;
 
-    NES_TRACE("Location: " << getWaypointAt(prevWaypoint)->getLocation()->toString() << "; Time: " << getWaypointAt(prevWaypoint)->getTimestamp().value())
+    NES_TRACE("Location: " << getWaypointAt(prevWaypoint)->getLocation()->toString()
+                           << "; Time: " << getWaypointAt(prevWaypoint)->getTimestamp().value())
     return getWaypointAt(prevWaypoint);
 }
 
 Timestamp LocationProviderCSV::getStartTime() const { return startTime; }
 
-const std::vector<Index::Experimental::WaypointPtr>& LocationProviderCSV::getWaypoints() const {
-    return waypoints;
-}
+const std::vector<Index::Experimental::WaypointPtr>& LocationProviderCSV::getWaypoints() const { return waypoints; }
 Index::Experimental::WaypointPtr LocationProviderCSV::getWaypointAt(size_t index) { return waypoints.at(index); }
 }// namespace NES::Spatial::Mobility::Experimental
