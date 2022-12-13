@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/Serialization/UdfSerializationUtil.hpp>
 
 namespace NES {
@@ -27,6 +28,30 @@ void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaU
         javaClass->set_class_name(className);
         javaClass->set_byte_code(byteCode.data(), byteCode.size());
     }
+    // TODO Missing schema serialization
 }
 
+Catalogs::UDF::JavaUdfDescriptorPtr
+UdfSerializationUtil::deserializeJavaUdfDescriptor(JavaUdfDescriptorMessage& javaUdfDescriptorMessage) {
+    // C++ represents the bytes type of serialized_instance and byte_code as std::strings
+    // which have to be converted to typed byte arrays.
+    auto serializedInstance = Catalogs::UDF::JavaSerializedInstance{javaUdfDescriptorMessage.serialized_instance().begin(),
+                                                                    javaUdfDescriptorMessage.serialized_instance().end()};
+    auto javaUdfByteCodeList = Catalogs::UDF::JavaUdfByteCodeList{};
+    javaUdfByteCodeList.reserve(javaUdfDescriptorMessage.classes().size());
+    for (const auto& classDefinition : javaUdfDescriptorMessage.classes()) {
+        javaUdfByteCodeList.insert(
+            {classDefinition.class_name(),
+             Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
+    }
+    // Deserialize the output schema.
+    auto outputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.mutable_outputschema());
+    // Create Java UDF descriptor.
+    return Catalogs::UDF::JavaUdfDescriptor::create(javaUdfDescriptorMessage.udf_class_name(),
+                                                                      javaUdfDescriptorMessage.udf_method_name(),
+                                                                      serializedInstance,
+                                                                      javaUdfByteCodeList,
+                                                                      outputSchema);
 }
+
+}// namespace NES
