@@ -18,8 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Services/LocationService.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>

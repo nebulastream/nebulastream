@@ -19,11 +19,12 @@ namespace NES::Spatial::Index::Experimental {
 
 Waypoint::Waypoint(Location location) : location(std::make_shared<Location>(location)), timestamp(std::nullopt){};
 
-Waypoint::Waypoint(Location location, Timestamp timestamp) : location(std::make_shared<Location>(location)), timestamp(timestamp) {}
+Waypoint::Waypoint(Location location, Timestamp timestamp)
+    : location(std::make_shared<Location>(location)), timestamp(timestamp) {}
 
 Waypoint Waypoint::invalid() { return {Experimental::Location()}; };
 
 LocationPtr Waypoint::getLocation() const { return location; }
 
 std::optional<Timestamp> Waypoint::getTimestamp() const { return timestamp; }
-}
+}// namespace NES::Spatial::Index::Experimental

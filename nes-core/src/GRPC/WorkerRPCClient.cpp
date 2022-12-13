@@ -464,10 +464,13 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std
         auto timestamp = reply.timestamp();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()), timestamp);
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(
+                Spatial::Index::Experimental::Location(coord.lat(), coord.lng()),
+                timestamp);
         }
         //no valid timestamp to include
-        return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
+        return std::make_shared<Spatial::Index::Experimental::Waypoint>(
+            Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
     }
     //location is invalid
     return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());

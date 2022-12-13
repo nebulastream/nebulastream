@@ -47,11 +47,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
     auto startTime = locationProvider->getStartTime();
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
@@ -64,11 +60,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
@@ -81,10 +73,6 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 }// namespace NES
