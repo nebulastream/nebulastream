@@ -18,7 +18,7 @@
 
 namespace NES::Benchmark::Measurements {
 
-std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte) {
+std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte, size_t numberOfQueries) {
     uint64_t maxTuplesPerSecond = 0;
     std::vector<std::string> vecCsvStrings;
     for (size_t measurementIdx = 0; measurementIdx < timestamps.size() - 1; ++measurementIdx) {
@@ -29,9 +29,9 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         measurementsCsv << "," << allProcessedBuffers[currentTs];
         measurementsCsv << "," << allProcessedTuples[currentTs];
         measurementsCsv << "," << allLatencySum[currentTs];
-        measurementsCsv << "," << allQueueSizeSums[currentTs] / timestamps.size();
-        measurementsCsv << "," << allAvailGlobalBufferSum[currentTs] / timestamps.size();
-        measurementsCsv << "," << allAvailFixedBufferSum[currentTs] / timestamps.size();
+        measurementsCsv << "," << allQueueSizeSums[currentTs] / numberOfQueries;
+        measurementsCsv << "," << allAvailGlobalBufferSum[currentTs] / numberOfQueries;
+        measurementsCsv << "," << allAvailFixedBufferSum[currentTs] / numberOfQueries;
 
         double timeDeltaSeconds = (timestamps[measurementIdx + 1] - timestamps[measurementIdx]);
         uint64_t tuplesPerSecond =

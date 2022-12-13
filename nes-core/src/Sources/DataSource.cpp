@@ -208,10 +208,10 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         wasGracefullyStopped = graceful;
     }
 
-//    refCounter++;
-//    if (refCounter != numberOfConsumerQueries) {
-//        return true;
-//    }
+    refCounter++;
+    if (refCounter != numberOfConsumerQueries) {
+        return true;
+    }
 
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     bool expected = true;
