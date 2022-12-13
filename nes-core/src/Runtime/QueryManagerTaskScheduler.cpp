@@ -178,8 +178,6 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-        //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_TRACE("QueryManager: added Task this pipelineID="
                   << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
                   << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer
@@ -229,8 +227,6 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-        //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_TRACE("QueryManager: added Task this pipelineID="
                   << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
                   << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
