@@ -1,15 +1,15 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
@@ -50,7 +50,6 @@ void loadClassesFromByteList(void* operatorPtr, const std::unordered_map<std::st
     }
 }
 
-
 jobject _deserializeInstance(void* operatorPtr, void* object) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto clazz = mapUDF->getEnvironment()->FindClass("MapJavaUdfUtils");
@@ -71,7 +70,6 @@ jobject _deserializeInstance(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     return _deserializeInstance(operatorPtr, (void *)mapUDF->getSerializedInstance().data());
 }
-
 
 jobject _serializeInstance(void* operatorPtr, jobject object) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
@@ -115,12 +113,12 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
 
         // init java vm arguments
         JavaVMInitArgs vm_args;             // Initialization arguments
-        auto* options = new JavaVMOption[1];// JVM invocation options
+        auto* options = new JavaVMOption[3];// JVM invocation options
         std::string classPathOpt = std::string("-Djava.class.path=") + javaPath;
         options[0].optionString = (char*) classPathOpt.c_str();
-        //options[1].optionString = (char*) "-verbose:jni";
-        //options[2].optionString = (char*) "-verbose:class";// where to find java .class
-        vm_args.nOptions = 1;                              // number of options
+        options[1].optionString = (char*) "-verbose:jni";
+        options[2].optionString = (char*) "-verbose:class";// where to find java .class
+        vm_args.nOptions = 3;                              // number of options
         vm_args.options = options;
         vm_args.version = JNI_VERSION_1_2;// minimum Java version
         vm_args.ignoreUnrecognized = true;// invalid options make the JVM init fail
@@ -147,6 +145,8 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
             NES_FATAL_ERROR("Invalid arguments during Java VM startup!");
             exit(EXIT_FAILURE);
         }
+    } else {
+        jvm->AttachCurrentThread((void **)&env, nullptr);
     }
 }
 
@@ -160,13 +160,13 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
                        SchemaPtr outputSchema)
     : className(className), methodName(methodName), inputProxyName(inputProxyName), outputProxyName(outputProxyName),
       byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema), outputSchema(outputSchema) {
+    // init java vm arguments
+    JavaVMInitArgs vm_args;
+    vm_args.version = JNI_VERSION_1_2;// minimum Java version
+    vm_args.ignoreUnrecognized = true;// invalid options make the JVM init fail
+
     // Start VM
     if (jvm == nullptr) {
-        // init java vm arguments
-        JavaVMInitArgs vm_args;
-        vm_args.version = JNI_VERSION_1_2;// minimum Java version
-        vm_args.ignoreUnrecognized = true;// invalid options make the JVM init fail
-
         jint rc = JNI_CreateJavaVM(&jvm, (void**) &env, &vm_args);
         if (rc == JNI_OK) {
             NES_TRACE("Java VM startup was successful");
@@ -189,11 +189,15 @@ MapJavaUdf::MapJavaUdf(const std::string& className,
             NES_FATAL_ERROR("Invalid arguments during Java VM startup!");
             exit(EXIT_FAILURE);
         }
+    } else {
+        jvm->AttachCurrentThread((void **)&env, &vm_args);
     }
     loadClassesFromByteList(this, byteCodeList);
 }
 
-MapJavaUdf::~MapJavaUdf() { jvm->DestroyJavaVM(); }
+MapJavaUdf::~MapJavaUdf() {
+    jvm->DetachCurrentThread();
+}
 
 void* findClassProxyInput(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
@@ -230,19 +234,55 @@ void *createIntegerObject(void* operatorPtr, int value) {
 
 int getValueOfIntegerObject(void* operatorPtr, void *object) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
-
-    /*auto clazz_ = mapUDF->getEnvironment()->FindClass("java/lang/Integer");
-    jniErrorCheck(mapUDF);
-    auto mid_ = mapUDF->getEnvironment()->GetMethodID(clazz_, "<init>", "(I)V");
-    jniErrorCheck(mapUDF);
-    object = mapUDF->getEnvironment()->NewObject(clazz_, mid_, 1);
-    jniErrorCheck(mapUDF);*/
-
     auto clazz = mapUDF->getEnvironment()->FindClass("java/lang/Integer");
     jniErrorCheck(mapUDF);
     auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "intValue", "()I");
     jniErrorCheck(mapUDF);
     auto value = mapUDF->getEnvironment()->CallIntMethod((jobject) object, mid);
+    jniErrorCheck(mapUDF);
+    return value;
+}
+
+void *createFloatObject(void* operatorPtr, float value) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto clazz = mapUDF->getEnvironment()->FindClass("java/lang/Float");
+    jniErrorCheck(mapUDF);
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "<init>", "(F)V");
+    jniErrorCheck(mapUDF);
+    auto object = mapUDF->getEnvironment()->NewObject(clazz, mid, value);
+    jniErrorCheck(mapUDF);
+    return object;
+}
+
+float getValueOfFloatObject(void* operatorPtr, void *object) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto clazz = mapUDF->getEnvironment()->FindClass("java/lang/Float");
+    jniErrorCheck(mapUDF);
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "floatValue", "()F");
+    jniErrorCheck(mapUDF);
+    auto value = mapUDF->getEnvironment()->CallFloatMethod((jobject) object, mid);
+    jniErrorCheck(mapUDF);
+    return value;
+}
+
+void *createBooleanObject(void* operatorPtr, bool value) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto clazz = mapUDF->getEnvironment()->FindClass("java/lang/Boolean");
+    jniErrorCheck(mapUDF);
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "<init>", "(Z)V");
+    jniErrorCheck(mapUDF);
+    auto object = mapUDF->getEnvironment()->NewObject(clazz, mid, value);
+    jniErrorCheck(mapUDF);
+    return object;
+}
+
+bool getValueOfBooleanObject(void* operatorPtr, void *object) {
+    auto mapUDF = (MapJavaUdf*) operatorPtr;
+    auto clazz = mapUDF->getEnvironment()->FindClass("java/lang/Boolean");
+    jniErrorCheck(mapUDF);
+    auto mid = mapUDF->getEnvironment()->GetMethodID(clazz, "booleanValue", "()Z");
+    jniErrorCheck(mapUDF);
+    auto value = mapUDF->getEnvironment()->CallBooleanMethod((jobject) object, mid);
     jniErrorCheck(mapUDF);
     return value;
 }
@@ -298,7 +338,7 @@ void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr,
     auto pojoClass = (jclass) pojoClassPtr;
     auto pojo = (jobject) pojoObjectPtr;
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
-    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "Z");
     jniErrorCheck(mapUDF);
     mapUDF->getEnvironment()->SetIntField(pojo, id, (jboolean) value);
     jniErrorCheck(mapUDF);
@@ -309,7 +349,7 @@ float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr
     auto pojoClass = (jclass) pojoClassPtr;
     auto pojo = (jobject) pojoObjectPtr;
     std::string fieldName = mapUDF->getInputSchema()->fields[fieldIndex]->getName();
-    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "B");
+    jfieldID id = mapUDF->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), "Z");
     jniErrorCheck(mapUDF);
     bool value = (bool) mapUDF->getEnvironment()->GetBooleanField(pojo, id);
     jniErrorCheck(mapUDF);
@@ -374,7 +414,6 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
     // find class implementing the map udf
     jclass c1 = mapUDF->getEnvironment()->FindClass(mapUDF->getClassName().c_str());
     jniErrorCheck(mapUDF);
-    std::cout << "found class\n";
 
     // Build function signature of map function
     std::string sig = "(L" + mapUDF->getInputProxyName() + ";)L" + mapUDF->getOutputProxyName() + ";";
@@ -382,7 +421,6 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
     // Find udf function
     jmethodID mid = mapUDF->getEnvironment()->GetMethodID(c1, mapUDF->getMethodName().c_str(), sig.c_str());
     jniErrorCheck(mapUDF);
-    std::cout << "found map\n";
 
     jobject udf_result;
     if (!mapUDF->getSerializedInstance().empty()) {
@@ -426,29 +464,10 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         if (field->getDataType()->isInteger()) {
             inputPojoPtr = FunctionCall<>("createIntegerObject", createIntegerObject, thisOperatorPtr, record.read(fieldName).as<Int32>());
         } else if (field->getDataType()->isFloat()) {
-            FunctionCall<>("setFloatField",
-                           setFloatField,
-                           thisOperatorPtr,
-                           inputClassPtr,
-                           inputPojoPtr,
-                           Value<Int32>(0),
-                           record.read(fieldName).as<Float>());
+            inputPojoPtr = FunctionCall<>("createFloatObject", createFloatObject, thisOperatorPtr, record.read(fieldName).as<Float>());
         } else if (field->getDataType()->isBoolean()) {
-            FunctionCall<>("setBooleanField",
-                           setBooleanField,
-                           thisOperatorPtr,
-                           inputClassPtr,
-                           inputPojoPtr,
-                           Value<Int32>(0),
-                           record.read(fieldName).as<Boolean>());
+            inputPojoPtr = FunctionCall<>("createBooleanObject", createBooleanObject, thisOperatorPtr, record.read(fieldName).as<Boolean>());
         } else if (field->getDataType()->isText()) {
-            /*FunctionCall<>("setStringField",
-                           setStringField,
-                           thisOperatorPtr,
-                           inputClassPtr,
-                           inputPojoPtr,
-                           Value<Int32>(0),
-                           record.read(fieldName).as<TextValue>());*/
         }
     } else {
         // 2. Plain old java object as map input
@@ -488,7 +507,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto outputClassPtr = FunctionCall<>("findClassProxyOutput", findClassProxyOutput, thisOperatorPtr);
     auto outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, inputPojoPtr);
 
-    // Write result into result record
+    // Write result into new record
     record = Record();
 
     // Loading record values into java objects
@@ -503,29 +522,12 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             Value<> val = FunctionCall<>("getValueOfIntegerObject", getValueOfIntegerObject, thisOperatorPtr, outputPojoPtr);
             record.write(fieldName, val);
         } else if (field->getDataType()->isFloat()) {
-            Value<> val = FunctionCall<>("getFloatField",
-                                         getFloatField,
-                                         thisOperatorPtr,
-                                         outputClassPtr,
-                                         outputPojoPtr,
-                                         Value<Int32>(0));
+            Value<> val = FunctionCall<>("getValueOfFloatObject", getValueOfFloatObject, thisOperatorPtr, outputPojoPtr);
             record.write(fieldName, val);
         } else if (field->getDataType()->isBoolean()) {
-            Value<> val = FunctionCall<>("getBooleanField",
-                                         getBooleanField,
-                                         thisOperatorPtr,
-                                         outputClassPtr,
-                                         outputPojoPtr,
-                                         Value<Int32>(0));
+            Value<> val = FunctionCall<>("getValueOfBooleanObject", getValueOfBooleanObject, thisOperatorPtr, outputPojoPtr);
             record.write(fieldName, val);
         } else if (field->getDataType()->isText()) {
-            /*FunctionCall<>("setStringField",
-                           setStringField,
-                           thisOperatorPtr,
-                           inputClassPtr,
-                           inputPojoPtr,
-                           Value<Int32>(0),
-                           record.read(fieldName).as<TextValue>());*/
         }
     } else {
         // 2. Plain old java object as map output
@@ -538,20 +540,12 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                     FunctionCall<>("getIntField", getIntField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
             } else if (field->getDataType()->isFloat()) {
-                Value<> val = FunctionCall<>("getFloatField",
-                                             getFloatField,
-                                             thisOperatorPtr,
-                                             outputClassPtr,
-                                             outputPojoPtr,
-                                             Value<Int32>(i));
+                Value<> val =
+                    FunctionCall<>("getFloatField", getFloatField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
             } else if (field->getDataType()->isBoolean()) {
-                Value<> val = FunctionCall<>("getBooleanField",
-                                             getBooleanField,
-                                             thisOperatorPtr,
-                                             outputClassPtr,
-                                             outputPojoPtr,
-                                             Value<Int32>(i));
+                Value<> val =
+                    FunctionCall<>("getBooleanField", getBooleanField, thisOperatorPtr, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
             }
         }
