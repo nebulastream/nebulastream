@@ -41,6 +41,7 @@ class Location;
 using LocationPtr = std::shared_ptr<Location>;
 class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
+using NodeIdsMapPtr = std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>;
 }// namespace Spatial::Index::Experimental
 
 namespace Configurations {
@@ -104,7 +105,7 @@ class LocationProvider {
      * @return list of node IDs and their corresponding GeographicalLocations
      */
 
-    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
+    Index::Experimental::NodeIdsMapPtr
     getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius);
 
     /**

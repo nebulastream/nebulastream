@@ -49,7 +49,7 @@ Index::Experimental::WaypointPtr LocationProvider::getWaypoint() {
     }
 }
 
-std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>
+Index::Experimental::NodeIdsMapPtr
 LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius) {
     if (!coordinatorRpcClient) {
         NES_WARNING("worker has no coordinator rpc client, cannot download node index");
@@ -59,7 +59,8 @@ LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, d
     return std::make_shared<std::unordered_map<uint64_t, Index::Experimental::Location>>(nodeVector.begin(), nodeVector.end());
 }
 
-std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
+
+Index::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(double radius) {
     auto location = getWaypoint()->getLocation();
     if (location && location->isValid()) {
         return getNodeIdsInRange(location, radius);
