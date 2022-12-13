@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <map>
 #include <string>
+#include <algorithm>
 
 #ifdef __APPLE__
 #include <sys/sysctl.h>
