@@ -18,7 +18,3 @@ add_test(NAME nautilus-remove-br-only-blocks-phase-test COMMAND nautilus-remove-
 add_executable(nautilus-structured-control-flow-phase-test "StructuredControlFlowPhaseTest.cpp")
 target_link_libraries(nautilus-structured-control-flow-phase-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-structured-control-flow-phase-test COMMAND nautilus-structured-control-flow-phase-test)
-
-add_executable(nautilus-value-scoping-phase-test "ValueScopingPhaseTest.cpp")
-target_link_libraries(nautilus-value-scoping-phase-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-value-scoping-phase-test COMMAND nautilus-value-scoping-phase-test)
