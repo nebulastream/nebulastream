@@ -499,7 +499,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     EXPECT_TRUE(retStopWrk1);
 }
 
-TEST_F(LocationIntegrationTests, DISABLED_testMovingDeviceSimulatedStartTimeInPast) {
+TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
