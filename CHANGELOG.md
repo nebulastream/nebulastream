@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.2](https://github.com/nebulastream/nebulastream/tree/v0.4.2) (2022-12-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.1...v0.4.2)
+
+### Bug Fixes 🐛
+
+- \[BUG\] LocationIntegrationTests fails randomly, LocationProviderCSV should not interpolate [\#3259](https://github.com/nebulastream/nebulastream/issues/3259)
+
+### Miscellaneous Issues ✌️
+
+- Window Code generation duplication [\#1424](https://github.com/nebulastream/nebulastream/issues/1424)
+
 ## [v0.4.1](https://github.com/nebulastream/nebulastream/tree/v0.4.1) (2022-12-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.0...v0.4.1)
