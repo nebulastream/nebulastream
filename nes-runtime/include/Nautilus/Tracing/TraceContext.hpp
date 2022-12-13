@@ -39,9 +39,9 @@ class ExecutionTrace;
 class TraceContext {
   public:
     template<typename Functor>
-    friend std::shared_ptr<ExecutionTrace> traceFunction(Functor func);
+    friend std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func);
     template<typename Functor>
-    friend std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(Functor func);
+    friend std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func);
 
     /**
      * @brief Get a thread local reference to the trace context.
@@ -145,7 +145,7 @@ class TraceContext {
 };
 
 template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
+std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func) {
     auto tr = TagRecorder::createTagRecorder();
     auto ctx = TraceContext::initialize(tr);
     auto result = ctx->apply([&func] {
@@ -157,7 +157,7 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
 }
 
 template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor func) {
+std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func) {
     auto tr = TagRecorder::createTagRecorder();
     auto ctx = TraceContext::initialize(tr);
     auto result = ctx->apply([&func] {

@@ -94,23 +94,27 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
 }
 
 [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> BasicBlock::getNextBlocks() {
-    // std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> nextBlocks;
-    if (operations.back()->getOperationType() == IR::Operations::Operation::BranchOp) {
-        auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operations.back());
+    // Depending on the type of the last operation we return the reference to the next block.
+    NES_ASSERT(!operations.empty(), "A block can't be empty at this point");
+    auto& termination = operations.back();
+    if (termination->getOperationType() == IR::Operations::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(termination);
         return std::make_pair(branchOp->getNextBlockInvocation().getBlock(), nullptr);
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::IfOp) {
-        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operations.back());
+    } else if (termination->getOperationType() == IR::Operations::Operation::IfOp) {
+        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(termination);
         return std::make_pair(ifOp->getTrueBlockInvocation().getBlock(), ifOp->getFalseBlockInvocation().getBlock());
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::LoopOp) {
+    } else if (termination->getOperationType() == IR::Operations::Operation::LoopOp) {
         // Todo change in #3169
-        auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(operations.back());
-        auto loopHeaderIfOp = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getTerminatorOp());
-        return std::make_pair(loopHeaderIfOp->getTrueBlockInvocation().getBlock(), loopHeaderIfOp->getFalseBlockInvocation().getBlock());
-    } else if (operations.back()->getOperationType() == IR::Operations::Operation::ReturnOp) {
+        auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(termination);
+        auto loopHeaderIfOp =
+            std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getTerminatorOp());
+        return std::make_pair(loopHeaderIfOp->getTrueBlockInvocation().getBlock(),
+                              loopHeaderIfOp->getFalseBlockInvocation().getBlock());
+    } else if (termination->getOperationType() == IR::Operations::Operation::ReturnOp) {
         return {};
     } else {
-        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: " 
-                    << operations.back()->getOperationType());
+        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: "
+                  << termination->getOperationType());
         NES_NOT_IMPLEMENTED();
     }
 }
