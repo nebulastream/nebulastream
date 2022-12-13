@@ -184,8 +184,6 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                   << " queryId=" << (*nextPipeline)->getQueryId() << " getQuerySubPlanId=" << (*nextPipeline)->getQuerySubPlanId()
                   << " queueId=" << queueId);
 
-        size_t queueSizeDebug = taskQueue.sizeGuess() < 0 ? 0 : taskQueue.sizeGuess();
-        NES_ASSERT(queueSizeDebug <= taskQueue.capacity(), " size=" << queueSizeDebug << " capa=" << taskQueue.capacity());
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
