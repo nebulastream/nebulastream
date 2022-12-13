@@ -106,8 +106,8 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     uint64_t nodeId = topologyManagerService->registerWorker(address, 4000, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);

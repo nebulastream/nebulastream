@@ -78,8 +78,8 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestW
         sourceCatalog->addLogicalSource("truck", schema);
 
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4, properties);
 

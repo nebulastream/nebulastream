@@ -469,7 +469,7 @@ class MetricValidator {
             return parsedMetrics.nodeId == nodeId;
         } else if (metric->getMetricType() == Monitoring::RegistrationMetric) {
             auto parsedMetrics = metric->getValue<Monitoring::RegistrationMetrics>();
-            return parsedMetrics.workerId == nodeId;
+            return parsedMetrics.nodeId == nodeId;
         } else if (metric->getMetricType() == Monitoring::WrappedCpuMetrics) {
             auto parsedMetrics = metric->getValue<Monitoring::CpuMetricsWrapper>();
             for (uint64_t i = 0; i < parsedMetrics.size(); i++) {

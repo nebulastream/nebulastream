@@ -91,8 +91,8 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         std::vector<TopologyNodePtr> parents;
 
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
         // Setup the topology
         auto rootNode = TopologyNode::create(nodeId, "localhost", 4000, 5000, resources, properties);

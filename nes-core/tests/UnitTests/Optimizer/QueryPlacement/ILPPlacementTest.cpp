@@ -88,8 +88,8 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         topologyForILP = Topology::create();
 
         std::map<std::string, std::any> properties;
-        properties[MAINTENANCE] = false;
-        properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
         TopologyNodePtr rootNode = TopologyNode::create(3, "localhost", 123, 124, 100, properties);
         rootNode->addNodeProperty("slots", 100);
