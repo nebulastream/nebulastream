@@ -153,7 +153,15 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
             auto loopOp = std::make_shared<Operations::LoopOperation>(Operations::LoopOperation::LoopType::DefaultLoop);
             loopOp->getLoopHeadBlock().setBlock(currentBlock);
             loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
+            loopOp->getLoopEndBlock().setBlock(priorBlock);
+            // Todo set arguments function in basicBlockInvocation
+            for(auto& arg: ifOp->getTrueBlockInvocation().getArguments()) {
+                loopOp->getLoopBodyBlock().addArgument(arg);
+            }
             loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getBlock());
+            for(auto& arg: ifOp->getFalseBlockInvocation().getArguments()) {
+                loopOp->getLoopFalseBlock().addArgument(arg);
+            }
             currentBlock->replaceTerminatorOperation(loopOp);
             // Next, we attempt to recognize whether the loop is a counted loop.
             // If the loop-header block has more than 2 incoming edges, we disregard it as a counted loop candidate.
@@ -167,7 +175,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                 }
                 // Check if less or equal than (<,==,or) or greater or equal than (>,==,or) is given.
                 // (<: ST(smaller than), >: GT(greater than)).
-                if(ifOp->getBooleanValue()->getOperationType ()== Operation::OrOp) {
+                if(ifOp->getBooleanValue()->getOperationType () == Operation::OrOp) {
                     auto orOp = std::static_pointer_cast<Operations::OrOperation>(ifOp->getBooleanValue());
                     if(orOp->getLeftInput()->getOperationType() == Operation::CompareOp && 
                        orOp->getRightInput()->getOperationType() == Operation::CompareOp) {
@@ -265,7 +273,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                         "the step size is negative.");
                             return;
                         }
-                        countedLoopInfo->loopEndBlock = std::move(priorBlock);
+                        // countedLoopInfo->loopEndBlock = std::move(priorBlock);
                         loopOp->setLoopType(Operations::LoopOperation::LoopType::CountedLoop);
                         loopOp->setLoopInfo(std::move(countedLoopInfo));
                     } else {
@@ -302,8 +310,9 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
         // Set the current values for the loop halting values.
         noMoreIfBlocks = ifBlocks.empty();
         returnBlockVisited = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operation::ReturnOp);
-        priorBlock = currentBlock;
+        // priorBlock = currentBlock; //Todo wrong, need to assign ifBlock as priorBlock!
         if(!noMoreIfBlocks) {
+            priorBlock = ifBlocks.top();
             // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.
             // Since loops can only loop back on their true-branch, we can safely stop tracking it as a loop candidate.
             loopHeaderCandidates.erase(ifBlocks.top()->getIdentifier());

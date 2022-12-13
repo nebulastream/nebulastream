@@ -37,7 +37,7 @@ class CountedLoopInfo : public LoopInfo {
     // OperationPtr loopBodyInductionVariable;
     BasicBlockPtr loopBodyBlock;
     BasicBlockPtr loopFalseBlock;
-    BasicBlockPtr loopEndBlock;
+    // BasicBlockPtr loopEndBlock;
     bool isCountedLoop() override { return true; }
 };
 
