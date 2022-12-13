@@ -531,7 +531,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
         .numberOfBuffersPerWorker = 128UL,
         .noWorkerThreads = 1,
         .joinSizeInByte = 1 * 1024 * 1024,
-        .windowSize = 10,
+        .windowSize = 20,
         .lazyJoinOperatorTest = this
     };
 

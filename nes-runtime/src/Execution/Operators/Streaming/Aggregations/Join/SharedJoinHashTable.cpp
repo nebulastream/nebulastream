@@ -36,7 +36,7 @@ void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedL
 
 std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) const {
     std::vector<FixedPage> ret(getNumPages(bucketPos));
-    size_t i = ret.size();
+    size_t i = getNumPages(bucketPos);
     auto head = bucketHeads[bucketPos].load();
     while(head != nullptr) {
         auto* tmp = head;
