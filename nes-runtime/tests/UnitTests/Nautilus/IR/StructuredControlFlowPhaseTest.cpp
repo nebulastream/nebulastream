@@ -73,7 +73,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         return dpsSortedGraphNodes;
     }
 
-      /**
+    /**
      * @brief lowerBound, upperBound, stepSize, loopEndBlockId
      */
     struct CountedLoopInfo {
@@ -83,21 +83,40 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         std::string loopEndBlockId;
     };
     using countedLoopInfoPtr = std::unique_ptr<CountedLoopInfo>;
+    /**
+     * @brief Create correctCountedLoopInfo.
+     * 
+     * @param lowerBound: The lower bound of the counted loop (minimum: 0)
+     * @param upperBound: The upper bound of the counted loop
+     * @param stepSize: The step size by which the loop induction variable is increased in each step.
+     * @param loopEndBlockId: The id of the block that loops back to the loop-header, and passes the final values.
+     * @return countedLoopInfoPtr
+     */
     countedLoopInfoPtr createCorrectCountedLoopInfo(uint32_t lowerBound, uint32_t upperBound, uint32_t stepSize, std::string loopEndBlockId) {
         return std::make_unique<CountedLoopInfo>(CountedLoopInfo{lowerBound, upperBound, stepSize, loopEndBlockId});
     }
 
     struct CorrectBlockValues {
-        uint32_t correctNumberOfBackLinks;
+        uint32_t correctNumberOfLoopBackEdges;
         std::unique_ptr<CountedLoopInfo> countedLoopInfo;
         std::string correctMergeBlockId;
     };
     using CorrectBlockValuesPtr = std::unique_ptr<CorrectBlockValues>;
+    /**
+     * @brief Create a CorrectBlock, which holds the expected data for exactly one block.
+     * 
+     * @param correctBlocks: A list into which we push the newly created 'correctBlock'
+     * @param correctBlockId: The id of the block that we create the expected to be correct values for.
+     * @param correctNumberOfLoopBackEdges: The number of expected loop back edges.
+     * @param correctMergeBlockId: The expected merge-block id (if block contains if-operation).
+     * @param countedLoopInfo: The expected countedLoopInfo(lower- and upperBound, stepSize, loopEndBlockId)
+     */
     void createCorrectBlock(std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks, 
-            std::string correctBlockId, uint32_t correctNumberOfBackLinks, 
+            std::string correctBlockId, uint32_t correctNumberOfLoopBackEdges, 
             std::string correctMergeBlockId, countedLoopInfoPtr countedLoopInfo = nullptr) {
                 correctBlocks.emplace(std::pair{correctBlockId, 
-                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{correctNumberOfBackLinks, std::move(countedLoopInfo), correctMergeBlockId})});
+                    std::make_unique<CorrectBlockValues>(CorrectBlockValues{
+                        correctNumberOfLoopBackEdges, std::move(countedLoopInfo), correctMergeBlockId})});
     }
 
 
@@ -131,6 +150,15 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         return dpsSortedIRGraph;
     }
 
+    /**
+     * @brief Takes a list of blocks, and a map that maps the basic block identifiers to a data structure that 
+     *          holds the expected, correct values for the respective block. The function iterates over all blocks,
+     *          and checks whether the basic blocks reflect the expected values.
+     * 
+     * @param dpsSortedBlocks An IR graph represented as a list of blocks (nodes).
+     * @param correctBlocks A map that maps blocks to a data structure that holds the expected values for the blocks.
+     * @return true, if all values in all blocks met the expected values, else, return false.
+     */
     bool checkIRForCorrectness(const std::vector<IR::BasicBlockPtr>& dpsSortedBlocks,
                                const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
         bool mergeBlocksAreCorrect = true;
@@ -204,10 +232,10 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                             }
                         }
                         // Check that the number of loop back edges is set correctly.
-                        backLinksAreCorrect &= currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
+                        backLinksAreCorrect &= currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfLoopBackEdges;
                         if(!backLinksAreCorrect) {
                             NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -" << currentBlock->getNumLoopBackEdges() 
-                            << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                            << "- backLinks instead of: -" << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfLoopBackEdges << "-.");
                         }
                     } else {
                         mergeBlocksAreCorrect = false;
