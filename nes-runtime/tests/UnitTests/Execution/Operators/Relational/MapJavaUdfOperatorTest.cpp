@@ -38,49 +38,49 @@ class MapJavaUdfOperatorTest : public testing::Test {
 
             /* Will be called after all tests in this class are finished. */
             static void TearDownTestCase() { std::cout << "Tear down MapJavaUdfOperatorTest test class." << std::endl; }
+
+            std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
 
 /**
-* @brief Test proper functioning of serialization
+* @brief Test proper function of serialization
 */
 TEST_F(MapJavaUdfOperatorTest, DeserializationTest) {
-    std::string path = "/home/amichalke/workspace/nebulastream/nebulastream-java-client/";
+    std::string path = testDataPath;
 
-    auto intialValue = 42;
+    auto initalValue = 42;
     auto map = MapJavaUdf("", "", "", "", { }, { }, Schema::create(), Schema::create(), path);
     jclass clazz = map.getEnvironment()->FindClass("java/lang/Integer");
     auto initMid = map.getEnvironment()->GetMethodID(clazz, "<init>", "(I)V");
-    auto obj = map.getEnvironment()->NewObject(clazz, initMid, intialValue); // init Integer object with 1
+    auto obj = map.getEnvironment()->NewObject(clazz, initMid, initalValue); // init Integer object with 1
     auto serialized  = map.serializeInstance(obj);
     auto deserialized = map.deserializeInstance(serialized);
     auto valueMid = map.getEnvironment()->GetMethodID(clazz, "intValue", "()I");
     jint value = map.getEnvironment()->CallIntMethod(deserialized, valueMid);
-    ASSERT_EQ((int) value, intialValue);
+    ASSERT_EQ((int) value, initalValue);
 }
 
 /**
-* @brief test default class loading
+* @brief Test simple UDF with with Integer Objects as input and output (DummyRichMapFunction<Integer, Integer>)
+ * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapJavaUdfOperatorTest, ClassLoaderTest) {
-    std::string path = "/home/amichalke/workspace/nebulastream/nebulastream-java-client/";
-    SchemaPtr input = Schema::create();
-    SchemaPtr output = Schema::create();
-    std::string method = "map"; // add pkg?
-    std::string clazz = "DummyRichMapFunction"; // add pkg
+TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::INT32);
+    SchemaPtr output = Schema::create()->addField("id", NES::INT32);
+    std::string method = "map";
+    std::string clazz = "DummyRichMapFunction";
     std::string inputProxy = "java/lang/Integer";
     std::string outputProxy = "java/lang/Integer";
 
+    auto initalValue = 42;
     auto map = MapJavaUdf(clazz, method, inputProxy, outputProxy, { }, { }, input, output, path);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
-    auto record = Record({{"id", Value<>(10)}, {"value", Value<>(12)}});
+    auto record = Record({{"id", Value<>(initalValue)}});
     map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), initalValue + 10);
 }
 
-/**
-* @brief Test custom class loader
-*/
-TEST_F(MapJavaUdfOperatorTest, CustomClassLoaderTest) {
-}
 }// namespace NES::Runtime::Execution::Operators
