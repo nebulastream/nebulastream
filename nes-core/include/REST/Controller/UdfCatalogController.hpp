@@ -143,25 +143,8 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             auto javaUdfRequest = RegisterJavaUdfRequest{};
             javaUdfRequest.ParseFromString(body);
             auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
-            // C++ represents the bytes type of serialized_instance and byte_code as std::strings
-            // which have to be converted to typed byte arrays.
-            auto serializedInstance = JavaSerializedInstance{descriptorMessage.serialized_instance().begin(),
-                                                             descriptorMessage.serialized_instance().end()};
-            auto javaUdfByteCodeList = JavaUdfByteCodeList{};
-            javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
-            for (const auto& classDefinition : descriptorMessage.classes()) {
-                javaUdfByteCodeList.insert(
-                    {classDefinition.class_name(),
-                     JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
-            }
-            // Deserialize the output schema.
-            auto outputSchema = SchemaSerializationUtil::deserializeSchema(descriptorMessage.mutable_outputschema());
+            auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(descriptorMessage);
             // Register JavaUdfDescriptor in UDF catalog and return success.
-            auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
-                                                               descriptorMessage.udf_method_name(),
-                                                               serializedInstance,
-                                                               javaUdfByteCodeList,
-                                                               outputSchema);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
             udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");
