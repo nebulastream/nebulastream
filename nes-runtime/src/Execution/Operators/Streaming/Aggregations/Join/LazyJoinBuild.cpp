@@ -42,6 +42,8 @@ void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
 
     LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
+
+    NES_DEBUG("Inserting key " << key << " in the hash table");
     return localHashTable->insert(key);
 }
 

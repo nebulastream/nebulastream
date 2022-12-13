@@ -109,6 +109,18 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
                                                          const std::string& timeStampFieldName, BufferManagerPtr bufferManager,
                                                          uint64_t windowSize);
 
+/**
+ * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
+ * @param buffersToSort
+ * @param schema
+ * @param sortFieldName
+ * @param bufferManager
+ * @return sorted buffers
+ */
+std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema,
+                                                           const std::string& sortFieldName, BufferManagerPtr bufferManager);
+
+
 } // namespace Util
 } // namespace NES::Runtime::Execution
 #endif//NES_LAZYJOINUTIL_HPP

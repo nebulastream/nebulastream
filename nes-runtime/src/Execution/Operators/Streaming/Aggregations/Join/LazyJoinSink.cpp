@@ -96,12 +96,12 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         ++joinedTuples;
 
                         // TODO ask Philipp how can I set win1win2$start and win1win2$end
-                        // TODO ask Philipp if I should support columnar layout as this implementation does not support it
 
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
                         auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
+                        // TODO ask Philipp if I should support columnar layout as this implementation does not support it
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);

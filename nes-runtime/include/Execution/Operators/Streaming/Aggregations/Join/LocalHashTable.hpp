@@ -36,7 +36,7 @@ class LocalHashTable {
 
     FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos) const;
 
-    size_t getBucketPos(uint64_t key) const;
+    size_t getBucketPos(uint64_t hash) const;
 
   private:
     std::vector<FixedPagesLinkedList*> buckets;
