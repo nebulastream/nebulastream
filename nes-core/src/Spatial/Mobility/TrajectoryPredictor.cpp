@@ -118,6 +118,7 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::LocationPtr cu
     }
     NES_DEBUG("Downloading nodes in range")
     //get current position and download node information from coordinator
+    //divide the download radius by 1000 to convert meters to kilometers
     auto nodeMapPtr = locationProvider->getNodeIdsInRange(currentLocation, nodeInfoDownloadRadius / 1000);
 
     //if we actually received nodes in our vicinity, we can clear the old nodes
