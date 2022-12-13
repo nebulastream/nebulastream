@@ -15,8 +15,6 @@
 #include <API/Query.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <NesBaseTest.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ProtobufMessageFactory.hpp>
