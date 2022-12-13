@@ -47,7 +47,7 @@ class SchemaSerializationUtil {
     * @param serializedSchema the serialized schema.
     * @return SchemaPtr
     */
-    static SchemaPtr deserializeSchema(SerializableSchema* serializedSchema);
+    static SchemaPtr deserializeSchema(const SerializableSchema& serializedSchema);
 };
 }// namespace NES
 

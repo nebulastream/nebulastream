@@ -435,29 +435,28 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("Deserialize map Java UDF operator.");
         auto mapJavaUdfDetails = SerializableOperator_MapJavaUdfDetails();
         details.UnpackTo(&mapJavaUdfDetails);
-        auto descriptorMessage = mapJavaUdfDetails.javaudfdescriptor();
-        auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(descriptorMessage);
+        auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(mapJavaUdfDetails.javaudfdescriptor());
         operatorNode = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
 
     // de-serialize operator output schema
-    operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_outputschema()));
+    operatorNode->setOutputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.outputschema()));
     // de-serialize operator input schema
     if (!operatorNode->isBinaryOperator()) {
         if (operatorNode->isExchangeOperator()) {
             operatorNode->as<ExchangeOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_inputschema()));
+                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
         } else {
             operatorNode->as<UnaryOperatorNode>()->setInputSchema(
-                SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_inputschema()));
+                SchemaSerializationUtil::deserializeSchema(serializedOperator.inputschema()));
         }
     } else {
         operatorNode->as<BinaryOperatorNode>()->setLeftInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_leftinputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
         operatorNode->as<BinaryOperatorNode>()->setRightInputSchema(
-            SchemaSerializationUtil::deserializeSchema(serializedOperator.mutable_rightinputschema()));
+            SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
 
     if (details.Is<SerializableOperator_JoinDetails>()) {
@@ -1331,7 +1330,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(zmqSerializedSourceDescriptor.sourceschema());
         auto ret =
             ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
         return ret;
@@ -1385,7 +1384,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto* tcpSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(tcpSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(tcpSerializedSourceDescriptor->release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(tcpSerializedSourceDescriptor->sourceschema());
         auto sourceConfig = TCPSourceType::create();
         auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
@@ -1418,7 +1417,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&networkSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(networkSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(networkSerializedSourceDescriptor.sourceschema());
         Network::NesPartition nesPartition{networkSerializedSourceDescriptor.nespartition().queryid(),
                                            networkSerializedSourceDescriptor.nespartition().operatorid(),
                                            networkSerializedSourceDescriptor.nespartition().partitionid(),
@@ -1439,7 +1438,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&defaultSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.sourceschema());
         auto ret = DefaultSourceDescriptor::create(schema,
                                                    defaultSerializedSourceDescriptor.numbufferstoprocess(),
                                                    defaultSerializedSourceDescriptor.sourcegatheringinterval());
@@ -1450,7 +1449,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&binarySerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(binarySerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(binarySerializedSourceDescriptor.sourceschema());
         auto ret = BinarySourceDescriptor::create(schema, binarySerializedSourceDescriptor.filepath());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>()) {
@@ -1459,7 +1458,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.sourceschema());
         auto sourceConfig = CSVSourceType::create();
         auto csvSourceConfig = new SerializablePhysicalSourceType_SerializableCSVSourceType();
         csvSerializedSourceDescriptor.physicalsourcetype().specificphysicalsourcetype().UnpackTo(csvSourceConfig);
@@ -1477,7 +1476,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&senseSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(senseSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(senseSerializedSourceDescriptor.sourceschema());
         return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>()) {
         // de-serialize logical source descriptor
@@ -1492,7 +1491,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema()) {
             auto schema =
-                SchemaSerializationUtil::deserializeSchema(logicalSourceSerializedSourceDescriptor.release_sourceschema());
+                SchemaSerializationUtil::deserializeSchema(logicalSourceSerializedSourceDescriptor.sourceschema());
             logicalSourceDescriptor->setSchema(schema);
         }
 
