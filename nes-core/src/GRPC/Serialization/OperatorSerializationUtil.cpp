@@ -48,6 +48,7 @@
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -90,6 +91,8 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
+#include <GRPC/Serialization/UdfSerializationUtil.hpp>
+
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -226,6 +229,13 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         auto renameDetails = SerializableOperator_RenameDetails();
         renameDetails.set_newsourcename(operatorNode->as<RenameSourceOperatorNode>()->getNewSourceName());
         serializedOperator.mutable_details()->PackFrom(renameDetails);
+    } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
+        NES_TRACE("Serializing Map Java UDF operator.");
+        auto details = SerializableOperator_MapJavaUdfDetails();
+        UdfSerializationUtil::serializeJavaUdfDescriptor(
+            *operatorNode->as<MapJavaUdfLogicalOperatorNode>()->getJavaUdfDescriptor(),
+            *details.mutable_javaudfdescriptor());
+        serializedOperator.mutable_details()->PackFrom(details);
     } else {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
     }
@@ -421,6 +431,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto renameDetails = SerializableOperator_RenameDetails();
         details.UnpackTo(&renameDetails);
         operatorNode = LogicalOperatorFactory::createRenameSourceOperator(renameDetails.newsourcename());
+    } else if (details.Is<SerializableOperator_MapJavaUdfDetails>()) {
+        NES_TRACE("Deserialize map Java UDF operator.");
+        auto mapJavaUdfDetails = SerializableOperator_MapJavaUdfDetails();
+        details.UnpackTo(&mapJavaUdfDetails);
+        auto descriptorMessage = mapJavaUdfDetails.javaudfdescriptor();
+        auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(descriptorMessage);
+        operatorNode = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }

@@ -19,16 +19,21 @@ namespace NES {
 
 void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaUdfDescriptor& javaUdfDescriptor,
                                                       JavaUdfDescriptorMessage& javaUdfDescriptorMessage) {
+    // Serialize UDF class name and method name.
     javaUdfDescriptorMessage.set_udf_class_name(javaUdfDescriptor.getClassName());
     javaUdfDescriptorMessage.set_udf_method_name(javaUdfDescriptor.getMethodName());
+    // Serialize UDF instance.
     javaUdfDescriptorMessage.set_serialized_instance(javaUdfDescriptor.getSerializedInstance().data(),
                                                      javaUdfDescriptor.getSerializedInstance().size());
+    // Serialize bytecode of dependent classes.
     for (const auto& [className, byteCode] : javaUdfDescriptor.getByteCodeList()) {
         auto* javaClass = javaUdfDescriptorMessage.add_classes();
         javaClass->set_class_name(className);
         javaClass->set_byte_code(byteCode.data(), byteCode.size());
     }
-    // TODO Missing schema serialization
+    // Serialize schema.
+    SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getOutputSchema(),
+                                             javaUdfDescriptorMessage.mutable_outputschema());
 }
 
 Catalogs::UDF::JavaUdfDescriptorPtr
@@ -48,10 +53,10 @@ UdfSerializationUtil::deserializeJavaUdfDescriptor(JavaUdfDescriptorMessage& jav
     auto outputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.mutable_outputschema());
     // Create Java UDF descriptor.
     return Catalogs::UDF::JavaUdfDescriptor::create(javaUdfDescriptorMessage.udf_class_name(),
-                                                                      javaUdfDescriptorMessage.udf_method_name(),
-                                                                      serializedInstance,
-                                                                      javaUdfByteCodeList,
-                                                                      outputSchema);
+                                                    javaUdfDescriptorMessage.udf_method_name(),
+                                                    serializedInstance,
+                                                    javaUdfByteCodeList,
+                                                    outputSchema);
 }
 
 }// namespace NES
