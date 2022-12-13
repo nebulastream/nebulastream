@@ -92,6 +92,8 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -523,6 +525,14 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 }
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
+
+    {
+        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
+        auto javaUdfMap = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfMap);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
+    }
 
     {
         auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");
