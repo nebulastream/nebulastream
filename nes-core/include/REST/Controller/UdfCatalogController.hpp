@@ -27,6 +27,7 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -96,16 +97,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
                 response.set_found(true);
-                auto* descriptorMessage = response.mutable_java_udf_descriptor();
-                descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
-                descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
-                descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
-                                                           udfDescriptor->getSerializedInstance().size());
-                for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
-                    auto* javaClass = descriptorMessage->add_classes();
-                    javaClass->set_class_name(className);
-                    javaClass->set_byte_code(byteCode.data(), byteCode.size());
-                }
+                UdfSerializationUtil::serializeJavaUdfDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
             }
         } catch (...) {
