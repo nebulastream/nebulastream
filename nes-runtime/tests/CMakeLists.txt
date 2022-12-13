@@ -13,6 +13,11 @@
 
 include(ExternalProject)
 
+# Copy Test Data
+file(COPY testData DESTINATION .)
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
+message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
+
 function(add_nes_runtime_test)
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
