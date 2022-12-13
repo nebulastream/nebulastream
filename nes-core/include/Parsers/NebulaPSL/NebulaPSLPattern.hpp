@@ -61,19 +61,19 @@ class NebulaPSLPattern {
      * @brief inserts a new ExpressionNode (filter) to the list of parsed expressions (WHERE-clause)
      * @param expNode
      */
-    void addExpression(ExpressionNodePtr expressionNodePtr);
+    void addExpression(ExpressionNodePtr expressionNode);
 
     /**
      * @brief inserts a new Sink to the list of parsed sinks
      * @param sink
      */
-    void addSink(SinkDescriptorPtr sinkDescriptorPtr);
+    void addSink(SinkDescriptorPtr sinkDescriptor);
 
     /**
      * @brief inserts a new ExpressionItem (Projection Attribute) to the  list of specified output attributes
      * @param expressionItem
      */
-    void addProjectionField(ExpressionNodePtr expressionNodePtr);
+    void addProjectionField(ExpressionNodePtr expressionNode);
 
     /**
      * @brief inserts a new Operator from the PATTERN clause to the list of operators

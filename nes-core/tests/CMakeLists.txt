@@ -309,6 +309,9 @@ add_nes_unit_test(maintenance-service-tests "UnitTests/Services/MaintenanceServi
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 
+### Query Plan Builder Tests ###
+add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
+
 
 # Lambda Source Integration tests
 add_nes_integration_test(lambda-source-integration-test "Integration/Source/LambdaSourceIntegrationTest.cpp")

@@ -240,11 +240,11 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 /**
-      * @brief: Update the Source names by sorting and then concatenating the source names from the sub- and query plan
-      * @param string consumed sources of the current queryPlan
-      * @param string consumed sources of the subQueryPlan
-      * @return string with new source name
-      */
+ * @brief: Update the source names by sorting and then concatenating the source names from the sub- and query plan
+ * @param string consumed sources of the current queryPlan
+ * @param string consumed sources of the subQueryPlan
+ * @return string with new source name
+ */
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
 
 /**
