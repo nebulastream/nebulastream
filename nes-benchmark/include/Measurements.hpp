@@ -66,7 +66,7 @@ class Measurements {
      * @param schemaSizeInByte
      * @return comma separated values
      */
-    std::vector<std::string> getMeasurementsAsCSV(size_t schemaSizeInByte);
+    std::vector<std::string> getMeasurementsAsCSV(size_t schemaSizeInByte, size_t numberOfQueries);
 
   private:
     /**

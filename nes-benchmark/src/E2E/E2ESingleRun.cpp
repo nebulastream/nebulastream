@@ -352,7 +352,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 
     std::stringstream outputCsvStream;
 
-    for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB)) {
+    for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;

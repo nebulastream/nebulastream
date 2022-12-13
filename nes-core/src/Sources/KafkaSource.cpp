@@ -22,7 +22,6 @@
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <sstream>
 #include <string>
 
@@ -64,10 +63,6 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 
     numberOfTuplesPerBuffer =
         std::floor(double(localBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
-
-    //temp for the experiment
-    this->gatheringMode = GatheringMode::INGESTION_RATE_MODE;
-    this->gatheringIngestionRate = 600;
 }
 
 KafkaSource::~KafkaSource() {
@@ -117,23 +112,15 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 buffer.setNumberOfTuples(numberOfTuplesPerBuffer);
 #endif
                 bufferProducedCnt++;
-                // XXX: maybe commit message every N times
-                //                if (!autoCommit) {
-                //                    consumer->commit(messages.back());
-                //                }
                 messages.pop_back();
                 return buffer;
 
             }//end of else
         } else {
             NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
-            //            auto start = std::chrono::high_resolution_clock::now();
             messages = consumer->poll_batch(batchSize);
-            //            auto finish = std::chrono::high_resolution_clock::now();
-            //            std::chrono::duration<double> elapsed = finish - start;
 
             if (!messages.empty()) {
-                //                std::cout << "poll got " << messages.size() << " entries" << " time=" << elapsed.count() << std::endl;
                 successFullPollCnt++;
             } else {
                 failedFullPollCnt++;
@@ -185,17 +172,10 @@ bool KafkaSource::connect() {
         cppkafka::TopicPartition assignment(topic, std::atoi(groupId.c_str()));
         vec.push_back(assignment);
         consumer->assign(vec);
-        std::cout << "kafka source=" << this->operatorId << " connect to topic=" << topic
-                  << " partition=" << std::atoi(groupId.c_str()) << std::endl;
+        NES_DEBUG("kafka source=" << this->operatorId << " connect to topic=" << topic
+                                  << " partition=" << std::atoi(groupId.c_str()));
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        std::string markerFile = "/tmp/start.source";
-
-        while (!std::filesystem::exists(markerFile)) {
-            NES_DEBUG("Waiting for the signal");
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-        std::cout << "kafka source starts producing" << std::endl;
+        NES_DEBUG("kafka source starts producing");
 
         connected = true;
     }
