@@ -18,14 +18,16 @@
 #include <string>
 
 namespace NES {
-
+namespace Worker {
+namespace Properties {
 const std::string SLOTS = "SLOTS";
 const std::string LOCATION = "LOCATION";
 const std::string DATA_PORT = "DATA_PORT";
 const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
 const std::string MAINTENANCE = "MAINTENANCE";
-
+}// namespace Properties
+}// namespace Worker
 }// namespace NES
 
 #endif//NES_WORKERPROPERTYKEYS_HPP

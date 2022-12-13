@@ -146,7 +146,7 @@ message RegisterWorkerReply {
 }
 
 message UnregisterWorkerRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
 }
 
 message UnregisterWorkerReply {
@@ -154,7 +154,7 @@ message UnregisterWorkerReply {
 }
 
 message RegisterPhysicalSourcesRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
   repeated PhysicalSourceDefinition physicalSources = 2;
 }
 
@@ -169,7 +169,7 @@ message RegisterPhysicalSourcesReply {
 }
 
 message UnregisterPhysicalSourceRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
   string physicalSourceName = 2;
   string logicalSourceName = 3;
 }
@@ -179,7 +179,7 @@ message UnregisterPhysicalSourceReply {
 }
 
 message RegisterLogicalSourceRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
   string logicalSourceName = 2;
   string sourceSchema = 3;
 }
@@ -189,7 +189,7 @@ message RegisterLogicalSourceReply {
 }
 
 message UnregisterLogicalSourceRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
   string logicalSourceName = 2;
 }
 
@@ -264,7 +264,7 @@ message SendScheduledReconnectReply {
 }
 
 message LocationUpdateRequest {
-  uint64 id = 1;
+  uint64 workerId = 1;
   GeoLocation geoLocation = 2;
   uint64 time = 3;
 }

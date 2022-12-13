@@ -131,7 +131,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     return false;
 }
 
-void MonitoringAgent::setWorkerId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
+void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 
 MetricCollectorPtr MonitoringAgent::getCollector(MetricType metricType) {
     auto metricCollector = catalog->getMetricCollector(metricType);

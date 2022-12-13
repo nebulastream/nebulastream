@@ -85,10 +85,10 @@ class MonitoringAgent {
     bool addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig);
 
     /**
-     * @brief Set the node ID of the topology
-     * @param nodeId
+     * @brief Set the node ID of the topology node
+     * @param nodeId: id of the topology node
      */
-    void setWorkerId(TopologyNodeId nodeId);
+    void setNodeId(TopologyNodeId nodeId);
 
     /**
      * @brief Getter for the metric collector pointer for a given metric type

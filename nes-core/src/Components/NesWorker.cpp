@@ -347,7 +347,7 @@ bool NesWorker::connect() {
 
     NES_DEBUG("NesWorker::connect() Worker registered successfully and got id=" << coordinatorRpcClient->getId());
     workerId = coordinatorRpcClient->getId();
-    monitoringAgent->setWorkerId(workerId);
+    monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerWorker rpc register success with id " << workerId);
         connected = true;

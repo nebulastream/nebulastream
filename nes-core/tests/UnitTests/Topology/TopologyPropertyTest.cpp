@@ -41,8 +41,8 @@ TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
     uint32_t dataPort = 5000;
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
@@ -66,8 +66,8 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     uint32_t dataPort = 5000;
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
@@ -86,8 +86,8 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
     uint32_t dataPort = 5000;
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
     auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
@@ -118,8 +118,8 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     uint32_t dataPort = 5000;
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     // create src and dst nodes
     auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);

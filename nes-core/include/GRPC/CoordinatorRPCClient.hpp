@@ -149,7 +149,7 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param registrationRequest:
+     * @param registrationRequest: request containing necessary input for worker registration
      * @return bool indicating success
      */
     bool registerWorker(const RegisterWorkerRequest& registrationRequest);
@@ -249,12 +249,12 @@ class CoordinatorRPCClient {
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
-     * @param nodeId the id of the calling worker
+     * @param workerId the id of the calling worker
      * @param locationUpdate a tuple containing the mobile devices location and a timestamp indicating when the device was located
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(uint64_t nodeId, NES::Spatial::Index::Experimental::WaypointPtr locationUpdate);
+    bool sendLocationUpdate(uint64_t workerId, NES::Spatial::Index::Experimental::WaypointPtr locationUpdate);
 
   private:
     uint64_t workerId;

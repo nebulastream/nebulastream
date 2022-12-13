@@ -20,7 +20,5 @@ add_source_files(nes-core
         SequenceConfOption.cpp
         EnumConfOption.cpp
         BaseConfiguration.cpp
-        WorkerConfigurationKeys.cpp
-        WorkerPropertyKeys.cpp
         )
 

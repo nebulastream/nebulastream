@@ -154,12 +154,14 @@ void setupSources(uint64_t noOfLogicalSource, uint64_t noOfPhysicalSource) {
 void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
     std::map<std::string, std::any> properties;
-    properties[MAINTENANCE] = false;
-    properties[SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
 
     topology = Topology::create();
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    //Register root worker
     topologyManagerService->registerWorker("1", 0, 0, UINT16_MAX, properties);
+    //register child workers
     for (uint64_t i = 2; i <= noOfTopologyNodes; i++) {
         topologyManagerService->registerWorker(std::to_string(i), 0, 0, UINT16_MAX, properties);
     }

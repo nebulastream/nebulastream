@@ -54,12 +54,14 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto slots = registrationRequest->numberofslots();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    workerProperties[NES::Worker::Properties::MAINTENANCE] =
-        false;//During registration, we assume the node is not under maintenance
+    workerProperties[NES::Worker::Properties::MAINTENANCE] = false; //During registration, we assume the node is not under maintenance
     workerProperties[NES::Worker::Configuration::TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
-        NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
+        NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
+    NES::Spatial::Index::Experimental::Location location(registrationRequest->geolocation().lat(),
+                                                         registrationRequest->geolocation().lng());
+    workerProperties[NES::Worker::Properties::LOCATION] = location;
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
     uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
@@ -188,7 +190,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request =" << request);
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     for (const auto& physicalSourceDefinition : request->physicalsources()) {
         bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
@@ -209,7 +211,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
                                                       UnregisterPhysicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request =" << request);
 
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     bool success =
         sourceCatalogService->unregisterPhysicalSource(physicalNode, request->physicalsourcename(), request->logicalsourcename());
 
