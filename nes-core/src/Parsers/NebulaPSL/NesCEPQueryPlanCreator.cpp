@@ -111,24 +111,24 @@ void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext
 void NesCEPQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
     // collect specified sinks
     std::string sinkType = context->sinkType()->getText();
-    SinkDescriptorPtr sinkDescriptorPtr;
+    SinkDescriptorPtr sinkDescriptor;
 
     if (sinkType == "Print") {
-        sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
+        sinkDescriptor = NES::PrintSinkDescriptor::create();
     }
     if (sinkType == "File") {
-        sinkDescriptorPtr = NES::FileSinkDescriptor::create(context->NAME()->getText());
+        sinkDescriptor = NES::FileSinkDescriptor::create(context->NAME()->getText());
     }
     if (sinkType == "MQTT") {
-        sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
+        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
     }
     if (sinkType == "Network") {
-        sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
+        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
     }
     if (sinkType == "NullOutput") {
-        sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
+        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
     }
-    pattern.addSink(sinkDescriptorPtr);
+    pattern.addSink(sinkDescriptor);
     NesCEPBaseListener::enterSink(context);
 }
 
@@ -164,7 +164,7 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     NesCEPBaseListener::enterQuantifiers(context);
 }
 
-void NesCEPQueryPlanCreator::exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) {
+void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) {
     //retrieve the ExpressionNode for the filter and save it in the pattern expressionList
     std::string comparisonOperator = context->comparisonOperator()->getText();
     auto leftExpressionNode = NES::Attribute(this->currentLeftExp).getExpressionNode();
@@ -215,11 +215,11 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
         NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreator: createQueryFromPatternList: Received an empty pattern");
     }
     NES_DEBUG("NesCEPQueryPlanCreator: createQueryFromPatternList: create query from AST elements")
-    QueryPlanPtr queryPlanPtr;
+    QueryPlanPtr queryPlan;
     // if for simple patterns without binary CEP operators
     if (this->pattern.getOperatorList().empty() && this->pattern.getSources().size() == 1) {
         auto sourceName = pattern.getSources().at(0);
-        queryPlanPtr = QueryPlanBuilder::createQueryPlan(sourceName);
+        queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
         // else for pattern with binary operators
     } else {
         // iterate over OperatorList, create and add LogicalOperatorNodes
@@ -227,15 +227,15 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
             auto operatorName = operatorNode->second.getOperatorName();
             // add binary operators
             if (operatorName == "OR" || operatorName == "SEQ" || operatorName == "AND") {
-                queryPlanPtr = addBinaryOperatorToQueryPlan(operatorName, operatorNode, queryPlanPtr);
+                queryPlan = addBinaryOperatorToQueryPlan(operatorName, operatorNode, queryPlan);
             } else if (operatorName == "TIMES") {//add times operator
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add unary operator " + operatorName)
                 auto sourceName = pattern.getSources().at(operatorNode->second.getLeftChildId());
-                queryPlanPtr = QueryPlanBuilder::createQueryPlan(sourceName);
+                queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG("NesCEPQueryPlanCreater: createQueryFromPatternList: add times operator"
                           + pattern.getSources().at(operatorNode->second.getLeftChildId()))
 
-                queryPlanPtr = QueryPlanBuilder::addMap(Attribute("Count") = 1, queryPlanPtr);
+                queryPlan = QueryPlanBuilder::addMap(Attribute("Count") = 1, queryPlan);
 
                 //create window
                 auto timeMeasurements = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -244,7 +244,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                                                                    timeMeasurements.first,
                                                                    timeMeasurements.second);
                     // check and add watermark
-                    queryPlanPtr = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlanPtr, windowType);
+                    queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, windowType);
                     // create default pol
                     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
                     auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
@@ -267,7 +267,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                                                                                        0);
 
                     OperatorNodePtr op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
-                    queryPlanPtr->appendOperatorAsNewRoot(op);
+                    queryPlan->appendOperatorAsNewRoot(op);
 
                     int32_t min = operatorNode->second.getMinMax().first;
                     int32_t max = operatorNode->second.getMinMax().second;
@@ -284,7 +284,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                         } else {
                             predicate = Attribute("Count") >= min && Attribute("Count") <= max;
                         }
-                        queryPlanPtr = QueryPlanBuilder::addFilter(predicate, queryPlanPtr);
+                        queryPlan = QueryPlanBuilder::addFilter(predicate, queryPlan);
                     }
                 } else {
                     NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreator: createQueryFromPatternList: The Iteration operator requires a time window.");
@@ -295,49 +295,49 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
         }
     }
     if (!pattern.getExpressions().empty()) {
-        queryPlanPtr = addFilters(queryPlanPtr);
+        queryPlan = addFilters(queryPlan);
     }
     if (!pattern.getProjectionFields().empty()) {
-        queryPlanPtr = addProjections(queryPlanPtr);
+        queryPlan = addProjections(queryPlan);
     }
 
-    const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlanPtr->getRootOperators();
+    const std::vector<NES::OperatorNodePtr>& rootOperators = queryPlan->getRootOperators();
     // add the sinks to the query plan
     for (SinkDescriptorPtr sinkDescriptor : pattern.getSinks()) {
         auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
         for (auto& rootOperator : rootOperators) {
             sinkOperator->addChild(rootOperator);
-            queryPlanPtr->removeAsRootOperator(rootOperator);
-            queryPlanPtr->addRootOperator(sinkOperator);
+            queryPlan->removeAsRootOperator(rootOperator);
+            queryPlan->addRootOperator(sinkOperator);
         }
     }
-    return queryPlanPtr;
+    return queryPlan;
 }
 
-QueryPlanPtr NesCEPQueryPlanCreator::addFilters( QueryPlanPtr queryPlanPtr) const {
+QueryPlanPtr NesCEPQueryPlanCreator::addFilters( QueryPlanPtr queryPlan) const {
     for (auto it = pattern.getExpressions().begin(); it != pattern.getExpressions().end(); ++it) {
-        queryPlanPtr = QueryPlanBuilder::addFilter(*it, queryPlanPtr);
+        queryPlan = QueryPlanBuilder::addFilter(*it, queryPlan);
     }
-    return queryPlanPtr;
+    return queryPlan;
 }
 
 std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                              int32_t timeUnit) const {
+                                                                                              int32_t timeValue) const {
 
     if (timeMeasure == "MILLISECOND") {
-        TimeMeasure size = Minutes(timeUnit);
+        TimeMeasure size = Minutes(timeValue);
         TimeMeasure slide = Minutes(1);
         return std::pair<TimeMeasure, TimeMeasure>(size, slide);
     } else if (timeMeasure == "SECOND") {
-        TimeMeasure size = Seconds(timeUnit);
+        TimeMeasure size = Seconds(timeValue);
         TimeMeasure slide = Seconds(1);
         return std::pair<TimeMeasure, TimeMeasure>(size, slide);
     } else if (timeMeasure == "MINUTE") {
-        TimeMeasure size = Minutes(timeUnit);
+        TimeMeasure size = Minutes(timeValue);
         TimeMeasure slide = Minutes(1);
         return std::pair<TimeMeasure, TimeMeasure>(size, slide);
     } else if (timeMeasure == "HOUR") {
-        TimeMeasure size = Hours(timeUnit);
+        TimeMeasure size = Hours(timeValue);
         TimeMeasure slide = Hours(1);
         return std::pair<TimeMeasure, TimeMeasure>(size, slide);
     } else {
@@ -346,8 +346,8 @@ std::pair<TimeMeasure, TimeMeasure> NesCEPQueryPlanCreator::transformWindowToTim
     return std::pair<TimeMeasure, TimeMeasure>(TimeMeasure(0), TimeMeasure(0));
 }
 
-QueryPlanPtr NesCEPQueryPlanCreator::addProjections(QueryPlanPtr queryPlanPtr) const {
-    return QueryPlanBuilder::addProjection(pattern.getProjectionFields(), queryPlanPtr);
+QueryPlanPtr NesCEPQueryPlanCreator::addProjections(QueryPlanPtr queryPlan) const {
+    return QueryPlanBuilder::addProjection(pattern.getProjectionFields(), queryPlan);
 }
 
 QueryPlanPtr NesCEPQueryPlanCreator::getQueryPlan() const {
@@ -368,9 +368,9 @@ std::string NesCEPQueryPlanCreator::keyAssignment(std::string keyName) const {
 
 QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string operaterName,
                                                           std::map<int, NebulaPSLOperatorNode>::const_iterator it,
-                                                          QueryPlanPtr queryPlanPtr) const {
-    QueryPlanPtr rightQueryPlanPtr;
-    QueryPlanPtr leftQueryPlanPtr;
+                                                          QueryPlanPtr queryPlan) const {
+    QueryPlanPtr rightQueryPlan;
+    QueryPlanPtr leftQueryPlan;
     NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: add binary operator " + operaterName)
     // find left (query) and right branch (subquery) of binary operator
     //left query plan
@@ -379,22 +379,23 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
     // if queryPlan is empty
-    if (!queryPlanPtr || (queryPlanPtr->getSourceConsumed().find(leftSourceName) == std::string::npos
-        && queryPlanPtr->getSourceConsumed().find(rightSourceName) == std::string::npos)) {
+    if (!queryPlan
+        || (queryPlan->getSourceConsumed().find(leftSourceName) == std::string::npos
+        && queryPlan->getSourceConsumed().find(rightSourceName) == std::string::npos)) {
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: both sources are not in the current queryPlan")
         //make left source current queryPlan
-        leftQueryPlanPtr = QueryPlanBuilder::createQueryPlan(leftSourceName);
+        leftQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
         //right source as right queryPlan
-        rightQueryPlanPtr = QueryPlanBuilder::createQueryPlan(rightSourceName);
+        rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
     } else{
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: check for the right branch")
-        leftQueryPlanPtr = queryPlanPtr;
-        rightQueryPlanPtr = checkIfSourceIsAlreadyConsumedSource(leftSourceName, rightSourceName, queryPlanPtr);
+        leftQueryPlan = queryPlan;
+        rightQueryPlan = checkIfSourceIsAlreadyConsumedSource(leftSourceName, rightSourceName, queryPlan);
     }
 
     if (operaterName == "OR") {
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: addUnionOperator")
-        leftQueryPlanPtr = QueryPlanBuilder::addUnionOperator(leftQueryPlanPtr, rightQueryPlanPtr);
+        leftQueryPlan = QueryPlanBuilder::addUnionOperator(leftQueryPlan, rightQueryPlan);
     } else {
         // Seq and And require a window, so first we create and check the window operator
         auto timeMeasurements = transformWindowToTimeMeasurements(pattern.getWindow().first, pattern.getWindow().second);
@@ -408,8 +409,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             std::string cepRightKey = keyAssignment("cep_rightkey");
 
             //next: add Map operator that maps the attributes with value 1 to the left and right source
-            leftQueryPlanPtr = QueryPlanBuilder::addMap(Attribute(cepLeftKey) = 1, leftQueryPlanPtr);
-            rightQueryPlanPtr = QueryPlanBuilder::addMap(Attribute(cepRightKey) = 1, rightQueryPlanPtr);
+            leftQueryPlan = QueryPlanBuilder::addMap(Attribute(cepLeftKey) = 1, leftQueryPlan);
+            rightQueryPlan = QueryPlanBuilder::addMap(Attribute(cepRightKey) = 1, rightQueryPlan);
 
             //then, define the artificial attributes as key attributes
             NES_DEBUG("NesCEPQueryPlanCreater: add name cepLeftKey " << cepLeftKey << "and name cepRightKey" << cepRightKey);
@@ -418,8 +419,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
             auto rightKeyFieldAccess = onRightKey.getExpressionNode()->as<FieldAccessExpressionNode>();
 
-            leftQueryPlanPtr = QueryPlanBuilder::addJoinOperator(leftQueryPlanPtr,
-                                                                rightQueryPlanPtr,
+            leftQueryPlan = QueryPlanBuilder::addJoinOperator(leftQueryPlan,
+                                                                 rightQueryPlan,
                                                                 onLeftKey,
                                                                 onRightKey,
                                                                 windowType,
@@ -430,7 +431,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 auto timestamp = WindowType::asTimeBasedWindowType(windowType)->getTimeCharacteristic()->getField()->getName();
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
-                auto sourceNameRight = rightQueryPlanPtr->getSourceConsumed();
+                auto sourceNameRight = rightQueryPlan->getSourceConsumed();
                 if (sourceNameRight.find("_") != std::string::npos) {
                     // we find the most left source and use its timestamp for the filter constraint
                     uint64_t posStart = sourceNameRight.find("_");
@@ -440,7 +441,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 else {
                     sourceNameRight = sourceNameRight + "$" + timestamp;
                 }
-                auto sourceNameLeft = leftQueryPlanPtr->getSourceConsumed();
+                auto sourceNameLeft = leftQueryPlan->getSourceConsumed();
                 // in case of composed sources on the left branch
                 if (sourceNameLeft.find("_") != std::string::npos) {
                     // we find the most right source and use its timestamp for the filter constraint
@@ -453,28 +454,28 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 NES_DEBUG("NesCEPQueryPlanCreater: ExpressionItem for Left Source "
                           << sourceNameLeft << "and ExpressionItem for Right Source " << sourceNameRight);
                 //create filter expression and add it to queryPlan
-                leftQueryPlanPtr =
-                    QueryPlanBuilder::addFilter(Attribute(sourceNameLeft) < Attribute(sourceNameRight), leftQueryPlanPtr);
+                leftQueryPlan =
+                    QueryPlanBuilder::addFilter(Attribute(sourceNameLeft) < Attribute(sourceNameRight), leftQueryPlan);
             }
         } else {
             NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreater: createQueryFromPatternList: Cannot create " + operaterName + "without a window.");
         }
     }
-    return leftQueryPlanPtr;
+    return leftQueryPlan;
 }
 
 QueryPlanPtr NesCEPQueryPlanCreator::checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
                                                                           std::basic_string<char> rightSourceName,
-                                                                          QueryPlanPtr queryPlanPtr) const {
+                                                                          QueryPlanPtr queryPlan) const {
     QueryPlanPtr rightQueryPlan = nullptr;
-    if (queryPlanPtr->getSourceConsumed().find(leftSourceName) != std::string::npos
-        && queryPlanPtr->getSourceConsumed().find(rightSourceName) != std::string::npos) {
+    if (queryPlan->getSourceConsumed().find(leftSourceName) != std::string::npos
+        && queryPlan->getSourceConsumed().find(rightSourceName) != std::string::npos) {
         NES_THROW_RUNTIME_ERROR("NesCEPQueryPlanCreater: checkIfSourceIsAlreadyConsumedSource: Both sources are already consumed and combined with a binary operator");
-    } else if (queryPlanPtr->getSourceConsumed().find(leftSourceName) == std::string::npos) {
+    } else if (queryPlan->getSourceConsumed().find(leftSourceName) == std::string::npos) {
         // right queryplan
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from " + leftSourceName)
         return rightQueryPlan = QueryPlanBuilder::createQueryPlan(leftSourceName);
-    } else if (queryPlanPtr->getSourceConsumed().find(rightSourceName) == std::string::npos) {
+    } else if (queryPlan->getSourceConsumed().find(rightSourceName) == std::string::npos) {
         // right queryplan
         NES_DEBUG("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryRight from " + rightSourceName)
         return rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
