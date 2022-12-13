@@ -70,7 +70,6 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         removeBrOnlyBlocksPhase.apply(ir);
         loopDetectionPhase.apply(ir);
         structuredControlFlowPhase.apply(ir);
-        // return enumerateIRForTests(ir);
         return dpsSortedGraphNodes;
     }
 

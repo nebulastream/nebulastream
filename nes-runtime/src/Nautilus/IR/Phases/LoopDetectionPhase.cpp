@@ -154,7 +154,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
             loopOp->getLoopHeadBlock().setBlock(currentBlock);
             loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
             loopOp->getLoopEndBlock().setBlock(priorBlock);
-            // Todo set arguments function in basicBlockInvocation
+            // Copy the arguments of the if-operation's true- and false-block to the newly created loop-operation.
             for(auto& arg: ifOp->getTrueBlockInvocation().getArguments()) {
                 loopOp->getLoopBodyBlock().addArgument(arg);
             }
@@ -310,7 +310,6 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
         // Set the current values for the loop halting values.
         noMoreIfBlocks = ifBlocks.empty();
         returnBlockVisited = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operation::ReturnOp);
-        // priorBlock = currentBlock; //Todo wrong, need to assign ifBlock as priorBlock!
         if(!noMoreIfBlocks) {
             priorBlock = ifBlocks.top();
             // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.

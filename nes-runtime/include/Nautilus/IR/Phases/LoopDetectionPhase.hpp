@@ -75,9 +75,7 @@ class LoopDetectionPhase {
          * @param visitedBlocks: Blocks that have already been processed.
          * @param loopHeaderCandidates: ifBlocks with true-branches that have not been fully explored yet.
          * @param priorBlock: We keep track of the previous block to assign the loop-end-block, when the currentBlock
-         *                    is a loop-header block and we are creating its loop-operation. 
-         * @param constantValues: To create counted-for-loops we have to keep track of all constants that are created in
-         *                        the IR, and of their argument names in case they are passed between blocks.
+         *                    is a loop-header block and we are creating its loop-operation.
          */
         void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, 
                         std::stack<IR::BasicBlockPtr>& ifBlocks, std::unordered_set<std::string>& visitedBlocks, 
