@@ -18,10 +18,10 @@
 #include <Nodes/Node.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Topology/LinkProperty.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <any>
 #include <map>
 #include <optional>
-#include <Util/TimeMeasurement.hpp>
 
 namespace NES {
 class TopologyNode;

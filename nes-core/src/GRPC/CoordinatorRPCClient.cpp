@@ -19,8 +19,8 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Spatial/Index/Location.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -626,8 +626,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId,
-                                              Spatial::Index::Experimental::WaypointPtr locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, Spatial::Index::Experimental::WaypointPtr locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;

@@ -105,8 +105,7 @@ class LocationProvider {
      * @return list of node IDs and their corresponding GeographicalLocations
      */
 
-    Index::Experimental::NodeIdsMapPtr
-    getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius);
+    Index::Experimental::NodeIdsMapPtr getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius);
 
     /**
      * Experimental

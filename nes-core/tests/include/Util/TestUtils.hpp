@@ -23,6 +23,7 @@
 #include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
@@ -35,7 +36,6 @@
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Spatial/Index/Waypoint.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;

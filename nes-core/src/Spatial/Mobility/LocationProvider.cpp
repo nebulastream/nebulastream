@@ -41,7 +41,8 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
 Index::Experimental::WaypointPtr LocationProvider::getWaypoint() {
     switch (nodeType) {
         case Index::Experimental::NodeType::MOBILE_NODE: return getCurrentWaypoint();
-        case Index::Experimental::NodeType::FIXED_LOCATION: return std::make_shared<Index::Experimental::Waypoint>(*fixedLocationCoordinates);
+        case Index::Experimental::NodeType::FIXED_LOCATION:
+            return std::make_shared<Index::Experimental::Waypoint>(*fixedLocationCoordinates);
         case Index::Experimental::NodeType::NO_LOCATION: return {};
         case Index::Experimental::NodeType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
@@ -49,8 +50,7 @@ Index::Experimental::WaypointPtr LocationProvider::getWaypoint() {
     }
 }
 
-Index::Experimental::NodeIdsMapPtr
-LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius) {
+Index::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius) {
     if (!coordinatorRpcClient) {
         NES_WARNING("worker has no coordinator rpc client, cannot download node index");
         return {};
@@ -58,7 +58,6 @@ LocationProvider::getNodeIdsInRange(Index::Experimental::LocationPtr location, d
     auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(location, radius);
     return std::make_shared<std::unordered_map<uint64_t, Index::Experimental::Location>>(nodeVector.begin(), nodeVector.end());
 }
-
 
 Index::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(double radius) {
     auto location = getWaypoint()->getLocation();

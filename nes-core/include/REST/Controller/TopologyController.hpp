@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
@@ -23,7 +24,6 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <Spatial/Index/Waypoint.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
