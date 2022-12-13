@@ -90,7 +90,11 @@ class MonitoringAgent {
      */
     void setNodeId(TopologyNodeId nodeId);
 
-    //TODO:
+    /**
+     * @brief Getter for the metric collector pointer for a given metric type
+     * @param metricType
+     * @return Ptr to the metric collector
+     */
     MetricCollectorPtr getCollector(MetricType metricType);
 
   private:

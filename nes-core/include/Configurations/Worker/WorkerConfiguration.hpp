@@ -242,7 +242,10 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 1, "Number of seconds to wait between health checks"};
 
-    //TODO: Beschreibung erstellen
+    /**
+     * @brief Configuration of the monitoring.
+     * Sets the metric attributes and sample rates that have to be monitored
+     */
     StringOption monitoringConfiguration = {MONITORING_CONFIG, "", "The configured monitoring settings"};
 
 

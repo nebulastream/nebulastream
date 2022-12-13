@@ -294,8 +294,9 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  uint64_t numberOfOrigins = 1);
 
 /**
- * @brief create a monitoring data sink
+ * @brief create a monitoring data sink with a monitoring manager
  * @param metricStore
+ * @param monitoringManager
  * @param nodeEngine
  * @param numOfProducers
  * @param queryId
@@ -304,7 +305,6 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
  * @param numberOfOrigins
  * @return a data sink pointer
  */
- //TODO: Beschreibung
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  Monitoring::MonitoringManagerPtr monitoringManager,
                                  Monitoring::MetricCollectorType collectorType,

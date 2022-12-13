@@ -102,31 +102,66 @@ class MetricUtils {
     static std::tuple<std::vector<std::string>, std::list<std::string>> randomAttributes(std::string metric,
                                                                                          int numberOfAttributes);
 
-    //TODO:
+    /**
+     * @brief Gives back the metric type from a given given metric collector type
+     * @param type
+     * @return metric type
+     */
     static MetricType metricTypeFromCollectorType(MetricCollectorType type);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Gives back the metric type from a given given source name
+     * @param sourceName
+     * @return metric type
+     */
     static MetricType metricTypeFromSourceName(std::string sourceName);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates the default schema for a given metric type
+     * @param metricType
+     * @return Schema pointer
+     */
     static SchemaPtr defaultSchema(MetricType metricType);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates the logical source name for a given metric type and schema
+     * @param metricType
+     * @param schema
+     * @return string of the logical source name
+     */
     static std::string createLogicalSourceName(MetricType metricType, SchemaPtr schema);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates a json object according to the configuration of the monitoring
+     * @param rawConfigString: the string of the monitoring configuration
+     */
     static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
 
-    //TODO:Beschreibung
+    /**
+     * @brief Parses a json object to a list of strings
+     * @param jsonAttributes
+     */
     static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Parses a json object to a list of integer
+     * @param jsonAttributes
+     */
     static std::list<uint64_t> jsonArrayToIntegerList(web::json::value jsonAttributes);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates a metric pointer for a given metric collector type and schema
+     * @param type
+     * @param schema
+     * @return metric pointer
+     */
     static MetricPtr createMetricFromCollectorTypeAndSchema(MetricCollectorType type, SchemaPtr schema);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates a metric pointer for a given metric collector type
+     * @param type
+     * @return metric pointer
+     */
     static MetricType getMetricTypeFromCollectorType(MetricCollectorType type);
 };
 }// namespace NES::Monitoring

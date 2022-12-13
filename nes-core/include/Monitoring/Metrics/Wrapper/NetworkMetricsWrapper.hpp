@@ -35,10 +35,16 @@ class NetworkMetricsWrapper {
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr, SchemaPtr schemaNew);
     NetworkMetricsWrapper(SchemaPtr schema);
 
-    //TODO: beschreibung Funktion
+    /**
+     * @brief Get the schema of the wrapper
+     * @return the schema
+     */
     [[nodiscard]] SchemaPtr getSchema() const;
 
-    //TODO: Beschreibung Funktion
+    /**
+     * @brief Set the schema of the wrapper
+     * @param newSchema
+     */
     void setSchema(SchemaPtr newSchema);
 
     /**

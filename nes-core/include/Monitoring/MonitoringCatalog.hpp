@@ -39,10 +39,18 @@ class MonitoringCatalog {
      */
     static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Creates a monitoring catalog for a given monitoring plan
+     * @param monitoringPlan
+     * @return Ptr to the monitoring catalog
+     */
     static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Checkes if a catalog has a metric type
+     * @param metric
+     * @return True, if metric type exists in catalog
+     */
     [[nodiscard]] bool hasMetric(MetricType metric) const;
 
     /**

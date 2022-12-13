@@ -54,7 +54,20 @@ class MonitoringSink : public SinkMedium {
                             FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                             uint64_t numberOfOrigins = 1);
 
-    //TODO: Beschreibung
+    /**
+     * @brief Constructor of a monitoring sink with a monitoringManager
+     * @param sinkFormat
+     * @param metricStore
+     * @param monitoringManager
+     * @param collectorType
+     * @param nodeEngine
+     * @param numOfProducers
+     * @param queryId
+     * @param querySubPlanId
+     * @param faultToleranceType
+     * @param numberOfOrigins
+     * @return a monitoring sink pointer
+     */
     explicit MonitoringSink(SinkFormatPtr sinkFormat,
                             Monitoring::MetricStorePtr metricStore,
                             Monitoring::MonitoringManagerPtr monitoringManager,

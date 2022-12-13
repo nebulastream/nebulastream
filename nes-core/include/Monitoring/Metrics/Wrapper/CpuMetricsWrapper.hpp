@@ -83,7 +83,10 @@ class CpuMetricsWrapper {
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
 
-    //TODO: Beschreiben
+    /**
+     * @brief Set the cpu cores that are to be monitored
+     * @param coresList
+     */
     void setCores(std::list<uint64_t> coresList);
 
   private:

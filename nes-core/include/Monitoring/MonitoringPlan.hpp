@@ -37,16 +37,31 @@ class MonitoringPlan {
     static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores);
     static MonitoringPlanPtr defaultPlan();
 
-    //TODO: Beschreiben
+    /**
+     * @brief Gets the schema for a metric type
+     * @param metric
+     * @return Ptr to the schema
+    */
     SchemaPtr getSchema(MetricType metric);
 
-    //TODO: Beschreiben
+    /**
+     * @brief Gets the sample rate for a metric type
+     * @param metric
+     * @return sample rate
+    */
     uint64_t getSampleRate(MetricType metric);
 
-    //TODO: Beschreiben
+    /**
+     * @brief Creates a monitoring plan for a given configuration of the monitoring
+     * @param configuredMetrics: configuration of the monitoring
+     * @return Ptr to the monitoring plan
+    */
     static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
 
-    //TODO: Beschreiben
+    /**
+     * @brief Gets a list of cpu core numbers that have to be monitored
+     * @return List of cores
+    */
     std::list<uint64_t> getCores();
     /**
      * @brief Returns the default collectors of the plan.

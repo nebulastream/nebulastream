@@ -330,16 +330,28 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
-    // TODO: Beschreiben
+    /**
+     * Getter for monitoring manager
+     * @return Ptr to the monitoring manager
+     */
     Monitoring::MonitoringManagerPtr getMonitoringManager();
 
-    //TODO: Beschreiben
+    /**
+     * Setter for monitoring manager
+     * @param monitoringManager
+     */
     void setMonitoringManager(Monitoring::MonitoringManagerPtr monitoringManager);
 
-    // TODO: Beschreiben
+    /**
+     * Getter for monitoring agent
+     * @return Ptr to the monitoring agent
+     */
     Monitoring::MonitoringAgentPtr getMonitoringAgent();
 
-    //TODO: Beschreiben
+    /**
+     * Setter for monitoring agent
+     * @param monitoringAgent
+     */
     void setMonitoringAgent(Monitoring::MonitoringAgentPtr monitoringAgent);
 
   public:
