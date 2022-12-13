@@ -24,8 +24,18 @@ using namespace std::string_literals;
 
 namespace NES::Catalogs::UDF {
 
+/**
+ * Utility class to create default and non-default Java UDF descriptors for testing.
+ *
+ * The class JavaUdfDescriptor performs a number of checks in its constructor.
+ * Creating the required inputs everytime a test needs a Java UDF descriptor leads to code repetition.
+ */
 class JavaUdfDescriptorBuilder {
   public:
+    /**
+     * Create a default Java UDF descriptor that can be used in tests.
+     * @return A Java UDF descriptor instance.
+     */
     static JavaUdfDescriptorPtr createDefaultJavaUdfDescriptor() {
         auto className = "some_package.my_udf"s;
         auto methodName = "udf_method"s;
@@ -36,6 +46,6 @@ class JavaUdfDescriptorBuilder {
     }
 };
 
-}
+}// namespace NES::Catalogs::UDF
 
 #endif//NES_JAVAUDFDESCRIPTORBUILDER_H

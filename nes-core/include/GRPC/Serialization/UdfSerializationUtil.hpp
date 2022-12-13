@@ -20,11 +20,24 @@
 
 namespace NES {
 
+/**
+ * Utility class to serialize/deserialize a Java UDF descriptor.
+ */
 class UdfSerializationUtil {
   public:
+    /**
+     * Serialize a Java UDF descriptor to a protobuf message.
+     * @param javaUdfDescriptor The Java UDF descriptor that should be serialized.
+     * @param javaUdfDescriptorMessage A mutable protobuf message into which the Java UDF descriptor is serialized.
+     */
     static void serializeJavaUdfDescriptor(const Catalogs::UDF::JavaUdfDescriptor& javaUdfDescriptor,
                                            JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
 
+    /**
+     * Deserialize a protobuf message representing a Java UDF descriptor.
+     * @param javaUdfDescriptorMessage The Java UDF descriptor protobuf message.
+     * @return A Java UDF descriptor that was deserialized from the protobuf message.
+     */
     static Catalogs::UDF::JavaUdfDescriptorPtr deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
 };
 

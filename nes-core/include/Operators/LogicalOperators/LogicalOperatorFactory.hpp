@@ -200,6 +200,13 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr
     createCEPIterationOperator(uint64_t minIterations, uint64_t maxIterations, OperatorId id = Util::getNextOperatorId());
 
+    /**
+     * Create a new MapJavaUdfLogicalOperatorNode.
+     *
+     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
+     * @param id The operator ID.
+     * @return A logical operator node which encapsulates the Java UDF.
+     */
     static LogicalUnaryOperatorNodePtr createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id = Util::getNextOperatorId());
 };
 
