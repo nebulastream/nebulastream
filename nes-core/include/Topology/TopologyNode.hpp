@@ -264,11 +264,16 @@ namespace NES {
             float effectiveLatency;
             //10GB
             long availableBuffers = 10737418240;
+            // 2GB
+            //long availableBuffers = 2147483648;
+            //long availableBuffers = 100000;
             bool maintenanceFlag;
             NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
             bool isMobile;
             //20mbit
-            double availableBandwidth = 2621440;
+            //double availableBandwidth = 5000;
+            double availableBandwidth = 2500000;
+
             float usedBandwidth = 0;
 
             /**

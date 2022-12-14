@@ -60,9 +60,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     SchemaPtr inputSchema2;
     Runtime::BufferManagerPtr bufferManager;
     std::vector<std::string> placementQueries = {};
+    std::vector<std::string> shortPlacementQueries = {};
     std::vector<std::string> purchaseQueries = {};
     std::vector<std::string> equivalentQueries = {};
     std::string testString = "";
+    std::vector<QueryId> queryIds = {};
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UpstreamBackupTest.log", NES::LogLevel::LOG_DEBUG);
@@ -82,7 +84,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         //workerConfig->enableStatisticOutput = true;
-        workerConfig->numberOfSlots = 15;
+        workerConfig->numberOfSlots = 100;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -94,6 +96,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         csvSourceTypeFinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers - 1);
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
+        //World cup schema
         inputSchema = Schema::create()
                           ->addField("timestamp", DataTypeFactory::createUInt64())
                           ->addField("clientID", DataTypeFactory::createUInt32())
@@ -104,6 +107,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
                           ->addField("type", DataTypeFactory::createUInt8())
                           ->addField("server", DataTypeFactory::createUInt8());
 
+        //Purchase schema (for testing purposes)
         inputSchema2 = Schema::create()
                           ->addField("userID", DataTypeFactory::createUInt64())
                           ->addField("itemID", DataTypeFactory::createUInt64())
@@ -112,14 +116,26 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         std::ofstream logFile;
         logFile.open("/home/noah/placements.csv");//3 Nodes
-        logFile << "topologyId, queryId, executionNodes, approach" << "\n";
+        logFile << "topologyId,queryId,executionNodes,approach,additionalBandwidthInBytePerSecond,additionalMemoryInByte" << "\n";
         logFile.close();
+
 
         /*std::ofstream timingsLogFile;
         timingsLogFile.open("/home/noah/timings.csv");//3 Nodes
         timingsLogFile << "activity, queryId, timeInMs" << "\n";
         timingsLogFile.close();*/
 
+        shortPlacementQueries = {"Query::from(\"worldCup\").map(Attribute(\"method\")=8147 * Attribute(\"status\")).filter(Attribute(\"method\")>6075).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").filter(Attribute(\"status\")>=5637).map(Attribute(\"server\")=5460 - Attribute(\"server\")).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").map(Attribute(\"objectID\")=1531 + Attribute(\"objectID\")).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").map(Attribute(\"clientID\")=6807 + Attribute(\"type\")).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").map(Attribute(\"server\")=6772 * Attribute(\"objectID\")).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").map(Attribute(\"status\")=4694 - Attribute(\"server\")).filter(Attribute(\"size\")>=9090).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").filter(Attribute(\"status\")>=3557).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").map(Attribute(\"type\")=5334 - Attribute(\"size\")).sink(NullOutputSinkDescriptor::create());",
+            "Query::from(\"worldCup\").project(Attribute(\"clientID\").as(\"xrnwd\"),Attribute(\"objectID\").as(\"tprcy\"),Attribute(\"timestamp\")).sink(NullOutputSinkDescriptor::create());"
+                                  };
+        //100 randomly generated, distinct queries
         placementQueries = {"Query::from(\"worldCup\").map(Attribute(\"method\")=8147 * Attribute(\"status\")).filter(Attribute(\"method\")>6075).project(Attribute(\"clientID\").as(\"ccudm\"),Attribute(\"objectID\").as(\"aesfy\"),Attribute(\"size\").as(\"dkqos\"),Attribute(\"timestamp\")).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").filter(Attribute(\"status\")>=5637).map(Attribute(\"server\")=5460 - Attribute(\"server\")).project(Attribute(\"clientID\").as(\"dolix\"),Attribute(\"objectID\").as(\"brpcc\"),Attribute(\"size\").as(\"eckkb\"),Attribute(\"method\").as(\"aonak\"),Attribute(\"status\").as(\"fpbvl\"),Attribute(\"type\").as(\"vibdr\"),Attribute(\"timestamp\")).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").map(Attribute(\"objectID\")=1531 + Attribute(\"objectID\")).project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"size\"),Attribute(\"method\"),Attribute(\"status\"),Attribute(\"type\"),Attribute(\"timestamp\")).filter(Attribute(\"objectID\")>2412).sink(NullOutputSinkDescriptor::create());",
@@ -221,11 +237,13 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         "Query::from(\"worldCup\").filter(Attribute(\"method\")<2278).project(Attribute(\"clientID\").as(\"exyii\"),Attribute(\"objectID\").as(\"qnuwv\"),Attribute(\"size\").as(\"hsajy\"),Attribute(\"method\").as(\"ravsz\"),Attribute(\"status\").as(\"rnlnx\"),Attribute(\"timestamp\")).map(Attribute(\"rnlnx\")=614 * Attribute(\"rnlnx\")).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").map(Attribute(\"size\")=6642 + Attribute(\"size\")).project(Attribute(\"clientID\").as(\"dzohu\"),Attribute(\"objectID\").as(\"pvzwq\"),Attribute(\"size\").as(\"fhfzd\"),Attribute(\"method\").as(\"szwdh\"),Attribute(\"timestamp\")).filter(Attribute(\"fhfzd\")>=4380).sink(NullOutputSinkDescriptor::create());"};
 
+        //Excerpt of 100 randomly generated equivalent queries
         equivalentQueries = {"Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"timestamp\")).map(Attribute(\"objectID\")=6).filter(Attribute(\"clientID\")>Attribute(\"clientID\") - Attribute(\"objectID\")).map(Attribute(\"clientID\")=Attribute(\"clientID\") + Attribute(\"objectID\")).filter(Attribute(\"clientID\")<Attribute(\"objectID\")).map(Attribute(\"clientID\")=10 * Attribute(\"clientID\")).filter(Attribute(\"clientID\")<32).window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(60))).apply(Sum(Attribute(\"clientID\"))).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"timestamp\")).map(Attribute(\"objectID\")=6).filter(Attribute(\"clientID\")>Attribute(\"clientID\") - 6).map(Attribute(\"clientID\")=Attribute(\"objectID\") + Attribute(\"clientID\")).filter(Attribute(\"objectID\")>Attribute(\"clientID\")).map(Attribute(\"clientID\")=10 * Attribute(\"clientID\")).filter(Attribute(\"clientID\")<33).window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Minutes(1))).apply(Sum(Attribute(\"clientID\"))).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"timestamp\")).map(Attribute(\"objectID\")=6).filter(Attribute(\"clientID\")>Attribute(\"clientID\") - Attribute(\"objectID\")).map(Attribute(\"clientID\")=Attribute(\"objectID\") + Attribute(\"clientID\")).filter(Attribute(\"objectID\")>Attribute(\"clientID\")).map(Attribute(\"clientID\")=10 * Attribute(\"clientID\")).filter(Attribute(\"clientID\")<35).window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Minutes(1))).apply(Sum(Attribute(\"clientID\"))).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"timestamp\")).map(Attribute(\"objectID\")=6).filter(Attribute(\"clientID\")>Attribute(\"clientID\") - Attribute(\"objectID\")).map(Attribute(\"clientID\")=Attribute(\"objectID\") + Attribute(\"clientID\")).filter(Attribute(\"clientID\")<Attribute(\"objectID\")).map(Attribute(\"clientID\")=10 * Attribute(\"clientID\")).filter(Attribute(\"clientID\")<34).window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Minutes(1))).apply(Sum(Attribute(\"clientID\"))).sink(NullOutputSinkDescriptor::create());"};
 
+        //Randomly generated purchase schema queries
         purchaseQueries = {"Query::from(\"purchases\").project(Attribute(\"userID\"),Attribute(\"itemID\"),Attribute(\"price\"),Attribute(\"timestamp\")).map(Attribute(\"userID\")=2553 - Attribute(\"price\")).filter(Attribute(\"itemID\")<5630).sink(NullOutputSinkDescriptor::create());",
         "Query::from(\"purchases\").map(Attribute(\"itemID\")=4692 + Attribute(\"itemID\")).filter(Attribute(\"itemID\")<1462).project(Attribute(\"userID\").as(\"xlcfv\"),Attribute(\"itemID\").as(\"cljyw\"),Attribute(\"price\").as(\"vbfta\"),Attribute(\"timestamp\")).sink(NullOutputSinkDescriptor::create());",
         };
@@ -557,30 +575,31 @@ TEST_F(UpstreamBackupTest, topology1) {
 
     //ADD QUERIES
     NES_INFO("UpstreamBackupTest: Submit query");
-    /*string query1 =
-        "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"size\"),Attribute(\"timestamp\")).map(Attribute(\"size\")=9317 + Attribute(\"clientID\")).filter(Attribute(\"clientID\")<=2491).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }
+    /*for(auto& q : placementQueries){
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }*/
 
-    string query2 =
-        "Query::from(\"worldCup\").map(Attribute(\"clientID\")=8285 * Attribute(\"server\")).project(Attribute(\"clientID\").as(\"qowhd\"),Attribute(\"objectID\").as(\"ogfpg\"),Attribute(\"timestamp\")).filter(Attribute(\"ogfpg\")>6787).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    for(auto& q : placementQueries){
-        queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     }
 
-    /*for(auto& queryId : queryIds){
+    for(auto& queryId : queryIds){
         queryService->validateAndQueueStopQueryRequest(queryId);
-    }*/
-    /*GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+    }
+
+
+    /*EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 1));
-
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 1));
@@ -592,7 +611,7 @@ TEST_F(UpstreamBackupTest, topology1) {
 
     NES_INFO("UpstreamBackupTest: Remove query 2");
     queryService->validateAndQueueStopQueryRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));*/
 
 
 
@@ -604,14 +623,10 @@ TEST_F(UpstreamBackupTest, topology1) {
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("UpstreamBackupTest: Stop worker 2");
-    bool retStopWrk3 = wrk3->stop(true);
-    EXPECT_TRUE(retStopWrk3);
-
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 TEST_F(UpstreamBackupTest, topology2) {
@@ -663,28 +678,29 @@ TEST_F(UpstreamBackupTest, topology2) {
 
     //ADD QUERIES
     NES_INFO("UpstreamBackupTest: Submit query");
-    /*string query1 =
-        "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"size\"),Attribute(\"timestamp\")).map(Attribute(\"size\")=9317 + Attribute(\"clientID\")).filter(Attribute(\"clientID\")<=2491).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId1 =
-        queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-
-    string query2 =
-        "Query::from(\"worldCup\").map(Attribute(\"clientID\")=8285 * Attribute(\"server\")).project(Attribute(\"clientID\").as(\"qowhd\"),Attribute(\"objectID\").as(\"ogfpg\"),Attribute(\"timestamp\")).filter(Attribute(\"ogfpg\")>6787).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
-
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }
     /*for(auto& q : placementQueries){
-        queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
     }*/
 
-    for (int i = 0; i < 100; ++i) {
-        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
     }
-    for (int i = 0; i < 50; ++i) {
-        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    for(auto& queryId : queryIds){
+        queryService->validateAndQueueStopQueryRequest(queryId);
     }
+    /*for (int i = 0; i < 50; ++i) {
+        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }*/
 
     //queryService->validateAndQueueAddQueryRequest(placementQueries[0], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //queryService->validateAndQueueAddQueryRequest(placementQueries[14], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
@@ -713,7 +729,7 @@ TEST_F(UpstreamBackupTest, topology2) {
 
     NES_INFO("UpstreamBackupTest: Remove query 2");
     queryService->validateAndQueueStopQueryRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));*/
 
 
 
@@ -736,7 +752,7 @@ TEST_F(UpstreamBackupTest, topology2) {
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 TEST_F(UpstreamBackupTest, topology3) {
@@ -820,8 +836,24 @@ TEST_F(UpstreamBackupTest, topology3) {
     QueryId queryId2 =
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
 
-    for(auto& q : placementQueries){
-        queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }
+    /*for(auto& q : placementQueries){
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }*/
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
+    }
+
+    for(auto& queryId : queryIds){
+        queryService->validateAndQueueStopQueryRequest(queryId);
     }
 
     /*for(auto& queryId : queryIds){
@@ -847,7 +879,7 @@ TEST_F(UpstreamBackupTest, topology3) {
 
 
 
-    /*NES_INFO("UpstreamBackupTest: Stop worker 1");
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
@@ -878,13 +910,14 @@ TEST_F(UpstreamBackupTest, topology3) {
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 TEST_F(UpstreamBackupTest, topology4) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("worldCup", inputSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("purchases", inputSchema2);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
@@ -892,7 +925,9 @@ TEST_F(UpstreamBackupTest, topology4) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("worldCup", "x1", csvSourceTypeInfinite);
+    auto physicalSource2 = PhysicalSource::create("purchases", "x2", csvSourceTypeInfinite);
     workerConfig->physicalSources.add(physicalSource1);
+    workerConfig->physicalSources.add(physicalSource2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -953,10 +988,41 @@ TEST_F(UpstreamBackupTest, topology4) {
     QueryId queryId2 =
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
 
-    for (int i = 0; i < 5; ++i) {
-        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }
+    /*for(auto& q : placementQueries){
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }*/
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     }
+
+    for(auto& queryId : queryIds){
+        queryService->validateAndQueueStopQueryRequest(queryId);
+    }
+
+    /*for (int i = 0; i < 30; ++i) {
+        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }
+    for (int i = 31; i < 60; ++i) {
+        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }
+    for (int i = 61; i < 90; ++i) {
+        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }*/
+    /*for (int i = 0; i < 4; ++i) {
+        queryService->validateAndQueueAddQueryRequest(equivalentQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }
+    for (int i = 50; i < 65; ++i) {
+        queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    }*/
 
 
     /*for(auto& queryId : queryIds){
@@ -978,7 +1044,7 @@ TEST_F(UpstreamBackupTest, topology4) {
 
     NES_INFO("UpstreamBackupTest: Remove query 2");
     queryService->validateAndQueueStopQueryRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));*/
 
 
 
@@ -1009,7 +1075,7 @@ TEST_F(UpstreamBackupTest, topology4) {
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 TEST_F(UpstreamBackupTest, topology5) {
@@ -1090,8 +1156,7 @@ TEST_F(UpstreamBackupTest, topology5) {
     remove(outputFilePath.c_str());
 
     //ADD QUERIES
-    NES_INFO("UpstreamBackupTest: Submit query");
-    /*string query1 =
+  /*  string query1 =
         "Query::from(\"worldCup\").project(Attribute(\"clientID\"),Attribute(\"objectID\"),Attribute(\"size\"),Attribute(\"timestamp\")).map(Attribute(\"size\")=9317 + Attribute(\"clientID\")).filter(Attribute(\"clientID\")<=2491).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId1 =
@@ -1101,11 +1166,31 @@ TEST_F(UpstreamBackupTest, topology5) {
         "Query::from(\"worldCup\").map(Attribute(\"clientID\")=8285 * Attribute(\"server\")).project(Attribute(\"clientID\").as(\"qowhd\"),Attribute(\"objectID\").as(\"ogfpg\"),Attribute(\"timestamp\")).filter(Attribute(\"ogfpg\")>6787).sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId2 =
-        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
+        queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
-    for(auto& q : placementQueries){
-        queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    queryService->validateAndQueueAddQueryRequest(placementQueries[0], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
+
+
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
     }
+    /*for(auto& q : placementQueries){
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }*/
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
+    }
+
+    for(auto& queryId : queryIds){
+        queryService->validateAndQueueStopQueryRequest(queryId);
+    }
+
 
     /*for(auto& queryId : queryIds){
         queryService->validateAndQueueStopQueryRequest(queryId);
@@ -1126,7 +1211,7 @@ TEST_F(UpstreamBackupTest, topology5) {
 
     NES_INFO("UpstreamBackupTest: Remove query 2");
     queryService->validateAndQueueStopQueryRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));*/
 
 
 
@@ -1169,7 +1254,7 @@ TEST_F(UpstreamBackupTest, topology5) {
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 
 TEST_F(UpstreamBackupTest, topology6) {
@@ -1282,8 +1367,24 @@ TEST_F(UpstreamBackupTest, topology6) {
     QueryId queryId2 =
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);*/
 
-    for(auto& q : placementQueries){
-        queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    for (int i = 0; i < 2; ++i) {
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(placementQueries[i], "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }
+    /*for(auto& q : placementQueries){
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(q, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryIds.push_back(queryId);
+    }*/
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    for(auto& queryId : queryIds){
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
+    }
+
+    for(auto& queryId : queryIds){
+        queryService->validateAndQueueStopQueryRequest(queryId);
     }
 
     /*for(auto& queryId : queryIds){
@@ -1309,7 +1410,7 @@ TEST_F(UpstreamBackupTest, topology6) {
 
 
 
-    /*NES_INFO("UpstreamBackupTest: Stop worker 1");
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
@@ -1360,6 +1461,6 @@ TEST_F(UpstreamBackupTest, topology6) {
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("UpstreamBackupTest: Test finished");*/
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 }// namespace NES

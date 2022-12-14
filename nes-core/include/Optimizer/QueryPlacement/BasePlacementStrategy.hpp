@@ -146,7 +146,7 @@ namespace NES {
         static float calcUpstreamBackupProcessing(ExecutionNodePtr executionNode, QueryId queryId);
 
         static float calcUpstreamBackupNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig,
-                                                  const TopologyPtr topology);
+                                                  const TopologyPtr& topology);
 
         static int calcUpstreamBackupMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
 
@@ -161,26 +161,25 @@ namespace NES {
                                                         float minMem);
 
         static std::vector<ExecutionNodePtr> getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes,
-                                                                      FaultToleranceConfigurationPtr ftConfig,
+                                                                      const FaultToleranceConfigurationPtr& ftConfig,
                                                                       const TopologyPtr& topology,
                                                                       const GlobalExecutionPlanPtr& globalExecutionPlan);
 
         static FaultToleranceType firstFitPlacement(const ExecutionNodePtr& executionNode,
                                                     const FaultToleranceConfigurationPtr& ftConfig,
                                                     const TopologyPtr& topology,
-                                                    GlobalExecutionPlanPtr globalExecutionPlan);
+                                                    const GlobalExecutionPlanPtr& globalExecutionPlan);
 
         static std::pair<FaultToleranceType,double> getBestApproachForNode(const ExecutionNodePtr& executionNode,
                                                                             const std::vector<ExecutionNodePtr>& executionNodes,
                                                                             const FaultToleranceConfigurationPtr& ftConfig,
-                                                                            TopologyPtr topology);
+                                                                            const TopologyPtr& topology);
 
         static void firstFitRecursivePlacement(const std::vector<ExecutionNodePtr>& sortedList,
                                                const FaultToleranceConfigurationPtr& ftConfig,
-                                               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan);
+                                               const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan);
 
         static FaultToleranceType firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes,
-                                                         //std::vector<FaultToleranceType> sortedApproaches,
                                                          FaultToleranceConfigurationPtr ftConfig,
                                                          TopologyPtr topology);
 
@@ -193,18 +192,6 @@ namespace NES {
 
         static FaultToleranceType getStricterProcessingGuarantee(const FaultToleranceConfigurationPtr& ftConfig1,
                                                                  const FaultToleranceConfigurationPtr& ftConfig2);
-
-        static void setupLogger(std::string testName,
-                                GlobalExecutionPlanPtr globalExecutionPlan,
-                                std::vector<ExecutionNodePtr> executionNodes,
-                                TopologyPtr topology,
-                                FaultToleranceConfigurationPtr ftConfig);
-
-        static void nodeLogger(std::string testName,
-                               GlobalExecutionPlanPtr globalExecutionPlan,
-                               std::vector<ExecutionNodePtr> executionNodes,
-                               TopologyPtr topology,
-                               FaultToleranceConfigurationPtr ftConfig);
 
         static int getExecutionNodeOperatorCosts(const ExecutionNodePtr& executionNode, QueryId queryId);
 
@@ -346,7 +333,7 @@ namespace NES {
                                              const TopologyPtr& topology);
         static float calcActiveStandbyProcessing(const ExecutionNodePtr& executionNode, QueryId queryId);
         static float calcActiveStandbyNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig,
-                                                 const TopologyPtr topology);
+                                                 const TopologyPtr& topology);
         static int calcActiveStandbyMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
         static double calcActiveStandbyCost(const ExecutionNodePtr& executionNode,
                                             std::vector<ExecutionNodePtr> executionNodes,
@@ -354,7 +341,7 @@ namespace NES {
                                             const TopologyPtr& topology);
         static float calcCheckpointingProcessing(const ExecutionNodePtr& executionNode, QueryId queryId);
         static float calcCheckpointingNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig,
-                                                 const TopologyPtr topology);
+                                                 const TopologyPtr& topology);
         static int calcCheckpointingMemory(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig);
         static double calcCheckpointingCost(const ExecutionNodePtr& executionNode,
                                             std::vector<ExecutionNodePtr> executionNodes,
@@ -370,7 +357,7 @@ namespace NES {
                                                   std::vector<ExecutionNodePtr> downstreamNeighbors,
                                                   const TopologyPtr& topology);
         static bool
-        checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, TopologyPtr topology);
+        checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology);
         static bool checkIfOperatorIsArbitraryRecursively(const LogicalOperatorNodePtr& operatorNode);
         static std::vector<int> getNumberOfEachOperatorOnExecutionNodeRecursively(const LogicalOperatorNodePtr& operatorNode);
         static std::vector<int> getNumberOfEachOperatorOnExecutionNode(const ExecutionNodePtr executionNode, QueryId queryId);

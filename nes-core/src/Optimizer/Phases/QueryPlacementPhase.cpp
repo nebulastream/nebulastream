@@ -56,6 +56,9 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
 }
 
 bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
+    /*std::ofstream timingsLogFile;
+    timingsLogFile.open("/home/noah/timingsWithout.csv", std::ios_base::app);
+    auto start = std::chrono::high_resolution_clock::now();*/
     NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
              + std::to_string(sharedQueryPlan->getSharedQueryId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
@@ -101,6 +104,9 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
 
     TopologyPtr top = topology;
+
+    //The root node does not perform fault-tolerance approaches.
+    //Therefore, Remove the root node from the vector of ExecutionNodes on which the decision will be based.
     executionNodes.erase(std::remove_if(
                              executionNodes.begin(), executionNodes.end(),
                              [top](const ExecutionNodePtr& node) {
@@ -109,17 +115,26 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
 
     Optimizer::BasePlacementStrategy::initAdjustedCosts(topology, globalExecutionPlan, globalExecutionPlan->getExecutionNodeByNodeId(1), queryId);
+    Optimizer::BasePlacementStrategy::initNetworkConnectivities(topology,globalExecutionPlan,ftConfig->getQueryId());
 
     std::vector<ExecutionNodePtr> sortedList =
         Optimizer::BasePlacementStrategy::getSortedListForFirstFit(executionNodes, ftConfig, topology, globalExecutionPlan);
 
     FaultToleranceType placedFT = Optimizer::BasePlacementStrategy::firstFitQueryPlacement(sortedList, ftConfig, topology);
 
+    //Data collection for evaluation
     NES_INFO("\nFOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT));
     std::ofstream logFilePlacements;
     logFilePlacements.open("/home/noah/placements.txt", std::ios_base::app);//3 Nodes
     logFilePlacements << "FOR QUERY#" << ftConfig->getQueryId() << ", CHOOSE " << toString(placedFT) << "\n";
     logFilePlacements.close();
+
+
+    int additionalBandwidth = 0;
+    int additionalMemory = 0;
+
+    int localAdditionalBandwidth = 0;
+    int localAdditionalMemory = 0;
 
     for(auto& node : executionNodes){
         TopologyNodePtr topNode = topology->findNodeWithId(node->getId());
@@ -128,16 +143,28 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
         switch(placedFT){
             case FaultToleranceType::ACTIVE_STANDBY:
-                topNode->increaseUsedBandwidth((ftConfig->getIngestionRate() * ftConfig->getTupleSize() * ftConfig->getAckInterval())
-                                                                               + (3 * (ftConfig->getAckSize() * ftConfig->getAckInterval())));
-                topNode->increaseUsedBuffers((ftConfig->getOutputQueueSize(networkConnectivityInSeconds) * 2));
+                localAdditionalBandwidth = (ftConfig->getIngestionRate() * ftConfig->getTupleSize() * ftConfig->getAckInterval())
+                    + (3 * (ftConfig->getAckSize() * ftConfig->getAckInterval()));
+                localAdditionalMemory = (ftConfig->getOutputQueueSize(networkConnectivityInSeconds) * 2);
+                additionalBandwidth += localAdditionalBandwidth;
+                additionalMemory += localAdditionalMemory;
+                topNode->increaseUsedBandwidth(localAdditionalBandwidth);
+                topNode->increaseUsedBuffers(localAdditionalMemory);
             case FaultToleranceType::CHECKPOINTING:
-                topNode->increaseUsedBandwidth(2 * (ftConfig->getAckSize() * ftConfig->getAckInterval()));
-                topNode->increaseUsedBuffers(ftConfig->getOutputQueueSize(networkConnectivityInSeconds) + ftConfig->getCheckpointSize());
+                localAdditionalBandwidth = 2 * (ftConfig->getAckSize() * ftConfig->getAckInterval());
+                localAdditionalMemory = ftConfig->getOutputQueueSize(networkConnectivityInSeconds) + ftConfig->getCheckpointSize();
+                additionalBandwidth += localAdditionalBandwidth;
+                additionalMemory += localAdditionalMemory;
+                topNode->increaseUsedBandwidth(localAdditionalBandwidth);
+                topNode->increaseUsedBuffers(localAdditionalMemory);
             case FaultToleranceType::UPSTREAM_BACKUP:
-                topNode->increaseUsedBandwidth(((ftConfig->getIngestionRate() / ftConfig->getAckRate()) * ftConfig->getAckSize())
-                                                                               + ((node->getChildren().size() * ftConfig->getAckSize()) * ftConfig->getAckInterval()));
-                topNode->increaseUsedBuffers(Optimizer::BasePlacementStrategy::calcUpstreamBackupMemorySingleNode(node, topology, ftConfig));
+                localAdditionalBandwidth = ((ftConfig->getIngestionRate() / ftConfig->getAckRate()) * ftConfig->getAckSize())
+                    + ((node->getChildren().size() * ftConfig->getAckSize()) * ftConfig->getAckInterval());
+                localAdditionalMemory = Optimizer::BasePlacementStrategy::calcUpstreamBackupMemorySingleNode(node, topology, ftConfig);
+                additionalBandwidth += localAdditionalBandwidth;
+                additionalMemory += localAdditionalMemory;
+                topNode->increaseUsedBandwidth(localAdditionalBandwidth);
+                topNode->increaseUsedBuffers(localAdditionalMemory);
             default:
                 break;
         }
@@ -158,9 +185,13 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
         }
     }
     topologyList << ",";
-    topologyList << toString(placedFT) + "\n";
+    topologyList << toString(placedFT) << ",";
+    topologyList << std::to_string(additionalBandwidth) << "," << std::to_string(additionalMemory) << "\n";
     logFile << topologyList.str();
     logFile.close();
+
+    additionalBandwidth = 0;
+    additionalMemory = 0;
 
 
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
@@ -168,6 +199,13 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
 
     NES_INFO("\nTOPOLOGY ENDING:" + topology->toString())
+    NES_INFO("\nGEP ENDING:" + globalExecutionPlan->getAsString());
+
+    /*auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> duration = end - start;
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    timingsLogFile << "topology6," << queryId << "," << ms.count() << "\n";
+    timingsLogFile.close();*/
 
     return success;
 }

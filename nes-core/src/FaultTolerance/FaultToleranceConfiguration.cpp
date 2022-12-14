@@ -74,7 +74,7 @@ float FaultToleranceConfiguration::getTotalAckSizePerSecond() const { return (th
  * t_i
  * @return time between acknowledgement tuples in seconds
  */
-float FaultToleranceConfiguration::getTimeBetweenAcks() const { return (static_cast<float>(1) / static_cast<float>(this->ingestion_rate)); }
+float FaultToleranceConfiguration::getTimeBetweenAcks() const { return (static_cast<float>(this->ack_rate) / static_cast<float>(this->ingestion_rate)); }
 
 /**
  * o

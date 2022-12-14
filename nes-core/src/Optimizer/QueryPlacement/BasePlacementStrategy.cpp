@@ -626,6 +626,8 @@ namespace NES::Optimizer {
             return candidateQueryPlan;
         }
 
+        //Return all nodes that have 1 depth less than executionNode and are neighbors of each other.
+        //The returned vector does not contain the parent node of executionNode since it is the primary node and not considered as possible secondary.
         std::vector<ExecutionNodePtr> BasePlacementStrategy::getDownstreamNeighborNodes(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> executionNodes){
 
             int targetDepth = getDepth(executionNode) - 1;
@@ -733,6 +735,7 @@ return downstreamLinkWeights;
 
         }
 
+        //Ping the downstream node and assign the ping to for each node. This is necessary for output queue estimations
         void BasePlacementStrategy::initNetworkConnectivities(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId){
 
             auto workerRpcClient = std::make_shared<WorkerRPCClient>();
@@ -755,8 +758,7 @@ return downstreamLinkWeights;
 
                         int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
 
-                        //TODO connection does not work correctly in this setup. should work in regular environments like with
-                        //the setup in UpstreamBackupTest
+                        //For testing purposes since the above method doesnt work when using UnitTests
                         if(conn == -1){
                             conn = (rand() % 150 + 10);
                         }
@@ -804,6 +806,7 @@ return downstreamLinkWeights;
         }
 
 
+        //Assign a scale-down factor for CPU slots to every ExecutionNode
         void BasePlacementStrategy::initAdjustedCosts(const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan, const ExecutionNodePtr& rootNode, QueryId queryId){
 
             rootNode->setAdjustedCosts(queryId, rootNode->getOccupiedResources(queryId));
@@ -1095,7 +1098,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
 
         }
 
-        float BasePlacementStrategy::calcUpstreamBackupNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr topology){
+        float BasePlacementStrategy::calcUpstreamBackupNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
 
             float upstreamBackupNetworkingFormula = 0;
 
@@ -1128,7 +1131,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
         float BasePlacementStrategy::calcUpstreamBackupMemorySingleNode(const ExecutionNodePtr& executionNode, const TopologyPtr& topology, const FaultToleranceConfigurationPtr& ftConfig){
             float cost = 0;
 
-            float rootDelay = static_cast<float>(getDelayToRoot(executionNode, topology));
+            auto rootDelay = static_cast<float>(getDelayToRoot(executionNode, topology));
             float delayInSeconds = rootDelay / 1000;
             cost = ftConfig->getAckRate() * ftConfig->getTupleSize() + ftConfig->getIngestionRate() * delayInSeconds * ftConfig->getTupleSize();
 
@@ -1197,7 +1200,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return (executionNode->getDownstreamRatio() * getExecutionNodeOperatorCosts(executionNode, queryId));
         }
 
-        float BasePlacementStrategy::calcActiveStandbyNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr topology){
+        float BasePlacementStrategy::calcActiveStandbyNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
             float activeStandbyNetworkingFormula = 0;
 
@@ -1280,7 +1283,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return (executionNode->getDownstreamRatio() * getExecutionNodeOperatorCosts(executionNode, queryId));
         }
 
-        float BasePlacementStrategy::calcCheckpointingNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr topology){
+        float BasePlacementStrategy::calcCheckpointingNetworking(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
             float newUsedBand = (ftConfig->getIngestionRate() * ftConfig->getTupleSize()) + topNode->getUsedBandwidth();
@@ -1393,7 +1396,8 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return result;
         }
 
-        std::vector<ExecutionNodePtr> BasePlacementStrategy::getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes, FaultToleranceConfigurationPtr ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
+        //Calculate the placement penalty for every ExecutionNode. Then, return a vector that contains the ExecutionNodes in ascending order of placement penalty.
+        std::vector<ExecutionNodePtr> BasePlacementStrategy::getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
             std::ofstream timingsLogFile;
             timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
             float upstreamBackupTimeAdded = 0;
@@ -1498,12 +1502,12 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return (proc / 3) + (netw / 3) + (mem / 3);
         }
 
-        FaultToleranceType BasePlacementStrategy::firstFitPlacement(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, GlobalExecutionPlanPtr globalExecutionPlan){
+        FaultToleranceType BasePlacementStrategy::firstFitPlacement(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
 
             std::vector<ExecutionNodePtr> downstreamNeighbors = getNeighborNodes(globalExecutionPlan->getExecutionNodeByNodeId(1),0, getDepth(executionNode) - 1);
             downstreamNeighbors.erase(std::remove_if(
                 downstreamNeighbors.begin(), downstreamNeighbors.end(),
-                [executionNode](const ExecutionNodePtr e){
+                [executionNode](const ExecutionNodePtr& e){
                     return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
                 }), downstreamNeighbors.end());
 
@@ -1592,7 +1596,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return false;
         }
 
-        bool BasePlacementStrategy::checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, TopologyPtr topology){
+        bool BasePlacementStrategy::checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
 
             //float upstreamBackupOperatorCosts = getNumberOfStatefulOperatorsOnExecutionNodeRecursively(getExecutionNodeParent(executionNode), ftConfig->getQueryId());
@@ -1626,7 +1630,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return false;
         }
 
-        std::pair<FaultToleranceType,double> BasePlacementStrategy::getBestApproachForNode(const ExecutionNodePtr& executionNode, const std::vector<ExecutionNodePtr>& executionNodes, const FaultToleranceConfigurationPtr& ftConfig, TopologyPtr topology){
+        std::pair<FaultToleranceType,double> BasePlacementStrategy::getBestApproachForNode(const ExecutionNodePtr& executionNode, const std::vector<ExecutionNodePtr>& executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
 
             std::vector<double> allCosts = {calcUpstreamBackupCost(executionNode, executionNodes, ftConfig, topology), calcActiveStandbyCost(executionNode, executionNodes, ftConfig, topology),
                                             calcCheckpointingCost(executionNode, executionNodes, ftConfig, topology)};
@@ -1634,7 +1638,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             std::vector<ExecutionNodePtr> downstreamNeighbors = getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1);
             downstreamNeighbors.erase(std::remove_if(
                                           downstreamNeighbors.begin(), downstreamNeighbors.end(),
-                                          [executionNode](const ExecutionNodePtr e){
+                                          [executionNode](const ExecutionNodePtr& e){
                                               return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
                                           }), downstreamNeighbors.end());
 
@@ -1666,7 +1670,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
 }*/
         }
 
-        void BasePlacementStrategy::firstFitRecursivePlacement(const std::vector<ExecutionNodePtr>& sortedList, const FaultToleranceConfigurationPtr& ftConfig, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan){
+        void BasePlacementStrategy::firstFitRecursivePlacement(const std::vector<ExecutionNodePtr>& sortedList, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
 
             std::vector<std::tuple<ExecutionNodePtr,FaultToleranceType,float>> result = {};
             int score = 0;
@@ -1704,6 +1708,8 @@ while(!sortedList.empty()){
 return result;
 }*/
 
+        //Iterate through the sorted list of ExecutionNodes. For all nodes, check if the Active Standby, Checkpointing or Upstream Backup constraints are met (in that order)
+        //Choose the FT approach whose constraints are met, otherwise choose Amnesia.
         FaultToleranceType BasePlacementStrategy::firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology){
             std::ofstream timingsLogFile;
             timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
@@ -1717,8 +1723,6 @@ return result;
             bool activeStandby = std::all_of(consideredNodes.begin(), consideredNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                                  {return checkActiveStandbyConstraints(executionNode, ftConfig,
                                                                                       getDownstreamNeighborNodes(executionNode, executionNodes),
-                                                                                      //getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1),
-                                                                                      //removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
 
             auto activeStandbyEnd = std::chrono::high_resolution_clock::now();
@@ -1787,55 +1791,6 @@ return result;
             return FaultToleranceType::AT_MOST_ONCE;
         }
 
-        void BasePlacementStrategy::setupLogger(std::string testName, GlobalExecutionPlanPtr globalExecutionPlan, std::vector<ExecutionNodePtr> executionNodes, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig){
-            TopologyPtr x = topology;
-
-            std::ofstream logFile;                                                                                         \
-            logFile.open("/home/noah/Desktop/" + testName + "/setup.csv");                \
-            logFile << "ExecutionNodes,queryDepth,ingestionRate," \
-                    << "tupleSizeInMB,acknowledgementSizeInMB,acknowledgementIntervalInTuples,acknowledgementIntervalInSeconds,desiredProcessingGuarantee,"              \
-                    << "checkpointSizeInMB,numOfQueryOperators,FTApproach"<< "\n"; \
-
-            int queryDepth = 0;
-
-            std::for_each(executionNodes.begin(), executionNodes.end(),
-                          [&](ExecutionNodePtr &executionNode){ if(getDepth(executionNode) > queryDepth){queryDepth = getDepth(executionNode);}});
-
-            logFile << globalExecutionPlan->getExecutionNodesByQueryId(ftConfig->getQueryId()).size() << "," << queryDepth << "," << ftConfig->getIngestionRate()
-                    << "," << ftConfig->getTupleSize() << "," << ftConfig->getAckSize() << "," << ftConfig->getAckRate() << "," << ftConfig->getAckInterval()
-                    << "," << ftConfig->getProcessingGuarantee() << "," << ftConfig->getCheckpointSize();
-            logFile.close();
-        }
-
-        void BasePlacementStrategy::nodeLogger(std::string testName, GlobalExecutionPlanPtr globalExecutionPlan, std::vector<ExecutionNodePtr> executionNodes, TopologyPtr topology, FaultToleranceConfigurationPtr ftConfig){
-            TopologyPtr x = topology;
-            GlobalExecutionPlanPtr gep = globalExecutionPlan;
-
-            std::ofstream logFile;                                                                                         \
-            logFile.open("/home/noah/Desktop/" + testName + "/nodes.csv");                \
-            logFile << "nodeId,numOfChildren,parentNodeId,nodeDepth,cpuSlotCapacity,usedCpuSlots,availableCpuSlots,downstreamRatio,bandwidthCapacityInBytePerSecond,usedBandwidthInBytePerSecond,availableBandwidthInBytePerSecond," \
-                    << "bandwidthRatio,availableMemoryInByte,downstreamDelayMs,sinkDelayInMs,numOfOperators,"              \
-                    << "hasSource,numOfSources,hasFilter,numOfFilters,hasProjection,numOfProjection,hasMap,numOfMap,hasRename,numOfRenames,hasUnion,numOfUnion,hasSink,numOfSinks"<< "\n"; \
-
-            for(auto& node : executionNodes){
-
-                TopologyNodePtr topNode = topology->findNodeWithId(node->getId());
-                int numberOfOperators = getNumberOfOperators(node, ftConfig->getQueryId());
-                int parentNodeId = -1;
-                if(!node->getParents().empty()){
-                    parentNodeId = getExecutionNodeParent(node)->getId();
-                }
-
-
-                logFile << node->getId() << "," << node->getChildren().size() << "," << parentNodeId << "," << getDepth(node) << "," << topology->findNodeWithId(node->getId())->getResourceCapacity() << ","
-                        << topology->findNodeWithId(node->getId())->getUsedResources() << "," << topology->findNodeWithId(node->getId())->getAvailableResources() << ","
-                        << node->getDownstreamRatio() << "," << (topNode->getAvailableBandwidth() + topNode->getUsedBandwidth()) << "," << topNode->getUsedBandwidth() << ","
-                        << topNode->getAvailableBandwidth() << "," << (topNode->getUsedBandwidth() / topNode->getAvailableBandwidth()) << "," << topology->findNodeWithId(node->getId())->getAvailableBuffers() << ","
-                        << getNetworkConnectivity(topology,node) << "," << (getDelayToRoot(node,topology)) <<numberOfOperators << "\n";
-
-            }
-            logFile.close();
-        }
     }// namespace NES::Optimizer
 
     //TODO missing info: queue-trimming / checkpointing interval, how to obtain stateful operators, how to get available and used bandwidth of a link
