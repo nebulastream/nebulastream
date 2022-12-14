@@ -160,7 +160,9 @@ class TestExecutionEngine {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    auto createDateSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
+    auto createDateSink(SchemaPtr outputSchema, size_t expectedBuffers) { return std::make_shared<TestSink>(expectedBuffers, outputSchema, nodeEngine); }
+    auto createDateSink(SchemaPtr outputSchema) { return createDataSink(outputSchema, 1); }
+
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
             inputSchema,
@@ -211,6 +213,8 @@ class TestExecutionEngine {
         return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     }
     bool stop() { return nodeEngine->stop(); }
+
+    Runtime::BufferManagerPtr getBufferManager() const { return nodeEngine->getBufferManager(); }
 
   private:
     Runtime::NodeEnginePtr nodeEngine;
