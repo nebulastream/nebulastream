@@ -538,7 +538,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
         auto thresholdWindowDetails = SerializableOperator_WindowDetails_ThresholdWindow();
         ExpressionSerializationUtil::serializeExpression(thresholdWindow->getPredicate(),
                                                          thresholdWindowDetails.mutable_predicate());
-        thresholdWindowDetails.set_miniumcount(thresholdWindow->getMinimumCount());
+        thresholdWindowDetails.set_minimumcount(thresholdWindow->getMinimumCount());
         windowDetails.mutable_windowtype()->PackFrom(thresholdWindowDetails);
     }
 
