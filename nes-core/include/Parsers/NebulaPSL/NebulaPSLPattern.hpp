@@ -86,7 +86,7 @@ class NebulaPSLPattern {
     std::map<int32_t, NebulaPSLOperatorNode> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
-    std::list<SinkDescriptorPtr> sinkList;    // INTO
+    std::list<SinkDescriptorPtr> sinkList; // INTO
     std::pair<std::string, int32_t> window;// WITHIN
 };
 

@@ -42,9 +42,7 @@ void NebulaPSLPattern::addExpression(ExpressionNodePtr expressionNode) {
     this->expressionList.insert(pos, expressionNode);
 }
 void NebulaPSLPattern::addSink(SinkDescriptorPtr sinkDescriptor) { this->sinkList.push_back(sinkDescriptor); }
-void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionNode) {
-    this->projectionFields.push_back(expressionNode);
-}
+void NebulaPSLPattern::addProjectionField(ExpressionNodePtr expressionNode) { this->projectionFields.push_back(expressionNode); }
 void NebulaPSLPattern::addOperatorNode(NebulaPSLOperatorNode operatorNode) {
     this->operatorList.insert(std::pair<uint32_t, NebulaPSLOperatorNode>(operatorNode.getId(), operatorNode));
 }

@@ -108,7 +108,7 @@ class QueryPlanBuilder {
                                                   NES::QueryPlanPtr rightQueryPlan,
                                                   NES::ExpressionItem onProbeKey,
                                                   NES::ExpressionItem onBuildKey);
-   /**
+    /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor to add to the queryPlan
@@ -131,7 +131,8 @@ class QueryPlanBuilder {
     * @param queryPlan the queryPlan to check and add the watermark strategy to
     * @return the updated queryPlan
     */
-    static NES::QueryPlanPtr checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan, const NES::Windowing::WindowTypePtr windowType);
+    static NES::QueryPlanPtr checkAndAddWatermarkAssignment(NES::QueryPlanPtr queryPlan,
+                                                            const NES::Windowing::WindowTypePtr windowType);
 
   private:
     /**
@@ -149,8 +150,9 @@ class QueryPlanBuilder {
     * @param: rightQueryPlan the right query plan of the binary operation
     * @return the updated queryPlan
     */
-    static NES::QueryPlanPtr
-    addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr operatorNode, NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan);
+    static NES::QueryPlanPtr addBinaryOperatorAndUpdateSource(NES::OperatorNodePtr operatorNode,
+                                                              NES::QueryPlanPtr leftQueryPlan,
+                                                              NES::QueryPlanPtr rightQueryPlan);
 };
-} // end namespace NES
+}// end namespace NES
 #endif//NES_NES_CORE_INCLUDE_PARSERS_QUERYPLANBUILDER_H_

@@ -18,11 +18,11 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -57,8 +57,8 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperatorNode>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperatorNode>()[0]->getNewSourceName(), "testStream");
     //test addFilter
-    auto filterExpression = ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("a").getExpressionNode(),
-                                                 NES::Attribute("b").getExpressionNode()));
+    auto filterExpression = ExpressionNodePtr(
+        LessExpressionNode::create(NES::Attribute("a").getExpressionNode(), NES::Attribute("b").getExpressionNode()));
     queryPlan = QueryPlanBuilder::addFilter(filterExpression, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<FilterLogicalOperatorNode>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0]->getPredicate(), filterExpression);
@@ -77,7 +77,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     EXPECT_TRUE(queryPlan->getOperatorByType<UnionLogicalOperatorNode>().size() == 1);
     // test addSink
     auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
-    queryPlan = QueryPlanBuilder::addSink(queryPlan,sinkDescriptorPtr);
+    queryPlan = QueryPlanBuilder::addSink(queryPlan, sinkDescriptorPtr);
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperatorNode>().size() == 1);
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperatorNode>()[0]->getSinkDescriptor()->equal(sinkDescriptorPtr));
 }

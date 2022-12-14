@@ -177,7 +177,9 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @param operaterName the operator name
      * @param iterator the list of nodes from the ANTLR AST Tree
      */
-    QueryPlanPtr addBinaryOperatorToQueryPlan(std::string operaterName, std::map<int, NebulaPSLOperatorNode>::const_iterator iterator, QueryPlanPtr queryPlan) const;
+    QueryPlanPtr addBinaryOperatorToQueryPlan(std::string operaterName,
+                                              std::map<int, NebulaPSLOperatorNode>::const_iterator iterator,
+                                              QueryPlanPtr queryPlan) const;
 
     /**
      * @brief: checks if one of the sources for a binary operator is already part of either the left or right queryPlan that are composed by the binary operator, i.e., already added to the final queryPlan
