@@ -15,8 +15,8 @@
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <algorithm>
@@ -164,24 +164,26 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
 // - Pull model: We have a separate service that is responsible for finding current location of a node based on the logic given below.
 // - Push Model: We have a separate service that is responsible for updating current location of a node.
 // @Felix: find out which of them is more efficient, extensible, and provides most consistent location.
-Spatial::Index::Experimental::WaypointPtr TopologyNode::getGeoLocation() {
+Spatial::DataTypes::Experimental::Waypoint TopologyNode::getWaypoint() {
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-    auto spatialType = std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
+    auto spatialType =
+        std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
     switch (spatialType) {
         case Spatial::Index::Experimental::SpatialType::MOBILE_NODE:
-            NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
+            NES_DEBUG("Accessing location data for mobile node with address: " << destAddress)
             return WorkerRPCClient::getWaypoint(destAddress);
         case Spatial::Index::Experimental::SpatialType::FIXED_LOCATION:
-            return std::any_cast<Spatial::Index::Experimental::Waypoint>(nodeProperties[NES::Worker::Properties::LOCATION]);
-        case Spatial::Index::Experimental::SpatialType::NO_LOCATION: return {};
+            return std::any_cast<NES::Spatial::DataTypes::Experimental::Waypoint>(nodeProperties[NES::Worker::Properties::LOCATION]);
+        case Spatial::Index::Experimental::SpatialType::NO_LOCATION:
         case Spatial::Index::Experimental::SpatialType::INVALID:
-            NES_WARNING("trying to access location of a node with invalid spatial type")
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
+            NES_WARNING("Accessing location of a node with invalid spatial type")
+            return NES::Spatial::DataTypes::Experimental::Waypoint::invalid();
     }
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr TopologyNode::getReconnectSchedule() {
-    auto spatialType = std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
+    auto spatialType =
+        std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
     if (spatialType == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
         std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
@@ -191,7 +193,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr TopologyNode::getReco
 }
 
 void TopologyNode::setGeoLocation(double latitude, double longitude) {
-    setGeoLocation(Spatial::Index::Experimental::Location(latitude, longitude));
+    setGeoLocation(Spatial::DataTypes::Experimental::Location(latitude, longitude));
 }
 
 void TopologyNode::setSpatialType(NES::Spatial::Index::Experimental::SpatialType spatialType) {
@@ -202,7 +204,7 @@ Spatial::Index::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
     return std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
 }
 
-void TopologyNode::setGeoLocation(NES::Spatial::Index::Experimental::Location geoLocation) {
+void TopologyNode::setGeoLocation(NES::Spatial::DataTypes::Experimental::Location geoLocation) {
     nodeProperties[NES::Worker::Properties::LOCATION] = geoLocation;
 }
 }// namespace NES

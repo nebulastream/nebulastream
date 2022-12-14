@@ -217,7 +217,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
             currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
             if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-                NES::Spatial::Index::Experimental::Location location = *currentNode->getGeoLocation()->getLocation();
+                NES::Spatial::Index::Experimental::Location location = *currentNode->getWaypoint()->getLocation();
                 auto locationInfo = nlohmann::json{};
                 if (location.isValid()) {
                     locationInfo["latitude"] = location.getLatitude();
