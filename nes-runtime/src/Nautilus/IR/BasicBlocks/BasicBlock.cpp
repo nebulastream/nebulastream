@@ -37,6 +37,7 @@ void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLe
 uint32_t BasicBlock::getNumLoopBackEdges() { return numLoopBackEdges; }
 void BasicBlock::incrementNumLoopBackEdge() { ++this->numLoopBackEdges; }
 bool BasicBlock::isLoopHeaderBlock() { return numLoopBackEdges > 0; }
+bool BasicBlock::isMergeBlock() { return predecessors.size() - numLoopBackEdges > 1; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 [[nodiscard]] Operations::OperationPtr BasicBlock::getOperationAt(size_t index) { return operations.at(index); }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }

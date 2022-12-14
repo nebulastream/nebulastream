@@ -25,10 +25,10 @@ class BasicBlockArgument : public Operation {
     ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
-    OperationPtr getBaseOperation();
-    void setBaseOperation(OperationPtr baseOperation);
+    std::vector<OperationPtr> getBaseOperations();
+    void addBaseOperation(OperationPtr baseOperation);
   private:
-    OperationPtr baseOperation;
+    std::vector<OperationPtr> baseOperations;
 };
 
 }// namespace NES::Nautilus::IR::Operations

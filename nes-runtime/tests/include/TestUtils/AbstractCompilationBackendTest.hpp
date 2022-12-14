@@ -21,6 +21,7 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
+#include <Nautilus/IR/Phases/ValueScopingPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <gtest/gtest-param-test.h>
@@ -37,6 +38,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
     Nautilus::IR::RemoveBrOnlyBlocksPhase removeBrOnlyBlocksPhase;
     Nautilus::IR::LoopDetectionPhase loopDetectionPhase;
     Nautilus::IR::StructuredControlFlowPhase structuredControlFlowPhase;
+    Nautilus::IR::ValueScopingPhase valueScopingPhase;
     auto prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace) {
         executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
         std::cout << *executionTrace.get() << std::endl;

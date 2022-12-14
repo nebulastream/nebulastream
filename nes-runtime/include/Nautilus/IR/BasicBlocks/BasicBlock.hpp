@@ -53,6 +53,8 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
      * @brief Check if the counter for edges that lead back from the loop body to the loop header is > 0.
      */
     [[nodiscard]] bool isLoopHeaderBlock();
+    [[nodiscard]] bool isMergeBlock();
+    // [[nodiscard]] bool getNumNonLoopBackPredecessors();
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getOperationAt(size_t index);
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();

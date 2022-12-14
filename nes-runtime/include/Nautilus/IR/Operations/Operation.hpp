@@ -66,6 +66,8 @@ class Operation {
     const Types::StampPtr& getStamp() const;
     void addUsage(const Operation*);
     const std::vector<const Operation*>& getUsages();
+    bool isLoopOperation();
+    bool isIfOperation();
 
   protected:
     OperationType opType;

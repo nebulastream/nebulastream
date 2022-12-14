@@ -26,4 +26,8 @@ void Operation::addUsage(const Operation* operation) { usages.emplace_back(opera
 
 const std::vector<const Operation*>& Operation::getUsages() { return usages; }
 
+
+bool Operation::isLoopOperation() { return opType == Operation::LoopOp; }
+bool Operation::isIfOperation() { return opType == Operation::IfOp; }
+
 }// namespace NES::Nautilus::IR::Operations
