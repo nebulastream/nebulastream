@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.3](https://github.com/nebulastream/nebulastream/tree/v0.4.3) (2022-12-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.2...v0.4.3)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Initial OpenCV integration [\#3150](https://github.com/nebulastream/nebulastream/issues/3150)
+
 ## [v0.4.2](https://github.com/nebulastream/nebulastream/tree/v0.4.2) (2022-12-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.1...v0.4.2)
