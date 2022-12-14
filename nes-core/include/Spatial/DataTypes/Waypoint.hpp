@@ -13,7 +13,7 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <optional>
@@ -33,14 +33,14 @@ class Waypoint {
 * @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
 * @param location The location of the device
 */
-    Waypoint(Location location);
+    Waypoint(GeoLocation location);
 
     /**
 * @brief Construct a waypoint with a certain timestamp
 * @param location the geaographical location of the device
 * @param timestamp the expected or actual time
 */
-    Waypoint(Location location, Timestamp timestamp);
+    Waypoint(GeoLocation location, Timestamp timestamp);
 
     /**
 * @brief return a waypoint signaling that no location data is available. Location wil be invalid and timestamp will be
@@ -53,7 +53,7 @@ class Waypoint {
 * @brief Getter function for the location
 * @return the geographical location
 */
-    Location getLocation() const;
+    GeoLocation getLocation() const;
 
     /**
 * @brief Getter function for the timestamp
@@ -62,7 +62,7 @@ class Waypoint {
     std::optional<Timestamp> getTimestamp() const;
 
   private:
-    Location location;
+    GeoLocation location;
     std::optional<Timestamp> timestamp;
 };
 }// namespace Experimental

@@ -30,11 +30,6 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Spatial::Index::Experimental {
-class LocationIndex;
-using LocationIndexPtr = std::shared_ptr<LocationIndex>;
-}// namespace Spatial::Index::Experimental
-
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
  */
@@ -196,12 +191,6 @@ class Topology {
     */
     static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
-    /**
-     * Getter for accessing the location index linked to this topology
-     * @return A smart pointer to the LocationIndex
-     */
-    NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
-
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 
@@ -220,7 +209,6 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
-    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

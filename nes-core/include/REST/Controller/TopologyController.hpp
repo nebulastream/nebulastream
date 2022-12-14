@@ -17,13 +17,16 @@
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
+
+
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -46,10 +49,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                       TopologyPtr topology,
+                       TopologyManagerServicePtr topologyManagerService,
                        oatpp::String completeRouterPrefix,
                        ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(std::move(topology)),
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topologyManagerService(std::move(topologyManagerService)),
           errorHandler(errorHandler) {}
 
     /**
@@ -60,15 +63,16 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<TopologyController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      TopologyPtr topology,
+                                                      TopologyManagerServicePtr topologyManagerService,
                                                       std::string routerPrefixAddition,
                                                       ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler);
+        return std::make_shared<TopologyController>(objectMapper, std::move(topologyManagerService), completeRouterPrefix, errorHandler);
     }
 
     ENDPOINT("GET", "", getTopology) {
         try {
+            topologyManagerService->
             auto topologyJson = getTopologyAsJson(topology);
             return createResponse(Status::CODE_200, topologyJson.dump());
         } catch (nlohmann::json::exception e) {
@@ -98,13 +102,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            auto parentPhysicalNode = topology->findNodeWithId(parentId);
-            auto childPhysicalNode = topology->findNodeWithId(childId);
-
-            bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            bool added = topologyManagerService->addParent(childId, parentId);
             if (added) {
                 NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
-                topology->print();
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
@@ -134,10 +134,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            auto parentPhysicalNode = topology->findNodeWithId(parentId);
-            auto childPhysicalNode = topology->findNodeWithId(childId);
-
-            bool removed = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            bool removed = topologyManagerService->removeParent(childId, parentId);
             if (removed) {
                 NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
@@ -174,14 +171,14 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 "Could not add parent for node in topology: childId and parentId must be different.");
         }
 
-        TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
+        TopologyNodePtr childPhysicalNode = topologyManagerService->findNodeWithId(childId);
         if (!childPhysicalNode) {
             return errorHandler->handleError(
                 Status::CODE_400,
                 "Could not add parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
         }
 
-        TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
+        TopologyNodePtr parentPhysicalNode = topologyManagerService->findNodeWithId(parentId);
         if (!parentPhysicalNode) {
             return errorHandler->handleError(
                 Status::CODE_400,
@@ -217,7 +214,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
             currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
             if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-                NES::Spatial::Index::Experimental::Location location = *currentNode->getWaypoint()->getLocation();
+                NES::Spatial::DataTypes::Experimental::GeoLocation location = *currentNode->getWaypoint()->getLocation();
                 auto locationInfo = nlohmann::json{};
                 if (location.isValid()) {
                     locationInfo["latitude"] = location.getLatitude();
@@ -252,7 +249,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         return topologyJson;
     }
 
-    TopologyPtr topology;
+    TopologyManagerServicePtr topologyManagerService;
     ErrorHandlerPtr errorHandler;
 };
 }//namespace Controller

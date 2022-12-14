@@ -21,7 +21,7 @@
 namespace NES::Spatial {
 
 namespace DataTypes::Experimental {
-class Location;
+class GeoLocation;
 }
 
 namespace Util {
@@ -36,14 +36,14 @@ class S2Utilities {
      * @param location the location object
      * @return an s2 point representing the location as the input object
      */
-    static S2Point locationToS2Point(NES::Spatial::DataTypes::Experimental::Location location);
+    static S2Point geoLocationToS2Point(NES::Spatial::DataTypes::Experimental::GeoLocation location);
 
     /**
      * Converts an s2 point to a location object
      * @param point the s2 point
      * @return a location object representing the some location as the input object
      */
-    static NES::Spatial::DataTypes::Experimental::Location s2pointToLocation(S2Point point);
+    static NES::Spatial::DataTypes::Experimental::GeoLocation s2pointToLocation(S2Point point);
 };
 }// namespace Util
 }// namespace NES::Spatial

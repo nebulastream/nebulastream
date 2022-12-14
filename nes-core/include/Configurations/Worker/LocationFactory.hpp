@@ -20,8 +20,7 @@
 #include <string>
 
 namespace NES::Spatial::DataTypes::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+class GeoLocation;
 }// namespace NES::Spatial::DataTypes::Experimental
 
 namespace NES::Configurations::Spatial::Index::Experimental {
@@ -29,14 +28,14 @@ namespace NES::Configurations::Spatial::Index::Experimental {
 class LocationFactory {
 
   public:
+
     /**
      * @brief obtains a Geographical location objects by parsing string coordinates
      * @param str: Coordinate string in the format "<lat, lng>"
      * @return A geographical location with the coordinates from the string, or <200, 200> (representing invalid Coordinates)
      * if the string was empty
      */
-
-    static NES::Spatial::DataTypes::Experimental::Location
+    static NES::Spatial::DataTypes::Experimental::GeoLocation
     createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
@@ -45,7 +44,7 @@ class LocationFactory {
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */
-    static NES::Spatial::DataTypes::Experimental::Location createFromYaml(Yaml::Node& yamlConfig);
+    static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Spatial::Index::Experimental
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_

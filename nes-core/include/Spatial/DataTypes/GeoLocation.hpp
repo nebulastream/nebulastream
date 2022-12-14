@@ -16,10 +16,13 @@
 
 #include <string>
 
-class GeoLocation;
-
 namespace NES {
 namespace Spatial {
+
+namespace Protobuf {
+class GeoLocation;
+}
+
 namespace DataTypes {
 namespace Experimental {
 
@@ -27,13 +30,13 @@ namespace Experimental {
 * @brief a representation of geographical location used to specify the fixed location of field nodes
 * and the changing location of mobile devices
 */
-class Location {
+class GeoLocation {
 
   public:
     /**
      * @brief the default constructor which constructs an object with lat=200 and lng=200 which represents an invalid location
      */
-    Location();
+    GeoLocation();
 
     /**
      * @brief constructs a Geographical location from latitude and longitude in degrees
@@ -41,42 +44,21 @@ class Location {
      * @param latitude: geographical latitude in degrees [-90, 90]
      * @param longitude: geographical longitude in degrees [-180, 180]
      */
-    Location(double latitude, double longitude);
-
-    Location(Location&&) = default;
+    GeoLocation(double latitude, double longitude);
 
     /**
      * @brief constructs a Geographicala location object from a Coordinates object used as members of protobuf messages
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param geoLocation: the coordinate object
      */
-    explicit Location(const GeoLocation& geoLocation);
-
-    /**
-     * @brief constructs a Geographical location from a tuple of doubles
-     * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
-     * @param coordTuple: a tuple of doubles in the format <lat, lng>
-     */
-    explicit Location(std::tuple<double, double> coordTuple);
-
-    /**
-     * @brief creates a tuple of doubles containing latitude and longitude of the location
-     * @return a tuple in the format <lat, lng>
-     */
-    explicit operator std::tuple<double, double>();
-
-    /**
-     * @brief creates a protobuf Coordinate object containing the latitude and longitude allowing
-     * @return a Coordinates object containing the locations latitude and longitude
-     */
-    explicit operator GeoLocation() const;
+    explicit GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation);
 
     /**
      * @brief compares two GeographicalLocations and checks if they represent the same point on the map
      * @param other: the object to compare to
      * @return true both objects have the same latitude and longitude. false otherwise
      */
-    bool operator==(const Location& other) const;
+    bool operator==(const GeoLocation& other) const;
 
     /**
      * @brief getter for the latitude
@@ -109,7 +91,7 @@ class Location {
      * @param coordinates: string of the format "<latitude>, <longitude>"
      * @return a Location object
      */
-    static Location fromString(const std::string& coordinates);
+    static GeoLocation fromString(const std::string&& coordinates);
 
     /**
      * @brief checks if the a pair of doubles represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)

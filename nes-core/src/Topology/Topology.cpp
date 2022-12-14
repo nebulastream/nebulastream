@@ -14,7 +14,7 @@
 
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -25,7 +25,7 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), locationIndex(std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>()) {}
+Topology::Topology() : rootNode(nullptr) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -62,9 +62,6 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        if (nodeToRemove->getSpatialNodeType() == NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
-            locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
-        }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
         return true;
@@ -602,6 +599,4 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     }
     return nullptr;
 }
-
-NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() { return locationIndex; }
 }// namespace NES
