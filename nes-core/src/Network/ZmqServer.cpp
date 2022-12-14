@@ -309,6 +309,11 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
                     buffer.setSequenceNumber(bufferHeader->sequenceNumber);
+                    auto now = std::chrono::system_clock::now();
+                    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+                    auto epoch = now_ms.time_since_epoch();
+                    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+                    buffer.setCreationTimestamp(bufferHeader->creationTimestamp - value.count());
 
                     exchangeProtocol.onBuffer(*nesPartition, buffer);
                     break;
