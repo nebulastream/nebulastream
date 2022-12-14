@@ -456,7 +456,7 @@ message SerializableOperator{
 
     message ThresholdWindow {
       SerializableExpression predicate = 1;
-      uint32 miniumCount = 2;
+      uint32 minimumCount = 2;
     }
 
     message Aggregation {

@@ -56,11 +56,11 @@ class AndOperatorTest : public Testing::NESBaseTest {
     }
 
     string removeRandomKey(string contentString) {
-        std::regex r2("cep_rightkey([0-9]+)");
-        contentString = std::regex_replace(contentString, r2, "cep_rightkey");
+        std::regex r2("cep_rightKey([0-9]+)");
+        contentString = std::regex_replace(contentString, r2, "cep_rightKey");
 
         uint64_t start = contentString.find("|QnV1QnV2$start:UINT64");
-        uint64_t end = contentString.find("QnV2$cep_rightkey:INT32|\n");
+        uint64_t end = contentString.find("QnV2$cep_rightKey:INT32|\n");
         // Repeat till end is reached
         while (start != std::string::npos) {
             // Replace this occurrence of Sub String
@@ -142,8 +142,6 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
-    NES_INFO("AndOperatorTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk1 = wrk1->stop(true);
@@ -221,8 +219,6 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
