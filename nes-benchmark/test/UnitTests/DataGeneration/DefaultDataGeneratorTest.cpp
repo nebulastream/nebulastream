@@ -105,7 +105,6 @@ namespace NES::Benchmark::DataGeneration {
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
-            // can't access private allocateBuffer() function
             Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
 
             auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
