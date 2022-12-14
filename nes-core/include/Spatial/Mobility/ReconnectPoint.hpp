@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
 
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -25,7 +25,7 @@ namespace NES::Spatial::Mobility::Experimental {
  * the location where the device is expected to be located at the time of reconnect
  */
 struct ReconnectPoint {
-    NES::Spatial::DataTypes::Experimental::Location predictedReconnectLocation;
+    NES::Spatial::DataTypes::Experimental::GeoLocation predictedReconnectLocation;
     ReconnectPrediction reconnectPrediction;
 };
 }// namespace NES::Spatial::Mobility::Experimental

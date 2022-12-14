@@ -49,7 +49,6 @@ using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}// namespace Spatial::Index::Experimental
 
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
@@ -71,7 +70,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService,
-                                  NES::Spatial::Index::Experimental::LocationServicePtr locationService);
+                                  LocationServicePtr locationService);
 
     /**
      * @brief RPC Call to register a monitoring plan at the monitoring manager
@@ -301,7 +300,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     QueryCatalogServicePtr queryCatalogService;
     Monitoring::MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
-    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    LocationServicePtr locationService;
 };
 }// namespace NES
 

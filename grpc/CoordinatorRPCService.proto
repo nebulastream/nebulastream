@@ -135,8 +135,8 @@ message RegisterWorkerRequest {
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
   SerializableRegistrationMetrics registrationMetrics = 5;
-  GeoLocation geoLocation = 6;
-  SpatialType spatialType = 7;
+  NES.Spatial.Protobuf.Waypoint waypoint = 6;
+  NES.Spatial.Protobuf.SpatialType spatialType = 7;
   bool tfSupported = 8;
   bool javaUDFSupported = 9;
 }
@@ -226,7 +226,7 @@ message RemoveParentReply {
 }
 
 message GetNodesInRangeRequest {
-  GeoLocation geoLocation = 1;
+  NES.Spatial.Protobuf.GeoLocation geoLocation = 1;
   double radius = 2;
 }
 
@@ -251,12 +251,12 @@ message EpochBarrierPropagationReply{
   bool success = 1;
 }
 message GetNodesInRangeReply{
-  repeated WorkerLocationInfo nodes = 1;
+  repeated NES.Spatial.Protobuf.WorkerLocationInfo nodes = 1;
 }
 
 message SendScheduledReconnectRequest {
   uint64 deviceId = 1;
-  SerializableReconnectPrediction reconnect = 2;
+  NES.Spatial.Protobuf.SerializableReconnectPrediction reconnect = 2;
 }
 
 message SendScheduledReconnectReply {
@@ -265,8 +265,7 @@ message SendScheduledReconnectReply {
 
 message LocationUpdateRequest {
   uint64 workerId = 1;
-  GeoLocation geoLocation = 2;
-  uint64 time = 3;
+  NES.Spatial.Protobuf.Waypoint waypoint = 2;
 }
 
 message LocationUpdateReply {

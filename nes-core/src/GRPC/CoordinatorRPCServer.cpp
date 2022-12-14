@@ -25,7 +25,7 @@
 #include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,7 +38,7 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService,
-                                           NES::Spatial::Index::Experimental::LocationServicePtr locationService)
+                                           LocationServicePtr locationService)
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
       locationService(locationService){};
@@ -54,14 +54,12 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     auto slots = registrationRequest->numberofslots();
     //construct worker property from the request
     std::map<std::string, std::any> workerProperties;
-    workerProperties[NES::Worker::Properties::MAINTENANCE] = false; //During registration, we assume the node is not under maintenance
+    workerProperties[NES::Worker::Properties::MAINTENANCE] =
+        false;//During registration, we assume the node is not under maintenance
     workerProperties[NES::Worker::Configuration::TENSORFLOW_SUPPORT] = registrationRequest->tfsupported();
     workerProperties[NES::Worker::Configuration::JAVA_UDF_SUPPORT] = registrationRequest->javaudfsupported();
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(registrationRequest->spatialtype());
-    NES::Spatial::Index::Experimental::Location location(registrationRequest->geolocation().lat(),
-                                                         registrationRequest->geolocation().lng());
-    workerProperties[NES::Worker::Properties::LOCATION] = location;
 
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
     uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
@@ -364,7 +362,7 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
                                                    request->radius());
 
     for (auto elem : inRange) {
-        WorkerLocationInfo* workerInfo = reply->add_nodes();
+        NES::Spatial::Protobuf::WorkerLocationInfo* workerInfo = reply->add_nodes();
         workerInfo->set_id(elem.first);
         workerInfo->set_allocated_geolocation(new GeoLocation{elem.second});
     }
@@ -434,7 +432,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
-    const SerializableReconnectPrediction& reconnectPoint = request->reconnect();
+    auto reconnectPoint = request->reconnect();
     const NES::Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
     bool success = locationService->updatePredictedReconnect(request->deviceid(), prediction);
     reply->set_success(success);
@@ -446,10 +444,11 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
-    auto coordinates = request->geolocation();
+    auto coordinates = request->waypoint().geolocation();
+    auto timestamp = request->waypoint().timestamp();
     NES_DEBUG("Coordinator received location update from node with id "
-              << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
-              << request->time());
+              << request->workerid() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
+              << timestamp);
     //todo #2862: update coordinator trajectory prediction
     reply->set_success(true);
     return Status::OK;

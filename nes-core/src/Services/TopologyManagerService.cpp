@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
@@ -28,7 +29,9 @@
 
 namespace NES {
 
-TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(std::move(topology)) {
+TopologyManagerService::TopologyManagerService(TopologyPtr topology,
+                                               NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex)
+    : topology(std::move(topology)), locationIndex(std::move(locationIndex)) {
     NES_DEBUG("TopologyManagerService()");
 }
 
@@ -73,23 +76,6 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    auto newNodeGeoLocation = newTopologyNode->getWaypoint().getLocation();
-
-    if (newNodeGeoLocation.isValid()
-        && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: " << newNodeGeoLocation.getLatitude() << ", "
-                                                            << newNodeGeoLocation.getLongitude());
-        topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, newNodeGeoLocation);
-    } else {
-        NES_DEBUG("added node is a non field node");
-        if (newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-            topology->getLocationIndex()->addMobileNode(newTopologyNode);
-            NES_DEBUG("added node is a mobile node");
-        } else {
-            NES_DEBUG("added node is a non mobile node");
-        }
-    }
-
     if (healthCheckService) {
         //add node to health check
         healthCheckService->addNodeToHealthCheck(newTopologyNode);
@@ -115,8 +101,6 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         //remove node to health check
         healthCheckService->removeNodeFromHealthCheck(physicalNode);
     }
-
-    topology->getLocationIndex()->removeNodeFromSpatialIndex(physicalNode);
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
@@ -214,25 +198,48 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
-std::vector<std::pair<TopologyNodePtr, Spatial::DataTypes::Experimental::Location>>
-TopologyManagerService::getNodesInRange(Spatial::DataTypes::Experimental::Location center, double radius) {
-    return topology->getLocationIndex()->getNodesInRange(center, radius);
-}
-
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>>
-TopologyManagerService::getNodesIdsInRange(Spatial::DataTypes::Experimental::Location center, double radius) {
-    auto list = getNodesInRange(center, radius);
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>> nodeIDsInRange{};
-    nodeIDsInRange.reserve(list.size());
-    for (auto elem : list) {
-        nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));
-    }
-    return nodeIDsInRange;
+std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
+TopologyManagerService::getNodesIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius) {
+    return locationIndex->getNodeIdsInRange(center, radius);
 }
 
 TopologyNodePtr TopologyManagerService::getRootNode() { return topology->getRoot(); }
 
 bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return topology->removePhysicalNode(nodeToRemove);
+}
+
+bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
+                                               NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+
+    auto topologyNode = topology->findNodeWithId(topologyNodeId);
+    if (!topologyNode) {
+        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        return false;
+    }
+
+    if (geoLocation.isValid()
+        && topologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
+        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
+        locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+    } else {
+        NES_DEBUG("added node is a non field node");
+        if (topologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
+            locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
+            NES_DEBUG("added node is a mobile node");
+        } else {
+            NES_DEBUG("added node is a non mobile node");
+        }
+    }
+    return true;
+}
+
+bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
+    auto topologyNode = topology->findNodeWithId(topologyNodeId);
+    if (!topologyNode) {
+        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        return false;
+    }
+    return locationIndex->removeNodeFromSpatialIndex(topologyNode);
 }
 }// namespace NES

@@ -193,7 +193,7 @@ ___
 
 To get all queryIdAndCatalogEntryMapping registered at NebulaStream.
 
-**API**: /sourceCatalog/allLogicalSource\
+**API**: /sourceCatalogServicePtr/allLogicalSource\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -211,7 +211,7 @@ To get all queryIdAndCatalogEntryMapping registered at NebulaStream.
 
 To get all physical sources for a given logical source.
 
-**API**: /sourceCatalog/allPhysicalSource\
+**API**: /sourceCatalogServicePtr/allPhysicalSource\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -226,7 +226,7 @@ To get all physical sources for a given logical source.
 ### Add Logical Source
 To add a logical source.
 
-**API**: /sourceCatalog/addLogicalSource\
+**API**: /sourceCatalogServicePtr/addLogicalSource\
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -241,7 +241,7 @@ To add a logical source.
 
 To add a logical source as a protobuf Object:
 
-**API**: /sourceCatalog/addLogicalSource-ex \
+**API**: /sourceCatalogServicePtr/addLogicalSource-ex \
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -256,7 +256,7 @@ A Protobuf encoded source name and schema.
 ### Update Logical Source
 To Update a logical source.
 
-**API**: /sourceCatalog/updateLogicalSource\
+**API**: /sourceCatalogServicePtr/updateLogicalSource\
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -273,7 +273,7 @@ To Update a logical source.
 
 To delete a logical source.
 
-**API**: /sourceCatalog/deleteLogicalSource\
+**API**: /sourceCatalogServicePtr/deleteLogicalSource\
 **Verb**: DELETE\
 **Response Code**: 200 OK
 
