@@ -122,10 +122,9 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        auto int8FieldType = Int8((int8_t)fieldType->size());
 
         entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef->add(int8FieldType);
+        entryMemRef = entryMemRef + fieldType->size();
     }
 
 }
