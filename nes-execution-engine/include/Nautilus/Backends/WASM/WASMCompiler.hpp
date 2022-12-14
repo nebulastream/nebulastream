@@ -46,14 +46,23 @@
 namespace NES::Nautilus::Backends::WASM {
 
 class WASMCompiler {
-  public:
-    WASMCompiler();
-    std::pair<size_t, char*> lower(const std::shared_ptr<IR::IRGraph>& ir);
-
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
     using BlockExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using ProxyFunctions = Mapping<std::string, std::vector<BinaryenType>>;
+
+  public:
+    WASMCompiler();
+    std::pair<size_t, char*> lower(const std::shared_ptr<IR::IRGraph>& ir);
+
+    std::vector<std::string> getProxyFunctionNames() {
+        std::vector<std::string> proxyFunctionNames;
+        for (const auto& proxyName : proxyFunctions.getMapping()) {
+            proxyFunctionNames.push_back(proxyName.first);
+        }
+        return proxyFunctionNames;
+    };
+
   private:
     /**
      * Binaryen module which generates the final wasm binary code
@@ -97,6 +106,9 @@ class WASMCompiler {
      * return types as value => {param_1, ..., param_n, return}
      */
     ProxyFunctions proxyFunctions;
+
+    const char* memoryName = "memory";
+    const char* proxyFunctionModule = "ProxyFunction";
 
     int index;
     int argIndex;

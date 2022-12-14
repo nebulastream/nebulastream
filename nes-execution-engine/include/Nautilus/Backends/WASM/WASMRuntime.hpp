@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_WASM_WASMRUNTIME_HPP_
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_WASM_WASMRUNTIME_HPP_
 
+#include <binaryen-c.h>
 #include <wasmtime.hh>
 #include <wasm.h>
 
@@ -22,27 +23,25 @@ namespace NES::Nautilus::Backends::WASM {
 class WASMRuntime {
   public:
     WASMRuntime();
-    void setup();
+    void setup(const std::vector<std::string>& proxyFunctions);
     void run(size_t binaryLength, char *queryBinary);
 
   private:
-    //wasmtime::Engine engine;
-    /*
-    wasm_engine_t *engine;
-    wasmtime_store_t *store;
-    wasmtime_context_t *context;
-    wasmtime_error_t *error;
-    wasm_trap_t *trap;
-    wasi_config_t *wasiConfig;
-    */
-    const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-    //wasmtime_instance_t queryInstance;
-    //wasmtime_linker_t *linker;
-    const char queryEntryName[8] = "execute";
-    //const char cpythonEntryName[7] = "_start";
+    wasmtime::Engine engine;
+    wasmtime::Linker linker;
+    wasmtime::Store store;
+    wasmtime::WasiConfig wasi;
 
+    const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
+    std::string proxyFunctionModule = "ProxyFunction";
+
+    void linkHostFunction(const std::string& proxyFunction);
     std::string parseWASMFile(const char* fileName);
     void prepareCPython();
+    void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName);
+    void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
+    void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
+    void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
 };
 
 }// namespace NES::Nautilus::Backends::WASM

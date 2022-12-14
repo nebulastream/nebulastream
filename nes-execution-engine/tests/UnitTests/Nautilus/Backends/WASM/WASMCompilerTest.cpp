@@ -24,24 +24,24 @@
 
 namespace NES::Nautilus {
 
-class WASMExpressionTest : public testing::Test {
+class WASMCompilerTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     Nautilus::Backends::WASM::WASMCompiler wasmCompiler;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("WASMExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup WASMExpressionTest test class." << std::endl;
+        NES::Logger::setupLogging("WASMCompilerTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup WASMCompilerTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup WASMExpressionTest test case." << std::endl; }
+    void SetUp() override { std::cout << "Setup WASMCompilerTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down WASMExpressionTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down WASMCompilerTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down WASMExpressionTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down WASMCompilerTest test class." << std::endl; }
 };
 
 Value<> int32AddExpression() {
@@ -50,7 +50,7 @@ Value<> int32AddExpression() {
     return x + y;
 }
 
-TEST_F(WASMExpressionTest, addIntFunctionTest) {
+TEST_F(WASMCompilerTest, addIntFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return int32AddExpression();
     });
@@ -73,7 +73,7 @@ Value<> int32SubExpression() {
     return x - y;
 }
 
-TEST_F(WASMExpressionTest, subIntFunctionTest) {
+TEST_F(WASMCompilerTest, subIntFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return int32SubExpression();
     });
@@ -92,7 +92,7 @@ Value<> int32MulExpression() {
     return x * y;
 }
 
-TEST_F(WASMExpressionTest, mulIntFunctionTest) {
+TEST_F(WASMCompilerTest, mulIntFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return int32MulExpression();
     });
@@ -111,7 +111,7 @@ Value<> int32DivExpression() {
     return x / y;
 }
 
-TEST_F(WASMExpressionTest, divIntFunctionTest) {
+TEST_F(WASMCompilerTest, divIntFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return int32DivExpression();
     });
@@ -129,7 +129,7 @@ Value<> int32AddArgsExpression(Value<Int32> x) {
     return x + y;
 }
 
-TEST_F(WASMExpressionTest, addInt32ArgsFunctionTest) {
+TEST_F(WASMCompilerTest, addInt32ArgsFunctionTest) {
     Value<Int32> tempx = (int32_t) 1;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -149,7 +149,7 @@ Value<> int64AddArgsExpression(Value<Int64> x) {
     return x + y;
 }
 
-TEST_F(WASMExpressionTest, addInt64ArgsFunctionTest) {
+TEST_F(WASMCompilerTest, addInt64ArgsFunctionTest) {
     Value<Int64> tempx = (int64_t) 1;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -170,7 +170,7 @@ Value<> booleanOrExpression() {
     return x || y;
 }
 
-TEST_F(WASMExpressionTest, orBooleanFunctionTest) {
+TEST_F(WASMCompilerTest, orBooleanFunctionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
         return booleanOrExpression();
     });
@@ -188,7 +188,7 @@ Value<> floatDivArgsExpression(Value<Float> x) {
     return x / y;
 }
 
-TEST_F(WASMExpressionTest, divFloatFunctionTest) {
+TEST_F(WASMCompilerTest, divFloatFunctionTest) {
     Value<Float> tempx = 10.7f;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createFloatStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -208,7 +208,7 @@ Value<> int32GTExpression(Value<Int32> x) {
     return x > y;
 }
 
-TEST_F(WASMExpressionTest, gtInt32FunctionTest) {
+TEST_F(WASMCompilerTest, gtInt32FunctionTest) {
     Value<Int32> tempx = 10;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -231,7 +231,7 @@ Value<> ifExpression(Value<Int32> x) {
     return y;
 }
 
-TEST_F(WASMExpressionTest, ifFunctionTest) {
+TEST_F(WASMCompilerTest, ifFunctionTest) {
     Value<Int32> tempx = 11;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -256,7 +256,7 @@ Value<> ifExpression2(Value<Int32> x) {
     return y + z;
 }
 
-TEST_F(WASMExpressionTest, ifFunction2Test) {
+TEST_F(WASMCompilerTest, ifFunction2Test) {
     Value<Int32> tempx = 11;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -281,7 +281,7 @@ Value<> ifElseExpression(Value<Int32> x) {
     return y;
 }
 
-TEST_F(WASMExpressionTest, ifElseFunctionTest) {
+TEST_F(WASMCompilerTest, ifElseFunctionTest) {
     Value<Int32> tempx = 11;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -306,7 +306,7 @@ Value<> ifElseIfExpression(Value<Int32> x) {
     return y;
 }
 
-TEST_F(WASMExpressionTest, ifElseIfFunctionTest) {
+TEST_F(WASMCompilerTest, ifElseIfFunctionTest) {
     Value<Int32> tempx = 4;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -328,7 +328,7 @@ Value<> loopExpression(Value<Int32> x) {
     return y;
 }
 
-TEST_F(WASMExpressionTest, loopFunctionTest) {
+TEST_F(WASMCompilerTest, loopFunctionTest) {
     Value<Int32> tempx = 5;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
@@ -339,11 +339,12 @@ TEST_F(WASMExpressionTest, loopFunctionTest) {
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasm = wasmCompiler.lower(ir);
-
-    //auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
-    //engine->setup();
-    //engine->run(wasm.first, wasm.second);
+    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
+    auto wasm = wasmCompiler->lower(ir);
+    auto proxies = wasmCompiler->getProxyFunctionNames();
+    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    engine->setup(proxies);
+    engine->run(wasm.first, wasm.second);
 }
 
 Value<> tmpExpression(Value<Int32> y) {
@@ -355,7 +356,7 @@ Value<> tmpExpression(Value<Int32> y) {
     return *x;
 }
 
-TEST_F(WASMExpressionTest, tmpExpressionTest) {
+TEST_F(WASMCompilerTest, tmpExpressionTest) {
     Value<Int32> tempx = 6;
     tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {

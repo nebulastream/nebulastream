@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Types/FloatStamp.hpp>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include "Nautilus/IR/Types/BooleanStamp.hpp"
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
@@ -23,8 +24,10 @@ namespace NES::Nautilus::Backends::WASM {
 WASMCompiler::WASMCompiler() = default;
 
 std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
-    BinaryenSetColorsEnabled(true);
     wasm = BinaryenModuleCreate();
+    BinaryenSetColorsEnabled(true);
+    //BinaryenModuleSetFeatures(wasm, BinaryenFeatureMemory64());
+
     relooper = RelooperCreate(wasm);
     consumed.clear();
     index = 0;
@@ -34,10 +37,10 @@ std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>&
 
     BinaryenModuleAutoDrop(wasm);
     if (!BinaryenModuleValidate(wasm)) {
-        std::cout << "Generated pre-optimized wasm is incorrect!" << std::endl;
+        NES_ERROR("Generated pre-optimized wasm is incorrect!");
     }
     BinaryenModulePrintStackIR(wasm, false);
-    std::cout << "---- Optimized WASM ----" << std::endl;
+    std::cout << "------ Optimized WASM ------" << std::endl;
     BinaryenModuleOptimize(wasm);
     BinaryenModulePrintStackIR(wasm, false);
     static char result[2048];
@@ -58,8 +61,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
                 args.push_back(BinaryenTypeInt32());
                 argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt32());
             }
-        } else {
-            auto floatStamp = cast_if<IR::Types::FloatStamp>(inputArg->getStamp().get());
+        } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(inputArg->getStamp().get())) {
             if (floatStamp->getBitWidth() == IR::Types::FloatStamp::F64) {
                 args.push_back(BinaryenTypeFloat64());
                 argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeFloat64());
@@ -67,6 +69,11 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
                 args.push_back(BinaryenTypeFloat32());
                 argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeFloat32());
             }
+        } else {
+            //TODO: arg is ptr
+            //std::cout << "IS POINTER? " << inputArg->getStamp()->isAddress() << std::endl;
+            args.push_back(BinaryenTypeInt64());
+            argExpression = BinaryenLocalGet(wasm, argIndex, BinaryenTypeInt64());
         }
         localVarMapping.setValue(inputArg->getIdentifier(), argExpression);
         bodyList.setValue(inputArg->getIdentifier(), argExpression);
@@ -76,15 +83,18 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
 
     generateWASM(functionOp->getFunctionBasicBlock(), bodyList);
 
-    //Add function args
+    /**
+     * Add function args
+     */
     auto argsArray = std::make_unique<BinaryenType[]>(args.size());
     int j = 0;
     for (const auto& x : args) {
         argsArray[j] = x;
         j++;
     }
-
-    //Extract variables and set them as locals
+    /**
+     * Extract variables and set them as locals
+     */
     auto varArray = std::make_unique<BinaryenType[]>(localVariables.size());
     int k = 0;
     for (const auto& x : localVariables.getMapping()) {
@@ -95,20 +105,21 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
     /**
      * Adding imports for proxy functions here
      */
-    BinaryenAddFunctionImport(wasm, "_start", "cpython", "_start", BinaryenTypeNone(), BinaryenTypeNone());
-    BinaryenAddFunctionImport(wasm, "yolo", "yolo", "yolo", BinaryenTypeNone(), BinaryenTypeNone());
-    for (const auto& proxyFunction : proxyFunctions.getMapping()) {
-        auto proxyName = proxyFunction.first.c_str();
+    auto proxies = proxyFunctions.getMapping();
+    for (const auto& proxyFunction : proxies) {
+        auto proxyName = proxyFunction.first;
+        //std::cout << "Proxies detected: " << proxyName << std::endl;
         auto types = proxyFunction.second;
         auto returnType = types.back();
         types.pop_back();
         BinaryenType params = BinaryenTypeCreate(types.data(), types.size());
-        BinaryenAddFunctionImport(wasm, proxyName, proxyName, proxyName, params, returnType);
+        BinaryenAddFunctionImport(wasm, proxyName.c_str(), proxyFunctionModule, proxyName.c_str(), params, returnType);
+        types.push_back(returnType);
     }
     /**
      * Memory stuff here, extract it later on
      */
-    BinaryenSetMemory(wasm, 1, 2, "mem", nullptr, nullptr, nullptr, nullptr, 0, false, false, "0");
+    BinaryenSetMemory(wasm, 64, 64, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, false, memoryName);
 
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), j);
     BinaryenExpressionRef body = generateBody();
@@ -116,7 +127,6 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
                         getBinaryenType(functionOp->getOutputArg()),
                         varArray.get(), index, body);
     BinaryenAddFunctionExport(wasm, functionOp->getName().c_str(), functionOp->getName().c_str());
-    //BinaryenSetStart(wasm, function);
 }
 
 void WASMCompiler::generateWASM(const IR::BasicBlockPtr& basicBlock, BinaryenExpressions& expressions) {
@@ -227,20 +237,29 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoopOperat
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddressOperation>& addressOp, BinaryenExpressions& expressions) {
+    std::cout << "ADDRESS\n";
     auto x = addressOp->toString();
     auto y = expressions.size();
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp, BinaryenExpressions& expressions) {
-    auto x = loadOp->toString();
-    auto y = expressions.size();
+    auto x = loadOp->getIdentifier();
+    auto z = loadOp->getAddress()->getIdentifier();
+    auto ptr = expressions.getValue(z);
+
+    auto y = BinaryenLoad(wasm, 8, false, 0, 0, BinaryenTypeInt32(), ptr, memoryName);
+    consumed.emplace(z, ptr);
+    expressions.setValue(x, y);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp, BinaryenExpressions& expressions) {
     auto value = expressions.getValue(storeOp->getValue()->getIdentifier());
     auto address = expressions.getValue(storeOp->getAddress()->getIdentifier());
-    auto y = expressions.size();
-    auto x = storeOp->toString();
+    auto storeExpression = BinaryenStore(wasm, 8, 0, 0, address, value, BinaryenExpressionGetType(value), memoryName);
+
+    consumed.emplace(storeOp->getValue()->getIdentifier(), value);
+    consumed.emplace(storeOp->getAddress()->getIdentifier(), address);
+    expressions.setValue("", storeExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstIntOperation>& constIntOp, BinaryenExpressions& expressions) {
@@ -353,19 +372,27 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::DivOperati
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ProxyCallOperation>& proxyCallOp, BinaryenExpressions& expressions) {
-    auto proxyCallName = proxyCallOp->getIdentifier();
-    std::cout << "Proxy function: " << proxyCallName << std::endl;
+    auto proxyCallId = proxyCallOp->getIdentifier();
+    auto proxyCallName = proxyCallOp->getFunctionSymbol();
     auto args = proxyCallOp->getInputArguments();
+    //std::cout << "Proxy function: " << proxyCallName << " Args: " << args.size() << std::endl;
     std::vector<BinaryenType> paramsAndReturnType;
+    std::vector<BinaryenExpressionRef> paramExpressions;
     for (const auto& arg : args) {
         auto paramType = getBinaryenType(arg->getStamp());
         paramsAndReturnType.push_back(paramType);
+        auto argId = arg->getIdentifier();
+        auto argExpression = expressions.getValue(argId);
+        paramExpressions.push_back(argExpression);
+        consumed.emplace(argId, argExpression);
     }
     auto returnType = getBinaryenType(proxyCallOp->getStamp());
+
     paramsAndReturnType.push_back(returnType);
+    auto proxyCall = BinaryenCall(wasm, proxyCallName.c_str(), paramExpressions.data(), paramExpressions.size(), returnType);
 
     proxyFunctions.setUniqueValue(proxyCallName, paramsAndReturnType);
-    expressions.setValue(proxyCallName, BinaryenCall(wasm, proxyCallName.c_str(), nullptr, 0, returnType));
+    expressions.setValue(proxyCallId, proxyCall);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::CompareOperation>& compareOp, BinaryenExpressions& expressions) {
@@ -461,7 +488,6 @@ BinaryenOp WASMCompiler::convertToFloat64Comparison(IR::Operations::CompareOpera
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ReturnOperation>& returnOp, BinaryenExpressions& expressions) {
-    expressions.setValue("cpython_call", BinaryenCall(wasm, "_start", nullptr, 0, BinaryenTypeNone()));
     BinaryenExpressionRef ret;
     if (!returnOp->hasReturnValue()) {
         ret = BinaryenReturn(wasm, nullptr);
@@ -495,8 +521,8 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOper
             localGet = localVarMapping.getValue(nextTrueArguments[i]->getIdentifier());
         }
         /**
-            * Create a new local variable which will be passed into the next block as a block argument
-            */
+         * Create a new local variable which will be passed into the next block as a block argument
+         */
         else {
             auto nextArgumentType = BinaryenExpressionGetType(expressions.getValue(currentTrueArguments[i]->getIdentifier()));
             localVariables.setUniqueValue(nextTrueArguments[i]->getIdentifier(), nextArgumentType);
@@ -621,6 +647,9 @@ void WASMCompiler::generateBasicBlock(IR::Operations::BasicBlockInvocation& bloc
 }
 
 BinaryenType WASMCompiler::getBinaryenType(const IR::Types::StampPtr& stampPtr) {
+    if (stampPtr->isVoid()) {
+        return BinaryenTypeNone();
+    }
     if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stampPtr.get())) {
         if (integerStamp->getBitWidth() == IR::Types::IntegerStamp::I64) {
             return BinaryenTypeInt64();
@@ -633,9 +662,12 @@ BinaryenType WASMCompiler::getBinaryenType(const IR::Types::StampPtr& stampPtr) 
         } else {
             return BinaryenTypeFloat32();
         }
-    } else {
+    } else if (auto boolStamp = cast_if<IR::Types::BooleanStamp>(stampPtr.get())) {
         //Return Boolean as Int32
         return BinaryenTypeInt32();
+    } else {
+        //pointer?
+        return BinaryenTypeInt64();
     }
 }
 
