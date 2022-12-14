@@ -84,9 +84,11 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
     NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
-    executablePipeline = std::async(std::launch::async, [this] {
+    // TODO enable async compilation
+    executablePipeline = std::async(std::launch::deferred, [this] {
                              return this->compilePipeline();
                          }).share();
+    executablePipeline.get();
     return 0;
 }
 
