@@ -537,7 +537,6 @@ class Query {
                    ExpressionItem onRightKey,
                    Windowing::WindowTypePtr const& windowType);
 
-
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
      * @brief: Creates a window aggregation.

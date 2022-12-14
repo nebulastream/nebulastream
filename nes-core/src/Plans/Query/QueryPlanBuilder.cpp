@@ -119,14 +119,14 @@ QueryPlanPtr QueryPlanBuilder::addJoinOperator(NES::QueryPlanPtr leftQueryPlan,
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
     auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
-                                                        rightQueryPlanKeyFieldAccess,
-                                                        windowType,
-                                                        distrType,
-                                                        triggerPolicy,
-                                                        triggerAction,
-                                                        1,
-                                                        1,
-                                                        joinType);
+                                                              rightQueryPlanKeyFieldAccess,
+                                                              windowType,
+                                                              distrType,
+                                                              triggerPolicy,
+                                                              triggerAction,
+                                                              1,
+                                                              1,
+                                                              joinType);
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
@@ -211,4 +211,4 @@ std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(NES
     }
     return expression->as<FieldAccessExpressionNode>();
 }
-}
+}// namespace NES

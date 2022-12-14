@@ -223,7 +223,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
     return true;
 }
 
-std::string Util::updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed){
+std::string Util::updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed) {
     //Update the Source names by sorting and then concatenating the source names from the sub query plan
     std::vector<std::string> sourceNames;
     sourceNames.emplace_back(subQueryPlanSourceConsumed);
