@@ -2150,6 +2150,7 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
     Monitoring::CpuMetricsWrapper parsedValues{};
     parsedValues.readFromBuffer(buf.value(), 0);
     ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
+    ASSERT_EQ(parsed.Values.size(), numCpuMetrics - 1);
 }
 
 }// namespace NES
