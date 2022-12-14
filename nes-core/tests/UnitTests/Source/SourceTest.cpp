@@ -2125,7 +2125,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
 }
 
-TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanTuple) {
+TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
     // create metrics and plan for MonitoringSource
     auto testCollector = std::make_shared<Monitoring::CpuCollector>();
     auto cpuMetrics = testCollector->readMetric()->getValue<Monitoring::CpuMetricsWrapper>();
@@ -2134,7 +2134,7 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanTuple) {
 
 
     auto schema = Monitoring::CpuMetrics::getSchema("");
-    auto bufferSize = numCpuMetrics - 1;
+    auto bufferSize = (numCpuMetrics - 1) * schema->getSchemaSizeInBytes();
 
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 12);
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value(); // MetricCollectorTest.cpp l. 80
@@ -2150,6 +2150,10 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanTuple) {
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
     auto buf = monitoringDataSource.receiveData();
+
+    Monitoring::CpuMetricsWrapper parsedValues{};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_TRUE(MetricValidator::isValid(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
 }
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnceDiskConfiguration) {
