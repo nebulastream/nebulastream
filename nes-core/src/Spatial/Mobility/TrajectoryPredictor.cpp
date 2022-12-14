@@ -140,7 +140,7 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::LocationPtr cu
 
     //save the position of the update so we can check how far we have moved from there later on
     std::unique_lock positionAtUpdateLock(indexUpdatePositionMutex);
-    positionOfLastNodeIndexUpdate = Spatial::Util::S2Utilities::locationToS2Point(*currentLocation);
+    positionOfLastNodeIndexUpdate = Spatial::Util::S2Utilities::geoLocationToS2Point(*currentLocation);
     NES_TRACE("setting last index update position to " << currentLocation->toString())
     return true;
 #else
@@ -275,7 +275,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
         //check if we are connected to a parent with a knwon position of if we can connect to one
         if (currentParentLocation || reconnectToClosestNode(currentOwnLocation)) {
             //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
-            S1Angle currentDistFromParent(Spatial::Util::S2Utilities::locationToS2Point(*currentOwnLocation->getLocation()),
+            S1Angle currentDistFromParent(Spatial::Util::S2Utilities::geoLocationToS2Point(*currentOwnLocation->getLocation()),
                                           currentParentLocation.value());
 
             //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
@@ -284,7 +284,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             }
 
             if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
-                auto currentOwnPoint = Spatial::Util::S2Utilities::locationToS2Point(*currentOwnLocation->getLocation());
+                auto currentOwnPoint = Spatial::Util::S2Utilities::geoLocationToS2Point(*currentOwnLocation->getLocation());
 
                 //if the next expected parent is closer than the current one: reconnect
                 if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
@@ -344,7 +344,7 @@ bool TrajectoryPredictor::reconnectToClosestNode(const Index::Experimental::Wayp
     }
     S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
     query.mutable_options()->set_max_distance(defaultCoverageRadiusAngle);
-    S2ClosestPointQuery<int>::PointTarget target(Spatial::Util::S2Utilities::locationToS2Point(*ownLocation->getLocation()));
+    S2ClosestPointQuery<int>::PointTarget target(Spatial::Util::S2Utilities::geoLocationToS2Point(*ownLocation->getLocation()));
     auto closestNode = query.FindClosestPoint(&target);
     if (closestNode.is_empty()) {
         return false;
@@ -361,8 +361,8 @@ bool TrajectoryPredictor::updateAverageMovementSpeed() {
 #ifdef S2DEF
     //calculate the movement speed based on the locations and timestamps in the locationBuffer
     Timestamp bufferTravelTime = locationBuffer.back()->getTimestamp().value() - locationBuffer.front()->getTimestamp().value();
-    S1Angle bufferDistance(Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.front()->getLocation()),
-                           Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.back()->getLocation()));
+    S1Angle bufferDistance(Spatial::Util::S2Utilities::geoLocationToS2Point(*locationBuffer.front()->getLocation()),
+                           Spatial::Util::S2Utilities::geoLocationToS2Point(*locationBuffer.back()->getLocation()));
     double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
 
     //check if there is a speed difference which surpasses the threshold compared to the previously calculated speed
@@ -424,7 +424,7 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
     }
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
-    S2Point currentPoint = Util::S2Utilities::locationToS2Point(*currentLocation);
+    S2Point currentPoint = Util::S2Utilities::geoLocationToS2Point(*currentLocation);
     S1Angle distAngle = S2Earth::MetersToAngle(0);
 
     //if a predicted path exists, calculate how far the workers current location is from the path
@@ -440,7 +440,7 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
     if ((trajectoryLine && distAngle > pathDistanceDeltaAngle)
         || (!trajectoryLine && locationBuffer.size() == locationBufferSize)) {
         NES_DEBUG("updating trajectory");
-        S2Point oldPoint = Util::S2Utilities::locationToS2Point(*newPathStart);
+        S2Point oldPoint = Util::S2Utilities::geoLocationToS2Point(*newPathStart);
         auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
         //we need to extrapolate backwards as well to make sure, that triangulation still works even if covering nodes lie behind the device
         auto backwardsExtrapolation = S2::GetPointOnLine(currentPoint, oldPoint, defaultCoverageRadiusAngle * 2);
@@ -512,9 +512,9 @@ void TrajectoryPredictor::scheduleReconnects() {
     auto currentParentPathCoverageEnd = reconnectionPointTuple.first;
 
     //find the expected time of arrival at the end of coverage of our current parent
-    remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.back()->getLocation()),
-                            currentParentPathCoverageEnd)
-                        .degrees()
+    remainingTime =
+        S1Angle(Spatial::Util::S2Utilities::geoLocationToS2Point(*locationBuffer.back()->getLocation()), currentParentPathCoverageEnd)
+            .degrees()
         / bufferAverageMovementSpeed;
     auto endOfCoverageETA = locationBuffer.back()->getTimestamp().value() + remainingTime;
 
@@ -549,7 +549,7 @@ void TrajectoryPredictor::scheduleReconnects() {
                 nextReconnectLocationOnPath = coverageTuple.first;
                 reconnectParentId = result.data();
                 minimumUncoveredRemainingPathDistance = currentUncoveredRemainingPathDistance;
-                remainingTime = S1Angle(Spatial::Util::S2Utilities::locationToS2Point(*locationBuffer.back()->getLocation()),
+                remainingTime = S1Angle(Spatial::Util::S2Utilities::geoLocationToS2Point(*locationBuffer.back()->getLocation()),
                                         nextReconnectLocationOnPath)
                                     .degrees()
                     / bufferAverageMovementSpeed;

@@ -142,8 +142,7 @@ message GetLocationRequest {
 }
 
 message GetLocationReply {
-  GeoLocation geoLocation = 1;
-  uint64 timestamp = 2;
+  NES.Spatial.Protobuf.Waypoint geoLocation = 1;
 }
 
 message GetReconnectScheduleRequest {
@@ -151,7 +150,7 @@ message GetReconnectScheduleRequest {
 }
 
 message GetReconnectScheduleReply {
-  ReconnectSchedule schedule = 1;
+  NES.Spatial.Protobuf.ReconnectSchedule schedule = 1;
 }
 
 enum MlModelFileUploadStatus {

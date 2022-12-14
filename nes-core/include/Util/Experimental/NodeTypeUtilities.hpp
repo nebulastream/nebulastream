@@ -27,11 +27,11 @@ class NodeTypeUtilities {
   public:
     static Index::Experimental::SpatialType stringToNodeType(const std::string nodeTypeString);
 
-    static Index::Experimental::SpatialType protobufEnumToNodeType(SpatialType nodeType);
+    static Index::Experimental::SpatialType protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType nodeType);
 
     static std::string toString(Index::Experimental::SpatialType nodeType);
 
-    static SpatialType toProtobufEnum(Index::Experimental::SpatialType nodeType);
+    static NES::Spatial::Protobuf::SpatialType toProtobufEnum(Index::Experimental::SpatialType nodeType);
 };
 
 }// namespace NES::Spatial::Util

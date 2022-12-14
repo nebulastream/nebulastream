@@ -24,8 +24,7 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
 namespace Spatial::DataTypes::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+class GeoLocation;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Index::Experimental {
@@ -35,7 +34,7 @@ using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
 class LocationService {
   public:
-    explicit LocationService(TopologyPtr topology);
+    explicit LocationService(TopologyPtr topology, NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex);
 
     /**
      * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
@@ -108,7 +107,7 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, Spatial::Mobility::Experimental::ReconnectPrediction);
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, NES::Spatial::Mobility::Experimental::ReconnectPrediction);
 
   private:
     /**
@@ -120,7 +119,7 @@ class LocationService {
      *   <longitude>,
      * ]
      */
-    static nlohmann::json convertLocationToJson(Spatial::DataTypes::Experimental::Location&& location);
+    static nlohmann::json convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation&& location);
 
     /**
      * Use a node id and a Location to construct a Json representation containing these values.
@@ -135,9 +134,9 @@ class LocationService {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, Spatial::DataTypes::Experimental::Location&& loc);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation&& loc);
 
-    Spatial::Index::Experimental::LocationIndexPtr locationIndex;
+    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     TopologyPtr topology;
 };
 }// namespace NES

@@ -663,7 +663,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getWaypoint()->getLocation()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
         idCount++;
     }
 
@@ -730,7 +730,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
             query.mutable_options()->set_max_distance(
                 S2Earth::MetersToAngle(mobilityConfiguration1->nodeInfoDownloadRadius.getValue()));
             S2ClosestPointQuery<int>::PointTarget target(
-                NES::Spatial::Util::S2Utilities::locationToS2Point(*indexUpdatePosition));
+                NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*indexUpdatePosition));
             auto closestNodeList = query.FindClosestPoints(&target);
             ASSERT_GT(closestNodeList.size(), 1);
             if (closestNodeList.size(), wrk1->getTrajectoryPredictor()->getSizeOfSpatialIndex()) {
@@ -775,12 +775,12 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
             lastPredictedPathRetrievalTime = getTimestamp();
             if (pathStart && pathEnd) {
                 if (pathStart->isValid() && pathEnd->isValid()) {
-                    auto startPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStart);
-                    auto endPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEnd);
+                    auto startPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*pathStart);
+                    auto endPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*pathEnd);
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
-                    auto pathCurrentPosToWayPoint = S2Polyline(
-                        std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation->getLocation()),
-                                     NES::Spatial::Util::S2Utilities::locationToS2Point(*nextWaypoint.first)}));
+                    auto pathCurrentPosToWayPoint =
+                        S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*workerLocation->getLocation()),
+                                     NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*nextWaypoint.first)}));
                     waypointCovered[waypointCounter] =
                         lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
                 }
@@ -791,8 +791,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         auto pathEndNew = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getPathEnd();
         if (pathStartNew && pathEndNew) {
             if (pathStartNew->isValid() && pathEndNew->isValid()) {
-                auto startPointNew = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStartNew);
-                auto endPointNew = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEndNew);
+                auto startPointNew = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*pathStartNew);
+                auto endPointNew = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*pathEndNew);
                 auto pathNew = S2Polyline(std::vector({startPointNew, endPointNew}));
 
                 //if we once covered the waypoint, we expect the path not to change until the waypoint is reached
@@ -968,7 +968,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
         locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getWaypoint()->getLocation()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
         idCount++;
     }
 

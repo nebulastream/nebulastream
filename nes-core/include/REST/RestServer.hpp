@@ -48,6 +48,9 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+
 namespace Catalogs {
 
 namespace Source {
@@ -67,11 +70,6 @@ class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 }//namespace Experimental
 
-namespace Spatial::Index::Experimental {
-class LocationService;
-using LocationServicePtr = std::shared_ptr<LocationService>;
-}// namespace Spatial::Index::Experimental
-
 /**
  * @brief : This class is responsible for starting the REST server.
  */
@@ -87,18 +85,18 @@ class RestServer {
    * */
     RestServer(std::string host,
                uint16_t port,
-               const NesCoordinatorWeakPtr& coordinator,
-               const QueryCatalogServicePtr& queryCatalogService,
-               const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-               const TopologyPtr& topology,
-               const GlobalExecutionPlanPtr& globalExecutionPlan,
-               const QueryServicePtr& queryService,
-               const MonitoringServicePtr& monitoringService,
-               const NES::Experimental::MaintenanceServicePtr& maintenanceService,
-               const GlobalQueryPlanPtr& globalQueryPlan,
-               const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
-               const Runtime::BufferManagerPtr& bufferManager,
-               const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
+               NesCoordinatorWeakPtr coordinator,
+               QueryCatalogServicePtr queryCatalogService,
+               SourceCatalogServicePtr sourceCatalogService,
+               TopologyManagerServicePtr topologyManagerService,
+               GlobalExecutionPlanPtr globalExecutionPlan,
+               QueryServicePtr queryService,
+               MonitoringServicePtr monitoringService,
+               NES::Experimental::MaintenanceServicePtr maintenanceService,
+               GlobalQueryPlanPtr globalQueryPlan,
+               Catalogs::UDF::UdfCatalogPtr udfCatalog,
+               Runtime::BufferManagerPtr bufferManager,
+               LocationServicePtr locationServicePtr);
 
     /**
    * @brief method to start the rest server, calls run() internally
@@ -126,10 +124,10 @@ class RestServer {
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryServicePtr queryService;
     GlobalQueryPlanPtr globalQueryPlan;
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    TopologyPtr topology;
+    SourceCatalogServicePtr sourceCatalogService;
+    TopologyManagerServicePtr topologyManagerService;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
-    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    LocationServicePtr locationService;
     Experimental::MaintenanceServicePtr maintenanceService;
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;

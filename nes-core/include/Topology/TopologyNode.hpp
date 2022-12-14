@@ -27,7 +27,7 @@ class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::DataTypes::Experimental {
-class Location;
+class GeoLocation;
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
@@ -117,11 +117,11 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-    explicit TopologyNode(const uint64_t id,
-                          const std::string ipAddress,
-                          const uint32_t grpcPort,
-                          const uint32_t dataPort,
-                          const uint16_t resources,
+    explicit TopologyNode(uint64_t id,
+                          std::string ipAddress,
+                          uint32_t grpcPort,
+                          uint32_t dataPort,
+                          uint16_t resources,
                           std::map<std::string, std::any> properties);
 
     bool containAsParent(NodePtr node) override;
@@ -176,36 +176,6 @@ class TopologyNode : public Node {
      * @return true if the removal is successful
      */
     bool removeLinkProperty(const TopologyNodePtr& linkedNode);
-
-    /**
-     * Experimental
-     * @brief get the geographical coordinates of this topology node.
-     * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
-     */
-    NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint();
-
-    /**
-     * Experimental
-     * @return a smart pointer to this nodes reconnect schedule or nullptr if the node is not a mobile node
-     */
-    NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
-
-    /**
-     * Experimental
-     * @brief set the fixed geographical coordinates of this topology node, making it a field node
-     * @param lat: geographical latitude in signed degrees [-90, 90]
-     * @param lng: geographical longitude in signed degrees [-180, 180]
-     * @return true on success
-     */
-    void setGeoLocation(double latitude, double longitude);
-
-    /**
-     * Experimental
-     * @brief set the fixed geographical coordinates of this topology node, making it a field node
-     * @param geoLocation: the Geographical location of the node
-     * @return true on success
-     */
-    void setGeoLocation(NES::Spatial::DataTypes::Experimental::Location geoLocation);
 
     /**
      * Experimental

@@ -13,7 +13,7 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <cstdint>
 

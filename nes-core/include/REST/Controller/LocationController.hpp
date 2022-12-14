@@ -26,10 +26,6 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 namespace NES {
-namespace Spatial::Index::Experimental {
-class LocationService;
-using LocationServicePtr = std::shared_ptr<LocationService>;
-}// namespace Spatial::Index::Experimental
 namespace REST {
 namespace Controller {
 class LocationController : public oatpp::web::server::api::ApiController {
@@ -42,7 +38,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
      */
     LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        oatpp::String completeRouterPrefix,
-                       const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
+                       LocationServicePtr locationService,
                        ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
           errorHandler(errorHandler) {}
@@ -55,7 +51,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
      */
     static std::shared_ptr<LocationController>
     create(const std::shared_ptr<ObjectMapper>& objectMapper,
-           const NES::Spatial::Index::Experimental::LocationServicePtr& locationService,
+           LocationServicePtr locationService,
            std::string routerPrefixAddition,
            ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
@@ -86,7 +82,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     }
 
   private:
-    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    LocationServicePtr locationService;
     ErrorHandlerPtr errorHandler;
 };
 }//namespace Controller

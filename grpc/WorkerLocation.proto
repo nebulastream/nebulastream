@@ -14,6 +14,13 @@
 
 syntax = "proto3";
 
+package NES.Spatial.Protobuf;
+
+message Waypoint {
+  GeoLocation geoLocation = 1;
+  uint64 timestamp = 2;
+}
+
 message GeoLocation {
   double lat = 1;
   double lng = 2;
@@ -32,9 +39,9 @@ message WorkerLocationInfo {
 
 message ReconnectSchedule {
   uint64 parentId = 1;
-  GeoLocation pathStart = 2;
-  GeoLocation pathEnd = 3;
-  GeoLocation lastIndexUpdatePosition = 4;
+  Waypoint pathStart = 2;
+  Waypoint pathEnd = 3;
+  Waypoint lastIndexUpdatePosition = 4;
   repeated SerializableReconnectPoint reconnectPoints = 5;
 }
 
@@ -44,6 +51,6 @@ message SerializableReconnectPrediction {
 }
 
 message SerializableReconnectPoint {
-  GeoLocation geoLocation = 1;
+  Waypoint waypoint = 1;
   SerializableReconnectPrediction reconnectPrediction = 2;
 }
