@@ -24,8 +24,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libbsd-dev \
   cmake \
   libopencv-dev \
-  libopencv4.2-java \
-  libopencv4.2-jni \
+  libopencv4.5-java \
+  libopencv4.5d-jni \
   software-properties-common \
   && apt-get clean -qq
 
