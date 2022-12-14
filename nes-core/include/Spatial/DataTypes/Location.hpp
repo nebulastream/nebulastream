@@ -18,12 +18,15 @@
 
 class GeoLocation;
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES {
+namespace Spatial {
+namespace DataTypes {
+namespace Experimental {
 
 /**
- * @brief a representation of geographical location used to specify the fixed location of field nodes
- * and the changing location of mobile devices
- */
+* @brief a representation of geographical location used to specify the fixed location of field nodes
+* and the changing location of mobile devices
+*/
 class Location {
 
   public:
@@ -39,6 +42,8 @@ class Location {
      * @param longitude: geographical longitude in degrees [-180, 180]
      */
     Location(double latitude, double longitude);
+
+    Location(Location&&) = default;
 
     /**
      * @brief constructs a Geographicala location object from a Coordinates object used as members of protobuf messages
@@ -118,6 +123,9 @@ class Location {
     double latitude;
     double longitude;
 };
-}// namespace NES::Spatial::Index::Experimental
+}// namespace Experimental
+}// namespace DataTypes
+}// namespace Spatial
+}// namespace NES
 
 #endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_
