@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #ifdef S2DEF
+#include <Common/Identifiers.hpp>
 #include <s2/s2point_index.h>
 #endif
 
@@ -35,8 +36,7 @@ class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::DataTypes::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+class GeoLocation;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Index::Experimental {
@@ -58,7 +58,7 @@ class LocationIndex {
      * @param geoLoc  the location of the Field node
      * @return true on success
      */
-    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
+    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     /**
      * Experimental
@@ -67,7 +67,7 @@ class LocationIndex {
      * @param geoLoc  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
+    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     /**
      * Experimental
@@ -84,16 +84,17 @@ class LocationIndex {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const Spatial::DataTypes::Experimental::Location& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodeId> getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation& geoLoc,
+                                                   int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
      * @brief returns the closest field node to a certain node (which does not equal the node passed as an argument)
-     * @param nodePtr: pointer to a field node
+     * @param topologyNodeId: topology node id
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodeId> getClosestNodeTo(TopologyNodeId topologyNodeId, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -102,45 +103,36 @@ class LocationIndex {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodePtr, Spatial::DataTypes::Experimental::Location>> getNodesInRange(Spatial::DataTypes::Experimental::Location center, double radius);
+    std::vector<std::pair<TopologyNodeId, Spatial::DataTypes::Experimental::GeoLocation>>
+    getNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
      * Experimental
      * @brief insert a new node into the map keeping track of all the mobile devices in the system
-     * @param node: a smart pointer to the node to be inserted
+     * @param nodeId: id of the node to be inserted
+     * @param geoLocation: location of the node
      */
-    void addMobileNode(TopologyNodePtr node);
+    void addMobileNode(TopologyNodeId nodeId, NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * Experimental
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>> getAllMobileNodeLocations();
+    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> getAllMobileNodeLocations();
+
+    /**
+     * Get geolocation of a node
+     * @param topologyNodeId : the node id
+     * @return geoLocation
+     */
+    Spatial::DataTypes::Experimental::GeoLocation getGeoLocationForNode(TopologyNodeId topologyNodeId);
 
     /**
      * Experimental
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
      */
     size_t getSizeOfPointIndex();
-
-    /**
-     * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
-     * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
-     * @param reconnectNodeId : The id of the expected new parent after the next reconnect
-     * @param reconnectLocation : The location where the mobile device is expected to be at the time of reconnect
-     * @param time : The expected time at which the device will reconnect
-     * @return true if the information was processed correctly
-     */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction);
-
-    /**
-     * @brief get the next scheduled reconnect for a mobile node if there is one saved at the coordinator side
-     * @param nodeId : The id of the mobileWorker
-     * @return an optional containing the id of the expected new parent, the expected location of the reconnect and the expected time
-     * of the reconnect. If no record can be found for this id the return value is nullopt.
-     */
-    std::optional<Mobility::Experimental::ReconnectPrediction> getScheduledReconnect(uint64_t nodeId);
 
   private:
     /**
@@ -151,16 +143,14 @@ class LocationIndex {
      * @param geoLoc: the (new) location of the field node
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     std::recursive_mutex locationIndexMutex;
-
-    // a map containing all registered mobile nodes
-    std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
-    std::unordered_map<uint64_t, Mobility::Experimental::ReconnectPrediction> reconnectPredictionMap;
+    // Map containing locations of all registered worker nodes
+    std::unordered_map<uint64_t, Spatial::DataTypes::Experimental::GeoLocation> workerNodeLocation;
 #ifdef S2DEF
-    // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
-    S2PointIndex<TopologyNodePtr> nodePointIndex;
+    // Spatial index that stores ids of all worker nodes and index them based on their geo location
+    S2PointIndex<TopologyNodeId> nodePointIndex;
 #endif
 };
 }//namespace Spatial::Index::Experimental

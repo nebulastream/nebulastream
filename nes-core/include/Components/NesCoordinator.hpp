@@ -78,6 +78,9 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+
 namespace Catalogs {
 
 namespace Source {
@@ -103,11 +106,6 @@ class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
 }// namespace Experimental
-
-namespace Spatial::Index::Experimental {
-class LocationService;
-using LocationServicePtr = std::shared_ptr<LocationService>;
-}// namespace Spatial::Index::Experimental
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
@@ -220,7 +218,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * getter for the locationService
      * @return
      */
-    NES::Spatial::Index::Experimental::LocationServicePtr getLocationService() const;
+    LocationServicePtr getLocationService() const;
 
     NesWorkerPtr getNesWorker();
 
@@ -260,7 +258,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
-    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    LocationServicePtr locationService;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

@@ -41,23 +41,24 @@ namespace NES {
 
 RestServer::RestServer(std::string host,
                        uint16_t port,
-                       const NesCoordinatorWeakPtr& coordinator,
-                       const QueryCatalogServicePtr& queryCatalogService,
-                       const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                       const TopologyPtr& topology,
-                       const GlobalExecutionPlanPtr& globalExecutionPlan,
-                       const QueryServicePtr& queryService,
-                       const MonitoringServicePtr& monitoringService,
-                       const Experimental::MaintenanceServicePtr& maintenanceService,
-                       const GlobalQueryPlanPtr& globalQueryPlan,
-                       const Catalogs::UDF::UdfCatalogPtr& udfCatalog,
-                       const Runtime::BufferManagerPtr& bufferManager,
-                       const NES::Spatial::Index::Experimental::LocationServicePtr& locationService)
-    : host(std::move(host)), port(port), coordinator(coordinator), queryCatalogService(queryCatalogService),
-      globalExecutionPlan(globalExecutionPlan), queryService(queryService), globalQueryPlan(globalQueryPlan),
-      sourceCatalog(sourceCatalog), topology(topology), udfCatalog(udfCatalog), locationService(locationService),
-      maintenanceService(maintenanceService), monitoringService(std::move(monitoringService)),
-      bufferManager(std::move(bufferManager)) {}
+                       NesCoordinatorWeakPtr coordinator,
+                       QueryCatalogServicePtr queryCatalogService,
+                       SourceCatalogServicePtr sourceCatalogService,
+                       TopologyManagerServicePtr topologyManagerService,
+                       GlobalExecutionPlanPtr globalExecutionPlan,
+                       QueryServicePtr queryService,
+                       MonitoringServicePtr monitoringService,
+                       NES::Experimental::MaintenanceServicePtr maintenanceService,
+                       GlobalQueryPlanPtr globalQueryPlan,
+                       Catalogs::UDF::UdfCatalogPtr udfCatalog,
+                       Runtime::BufferManagerPtr bufferManager,
+                       LocationServicePtr locationService)
+    : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalogService(std::move(queryCatalogService)),
+      globalExecutionPlan(std::move(globalExecutionPlan)), queryService(std::move(queryService)),
+      globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
+      topologyManagerService(std::move(topologyManagerService)), udfCatalog(std::move(udfCatalog)),
+      locationService(std::move(locationService)), maintenanceService(std::move(maintenanceService)),
+      monitoringService(std::move(monitoringService)), bufferManager(std::move(bufferManager)) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on " << host << ":" << std::to_string(port));
@@ -111,7 +112,7 @@ void RestServer::run() {
                                                                                    globalQueryPlan,
                                                                                    "/queryCatalog",
                                                                                    errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topology, "/topology", errorHandler);
+    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,
@@ -121,7 +122,7 @@ void RestServer::run() {
     auto udfCatalogController =
         REST::Controller::UdfCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController =
-        REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalog, errorHandler, "/sourceCatalog");
+        REST::Controller::SourceCatalogController::create(objectMapper, sourceCatalogService, errorHandler, "/sourceCatalog");
     auto maintenanceController =
         REST::Controller::MaintenanceController::create(objectMapper, maintenanceService, errorHandler, "/maintenance");
     auto locationController =

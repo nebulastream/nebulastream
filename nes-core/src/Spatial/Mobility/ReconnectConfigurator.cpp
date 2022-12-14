@@ -93,7 +93,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
     if (locProvider) {
         //get the devices current location
         auto currentWaypoint = locProvider->getCurrentWaypoint();
-        auto currentPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*currentWaypoint->getLocation());
+        auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*currentWaypoint->getLocation());
 
         std::unique_lock lock(reconnectConfigMutex);
         //check if we moved further than the threshold. if so, tell the coordinator about the devices new position
@@ -110,7 +110,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThreshold
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySendLocationUpdates() {
     //get the devices current location
     auto currentWaypoint = worker.getLocationProvider()->getCurrentWaypoint();
-    auto currentPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*currentWaypoint->getLocation());
+    auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(*currentWaypoint->getLocation());
 
     NES_DEBUG("transmitting initial location")
     coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentWaypoint);

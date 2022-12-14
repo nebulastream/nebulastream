@@ -14,18 +14,18 @@
 
 #include <CoordinatorRPCService.pb.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 
 using namespace NES::Spatial::DataTypes::Experimental;
 
-Location::Location() {
+GeoLocation::GeoLocation() {
     latitude = std::numeric_limits<double>::quiet_NaN();
     longitude = std::numeric_limits<double>::quiet_NaN();
 }
 
-Location::Location(double latitude, double longitude) {
+GeoLocation::GeoLocation(double latitude, double longitude) {
     //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
     if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
         NES_ERROR("Trying to create node with an invalid location");
@@ -35,9 +35,9 @@ Location::Location(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-Location::Location(const GeoLocation& geoLocation) : Location(geoLocation.lat(), geoLocation.lng()) {}
+GeoLocation::GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation) : GeoLocation(geoLocation.lat(), geoLocation.lng()) {}
 
-Location Location::fromString(const std::string& coordinates) {
+GeoLocation GeoLocation::fromString(const std::string&& coordinates) {
     if (coordinates.empty()) {
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
@@ -57,18 +57,7 @@ Location Location::fromString(const std::string& coordinates) {
     return {lat, lng};
 }
 
-Location::operator std::tuple<double, double>() { return std::make_tuple(latitude, longitude); };
-
-Location::Location(std::tuple<double, double> coordTuple) : Location(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
-
-Location::operator GeoLocation() const {
-    GeoLocation coordinates;
-    coordinates.set_lat(latitude);
-    coordinates.set_lng(longitude);
-    return coordinates;
-}
-
-bool Location::operator==(const Location& other) const {
+bool GeoLocation::operator==(const GeoLocation& other) const {
     //if both objects are an invalid location, consider them equal
     if (!this->isValid() && !other.isValid()) {
         return true;
@@ -76,14 +65,14 @@ bool Location::operator==(const Location& other) const {
     return this->latitude == other.latitude && this->longitude == other.longitude;
 }
 
-double Location::getLatitude() const { return latitude; }
+double GeoLocation::getLatitude() const { return latitude; }
 
-double Location::getLongitude() const { return longitude; }
+double GeoLocation::getLongitude() const { return longitude; }
 
-bool Location::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
+bool GeoLocation::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
 
-std::string Location::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
+std::string GeoLocation::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
 
-bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
+bool GeoLocation::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }

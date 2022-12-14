@@ -15,13 +15,14 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
-#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <vector>
 #ifdef S2DEF
+#include <Common/Identifiers.hpp>
 #include <s2/base/integral_types.h>
 #endif
 
@@ -34,7 +35,10 @@ using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
 namespace Spatial::Index::Experimental {
 enum class NodeType;
-}
+
+class LocationIndex;
+using LocationIndexPtr = std::shared_ptr<LocationIndex>;
+}// namespace Spatial::Index::Experimental
 
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
@@ -42,7 +46,7 @@ enum class NodeType;
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology);
+    TopologyManagerService(TopologyPtr topology, Spatial::Index::Experimental::LocationIndexPtr locationIndex);
 
     /**
      * @brief registers a worker.
@@ -54,24 +58,39 @@ class TopologyManagerService {
      * @return unique identifier of the worker
      */
     uint64_t registerWorker(const std::string& address,
-                            const int64_t grpcPort,
-                            const int64_t dataPort,
-                            const uint16_t numberOfSlots,
+                            int64_t grpcPort,
+                            int64_t dataPort,
+                            uint16_t numberOfSlots,
                             std::map<std::string, std::any> workerProperties);
 
     /**
-    * @brief unregister an existing node
-    * @param nodeId
-    * @return bool indicating success
-    */
+     * Update GeoLocation of a worker node
+     * @param topologyNodeId : worker node id
+     * @param geoLocation : location of the worker node
+     * @return true if successful
+     */
+    bool updateGeoLocation(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+
+    /**
+     * Remove geolocation of worker node
+     * @param topologyNodeId : worker id whose location is to be removed
+     * @return true if successful
+     */
+    bool removeGeoLocation(TopologyNodeId topologyNodeId);
+
+    /**
+     * @brief unregister an existing node
+     * @param nodeId
+     * @return bool indicating success
+     */
     bool unregisterNode(uint64_t nodeId);
 
     /**
-    * @brief method to ad a new parent to a node
-    * @param childId
-    * @param parentId
-    * @return bool indicating success
-    */
+     * @brief method to ad a new parent to a node
+     * @param childId
+     * @param parentId
+     * @return bool indicating success
+     */
     bool addParent(uint64_t childId, uint64_t parentId);
 
     /**
@@ -91,24 +110,13 @@ class TopologyManagerService {
 
     /**
      * Experimental
-     * @brief query for topology pointers of the field nodes (non mobile nodes with a known location)
-     * within a certain radius around a geographical location
-     * @param center: the center of the query area represented as a Location object
-     * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
-     * @return vector of pairs containing a pointer to the topology node and the nodes location
-     */
-    std::vector<std::pair<TopologyNodePtr, NES::Spatial::DataTypes::Experimental::Location>>
-    getNodesInRange(NES::Spatial::DataTypes::Experimental::Location center, double radius);
-
-    /**
-     * Experimental
      * @brief query for the ids of field nodes within a certain radius around a geographical location
      * @param center: the center of the query area represented as a Location object
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::Location>>
-    getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::Location center, double radius);
+    std::vector<std::pair<TopologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation center, double radius);
 
     /**
      * Method to return the root node
@@ -133,14 +141,14 @@ class TopologyManagerService {
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
+    HealthCheckServicePtr healthCheckService;
+    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
      * @return next topology node id
      */
     uint64_t getNextTopologyNodeId();
-
-    HealthCheckServicePtr healthCheckService;
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
