@@ -258,7 +258,6 @@ TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
     }
 
     std::vector<Runtime::TupleBuffer> nljBuffers;
-    auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
     uint64_t lastTupleTimeStampWindow = windowSize - 1;
     uint64_t firstTupleTimeStampWindow = 0;
     auto bufferJoined = bufferManager->getBufferBlocking();
