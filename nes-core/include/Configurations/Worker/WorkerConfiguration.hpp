@@ -22,7 +22,7 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/Location.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <map>
 #include <string>
@@ -182,7 +182,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::Index::Experimental::Location, Configurations::Spatial::Index::Experimental::LocationFactory>
+    WrapOption<NES::Spatial::DataTypes::Experimental::Location, Configurations::Spatial::Index::Experimental::LocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**

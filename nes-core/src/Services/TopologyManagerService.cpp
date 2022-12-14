@@ -15,9 +15,9 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -73,7 +73,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    auto newNodeGeoLocation = newTopologyNode->getGeoLocation();
+    auto newNodeGeoLocation = newTopologyNode->getWaypoint().getLocation();
 
     if (newNodeGeoLocation.isValid()
         && newTopologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
@@ -214,15 +214,15 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of future movement
-std::vector<std::pair<TopologyNodePtr, Spatial::Index::Experimental::Location>>
-TopologyManagerService::getNodesInRange(Spatial::Index::Experimental::Location center, double radius) {
+std::vector<std::pair<TopologyNodePtr, Spatial::DataTypes::Experimental::Location>>
+TopologyManagerService::getNodesInRange(Spatial::DataTypes::Experimental::Location center, double radius) {
     return topology->getLocationIndex()->getNodesInRange(center, radius);
 }
 
-std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
-TopologyManagerService::getNodesIdsInRange(Spatial::Index::Experimental::Location center, double radius) {
+std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>>
+TopologyManagerService::getNodesIdsInRange(Spatial::DataTypes::Experimental::Location center, double radius) {
     auto list = getNodesInRange(center, radius);
-    std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodeIDsInRange{};
+    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>> nodeIDsInRange{};
     nodeIDsInRange.reserve(list.size());
     for (auto elem : list) {
         nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));

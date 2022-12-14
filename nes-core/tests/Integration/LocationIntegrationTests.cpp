@@ -320,8 +320,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     ASSERT_EQ(node1->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     ASSERT_EQ(node2->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 
-    EXPECT_TRUE(node1->getGeoLocation()->getLocation()->isValid());
-    EXPECT_EQ(*node2->getGeoLocation()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_TRUE(node1->getWaypoint()->getLocation()->isValid());
+    EXPECT_EQ(*node2->getWaypoint()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -662,8 +662,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getGeoLocation()->getLocation()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getGeoLocation()->getLocation()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getWaypoint()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
         idCount++;
     }
 
@@ -967,8 +967,8 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         currNode->setGeoLocation(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getGeoLocation()->getLocation()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getGeoLocation()->getLocation()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getWaypoint()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getWaypoint()->getLocation()), currNode->getId());
         idCount++;
     }
 

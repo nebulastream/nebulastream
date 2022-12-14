@@ -16,15 +16,15 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/Location.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
 
 namespace NES {
@@ -449,7 +449,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std::string& address) {
+Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
@@ -463,16 +463,14 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std
         auto timestamp = reply.timestamp();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(
-                Spatial::Index::Experimental::Location(coord.lat(), coord.lng()),
-                timestamp);
+            return NES::Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Location(coord.lat(), coord.lng()),
+                                                          timestamp);
         }
         //no valid timestamp to include
-        return std::make_shared<Spatial::Index::Experimental::Waypoint>(
-            Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
+        return NES::Spatial::DataTypes::Experimental::Waypoint(NES::Spatial::DataTypes::Experimental::Location(coord.lat(), coord.lng()));
     }
     //location is invalid
-    return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
+    return Spatial::Index::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& address) {
@@ -500,7 +498,8 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto vec = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
-            auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.geolocation().lat(), reconnectData.geolocation().lng());
+            auto loc =
+                NES::Spatial::Index::Experimental::Location(reconnectData.geolocation().lat(), reconnectData.geolocation().lng());
             vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
                 Spatial::Mobility::Experimental::ReconnectPoint{
                     loc,
