@@ -642,6 +642,9 @@ namespace NES::Optimizer {
             return answer;
         }
 
+        //Get downstream nodes (for targetDepth = getDepth(executionNode)-1). Also contains the direct downstream node of executionNode.
+        //To get candidate secondary nodes, the parent of executionNode must be removed from the returned vector.
+        //Alternatively, use getDownstreamNeighborNodes which does this already (but required executionNodes vector)
         std::vector<ExecutionNodePtr> BasePlacementStrategy::getNeighborNodes(const ExecutionNodePtr& executionNode, int levelsLower, int targetDepth){
 
             std::vector<ExecutionNodePtr> answer;
@@ -659,21 +662,9 @@ namespace NES::Optimizer {
 
         }
 
-        std::vector<ExecutionNodePtr> BasePlacementStrategy::removeParentNodeFromVector(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> vector){
-
-            std::vector<ExecutionNodePtr> answer = vector;
-
-            answer.erase(std::remove_if(
-                             answer.begin(), answer.end(),
-                                          [executionNode](const ExecutionNodePtr e){
-                                              return e->getId() == Optimizer::BasePlacementStrategy::getExecutionNodeParent(executionNode)->getId();
-                                          }), answer.end());
 
 
-            return answer;
-
-        }
-
+        //Get the depth of executionNode within the topology. Starting at a depth of 1 for the root
         int BasePlacementStrategy::getDepth(const ExecutionNodePtr& executionNode){
 
             int ncounter = 0;
@@ -685,43 +676,13 @@ namespace NES::Optimizer {
             return ncounter;
         }
 
+        //Helper to get the parent of executionNode so that ->getParents()[0] is not necessary. Only works because currently, NES only allows for one parent node
         ExecutionNodePtr BasePlacementStrategy::getExecutionNodeParent(const ExecutionNodePtr& executionNode){
             return executionNode->getParents()[0]->as<ExecutionNode>();
         }
 
-        /*void BasePlacementStrategy::initDepths(ExecutionNodePtr executionNode, QueryId queryId){
 
-if(executionNode->getParents().empty()){
-    executionNode->setQueryDepth(queryId, 0);
-    return;
-}
-NodePtr *min = std::max_element( executionNode->getParents().begin(), executionNode->getParents().end(),
-                            [&queryId]( const NodePtr &a, const NodePtr &b)
-                            {
-                                return a->as<ExecutionNode>()->getQueryDepth(queryId)
-                                    > b->as<ExecutionNode>()->getQueryDepth(queryId);
-                            } );
-
-executionNode->setQueryDepth(queryId, min.);
-}*/
-
-
-        /*float BasePlacementStrategy::calcDownstreamLinkWeights(TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, ExecutionNodePtr executionNode, QueryId queryId){
-TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
-
-float downstreamLinkWeights = 0;
-
-for(auto& parent : topNode->getParents()){
-    TopologyNodePtr topParent = parent->as<TopologyNode>();
-    ExecutionNodePtr exParent = globalExecutionPlan->getExecutionNodeByNodeId(topParent->getId());
-    if(globalExecutionPlan->checkIfExecutionNodeExists(topParent->getId()) && exParent->hasQuerySubPlans(queryId)){
-        downstreamLinkWeights += calcLinkWeight(topology, executionNode, exParent);
-    }
-}
-
-return downstreamLinkWeights;
-}*/
-
+        //Get the downstream ping from upstreamNode to its downstream node.
         float BasePlacementStrategy::getNetworkConnectivity(const TopologyPtr& topology, const ExecutionNodePtr& upstreamNode){
 
             if(upstreamNode->getParents().empty()){
@@ -776,28 +737,12 @@ return downstreamLinkWeights;
             }
         }
 
+        //Get the cumulated delay from executionNode to the root of the topology based on the downstream ping assigned beforehand (initNetworkConnectivities)
         int BasePlacementStrategy::getDelayToRoot(const ExecutionNodePtr& executionNode, const TopologyPtr& topology){
 
             int delay = getNetworkConnectivity(topology,executionNode);
 
             if(!executionNode->getParents().empty()){
-                /*TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
-    TopologyNodePtr topNodeParent = topology->findNodeWithId(executionNode->getParents()[0]->as<ExecutionNode>()->getId());
-    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-    auto startIpAddress = topNode->getIpAddress();
-    auto startGrpcPort = topNode->getGrpcPort();
-    std::string startRpcAddress = startIpAddress + ":" + std::to_string(startGrpcPort);
-
-    auto destIpAddress = topNodeParent->getIpAddress();
-    auto destGrpcPort = topNodeParent->getGrpcPort();
-    std::string destRpcAddress = destIpAddress + ":" + std::to_string(destGrpcPort);
-
-    int conn = workerRpcClient->getConnectivity(startRpcAddress,destRpcAddress);
-
-    if(conn == -1){
-        conn = (rand() % 100 + 10);
-    }*/
-
                 return delay + getDelayToRoot(getExecutionNodeParent(executionNode), topology);
                 //return delay + getDelayToRoot(executionNode->getParents()[0]->as<ExecutionNode>(), topology);
             }else{
@@ -824,8 +769,8 @@ return downstreamLinkWeights;
         }
 
 
-        //TODO solve all cases of random values
-
+        /*
+        //Unused remnant from earlier version of approach placement
         FaultToleranceType BasePlacementStrategy::bestApproach(std::vector<float> activeStandbyCosts, std::vector<float> checkpointingCosts, std::vector<float> upstreamBackupCosts){
 
             std::vector<float> allProcessingCosts = {activeStandbyCosts[0], checkpointingCosts[0], upstreamBackupCosts[0]};
@@ -895,29 +840,9 @@ return downstreamLinkWeights;
 
             return x->first;
 
+        }*/
 
-
-
-            //float faultToleranceScores[3] = {activeStandbyScore, checkpointingScore, upstreamBackupScore};
-            /*const int N = sizeof(faultToleranceScores) / sizeof(int);
-int indexOfBestScore = std::distance(faultToleranceScores, std::max_element(faultToleranceScores, faultToleranceScores + N));
-
-switch(indexOfBestScore) {
-    case 0:
-        NES_INFO("FT TO CHOSE: ACTIVE STANDBY");
-        return FaultToleranceType::ACTIVE_STANDBY;
-    case 1:
-        NES_INFO("FT TO CHOSE: CHECKPOINTING");
-        return FaultToleranceType::CHECKPOINTING;
-    case 2:
-        NES_INFO("FT TO CHOSE: UPSTREAM BACKUP");
-        return FaultToleranceType::UPSTREAM_BACKUP;
-    default:
-        return FaultToleranceType::NONE;
-}*/
-
-        }
-
+        //Calculate operator costs (using ILP weights)
         int BasePlacementStrategy::getOperatorCostsRecursively(const LogicalOperatorNodePtr& operatorNode){
             int cost = 0;
             if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
@@ -941,6 +866,7 @@ switch(indexOfBestScore) {
             return cost;
         }
 
+
         int BasePlacementStrategy::getStatefulOperatorCostsRecursively(const LogicalOperatorNodePtr& operatorNode){
             NodePtr nodePtr = operatorNode->as<Node>();
             int cost = 0;
@@ -955,6 +881,7 @@ switch(indexOfBestScore) {
             return cost;
         }
 
+        //Calculate the operator processing costs on one node based on the ILP weights
         int BasePlacementStrategy::getExecutionNodeOperatorCosts(const ExecutionNodePtr& executionNode, QueryId queryId){
             int costs = 0;
             for(auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
@@ -966,7 +893,7 @@ switch(indexOfBestScore) {
         }
 
 
-
+        //Helper for calculating processing costs for exactly-once
         int BasePlacementStrategy::getExecutionNodeStatefulOperatorCosts(const ExecutionNodePtr& executionNode, QueryId queryId){
             int costs = 0;
             for(auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
@@ -977,6 +904,7 @@ switch(indexOfBestScore) {
             return costs;
         }
 
+        //Helper for calculating processing costs
         int BasePlacementStrategy::getNumberOfStatefulOperatorsRecursively(const LogicalOperatorNodePtr& operatorNode){
             NodePtr nodePtr = operatorNode->as<Node>();
             int cost = 0;
@@ -990,6 +918,7 @@ switch(indexOfBestScore) {
             return cost;
         }
 
+        //Helper for calculating processing costs
         int BasePlacementStrategy::getNumberOfOperators(const ExecutionNodePtr& executionNode, QueryId queryId){
             int costs = 0;
             for(auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
@@ -1000,6 +929,7 @@ switch(indexOfBestScore) {
             return costs;
         }
 
+        //Helper for calculating processing costs
         int BasePlacementStrategy::getNumberOfOperatorsRecursively(const LogicalOperatorNodePtr& operatorNode){
             NodePtr nodePtr = operatorNode->as<Node>();
             int cost = 1;
@@ -1010,52 +940,7 @@ switch(indexOfBestScore) {
             return cost;
         }
 
-
-        /*float BasePlacementStrategy::getExecutionNodeAvailableBandwidth(ExecutionNodePtr executionNode){
-return ()
-}*/
-
-        /*std::vector<ExecutionNodePtr> BasePlacementStrategy::getOrderedListOfNodes(std::vector<ExecutionNodePtr> executionNodes, QueryId queryId){
-
-auto maxAvailableResourcesIndex= std::max_element( executionNodes.begin(), executionNodes.end(),
-                                [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
-                                {
-                                    return a->as<TopologyNode>()->getAvailableResources() < b->as<TopologyNode>()->getAvailableResources();
-                                } );
-auto minAvailableResourcesIndex= std::max_element( executionNodes.begin(), executionNodes.end(),
-                                                   [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
-                                {
-                                   return a->as<TopologyNode>()->getAvailableResources() > b->as<TopologyNode>()->getAvailableResources();
-                               } );
-
-ExecutionNodePtr primary = executionNodes[std::distance(executionNodes.begin(), maxAvailableResourcesIndex)];
-
-int maxAvailableResources = executionNodes[std::distance(executionNodes.begin(), maxAvailableResourcesIndex)]->as<TopologyNode>()->getAvailableResources();
-int minAvailableResources = executionNodes[std::distance(executionNodes.begin(), minAvailableResourcesIndex)]->as<TopologyNode>()->getAvailableResources();
-
-auto maxAvailableBandwidthIndex= std::max_element( executionNodes.begin(), executionNodes.end(),
-                                                   [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
-                                                   {
-
-                                                       return std::any_cast<float>(a->as<TopologyNode>()->getNodeProperty("availableBandwidth")) <
-                                                           std::any_cast<float>(b->as<TopologyNode>()->getNodeProperty("availableBandwidth"));
-                                                   } );
-auto minAvailableBandwidthIndex= std::max_element( executionNodes.begin(), executionNodes.end(),
-                                                   [&queryId]( const ExecutionNodePtr &a, const ExecutionNodePtr &b )
-                                                   {
-
-                                                       return std::any_cast<float>(a->as<TopologyNode>()->getNodeProperty("availableBandwidth")) >
-                                                           std::any_cast<float>(b->as<TopologyNode>()->getNodeProperty("availableBandwidth"));
-                                                   } );
-
-float maxAvailableBandwidth = std::any_cast<float>(executionNodes[std::distance(executionNodes.begin(), maxAvailableBandwidthIndex)]->as<TopologyNode>()->getNodeProperty("availableBandwidth"));
-float minAvailableBandwidth = std::any_cast<float>(executionNodes[std::distance(executionNodes.begin(), minAvailableBandwidthIndex)]->as<TopologyNode>()->getNodeProperty("availableBandwidth"));
-
-//TODO add memory component
-}*/
-
-        //FaultToleranceType BasePlacementStrategy::calcLinkPenalty(std::vector<float> activeStandbyCosts, std::vector<float> checkpointingCosts, std::vector<float> upstreamBackupCosts){
-
+        //Helper for calculating processing costs for exactly-once
         bool BasePlacementStrategy::checkIfSubPlanIsArbitrary(const ExecutionNodePtr& executionNode, QueryId queryId){
 
             for(auto& subPlan : executionNode->getQuerySubPlans(queryId)) {
@@ -1070,6 +955,7 @@ float minAvailableBandwidth = std::any_cast<float>(executionNodes[std::distance(
 
         }
 
+        //Helper for calculating processing costs for exactly-once
         bool BasePlacementStrategy::checkIfOperatorIsArbitraryRecursively(const LogicalOperatorNodePtr& operatorNode){
             bool isArbitrary = false;
             if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
@@ -1154,6 +1040,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return cost;
         }
 
+        //Calculate the total estimated Upstream Backup cost for one node (using the estimations from calcUpstreamBackupProcessing, calcUpstreamBackupNetworking and calcUpstreamBackupMemory)
         double BasePlacementStrategy::calcUpstreamBackupCost(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             std::vector<int> allUpstreamBackupProcessingCosts;
 
@@ -1239,6 +1126,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return cost;
         }
 
+        //Calculate the total estimated Active Standby cost for one node (using the estimations from calcActiveStandbyProcessing, calcActiveStandbyNetworking and calcActiveStandbyMemory)
         double BasePlacementStrategy::calcActiveStandbyCost(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             std::vector<int> allActiveStandbyProcessingCosts;
 
@@ -1315,6 +1203,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return cost;
         }
 
+        //Calculate the total estimated checkpointing cost for one node (using the estimations from calcCheckpointingProcessing, calcCheckpointingNetworking and calcCheckpointingMemory)
         double BasePlacementStrategy::calcCheckpointingCost(const ExecutionNodePtr& executionNode, std::vector<ExecutionNodePtr> executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             std::vector<int> allCheckpointingProcessingCosts;
 
@@ -1348,6 +1237,8 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return checkpointingCost;
         }
 
+        /*
+        //Unused remnant of firstFit (early version)
         std::vector<FaultToleranceType> BasePlacementStrategy::getSortedApproachList(const std::vector<ExecutionNodePtr>& sourceNodes, const std::vector<ExecutionNodePtr>& restNodes , const FaultToleranceConfigurationPtr& ftConfig,
                                                                                      const TopologyPtr& topology){
 
@@ -1394,9 +1285,9 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             }
 
             return result;
-        }
+        }*/
 
-        //Calculate the placement penalty for every ExecutionNode. Then, return a vector that contains the ExecutionNodes in ascending order of placement penalty.
+        //Calculate the estimated placement cost and placement penalty for every ExecutionNode. Then, return a vector that contains the ExecutionNodes in ascending order of placement penalty.
         std::vector<ExecutionNodePtr> BasePlacementStrategy::getSortedListForFirstFit(const std::vector<ExecutionNodePtr>& executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
             std::ofstream timingsLogFile;
             timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
@@ -1480,6 +1371,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return result;
         }
 
+        //Helper function to normalize a given set of component costs of an approach.
         double BasePlacementStrategy::calcExecutionNodeNormalizedFTCost(int processingCost, float networkingCost, float memoryCost, int maxProc, int minProc, float maxNetw, float minNetw, float maxMem, float minMem){
 
             double proc = 0;
@@ -1502,6 +1394,7 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             return (proc / 3) + (netw / 3) + (mem / 3);
         }
 
+        //Perform firstFitPlacement. The order of attempted approaches is Active Standby, then Checkpointing, and finally Upstream Backup
         FaultToleranceType BasePlacementStrategy::firstFitPlacement(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
 
             std::vector<ExecutionNodePtr> downstreamNeighbors = getNeighborNodes(globalExecutionPlan->getExecutionNodeByNodeId(1),0, getDepth(executionNode) - 1);
@@ -1554,11 +1447,6 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             if(activeStandbyDownstreamWithAvailResourcesExists
                 && topology->findNodeWithId(executionNode->getId())->getAvailableBandwidth() >= activeStandbyNetworkingFormula
                 && topology->findNodeWithId(executionNode->getId())->getAvailableBuffers() >= activeStandbyMemoryFormula){
-                TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
-
-                //topNode->reduceResources(activeStandbyOperatorCosts);
-                //topNode->increaseUsedBuffers(activeStandbyMemoryFormula);
-                //topology->findNodeWithId(executionNode->getId())->increaseUsedBandwidth(activeStandbyNetworkingFormula);
                 return true;
             }
 
@@ -1586,20 +1474,15 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             if(checkpointingDownstreamWithAvailResourcesExists
                 && topology->findNodeWithId(executionNode->getId())->getAvailableBandwidth() >= checkpointingNetworkingFormula
                 && topNode->getAvailableBuffers() >= checkpointingMemoryFormula){
-                //topNode->reduceResources(checkpointingOperatorCosts);
-                //topNode->increaseUsedBandwidth(checkpointingNetworkingFormula);
-                //topNode->increaseUsedBuffers(checkpointingMemoryFormula);
-
                 return true;
             }
 
             return false;
         }
 
+
         bool BasePlacementStrategy::checkUpstreamBackupConstraints(const ExecutionNodePtr& executionNode, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
             TopologyNodePtr topNode = topology->findNodeWithId(executionNode->getId());
-
-            //float upstreamBackupOperatorCosts = getNumberOfStatefulOperatorsOnExecutionNodeRecursively(getExecutionNodeParent(executionNode), ftConfig->getQueryId());
 
             float upstreamBackupNetworkingFormula = 0;
 
@@ -1621,15 +1504,13 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             if(//topology->findNodeWithId(executionNode->getId())->getAvailableResources() >= upstreamBackupOperatorCosts
                 topology->findNodeWithId(executionNode->getId())->getAvailableBandwidth() >= upstreamBackupNetworkingFormula
                 && topNode->getAvailableBuffers() >= upstreamBackupMemoryCost){
-                //topNode->reduceResources(upstreamBackupOperatorCosts);
-                //topNode->increaseUsedBuffers(upstreamBackupMemoryCost);
-                //topNode->increaseUsedBandwidth(upstreamBackupNetworkingFormula);
                 return true;
             }
 
             return false;
         }
 
+        //Calculate the best approach for a given node. The "best" approach here is the one that has the lowest calculated, normalized, estimated costs
         std::pair<FaultToleranceType,double> BasePlacementStrategy::getBestApproachForNode(const ExecutionNodePtr& executionNode, const std::vector<ExecutionNodePtr>& executionNodes, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology){
 
             std::vector<double> allCosts = {calcUpstreamBackupCost(executionNode, executionNodes, ftConfig, topology), calcActiveStandbyCost(executionNode, executionNodes, ftConfig, topology),
@@ -1657,19 +1538,9 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             }
 
             return {FaultToleranceType::AMNESIA, -1};
-
-            /*switch(std::distance(std::begin(allCosts), it)){
-    case 0:
-        return {FaultToleranceType::UPSTREAM_BACKUP, allCosts[0]};
-    case 1:
-        return {FaultToleranceType::ACTIVE_STANDBY, allCosts[1]};
-    case 2:
-        return {FaultToleranceType::CHECKPOINTING, allCosts[2]};
-    default:
-        return {FaultToleranceType::AMNESIA, -1};
-}*/
         }
 
+        //Calculate an FT-score for all placements in order to later on determine which FT approach can be performed by all nodes
         void BasePlacementStrategy::firstFitRecursivePlacement(const std::vector<ExecutionNodePtr>& sortedList, const FaultToleranceConfigurationPtr& ftConfig, const TopologyPtr& topology, const GlobalExecutionPlanPtr& globalExecutionPlan){
 
             std::vector<std::tuple<ExecutionNodePtr,FaultToleranceType,float>> result = {};
@@ -1696,25 +1567,14 @@ return (executionNode->getDownstreamRatio() * getNumberOfStatefulOperatorsOnExec
             }
         }
 
-        /*std::vector<std::tuple<ExecutionNodePtr,FaultToleranceType,float>> BasePlacementStrategy::firstFitRecursivePlacement(std::vector<ExecutionNodePtr> sortedList, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology){
-
-std::vector<std::tuple<ExecutionNodePtr,FaultToleranceType,float>> result = {};
-
-
-while(!sortedList.empty()){
-    result.push_back(getFirstFitResultTuple(sortedList, ftConfig, topology));
-    sortedList.erase(sortedList.begin());
-}
-return result;
-}*/
 
         //Iterate through the sorted list of ExecutionNodes. For all nodes, check if the Active Standby, Checkpointing or Upstream Backup constraints are met (in that order)
         //Choose the FT approach whose constraints are met, otherwise choose Amnesia.
         FaultToleranceType BasePlacementStrategy::firstFitQueryPlacement(std::vector<ExecutionNodePtr> executionNodes, FaultToleranceConfigurationPtr ftConfig, TopologyPtr topology){
-            std::ofstream timingsLogFile;
+            /*std::ofstream timingsLogFile;
             timingsLogFile.open("/home/noah/timings.csv", std::ios_base::app);
 
-            auto activeStandbyStart = std::chrono::high_resolution_clock::now();
+            auto activeStandbyStart = std::chrono::high_resolution_clock::now();*/
 
             std::vector<ExecutionNodePtr> consideredNodes = {};
             std::copy_if(executionNodes.begin(), executionNodes.end(), std::back_inserter(consideredNodes),
@@ -1725,16 +1585,16 @@ return result;
                                                                                       getDownstreamNeighborNodes(executionNode, executionNodes),
                                                                                       topology);});
 
-            auto activeStandbyEnd = std::chrono::high_resolution_clock::now();
+            /*auto activeStandbyEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> activeStandbyDuration = activeStandbyEnd - activeStandbyStart;
             std::chrono::milliseconds msActiveStandby = std::chrono::duration_cast<std::chrono::milliseconds>(activeStandbyDuration);
-            timingsLogFile << "checkActiveStandbyConstraints" << "," << ftConfig->getQueryId() << "," << msActiveStandby.count() << "\n";
+            timingsLogFile << "checkActiveStandbyConstraints" << "," << ftConfig->getQueryId() << "," << msActiveStandby.count() << "\n";*/
 
             if(activeStandby){
                 return FaultToleranceType::ACTIVE_STANDBY;
             }
 
-            auto checkpointingStart = std::chrono::high_resolution_clock::now();
+            //auto checkpointingStart = std::chrono::high_resolution_clock::now();
 
             bool checkpointing = std::all_of(consideredNodes.begin(), consideredNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                              {return checkCheckpointingConstraints(executionNode, ftConfig,
@@ -1743,33 +1603,34 @@ return result;
                                                                                       //removeParentNodeFromVector(executionNode, getNeighborNodes(getExecutionNodeRootNode(executionNode),0, getDepth(executionNode) - 1)),
                                                                                       topology);});
 
-            auto checkpointingEnd = std::chrono::high_resolution_clock::now();
+            /*auto checkpointingEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> checkpointingDuration = checkpointingEnd - activeStandbyStart;
             std::chrono::milliseconds msCheckpointing = std::chrono::duration_cast<std::chrono::milliseconds>(checkpointingDuration);
-            timingsLogFile << "checkCheckpointingConstraints" << "," << ftConfig->getQueryId() << "," << msCheckpointing.count() << "\n";
+            timingsLogFile << "checkCheckpointingConstraints" << "," << ftConfig->getQueryId() << "," << msCheckpointing.count() << "\n";*/
 
             if(checkpointing){
                 return FaultToleranceType::CHECKPOINTING;
             }
 
-            auto upstreamBackupStart = std::chrono::high_resolution_clock::now();
+            //auto upstreamBackupStart = std::chrono::high_resolution_clock::now();
 
             bool upstreamBackup = std::all_of(executionNodes.begin(), executionNodes.end(), [&](const ExecutionNodePtr& executionNode)
                                               {return checkUpstreamBackupConstraints(executionNode, ftConfig, topology);});
 
-            auto upstreamBackupEnd = std::chrono::high_resolution_clock::now();
+            /*auto upstreamBackupEnd = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> upstreamBackupDuration = upstreamBackupEnd - upstreamBackupStart;
             std::chrono::milliseconds msUpstreamBackup = std::chrono::duration_cast<std::chrono::milliseconds>(upstreamBackupDuration);
-            timingsLogFile << "checkUpstreamBackupConstraints" << "," << ftConfig->getQueryId() << "," << msUpstreamBackup.count() << "\n";
+            timingsLogFile << "checkUpstreamBackupConstraints" << "," << ftConfig->getQueryId() << "," << msUpstreamBackup.count() << "\n";*/
 
             if(upstreamBackup){
                 return FaultToleranceType::UPSTREAM_BACKUP;
             }
 
-            timingsLogFile.close();
+            //timingsLogFile.close();
             return FaultToleranceType::AMNESIA;
         }
 
+        //Get the root / sink of the topology of executionNode
         ExecutionNodePtr BasePlacementStrategy::getExecutionNodeRootNode(ExecutionNodePtr executionNode){
 
             ExecutionNodePtr root = executionNode;
@@ -1781,6 +1642,7 @@ return result;
             return root;
         }
 
+        //Unused Remnant from query merging implementation
         FaultToleranceType BasePlacementStrategy::getStricterProcessingGuarantee(const FaultToleranceConfigurationPtr& ftConfig1,
                                                                                  const FaultToleranceConfigurationPtr& ftConfig2){
             if(ftConfig1->getProcessingGuarantee() == FaultToleranceType::EXACTLY_ONCE || ftConfig2->getProcessingGuarantee() == FaultToleranceType::EXACTLY_ONCE){
