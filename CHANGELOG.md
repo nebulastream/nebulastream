@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.4](https://github.com/nebulastream/nebulastream/tree/v0.4.4) (2022-12-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.3...v0.4.4)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] QueryParser/QueryParsing Services \[restrucuture\] [\#2991](https://github.com/nebulastream/nebulastream/issues/2991)
+
 ## [v0.4.3](https://github.com/nebulastream/nebulastream/tree/v0.4.3) (2022-12-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.2...v0.4.3)
