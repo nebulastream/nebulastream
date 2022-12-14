@@ -106,6 +106,8 @@ std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace)
     return os;
 }
 
-std::vector<ValueRef> ExecutionTrace::getArguments() { return arguments; }
+const std::vector<ValueRef>& ExecutionTrace::getArguments() { return arguments; }
+
+std::shared_ptr<OperationRef> ExecutionTrace::getReturn() { return returnRef; }
 
 }// namespace NES::Nautilus::Tracing

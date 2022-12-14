@@ -68,10 +68,8 @@ void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
         TraceOperation result = TraceOperation(RETURN);
         if (!resultRef.type->isVoid()) {
             result.input.emplace_back(resultRef);
-            result.result = resultRef;
-        } else {
-            result.result = resultRef;
         }
+        result.result = resultRef;
         return result;
     });
 }
