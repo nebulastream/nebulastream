@@ -30,7 +30,7 @@ class ValueRef {
      * @param operationId
      * @param type
      */
-    ValueRef(uint32_t blockId, uint32_t operationId, const IR::Types::StampPtr& type);
+    ValueRef(uint32_t blockId, uint32_t operationId, IR::Types::StampPtr  type);
 
     /**
      * @brief Copy constructor
@@ -71,7 +71,7 @@ class ValueRef {
  * @param type
  * @return ValueRef
  */
-ValueRef createNextRef(IR::Types::StampPtr type);
+ValueRef createNextRef(const IR::Types::StampPtr& type);
 
 struct ValueRefHasher {
     std::size_t operator()(const ValueRef& k) const {
