@@ -2135,7 +2135,6 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanTuple) {
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 12);
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value(); // MetricCollectorTest.cpp l. 80
 
-    //uint64_t numBuffers = 1;
     MonitoringSourceProxy monitoringDataSource(testCollector,
                                                MonitoringSource::DEFAULT_WAIT_TIME,
                                                bufferManager,
