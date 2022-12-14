@@ -23,7 +23,7 @@ namespace NES::Nautilus {
 
 Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampPtr&& stamp) {
     if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
-        return ctx->createNextRef(std::move(stamp));
+        return ctx->createNextRef(stamp);
     }
     return Nautilus::Tracing::ValueRef(0, 0, nullptr);
 }
