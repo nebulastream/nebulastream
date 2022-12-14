@@ -150,7 +150,7 @@ expression
 predicate
     : predicate NOT? IN LPARENTHESIS expressions RPARENTHESIS    					#inPredicate
     | predicate IS nullNotnull                                      #isNullPredicate
-    | left=predicate comparisonOperator right=predicate             #binaryComparasionPredicate
+    | left=predicate comparisonOperator right=predicate             #binaryComparisonPredicate
     | expressionAtom                         			            #expressionAtomPredicate
     ;
 
