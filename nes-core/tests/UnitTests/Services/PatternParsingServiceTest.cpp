@@ -11,16 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Services/QueryParsingService.hpp>
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <climits>
 #include <gtest/gtest.h>
@@ -127,7 +127,7 @@ TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSinks) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, DisjunctionPattern){
+TEST_F(PatternParsingServiceTest, DisjunctionPattern) {
     //pattern string as received from the NES UI and create query plan from parsing service
     std::string patternString =
         "PATTERN test:= (A OR B) FROM default_logical AS A, default_logical_b AS B  INTO Print :: testSink ";
@@ -347,7 +347,7 @@ TEST_F(PatternParsingServiceTest, TimesOperatorUnbounded) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) { // TODO issue #866
+TEST_F(PatternParsingServiceTest, DISABLED_simplePattern1HasTimes4) {// TODO issue #866
     //pattern string as received from the NES UI
     std::string patternString = "PATTERN test:= (A[2+]) FROM default_logical AS A INTO Print :: testSink ";
     std::shared_ptr<QueryParsingService> patternParsingService;

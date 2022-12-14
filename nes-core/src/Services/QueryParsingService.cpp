@@ -129,9 +129,10 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 
 QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string& queryCodeSnippet) {
     // we hand over all auto-generated files (tokens, lexer, etc.) to ANTLR to create the AST
-    if(queryCodeSnippet.empty() || queryCodeSnippet.size() < 15){
-        NES_THROW_RUNTIME_ERROR("QueryParsingService::createPatternFromCodeString: The query is too short, make sure you provide at least a source (FROM) and a sink (INTO)");
-    }else {
+    if (queryCodeSnippet.empty() || queryCodeSnippet.size() < 15) {
+        NES_THROW_RUNTIME_ERROR("QueryParsingService::createPatternFromCodeString: The query is too short, make sure you provide "
+                                "at least a source (FROM) and a sink (INTO)");
+    } else {
         antlr4::ANTLRInputStream input(queryCodeSnippet.c_str(), queryCodeSnippet.length());
         Parsers::NesCEPLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);

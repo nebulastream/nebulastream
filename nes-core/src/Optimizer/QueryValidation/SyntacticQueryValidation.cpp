@@ -37,7 +37,7 @@ NES::QueryPlanPtr SyntacticQueryValidation::validate(const std::string& inputQue
         if (inputQuery.starts_with("PATTERN")) {
             NES_DEBUG("SyntacticQueryValidation: parse pattern query from declarative PSL.");
             queryPlan = queryParsingService->createPatternFromCodeString(inputQuery);
-        }else{
+        } else {
             NES_DEBUG("SyntacticQueryValidation: parse C++ query from query string.");
             queryPlan = queryParsingService->createQueryFromCodeString(inputQuery);
         }
