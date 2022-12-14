@@ -17,23 +17,26 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 ReconnectSchedule::ReconnectSchedule(uint64_t currentParentId,
-                                     Index::Experimental::LocationPtr pathBeginning,
-                                     Index::Experimental::LocationPtr pathEnd,
-                                     Index::Experimental::LocationPtr lastIndexUpdatePosition,
+                                     NES::Spatial::DataTypes::Experimental::Location&& pathBeginning,
+                                     NES::Spatial::DataTypes::Experimental::Location&& pathEnd,
+                                     NES::Spatial::DataTypes::Experimental::Location&& lastIndexUpdatePosition,
                                      std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector)
     : currentParentId(currentParentId), pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
-      lastIndexUpdatePosition(lastIndexUpdatePosition), reconnectVector(std::move(reconnectVector)) {}
+      lastIndexUpdatePosition(std::move(lastIndexUpdatePosition)), reconnectVector(std::move(reconnectVector)) {}
 
-Index::Experimental::LocationPtr ReconnectSchedule::getPathStart() const { return pathStart; }
+NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getPathStart() const { return pathStart; }
 
-Index::Experimental::LocationPtr ReconnectSchedule::getPathEnd() const { return pathEnd; }
+NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getPathEnd() const { return pathEnd; }
 
 std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
 }
 
 ReconnectSchedule ReconnectSchedule::Empty() { return {0, {}, {}, {}, {}}; }
-Index::Experimental::LocationPtr ReconnectSchedule::getLastIndexUpdatePosition() const { return lastIndexUpdatePosition; }
+
+NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getLastIndexUpdatePosition() const {
+    return lastIndexUpdatePosition;
+}
 
 uint64_t ReconnectSchedule::getCurrentParentId() { return currentParentId; }
 }// namespace NES::Spatial::Mobility::Experimental

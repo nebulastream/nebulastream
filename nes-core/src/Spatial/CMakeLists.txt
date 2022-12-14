@@ -16,13 +16,13 @@ add_source_files(nes-core
         DataTypes/Point.cpp
         DataTypes/Polygon.cpp
         DataTypes/Rectangle.cpp
+        DataTypes/Waypoint.cpp
         Mobility/LocationProviderCSV.cpp
         LocationIndex.cpp
         Mobility/LocationProvider.cpp
         Mobility/ReconnectSchedule.cpp
         Mobility/TrajectoryPredictor.cpp
         Mobility/ReconnectConfigurator.cpp
-        Location.cpp
-        Waypoint.cpp
-)
+        DataTypes/Location.cpp
+        )
 

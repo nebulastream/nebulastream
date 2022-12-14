@@ -14,12 +14,11 @@
 
 #include <CoordinatorRPCService.pb.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Exceptions/InvalidCoordinateFormatException.hpp>
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/Location.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 
-namespace NES::Spatial::Index::Experimental {
+using namespace NES::Spatial::DataTypes::Experimental;
 
 Location::Location() {
     latitude = std::numeric_limits<double>::quiet_NaN();
@@ -29,8 +28,8 @@ Location::Location() {
 Location::Location(double latitude, double longitude) {
     //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
     if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
-        NES_WARNING("Trying to create node with an invalid location");
-        throw CoordinatesOutOfRangeException();
+        NES_ERROR("Trying to create node with an invalid location");
+        throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
     this->latitude = latitude;
     this->longitude = longitude;
@@ -40,7 +39,7 @@ Location::Location(const GeoLocation& geoLocation) : Location(geoLocation.lat(),
 
 Location Location::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {
-        throw InvalidCoordinateFormatException();
+        throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
 
     std::stringstream stringStream(coordinates);
@@ -49,8 +48,8 @@ Location Location::fromString(const std::string& coordinates) {
     char separator = 0;
     stringStream >> separator;
     if (separator != ',') {
-        NES_WARNING("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
-        throw InvalidCoordinateFormatException();
+        NES_ERROR("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
+        throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
     double lng;
     stringStream >> lng;
@@ -88,5 +87,3 @@ std::string Location::toString() const { return std::to_string(latitude) + ", " 
 bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
-
-}// namespace NES::Spatial::Index::Experimental

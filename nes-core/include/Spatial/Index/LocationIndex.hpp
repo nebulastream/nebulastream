@@ -13,7 +13,8 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
-#include <Spatial/Index/Location.hpp>
+
+#include <Spatial/DataTypes/Location.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -33,11 +34,14 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
+namespace Spatial::DataTypes::Experimental {
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
+}// namespace Spatial::DataTypes::Experimental
+
 namespace Spatial::Index::Experimental {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
 
 /**
  * this class holds information about the geographical position of nodes, for which such a position is known (field nodes)
@@ -54,7 +58,7 @@ class LocationIndex {
      * @param geoLoc  the location of the Field node
      * @return true on success
      */
-    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
+    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
 
     /**
      * Experimental
@@ -63,7 +67,7 @@ class LocationIndex {
      * @param geoLoc  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
+    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
 
     /**
      * Experimental
@@ -80,7 +84,7 @@ class LocationIndex {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const Location& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const Spatial::DataTypes::Experimental::Location& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -98,7 +102,7 @@ class LocationIndex {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodePtr, Location>> getNodesInRange(Location center, double radius);
+    std::vector<std::pair<TopologyNodePtr, Spatial::DataTypes::Experimental::Location>> getNodesInRange(Spatial::DataTypes::Experimental::Location center, double radius);
 
     /**
      * Experimental
@@ -112,7 +116,7 @@ class LocationIndex {
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, LocationPtr>> getAllMobileNodeLocations();
+    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::Location>> getAllMobileNodeLocations();
 
     /**
      * Experimental
@@ -147,7 +151,7 @@ class LocationIndex {
      * @param geoLoc: the (new) location of the field node
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::Location&& geoLoc);
 
     std::recursive_mutex locationIndexMutex;
 

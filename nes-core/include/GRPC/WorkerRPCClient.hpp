@@ -50,12 +50,10 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
-namespace Spatial::Index::Experimental {
+namespace Spatial::DataTypes::Experimental {
 class Location;
-using LocationPtr = std::shared_ptr<Location>;
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
-}// namespace Spatial::Index::Experimental
+}// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
@@ -224,10 +222,10 @@ class WorkerRPCClient {
      * @brief method to check the location of any node. If the node is a mobile node, its current loction will be returned.
      * If the node is a field node, its fixed location will be returned. If the node does not have a known location, an
      * invalid location will be returned
-     * @param address: the ip adress of the node
+     * @param address: the ip address of the node
      * @return location representing the nodes location or invalid if no such location exists
      */
-    static NES::Spatial::Index::Experimental::WaypointPtr getWaypoint(const std::string& address);
+    static NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
     /**
      * @brief method to obtain the reconnect schedule calculated by a mobile worker containing beginning and end locations of the

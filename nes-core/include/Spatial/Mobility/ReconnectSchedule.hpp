@@ -13,13 +13,11 @@
 */
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_
-#include "Util/TimeMeasurement.hpp"
+
+#include <Util/TimeMeasurement.hpp>
+#include <Spatial/DataTypes/Location.hpp>
 #include <memory>
 #include <vector>
-namespace NES::Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
-}// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
 struct ReconnectPrediction;
@@ -39,29 +37,29 @@ class ReconnectSchedule {
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
     ReconnectSchedule(uint64_t currentParentId,
-                      Index::Experimental::LocationPtr pathBeginning,
-                      Index::Experimental::LocationPtr pathEnd,
-                      Index::Experimental::LocationPtr lastIndexUpdatePosition,
+                      DataTypes::Experimental::Location&& pathBeginning,
+                      DataTypes::Experimental::Location&& pathEnd,
+                      DataTypes::Experimental::Location&& lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector);
 
     /**
      * @brief getter function for the start location of the current predicted path
      * @return a smart pointer to a location object with the coordinates of the path beginning
      */
-    [[nodiscard]] Index::Experimental::LocationPtr getPathStart() const;
+    [[nodiscard]] DataTypes::Experimental::Location getPathStart() const;
 
     /**
      * @brief getter function for the end location of the current predicted path
      * @return a smart pointer to a location object with the coordinates of the path end
      */
-    [[nodiscard]] Index::Experimental::LocationPtr getPathEnd() const;
+    [[nodiscard]] DataTypes::Experimental::Location getPathEnd() const;
 
     /**
      * @brief getter function for the location at which the device was located when the last download of field node location data
      * to the local spatial index happened
      * @return a smart pointer to a location object with the coordinates of the device position of the time of updating
      */
-    [[nodiscard]] Index::Experimental::LocationPtr getLastIndexUpdatePosition() const;
+    [[nodiscard]] DataTypes::Experimental::Location getLastIndexUpdatePosition() const;
 
     /**
      * @brief getter function for the vector containing the scheduled reconnects
@@ -79,9 +77,9 @@ class ReconnectSchedule {
 
   private:
     uint64_t currentParentId;
-    Index::Experimental::LocationPtr pathStart;
-    Index::Experimental::LocationPtr pathEnd;
-    Index::Experimental::LocationPtr lastIndexUpdatePosition;
+    NES::Spatial::DataTypes::Experimental::Location pathStart;
+    NES::Spatial::DataTypes::Experimental::Location pathEnd;
+    NES::Spatial::DataTypes::Experimental::Location lastIndexUpdatePosition;
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
 };
 }// namespace NES::Spatial::Mobility::Experimental

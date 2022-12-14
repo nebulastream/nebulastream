@@ -26,13 +26,12 @@ namespace NES {
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Spatial::Index::Experimental {
+namespace Spatial::DataTypes::Experimental {
 class Location;
-using LocationPtr = std::shared_ptr<Location>;
-
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
+}// namespace Spatial::DataTypes::Experimental
 
+namespace Spatial::Index::Experimental {
 enum class SpatialType;
 }// namespace Spatial::Index::Experimental
 
@@ -183,7 +182,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    NES::Spatial::Index::Experimental::WaypointPtr getGeoLocation();
+    NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint();
 
     /**
      * Experimental
@@ -206,7 +205,7 @@ class TopologyNode : public Node {
      * @param geoLocation: the Geographical location of the node
      * @return true on success
      */
-    void setGeoLocation(NES::Spatial::Index::Experimental::Location geoLocation);
+    void setGeoLocation(NES::Spatial::DataTypes::Experimental::Location geoLocation);
 
     /**
      * Experimental

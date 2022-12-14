@@ -22,14 +22,16 @@
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-}// namespace NES
 
-namespace NES::Spatial::Index::Experimental {
-class LocationIndex;
-using LocationIndexPtr = std::shared_ptr<LocationIndex>;
-
+namespace Spatial::DataTypes::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
+}// namespace Spatial::DataTypes::Experimental
+
+namespace Spatial::Index::Experimental {
+class LocationIndex;
+using LocationIndexPtr = std::shared_ptr<LocationIndex>;
+}// namespace Spatial::Index::Experimental
 
 class LocationService {
   public:
@@ -106,7 +108,7 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction);
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, Spatial::Mobility::Experimental::ReconnectPrediction);
 
   private:
     /**
@@ -118,7 +120,7 @@ class LocationService {
      *   <longitude>,
      * ]
      */
-    static nlohmann::json convertLocationToJson(Location location);
+    static nlohmann::json convertLocationToJson(Spatial::DataTypes::Experimental::Location&& location);
 
     /**
      * Use a node id and a Location to construct a Json representation containing these values.
@@ -133,11 +135,11 @@ class LocationService {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, Location loc);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, Spatial::DataTypes::Experimental::Location&& loc);
 
-    LocationIndexPtr locationIndex;
+    Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     TopologyPtr topology;
 };
-}// namespace NES::Spatial::Index::Experimental
+}// namespace NES
 
 #endif// NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
