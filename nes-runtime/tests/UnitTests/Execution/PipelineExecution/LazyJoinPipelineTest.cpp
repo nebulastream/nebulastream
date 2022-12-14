@@ -111,8 +111,8 @@ class LazyJoinPipelineTest : public testing::Test, public AbstractPipelineExecut
 TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
 
     // Activating and installing error listener
-    auto runner = std::make_shared<TestRunner>();
-    NES::Exceptions::installGlobalErrorListener(runner);
+//    auto runner = std::make_shared<TestRunner>();
+//    NES::Exceptions::installGlobalErrorListener(runner);
 
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
