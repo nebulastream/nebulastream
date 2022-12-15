@@ -35,10 +35,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Spatial::DataTypes::Experimental {
-class GeoLocation;
-}// namespace Spatial::DataTypes::Experimental
-
 namespace Spatial::Index::Experimental {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
@@ -58,7 +54,7 @@ class LocationIndex {
      * @param geoLoc  the location of the Field node
      * @return true on success
      */
-    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
+    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     /**
      * Experimental
@@ -67,7 +63,7 @@ class LocationIndex {
      * @param geoLoc  the new location of the Field node
      * @return true on success, false if the node was not a field node
      */
-    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
+    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     /**
      * Experimental
@@ -84,7 +80,7 @@ class LocationIndex {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodeId> getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation& geoLoc,
+    std::optional<TopologyNodeId> getClosestNodeTo(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLoc,
                                                    int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
@@ -103,8 +99,8 @@ class LocationIndex {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodeId, Spatial::DataTypes::Experimental::GeoLocation>>
-    getNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation center, double radius);
+    std::vector<std::pair<TopologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& center, double radius);
 
     /**
      * Experimental
@@ -119,14 +115,14 @@ class LocationIndex {
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> getAllMobileNodeLocations();
+    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> getAllMobileNodeLocations();
 
     /**
      * Get geolocation of a node
      * @param topologyNodeId : the node id
      * @return geoLocation
      */
-    Spatial::DataTypes::Experimental::GeoLocation getGeoLocationForNode(TopologyNodeId topologyNodeId);
+    NES::Spatial::DataTypes::Experimental::GeoLocation getGeoLocationForNode(TopologyNodeId topologyNodeId);
 
     /**
      * Experimental
@@ -143,11 +139,11 @@ class LocationIndex {
      * @param geoLoc: the (new) location of the field node
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLoc);
 
     std::recursive_mutex locationIndexMutex;
     // Map containing locations of all registered worker nodes
-    std::unordered_map<uint64_t, Spatial::DataTypes::Experimental::GeoLocation> workerNodeLocation;
+    std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerNodeLocation;
 #ifdef S2DEF
     // Spatial index that stores ids of all worker nodes and index them based on their geo location
     S2PointIndex<TopologyNodeId> nodePointIndex;

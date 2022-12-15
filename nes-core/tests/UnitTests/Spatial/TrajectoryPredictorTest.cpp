@@ -13,6 +13,7 @@
 */
 #include <gtest/gtest.h>
 
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
 #include <Util/Logger/Logger.hpp>

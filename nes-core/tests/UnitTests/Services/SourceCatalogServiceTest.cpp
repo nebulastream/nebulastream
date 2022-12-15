@@ -24,6 +24,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -95,7 +96,8 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
 
     std::string physicalSourceName = "testStream";
 

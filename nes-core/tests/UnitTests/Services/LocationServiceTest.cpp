@@ -19,7 +19,9 @@
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/LocationService.hpp>
-#include <Spatial/Index/Location.hpp>
+#include <Services/TopologyManagerService.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Index/Waypoint.hpp>
 #include <Topology/Topology.hpp>
@@ -34,9 +36,6 @@
 namespace NES {
 
 std::string ip = "127.0.0.1";
-namespace Spatial::Index::Experimental {
-using LocationServicePtr = std::shared_ptr<LocationService>;
-}
 
 class LocationServiceTest : public Testing::NESBaseTest {
   public:
@@ -46,13 +45,13 @@ class LocationServiceTest : public Testing::NESBaseTest {
     }
     static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
 
-    nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::Index::Experimental::LocationPtr loc) {
+    nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation loc) {
         nlohmann::json nodeInfo;
         nodeInfo["id"] = id;
         nlohmann::json::array_t locJson;
-        if (loc) {
-            locJson.push_back(loc->getLatitude());
-            locJson.push_back((loc->getLongitude()));
+        if (loc.isValid()) {
+            locJson.push_back(loc.getLatitude());
+            locJson.push_back((loc.getLongitude()));
         }
 
         nodeInfo["location"] = locJson;
@@ -63,7 +62,8 @@ class LocationServiceTest : public Testing::NESBaseTest {
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
-    NES::Spatial::Index::Experimental::LocationServicePtr service;
+    NES::LocationServicePtr locationService;
+    NES::TopologyManagerServicePtr topologyManagerService;
 };
 
 TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
@@ -74,25 +74,22 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     nlohmann::json cmpJson;
     nlohmann::json cmpLoc;
     TopologyPtr topology = Topology::create();
-    service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
+    topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
-    TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
-    TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0, properties);
-    //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    node2->setGeoLocation(13.4, -23);
-    node2->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
-    TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0, properties);
-    node3->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
+    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
 
-    topology->setAsRoot(node1);
-    topology->addNewTopologyNodeAsChild(node1, node2);
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
-    locIndex->initializeFieldNodeCoordinates(node2, *node2->getWaypoint()->getLocation());
+    topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
@@ -104,26 +101,26 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
-    topology->addNewTopologyNodeAsChild(node1, node3);
-    locIndex->addMobileNode(node3);
+
+    topologyManagerService->updateGeoLocation(node3Id, {13.4, -23});
 
     // test querying for node which does not exist in the system
-    EXPECT_EQ(service->requestNodeLocationDataAsJson(1234), nullptr);
+    EXPECT_EQ(locationService->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
-    cmpJson = service->requestNodeLocationDataAsJson(1);
-    EXPECT_EQ(cmpJson["id"], 1);
+    cmpJson = locationService->requestNodeLocationDataAsJson(1);
+    EXPECT_EQ(cmpJson["id"], node1Id);
     EXPECT_TRUE(cmpJson["location"].empty());
 
     //test getting location of field node
-    cmpJson = service->requestNodeLocationDataAsJson(2);
-    EXPECT_EQ(cmpJson["id"], 2);
+    cmpJson = locationService->requestNodeLocationDataAsJson(2);
+    EXPECT_EQ(cmpJson["id"], node2Id);
     EXPECT_EQ(cmpJson["location"][0], 13.4);
     EXPECT_EQ(cmpJson["location"][1], -23);
 
     //test getting location of a mobile node
-    cmpJson = service->requestNodeLocationDataAsJson(3);
-    EXPECT_EQ(cmpJson["id"], 3);
+    cmpJson = locationService->requestNodeLocationDataAsJson(3);
+    EXPECT_EQ(cmpJson["id"], node3Id);
     EXPECT_EQ(cmpJson["location"][0], 52.55227464714949);
     EXPECT_EQ(cmpJson["location"][1], 13.351743136322877);
 
@@ -131,38 +128,36 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_TRUE(retStopWrk3);
 }
 
-
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
     uint64_t rpcPortWrk4 = 6003;
-    nlohmann::json cmpLoc;
+
     TopologyPtr topology = Topology::create();
-    service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
+    topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
-    TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0, properties);
-    //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    node2->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
-    node2->setGeoLocation(13.4, -23);
-    TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0, properties);
-    node3->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
-    TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0, properties);
-    node4->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
-    topology->setAsRoot(node1);
-    topology->addNewTopologyNodeAsChild(node1, node2);
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
+    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
 
-    locIndex->initializeFieldNodeCoordinates(node2, *node2->getWaypoint()->getLocation());
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
-    auto response0 = service->requestLocationDataFromAllMobileNodesAsJson();
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    auto node4Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk4, 0, 0, properties);
 
-    //no mobile nodes added yet. List should be empty
-    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
+    topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
+
+    auto response0 = locationService->requestLocationDataFromAllMobileNodesAsJson();
+
+    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 1);
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
@@ -174,21 +169,23 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
-    topology->addNewTopologyNodeAsChild(node1, node3);
-    locIndex->addMobileNode(node3);
 
-    auto response1 = service->requestLocationDataFromAllMobileNodesAsJson();
+    auto response1 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp1 = response1.get<std::vector<nlohmann::json>>();
     EXPECT_TRUE(getLocResp1.size() == 1);
 
-    cmpLoc[0] = 52.55227464714949;
-    cmpLoc[1] = 13.351743136322877;
+    nlohmann::json cmpLoc;
+    cmpLoc[0] = 13.4;
+    cmpLoc[1] = -23;
     auto entry = getLocResp1[0].get<std::map<std::string, nlohmann::json>>();
     EXPECT_TRUE(entry.size() == 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
-    EXPECT_EQ(entry.at("id"), 3);
+    EXPECT_EQ(entry.at("id"), node2Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
     EXPECT_EQ(entry.at("location"), cmpLoc);
+
+    cmpLoc[0] = 52.55227464714949;
+    cmpLoc[1] = 13.351743136322877;
 
     NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
@@ -200,24 +197,22 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart4);
-    topology->addNewTopologyNodeAsChild(node1, node4);
-    locIndex->addMobileNode(node4);
 
-    auto response2 = service->requestLocationDataFromAllMobileNodesAsJson();
+    auto response2 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp2 = response2.get<std::vector<nlohmann::json>>();
-    EXPECT_TRUE(getLocResp2.size() == 2);
+    EXPECT_EQ(getLocResp2.size(), 3);
 
     for (auto e : getLocResp2) {
         entry = e.get<std::map<std::string, nlohmann::json>>();
-        EXPECT_TRUE(entry.size() == 2);
+        EXPECT_TRUE(entry.size() == 3);
         EXPECT_TRUE(entry.find("id") != entry.end());
         NES_DEBUG("checking element with id " << entry.at("id"));
-        EXPECT_TRUE(entry.at("id") == 3 || entry.at("id") == 4);
-        if (entry.at("id") == 3) {
+        EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
+        if (entry.at("id") == node3Id) {
             cmpLoc[0] = 52.55227464714949;
             cmpLoc[1] = 13.351743136322877;
         }
-        if (entry.at("id") == 4) {
+        if (entry.at("id") == node4Id) {
             cmpLoc[0] = 53.55227464714949;
             cmpLoc[1] = -13.351743136322877;
         }
@@ -237,16 +232,16 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
     uint64_t rpcPortWrk3 = 6002;
     nlohmann::json cmpLoc;
     TopologyPtr topology = Topology::create();
-    service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
+    topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
+
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
+    topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0, properties);
-    //setting coordinates for field node which should not show up in the response when querying for mobile nodes
-    TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0, properties);
-    node3->setSpatialType(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
-    topology->setAsRoot(node1);
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
@@ -258,11 +253,8 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
-    topology->addNewTopologyNodeAsChild(node1, node3);
-    locIndex->addMobileNode(node3);
 
-    auto response1 = service->requestReconnectScheduleAsJson(node3->getId());
-
+    auto response1 = locationService->requestReconnectScheduleAsJson(node3Id);
     auto entry = response1.get<std::map<std::string, nlohmann::json>>();
     EXPECT_EQ(entry.size(), 4);
     EXPECT_NE(entry.find("pathStart"), entry.end());
@@ -281,21 +273,21 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
 TEST_F(LocationServiceTest, testConvertingToJson) {
     double lat = 10.5;
     double lng = -3.3;
-    auto loc1 = std::make_shared<NES::Spatial::Index::Experimental::Location>(lat, lng);
+    auto loc1 = NES::Spatial::DataTypes::Experimental::GeoLocation(lat, lng);
     auto validLocJson = convertNodeLocationInfoToJson(1, loc1);
 
     EXPECT_EQ(validLocJson["id"], 1);
     EXPECT_EQ(validLocJson["location"][0], lat);
     EXPECT_EQ(validLocJson["location"][1], lng);
 
-    auto invalidLoc = std::make_shared<NES::Spatial::Index::Experimental::Location>();
+    auto invalidLoc = NES::Spatial::DataTypes::Experimental::GeoLocation();
     auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
     NES_DEBUG("Invalid location json: " << invalidLocJson.dump())
     EXPECT_EQ(invalidLocJson["id"], 2);
     EXPECT_TRUE(std::isnan(invalidLocJson["location"][0].get<double>()));
     EXPECT_TRUE(std::isnan(invalidLocJson["location"][1].get<double>()));
 
-    std::shared_ptr<NES::Spatial::Index::Experimental::Location> locNullPtr;
+    NES::Spatial::DataTypes::Experimental::GeoLocation locNullPtr;
     auto nullLocJson = convertNodeLocationInfoToJson(3, locNullPtr);
     EXPECT_EQ(nullLocJson["id"], 3);
     EXPECT_TRUE(nullLocJson["location"].empty());

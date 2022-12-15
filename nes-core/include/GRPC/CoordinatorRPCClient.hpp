@@ -197,7 +197,7 @@ class CoordinatorRPCClient {
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
     std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>>
-    getNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation, double radius);
+    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
