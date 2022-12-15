@@ -1,0 +1,24 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 5120, 10240
+numberOfPreAllocatedBuffer: 1000
+
+
+# Benchmark parameter for the entire run
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 0
+numberOfMeasurementsToCollect: 1
+
+numberOfSources: 3
+inputType: MemoryMode
+dataProviderMode: MemCopy
+outputFile: JoinTwoSources.csv
+benchmarkName: JoinTwoSources
+query: 'Query::from("input1").joinWith(Query::from("input2"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .joinWith(Query::from("input3"))
+                                  .where(Attribute("id")).equalsTo(Attribute("id"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .sink(NullOutputSinkDescriptor::create());'
