@@ -114,4 +114,15 @@ LogicalSourcePtr SourceCatalogService::getLogicalSource(const std::string& logic
     return std::make_shared<LogicalSource>(*logicalSource);
 }
 
+std::map<std::string, std::string> SourceCatalogService::getAllLogicalSourceAsString() {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    return sourceCatalog->getAllLogicalSourceAsString();
+}
+
+std::vector<Catalogs::Source::SourceCatalogEntryPtr>
+SourceCatalogService::getPhysicalSources(const std::string& logicalSourceName) {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    return sourceCatalog->getPhysicalSources(logicalSourceName);
+}
+
 }//namespace NES
