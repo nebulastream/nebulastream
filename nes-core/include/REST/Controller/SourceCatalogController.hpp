@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -109,7 +110,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ADD_CORS(getSchema)
     ENDPOINT("GET", "/schema", getSchema, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
-            SchemaPtr schema = sourceCatalogService->getSchemaForLogicalSource(logicalSourceName);
+            SchemaPtr schema = sourceCatalogService->getLogicalSource(logicalSourceName)->getSchema();
             SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
             return createResponse(Status::CODE_200, serializableSchema->SerializeAsString());
         } catch (const MapEntryNotFoundException& e) {
