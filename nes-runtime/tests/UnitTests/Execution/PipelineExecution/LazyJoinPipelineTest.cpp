@@ -37,28 +37,6 @@
 
 namespace NES::Runtime::Execution {
 
-
-class TestRunner : public NES::Exceptions::ErrorListener {
-  public:
-    void onFatalError(int signalNumber, std::string callStack) override {
-        std::ostringstream fatalErrorMessage;
-        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                          << callStack;
-
-        NES_FATAL_ERROR(fatalErrorMessage.str());
-        std::cerr << fatalErrorMessage.str() << std::endl;
-    }
-
-    void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
-        std::ostringstream fatalExceptionMessage;
-        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
-
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
-        std::cerr << fatalExceptionMessage.str() << std::endl;
-    }
-};
-
-
 class LazyJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     LazyJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager, uint64_t noWorkerThreads,
