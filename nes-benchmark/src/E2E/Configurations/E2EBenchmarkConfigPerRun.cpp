@@ -20,7 +20,7 @@
 namespace NES::Benchmark {
 E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     using namespace Configurations;
-    numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "No. Worker Threads");
+    numWorkerOfThreads = ConfigurationOption<uint32_t>::create("numWorkerOfThreads", 1, "No. Worker Threads");
     numberOfSources = ConfigurationOption<uint32_t>::create("numberOfSources", 1, "No. sources");
     bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
     numberOfQueriesToDeploy = ConfigurationOption<uint32_t>::create("numberOfQueriesToDeploy", 1, "Number of Queries to use");
@@ -33,7 +33,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
 
 std::string E2EBenchmarkConfigPerRun::toString() {
     std::stringstream oss;
-    oss << "- numWorkerThreads: " << numWorkerThreads->getValueAsString() << std::endl
+    oss << "- numWorkerOfThreads: " << numWorkerOfThreads->getValueAsString() << std::endl
         << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl
         << "- numberOfQueriesToDeploy: " << numberOfQueriesToDeploy->getValueAsString() << std::endl
         << "- numberOfSources: " << numberOfSources->getValueAsString() << std::endl
@@ -51,8 +51,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     E2EBenchmarkConfigPerRun configPerRun;
 
     /* Getting all parameters per experiment run in vectors */
-    auto numWorkerThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
-                                                                configPerRun.numWorkerThreads->getDefaultValue());
+    auto numWorkerOfThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
+                                                                configPerRun.numWorkerOfThreads->getDefaultValue());
 
     auto numberOfSources = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfSources"].As<std::string>(),
                                                                 configPerRun.numberOfSources->getDefaultValue());
@@ -75,7 +75,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
                                             configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 
     /* Retrieving the maximum number of experiments to run */
-    size_t totalBenchmarkRuns = numWorkerThreads.size();
+    size_t totalBenchmarkRuns = numWorkerOfThreads.size();
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfQueriesToDeploy.size());
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.size());
@@ -84,7 +84,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfSources.size());
 
     /* Padding all vectors to the desired size */
-    Util::padVectorToSize<uint32_t>(numWorkerThreads, totalBenchmarkRuns, numWorkerThreads.back());
+    Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
     Util::padVectorToSize<uint32_t>(numberOfSources, totalBenchmarkRuns, numberOfSources.back());
     Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
     Util::padVectorToSize<uint32_t>(numberOfQueriesToDeploy, totalBenchmarkRuns, numberOfQueriesToDeploy.back());
@@ -99,7 +99,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     allConfigPerRuns.reserve(totalBenchmarkRuns);
     for (size_t i = 0; i < totalBenchmarkRuns; ++i) {
         E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
-        e2EBenchmarkConfigPerRun.numWorkerThreads->setValue(numWorkerThreads[i]);
+        e2EBenchmarkConfigPerRun.numWorkerOfThreads->setValue(numWorkerOfThreads[i]);
         e2EBenchmarkConfigPerRun.numberOfSources->setValue(numberOfSources[i]);
         e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
         e2EBenchmarkConfigPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy[i]);

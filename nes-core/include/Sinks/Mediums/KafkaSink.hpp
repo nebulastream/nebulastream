@@ -33,6 +33,19 @@ class KafkaSink : public SinkMedium {
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
   public:
+   /**
+    * Constructor for a kafka Sink
+    * @param format format of the sink
+    * @param nodeEngine
+    * @param numOfProducers
+    * @param brokers list of brokers to connect to
+    * @param topic list of topics to push to
+    * @param queryId
+    * @param querySubPlanId
+    * @param kafkaProducerTimeout timeout how long to wait until the push fails
+    * @param faultToleranceType
+    * @param numberOfOrigins
+    */
     KafkaSink(SinkFormatPtr format,
               Runtime::NodeEnginePtr nodeEngine,
               uint32_t numOfProducers,

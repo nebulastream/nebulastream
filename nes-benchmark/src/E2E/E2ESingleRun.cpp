@@ -23,13 +23,14 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Version/version.hpp>
-#include <algorithm>
+
+#ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/cppkafka.h>
+#endif
+
 #include <fstream>
 
 namespace NES::Benchmark {
-
-static const std::string markerFile = "/tmp/start.source";
 
 void E2ESingleRun::setupCoordinatorConfig() {
     NES_INFO("Creating coordinator and worker configuration...");
@@ -43,7 +44,7 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->optimizer.distributedWindowCombinerThreshold = 100;
 
     // Worker configuration
-    coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerThreads->getValue();
+    coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerOfThreads->getValue();
     coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
 
     coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numberOfBuffersInGlobalBufferManager->getValue();
@@ -97,8 +98,6 @@ void E2ESingleRun::createSources() {
         if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
             //Kafka is not using a data provider as Kafka itself is the provider
-            std::remove(markerFile.c_str());// delete file
-
             auto connectionStringVec =
                 NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
 
@@ -128,6 +127,7 @@ void E2ESingleRun::createSources() {
             // Adding necessary items to the corresponding vectors
             allDataProviders.emplace_back(dataProvider);
             allBufferManagers.emplace_back(bufferManager);
+            allDataGenerators.emplace_back(dataGenerator);
 
             size_t generatorQueueIndex = 0;
             auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
@@ -178,15 +178,6 @@ void E2ESingleRun::runQuery() {
     NES_DEBUG("Starting the data provider...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->start();
-    }
-
-    if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
-        //we start the Kakfa data provider by writing to a file
-        std::fstream fs;
-        fs.open(markerFile, std::ios::out);
-        fs << "test";
-        fs.close();
-        NES_DEBUG("Started the data provider!");
     }
 
     // Wait for the system to come to a steady state
@@ -338,8 +329,7 @@ void E2ESingleRun::stopQuery() {
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
 
-    //    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
-    auto schemaSizeInB = 78;
+    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
     std::string queryString = configOverAllRuns.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
@@ -347,7 +337,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     header << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
               "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
               "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-              "numWorkerThreads,numberOfDeplyoedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
+              "numWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
            << std::endl;
 
     std::stringstream outputCsvStream;
@@ -356,7 +346,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
-        outputCsvStream << "," << configPerRun.numWorkerThreads->getValue();
+        outputCsvStream << "," << configPerRun.numWorkerOfThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
         outputCsvStream << "," << configPerRun.numberOfSources->getValue();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();

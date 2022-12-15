@@ -114,8 +114,6 @@ class KafkaSinkTest : public Testing::NESBaseTest {
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
         createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
-
-    SUCCEED();
 }
 
 /**
@@ -130,8 +128,6 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     EXPECT_EQ(kafkaSink->toString(), expected);
 
     NES_DEBUG("kafka string=" << kafkaSink->toString());
-
-    SUCCEED();
 }
 
 #ifdef RUNNING_KAFKA_INSTANCE
@@ -223,8 +219,6 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
             }
         }
     }
-
-    SUCCEED();
 }
 #endif
 }// namespace NES

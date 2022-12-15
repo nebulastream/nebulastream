@@ -66,7 +66,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     std::uint64_t getNumberOfToProcessBuffers() const;
 
     /**
-     * @brief Get the number of buffers to produce
+     * @brief Get the number of batches to pull from kafka in one call
      */
     std::uint64_t getBatchSize() const;
 

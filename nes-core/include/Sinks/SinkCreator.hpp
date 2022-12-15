@@ -319,7 +319,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
  * @param queryId
  * @param querySubPlanId
  * @param nodeEngine
- * @param activeProducers
+ * @param activeProducers how many different queries write to this sink which is needed for sink shutdown
  * @param brokers: broker list
  * @param topic: kafka topic to write to
  * @param kafkaProducerTimeout: kafka producer timeout
