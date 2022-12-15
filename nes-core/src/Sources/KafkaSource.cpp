@@ -71,6 +71,14 @@ KafkaSource::~KafkaSource() {
               << " failedFullPollCnt=" << failedFullPollCnt << "reuseCnt=" << reuseCnt << std::endl;
 }
 
+void KafkaSource::recyclePooledBuffer(Runtime::detail::MemorySegment*){};
+
+/**
+     * @brief Interface method for unpooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
+void KafkaSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment*){};
+
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     if (!connect()) {
         NES_DEBUG("Connect Kafa Source");
@@ -79,6 +87,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
     while (true) {
+        //iterate over the polled message buffer
         if (!messages.empty()) {
             reuseCnt++;
             if (messages.back().get_error()) {
@@ -97,6 +106,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
 #define COPYBUFFER
 #ifdef COPYBUFFER
+                //this method copies the payload of the kafka message into a buffer
                 Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
                 NES_ASSERT(messages.back().get_payload().get_size() <= buffer.getBufferSize(), "The buffer is not large enough");
                 std::memcpy(buffer.getBuffer(),
@@ -104,7 +114,8 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                             messages.back().get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
                 buffer.setCreationTimestamp(timeStamp);
-#else
+#else//use wrap buffer
+                //this method wraps a buffer around  payload of the kafka message
                 const unsigned char* ptr = messages.back().get_payload().get_data();
                 uint8_t* p8 = const_cast<uint8_t*>(ptr);
                 auto buffer = Runtime::TupleBuffer::wrapMemory(p8, localBufferManager->getBufferSize(), this);
@@ -118,13 +129,18 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             }//end of else
         } else {
             NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
+
+            //poll a batch of messages and put it into a vector
             messages = consumer->poll_batch(batchSize);
 
+            //do bookkeeping make the behavior comprehensible
             if (!messages.empty()) {
                 successFullPollCnt++;
             } else {
                 failedFullPollCnt++;
             }
+
+            //if the source is requested to stop we
             if (!this->running) {
                 NES_DEBUG("Source stops so stop pulling from kafka");
                 return std::nullopt;

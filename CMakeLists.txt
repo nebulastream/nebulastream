@@ -46,6 +46,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+option(NES_USE_KAFKA "Build with Kafka support" ON)
 
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
@@ -178,6 +179,7 @@ set(NES_WARNINGS "-Wall -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
+
 
 if (NOT APPLE)
     if (NES_USE_LLD)
@@ -417,11 +419,14 @@ else ()
 endif ()
 
 # Library containing Kafka client
-if (NOT APPLE)
-    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
-    add_compile_definitions(ENABLE_KAFKA_BUILD)
-    message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+if (NES_USE_KAFKA)
+    if (NOT APPLE)
+        include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
+        add_compile_definitions(ENABLE_KAFKA_BUILD)
+        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    endif ()
+
 endif ()
 
 # Library containing OPC client
@@ -680,7 +685,7 @@ install(EXPORT NebulaStreamTargets
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${LIB_INSTALL_DIR}${ConfigPackageLocation})
+        DESTINATION ${LIB_INSTALL_DIR} ${ConfigPackageLocation})
 
 # Configure CPackage
 SET(CPACK_GENERATOR "DEB")

@@ -124,7 +124,7 @@ class KafkaSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
-     * @brief Get batchSize
+     * @brief Get batchSize as the number of messages to pull in one chunk form kafka
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getBatchSize() const;
 
@@ -134,7 +134,7 @@ class KafkaSourceType : public PhysicalSourceType {
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
     /**
-     * @brief Set batch size
+     * @brief Set batch size as the number of messages pulled from kafka in one chunk
      */
     void setBatchSize(uint32_t batchSize);
 
