@@ -142,7 +142,7 @@ message GetLocationRequest {
 }
 
 message GetLocationReply {
-  NES.Spatial.Protobuf.Waypoint geoLocation = 1;
+  NES.Spatial.Protobuf.Waypoint waypoint = 1;
 }
 
 message GetReconnectScheduleRequest {
