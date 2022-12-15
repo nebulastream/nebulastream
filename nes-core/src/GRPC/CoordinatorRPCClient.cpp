@@ -16,19 +16,20 @@
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Health.grpc.pb.h>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <fstream>
-#include <Health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
 #include <string>
 
@@ -463,23 +464,23 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
-CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::LocationPtr location, double radius) {
-    if (!location) {
+std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
+CoordinatorRPCClient::getNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation&& geoLocation, double radius) {
+    if (!geoLocation.isValid()) {
         return {};
     }
     GetNodesInRangeRequest request;
-    GeoLocation* pCoordinates = request.mutable_geolocation();
-    pCoordinates->set_lat(location->getLatitude());
-    pCoordinates->set_lng(location->getLongitude());
+    NES::Spatial::Protobuf::GeoLocation* pCoordinates = request.mutable_geolocation();
+    pCoordinates->set_lat(geoLocation.getLatitude());
+    pCoordinates->set_lng(geoLocation.getLongitude());
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodesInRange;
-    for (WorkerLocationInfo workerInfo : *reply.mutable_nodes()) {
+    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> nodesInRange;
+    for (NES::Spatial::Protobuf::WorkerLocationInfo workerInfo : *reply.mutable_nodes()) {
         nodesInRange.emplace_back(workerInfo.id(), workerInfo.geolocation());
     }
     return nodesInRange;
@@ -601,7 +602,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     SendScheduledReconnectReply reply;
 
     request.set_deviceid(nodeId);
-    SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
+    NES::Spatial::Protobuf::SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
     reconnectPoint->set_id(scheduledReconnect.expectedNewParentId);
     reconnectPoint->set_time(scheduledReconnect.expectedTime);
 
@@ -609,20 +610,20 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t workerId,
-                                              Spatial::Index::Experimental::WaypointPtr locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(uint64_t workerId, Spatial::DataTypes::Experimental::Waypoint&& locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
 
     request.set_workerid(workerId);
 
-    GeoLocation* coordinates = request.mutable_geolocation();
-    coordinates->set_lat(locationUpdate->getLocation()->getLatitude());
-    coordinates->set_lng(locationUpdate->getLocation()->getLongitude());
+    NES::Spatial::Protobuf::Waypoint* waypoint = request.mutable_waypoint();
+    NES::Spatial::Protobuf::GeoLocation* geoLocation = waypoint->mutable_geolocation();
+    geoLocation->set_lat(locationUpdate.getLocation().getLatitude());
+    geoLocation->set_lng(locationUpdate.getLocation().getLongitude());
 
-    if (locationUpdate->getTimestamp()) {
-        request.set_time(locationUpdate->getTimestamp().value());
+    if (locationUpdate.getTimestamp()) {
+        waypoint->set_timestamp(locationUpdate.getTimestamp().value());
     }
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();

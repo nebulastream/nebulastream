@@ -35,13 +35,10 @@ namespace Monitoring {
 class RegistrationMetrics;
 }// namespace Monitoring
 
-namespace Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+namespace Spatial::DataTypes::Experimental {
+class GeoLocation;
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
-enum class NodeType;
-}// namespace Spatial::Index::Experimental
+}// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
 struct ReconnectPrediction;
@@ -165,12 +162,12 @@ class CoordinatorRPCClient {
     /**
      * Experimental
      * @brief Method to get all field nodes (field nodes = non-mobile nodes with a specified geographical location) within a certain range around a geographical point
-     * @param coord: center of the query area
+     * @param geoLocation: center of the query area
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>>
-    getNodeIdsInRange(NES::Spatial::Index::Experimental::LocationPtr location, double radius);
+    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    getNodeIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
@@ -224,7 +221,7 @@ class CoordinatorRPCClient {
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(uint64_t workerId, NES::Spatial::Index::Experimental::WaypointPtr locationUpdate);
+    bool sendLocationUpdate(uint64_t workerId, NES::Spatial::DataTypes::Experimental::Waypoint&& locationUpdate);
 
   private:
     uint64_t workerId;

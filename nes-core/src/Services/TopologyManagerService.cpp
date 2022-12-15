@@ -22,8 +22,9 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/SpatialType.hpp>
+#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SpatialUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
@@ -241,5 +242,66 @@ bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
         return false;
     }
     return locationIndex->removeNodeFromSpatialIndex(topologyNode);
+}
+
+NES::Spatial::DataTypes::Experimental::GeoLocation TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {
+    return locationIndex->getGeoLocationForNode(nodeId);
+}
+
+nlohmann::json TopologyManagerService::getTopologyAsJson() {
+    NES_INFO("TopologyController: getting topology as JSON");
+
+    nlohmann::json topologyJson{};
+    auto root = topology->getRoot();
+    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
+    std::deque<TopologyNodePtr> childToAdd;
+
+    std::vector<nlohmann::json> nodes = {};
+    std::vector<nlohmann::json> edges = {};
+
+    while (!parentToAdd.empty()) {
+        // Current topology node to add to the JSON
+        TopologyNodePtr currentNode = parentToAdd.front();
+        nlohmann::json currentNodeJsonValue{};
+
+        parentToAdd.pop_front();
+        // Add properties for current topology node
+        currentNodeJsonValue["id"] = currentNode->getId();
+        currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
+        currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
+        if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
+            NES::Spatial::DataTypes::Experimental::GeoLocation location = getGeoLocationForNode(currentNode->getId());
+            auto locationInfo = nlohmann::json{};
+            if (location.isValid()) {
+                locationInfo["latitude"] = location.getLatitude();
+                locationInfo["longitude"] = location.getLongitude();
+            }
+            currentNodeJsonValue["location"] = locationInfo;
+        }
+        currentNodeJsonValue["nodeType"] = Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
+
+        for (const auto& child : currentNode->getChildren()) {
+            // Add edge information for current topology node
+            nlohmann::json currentEdgeJsonValue{};
+            currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
+            currentEdgeJsonValue["target"] = currentNode->getId();
+            edges.push_back(currentEdgeJsonValue);
+
+            childToAdd.push_back(child->as<TopologyNode>());
+        }
+
+        if (parentToAdd.empty()) {
+            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
+            childToAdd.clear();
+        }
+
+        nodes.push_back(currentNodeJsonValue);
+    }
+    NES_INFO("TopologyController: no more topology node to add");
+
+    // add `nodes` and `edges` JSON array to the final JSON result
+    topologyJson["nodes"] = nodes;
+    topologyJson["edges"] = edges;
+    return topologyJson;
 }
 }// namespace NES
