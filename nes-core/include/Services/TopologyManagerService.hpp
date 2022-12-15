@@ -23,6 +23,7 @@
 #include <vector>
 #ifdef S2DEF
 #include <Common/Identifiers.hpp>
+#include <nlohmann/json.hpp>
 #include <s2/base/integral_types.h>
 #endif
 
@@ -46,7 +47,7 @@ using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology, Spatial::Index::Experimental::LocationIndexPtr locationIndex);
+    TopologyManagerService(TopologyPtr topology, NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex);
 
     /**
      * @brief registers a worker.
@@ -136,6 +137,20 @@ class TopologyManagerService {
      * @param healthCheckService
      */
     void setHealthService(HealthCheckServicePtr healthCheckService);
+
+    /**
+     * Get the geo location of the node
+     * @param nodeId : node id of the worker
+     * @return GeoLocation of the node
+     */
+    NES::Spatial::DataTypes::Experimental::GeoLocation getGeoLocationForNode(TopologyNodeId nodeId);
+
+    /**
+      * @brief function to obtain JSON representation of a NES Topology
+      * @param root of the Topology
+      * @return JSON representation of the Topology
+      */
+    nlohmann::json getTopologyAsJson();
 
   private:
     TopologyPtr topology;
