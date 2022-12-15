@@ -91,7 +91,7 @@ class GeoLocation {
      * @param coordinates: string of the format "<latitude>, <longitude>"
      * @return a Location object
      */
-    static GeoLocation fromString(const std::string&& coordinates);
+    static GeoLocation fromString(const std::string& coordinates);
 
     /**
      * @brief checks if the a pair of doubles represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)

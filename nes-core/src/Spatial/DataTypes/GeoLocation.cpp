@@ -37,7 +37,7 @@ GeoLocation::GeoLocation(double latitude, double longitude) {
 
 GeoLocation::GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation) : GeoLocation(geoLocation.lat(), geoLocation.lng()) {}
 
-GeoLocation GeoLocation::fromString(const std::string&& coordinates) {
+GeoLocation GeoLocation::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }

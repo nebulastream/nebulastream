@@ -48,7 +48,6 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         topology = Topology::create();
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Properties::LOCATION] = NES::Spatial::Index::Experimental::Location();
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
         TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources, properties);
         topology->setAsRoot(root);

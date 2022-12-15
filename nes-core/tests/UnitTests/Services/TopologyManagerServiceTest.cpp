@@ -25,6 +25,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -69,11 +70,11 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Properties::LOCATION] = NES::Spatial::Index::Experimental::Location();
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
 
     uint64_t nodeId = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);

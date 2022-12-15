@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
@@ -43,10 +43,6 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 #ifdef S2DEF
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 #endif
-namespace NES::Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
-}// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
@@ -124,7 +120,7 @@ class TrajectoryPredictor {
      * @param id : the id of the field node
      * @return the location of the node of an invalid Location if the node does not exist in the local index
      */
-    NES::Spatial::Index::Experimental::Location getNodeLocationById(uint64_t id);
+    NES::Spatial::DataTypes::Experimental::GeoLocation getNodeLocationById(uint64_t id);
 
     /**
      * @return the amount of field node locations saved locally
@@ -143,7 +139,7 @@ class TrajectoryPredictor {
      * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
      */
     //todo 2951: change return type to struct
-    Index::Experimental::WaypointPtr getLastReconnectLocationAndTime();
+    DataTypes::Experimental::Waypoint getLastReconnectLocationAndTime();
 
   private:
     /**
@@ -153,8 +149,8 @@ class TrajectoryPredictor {
      * @param currentLocation : the current device position
      * @return true if the trajectory was recalculated, false if the device did not deviate further than the threshold
      */
-    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& newPathStart,
-                             const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
+    bool updatePredictedPath(const NES::Spatial::DataTypes::Experimental::GeoLocation& newPathStart,
+                             const NES::Spatial::DataTypes::Experimental::GeoLocation& currentLocation);
 
     /**
      * @brief find the minimal covering set of field nodes covering the predicted path. This represents the reconnect schedule
@@ -169,7 +165,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the current location of the mobile device
      * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
      */
-    bool updateDownloadedNodeIndex(Index::Experimental::LocationPtr currentLocation);
+    bool updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
 
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
@@ -177,7 +173,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the device position
      * @return true if the received list of node positions was not empty
      */
-    bool downloadFieldNodes(Index::Experimental::LocationPtr currentLocation);
+    bool downloadFieldNodes(const DataTypes::Experimental::GeoLocation& currentLocation);
 
     /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the
@@ -193,14 +189,14 @@ class TrajectoryPredictor {
      * @param newParentId: The id of the new parent to connect to
      * @param ownLocation: This workers current location
      */
-    void reconnect(uint64_t newParentId, const Index::Experimental::WaypointPtr& ownLocation);
+    void reconnect(uint64_t newParentId, const DataTypes::Experimental::Waypoint& ownLocation);
 
     /**
      * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
      * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
      * @param ownLocation: This workers current location
      */
-    bool reconnectToClosestNode(const Index::Experimental::WaypointPtr& ownLocation);
+    bool reconnectToClosestNode(const DataTypes::Experimental::Waypoint& ownLocation);
 
     LocationProviderPtr locationProvider;
     ReconnectConfiguratorPtr reconnectConfigurator;
@@ -235,11 +231,11 @@ class TrajectoryPredictor {
     S2PointIndex<uint64_t> fieldNodeIndex;
 #endif
     uint64_t parentId;
-    std::deque<Index::Experimental::WaypointPtr> locationBuffer;
+    std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
-    Index::Experimental::WaypointPtr lastReconnectWaypoint;
+    DataTypes::Experimental::Waypoint lastReconnectWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_

@@ -458,18 +458,19 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, request, &reply);
-    if (reply.has_geolocation()) {
-        auto coord = reply.geolocation();
-        auto timestamp = reply.timestamp();
+    if (reply.has_waypoint()) {
+        auto waypoint = reply.waypoint();
+        auto timestamp = waypoint.timestamp();
+        auto geoLocation = waypoint.geolocation();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
             return NES::Spatial::DataTypes::Experimental::Waypoint(
-                Spatial::DataTypes::Experimental::Location(coord.lat(), coord.lng()),
+                Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()),
                 timestamp);
         }
         //no valid timestamp to include
         return NES::Spatial::DataTypes::Experimental::Waypoint(
-            NES::Spatial::DataTypes::Experimental::Location(coord.lat(), coord.lng()));
+            NES::Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()));
     }
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
@@ -511,9 +512,9 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
 
         //construct a schedule from the received data
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
-                                                                                         start,
-                                                                                         end,
-                                                                                         lastUpdatePosition,
+                                                                                         std::move(end),
+                                                                                         std::move(start),
+                                                                                         std::move(lastUpdatePosition),
                                                                                          vec);
     }
     //if no schedule was received, return an empty schedule

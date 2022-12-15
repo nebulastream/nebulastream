@@ -53,13 +53,13 @@ class LocationProviderCSV : public LocationProvider {
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
     //todo: #2951: change return type
-    [[nodiscard]] Index::Experimental::WaypointPtr getCurrentWaypoint() override;
+    [[nodiscard]] DataTypes::Experimental::Waypoint getCurrentWaypoint() override;
 
     /**
      * @brief return a vector containing all the waypoints read from the csv file
      * @return a vector of pairs of Locations and Timestamps
      */
-    [[nodiscard]] const std::vector<Index::Experimental::WaypointPtr>& getWaypoints() const;
+    [[nodiscard]] const std::vector<DataTypes::Experimental::Waypoint>& getWaypoints() const;
 
   private:
     /**
@@ -67,10 +67,10 @@ class LocationProviderCSV : public LocationProvider {
      * @param index: the iterator which marks the position in the vector of waypoints
      * @return the waypoint
      */
-    Index::Experimental::WaypointPtr getWaypointAt(size_t index);
+    DataTypes::Experimental::Waypoint getWaypointAt(size_t index);
 
     Timestamp startTime;
-    std::vector<Index::Experimental::WaypointPtr> waypoints;
+    std::vector<DataTypes::Experimental::Waypoint> waypoints;
     size_t nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental

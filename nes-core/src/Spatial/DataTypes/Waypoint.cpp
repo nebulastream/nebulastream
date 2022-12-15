@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES::Spatial::DataTypes::Experimental {
 
-Waypoint::Waypoint(Location location) : location(location), timestamp(std::nullopt){};
+Waypoint::Waypoint(GeoLocation location) : location(location), timestamp(std::nullopt){};
 
-Waypoint::Waypoint(Location location, Timestamp timestamp) : location(location), timestamp(timestamp) {}
+Waypoint::Waypoint(GeoLocation location, Timestamp timestamp) : location(location), timestamp(timestamp) {}
 
-Waypoint Waypoint::invalid() { return {Experimental::Location()}; };
+Waypoint Waypoint::invalid() { return {GeoLocation()}; };
 
-Location Waypoint::getLocation() const { return location; }
+GeoLocation Waypoint::getLocation() const { return location; }
 
 std::optional<Timestamp> Waypoint::getTimestamp() const { return timestamp; }
-}// namespace NES::Spatial::Index::Experimental
+}// namespace NES::Spatial::DataTypes::Experimental
