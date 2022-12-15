@@ -36,7 +36,7 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        // using seed to generate a predictable sequence of values for DefaultDataGeneratorTest
+        // using seed to generate a predictable sequence of values for deterministic behavior
         std::mt19937 generator(GENERATOR_SEED_DEFAULT);
         std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
