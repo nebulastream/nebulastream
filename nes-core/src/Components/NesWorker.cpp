@@ -30,8 +30,8 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
@@ -245,7 +245,8 @@ bool NesWorker::stop(bool) {
             NES_WARNING("No health check service was created");
         }
 
-        if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+        if (locationProvider
+            && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
             if (trajectoryPredictor) {
                 trajectoryPredictor->stopReconnectPlanning();
                 NES_TRACE("triggered stopping of reconnect planner thread");
@@ -292,9 +293,10 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
-    NES::Spatial::Index::Experimental::Location geoLocation = {};
-    if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
-        geoLocation = *(locationProvider->getWaypoint()->getLocation());
+    NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation{};
+    if (locationProvider
+        && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
+        geoLocation = locationProvider->getWaypoint().getLocation();
     }
 
     NES_DEBUG("NesWorker::connect() Registering worker with coordinator at " << coordinatorAddress);
@@ -309,7 +311,8 @@ bool NesWorker::connect() {
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
-    GeoLocation* geolocation = registrationRequest.mutable_geolocation();
+    auto waypoint = registrationRequest.mutable_waypoint();
+    auto geolocation = waypoint->mutable_geolocation();
     geolocation->set_lat(geoLocation.getLatitude());
     geolocation->set_lng(geoLocation.getLongitude());
 

@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
 
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
@@ -41,11 +41,6 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 }// namespace Configurations::Spatial::Mobility::Experimental
 
 namespace Spatial {
-namespace Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
-}// namespace Index::Experimental
-
 namespace Mobility::Experimental {
 /**
      * @brief runs at worker side and sends periodic updates about location and reconnect predictions to the coordinator. Also

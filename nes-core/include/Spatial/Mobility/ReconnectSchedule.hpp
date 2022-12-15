@@ -37,9 +37,9 @@ class ReconnectSchedule {
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
     ReconnectSchedule(uint64_t currentParentId,
-                      DataTypes::Experimental::GeoLocation&& pathBeginning,
-                      DataTypes::Experimental::GeoLocation&& pathEnd,
-                      DataTypes::Experimental::GeoLocation&& lastIndexUpdatePosition,
+                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
+                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
+                      const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector);
 
     /**

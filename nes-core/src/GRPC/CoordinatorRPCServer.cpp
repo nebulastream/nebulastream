@@ -288,8 +288,11 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 
     for (auto elem : inRange) {
         NES::Spatial::Protobuf::WorkerLocationInfo* workerInfo = reply->add_nodes();
+        auto geoLocation = elem.second;
         workerInfo->set_id(elem.first);
-        workerInfo->set_allocated_geolocation(new GeoLocation{elem.second});
+        auto protoGeoLocation = workerInfo->mutable_geolocation();
+        protoGeoLocation->set_lat(geoLocation.getLatitude());
+        protoGeoLocation->set_lng(geoLocation.getLongitude());
     }
     return Status::OK;
 }

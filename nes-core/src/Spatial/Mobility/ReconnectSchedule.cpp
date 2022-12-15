@@ -17,16 +17,16 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 ReconnectSchedule::ReconnectSchedule(uint64_t currentParentId,
-                                     NES::Spatial::DataTypes::Experimental::Location&& pathBeginning,
-                                     NES::Spatial::DataTypes::Experimental::Location&& pathEnd,
-                                     NES::Spatial::DataTypes::Experimental::Location&& lastIndexUpdatePosition,
+                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
+                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
+                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
                                      std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector)
     : currentParentId(currentParentId), pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
       lastIndexUpdatePosition(std::move(lastIndexUpdatePosition)), reconnectVector(std::move(reconnectVector)) {}
 
-NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getPathStart() const { return pathStart; }
+NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathStart() const { return pathStart; }
 
-NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getPathEnd() const { return pathEnd; }
+NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathEnd() const { return pathEnd; }
 
 std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
@@ -34,7 +34,7 @@ std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> ReconnectSchedule:
 
 ReconnectSchedule ReconnectSchedule::Empty() { return {0, {}, {}, {}, {}}; }
 
-NES::Spatial::DataTypes::Experimental::Location ReconnectSchedule::getLastIndexUpdatePosition() const {
+NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getLastIndexUpdatePosition() const {
     return lastIndexUpdatePosition;
 }
 
