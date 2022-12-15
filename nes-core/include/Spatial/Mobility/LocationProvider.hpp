@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -36,13 +36,13 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-namespace Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+namespace Spatial::DataTypes::Experimental {
+class GeoLocation;
+using GeoLocationPtr = std::shared_ptr<GeoLocation>;
 class Waypoint;
 using WaypointPtr = std::shared_ptr<Waypoint>;
-using NodeIdsMapPtr = std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>>;
-}// namespace Spatial::Index::Experimental
+using NodeIdsMapPtr = std::shared_ptr<std::unordered_map<uint64_t, GeoLocation>>;
+}// namespace Spatial::DataTypes::Experimental
 
 namespace Configurations {
 
@@ -76,7 +76,7 @@ class LocationProvider {
      * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
      * @param fieldNodeLoc the fixed location if this worker is a field node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(Index::Experimental::SpatialType spatialType, Index::Experimental::Location fieldNodeLoc);
+    explicit LocationProvider(Index::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation fieldNodeLoc);
 
     /**
      * @brief default destructor
@@ -95,7 +95,7 @@ class LocationProvider {
      * @return Location object containig the current location if the worker runs on a mobile device, the fixed location if
      * the worker is a field node or an invalid location if there is no known location
      */
-    Index::Experimental::WaypointPtr getWaypoint();
+    DataTypes::Experimental::Waypoint getWaypoint();
 
     /**
      * Experimental
@@ -104,8 +104,7 @@ class LocationProvider {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-
-    Index::Experimental::NodeIdsMapPtr getNodeIdsInRange(Index::Experimental::LocationPtr location, double radius);
+    DataTypes::Experimental::NodeIdsMapPtr getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location, double radius);
 
     /**
      * Experimental
@@ -113,14 +112,14 @@ class LocationProvider {
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::shared_ptr<std::unordered_map<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
+    std::shared_ptr<std::unordered_map<uint64_t, DataTypes::Experimental::GeoLocation>> getNodeIdsInRange(double radius);
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
      * @param geoLoc: The new fixed Location to be set
      * @return success of operation
      */
-    bool setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc);
+    bool setFixedLocationCoordinates(const DataTypes::Experimental::GeoLocation&& geoLoc);
 
     /**
      * @brief pass a pointer to this worker coordinator rpc client, so the location provider can query information from the coordinator
@@ -141,13 +140,12 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual Index::Experimental::WaypointPtr getCurrentWaypoint();
+    virtual DataTypes::Experimental::Waypoint getCurrentWaypoint();
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    Index::Experimental::LocationPtr fixedLocationCoordinates;
+    DataTypes::Experimental::GeoLocation fixedLocationCoordinates;
     Index::Experimental::SpatialType spatialType;
-
     TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental

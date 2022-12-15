@@ -465,7 +465,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 }
 
 std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
-CoordinatorRPCClient::getNodeIdsInRange(Spatial::DataTypes::Experimental::GeoLocation&& geoLocation, double radius) {
+CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius) {
     if (!geoLocation.isValid()) {
         return {};
     }
