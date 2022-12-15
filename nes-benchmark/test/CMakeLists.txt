@@ -11,7 +11,7 @@
 # limitations under the License.
 
 function(add_benchmark_test TARGET_NAME CONFIG_FILE_NAME)
-    add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
+    #add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
     message(STATUS "Added benchmark test ${TARGET_NAME} with config file ${CONFIG_FILE_NAME}")
 endfunction()
 
