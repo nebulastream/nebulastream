@@ -93,13 +93,18 @@ class KafkaSource : public DataSource, public Runtime::BufferRecycler {
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+    /**
+     * @brief Interface method for pooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override;
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override;
+
   private:
     /**
      * @brief method to connect kafka using the host and port specified before

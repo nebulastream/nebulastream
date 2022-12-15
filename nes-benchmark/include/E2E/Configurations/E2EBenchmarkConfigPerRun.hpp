@@ -43,7 +43,7 @@ class E2EBenchmarkConfigPerRun {
          */
     static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
 
-    Configurations::IntConfigOption numWorkerThreads;
+    Configurations::IntConfigOption numWorkerOfThreads;
     Configurations::IntConfigOption numberOfSources;
     Configurations::IntConfigOption bufferSizeInBytes;
     Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;

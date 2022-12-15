@@ -23,8 +23,8 @@
 #include <unordered_map>
 
 const uint64_t bufferSizeInBytes = 131072;
+const uint64_t flushDelay = 131072;
 
-namespace NES::Benchmark {}
 int main(int argc, const char* argv[]) {
     // Activating and installing error listener
     std::cout << "hello" << std::endl;
@@ -79,7 +79,7 @@ int main(int argc, const char* argv[]) {
                 std::vector<uint8_t> bytes(buffer, buffer + len);
                 try {
                     producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
-                    producer.flush(std::chrono::seconds(100));
+                    producer.flush(std::chrono::seconds(flushDelay));
                 } catch (const std::exception& ex) {
                     std::cout << ex.what() << std::endl;
                 } catch (const std::string& ex) {
@@ -96,7 +96,7 @@ int main(int argc, const char* argv[]) {
     for (auto& e : futures) {
         e.get();
     }
-    producer.flush(std::chrono::seconds(100));
+    producer.flush(std::chrono::seconds(flushDelay));
 
     return 0;
 }
