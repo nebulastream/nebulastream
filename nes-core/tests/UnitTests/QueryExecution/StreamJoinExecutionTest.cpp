@@ -228,6 +228,13 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
 }
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinSimple) {
+
+- rewrite this to read data for both sources from a csv file and also read the expected buffers from another csv file.
+- then run read buffers and compare them to the expected ones
+- adapt LowerPhysicalToNautilusOperators to new Join
+- check if new stream join is semantically similar to old one. if this is the case, then test both joins, the old and the new one. old with default_query_compiler and stream join with nautilus_query_compiler
+
+
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
