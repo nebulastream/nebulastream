@@ -12,10 +12,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//#include <API/Schema.hpp>
 #include <DataProvider/InternalProvider.hpp>
-#include <DataGeneration/DataGenerator.hpp>
-#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
-#include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
+//#include <DataGeneration/DataGenerator.hpp>
+//#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+//#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+//#include <Runtime/detail/TupleBufferImpl.hpp>
+//#include <vector>
 #include <gtest/gtest.h>
 #include <Util/Logger/Logger.hpp>
 
@@ -40,20 +45,55 @@ namespace NES::Benchmark::DataProviding {
 
     TEST_F(InternalProviderTest, readNextBufferTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-        E2EBenchmarkConfigPerRun configPerRun;
+        uint64_t currentlyEmittedBuffer = 0;
         size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
 
-        auto dataGenerator = std::make_shared<DataGeneration::DataGenerator>();
         auto bufferManager =  std::make_shared<Runtime::BufferManager>();
-        dataGenerator->setBufferManager(bufferManager);
-        auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
-                                                        configPerRun.bufferSizeInBytes->getValue());
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        // TODO: test for column layout
+        // is it necessary to create a schema or is there some other way to set memoryLayout?
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
 
         auto internalProviderDefault = DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers);
         auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
+
+        ASSERT_FALSE(createdBuffers.empty());
+        
+        auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
+        //++currentlyEmittedBuffer;
+
+        // why is there no matching function for wrapMemory?
+        auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault);
+        auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
+        auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
+
+        expectedNextBuffer.setCreationTimestamp(timeStamp);
+        expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+
+        ASSERT_EQ(expectedNextBuffer, nextBufferDefault);
     }
 
-    // the following tests are not necessary, functions are empty
+    // the following tests are not necessary, functions are not currently implemented
     /*TEST_F(InternalProviderTest, recyclePooledBufferTest) {
 
     }
@@ -67,6 +107,38 @@ namespace NES::Benchmark::DataProviding {
     }*/
 
     TEST_F(InternalProviderTest, stopTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
 
+        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        // TODO: test for column layout
+        // is it necessary to create a schema or is there some other way to set memoryLayout?
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT);
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto internalProviderDefault = DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers);
+        internalProviderDefault->stop();
+
+        ASSERT_TRUE(createdBuffers.empty());
     }
 }//namespace NES::Benchmark::DataGeneration
