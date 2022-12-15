@@ -243,7 +243,7 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
     ASSERT_EQ(content, expectedContent);
 }
 
-TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsSparseTopology) {
+TEST_F(NemoIntegrationTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
     uint64_t childThreshold = 0;
     uint64_t combinerThreshold = 0;
     uint64_t expectedNoBuffers = 2;
