@@ -48,8 +48,8 @@ add_nes_benchmarks(incremental-placement-benchmark "src/MicroBenchmarks/Incremen
 ### Output Channel Benchmark ###
 add_nes_benchmarks(output-channel-benchmark "src/MicroBenchmarks/BenchmarkOutputChannel.cpp")
 
-#YSB Kafka data generaot
-add_nes_benchmarks(ysb-kafka-data-generator "src/DataGeneration/YSBKafkaDataGenerator.cpp")
+##YSB Kafka data generaot
+#add_nes_benchmarks(ysb-kafka-data-generator "src/DataGeneration/YSBKafkaDataGenerator.cpp")
 
 # Adding benchmark tests
 add_subdirectory(test)
