@@ -89,11 +89,31 @@ uint64_t murmurHash(uint64_t key);
  */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
-
+/**
+ * @brief Creates a TupleBuffer from recordPtr
+ * @param recordPtr
+ * @param schema
+ * @param bufferManager
+ * @return Filled tupleBuffer
+ */
 Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager);
 
-Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+/**
+ * @brief Creates a TupleBuffer from a Nautilus::Record
+ * @param nautilusRecord
+ * @param schema
+ * @param bufferManager
+ * @return Filled TupleBuffer
+ */
+Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
+/**
+ * @brief Writes from the nautilusRecord to the bufferPtr
+ * @param bufferPtr
+ * @param nautilusRecord
+ * @param schema
+ * @param bufferManager
+ */
 void writeNautilusRecord(int8_t* bufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
