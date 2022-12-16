@@ -32,13 +32,13 @@ namespace NES::Benchmark::DataGeneration {
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { NES_INFO("Setup DefaultDataGeneratorTest test case.") }
+        void SetUp() override { NES_INFO("Setup DefaultDataGeneratorTest test case."); }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { NES_INFO("Tear down DefaultDataGeneratorTest test case.") }
+        void TearDown() override { NES_INFO("Tear down DefaultDataGeneratorTest test case."); }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class.") }
+        static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
     };
 
     /* The following test block tests the member functions of the DefaultDataGenerator */
