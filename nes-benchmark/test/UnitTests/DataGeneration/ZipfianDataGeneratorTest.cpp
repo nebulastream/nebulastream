@@ -28,19 +28,20 @@ namespace NES::Benchmark::DataGeneration {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("ZipfianDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
-            std::cout << "Setup ZipfianDataGeneratorTest test class." << std::endl;
+            NES_INFO("Setup ZipfianDataGeneratorTest test class.")
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { std::cout << "Setup ZipfianDataGeneratorTest test case." << std::endl; }
+        void SetUp() override { NES_INFO("Setup ZipfianDataGeneratorTest test case.") }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { std::cout << "Tear down ZipfianDataGeneratorTest test case." << std::endl; }
+        void TearDown() override { NES_INFO("Tear down ZipfianDataGeneratorTest test case.") }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { std::cout << "Tear down ZipfianDataGeneratorTest test class." << std::endl; }
+        static void TearDownTestCase() { NES_INFO("Tear down ZipfianDataGeneratorTest test class.") }
     };
 
+    /* The following test block tests the member functions of the ZipfianDataGenerator */
     TEST_F(ZipfianDataGeneratorTest, getSchemaTest) {
         auto alpha = 0.9;
         auto minValue = 0;
