@@ -15,9 +15,9 @@
 #define NES_LAZYJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinWindow.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/SharedJoinHashTable.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <cstddef>

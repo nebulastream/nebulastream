@@ -15,8 +15,8 @@ limitations under the License.
 
 #include <atomic>
 #include <cstddef>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 
 namespace NES::Runtime::Execution {

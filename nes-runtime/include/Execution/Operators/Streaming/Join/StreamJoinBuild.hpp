@@ -15,7 +15,7 @@ limitations under the License.
 #define NES_LAZYJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {

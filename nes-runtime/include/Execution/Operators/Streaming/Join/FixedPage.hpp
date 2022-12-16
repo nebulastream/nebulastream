@@ -17,8 +17,8 @@
 #include <atomic>
 
 #include <Nautilus/Interface/Record.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {

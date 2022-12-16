@@ -16,8 +16,8 @@
 #define NES_LAZYJOINWINDOW_HPP
 
 #include <vector>
-#include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution {
 
