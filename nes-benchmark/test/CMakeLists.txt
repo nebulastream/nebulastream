@@ -15,8 +15,6 @@ function(add_benchmark_test TARGET_NAME CONFIG_FILE_NAME)
     message(STATUS "Added benchmark test ${TARGET_NAME} with config file ${CONFIG_FILE_NAME}")
 endfunction()
 
-
-
 message(STATUS "Building benchmarks tests...")
 
 

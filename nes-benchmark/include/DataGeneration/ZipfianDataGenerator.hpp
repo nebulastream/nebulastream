@@ -25,7 +25,6 @@ class ZipfianDataGenerator : public DataGenerator {
   public:
     explicit ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue);
 
-  public:
     /**
      * @brief creates Zipfian data with the schema "id, value, payload, timestamp"
      * the id, payload, and timestamp are just counters that increment whereas the value gets drawn

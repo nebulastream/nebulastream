@@ -28,19 +28,20 @@ namespace NES::Benchmark::DataGeneration {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("DefaultDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
-            std::cout << "Setup DefaultDataGeneratorTest test class." << std::endl;
+            NES_INFO("Setup DefaultDataGeneratorTest test class.");
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { std::cout << "Setup DefaultDataGeneratorTest test case." << std::endl; }
+        void SetUp() override { NES_INFO("Setup DefaultDataGeneratorTest test case.") }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { std::cout << "Tear down DefaultDataGeneratorTest test case." << std::endl; }
+        void TearDown() override { NES_INFO("Tear down DefaultDataGeneratorTest test case.") }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { std::cout << "Tear down DefaultDataGeneratorTest test class." << std::endl; }
+        static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class.") }
     };
 
+    /* The following test block tests the member functions of the DefaultDataGenerator */
     TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
         auto minValue = 0;
         auto maxValue = 1000;
