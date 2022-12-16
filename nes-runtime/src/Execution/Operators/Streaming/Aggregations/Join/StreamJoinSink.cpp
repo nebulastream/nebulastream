@@ -19,8 +19,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinSink.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinSink.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-LazyJoinSink::LazyJoinSink(uint64_t handlerIndex)
+StreamJoinSink::StreamJoinSink(uint64_t handlerIndex)
     : handlerIndex(handlerIndex) {}
 
 
@@ -58,7 +58,7 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
     return keyType->size();
 }
 
-size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, LazyJoinOperatorHandler* operatorHandler,
+size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, StreamJoinOperatorHandler* operatorHandler,
                    std::vector<FixedPage>&& probeSide,
                    std::vector<FixedPage>&& buildSide) {
 
@@ -140,7 +140,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     NES_ASSERT2_FMT(joinPartitionTimeStampPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
 
 
-    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
     auto joinPartTimestamp = static_cast<JoinPartitionIdTumpleStamp*>(joinPartitionTimeStampPtr);
@@ -181,7 +181,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 }
 
-void LazyJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
+void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto joinPartitionTimestampPtr = recordBuffer.getBuffer();

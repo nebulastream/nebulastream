@@ -17,8 +17,8 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinSink.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinSink.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -37,9 +37,9 @@
 
 namespace NES::Runtime::Execution {
 
-class LazyJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    LazyJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager, uint64_t noWorkerThreads,
+    StreamJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager, uint64_t noWorkerThreads,
                                            OperatorHandlerPtr lazyJoinOpHandler, uint64_t pipelineId)
                                              : PipelineExecutionContext(pipelineId,// mock pipeline id
                                                                         1, // mock query id
@@ -56,7 +56,7 @@ class LazyJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class LazyJoinPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
+class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
 
   public:
 
@@ -66,27 +66,27 @@ class LazyJoinPipelineTest : public testing::Test, public AbstractPipelineExecut
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("LazyJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup LazyJoinPipelineTest test class." << std::endl;
+        NES::Logger::setupLogging("StreamJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup StreamJoinPipelineTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup LazyJoinPipelineTest test case." << std::endl;
+        std::cout << "Setup StreamJoinPipelineTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down LazyJoinPipelineTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down StreamJoinPipelineTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down LazyJoinPipelineTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down StreamJoinPipelineTest test class." << std::endl; }
 };
 
 
-TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
+TEST_P(StreamJoinPipelineTest, lazyJoinPipeline) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -133,12 +133,12 @@ TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
 
 
     auto handlerIndex = 0;
-    auto joinBuildLeft = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+    auto joinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
                                                                         timeStampField, leftSchema);
-    auto joinBuildRight = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
+    auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
                                                                         timeStampField, rightSchema);
-    auto joinSink = std::make_shared<Operators::LazyJoinSink>(handlerIndex);
-    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(leftSchema, rightSchema,
+    auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
+    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
                                                                        noWorkerThreads * 2,
                                                                        numSourcesLeft + numSourcesRight,
@@ -156,9 +156,9 @@ TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
     pipelineSink->setRootOperator(joinSink);
 
     auto curPipelineId = 0;
-    auto pipelineExecCtxLeft = LazyJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxRight = LazyJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxSink = LazyJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxLeft = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxRight = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxSink = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
 
 
     auto executablePipelineLeft = provider->create(pipelineBuildLeft);
@@ -319,9 +319,9 @@ TEST_P(LazyJoinPipelineTest, lazyJoinPipeline) {
 
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        LazyJoinPipelineTest,
+                        StreamJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<LazyJoinPipelineTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<StreamJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });
 

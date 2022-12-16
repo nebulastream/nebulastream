@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
 
 
 
-Operators::LocalHashTable& LazyJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
+Operators::LocalHashTable& StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
     if (leftSide) {
         return localHashTableLeftSide[index];
     } else {
@@ -26,7 +26,7 @@ Operators::LocalHashTable& LazyJoinWindow::getLocalHashTable(size_t index, bool 
 }
 
 
-Operators::SharedJoinHashTable& LazyJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
+Operators::SharedJoinHashTable& StreamJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
     if (isLeftSide) {
         return leftSideHashTable;
     } else {
@@ -34,11 +34,11 @@ Operators::SharedJoinHashTable& LazyJoinWindow::getSharedJoinHashTable(bool isLe
     }
 }
 
-uint64_t LazyJoinWindow::fetchSubBuild(uint64_t sub) {
+uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) {
     return counterFinishedBuilding.fetch_sub(sub);
 }
 
-LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
+StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
                                size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
                                size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
                         : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
@@ -65,13 +65,13 @@ LazyJoinWindow::LazyJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinish
 
 }
 
-LazyJoinWindow::~LazyJoinWindow() {
+StreamJoinWindow::~StreamJoinWindow() {
     std::free(head);
 }
 
-uint64_t LazyJoinWindow::fetchSubSink(uint64_t sub) {
+uint64_t StreamJoinWindow::fetchSubSink(uint64_t sub) {
     return counterFinishedSink.fetch_sub(sub);
 }
 
-size_t LazyJoinWindow::getLastTupleTimeStamp() const { return lastTupleTimeStamp; }
+size_t StreamJoinWindow::getLastTupleTimeStamp() const { return lastTupleTimeStamp; }
 } // namespace NES::Runtime::Execution

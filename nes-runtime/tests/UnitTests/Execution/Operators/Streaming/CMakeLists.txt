@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-lazy-join-operator-test "Aggregations/LazyJoinOperatorTest.cpp")
-target_link_libraries(runtime-lazy-join-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-lazy-join-operator-test COMMAND runtime-lazy-join-operator-test)
+add_executable(runtime-stream-join-operator-test "Aggregations/StreamJoinOperatorTest.cpp")
+target_link_libraries(runtime-stream-join-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-stream-join-operator-test COMMAND runtime-stream-join-operator-test)

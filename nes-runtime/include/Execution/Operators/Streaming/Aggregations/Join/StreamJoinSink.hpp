@@ -19,10 +19,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class LazyJoinSink : public Operator {
+class StreamJoinSink : public Operator {
 
   public:
-    LazyJoinSink(uint64_t handlerIndex);
+    StreamJoinSink(uint64_t handlerIndex);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket

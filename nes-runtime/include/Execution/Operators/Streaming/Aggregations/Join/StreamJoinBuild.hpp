@@ -15,19 +15,19 @@ limitations under the License.
 #define NES_LAZYJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {
 
-class LazyJoinBuild;
-using LazyJoinBuildPtr = std::shared_ptr<LazyJoinBuild>;
+class StreamJoinBuild;
+using StreamJoinBuildPtr = std::shared_ptr<StreamJoinBuild>;
 
-class LazyJoinBuild : public ExecutableOperator {
+class StreamJoinBuild : public ExecutableOperator {
 
   public:
 
-    LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
+    StreamJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
                   const std::string& timeStampField, SchemaPtr schema);
 
     /**
