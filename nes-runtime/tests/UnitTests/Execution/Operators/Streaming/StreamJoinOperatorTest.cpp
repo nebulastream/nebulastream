@@ -16,7 +16,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
