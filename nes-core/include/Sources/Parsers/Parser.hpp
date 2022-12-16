@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <string>
 
 namespace NES {

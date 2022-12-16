@@ -160,8 +160,7 @@ class TestExecutionEngine {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    auto createDateSink(SchemaPtr outputSchema, size_t expectedBuffers) { return std::make_shared<TestSink>(expectedBuffers, outputSchema, nodeEngine); }
-    auto createDateSink(SchemaPtr outputSchema) { return createDataSink(outputSchema, 1); }
+    auto createDateSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
 
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
