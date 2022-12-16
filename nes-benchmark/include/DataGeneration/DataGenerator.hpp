@@ -75,9 +75,9 @@ class DataGenerator {
     static DataGeneratorPtr createGeneratorByName(std::string name, Yaml::Node generatorNode);
 
     /**
-     * @brief
+     * @brief creates either a RowLayout or a ColumnLayout based on the underlying schema
      * @param bufferSize
-     * @return
+     * @return RowLayout pointer, ColumnLayout pointer or nullptr
      */
     Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
