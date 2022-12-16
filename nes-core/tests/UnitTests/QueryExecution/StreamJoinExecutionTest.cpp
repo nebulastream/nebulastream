@@ -25,10 +25,11 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
+        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
+        NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
@@ -36,13 +37,13 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
+        NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };

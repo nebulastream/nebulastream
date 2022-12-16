@@ -15,13 +15,11 @@
 #include <API/Schema.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinSink.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -67,22 +65,22 @@ class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExec
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup StreamJoinPipelineTest test class." << std::endl;
+        NES_INFO("Setup StreamJoinPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup StreamJoinPipelineTest test case." << std::endl;
+        NES_INFO("Setup StreamJoinPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down StreamJoinPipelineTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down StreamJoinPipelineTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down StreamJoinPipelineTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down StreamJoinPipelineTest test class."); }
 };
 
 

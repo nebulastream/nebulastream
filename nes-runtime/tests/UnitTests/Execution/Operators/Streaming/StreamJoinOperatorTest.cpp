@@ -40,22 +40,20 @@ class StreamJoinOperatorTest : public testing::Test, public AbstractPipelineExec
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup StreamJoinOperatorTest test class." << std::endl;
-
-
+        NES_INFO("Setup StreamJoinOperatorTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup StreamJoinOperatorTest test case." << std::endl;
+        NES_INFO("Setup StreamJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down StreamJoinOperatorTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down StreamJoinOperatorTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down StreamJoinOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down StreamJoinOperatorTest test class."); }
 
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
