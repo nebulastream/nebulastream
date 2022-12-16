@@ -30,9 +30,6 @@ namespace NES::Runtime::Execution::Operators {
  */
 class SharedJoinHashTable {
   private:
-
-
-
     /**
      * @brief class that stores all pages for a single bucket
      */
@@ -44,6 +41,10 @@ class SharedJoinHashTable {
 
 
   public:
+    /**
+     * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
+     * @param numBuckets
+     */
     explicit SharedJoinHashTable(size_t numBuckets);
 
     /**
@@ -67,6 +68,11 @@ class SharedJoinHashTable {
      */
     size_t getNumItems(size_t bucketPos) const;
 
+    /**
+     * @brief Returns the number of pages belonging to the bucketPos
+     * @param bucketPos
+     * @return number of pages
+     */
     size_t getNumPages(size_t bucketPos) const;
 
 

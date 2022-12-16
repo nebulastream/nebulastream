@@ -25,19 +25,60 @@ namespace NES::Runtime::Execution {
 class StreamJoinWindow {
 
   public:
+    /**
+     * @brief Constructor for a StreamJoinWindow
+     * @param maxNoWorkerThreads
+     * @param counterFinishedBuildingStart
+     * @param counterFinishedSinkStart
+     * @param totalSizeForDataStructures
+     * @param sizeOfRecordLeft
+     * @param sizeOfRecordRight
+     * @param lastTupleTimeStamp
+     * @param pageSize
+     * @param numPartitions
+     */
     explicit StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
                             size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
                             size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions);
+
+    /**
+     * @brief Deconstructor of a StreamJoinWindow
+     */
     virtual ~StreamJoinWindow();
 
+    /**
+     * @brief Returns the local hash table of either the left or the right join side
+     * @param index
+     * @param leftSide
+     * @return Reference to the hash table
+     */
     Operators::LocalHashTable& getLocalHashTable(size_t index, bool leftSide);
 
+    /**
+     * @brief Returns the shared hash table of either the left or the right side
+     * @param isLeftSide
+     * @return Reference to the shared hash table
+     */
     Operators::SharedJoinHashTable& getSharedJoinHashTable(bool isLeftSide);
 
+    /**
+     * @brief Performs an atomic fetch and sub instruction for detecting if the build phase is done
+     * @param sub
+     * @return old value
+     */
     uint64_t fetchSubBuild(uint64_t sub);
 
+    /**
+     * @brief Performs an atomic fetch and sub instruction for detecting if the sink phase is done
+     * @param sub
+     * @return old value
+     */
     uint64_t fetchSubSink(uint64_t sub);
 
+    /**
+     * @brief Returns the last tuple that can be inserted into this window
+     * @return lastTupleTimeStamp
+     */
     size_t getLastTupleTimeStamp() const;
 
   private:

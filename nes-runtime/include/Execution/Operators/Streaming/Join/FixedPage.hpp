@@ -29,16 +29,42 @@ namespace NES::Runtime::Execution::Operators {
  */
 class FixedPage{
   public:
+    /**
+     * @brief Constructor for a FixedPage
+     * @param tail
+     * @param overrunAddress
+     * @param sizeOfRecord
+     * @param pageSize
+     */
     explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize);
 
+    /**
+     * @brief Default constructor
+     */
     FixedPage() = default;
 
-    FixedPage(FixedPage* page);
+    /**
+     * @brief Constructor for a FixedPage from another FixedPage
+     * @param otherPage
+     */
+    FixedPage(FixedPage* otherPage);
 
+    /**
+     * @brief Constructor for a FixedPage from another FixedPage
+     * @param otherPage
+     */
     FixedPage(const FixedPage& that);
 
+    /**
+     * @brief Constructor for a FixedPage from another FixedPage
+     * @param otherPage
+     */
     FixedPage(FixedPage&& that);
 
+    /**
+     * @brief Constructor for a FixedPage from another FixedPage
+     * @param otherPage
+     */
     FixedPage& operator=(FixedPage&& that);
 
     /**
@@ -69,6 +95,11 @@ class FixedPage{
     size_t size() const;
 
   private:
+    /**
+     * @brief Swapping lhs FixedPage with rhs FixedPage
+     * @param lhs
+     * @param rhs
+     */
     void swap(FixedPage& lhs, FixedPage& rhs) noexcept;
 
   private:

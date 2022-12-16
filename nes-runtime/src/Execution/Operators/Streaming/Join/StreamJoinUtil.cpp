@@ -35,17 +35,15 @@
 namespace NES::Runtime::Execution::Util {
 
     uint64_t murmurHash(uint64_t key) {
-//        uint64_t hash = key;
-//
-//        hash ^= hash >> 33;
-//        hash *= UINT64_C(0xff51afd7ed558ccd);
-//        hash ^= hash >> 33;
-//        hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-//        hash ^= hash >> 33;
-//
-//        return hash;
+        uint64_t hash = key;
 
-        return key;
+        hash ^= hash >> 33;
+        hash *= UINT64_C(0xff51afd7ed558ccd);
+        hash ^= hash >> 33;
+        hash *= UINT64_C(0xc4ceb9fe1a85ec53);
+        hash ^= hash >> 33;
+
+        return hash;
     }
 
     Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager) {
@@ -196,7 +194,7 @@ namespace NES::Runtime::Execution::Util {
         return retVector;
     }
 
-    Runtime::TupleBuffer getBufferFromNautilus(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+    Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
         auto buffer = bufferManager->getBufferBlocking();
         int8_t* bufferPtr = (int8_t *)buffer.getBuffer();
 

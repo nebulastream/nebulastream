@@ -26,16 +26,39 @@ namespace NES::Runtime::Execution::Operators {
 class LocalHashTable {
 
   public:
+    /**
+     * @brief Constructor for a HashTable that is only accessed by a single thread
+     * @param sizeOfRecord
+     * @param numPartitions
+     * @param tail
+     * @param overrunAddress
+     * @param pageSize
+     */
     explicit LocalHashTable(size_t sizeOfRecord,
                             size_t numPartitions,
                             std::atomic<uint64_t>& tail,
                             size_t overrunAddress,
                             size_t pageSize);
 
+    /**
+     * @brief Inserts the key into this hash table by returning a pointer to a free memory space
+     * @param key
+     * @return Pointer to free memory space where the data shall be written
+     */
     uint8_t* insert(uint64_t key) const;
 
+    /**
+     * @brief Returns the bucket at bucketPos
+     * @param bucketPos
+     * @return bucket
+     */
     FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos) const;
 
+    /**
+     * @brief Calculates the bucket position for the hash
+     * @param hash
+     * @return bucket position
+     */
     size_t getBucketPos(uint64_t hash) const;
 
   private:

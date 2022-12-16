@@ -21,17 +21,36 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief
+ * @brief This class implements a LinkedList consisting of FixedPages
  */
 class FixedPagesLinkedList{
   public:
+    /**
+     * @brief Constructor for a FixedPagesLinkedList
+     * @param tail
+     * @param overrunAddress
+     * @param sizeOfRecord
+     * @param pageSize
+     */
     FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord,
                          size_t pageSize);
 
+    /**
+     * @brief Deconstructor for a FixedPagesLinkedList
+     */
     ~FixedPagesLinkedList();
 
+    /**
+     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
+     * @param hash
+     * @return Pointer to a free memory space where to write the data
+     */
     uint8_t* append(const uint64_t hash);
 
+    /**
+     * @brief Returns all pages belonging to this list
+     * @return Vector containing pointer to the FixedPages
+     */
     const std::vector<FixedPage*>& getPages() const;
 
   private:

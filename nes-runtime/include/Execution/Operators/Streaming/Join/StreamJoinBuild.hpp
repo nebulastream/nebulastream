@@ -26,7 +26,14 @@ using StreamJoinBuildPtr = std::shared_ptr<StreamJoinBuild>;
 class StreamJoinBuild : public ExecutableOperator {
 
   public:
-
+    /**
+     * @brief Constructors for a StreamJoinBuild
+     * @param handlerIndex
+     * @param isLeftSide
+     * @param joinFieldName
+     * @param timeStampField
+     * @param schema
+     */
     StreamJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
                   const std::string& timeStampField, SchemaPtr schema);
 
@@ -36,9 +43,6 @@ class StreamJoinBuild : public ExecutableOperator {
      * @param record
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
-
-
-
 
 
   private:
