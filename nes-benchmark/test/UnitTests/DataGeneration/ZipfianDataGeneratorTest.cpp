@@ -68,7 +68,6 @@ namespace NES::Benchmark::DataGeneration {
         auto nameDefault = zipfianDataGenerator->getName();
 
         auto expectedName = "Zipfian";
-
         ASSERT_EQ(nameDefault, expectedName);
     }
 
