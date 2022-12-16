@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 #define NES_CORE_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
 
 namespace NES {

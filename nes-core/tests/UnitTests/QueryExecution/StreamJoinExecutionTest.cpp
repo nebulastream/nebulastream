@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 // clang-format: on
 #include <NesBaseTest.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
 
 namespace NES::Runtime::Execution {
@@ -46,195 +47,48 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };
 
-std::vector<Runtime::TupleBuffer> fillBuffersAndNLJ(Runtime::MemoryLayouts::DynamicTupleBuffer& leftBuffer,
-                                                    Runtime::MemoryLayouts::DynamicTupleBuffer& rightBuffer,
-                                                    std::shared_ptr<TestExecutionEngine> executionEngine,
-                                                    size_t numberOfTuplesToProduce, size_t windowSize,
-                                                    const std::string& timeStampFieldName, SchemaPtr joinSchema,
-                                                    const std::string& joinFieldNameLeft, const std::string& joinFieldNameRight) {
-    for (auto i = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
-        leftBuffer[i][0].write(i + 1000);
-        leftBuffer[i][1].write((i % 10) + 10);
-        leftBuffer[i][2].write(i);
 
-        rightBuffer[i][0].write(i + 2000);
-        rightBuffer[i][1].write((i % 10) + 10);
-        rightBuffer[i][2].write(i);
-    }
+std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
+    std::vector<PhysicalTypePtr> retVector;
 
-
-    uint64_t lastTupleTimeStampWindow = windowSize - 1;
-    uint64_t firstTupleTimeStampWindow = 0;
-    auto bufferJoined = executionEngine->getBuffer(joinSchema).getBuffer();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferJoined.getBufferSize());
-
-    // Perform NLJ so that we can check for correctness later on
-    std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> nljBuffers;
-    for (auto outer = 0UL; outer < leftBuffer.getNumberOfTuples(); ++outer) {
-        auto timeStampLeft = leftBuffer[outer][timeStampFieldName].read<uint64_t>();
-        if (timeStampLeft > lastTupleTimeStampWindow) {
-            lastTupleTimeStampWindow += windowSize;
-            firstTupleTimeStampWindow += windowSize;
-
-            nljBuffers.emplace_back(Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferJoined));
-            bufferJoined = executionEngine->getBuffer(joinSchema).getBuffer();
-        }
-
-        for (auto inner = 0UL; inner < rightBuffer.getNumberOfTuples(); ++inner) {
-            auto timeStampRight = rightBuffer[inner][timeStampFieldName].read<uint64_t>();
-            if (timeStampRight > lastTupleTimeStampWindow || timeStampRight < firstTupleTimeStampWindow) {
-                continue;
-            }
-
-            auto leftKey = leftBuffer[outer][joinFieldNameLeft].read<uint64_t>();
-            auto rightKey = rightBuffer[inner][joinFieldNameRight].read<uint64_t>();
-
-            if (leftKey == rightKey) {
-                auto dynamicBufJoined = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferJoined);
-                auto posNewTuple = dynamicBufJoined.getNumberOfTuples();
-                dynamicBufJoined[posNewTuple][0].write<uint64_t>(leftKey);
-
-                dynamicBufJoined[posNewTuple][1].write<uint64_t>(leftBuffer[outer][0].read<uint64_t>());
-                dynamicBufJoined[posNewTuple][2].write<uint64_t>(leftBuffer[outer][1].read<uint64_t>());
-                dynamicBufJoined[posNewTuple][3].write<uint64_t>(leftBuffer[outer][2].read<uint64_t>());
-
-                dynamicBufJoined[posNewTuple][4].write<uint64_t>(rightBuffer[inner][0].read<uint64_t>());
-                dynamicBufJoined[posNewTuple][5].write<uint64_t>(rightBuffer[inner][1].read<uint64_t>());
-                dynamicBufJoined[posNewTuple][6].write<uint64_t>(rightBuffer[inner][2].read<uint64_t>());
-
-                dynamicBufJoined.setNumberOfTuples(posNewTuple + 1);
-                if (dynamicBufJoined.getNumberOfTuples() >= dynamicBufJoined.getCapacity()) {
-                    nljBuffers.emplace_back(Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferJoined));
-                    bufferJoined = executionEngine->getBuffer(joinSchema).getBuffer();
-                }
-            }
-        }
-    }
-}
-
-std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::TupleBuffer>& buffers, SchemaPtr schema,
-                                                         const std::string& timeStampFieldName,
-                                                         BufferManagerPtr bufferManager,
-                                                         uint64_t windowSize) {
-    if (buffers.size() == 0) {
-        return std::vector<Runtime::TupleBuffer>();
-    }
-
-    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
-    }
-
-    NES_INFO("Merging buffers together!");
-
-    std::vector<Runtime::TupleBuffer> retVector;
-
-    auto curBuffer = bufferManager->getBufferBlocking();
-    auto numberOfTuplesInBuffer = 0UL;
-    auto lastTimeStamp = windowSize - 1;
-    for (auto buf : buffers) {
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buf);
-
-        for (auto curTuple = 0UL; curTuple < dynamicTupleBuffer.getNumberOfTuples(); ++curTuple) {
-            if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp ||
-                numberOfTuplesInBuffer >= memoryLayout->getCapacity()) {
-
-                if (dynamicTupleBuffer[curTuple][timeStampFieldName].read<uint64_t>() > lastTimeStamp) {
-                    lastTimeStamp += windowSize;
-                }
-
-
-                curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-                //                    NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
-                retVector.emplace_back(std::move(curBuffer));
-
-                curBuffer = bufferManager->getBufferBlocking();
-                numberOfTuplesInBuffer = 0;
-            }
-
-            // TODO rewrite this here so that we also support column layout
-            // We just have to replace the mempcy with multiple writes and reads to dynamicTupleBuffer
-            memcpy(curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
-                   buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple, schema->getSchemaSizeInBytes());
-            numberOfTuplesInBuffer += 1;
-            curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-
-            //                NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
-        }
-    }
-
-    if (numberOfTuplesInBuffer > 0) {
-        curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-        //            NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
-        retVector.emplace_back(std::move(curBuffer));
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        retVector.push_back(physicalField);
     }
 
     return retVector;
 }
 
-
-std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema,
-                                                           const std::string& sortFieldName, BufferManagerPtr bufferManager) {
-    if (buffersToSort.size() == 0) {
-        return std::vector<Runtime::TupleBuffer>();
-    }
-    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-        NES_FATAL_ERROR("Column layout is not support for this function currently!");
-    }
-
-
-    std::vector<Runtime::TupleBuffer> retVector;
-    for (auto bufRead : buffersToSort) {
-        std::vector<size_t> indexAlreadyInNewBuffer;
-        auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        auto dynamicTupleBuf = Runtime::MemoryLayouts::DynamicTupleBuffer(memLayout, bufRead);
-
-        NES_DEBUG("Buffer before sorting is " << Util::printTupleBufferAsCSV(bufRead, schema));
-
-        auto bufRet = bufferManager->getBufferBlocking();
-
-        for (auto outer = 0UL; outer < bufRead.getNumberOfTuples(); ++outer) {
-            auto smallestIndex = bufRead.getNumberOfTuples() + 1;
-            for (auto inner = 0UL; inner < bufRead.getNumberOfTuples(); ++inner) {
-                if (std::find(indexAlreadyInNewBuffer.begin(), indexAlreadyInNewBuffer.end(), inner)
-                    != indexAlreadyInNewBuffer.end()) {
-                    // If we have already moved this index into the
-                    continue;
-                }
-
-                auto sortValueCur = dynamicTupleBuf[inner][sortFieldName].read<uint64_t>();
-                auto sortValueOld = dynamicTupleBuf[smallestIndex][sortFieldName].read<uint64_t>();
-
-                if (smallestIndex == bufRead.getNumberOfTuples() + 1) {
-                    smallestIndex = inner;
-                    continue;
-                } else if (sortValueCur < sortValueOld) {
-                    smallestIndex = inner;
-                }
-            }
-            indexAlreadyInNewBuffer.emplace_back(smallestIndex);
-            auto posRet = bufRet.getNumberOfTuples();
-            memcpy(bufRet.getBuffer() + posRet * schema->getSchemaSizeInBytes(),
-                   bufRead.getBuffer() + smallestIndex * schema->getSchemaSizeInBytes(),
-                   schema->getSchemaSizeInBytes());
-            bufRet.setNumberOfTuples(posRet + 1);
-        }
-        NES_DEBUG("Buffer after sorting is " << Util::printTupleBufferAsCSV(bufRet, schema));
-        retVector.emplace_back(bufRet);
-        bufRet = bufferManager->getBufferBlocking();
-    }
-
-    return retVector;
+std::istream &operator>>(std::istream &is, std::string &l)
+{
+    std::getline(is, l);
+    return is;
 }
 
-TEST_P(StreamJoinQueryExecutionTest, streamJoinSimple) {
+Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFileName,
+                     Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
+                     const SchemaPtr schema) {
 
-- rewrite this to read data for both sources from a csv file and also read the expected buffers from another csv file.
-- then run read buffers and compare them to the expected ones
-- adapt LowerPhysicalToNautilusOperators to new Join
-- check if new stream join is semantically similar to old one. if this is the case, then test both joins, the old and the new one. old with default_query_compiler and stream join with nautilus_query_compiler
+    auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
+    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
+    const std::string delimiter = ",";
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
 
+    std::ifstream inputFile(fullPath);
+    std::istream_iterator<std::string> beginIt(inputFile);
+    std::istream_iterator<std::string> endIt;
+    for (auto it = beginIt; it != endIt; ++it) {
+        std::string line = *it;
+        parser->writeInputTupleToTupleBuffer(line, buffer.getNumberOfTuples(), buffer, schema);
+    }
 
+    NES_DEBUG("Created buffer \n" << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema) << " from csvFile = " << fullPath);
+
+    return buffer;
+}
+
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -247,37 +101,31 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinSimple) {
 
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
     const auto joinFieldNameRight = rightSchema->get(1)->getName();
-
-    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
     const auto timeStampField = leftSchema->get(2)->getName();
-    const auto windowSize = 10UL;
-    const auto numberOfTuplesToProduce = 10 * windowSize;
-
-    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
-    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
-
-    auto sourceNameLeft = testSourceDescriptorLeft->getLogicalSourceName();
-    auto sourceNameRight = testSourceDescriptorRight->getLogicalSourceName();
+    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
 
     ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Schema::create(leftSchema->getLayoutType());
-    joinSchema->addField(sourceNameLeft + sourceNameRight + "$key", leftSchema->get(joinFieldNameLeft)->getDataType());
-    for (const auto& field : leftSchema->fields) {
-        joinSchema->addField(field->getName(), field->getDataType());
-    }
-    for (const auto& field : rightSchema->fields) {
-        joinSchema->addField(field->getName(), field->getDataType());
-    }
+    joinSchema->addField("key", leftSchema->get(joinFieldNameLeft)->getDataType());
+    joinSchema->copyFields(leftSchema);
+    joinSchema->copyFields(rightSchema);
 
-    auto inputBufferLeft = executionEngine->getBuffer(leftSchema);
-    auto inputBufferRight = executionEngine->getBuffer(rightSchema);
 
-    auto nljBuffers = fillBuffersAndNLJ(inputBufferLeft, inputBufferRight, executionEngine,
-                                        numberOfTuplesToProduce, windowSize, timeStampField, joinSchema,
-                                        joinFieldNameLeft, joinFieldNameRight);
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 20UL;
+    const std::string fileNameBuffersLeft("stream_join_left.csv");
+    const std::string fileNameBuffersRight("stream_join_right.csv");
+    const std::string fileNameBuffersSink("stream_join_sink.csv");
 
-    auto testSink = executionEngine->createDateSink(joinSchema, nljBuffers.size());
+    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema);
+    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema);
+    auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema);
+
+    auto testSink = executionEngine->createDateSink(joinSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
+    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
 
     auto query = TestQuery::from(testSourceDescriptorLeft).joinWith(TestQuery::from(testSourceDescriptorRight))
                      .where(Attribute(joinFieldNameLeft))
@@ -285,41 +133,23 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinSimple) {
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
-    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
+    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
+    ASSERT_TRUE(!!sourceLeft);
+    ASSERT_TRUE(!!sourceRight);
 
-    auto sourceLeft = executionEngine->getDataSource(plan, 0);
-    auto sourceRight = executionEngine->getDataSource(plan, 1);
-
-
-
-
-    sourceLeft->emitBuffer(inputBufferLeft);
-    sourceRight->emitBuffer(inputBufferRight);
-
+    sourceLeft->emitBuffer(leftBuffer);
+    sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), nljBuffers.size());
 
-    auto mergedEmittedBuffers = mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers,
-                                                       joinSchema, timeStampField,
-                                                       executionEngine->getBufferManager(), windowSize);
-    auto sortedMergedEmittedBuffers = sortBuffersInTupleBuffer(mergedEmittedBuffers,
-                                                               joinSchema, timeStampField, executionEngine->getBufferManager());
-    auto sortNLJBuffers = sortBuffersInTupleBuffer(nljBuffers, joinSchema, timeStampField, executionEngine->getBufferManager());
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    auto resultBuffer = testSink->getResultBuffer(0);
 
-    nljBuffers.clear();
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
+    EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(), expectedSinkBuffer.getBuffer().getBuffer(),
+                       expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes()) == 0);
 
-
-    // TODO add here merge and sort testSink buffers
-    for (auto i = 0; i < nljBuffers.size(); ++i) {
-        auto nljBuffer = nljBuffers[i];
-        auto testSinkBuffer = testSink->get(i);
-
-        ASSERT_TRUE(memcmp(testSinkBuffer.getBuffer(), nljBuffer.getBuffer(), testSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes()) == 0);
-    }
-
-
-    ASSERT_TRUE(executionEngine->stopQuery(plan));
-    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
 
