@@ -24,11 +24,11 @@ message(STATUS "Building benchmarks tests...")
 
 # Adding unit test for DefaultDataGenerator
 add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
-target_link_libraries(default-data-generator-test nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
+target_link_libraries(default-data-generator-test nes-benchmark)
 
 # Adding unit test for ZipfianDataGenerator
 add_nes_unit_test(zipfian-data-generator-test "UnitTests/DataGeneration/ZipfianDataGeneratorTest.cpp")
-target_link_libraries(zipfian-data-generator-test nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
+target_link_libraries(zipfian-data-generator-test nes-benchmark)
 
 
 message(STATUS "Done building benchmarks tests")
