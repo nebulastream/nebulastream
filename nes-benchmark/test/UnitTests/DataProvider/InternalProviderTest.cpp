@@ -30,17 +30,17 @@ namespace NES::Benchmark::DataProviding {
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
             NES::Logger::setupLogging("InternalProviderTest.log", NES::LogLevel::LOG_DEBUG);
-            std::cout << "Setup InternalProviderTest test class." << std::endl;
+            NES_INFO("Setup InternalProviderTest test class.");
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { std::cout << "Setup InternalProviderTest test case." << std::endl; }
+        void SetUp() override { NES_INFO("Setup InternalProviderTest test case."); }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { std::cout << "Tear down InternalProviderTest test case." << std::endl; }
+        void TearDown() override { NES_INFO("Tear down InternalProviderTest test case."); }
 
         /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { std::cout << "Tear down InternalProviderTest test class." << std::endl; }
+        static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
     };
 
     TEST_F(InternalProviderTest, readNextBufferTest) {
@@ -55,8 +55,11 @@ namespace NES::Benchmark::DataProviding {
         createdBuffers.reserve(numberOfBuffers);
 
         // TODO: test for column layout
-        // is it necessary to create a schema or is there some other way to set memoryLayout?
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT);
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+             ->addField(createField("id", NES::UINT64))
+             ->addField(createField("value", NES::UINT64))
+             ->addField(createField("payload", NES::UINT64))
+             ->addField(createField("timestamp", NES::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
@@ -77,20 +80,25 @@ namespace NES::Benchmark::DataProviding {
         auto internalProviderDefault = DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers);
         auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
 
-        ASSERT_FALSE(createdBuffers.empty());
-        
+        ASSERT_TRUE(!createdBuffers.empty());
+
         auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
         //++currentlyEmittedBuffer;
 
-        // why is there no matching function for wrapMemory?
-        auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault);
+        // what does get() do?
+        auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), std::dynamic_pointer_cast<InternalProvider>(internalProviderDefault).get());
         auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
         auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
 
         expectedNextBuffer.setCreationTimestamp(timeStamp);
         expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
-        ASSERT_EQ(expectedNextBuffer, nextBufferDefault);
+        ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
+
+        auto dataBuffer = nextBufferDefault->getBuffer();
+        auto expectedBuffer = expectedNextBuffer.getBuffer();
+
+        ASSERT_TRUE(memcmp(dataBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
     // the following tests are not necessary, functions are not currently implemented
@@ -117,8 +125,11 @@ namespace NES::Benchmark::DataProviding {
         createdBuffers.reserve(numberOfBuffers);
 
         // TODO: test for column layout
-        // is it necessary to create a schema or is there some other way to set memoryLayout?
-        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT);
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+             ->addField(createField("id", NES::UINT64))
+             ->addField(createField("value", NES::UINT64))
+             ->addField(createField("payload", NES::UINT64))
+             ->addField(createField("timestamp", NES::UINT64));
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
         for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
