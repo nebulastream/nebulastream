@@ -13,7 +13,7 @@ limitations under the License.
 */
 
 #include <atomic>
-#include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

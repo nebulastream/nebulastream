@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-stream-join-operator-test "Aggregations/StreamJoinOperatorTest.cpp")
+add_executable(runtime-stream-join-operator-test "StreamJoinOperatorTest.cpp")
 target_link_libraries(runtime-stream-join-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-stream-join-operator-test COMMAND runtime-stream-join-operator-test)
