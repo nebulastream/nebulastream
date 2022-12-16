@@ -13,7 +13,7 @@ limitations under the License.
 */
 #include <cmath>
 
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 

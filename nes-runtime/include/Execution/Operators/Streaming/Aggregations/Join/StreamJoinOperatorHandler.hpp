@@ -15,7 +15,7 @@
 #define NES_LAZYJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/SharedJoinHashTable.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -27,13 +27,13 @@
 namespace NES::Runtime::Execution {
 
 
-class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
+class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
 
 
 
   public:
-    explicit LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
+    explicit StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                      SchemaPtr joinSchemaRight,
                                      std::string joinFieldNameLeft,
                                      std::string joinFieldNameRight,
@@ -62,11 +62,11 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
 
     void deleteWindow(size_t timeStamp);
 
-    LazyJoinWindow& getWindow(size_t timeStamp);
+    StreamJoinWindow& getWindow(size_t timeStamp);
 
     size_t getNumActiveWindows();
 
-    LazyJoinWindow& getWindowToBeFilled(bool isLeftSide);
+    StreamJoinWindow& getWindowToBeFilled(bool isLeftSide);
 
     void incLastTupleTimeStamp(uint64_t increment, bool isLeftSide);
 
@@ -82,7 +82,7 @@ class LazyJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRe
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    std::list<LazyJoinWindow> lazyJoinWindows;
+    std::list<StreamJoinWindow> lazyJoinWindows;
     size_t maxNoWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;

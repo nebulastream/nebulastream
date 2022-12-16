@@ -21,8 +21,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -32,7 +32,7 @@ namespace NES::Runtime::Execution::Operators {
 
 void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    LazyJoinOperatorHandler* opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    StreamJoinOperatorHandler* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
 
     return static_cast<void*>(&opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
 }
@@ -54,7 +54,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
 
-    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
@@ -92,13 +92,13 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 size_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
-    auto opHandler = static_cast<LazyJoinOperatorHandler*>(ptrOpHandler);
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
 
 
-void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
+void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
@@ -129,7 +129,7 @@ void LazyJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
 }
 
-LazyJoinBuild::LazyJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
+StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
                              const std::string& timeStampField, SchemaPtr schema)
     : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
       schema(schema) {
