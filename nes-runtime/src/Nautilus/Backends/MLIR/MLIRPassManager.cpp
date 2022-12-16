@@ -13,8 +13,14 @@
 */
 
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
+#include <Nautilus/Backends/MLIR/Passes/SerializeToCubinPass.hpp>
+#include <llvm/Support/TargetSelect.h>
+#include <mlir/Conversion/GPUCommon/GPUCommonPass.h>
+#include <mlir/Conversion/GPUToNVVM/GPUToNVVMPass.h>
 #include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
 #include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
+#include <mlir/Dialect/GPU/GPUDialect.h>
+#include <mlir/Dialect/GPU/Passes.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/Pass/PassManager.h>
@@ -49,8 +55,16 @@ std::unique_ptr<mlir::Pass> getMLIROptimizationPass(MLIRPassManager::Optimizatio
 int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
                                                 std::vector<LoweringPass> loweringPasses,
                                                 std::vector<OptimizationPass> optimizationPasses) {
+    LLVMInitializeNVPTXTarget();
+    LLVMInitializeNVPTXTargetInfo();
+    LLVMInitializeNVPTXTargetMC();
+    LLVMInitializeNVPTXAsmPrinter();
     mlir::PassManager passManager(module->getContext());
     applyPassManagerCLOptions(passManager);
+
+    //    module->getContext()->getOrLoadDialect<mlir::func::FuncDialect>();
+    module->getContext()->getOrLoadDialect<mlir::gpu::GPUDialect>();
+    //    module->getContext()->getOrLoadDialect<mlir::memref::MemRefDialect>();
 
     // Apply optimization passes.
     if (!optimizationPasses.empty()) {
@@ -66,6 +80,14 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
             passManager.addPass(getMLIRLoweringPass(loweringPass));
         }
     } else {
+        // TODO 2853: add if clause
+        passManager.addPass(mlir::createGpuKernelOutliningPass());
+        auto& kernelPm = passManager.nest<mlir::gpu::GPUModuleOp>();
+        kernelPm.addPass(mlir::createStripDebugInfoPass());
+        kernelPm.addPass(mlir::createLowerGpuOpsToNVVMOpsPass());
+        kernelPm.addPass(std::make_unique<SerializeToCubinPass>());
+        passManager.addPass(mlir::createGpuToLLVMConversionPass());
+
         passManager.addPass(mlir::createLowerToCFGPass());
         passManager.addPass(mlir::createLowerToLLVMPass());
     }

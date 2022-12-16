@@ -12,13 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        MLIRUtility.cpp
-        MLIRLoweringProvider.cpp
-        MLIRCompilationBackend.cpp
-        MLIRExecutable.cpp
-        MLIRPassManager.cpp
-        LLVMIROptimizer.cpp
-        JITCompiler.cpp
+        SerializeToCubinPass.cpp
         )
-
-add_subdirectory(Passes)

@@ -34,3 +34,7 @@ add_test(NAME nautilus-type-compilation-test COMMAND nautilus-type-compilation-t
 add_executable(nautilus-function-compilation-test "FunctionCompilationTest.cpp")
 target_link_libraries(nautilus-function-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME nautilus-function-compilation-test COMMAND nautilus-function-compilation-test)
+
+add_executable(nautilus-gpu-launch-compilation-test "GPULaunchCompilationTest.cpp")
+target_link_libraries(nautilus-gpu-launch-compilation-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME nautilus-gpu-launch-compilation-test COMMAND nautilus-gpu-launch-compilation-test)

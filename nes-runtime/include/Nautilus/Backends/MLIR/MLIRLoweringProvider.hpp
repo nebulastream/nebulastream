@@ -106,6 +106,14 @@ class MLIRLoweringProvider {
     void generateMLIR(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
 
     /**
+     * @brief Generates a GPU Launch MLIR from a loop expressed in basic blocks.
+     *
+     * @param basicBlock: The  basic block that MLIR code is generated for.
+     * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.
+     */
+    void generateGPULaunch(IR::BasicBlockPtr basicBlock, ValueFrame& frame);
+
+    /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param Operation:  operation that the MLIRLoweringProvider generates MLIR code for.
      * @param frame: An unordered map that MLIR operations insert their resulting values, and identifiers in.

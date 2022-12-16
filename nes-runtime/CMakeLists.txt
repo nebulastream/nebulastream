@@ -202,3 +202,6 @@ install(TARGETS nes-runtime
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
+
+# TODO 2853: the deps should build this and we should link to the one in the dependency
+target_link_libraries(nes-runtime PUBLIC /home/dwi/Documents/Research/HeterogenoeusCompilation/llvm-project/build/lib/libmlir_cuda_runtime.so)

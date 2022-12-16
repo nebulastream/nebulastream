@@ -13,6 +13,7 @@
 */
 
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
@@ -20,6 +21,7 @@
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/GPU/GPUDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMTypes.h>
 #include <mlir/Dialect/SCF/SCF.h>
@@ -147,6 +149,7 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
     builder->getContext()->loadDialect<mlir::StandardOpsDialect>();
     builder->getContext()->loadDialect<mlir::LLVM::LLVMDialect>();
     builder->getContext()->loadDialect<mlir::scf::SCFDialect>();
+    builder->getContext()->loadDialect<mlir::gpu::GPUDialect>();// TODO 2853: add a condition and check if USE_GPU is ON
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
@@ -264,6 +267,76 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AndOpera
     frame.setValue(andOperation->getIdentifier(), mlirAndOp);
 }
 
+void MLIRLoweringProvider::generateGPULaunch(IR::BasicBlockPtr basicBlock, ValueFrame& frame) {
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
+    // Obtain the lower and upper bound of the loop
+    mlir::Value upperBound;
+
+    // generate pre-loop
+    for (uint32_t i = 0; i < (basicBlock->getOperations().size() - 1); i++) {
+        generateMLIR(basicBlock->getOperations()[i], frame);
+    }
+
+    // set value from invocation
+    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(basicBlock->getTerminatorOp());
+//    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(ir->getRootOperation()->getFunctionBasicBlock()->getTerminatorOp());
+//    auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(branchOp->getNextBlockInvocation().getBlock()->getTerminatorOp());
+
+    frame = createFrameFromParentBlock(frame, branchOp->getNextBlockInvocation());
+
+    //    for (uint32_t i = 0; i < (branchOp->getNextBlockInvocation().getBlock()->getOperations().size() - 1); i++) {
+    //        generateMLIR(branchOp->getNextBlockInvocation().getBlock()->getOperations()[i], frame);
+    //    }
+
+//    auto candidateLoopOperation = branchOp->getNextBlockInvocation().getBlock()->getOperations().back();
+
+    if (auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(branchOp->getNextBlockInvocation().getBlock()->getTerminatorOp())) {
+        auto loopInfo = loopOp->getLoopInfo();
+        if (auto countedLoopInfo = std::static_pointer_cast<IR::Operations::CountedLoopInfo>(loopInfo)) {
+            upperBound = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("upperBound"), countedLoopInfo->upperBound);
+
+            mlir::Value constOne = builder->create<mlir::arith::ConstantIndexOp>(getNameLoc("constOne"), 1);
+
+            // Initiate kernel launch configuration
+            mlir::Value gridSizeX = constOne;
+            mlir::Value gridSizeY = constOne;
+            mlir::Value gridSizeZ = constOne;
+            mlir::Value blockSizeX = upperBound;
+            mlir::Value blockSizeY = constOne;
+            mlir::Value blockSizeZ = constOne;
+
+            auto launchOp = builder->create<mlir::gpu::LaunchOp>(getNameLoc("forLoop"),
+                                                                 gridSizeX,
+                                                                 gridSizeY,
+                                                                 gridSizeZ,
+                                                                 blockSizeX,
+                                                                 blockSizeY,
+                                                                 blockSizeZ);
+            builder->setInsertionPointToStart(&launchOp.body().front());
+
+            auto operations = loopOp->getLoopBodyBlock().getBlock()->getOperations();
+            for (auto operation:operations) {
+                generateMLIR(operation, frame);
+            }
+            // assuming the last three operation only handles the induction variable and branching
+
+            builder->setInsertionPointToEnd(&launchOp.body().back());
+            builder->create<mlir::gpu::TerminatorOp>(getNameLoc("gpuTerminator"), llvm::None);
+            builder->restoreInsertionPoint(parentBlockInsertionPoint);
+
+            // TODO 2853: remove this HACK
+            builder->create<mlir::LLVM::ReturnOp>(getNameLoc("return"),
+                                                  getConstInt("105", IR::Types::StampFactory::createInt32Stamp(), 105));
+        } else {
+            // throw error
+            NES_ERROR("Cannot cast loopInfo to CountedLoopInfo")
+        }
+
+    } else {
+        NES_ERROR("Cannot cast to loopOp")
+    }
+}
+
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp, ValueFrame& frame) {
     // Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
@@ -289,8 +362,14 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::Function
     }
 
     // Generate MLIR for operations in function body (BasicBlock).
-    generateMLIR(functionOp->getFunctionBasicBlock(), frame);
+    if (functionOp->getName() == std::string("execute")) {
+        generateGPULaunch(functionOp->getFunctionBasicBlock(), frame);
+        //        generateMLIR(functionOp->getFunctionBasicBlock(), frame);
+    } else {
+        generateMLIR(functionOp->getFunctionBasicBlock(), frame);
+    }
 
+    theModule->dump();
     theModule.push_back(mlirFunction);
 }
 
