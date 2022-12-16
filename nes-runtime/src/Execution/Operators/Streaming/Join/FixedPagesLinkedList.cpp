@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

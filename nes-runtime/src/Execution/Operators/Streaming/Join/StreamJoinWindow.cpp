@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinWindow.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
 
