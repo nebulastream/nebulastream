@@ -88,8 +88,8 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.bloomFilter, rhs.bloomFilter);
 }
 
-FixedPage::FixedPage(FixedPage* page) : sizeOfRecord(page->sizeOfRecord), data(page->data), pos(page->pos),
-                                        capacity(page->capacity), bloomFilter(std::move(page->bloomFilter)) {}
+FixedPage::FixedPage(FixedPage* otherPage) : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), pos(otherPage->pos),
+                                        capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
 
 
 } // namespace NES::Runtime::Execution::Operators

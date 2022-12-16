@@ -134,7 +134,7 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
             for (auto k = 0UL; k < page->size(); ++k) {
                 uint8_t* recordPtr = page->operator[](k);
                 auto bucketBuffer = Util::getBufferFromPointer(recordPtr, schema, bufferManager);
-                auto recordBuffer = Util::getBufferFromNautilus(record, schema, bufferManager);
+                auto recordBuffer = Util::getBufferFromRecord(record, schema, bufferManager);
 
                 if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), schema->getSchemaSizeInBytes()) == 0) {
                     correctlyInserted = true;
