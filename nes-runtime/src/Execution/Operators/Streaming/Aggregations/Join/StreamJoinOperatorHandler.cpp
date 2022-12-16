@@ -15,13 +15,13 @@ limitations under the License.
 
 #include <atomic>
 #include <cstddef>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
 
 
 namespace NES::Runtime::Execution {
 
-LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
+StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  SchemaPtr joinSchemaRight,
                                                  std::string joinFieldNameLeft,
                                                  std::string joinFieldNameRight,
@@ -50,39 +50,39 @@ LazyJoinOperatorHandler::LazyJoinOperatorHandler(SchemaPtr joinSchemaLeft,
 
 
 
-void LazyJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
+void StreamJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
 
-void LazyJoinOperatorHandler::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
+void StreamJoinOperatorHandler::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
 
-const std::string& LazyJoinOperatorHandler::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
-const std::string& LazyJoinOperatorHandler::getJoinFieldNameRight() const { return joinFieldNameRight; }
+const std::string& StreamJoinOperatorHandler::getJoinFieldNameLeft() const { return joinFieldNameLeft; }
+const std::string& StreamJoinOperatorHandler::getJoinFieldNameRight() const { return joinFieldNameRight; }
 
-SchemaPtr LazyJoinOperatorHandler::getJoinSchemaLeft() const { return joinSchemaLeft; }
-SchemaPtr LazyJoinOperatorHandler::getJoinSchemaRight() const { return joinSchemaRight; }
+SchemaPtr StreamJoinOperatorHandler::getJoinSchemaLeft() const { return joinSchemaLeft; }
+SchemaPtr StreamJoinOperatorHandler::getJoinSchemaRight() const { return joinSchemaRight; }
 
-void LazyJoinOperatorHandler::start(PipelineExecutionContextPtr,StateManagerPtr, uint32_t) {
-    NES_DEBUG("start LazyJoinOperatorHandler");
+void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr,StateManagerPtr, uint32_t) {
+    NES_DEBUG("start StreamJoinOperatorHandler");
 }
 
-void LazyJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
-    NES_DEBUG("stop LazyJoinOperatorHandler");
+void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
+    NES_DEBUG("stop StreamJoinOperatorHandler");
     // TODO ask Philipp, if I should delete here all windows
 }
 
-void LazyJoinOperatorHandler::createNewWindow(bool isLeftSide) {
+void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
 
     auto lastTupleTimeStamp = getLastTupleTimeStamp(isLeftSide);
     if (checkWindowExists(lastTupleTimeStamp)) {
         return;
     }
 
-    NES_DEBUG("LazyJoinOperatorHandler: create a new window for the lazyjoin");
+    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the lazyjoin");
     lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
                                  totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
                                  joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
 }
 
-void LazyJoinOperatorHandler::deleteWindow(size_t timeStamp) {
+void StreamJoinOperatorHandler::deleteWindow(size_t timeStamp) {
     for (auto it = lazyJoinWindows.begin(); it != lazyJoinWindows.end(); ++it) {
         if (timeStamp <= it->getLastTupleTimeStamp()) {
             lazyJoinWindows.erase(it);
@@ -91,7 +91,7 @@ void LazyJoinOperatorHandler::deleteWindow(size_t timeStamp) {
     }
 }
 
-bool LazyJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
+bool StreamJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
     for (auto& lazyJoinWindow : lazyJoinWindows) {
         if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
             return true;
@@ -101,7 +101,7 @@ bool LazyJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
     return false;
 }
 
-LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
+StreamJoinWindow& StreamJoinOperatorHandler::getWindow(size_t timeStamp) {
     for (auto& lazyJoinWindow : lazyJoinWindows) {
         if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
             return lazyJoinWindow;
@@ -112,7 +112,7 @@ LazyJoinWindow& LazyJoinOperatorHandler::getWindow(size_t timeStamp) {
 
 }
 
-uint64_t LazyJoinOperatorHandler::getLastTupleTimeStamp(bool isLeftSide) const {
+uint64_t StreamJoinOperatorHandler::getLastTupleTimeStamp(bool isLeftSide) const {
     if (isLeftSide) {
         return lastTupleTimeStampLeft;
     } else {
@@ -120,7 +120,7 @@ uint64_t LazyJoinOperatorHandler::getLastTupleTimeStamp(bool isLeftSide) const {
     }
 }
 
-LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled(bool isLeftSide) {
+StreamJoinWindow& StreamJoinOperatorHandler::getWindowToBeFilled(bool isLeftSide) {
     if (isLeftSide) {
         return getWindow(lastTupleTimeStampLeft);
     } else {
@@ -128,7 +128,7 @@ LazyJoinWindow& LazyJoinOperatorHandler::getWindowToBeFilled(bool isLeftSide) {
     }
 }
 
-void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool isLeftSide) {
+void StreamJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool isLeftSide) {
     if (isLeftSide) {
         lastTupleTimeStampLeft += increment;
     } else {
@@ -137,11 +137,11 @@ void LazyJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool isL
 }
 
 
-size_t LazyJoinOperatorHandler::getWindowSize() const {
+size_t StreamJoinOperatorHandler::getWindowSize() const {
     return windowSize;
 }
-size_t LazyJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
+size_t StreamJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
-size_t LazyJoinOperatorHandler::getNumActiveWindows() { return lazyJoinWindows.size(); }
+size_t StreamJoinOperatorHandler::getNumActiveWindows() { return lazyJoinWindows.size(); }
 
 } // namespace NES::Runtime::Execution

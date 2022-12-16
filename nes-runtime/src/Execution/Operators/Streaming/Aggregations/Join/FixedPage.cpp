@@ -14,7 +14,7 @@
 
 #include <atomic>
 
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <cstring>

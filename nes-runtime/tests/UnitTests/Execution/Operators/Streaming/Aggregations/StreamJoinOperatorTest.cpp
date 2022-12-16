@@ -18,9 +18,9 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinSink.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinSink.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -35,34 +35,34 @@
 namespace NES::Runtime::Execution {
 
 
-class LazyJoinOperatorTest : public testing::Test, public AbstractPipelineExecutionTest {
+class StreamJoinOperatorTest : public testing::Test, public AbstractPipelineExecutionTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("LazyJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup LazyJoinOperatorTest test class." << std::endl;
+        NES::Logger::setupLogging("StreamJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup StreamJoinOperatorTest test class." << std::endl;
 
 
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup LazyJoinOperatorTest test case." << std::endl;
+        std::cout << "Setup StreamJoinOperatorTest test case." << std::endl;
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down LazyJoinOperatorTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down StreamJoinOperatorTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down LazyJoinOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down StreamJoinOperatorTest test class." << std::endl; }
 
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::vector<TupleBuffer> emittedBuffers;
 };
 
-struct LazyJoinBuildHelper {
+struct StreamJoinBuildHelper {
     size_t pageSize = CHUNK_SIZE;
     size_t numPartitions = NUM_PARTITIONS;
     size_t numberOfTuplesToProduce;
@@ -70,18 +70,18 @@ struct LazyJoinBuildHelper {
     size_t noWorkerThreads;
     size_t joinSizeInByte;
     size_t windowSize;
-    Operators::LazyJoinBuildPtr lazyJoinBuild;
+    Operators::StreamJoinBuildPtr lazyJoinBuild;
     std::string joinFieldName;
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::string timeStampField;
-    LazyJoinOperatorTest* lazyJoinOperatorTest;
+    StreamJoinOperatorTest* lazyJoinOperatorTest;
     bool isLeftSide;
 };
 
 
 
-bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
+bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
 
     auto pageSize = buildHelper.pageSize;
     auto numPartitions = buildHelper.numPartitions;
@@ -99,7 +99,7 @@ bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
     auto isLeftSide = buildHelper.isLeftSide;
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bufferManager, numberOfBuffersPerWorker);
-    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(schema, schema,
+    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(schema, schema,
                                                                        joinFieldName, joinFieldName,
                                                                        noWorkerThreads * 2, noWorkerThreads, joinSizeInByte,
                                                                        windowSize, pageSize, numPartitions);
@@ -155,7 +155,7 @@ bool lazyJoinBuildAndCheck(LazyJoinBuildHelper buildHelper) {
 }
 
 
-struct LazyJoinSinkHelper {
+struct StreamJoinSinkHelper {
     BufferManagerPtr bufferManager;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
@@ -169,7 +169,7 @@ struct LazyJoinSinkHelper {
     size_t noWorkerThreads;
     size_t joinSizeInByte;
     size_t windowSize;
-    LazyJoinOperatorTest* lazyJoinOperatorTest;
+    StreamJoinOperatorTest* lazyJoinOperatorTest;
 };
 
 bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffers,
@@ -191,11 +191,11 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
     return foundBuffer;
 }
 
-bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
+bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, lazyJoinSinkHelper.bufferManager,
                                                          lazyJoinSinkHelper.numberOfBuffersPerWorker);
-    auto lazyJoinOpHandler = std::make_shared<LazyJoinOperatorHandler>(lazyJoinSinkHelper.leftSchema, lazyJoinSinkHelper.rightSchema,
+    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(lazyJoinSinkHelper.leftSchema, lazyJoinSinkHelper.rightSchema,
                                                                        lazyJoinSinkHelper.joinFieldNameLeft, lazyJoinSinkHelper.joinFieldNameRight,
                                                                        lazyJoinSinkHelper.noWorkerThreads * 2,
                                                                        lazyJoinSinkHelper.numSourcesLeft + lazyJoinSinkHelper.numSourcesRight,
@@ -222,15 +222,15 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
 
 
     auto handlerIndex = 0UL;
-    auto lazyJoinBuildLeft = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ true,
+    auto lazyJoinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true,
                                                                         lazyJoinSinkHelper.joinFieldNameLeft,
                                                                         lazyJoinSinkHelper.timeStampField,
                                                                         lazyJoinSinkHelper.leftSchema);
-    auto lazyJoinBuildRight = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, /*isLeftSide*/ false,
+    auto lazyJoinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false,
                                                                          lazyJoinSinkHelper.joinFieldNameRight,
                                                                          lazyJoinSinkHelper.timeStampField,
                                                                          lazyJoinSinkHelper.rightSchema);
-    auto lazyJoinSink = std::make_shared<Operators::LazyJoinSink>(handlerIndex);
+    auto lazyJoinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
 
 
 
@@ -358,7 +358,7 @@ bool lazyJoinSinkAndCheck(LazyJoinSinkHelper lazyJoinSinkHelper) {
     return true;
 }
 
-TEST_F(LazyJoinOperatorTest, joinBuildTest) {
+TEST_F(StreamJoinOperatorTest, joinBuildTest) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
@@ -371,10 +371,10 @@ TEST_F(LazyJoinOperatorTest, joinBuildTest) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    LazyJoinBuildHelper buildHelper = {
+    StreamJoinBuildHelper buildHelper = {
         .pageSize = CHUNK_SIZE,
         .numberOfTuplesToProduce = 100UL,
         .numberOfBuffersPerWorker = 128UL,
@@ -394,7 +394,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTest) {
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestRight) {
+TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_right", BasicType::UINT64)
@@ -407,10 +407,10 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRight) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
+    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
                                                                     timeStampField, rightSchema);
 
-    LazyJoinBuildHelper buildHelper = {
+    StreamJoinBuildHelper buildHelper = {
         .pageSize = CHUNK_SIZE,
         .numberOfTuplesToProduce = 100UL,
         .numberOfBuffersPerWorker = 128UL,
@@ -430,7 +430,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestRight) {
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
+TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -442,10 +442,10 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    LazyJoinBuildHelper buildHelper = {
+    StreamJoinBuildHelper buildHelper = {
         .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
         .numPartitions = 1,
         .numberOfTuplesToProduce = 100UL,
@@ -467,7 +467,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
-TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
+TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -479,10 +479,10 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto handlerIndex = 0;
     const auto isLeftSide = true;
 
-    auto lazyJoinBuild = std::make_shared<Operators::LazyJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    LazyJoinBuildHelper buildHelper = {
+    StreamJoinBuildHelper buildHelper = {
         .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
         .numPartitions = 1,
         .numberOfTuplesToProduce = 100UL,
@@ -503,7 +503,7 @@ TEST_F(LazyJoinOperatorTest, joinBuildTestMultipleWindows) {
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
-TEST_F(LazyJoinOperatorTest, joinSinkTest) {
+TEST_F(StreamJoinOperatorTest, joinSinkTest) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
@@ -516,7 +516,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
                            ->addField("timestamp", BasicType::UINT64);
 
 
-    LazyJoinSinkHelper lazyJoinSinkHelper {
+    StreamJoinSinkHelper lazyJoinSinkHelper {
         .bufferManager = bm,
         .leftSchema = leftSchema,
         .rightSchema = rightSchema,
@@ -538,7 +538,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTest) {
     ASSERT_TRUE(lazyJoinSinkAndCheck(lazyJoinSinkHelper));
 }
 
-TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleBuckets) {
+TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -550,7 +550,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleBuckets) {
                                  ->addField("timestamp", BasicType::UINT64);
 
 
-    LazyJoinSinkHelper lazyJoinSinkHelper {
+    StreamJoinSinkHelper lazyJoinSinkHelper {
         .bufferManager = bm,
         .leftSchema = leftSchema,
         .rightSchema = rightSchema,
@@ -571,7 +571,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleBuckets) {
     ASSERT_TRUE(lazyJoinSinkAndCheck(lazyJoinSinkHelper));
 }
 
-TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleWindows) {
+TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -584,7 +584,7 @@ TEST_F(LazyJoinOperatorTest, joinSinkTestMultipleWindows) {
                                  ->addField("timestamp", BasicType::UINT64);
 
 
-    LazyJoinSinkHelper lazyJoinSinkHelper {
+    StreamJoinSinkHelper lazyJoinSinkHelper {
         .bufferManager = bm,
         .leftSchema = leftSchema,
         .rightSchema = rightSchema,

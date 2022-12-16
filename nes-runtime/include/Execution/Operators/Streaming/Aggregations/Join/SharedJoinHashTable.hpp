@@ -20,7 +20,7 @@
 #include <Execution/Operators/Streaming/Aggregations/Join/BloomFilter.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Join/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Join/LazyJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
