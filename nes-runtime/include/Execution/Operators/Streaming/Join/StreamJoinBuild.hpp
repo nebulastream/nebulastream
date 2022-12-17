@@ -11,8 +11,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef NES_LAZYJOINBUILD_HPP
-#define NES_LAZYJOINBUILD_HPP
+#ifndef NES_STREAMJOINBUILD_HPP
+#define NES_STREAMJOINBUILD_HPP
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -55,4 +55,4 @@ class StreamJoinBuild : public ExecutableOperator {
 
 
 }
-#endif//NES_LAZYJOINBUILD_HPP
+#endif//NES_STREAMJOINBUILD_HPP

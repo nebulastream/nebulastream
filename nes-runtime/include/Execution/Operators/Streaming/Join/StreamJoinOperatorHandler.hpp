@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_LAZYJOINOPERATORHANDLER_HPP
-#define NES_LAZYJOINOPERATORHANDLER_HPP
+#ifndef NES_STREAMJOINOPERATORHANDLER_HPP
+#define NES_STREAMJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinWindow.hpp>
@@ -186,4 +186,4 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
 };
 
 } // namespace NES::Runtime::Execution::Operators
-#endif//NES_LAZYJOINOPERATORHANDLER_HPP
+#endif//NES_STREAMJOINOPERATORHANDLER_HPP

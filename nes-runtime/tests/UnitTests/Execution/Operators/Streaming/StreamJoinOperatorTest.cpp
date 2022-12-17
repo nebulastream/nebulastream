@@ -338,8 +338,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                     auto const fieldType = physicalDataTypeFactory.getPhysicalType(streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.joinFieldNameLeft)->getDataType());
                     bufferPtr += fieldType->size();
 
-                    Util::writeNautilusRecord(bufferPtr, leftRecord, streamJoinSinkHelper.leftSchema, streamJoinSinkHelper.bufferManager);
-                    Util::writeNautilusRecord(bufferPtr + streamJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
+                    Util::writeNautilusRecord(0, bufferPtr, leftRecord, streamJoinSinkHelper.leftSchema, streamJoinSinkHelper.bufferManager);
+                    Util::writeNautilusRecord(0, bufferPtr + streamJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
                                               rightRecord, streamJoinSinkHelper.rightSchema, streamJoinSinkHelper.bufferManager);
                     numberOfTuplesInBuffer += 1;
                     buffer.setNumberOfTuples(numberOfTuplesInBuffer);
