@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LAZYJOINWINDOW_HPP
-#define NES_LAZYJOINWINDOW_HPP
+#ifndef NES_STREAMJOINWINDOW_HPP
+#define NES_STREAMJOINWINDOW_HPP
 
 #include <vector>
 #include <Execution/Operators/Streaming/Join/LocalHashTable.hpp>
@@ -95,4 +95,4 @@ class StreamJoinWindow {
 };
 
 } // namespace NES::Runtime::Execution
-#endif//NES_LAZYJOINWINDOW_HPP
+#endif//NES_STREAMJOINWINDOW_HPP

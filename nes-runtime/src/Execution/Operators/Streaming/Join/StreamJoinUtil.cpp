@@ -61,18 +61,20 @@ namespace NES::Runtime::Execution::Util {
         return buffer;
     }
 
-    void writeNautilusRecord(int8_t* bufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+    void writeNautilusRecord(size_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+        Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
+        Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
             auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
             auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
 
-            memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
+            memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
 
         } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
             auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
             auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
-            memoryProviderPtr->write(Nautilus::Value<Nautilus::UInt64>(0UL), Nautilus::Value<Nautilus::MemRef>(bufferPtr), nautilusRecord);
+            memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
 
         } else {
             NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
@@ -189,7 +191,7 @@ namespace NES::Runtime::Execution::Util {
         auto buffer = bufferManager->getBufferBlocking();
         int8_t* bufferPtr = (int8_t *)buffer.getBuffer();
 
-        writeNautilusRecord(bufferPtr, nautilusRecord, schema, bufferManager);
+        writeNautilusRecord(0, bufferPtr, nautilusRecord, schema, bufferManager);
 
         buffer.setNumberOfTuples(1);
         return buffer;
