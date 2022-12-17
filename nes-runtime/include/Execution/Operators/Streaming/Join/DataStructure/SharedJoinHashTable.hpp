@@ -17,9 +17,9 @@
 #include <atomic>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/BloomFilter.hpp>
-#include <Execution/Operators/Streaming/Join/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {

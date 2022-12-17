@@ -16,8 +16,8 @@
 #define NES_STREAMJOINWINDOW_HPP
 
 #include <vector>
-#include <Execution/Operators/Streaming/Join/LocalHashTable.hpp>
-#include <Execution/Operators/Streaming/Join/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution {
 

@@ -17,7 +17,7 @@
 #include <atomic>
 
 #include <Nautilus/Interface/Record.hpp>
-#include <Execution/Operators/Streaming/Join/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 

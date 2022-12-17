@@ -11,13 +11,9 @@
 # limitations under the License.
 
 
-add_source_files(nes-runtime StreamJoinBuild.cpp
-        BloomFilter.cpp
+add_subdirectory(DataStructure)
+add_subdirectory(JoinPhases)
+
+add_source_files(nes-runtime
         StreamJoinOperatorHandler.cpp
-        LocalHashTable.cpp
-        SharedJoinHashTable.cpp
-        FixedPage.cpp
-        FixedPagesLinkedList.cpp
-        StreamJoinSink.cpp
-        StreamJoinUtil.cpp
-        StreamJoinWindow.cpp)
+        StreamJoinUtil.cpp)
