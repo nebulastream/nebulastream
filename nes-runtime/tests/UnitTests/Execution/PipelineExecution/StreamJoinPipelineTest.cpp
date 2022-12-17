@@ -84,94 +84,20 @@ class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExec
 };
 
 
-TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
+void buildLeftAndRightHashTable(std::vector<TupleBuffer>& allBuffersLeft, std::vector<TupleBuffer>& allBuffersRight,
+                                BufferManagerPtr bufferManager, SchemaPtr leftSchema, SchemaPtr rightSchema,
+                                ExecutablePipelineStage* executablePipelineLeft, ExecutablePipelineStage* executablePipelineRight,
+                                PipelineExecutionContext& pipelineExecCtxLeft, PipelineExecutionContext& pipelineExecCtxRight,
+                                Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutLeft, Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutRight,
+                                WorkerContextPtr workerContext, size_t numberOfTuplesToProduce) {
 
-    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
-    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
-    const auto joinBuildEmitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("partitionId", BasicType::UINT64)
-                                 ->addField("lastTupleTimeStamp", BasicType::UINT64);
+    auto tuplePerBufferLeft = bufferManager->getBufferSize() / leftSchema->getSchemaSizeInBytes();
+    auto tuplePerBufferRight = bufferManager->getBufferSize() / rightSchema->getSchemaSizeInBytes();
 
-    const auto joinFieldNameRight = rightSchema->get(1)->getName();
-    const auto joinFieldNameLeft = leftSchema->get(1)->getName();
-
-    ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
-    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
-    auto timeStampField = leftSchema->get(2)->getName();
-
-
-    auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
-    auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
-    auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
-
-    auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
-    auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
-
-    auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
-    auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
-
-    auto noWorkerThreads = 1;
-    auto numSourcesLeft = 1;
-    auto numSourcesRight = 1;
-    auto joinSizeInByte = 1 * 1024 * 1024;
-    auto windowSize = 20UL;
-    auto numberOfTuplesToProduce = windowSize * 20;
-
-
-    auto handlerIndex = 0;
-    auto joinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
-                                                                        timeStampField, leftSchema);
-    auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
-                                                                        timeStampField, rightSchema);
-    auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
-                                                                       joinFieldNameLeft, joinFieldNameRight,
-                                                                       noWorkerThreads * 2,
-                                                                       numSourcesLeft + numSourcesRight,
-                                                                       joinSizeInByte,
-                                                                       windowSize);
-
-    scanOperatorLeft->setChild(joinBuildLeft);
-    scanOperatorRight->setChild(joinBuildRight);
-
-    auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
-    auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
-    auto pipelineSink = std::make_shared<PhysicalOperatorPipeline>();
-    pipelineBuildLeft->setRootOperator(scanOperatorLeft);
-    pipelineBuildRight->setRootOperator(scanOperatorRight);
-    pipelineSink->setRootOperator(joinSink);
-
-    auto curPipelineId = 0;
-    auto pipelineExecCtxLeft = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxRight = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxSink = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
-
-
-    auto executablePipelineLeft = provider->create(pipelineBuildLeft);
-    auto executablePipelineRight = provider->create(pipelineBuildRight);
-    auto executablePipelineSink = provider->create(pipelineSink);
-
-    ASSERT_EQ(executablePipelineLeft->setup(pipelineExecCtxLeft), 0);
-    ASSERT_EQ(executablePipelineRight->setup(pipelineExecCtxRight), 0);
-    ASSERT_EQ(executablePipelineSink->setup(pipelineExecCtxSink), 0);
-
-    // Building left and right
     auto bufferLeft = bufferManager->getBufferBlocking();
     auto bufferRight = bufferManager->getBufferBlocking();
-
-    std::vector<Runtime::TupleBuffer> allBuffersLeft;
-    std::vector<Runtime::TupleBuffer> allBuffersRight;
-    auto tuplePerBuffer = bufferManager->getBufferSize() / leftSchema->getSchemaSizeInBytes();
     for (auto i = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
-        if (bufferLeft.getNumberOfTuples() >= tuplePerBuffer) {
+        if (bufferLeft.getNumberOfTuples() >= tuplePerBufferLeft) {
             executablePipelineLeft->execute(bufferLeft, pipelineExecCtxLeft, *workerContext);
             allBuffersLeft.emplace_back(bufferLeft);
             bufferLeft = bufferManager->getBufferBlocking();
@@ -185,7 +111,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
         bufferLeft.setNumberOfTuples(posLeft + 1);
 
 
-        if (bufferRight.getNumberOfTuples() >= tuplePerBuffer) {
+        if (bufferRight.getNumberOfTuples() >= tuplePerBufferRight) {
             executablePipelineRight->execute(bufferRight, pipelineExecCtxRight, *workerContext);
             allBuffersRight.emplace_back(bufferRight);
             bufferRight = bufferManager->getBufferBlocking();
@@ -207,26 +133,17 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
         executablePipelineRight->execute(bufferRight, pipelineExecCtxRight, *workerContext);
         allBuffersRight.push_back(bufferRight);
     }
+}
 
-    // Assure that at least one buffer has been emitted
-    ASSERT_TRUE(pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
+void performNLJ(std::vector<TupleBuffer>& nljBuffers, std::vector<TupleBuffer>& allBuffersLeft,
+                std::vector<TupleBuffer>& allBuffersRight, size_t windowSize, const std::string& timeStampField,
+                Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutLeft, Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutRight,
+                Runtime::MemoryLayouts::RowLayoutPtr memoryLayoutJoined, const std::string& joinFieldNameLeft,
+                const std::string& joinFieldNameRight, BufferManagerPtr bufferManager){
 
-    // Calling join Sink
-    std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
-    buildEmittedBuffers.insert(buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(),
-                               pipelineExecCtxRight.emittedBuffers.end());
-
-
-    NES_DEBUG("Calling joinSink for " << buildEmittedBuffers.size() << " buffers");
-    for (auto buf : buildEmittedBuffers) {
-        executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
-    }
-
-    std::vector<Runtime::TupleBuffer> nljBuffers;
     uint64_t lastTupleTimeStampWindow = windowSize - 1;
     uint64_t firstTupleTimeStampWindow = 0;
     auto bufferJoined = bufferManager->getBufferBlocking();
-
     for (auto bufLeft : allBuffersLeft) {
         auto dynamicBufLeft = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutLeft, bufLeft);
         for (auto tupleLeftCnt = 0UL; tupleLeftCnt < dynamicBufLeft.getNumberOfTuples(); ++tupleLeftCnt) {
@@ -275,16 +192,115 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
             }
         }
     }
+}
+
+TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
+
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("f1_left", BasicType::UINT64)
+                                ->addField("f2_left", BasicType::UINT64)
+                                ->addField("timestamp", BasicType::UINT64);
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("f1_right", BasicType::UINT64)
+                                 ->addField("f2_right", BasicType::UINT64)
+                                 ->addField("timestamp", BasicType::UINT64);
+    const auto joinBuildEmitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("partitionId", BasicType::UINT64)
+                                 ->addField("lastTupleTimeStamp", BasicType::UINT64);
+
+    const auto joinFieldNameRight = rightSchema->get(1)->getName();
+    const auto joinFieldNameLeft = leftSchema->get(1)->getName();
+
+    ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+
+    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
+    auto timeStampField = leftSchema->get(2)->getName();
 
 
-    // Comparing expected output versus actual output via a NLJ
-    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers,
-                                                             joinSchema, timeStampField,
+    auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
+    auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
+    auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
+
+    auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
+    auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
+
+    auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
+    auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
+
+    auto noWorkerThreads = 1;
+    auto numSourcesLeft = 1, numSourcesRight = 1;
+    auto joinSizeInByte = 1 * 1024 * 1024;
+    auto windowSize = 20UL;
+    auto numberOfTuplesToProduce = windowSize * 20;
+
+
+    auto handlerIndex = 0;
+    auto joinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true, joinFieldNameLeft,
+                                                                        timeStampField, leftSchema);
+    auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
+                                                                        timeStampField, rightSchema);
+    auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
+    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
+                                                                       joinFieldNameLeft, joinFieldNameRight,
+                                                                       noWorkerThreads * 2, numSourcesLeft + numSourcesRight,
+                                                                       joinSizeInByte, windowSize);
+
+    scanOperatorLeft->setChild(joinBuildLeft);
+    scanOperatorRight->setChild(joinBuildRight);
+
+    auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
+    auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
+    auto pipelineSink = std::make_shared<PhysicalOperatorPipeline>();
+    pipelineBuildLeft->setRootOperator(scanOperatorLeft);
+    pipelineBuildRight->setRootOperator(scanOperatorRight);
+    pipelineSink->setRootOperator(joinSink);
+
+
+    auto curPipelineId = 0;
+    auto pipelineExecCtxLeft = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxRight = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxSink = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+
+    auto executablePipelineLeft = provider->create(pipelineBuildLeft);
+    auto executablePipelineRight = provider->create(pipelineBuildRight);
+    auto executablePipelineSink = provider->create(pipelineSink);
+
+    ASSERT_EQ(executablePipelineLeft->setup(pipelineExecCtxLeft), 0);
+    ASSERT_EQ(executablePipelineRight->setup(pipelineExecCtxRight), 0);
+    ASSERT_EQ(executablePipelineSink->setup(pipelineExecCtxSink), 0);
+
+    // Filling left and right hash tables
+    std::vector<Runtime::TupleBuffer> allBuffersLeft, allBuffersRight;
+    buildLeftAndRightHashTable(allBuffersLeft, allBuffersRight, bufferManager, leftSchema, rightSchema,
+                               executablePipelineLeft.get(), executablePipelineRight.get(),
+                               pipelineExecCtxLeft, pipelineExecCtxRight, memoryLayoutLeft, memoryLayoutRight,
+                               workerContext, numberOfTuplesToProduce);
+
+    // Assure that at least one buffer has been emitted
+    ASSERT_TRUE(pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
+
+    // Calling join Sink
+    std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
+    buildEmittedBuffers.insert(buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(),
+                               pipelineExecCtxRight.emittedBuffers.end());
+
+
+    NES_DEBUG("Calling joinSink for " << buildEmittedBuffers.size() << " buffers");
+    for (auto buf : buildEmittedBuffers) {
+        executablePipelineSink->execute(buf, pipelineExecCtxSink, *workerContext);
+    }
+
+    std::vector<Runtime::TupleBuffer> nljBuffers;
+    performNLJ(nljBuffers, allBuffersLeft, allBuffersRight, windowSize, timeStampField, memoryLayoutLeft, memoryLayoutRight,
+               memoryLayoutJoined, joinFieldNameLeft, joinFieldNameRight, bufferManager);
+
+    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers, joinSchema, timeStampField,
                                                              bufferManager, windowSize);
 
     // We have to sort and merge the emitted buffers as otherwise we can not simply compare versus a NLJ version
-    auto sortedMergedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers,
-                                                                     joinSchema, timeStampField, bufferManager);
+    auto sortedMergedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, timeStampField,
+                                                                     bufferManager);
     auto sortNLJBuffers = Util::sortBuffersInTupleBuffer(nljBuffers, joinSchema, timeStampField, bufferManager);
 
     pipelineExecCtxSink.emittedBuffers.clear();
