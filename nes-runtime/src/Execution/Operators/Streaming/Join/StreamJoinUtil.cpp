@@ -227,4 +227,22 @@ namespace NES::Runtime::Execution::Util {
         }
         return ss.str();
     }
+
+    SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
+        NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(), "Left and right schema do not have the same layout type");
+        NES_ASSERT(leftSchema->contains(keyFieldName) || rightSchema->contains(keyFieldName),
+                   "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
+
+        auto retSchema = Schema::create(leftSchema->getLayoutType());
+        if (leftSchema->contains(keyFieldName)) {
+            retSchema->addField(leftSchema->get(keyFieldName));
+        } else {
+            retSchema->addField(rightSchema->get(keyFieldName));
+        }
+
+        retSchema->copyFields(leftSchema);
+        retSchema->copyFields(rightSchema);
+
+        return retSchema;
+    }
 }
