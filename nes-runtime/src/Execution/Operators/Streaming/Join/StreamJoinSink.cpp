@@ -97,6 +97,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
 
     auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
+    currentTupleBuffer.setNumberOfTuples(0);
     size_t joinedTuples = 0;
 
     for(auto& lhsPage : probeSide) {
@@ -135,6 +136,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                             NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
 
                             currentTupleBuffer = workerCtx->allocateTupleBuffer();
+                            currentTupleBuffer.setNumberOfTuples(0);
                         }
                     }
                 }
@@ -206,7 +208,6 @@ void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
 
     Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
                            joinPartitionTimestampPtr);
-    
 }
 
 

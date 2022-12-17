@@ -258,9 +258,12 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
 
     for (auto i = 0UL, curWindow = 0UL; i < streamJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto recordLeft = Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>(i)}, {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
+        auto recordLeft = Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>(i)},
+                                            {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
                                             {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>(i)}});
-        auto recordRight = Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>(i+1000)}, {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
+
+        auto recordRight = Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>(i+1000)},
+                                             {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
                                              {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>(i)}});
 
         if (recordRight.read(streamJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
