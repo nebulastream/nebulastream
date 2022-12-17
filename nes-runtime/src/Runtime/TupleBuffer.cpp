@@ -19,8 +19,9 @@
 namespace NES::Runtime {
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
+    auto controlBlockSize = alignBufferSize(sizeof(Runtime::detail::BufferControlBlock), 64);
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
+    auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - controlBlockSize);
     auto memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();

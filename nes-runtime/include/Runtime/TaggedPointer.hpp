@@ -19,9 +19,11 @@
 #include <folly/Likely.h>
 #include <folly/Portability.h>
 
-#if !FOLLY_X64 && !FOLLY_AARCH64 && !FOLLY_PPC64
-#error "DiscriminatedPtr is x64, arm64 and ppc64 specific code."
+#if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__arm__)) && !(defined(__powerpc64__))
+#error "TaggedPointer is x64, arm64 and ppc64 specific code."
 #endif
+
+
 
 namespace NES {
 template<typename T>
