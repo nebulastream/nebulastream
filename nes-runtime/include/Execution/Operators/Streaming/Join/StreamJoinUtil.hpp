@@ -59,7 +59,10 @@ T* allocHugePages(size_t size) {
     void* tmp = nullptr;
     NES_ASSERT2_FMT(0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
                     "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
-    madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
+    #ifdef __linux__
+        madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
+    #endif
+        
     NES_ASSERT2_FMT(tmp != nullptr, "Cannot remap as huge pages");
     mlock(tmp, size * sizeof(T));
     return reinterpret_cast<T*>(tmp);
