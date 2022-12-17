@@ -74,5 +74,6 @@ void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     memref.store(zero);
     countMemref.store(zero);
 }
+uint64_t AvgAggregationFunction::getSize() { return 16; }
 
 }// namespace NES::Runtime::Execution::Aggregation

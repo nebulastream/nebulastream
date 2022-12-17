@@ -14,11 +14,12 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_
-#include <Windowing/Experimental/ThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/ThreadLocalSliceStore.hpp>
 #include <memory>
 
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
+class State;
 class GlobalSlice;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 
@@ -30,12 +31,13 @@ using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
  */
 class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
   public:
-    explicit GlobalThreadLocalSliceStore(uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide);
+    explicit GlobalThreadLocalSliceStore(uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide, const std::unique_ptr<State>& defaultState);
     ~GlobalThreadLocalSliceStore() = default;
 
   private:
     GlobalSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t entrySize;
+    const std::unique_ptr<State>& defaultState;
 };
 }// namespace NES::Windowing::Experimental
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_

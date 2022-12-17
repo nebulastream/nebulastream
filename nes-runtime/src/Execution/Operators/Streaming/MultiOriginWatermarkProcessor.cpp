@@ -11,22 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-namespace NES::Experimental {
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+namespace NES::Runtime::Execution::Operators {
 
-LockFreeMultiOriginWatermarkProcessor::LockFreeMultiOriginWatermarkProcessor(const std::vector<OriginId> origins)
-    : origins(std::move(origins)) {
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId> origins) : origins(std::move(origins)) {
     for (uint64_t i = 0; i < this->origins.size(); i++) {
         watermarkProcessors.emplace_back(std::make_shared<Util::NonBlockingMonotonicSeqQueue<OriginId>>());
     }
 };
 
-std::shared_ptr<LockFreeMultiOriginWatermarkProcessor>
-LockFreeMultiOriginWatermarkProcessor::create(const std::vector<OriginId> origins) {
-    return std::make_shared<LockFreeMultiOriginWatermarkProcessor>(origins);
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const std::vector<OriginId> origins) {
+    return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-uint64_t LockFreeMultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
+uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
     for (size_t originIndex = 0; originIndex < origins.size(); originIndex++) {
         if (origins[originIndex] == origin) {
             watermarkProcessors[originIndex]->emplace(sequenceNumber, ts);
@@ -35,7 +33,7 @@ uint64_t LockFreeMultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uin
     return getCurrentWatermark();
 }
 
-uint64_t LockFreeMultiOriginWatermarkProcessor::getCurrentWatermark() {
+uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {
     auto minimalWatermark = UINT64_MAX;
     for (auto& wt : watermarkProcessors) {
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
@@ -43,4 +41,4 @@ uint64_t LockFreeMultiOriginWatermarkProcessor::getCurrentWatermark() {
     return minimalWatermark;
 }
 
-}// namespace NES::Experimental
+}// namespace NES::Runtime::Execution::Operators

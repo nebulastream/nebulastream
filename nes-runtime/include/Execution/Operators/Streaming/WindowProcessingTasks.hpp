@@ -14,7 +14,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_WINDOWPROCESSINGTASKS_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_WINDOWPROCESSINGTASKS_HPP_
 #include <cinttypes>
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief This task models the merge task of an a specific slice, with a start and a end.
@@ -42,6 +42,6 @@ struct Window {
     uint64_t sequenceNumber;
 };
 
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_WINDOWPROCESSINGTASKS_HPP_

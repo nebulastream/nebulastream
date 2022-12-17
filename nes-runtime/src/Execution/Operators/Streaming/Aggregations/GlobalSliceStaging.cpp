@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/WindowProcessingException.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/WindowProcessingException.hpp>
 
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 std::tuple<uint64_t, uint64_t> GlobalSliceStaging::addToSlice(uint64_t sliceEndTs, std::unique_ptr<State> state) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
@@ -45,4 +45,4 @@ void GlobalSliceStaging::clear() {
     slicePartitionMap.clear();
 }
 
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
