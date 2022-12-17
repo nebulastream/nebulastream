@@ -27,7 +27,7 @@ Hashmap::Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
 }
 
 uint64_t Hashmap::setSize(uint64_t nrEntries) {
-    assert(nrEntries != 0);
+    NES_ASSERT(nrEntries != 0, "invalid num entries");
 
     currentSize = 0;
     if (!!entryBuffer) {
@@ -40,7 +40,7 @@ uint64_t Hashmap::setSize(uint64_t nrEntries) {
 
     const auto loadFactor = 0.7;
     size_t exp = 64 - __builtin_clzll(nrEntries);
-    assert(exp < sizeof(hash_t) * 8);
+    NES_ASSERT(exp < sizeof(hash_t) * 8, "invalid exp");
     if (((size_t) 1 << exp) < nrEntries / loadFactor) {
         exp++;
     }
@@ -51,9 +51,10 @@ uint64_t Hashmap::setSize(uint64_t nrEntries) {
         NES_FATAL_ERROR("No buffer available");
     }
     this->entryBuffer = buffer.value();
+    buffer.reset();
     // set entries to zero
-    memset(buffer->getBuffer(), 0, buffer->getBufferSize());
-    entries = buffer->getBuffer<Entry*>();
+    memset(entryBuffer.getBuffer(), 0, entryBuffer.getBufferSize());
+    entries = entryBuffer.getBuffer<Entry*>();
 
     if (storageBuffers == nullptr) {
         storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();

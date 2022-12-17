@@ -36,11 +36,17 @@ class HashMapTest : public Testing::TestWithErrorHandling<testing::Test> {
         NES_INFO("HashMapTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("HashMapTest test class TearDownTestCase."); }
+
+    void SetUp() {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        bufferManager = std::make_shared<Runtime::BufferManager>();
+    }
+
+    Runtime::BufferManagerPtr bufferManager{nullptr};
 };
 
 TEST_F(HashMapTest, putEntry) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, 8, 100);
+    auto map = Experimental::Hashmap(bufferManager, 8, 8, 100);
     auto e1 = Experimental::Hashmap::Entry(nullptr, 10);
     map.entries[0] = &e1;
     auto e2 = map.entries[0];
@@ -48,8 +54,8 @@ TEST_F(HashMapTest, putEntry) {
 }
 
 TEST_F(HashMapTest, insertKey) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, 8, 100);
+
+    auto map = Experimental::Hashmap(bufferManager, 8, 8, 100);
     auto entry1 = map.findOrCreate<uint64_t, false>(10, 10);
     auto entry2 = map.findOrCreate<uint64_t, false>(10, 10);
     ASSERT_EQ(entry1, entry2);
@@ -58,8 +64,8 @@ TEST_F(HashMapTest, insertKey) {
 #if defined(__SSE4_2__)
 
 TEST_F(HashMapTest, insertSmallNumberOfUniqueKey) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, 8, 100);
+
+    auto map = Experimental::Hashmap(bufferManager, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
     for (uint64_t i = 0; i < 100; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
@@ -77,8 +83,8 @@ TEST_F(HashMapTest, insertSmallNumberOfUniqueKey) {
 }
 
 TEST_F(HashMapTest, updateSmallNumberOKeys) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, 8, 100);
+
+    auto map = Experimental::Hashmap(bufferManager, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
     for (uint64_t i = 0; i < 10; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
@@ -104,8 +110,8 @@ TEST_F(HashMapTest, updateSmallNumberOKeys) {
 }
 
 TEST_F(HashMapTest, insertLargeNumberOfKeys) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, 8, 100);
+
+    auto map = Experimental::Hashmap(bufferManager, 8, 8, 100);
     auto hasher = Experimental::CRC32Hash();
     for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);
@@ -127,8 +133,8 @@ TEST_F(HashMapTest, insertMultipleValues) {
         uint32_t v1;
         uint64_t v2;
     };
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto map = Experimental::Hashmap(bm, 8, sizeof(MapValues), 100);
+
+    auto map = Experimental::Hashmap(bufferManager, 8, sizeof(MapValues), 100);
     auto hasher = Experimental::CRC32Hash();
     for (uint64_t i = 0; i < 100000; i++) {
         auto hash = hasher(i, Experimental::Hash<Experimental::CRC32Hash>::SEED);

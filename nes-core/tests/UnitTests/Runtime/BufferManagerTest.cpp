@@ -64,15 +64,6 @@ TEST_F(BufferManagerTest, initializedBufferManagerWithNuma) {
 }
 #endif
 
-TEST_F(BufferManagerTest, initializedBufferManagerAlignment16) {
-    auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size,
-                                                                  buffers_managed,
-                                                                  std::make_shared<Runtime::NesDefaultMemoryAllocator>(),
-                                                                  16);
-    auto buffer = bufferManager->getBufferBlocking();
-    ASSERT_TRUE(reinterpret_cast<uintptr_t>(buffer.getBuffer()) % 16 == 0);
-}
-
 TEST_F(BufferManagerTest, initializedBufferManagerAlignment64) {
     auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size,
                                                                   buffers_managed,
@@ -115,6 +106,12 @@ TEST_F(BufferManagerTest, singleThreadedManyBufferRecyclingUnpooled) {
         auto buffer0 = bufferManager->getUnpooledBuffer(16384);
         ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1U);
     }
+    ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1u);
+}
+
+TEST_F(BufferManagerTest, allocateSingleByteUnpooledBuffer) {
+    auto bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
+    auto opt = bufferManager->getUnpooledBuffer(1);
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1u);
 }
 
