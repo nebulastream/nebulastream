@@ -27,6 +27,8 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+
+
 namespace NES::Runtime {
 
 BufferManager::BufferManager(uint32_t bufferSize,
@@ -38,7 +40,8 @@ BufferManager::BufferManager(uint32_t bufferSize,
       availableBuffers(numOfBuffers), numOfAvailableBuffers(numOfBuffers),
 #endif
       bufferSize(bufferSize), numOfBuffers(numOfBuffers), memoryResource(memoryResource) {
-    initialize(withAlignment);
+    ((void) withAlignment);
+    initialize(DEFAULT_ALIGNMENT);
 }
 
 void BufferManager::destroy() {
@@ -94,14 +97,6 @@ void BufferManager::destroy() {
 
 BufferManager::~BufferManager() { destroy(); }
 
-uint32_t BufferManager::alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
-    if (bufferSize % withAlignment) {
-        // make sure that each buffer is a multiple of the alignment
-        return bufferSize + (withAlignment - bufferSize % withAlignment);
-    }
-    return bufferSize;
-}
-
 void BufferManager::initialize(uint32_t withAlignment) {
     std::unique_lock lock(availableBuffersMutex);
 
@@ -146,8 +141,8 @@ void BufferManager::initialize(uint32_t withAlignment) {
     }
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        uint8_t* controlBlock = ptr + alignedBufferSize;
-        uint8_t* payload = ptr;
+        uint8_t* controlBlock = ptr;
+        uint8_t* payload = ptr + controlBlockSize;
         allBuffers.emplace_back(
             payload,
             bufferSize,
@@ -257,7 +252,8 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     // we could not find a buffer, allocate it
     // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
+    auto alignedBufferSizePlusControlBlock =
+        alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
     if (ptr == nullptr) {
@@ -279,7 +275,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
-        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size);
+        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
