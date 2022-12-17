@@ -16,7 +16,6 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-
 namespace NES {
 
 /**
@@ -48,7 +47,6 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      * @brief Kafka connection Timeout
      */
     uint64_t getTimeout() const;
-
 
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;

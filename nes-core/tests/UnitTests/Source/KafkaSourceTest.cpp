@@ -135,7 +135,8 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(sourceTest). OFFSETMODE(earliest). BATCHSIZE(1). ";
+    std::string expected =
+        "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(sourceTest). OFFSETMODE(earliest). BATCHSIZE(1). ";
 
     EXPECT_EQ(kafkaSource->toString(), expected);
 
@@ -227,8 +228,7 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
 
                 // Now commit the message
                 consumer.commit(msg);
-                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()),
-                                              message.size());
+                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()), message.size());
                 EXPECT_EQ(payload_view, message);
                 pollSuccessFull = true;
             }

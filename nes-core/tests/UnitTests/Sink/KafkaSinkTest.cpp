@@ -213,8 +213,7 @@ TEST_F(KafkaSinkTest, KafkaSinkWriteBuffer) {
                     "\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|"
                     "2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n|2|2|\n+--------------------------------------"
                     "--------------+";
-                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()),
-                                              expected.size());
+                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()), expected.size());
                 EXPECT_EQ(expected, payload_view);
             }
         }

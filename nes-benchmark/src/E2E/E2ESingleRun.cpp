@@ -334,15 +334,17 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream header;
-    header << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
-              "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
-              "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-              "numWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
-           << std::endl;
+    header
+        << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+           "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
+           "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
+           "numWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
+        << std::endl;
 
     std::stringstream outputCsvStream;
 
-    for (auto measurementsCsv : measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
+    for (auto measurementsCsv :
+         measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
