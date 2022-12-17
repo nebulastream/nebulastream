@@ -13,6 +13,7 @@
 */
 
 #include <atomic>
+#include <cstdint>
 
 #include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
@@ -21,8 +22,10 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>

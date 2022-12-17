@@ -17,9 +17,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>

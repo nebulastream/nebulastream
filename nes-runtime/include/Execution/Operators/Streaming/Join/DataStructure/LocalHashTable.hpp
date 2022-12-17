@@ -19,8 +19,8 @@
 
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Execution/Operators/Streaming/Join/FixedPage.hpp>
-#include <Execution/Operators/Streaming/Join/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 class LocalHashTable {

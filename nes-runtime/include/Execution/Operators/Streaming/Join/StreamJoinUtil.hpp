@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_LAZYJOINUTIL_HPP
-#define NES_LAZYJOINUTIL_HPP
+#ifndef NES_STREAMJOINUTIL_HPP
+#define NES_STREAMJOINUTIL_HPP
 
 #include <cerrno>
 #include <cstdint>
@@ -153,4 +153,4 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
 
 } // namespace Util
 } // namespace NES::Runtime::Execution
-#endif//NES_LAZYJOINUTIL_HPP
+#endif//NES_STREAMJOINUTIL_HPP

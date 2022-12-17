@@ -20,7 +20,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
