@@ -85,12 +85,12 @@ class StreamJoinOperatorTest : public testing::Test {
 };
 
 struct StreamJoinBuildHelper {
-    size_t pageSize = CHUNK_SIZE;
-    size_t numPartitions = NUM_PARTITIONS;
+    size_t pageSize;
+    size_t numPartitions;
     size_t numberOfTuplesToProduce;
     size_t numberOfBuffersPerWorker;
     size_t noWorkerThreads;
-    size_t totalNumSources = 2;
+    size_t totalNumSources;
     size_t joinSizeInByte;
     size_t windowSize;
     Operators::StreamJoinBuildPtr lazyJoinBuild;
@@ -100,6 +100,17 @@ struct StreamJoinBuildHelper {
     std::string timeStampField;
     StreamJoinOperatorTest* lazyJoinOperatorTest;
     bool isLeftSide;
+
+    StreamJoinBuildHelper() {
+        pageSize = CHUNK_SIZE;
+        numPartitions = NUM_PARTITIONS;
+        numberOfTuplesToProduce = 100;
+        numberOfBuffersPerWorker = 128;
+        noWorkerThreads = 1;
+        totalNumSources = 2;
+        joinSizeInByte = 1 * 1024 * 1024;
+        windowSize = 1000;
+    }
 };
 
 
@@ -173,7 +184,7 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
         }
 
         if (!correctlyInserted) {
-            NES_ERROR("correctlyInserted is false!");
+            NES_ERROR("Could not find buffer in bucket!");
             return false;
         }
     }
@@ -413,21 +424,14 @@ TEST_F(StreamJoinOperatorTest, joinBuildTest) {
     auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper = {
-        .pageSize = CHUNK_SIZE,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1UL,
-        .joinSizeInByte = 1 * 1024 * 1024UL,
-        .windowSize = 1000,
-        .lazyJoinBuild = lazyJoinBuild,
-        .joinFieldName = joinFieldNameLeft,
-        .bufferManager = bm,
-        .schema = leftSchema,
-        .timeStampField = timeStampField,
-        .lazyJoinOperatorTest = this,
-        .isLeftSide = isLeftSide
-    };
+    StreamJoinBuildHelper buildHelper;
+    buildHelper.lazyJoinBuild = lazyJoinBuild;
+    buildHelper.joinFieldName = joinFieldNameLeft;
+    buildHelper.bufferManager = bm;
+    buildHelper.schema = leftSchema;
+    buildHelper.timeStampField = timeStampField;
+    buildHelper.lazyJoinOperatorTest = this;
+    buildHelper.isLeftSide = isLeftSide;
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
@@ -443,27 +447,20 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
 
     const auto joinFieldNameRight = "f2_right";
     const auto timeStampField = "timestamp";
-    const auto isLeftSide = true;
+    const auto isLeftSide = false;
 
     auto handlerIndex = 0;
     auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
                                                                     timeStampField, rightSchema);
 
-    StreamJoinBuildHelper buildHelper = {
-        .pageSize = CHUNK_SIZE,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1UL,
-        .joinSizeInByte = 1 * 1024 * 1024UL,
-        .windowSize = 1000,
-        .lazyJoinBuild = lazyJoinBuild,
-        .joinFieldName = joinFieldNameRight,
-        .bufferManager = bm,
-        .schema = rightSchema,
-        .timeStampField = timeStampField,
-        .lazyJoinOperatorTest = this,
-        .isLeftSide = isLeftSide
-    };
+    StreamJoinBuildHelper buildHelper;
+    buildHelper.lazyJoinBuild = lazyJoinBuild;
+    buildHelper.joinFieldName = joinFieldNameRight;
+    buildHelper.bufferManager = bm;
+    buildHelper.schema = rightSchema;
+    buildHelper.timeStampField = timeStampField;
+    buildHelper.lazyJoinOperatorTest = this;
+    buildHelper.isLeftSide = isLeftSide;
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
@@ -484,22 +481,16 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper = {
-        .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
-        .numPartitions = 1,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1UL,
-        .joinSizeInByte = 1 * 1024 * 1024UL,
-        .windowSize = 1000,
-        .lazyJoinBuild = lazyJoinBuild,
-        .joinFieldName = joinFieldNameLeft,
-        .bufferManager = bm,
-        .schema = leftSchema,
-        .timeStampField = timeStampField,
-        .lazyJoinOperatorTest = this,
-        .isLeftSide = isLeftSide
-    };
+    StreamJoinBuildHelper buildHelper;
+    buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
+    buildHelper.numPartitions = 1;
+    buildHelper.lazyJoinBuild = lazyJoinBuild;
+    buildHelper.joinFieldName = joinFieldNameLeft;
+    buildHelper.bufferManager = bm;
+    buildHelper.schema = leftSchema;
+    buildHelper.timeStampField = timeStampField;
+    buildHelper.lazyJoinOperatorTest = this;
+    buildHelper.isLeftSide = isLeftSide;
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
@@ -525,22 +516,17 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper = {
-        .pageSize = leftSchema->getSchemaSizeInBytes() * 2,
-        .numPartitions = 1,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1UL,
-        .joinSizeInByte = 1 * 1024 * 1024UL,
-        .windowSize = 5,
-        .lazyJoinBuild = lazyJoinBuild,
-        .joinFieldName = joinFieldNameLeft,
-        .bufferManager = bm,
-        .schema = leftSchema,
-        .timeStampField = timeStampField,
-        .lazyJoinOperatorTest = this,
-        .isLeftSide = isLeftSide
-    };
+    StreamJoinBuildHelper buildHelper;
+    buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2,
+    buildHelper.numPartitions = 1;
+    buildHelper.windowSize = 5;
+    buildHelper.lazyJoinBuild = lazyJoinBuild;
+    buildHelper.joinFieldName = joinFieldNameLeft;
+    buildHelper.bufferManager = bm;
+    buildHelper.schema = leftSchema;
+    buildHelper.timeStampField = timeStampField;
+    buildHelper.lazyJoinOperatorTest = this;
+    buildHelper.isLeftSide = isLeftSide;
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
