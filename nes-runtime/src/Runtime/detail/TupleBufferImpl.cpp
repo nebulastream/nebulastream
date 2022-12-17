@@ -36,9 +36,11 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
                              BufferRecycler* recycler,
-                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
-    : ptr(ptr + sizeof(BufferControlBlock)), size(size) {
-    controlBlock = new (ptr) BufferControlBlock(this, recycler, std::move(recycleFunction));
+                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+                             uint8_t* controlBlock)
+    : size(size) {
+    this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    this->ptr = ptr;
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -55,7 +57,7 @@ MemorySegment::MemorySegment(uint8_t* ptr,
     : ptr(ptr), size(size) {
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
-    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
+    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)), 1);
     controlBlock->prepare();
 }
 
@@ -73,14 +75,13 @@ MemorySegment::~MemorySegment() {
 
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
         // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
-        size_t actualBufferSize = size;
-        if ((ptr - sizeof(BufferControlBlock)) != reinterpret_cast<uint8_t*>(controlBlock)) {
-            delete controlBlock;
+        if (controlBlock.tag()) {
+            delete controlBlock.get();
         } else {
-            actualBufferSize += sizeof(BufferControlBlock);
             controlBlock->~BufferControlBlock();
         }
 
+        std::exchange(controlBlock, nullptr);
         std::exchange(ptr, nullptr);
     }
 }
@@ -88,7 +89,9 @@ MemorySegment::~MemorySegment() {
 BufferControlBlock::BufferControlBlock(MemorySegment* owner,
                                        BufferRecycler* recycler,
                                        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)) {}
+    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)) {
+    // nop
+}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());

@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
+#include <Runtime/TaggedPointer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
@@ -244,7 +245,8 @@ class MemorySegment {
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,
                            BufferRecycler* recycler,
-                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+                           uint8_t* controlBlock);
 
     ~MemorySegment();
 
@@ -292,7 +294,7 @@ class MemorySegment {
 
     uint8_t* ptr{nullptr};
     uint32_t size{0};
-    detail::BufferControlBlock* controlBlock{nullptr};
+    TaggedPointer<detail::BufferControlBlock> controlBlock{nullptr};
 };
 
 /**

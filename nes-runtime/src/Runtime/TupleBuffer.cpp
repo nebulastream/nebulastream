@@ -22,7 +22,7 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
     auto memorySegment = block->getOwner();
-    auto tb = TupleBuffer(memorySegment->controlBlock, memorySegment->ptr, memorySegment->size);
+    auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();
     return tb;
 }
@@ -33,13 +33,13 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
         delete segment;
     };
     auto* memSegment = new detail::MemorySegment(ptr, length, parent, std::move(callback), true);
-    return TupleBuffer(memSegment->controlBlock, ptr, length);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
 
 TupleBuffer
 TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
-    return TupleBuffer(memSegment->controlBlock, ptr, length);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
 
 uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) noexcept {
