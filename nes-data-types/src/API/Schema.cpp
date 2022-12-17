@@ -177,10 +177,6 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder) {
         if (!(schema->contains(field))) {
             return false;
         }
-//        auto otherFieldAttribute = schema->hasFieldName(fieldAttribute->getName());
-//        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute))) {
-//            return false;
-//        }
     }
     return true;
 }
@@ -238,7 +234,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() {
 
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-//        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+        NES_DEBUG("contain compare field=" << field->getName() << " with other=" << fieldName);
         if (field->getName() == fieldName) {
             return true;
         }

@@ -194,11 +194,10 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
                                  uint64_t& removedBuffer) {
 
     bool foundBuffer = false;
-    NES_DEBUG("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
+    NES_TRACE("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
-        NES_DEBUG("Comparing versus = " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
         if (memcmp(tupleBufferIt->getBuffer(), expectedBuffer.getBuffer(), sizeJoinedTuple * expectedBuffer.getNumberOfTuples()) == 0) {
-            NES_DEBUG("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
+            NES_TRACE("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
             removedBuffer += 1;
