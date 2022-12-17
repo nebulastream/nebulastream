@@ -77,23 +77,23 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
     }
 
     NES_DEBUG("StreamJoinOperatorHandler: create a new window for the lazyjoin");
-    lazyJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
+    streamJoinWindows.emplace_back(maxNoWorkerThreads, counterFinishedBuildingStart, counterFinishedSinkStart,
                                  totalSizeForDataStructures, joinSchemaLeft->getSchemaSizeInBytes(),
                                  joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
 }
 
 void StreamJoinOperatorHandler::deleteWindow(size_t timeStamp) {
-    for (auto it = lazyJoinWindows.begin(); it != lazyJoinWindows.end(); ++it) {
+    for (auto it = streamJoinWindows.begin(); it != streamJoinWindows.end(); ++it) {
         if (timeStamp <= it->getLastTupleTimeStamp()) {
-            lazyJoinWindows.erase(it);
+            streamJoinWindows.erase(it);
             break;
         }
     }
 }
 
 bool StreamJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
-    for (auto& lazyJoinWindow : lazyJoinWindows) {
-        if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
+    for (auto& streamJoinWindow : streamJoinWindows) {
+        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
             return true;
         }
     }
@@ -102,13 +102,13 @@ bool StreamJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
 }
 
 StreamJoinWindow& StreamJoinOperatorHandler::getWindow(size_t timeStamp) {
-    for (auto& lazyJoinWindow : lazyJoinWindows) {
-        if (timeStamp <= lazyJoinWindow.getLastTupleTimeStamp()) {
-            return lazyJoinWindow;
+    for (auto& streamJoinWindow : streamJoinWindows) {
+        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
+            return streamJoinWindow;
         }
     }
 
-    NES_THROW_RUNTIME_ERROR("Could not find lazyJoinWindow for timestamp: " << timeStamp);
+    NES_THROW_RUNTIME_ERROR("Could not find streamJoinWindow for timestamp: " << timeStamp);
 
 }
 
@@ -142,6 +142,6 @@ size_t StreamJoinOperatorHandler::getWindowSize() const {
 }
 size_t StreamJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
-size_t StreamJoinOperatorHandler::getNumActiveWindows() { return lazyJoinWindows.size(); }
+size_t StreamJoinOperatorHandler::getNumActiveWindows() { return streamJoinWindows.size(); }
 
 } // namespace NES::Runtime::Execution

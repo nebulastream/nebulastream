@@ -70,12 +70,10 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     if (opHandler->getWindowToBeFilled(isLeftSide).fetchSubBuild(1) == 1) {
         for (auto i = 0UL; i < opHandler->getNumPartitions(); ++i) {
 
-
             auto* joinPartitionIdTupleStamp = new JoinPartitionIdTumpleStamp;
             joinPartitionIdTupleStamp->partitionId = i,
             joinPartitionIdTupleStamp->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getLastTupleTimeStamp();
 
-            // TODO ask Ventura and/or Philipp if I have to call somewhere explicitly a delete
             auto buffer = Runtime::TupleBuffer::wrapMemory(reinterpret_cast<uint8_t*>(joinPartitionIdTupleStamp),
                                                            sizeof(struct JoinPartitionIdTumpleStamp), opHandler);
 

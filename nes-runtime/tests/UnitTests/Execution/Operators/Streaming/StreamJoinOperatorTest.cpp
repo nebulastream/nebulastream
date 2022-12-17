@@ -34,27 +34,6 @@
 
 namespace NES::Runtime::Execution {
 
-class TestRunner : public NES::Exceptions::ErrorListener {
-  public:
-    void onFatalError(int signalNumber, std::string callStack) override {
-        std::ostringstream fatalErrorMessage;
-        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                          << callStack;
-
-        NES_FATAL_ERROR(fatalErrorMessage.str());
-        std::cerr << fatalErrorMessage.str() << std::endl;
-    }
-
-    void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
-        std::ostringstream fatalExceptionMessage;
-        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
-
-        NES_FATAL_ERROR(fatalExceptionMessage.str());
-        std::cerr << fatalExceptionMessage.str() << std::endl;
-    }
-};
-
-
 class StreamJoinOperatorTest : public testing::Test {
   public:
 
@@ -93,65 +72,52 @@ struct StreamJoinBuildHelper {
     size_t totalNumSources;
     size_t joinSizeInByte;
     size_t windowSize;
-    Operators::StreamJoinBuildPtr lazyJoinBuild;
+    Operators::StreamJoinBuildPtr streamJoinBuild;
     std::string joinFieldName;
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::string timeStampField;
-    StreamJoinOperatorTest* lazyJoinOperatorTest;
+    StreamJoinOperatorTest* streamJoinOperatorTest;
     bool isLeftSide;
 
-    StreamJoinBuildHelper() {
-        pageSize = CHUNK_SIZE;
-        numPartitions = NUM_PARTITIONS;
-        numberOfTuplesToProduce = 100;
-        numberOfBuffersPerWorker = 128;
-        noWorkerThreads = 1;
-        totalNumSources = 2;
-        joinSizeInByte = 1 * 1024 * 1024;
-        windowSize = 1000;
-    }
+    StreamJoinBuildHelper(Operators::StreamJoinBuildPtr streamJoinBuild,
+                          const std::string& joinFieldName, BufferManagerPtr bufferManager,
+                          SchemaPtr schema, const std::string& timeStampField,
+                          StreamJoinOperatorTest* streamJoinOperatorTest, bool isLeftSide)
+        : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100),
+          numberOfBuffersPerWorker(128), noWorkerThreads(1), totalNumSources(2),
+          joinSizeInByte(1*1024*1024), windowSize(1000), streamJoinBuild(streamJoinBuild),
+          joinFieldName(joinFieldName), bufferManager(bufferManager), schema(schema),
+          timeStampField(timeStampField), streamJoinOperatorTest(streamJoinOperatorTest),
+          isLeftSide(isLeftSide) {}
 };
 
 
 
-bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
+bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
+    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager,
+                                                         buildHelper.numberOfBuffersPerWorker);
+    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(buildHelper.schema, buildHelper.schema,
+                                                                           buildHelper.joinFieldName, buildHelper.joinFieldName,
+                                                                           buildHelper.noWorkerThreads * 2,
+                                                                           buildHelper.totalNumSources,
+                                                                           buildHelper.joinSizeInByte,
+                                                                           buildHelper.windowSize,
+                                                                           buildHelper.pageSize,
+                                                                           buildHelper.numPartitions);
 
-    auto pageSize = buildHelper.pageSize;
-    auto numPartitions = buildHelper.numPartitions;
-    auto bufferManager = buildHelper.bufferManager;
-    auto schema = buildHelper.schema;
-    auto& joinFieldName = buildHelper.joinFieldName;
-    auto numberOfBuffersPerWorker = buildHelper.numberOfBuffersPerWorker;
-    auto noWorkerThreads = buildHelper.noWorkerThreads;
-    auto joinSizeInByte = buildHelper.joinSizeInByte;
-    auto windowSize = buildHelper.windowSize;
-    auto numberOfTuplesToProduce = buildHelper.numberOfTuplesToProduce;
-    auto lazyJoinBuild = buildHelper.lazyJoinBuild;
-    auto& timeStampField = buildHelper.timeStampField;
-    auto& lazyJoinOperatorTest = buildHelper.lazyJoinOperatorTest;
-    auto isLeftSide = buildHelper.isLeftSide;
-    auto totalNumSources = buildHelper.totalNumSources;
-
-    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bufferManager, numberOfBuffersPerWorker);
-    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(schema, schema,
-                                                                         joinFieldName, joinFieldName,
-                                                                         noWorkerThreads * 2,
-                                                                         totalNumSources,
-                                                                         joinSizeInByte,
-                                                                         windowSize, pageSize, numPartitions);
-
+    auto streamJoinOperatorTest = buildHelper.streamJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(-1,// mock pipeline id
                                                     0, // mock query id
                                                     nullptr,
-                                                    noWorkerThreads,
-                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    buildHelper.noWorkerThreads,
+                                                    [&streamJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                                                        streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
                                                     },
-                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer) {
-                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    [&streamJoinOperatorTest](TupleBuffer& buffer) {
+                                                        streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
                                                     },
-                                                    {lazyJoinOpHandler});
+                                                    {streamJoinOpHandler});
 
 
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
@@ -159,24 +125,26 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
 
 
     // Execute record and thus fill the hash table
-    for (auto i = 0UL; i < numberOfTuplesToProduce + 1; ++i) {
-        auto record = Nautilus::Record({{schema->get(0)->getName(), Value<UInt64>(i)}, {schema->get(1)->getName(), Value<UInt64>((i % 10) + 1)}, {schema->get(2)->getName(), Value<UInt64>(i)}});
-        lazyJoinBuild->execute(executionContext, record);
+    for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
+        auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>(i)},
+                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((i % 10) + 1)},
+                                        {buildHelper.schema->get(2)->getName(), Value<UInt64>(i)}});
+        buildHelper.streamJoinBuild->execute(executionContext, record);
 
-        uint64_t joinKey = record.read(joinFieldName).as<UInt64>().getValue().getValue();
-        uint64_t timeStamp = record.read(timeStampField).as<UInt64>().getValue().getValue();
+        uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
+        uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
-        auto hashTable = lazyJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), isLeftSide);
+        auto hashTable = streamJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
         auto bucket = hashTable.getBucketLinkedList(hashTable.getBucketPos(hash));
 
         bool correctlyInserted = false;
         for (auto page : bucket->getPages()) {
             for (auto k = 0UL; k < page->size(); ++k) {
                 uint8_t* recordPtr = page->operator[](k);
-                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, schema, bufferManager);
-                auto recordBuffer = Util::getBufferFromRecord(record, schema, bufferManager);
+                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, buildHelper.bufferManager);
+                auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
 
-                if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), schema->getSchemaSizeInBytes()) == 0) {
+                if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), buildHelper.schema->getSchemaSizeInBytes()) == 0) {
                     correctlyInserted = true;
                     break;
                 }
@@ -194,20 +162,30 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
 
 
 struct StreamJoinSinkHelper {
-    BufferManagerPtr bufferManager;
-    SchemaPtr leftSchema;
-    SchemaPtr rightSchema;
-    size_t numSourcesLeft, numSourcesRight;
-    std::string joinFieldNameLeft, joinFieldNameRight;
-    std::string timeStampField;
-    size_t pageSize = CHUNK_SIZE;
-    size_t numPartitions = NUM_PARTITIONS;
+    size_t pageSize;
+    size_t numPartitions;
     size_t numberOfTuplesToProduce;
     size_t numberOfBuffersPerWorker;
     size_t noWorkerThreads;
+    size_t numSourcesLeft, numSourcesRight;
     size_t joinSizeInByte;
     size_t windowSize;
-    StreamJoinOperatorTest* lazyJoinOperatorTest;
+    std::string joinFieldNameLeft, joinFieldNameRight;
+    BufferManagerPtr bufferManager;
+    SchemaPtr leftSchema, rightSchema;
+    std::string timeStampField;
+    StreamJoinOperatorTest* streamJoinOperatorTest;
+
+    StreamJoinSinkHelper(const std::string& joinFieldNameLeft, const std::string& joinFieldNameRight,
+                         BufferManagerPtr bufferManager, SchemaPtr leftSchema, SchemaPtr rightSchema,
+                         const std::string& timeStampField,
+                         StreamJoinOperatorTest* streamJoinOperatorTest)
+        : pageSize(CHUNK_SIZE), numPartitions(NUM_PARTITIONS), numberOfTuplesToProduce(100),
+          numberOfBuffersPerWorker(128), noWorkerThreads(1), numSourcesLeft(1), numSourcesRight(1),
+          joinSizeInByte(1 * 1024 * 1024), windowSize(1000), joinFieldNameLeft(joinFieldNameLeft),
+          joinFieldNameRight(joinFieldNameRight), bufferManager(bufferManager), leftSchema(leftSchema),
+          rightSchema(rightSchema), timeStampField(timeStampField),
+          streamJoinOperatorTest(streamJoinOperatorTest) {}
 };
 
 bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffers,
@@ -230,122 +208,122 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
     return foundBuffer;
 }
 
-bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
+bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
 
-    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, lazyJoinSinkHelper.bufferManager,
-                                                         lazyJoinSinkHelper.numberOfBuffersPerWorker);
-    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(lazyJoinSinkHelper.leftSchema, lazyJoinSinkHelper.rightSchema,
-                                                                       lazyJoinSinkHelper.joinFieldNameLeft, lazyJoinSinkHelper.joinFieldNameRight,
-                                                                       lazyJoinSinkHelper.noWorkerThreads * 2,
-                                                                       lazyJoinSinkHelper.numSourcesLeft + lazyJoinSinkHelper.numSourcesRight,
-                                                                       lazyJoinSinkHelper.joinSizeInByte,
-                                                                       lazyJoinSinkHelper.windowSize,
-                                                                       lazyJoinSinkHelper.pageSize,
-                                                                       lazyJoinSinkHelper.numPartitions);
+    auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, streamJoinSinkHelper.bufferManager,
+                                                         streamJoinSinkHelper.numberOfBuffersPerWorker);
+    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(streamJoinSinkHelper.leftSchema, streamJoinSinkHelper.rightSchema,
+                                                                       streamJoinSinkHelper.joinFieldNameLeft, streamJoinSinkHelper.joinFieldNameRight,
+                                                                       streamJoinSinkHelper.noWorkerThreads * 2,
+                                                                       streamJoinSinkHelper.numSourcesLeft + streamJoinSinkHelper.numSourcesRight,
+                                                                       streamJoinSinkHelper.joinSizeInByte,
+                                                                       streamJoinSinkHelper.windowSize,
+                                                                       streamJoinSinkHelper.pageSize,
+                                                                       streamJoinSinkHelper.numPartitions);
 
-    auto lazyJoinOperatorTest = lazyJoinSinkHelper.lazyJoinOperatorTest;
+    auto streamJoinOperatorTest = streamJoinSinkHelper.streamJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(0,// mock pipeline id
                                                     1, // mock query id
-                                                    lazyJoinSinkHelper.bufferManager,
-                                                    lazyJoinSinkHelper.noWorkerThreads,
-                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    streamJoinSinkHelper.bufferManager,
+                                                    streamJoinSinkHelper.noWorkerThreads,
+                                                    [&streamJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                                                        streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
                                                     },
-                                                    [&lazyJoinOperatorTest](TupleBuffer& buffer) {
-                                                        lazyJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
+                                                    [&streamJoinOperatorTest](TupleBuffer& buffer) {
+                                                        streamJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer));
                                                     },
-                                                    {lazyJoinOpHandler});
+                                                    {streamJoinOpHandler});
 
     auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
                                              Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
 
 
     auto handlerIndex = 0UL;
-    auto lazyJoinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true,
-                                                                        lazyJoinSinkHelper.joinFieldNameLeft,
-                                                                        lazyJoinSinkHelper.timeStampField,
-                                                                        lazyJoinSinkHelper.leftSchema);
-    auto lazyJoinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false,
-                                                                         lazyJoinSinkHelper.joinFieldNameRight,
-                                                                         lazyJoinSinkHelper.timeStampField,
-                                                                         lazyJoinSinkHelper.rightSchema);
-    auto lazyJoinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
+    auto streamJoinBuildLeft = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ true,
+                                                                        streamJoinSinkHelper.joinFieldNameLeft,
+                                                                        streamJoinSinkHelper.timeStampField,
+                                                                        streamJoinSinkHelper.leftSchema);
+    auto streamJoinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false,
+                                                                         streamJoinSinkHelper.joinFieldNameRight,
+                                                                         streamJoinSinkHelper.timeStampField,
+                                                                         streamJoinSinkHelper.rightSchema);
+    auto streamJoinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
 
 
 
     std::vector<std::vector<Nautilus::Record>> leftRecords;
     std::vector<std::vector<Nautilus::Record>> rightRecords;
 
-    uint64_t lastTupleTimeStampWindow = lazyJoinSinkHelper.windowSize - 1;
+    uint64_t lastTupleTimeStampWindow = streamJoinSinkHelper.windowSize - 1;
     std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
 
-    for (auto i = 0UL, curWindow = 0UL; i < lazyJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto recordLeft = Nautilus::Record({{lazyJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>(i)}, {lazyJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
-                                            {lazyJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>(i)}});
-        auto recordRight = Nautilus::Record({{lazyJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>(i+1000)}, {lazyJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
-                                             {lazyJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>(i)}});
+    for (auto i = 0UL, curWindow = 0UL; i < streamJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
+        auto recordLeft = Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>(i)}, {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
+                                            {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>(i)}});
+        auto recordRight = Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>(i+1000)}, {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
+                                             {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>(i)}});
 
-        if (recordRight.read(lazyJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
+        if (recordRight.read(streamJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
             rightRecords.push_back(std::vector(tmpRecordsRight.begin(), tmpRecordsRight.end()));
 
             tmpRecordsLeft = std::vector<Nautilus::Record>();
             tmpRecordsRight = std::vector<Nautilus::Record>();
 
-            lastTupleTimeStampWindow += lazyJoinSinkHelper.windowSize;
+            lastTupleTimeStampWindow += streamJoinSinkHelper.windowSize;
         }
 
         tmpRecordsLeft.emplace_back(recordLeft);
         tmpRecordsRight.emplace_back(recordRight);
 
 
-        lazyJoinBuildLeft->execute(executionContext, recordLeft);
-        lazyJoinBuildRight->execute(executionContext, recordRight);
+        streamJoinBuildLeft->execute(executionContext, recordLeft);
+        streamJoinBuildRight->execute(executionContext, recordRight);
     }
 
 
-    auto numberOfEmittedBuffersBuild = lazyJoinOperatorTest->emittedBuffers.size();
+    auto numberOfEmittedBuffersBuild = streamJoinOperatorTest->emittedBuffers.size();
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
-        auto tupleBuffer = lazyJoinOperatorTest->emittedBuffers[cnt];
+        auto tupleBuffer = streamJoinOperatorTest->emittedBuffers[cnt];
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
-        lazyJoinSink->open(executionContext, recordBuffer);
+        streamJoinSink->open(executionContext, recordBuffer);
     }
 
     // Delete all buffers that have been emitted from the build phase
-    lazyJoinOperatorTest->emittedBuffers.erase(lazyJoinOperatorTest->emittedBuffers.begin(),
-                                               lazyJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
+    streamJoinOperatorTest->emittedBuffers.erase(streamJoinOperatorTest->emittedBuffers.begin(),
+                                               streamJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
-    SchemaPtr joinSchema = Schema::create(lazyJoinSinkHelper.leftSchema->getLayoutType());
-    joinSchema->addField(lazyJoinSinkHelper.leftSchema->get(lazyJoinSinkHelper.joinFieldNameLeft));
-    joinSchema->copyFields(lazyJoinSinkHelper.leftSchema);
-    joinSchema->copyFields(lazyJoinSinkHelper.rightSchema);
+    SchemaPtr joinSchema = Schema::create(streamJoinSinkHelper.leftSchema->getLayoutType());
+    joinSchema->addField(streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.joinFieldNameLeft));
+    joinSchema->copyFields(streamJoinSinkHelper.leftSchema);
+    joinSchema->copyFields(streamJoinSinkHelper.rightSchema);
 
 
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
-    if (lazyJoinOpHandler->getNumActiveWindows() != 1) {
+    if (streamJoinOpHandler->getNumActiveWindows() != 1) {
         NES_ERROR("Not exactly one active window!");
         return false;
     }
 
     auto removedBuffer = 0UL;
     auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
-    auto buffer = lazyJoinSinkHelper.bufferManager->getBufferBlocking();
-    auto tuplePerBuffer = lazyJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
-    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(lazyJoinOperatorTest->emittedBuffers,
-                                                             joinSchema, lazyJoinSinkHelper.timeStampField,
-                                                             lazyJoinSinkHelper.bufferManager, lazyJoinSinkHelper.windowSize);
-    auto sortedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, lazyJoinSinkHelper.timeStampField,
-                                                         lazyJoinSinkHelper.bufferManager);
+    auto buffer = streamJoinSinkHelper.bufferManager->getBufferBlocking();
+    auto tuplePerBuffer = streamJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
+    auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(streamJoinOperatorTest->emittedBuffers,
+                                                             joinSchema, streamJoinSinkHelper.timeStampField,
+                                                             streamJoinSinkHelper.bufferManager, streamJoinSinkHelper.windowSize);
+    auto sortedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, streamJoinSinkHelper.timeStampField,
+                                                         streamJoinSinkHelper.bufferManager);
 
-    lazyJoinOperatorTest->emittedBuffers.clear();
+    streamJoinOperatorTest->emittedBuffers.clear();
     mergedEmittedBuffers.clear();
 
     for (auto curWindow = 0UL; curWindow < leftRecords.size(); ++curWindow) {
         auto numberOfTuplesInBuffer = 0UL;
         for (auto& leftRecord : leftRecords[curWindow]) {
             for (auto& rightRecord : rightRecords[curWindow]) {
-                if (leftRecord.read(lazyJoinSinkHelper.joinFieldNameLeft) == rightRecord.read(lazyJoinSinkHelper.joinFieldNameRight)) {
+                if (leftRecord.read(streamJoinSinkHelper.joinFieldNameLeft) == rightRecord.read(streamJoinSinkHelper.joinFieldNameRight)) {
                     // We expect to have at least one more buffer that was created by our join
                     if (sortedEmittedBuffers.size() == 0) {
                         NES_ERROR("Expected at least one buffer!");
@@ -354,22 +332,22 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
 
                     int8_t* bufferPtr = (int8_t*) buffer.getBuffer() + numberOfTuplesInBuffer * sizeJoinedTuple;
                     auto keyRef = Nautilus::Value<Nautilus::MemRef>(bufferPtr);
-                    keyRef.store(leftRecord.read(lazyJoinSinkHelper.joinFieldNameLeft));
+                    keyRef.store(leftRecord.read(streamJoinSinkHelper.joinFieldNameLeft));
 
                     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-                    auto const fieldType = physicalDataTypeFactory.getPhysicalType(lazyJoinSinkHelper.leftSchema->get(lazyJoinSinkHelper.joinFieldNameLeft)->getDataType());
+                    auto const fieldType = physicalDataTypeFactory.getPhysicalType(streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.joinFieldNameLeft)->getDataType());
                     bufferPtr += fieldType->size();
 
-                    Util::writeNautilusRecord(bufferPtr, leftRecord, lazyJoinSinkHelper.leftSchema, lazyJoinSinkHelper.bufferManager);
-                    Util::writeNautilusRecord(bufferPtr + lazyJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
-                                              rightRecord, lazyJoinSinkHelper.rightSchema, lazyJoinSinkHelper.bufferManager);
+                    Util::writeNautilusRecord(bufferPtr, leftRecord, streamJoinSinkHelper.leftSchema, streamJoinSinkHelper.bufferManager);
+                    Util::writeNautilusRecord(bufferPtr + streamJoinSinkHelper.leftSchema->getSchemaSizeInBytes(),
+                                              rightRecord, streamJoinSinkHelper.rightSchema, streamJoinSinkHelper.bufferManager);
                     numberOfTuplesInBuffer += 1;
                     buffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
                     if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                         std::vector<Runtime::TupleBuffer> bufVec({buffer});
-                        auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, lazyJoinSinkHelper.timeStampField,
-                                                                           lazyJoinSinkHelper.bufferManager);
+                        auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, streamJoinSinkHelper.timeStampField,
+                                                                           streamJoinSinkHelper.bufferManager);
 
                         bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], sizeJoinedTuple,
                                                                        joinSchema, removedBuffer);
@@ -380,7 +358,7 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
                         }
 
                         numberOfTuplesInBuffer = 0;
-                        buffer = lazyJoinSinkHelper.bufferManager->getBufferBlocking();
+                        buffer = streamJoinSinkHelper.bufferManager->getBufferBlocking();
                     }
                 }
             }
@@ -388,8 +366,8 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
 
         if (numberOfTuplesInBuffer > 0) {
             std::vector<Runtime::TupleBuffer> bufVec({buffer});
-            auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, lazyJoinSinkHelper.timeStampField,
-                                                               lazyJoinSinkHelper.bufferManager);
+            auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, streamJoinSinkHelper.timeStampField,
+                                                               streamJoinSinkHelper.bufferManager);
             bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], sizeJoinedTuple,
                                                            joinSchema, removedBuffer);
             if (!foundBuffer) {
@@ -409,61 +387,42 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTest) {
-
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
                           ->addField("f2_left", BasicType::UINT64)
                           ->addField("timestamp", BasicType::UINT64);
-
 
     const auto joinFieldNameLeft = "f2_left";
     const auto timeStampField = "timestamp";
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto streamJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper;
-    buildHelper.lazyJoinBuild = lazyJoinBuild;
-    buildHelper.joinFieldName = joinFieldNameLeft;
-    buildHelper.bufferManager = bm;
-    buildHelper.schema = leftSchema;
-    buildHelper.timeStampField = timeStampField;
-    buildHelper.lazyJoinOperatorTest = this;
-    buildHelper.isLeftSide = isLeftSide;
-
-    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
-
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_right", BasicType::UINT64)
                                 ->addField("f2_right", BasicType::UINT64)
                                 ->addField("timestamp", BasicType::UINT64);
-
 
     const auto joinFieldNameRight = "f2_right";
     const auto timeStampField = "timestamp";
     const auto isLeftSide = false;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
+    auto streamJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
                                                                     timeStampField, rightSchema);
-
-    StreamJoinBuildHelper buildHelper;
-    buildHelper.lazyJoinBuild = lazyJoinBuild;
-    buildHelper.joinFieldName = joinFieldNameRight;
-    buildHelper.bufferManager = bm;
-    buildHelper.schema = rightSchema;
-    buildHelper.timeStampField = timeStampField;
-    buildHelper.lazyJoinOperatorTest = this;
-    buildHelper.isLeftSide = isLeftSide;
-
-    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
-    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
+    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
+    
+    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    // As we are only building here the left side, we do not emit any buffers
+    ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
@@ -478,30 +437,19 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     const auto isLeftSide = true;
 
     auto handlerIndex = 0;
-    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto streamJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper;
+    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
     buildHelper.numPartitions = 1;
-    buildHelper.lazyJoinBuild = lazyJoinBuild;
-    buildHelper.joinFieldName = joinFieldNameLeft;
-    buildHelper.bufferManager = bm;
-    buildHelper.schema = leftSchema;
-    buildHelper.timeStampField = timeStampField;
-    buildHelper.lazyJoinOperatorTest = this;
-    buildHelper.isLeftSide = isLeftSide;
 
-    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
-    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
+    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    // As we are only building here the left side, we do not emit any buffers
+    ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
-
-    // Activating and installing error listener
-    auto runner = std::make_shared<TestRunner>();
-    NES::Exceptions::installGlobalErrorListener(runner);
-
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)
@@ -513,28 +461,20 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     const auto handlerIndex = 0;
     const auto isLeftSide = true;
 
-    auto lazyJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
+    auto streamJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameLeft,
                                                                     timeStampField, leftSchema);
 
-    StreamJoinBuildHelper buildHelper;
+    StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2,
     buildHelper.numPartitions = 1;
     buildHelper.windowSize = 5;
-    buildHelper.lazyJoinBuild = lazyJoinBuild;
-    buildHelper.joinFieldName = joinFieldNameLeft;
-    buildHelper.bufferManager = bm;
-    buildHelper.schema = leftSchema;
-    buildHelper.timeStampField = timeStampField;
-    buildHelper.lazyJoinOperatorTest = this;
-    buildHelper.isLeftSide = isLeftSide;
 
-    ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
+    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTest) {
-
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
                           ->addField("f2_left", BasicType::UINT64)
@@ -545,27 +485,15 @@ TEST_F(StreamJoinOperatorTest, joinSinkTest) {
                            ->addField("f2_right", BasicType::UINT64)
                            ->addField("timestamp", BasicType::UINT64);
 
+    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper lazyJoinSinkHelper {
-        .bufferManager = bm,
-        .leftSchema = leftSchema,
-        .rightSchema = rightSchema,
-        .numSourcesLeft = 1,
-        .numSourcesRight = 1,
-        .joinFieldNameLeft = "f2_left",
-        .joinFieldNameRight = "f2_right",
-        .timeStampField = "timestamp",
-        .pageSize = 2 * leftSchema->getSchemaSizeInBytes(),
-        .numPartitions = 2,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1,
-        .joinSizeInByte = 1 * 1024 * 1024,
-        .windowSize = 20,
-        .lazyJoinOperatorTest = this
-    };
 
-    ASSERT_TRUE(lazyJoinSinkAndCheck(lazyJoinSinkHelper));
+    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    streamJoinSinkHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
+    streamJoinSinkHelper.numPartitions = 2;
+    streamJoinSinkHelper.windowSize = 20;
+
+    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
@@ -579,26 +507,13 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
                                  ->addField("f2_right", BasicType::UINT64)
                                  ->addField("timestamp", BasicType::UINT64);
 
+    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper lazyJoinSinkHelper {
-        .bufferManager = bm,
-        .leftSchema = leftSchema,
-        .rightSchema = rightSchema,
-        .numSourcesLeft = 1,
-        .numSourcesRight = 1,
-        .joinFieldNameLeft = "f2_left",
-        .joinFieldNameRight = "f2_right",
-        .timeStampField = "timestamp",
-        .numPartitions = 128,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1,
-        .joinSizeInByte = 1 * 1024 * 1024,
-        .windowSize = 10,
-        .lazyJoinOperatorTest = this
-    };
+    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    streamJoinSinkHelper.numPartitions = 128;
+    streamJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(lazyJoinSinkAndCheck(lazyJoinSinkHelper));
+    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
@@ -613,27 +528,13 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
                                  ->addField("f2_right", BasicType::UINT64)
                                  ->addField("timestamp", BasicType::UINT64);
 
+    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
-    StreamJoinSinkHelper lazyJoinSinkHelper {
-        .bufferManager = bm,
-        .leftSchema = leftSchema,
-        .rightSchema = rightSchema,
-        .numSourcesLeft = 1,
-        .numSourcesRight = 1,
-        .joinFieldNameLeft = "f2_left",
-        .joinFieldNameRight = "f2_right",
-        .timeStampField = "timestamp",
-        .numPartitions = 1,
-        .numberOfTuplesToProduce = 100UL,
-        .numberOfBuffersPerWorker = 128UL,
-        .noWorkerThreads = 1,
-        .joinSizeInByte = 1 * 1024 * 1024,
-        .windowSize = 10,
-        .lazyJoinOperatorTest = this
-    };
+    StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
+    streamJoinSinkHelper.numPartitions = 1;
+    streamJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(lazyJoinSinkAndCheck(lazyJoinSinkHelper));
-
+    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 
