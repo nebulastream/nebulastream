@@ -112,27 +112,21 @@ namespace NES::Runtime::Execution::Util {
 
 
                     curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-//                    NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
                     retVector.emplace_back(std::move(curBuffer));
 
                     curBuffer = bufferManager->getBufferBlocking();
                     numberOfTuplesInBuffer = 0;
                 }
 
-                // TODO rewrite this here so that we also support column layout
-                // We just have to replace the mempcy with multiple writes and reads to dynamicTupleBuffer
                 memcpy(curBuffer.getBuffer() + schema->getSchemaSizeInBytes() * numberOfTuplesInBuffer,
                        buf.getBuffer() + schema->getSchemaSizeInBytes() * curTuple, schema->getSchemaSizeInBytes());
                 numberOfTuplesInBuffer += 1;
                 curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-
-//                NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
             }
         }
 
         if (numberOfTuplesInBuffer > 0) {
             curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
-//            NES_DEBUG("Merged buffer to new buffer = " << Util::printTupleBufferAsCSV(curBuffer, schema));
             retVector.emplace_back(std::move(curBuffer));
         }
 
@@ -155,8 +149,6 @@ namespace NES::Runtime::Execution::Util {
             std::vector<size_t> indexAlreadyInNewBuffer;
             auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
             auto dynamicTupleBuf = Runtime::MemoryLayouts::DynamicTupleBuffer(memLayout, bufRead);
-
-            NES_DEBUG("Buffer before sorting is " << Util::printTupleBufferAsCSV(bufRead, schema));
 
             auto bufRet = bufferManager->getBufferBlocking();
 
@@ -186,7 +178,6 @@ namespace NES::Runtime::Execution::Util {
                        schema->getSchemaSizeInBytes());
                 bufRet.setNumberOfTuples(posRet + 1);
             }
-            NES_DEBUG("Buffer after sorting is " << Util::printTupleBufferAsCSV(bufRet, schema));
             retVector.emplace_back(bufRet);
             bufRet = bufferManager->getBufferBlocking();
         }

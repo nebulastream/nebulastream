@@ -199,13 +199,11 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
         bufferRight.setNumberOfTuples(posRight + 1);
     }
     if (bufferLeft.getNumberOfTuples() > 0) {
-        NES_DEBUG("Executing in the left pipeline the following buffer = " << Util::printTupleBufferAsCSV(bufferLeft, leftSchema));
         executablePipelineLeft->execute(bufferLeft, pipelineExecCtxLeft, *workerContext);
         allBuffersLeft.emplace_back(bufferLeft);
     }
 
     if (bufferRight.getNumberOfTuples() > 0) {
-        NES_DEBUG("Executing in the right pipeline the following buffer = " << Util::printTupleBufferAsCSV(bufferRight, rightSchema));
         executablePipelineRight->execute(bufferRight, pipelineExecCtxRight, *workerContext);
         allBuffersRight.push_back(bufferRight);
     }
@@ -283,6 +281,8 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(pipelineExecCtxSink.emittedBuffers,
                                                              joinSchema, timeStampField,
                                                              bufferManager, windowSize);
+
+    // We have to sort and merge the emitted buffers as otherwise we can not simply compare versus a NLJ version
     auto sortedMergedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers,
                                                                      joinSchema, timeStampField, bufferManager);
     auto sortNLJBuffers = Util::sortBuffersInTupleBuffer(nljBuffers, joinSchema, timeStampField, bufferManager);
