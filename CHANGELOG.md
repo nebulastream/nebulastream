@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.4.5](https://github.com/nebulastream/nebulastream/tree/v0.4.5) (2022-12-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.4...v0.4.5)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Bug in Nemo integration test [\#3316](https://github.com/nebulastream/nebulastream/issues/3316)
+- \[BUG\] AllowedLatenessTest fails randomly  [\#3241](https://github.com/nebulastream/nebulastream/issues/3241)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Unit Test for Data Generators [\#3281](https://github.com/nebulastream/nebulastream/issues/3281)
+
 ## [v0.4.4](https://github.com/nebulastream/nebulastream/tree/v0.4.4) (2022-12-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.3...v0.4.4)
