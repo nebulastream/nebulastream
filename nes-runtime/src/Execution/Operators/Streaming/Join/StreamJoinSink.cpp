@@ -34,11 +34,24 @@ StreamJoinSink::StreamJoinSink(uint64_t handlerIndex)
     : handlerIndex(handlerIndex) {}
 
 
-
+/**
+ * @brief Checks if two fields are similar
+ * @param fieldPtr1
+ * @param fieldPtr2
+ * @param sizeOfField
+ * @return true if both fields are equal, false otherwise
+ */
 bool compareField(uint8_t* fieldPtr1, uint8_t * fieldPtr2, size_t sizeOfField) {
     return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
 }
 
+/**
+ * @brief Returns a pointer to the field of the record (recordBase)
+ * @param recordBase
+ * @param joinSchema
+ * @param fieldName
+ * @return pointer to the field
+ */
 uint8_t* getField(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& fieldName) {
     uint8_t* pointer = recordBase;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -52,29 +65,39 @@ uint8_t* getField(uint8_t* recordBase, SchemaPtr joinSchema, const std::string& 
     return pointer;
 }
 
+/**
+ * @brief Returns the size of the key in Bytes
+ * @param joinSchema
+ * @param joinFieldName
+ * @return size of the key in Bytes
+ */
 size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto const keyType = physicalDataTypeFactory.getPhysicalType(joinSchema->get(joinFieldName)->getDataType());
     return keyType->size();
 }
 
+/**
+ * @brief Performs the join of two buckets probeSide and buildSide
+ * @param pipelineCtx
+ * @param workerCtx
+ * @param operatorHandler
+ * @param probeSide
+ * @param buildSide
+ * @return number of joined tuples
+ */
 size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, StreamJoinOperatorHandler* operatorHandler,
-                   std::vector<FixedPage>&& probeSide,
-                   std::vector<FixedPage>&& buildSide) {
+                   std::vector<FixedPage>&& probeSide, std::vector<FixedPage>&& buildSide) {
 
-    size_t joinedTuples = 0;
+    auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinSchemaRight(),
+                                             operatorHandler->getJoinFieldNameLeft());
     size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
-    auto sizeOfJoinedTuple = sizeOfKey + operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes() +
-                             operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
+    auto sizeOfJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
-    auto numberOfTuplesInBuffer = 0UL;
-    auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
 
-    SchemaPtr joinSchema = Schema::create(operatorHandler->getJoinSchemaLeft()->getLayoutType());
-    joinSchema->addField(operatorHandler->getJoinSchemaLeft()->get(operatorHandler->getJoinFieldNameLeft()));
-    joinSchema->copyFields(operatorHandler->getJoinSchemaLeft());
-    joinSchema->copyFields(operatorHandler->getJoinSchemaRight());
+    auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
+    size_t joinedTuples = 0;
 
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
@@ -95,13 +118,11 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                     if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
                         ++joinedTuples;
 
-                        // TODO ask Philipp how can I set win1win2$start and win1win2$end
-
+                        auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
                         auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
-                        // TODO ask Philipp if I should support columnar layout as this implementation does not support it
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
@@ -109,12 +130,10 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         numberOfTuplesInBuffer += 1;
                         currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
-
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
                             NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
 
-                            numberOfTuplesInBuffer = 0;
                             currentTupleBuffer = workerCtx->allocateTupleBuffer();
                         }
                     }
@@ -123,11 +142,10 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
         }
     }
 
-    if (numberOfTuplesInBuffer > 0) {
+    if (currentTupleBuffer.getNumberOfTuples() > 0) {
         pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
         NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
     }
-
 
     return joinedTuples;
 }
@@ -167,7 +185,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
         }
     }
 
-    if (joinedTuples) {
+    if (joinedTuples > 0) {
         NES_DEBUG("Worker " << workerCtx->getId() << " got partitionId " << partitionId << " joined #tuple=" << joinedTuples);
         NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
                         "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
@@ -188,8 +206,7 @@ void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
 
     Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
                            joinPartitionTimestampPtr);
-
-
+    
 }
 
 

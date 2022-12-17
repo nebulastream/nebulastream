@@ -140,6 +140,15 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema,
                                                            const std::string& sortFieldName, BufferManagerPtr bufferManager);
 
+/**
+ * @brief Creates the join schema from the left and right schema
+ * @param leftSchema
+ * @param rightSchema
+ * @param keyFieldName
+ * @return
+ */
+SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName);
+
 
 } // namespace Util
 } // namespace NES::Runtime::Execution
