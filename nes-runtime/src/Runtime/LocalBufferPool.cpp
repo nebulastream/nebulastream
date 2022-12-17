@@ -110,7 +110,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
             NES_VERIFY(memSegment, "null memory segment");
             exclusiveBuffers.pop_front();
             if (memSegment->controlBlock->prepare()) {
-                return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+                return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
             }
             NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
                                     << memSegment->controlBlock->getReferenceCount());
@@ -123,7 +123,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
     if (exclusiveBuffers.read(memSegment)) {
         if (memSegment->controlBlock->prepare()) {
             exclusiveBufferCount.fetch_sub(1);
-            return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         } else {
             NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
                                     << memSegment->controlBlock->getReferenceCount());
