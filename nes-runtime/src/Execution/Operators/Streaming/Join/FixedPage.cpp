@@ -47,7 +47,6 @@ uint8_t* FixedPage::append(const uint64_t hash)  {
 
 
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
-
     uint64_t totalKey;
     memcpy(&totalKey, keyPtr, sizeOfKey);
     uint64_t hash = Util::murmurHash(totalKey);
