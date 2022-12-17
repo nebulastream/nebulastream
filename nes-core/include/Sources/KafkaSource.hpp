@@ -129,7 +129,6 @@ class KafkaSource : public DataSource, public Runtime::BufferRecycler {
     uint64_t successFullPollCnt = 0;
     uint64_t failedFullPollCnt = 0;
     uint64_t reuseCnt = 0;
-
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;

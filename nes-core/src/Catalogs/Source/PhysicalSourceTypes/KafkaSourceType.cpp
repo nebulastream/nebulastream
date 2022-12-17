@@ -136,13 +136,14 @@ KafkaSourceType::KafkaSourceType()
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::CONNECTION_TIMEOUT_CONFIG,
                                                                 10,
                                                                 "connection time out for source, needed for: KafkaSource")),
-      numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
-                                                                                     1,
-                                                                                     "Numbers of events pulled from the queue overall")),
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
+                                                                1,
+                                                                "Numbers of events pulled from the queue overall")),
 
       batchSize(Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
-                                                                   1,
-                                                                   "Numbers of events pulled from the queue per pull request"))
+                                                                      1,
+                                                                      "Numbers of events pulled from the queue per pull request"))
 
 {
     NES_INFO("KafkaSourceType: Init source config object with default values.");

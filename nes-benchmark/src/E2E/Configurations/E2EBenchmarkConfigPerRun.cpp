@@ -52,15 +52,15 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
     /* Getting all parameters per experiment run in vectors */
     auto numWorkerOfThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
-                                                                configPerRun.numWorkerOfThreads->getDefaultValue());
+                                                                  configPerRun.numWorkerOfThreads->getDefaultValue());
 
     auto numberOfSources = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfSources"].As<std::string>(),
-                                                                configPerRun.numberOfSources->getDefaultValue());
+                                                               configPerRun.numberOfSources->getDefaultValue());
 
     auto bufferSizeInBytes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(),
                                                                  configPerRun.bufferSizeInBytes->getDefaultValue());
     auto numberOfQueriesToDeploy = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfQueriesToDeploy"].As<std::string>(),
-                                                                 configPerRun.numberOfQueriesToDeploy->getDefaultValue());
+                                                                       configPerRun.numberOfQueriesToDeploy->getDefaultValue());
 
     auto numberOfBuffersInGlobalBufferManager =
         Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(),

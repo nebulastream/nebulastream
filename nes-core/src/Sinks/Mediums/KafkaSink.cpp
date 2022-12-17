@@ -16,9 +16,9 @@
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
+#include <cppkafka/cppkafka.h>
 #include <sstream>
 #include <string>
-#include <cppkafka/cppkafka.h>
 
 using namespace std::chrono_literals;
 

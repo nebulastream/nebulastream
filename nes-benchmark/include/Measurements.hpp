@@ -16,9 +16,9 @@
 #define NES_MEASUREMENTS_HPP
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace NES::Benchmark::Measurements {
 /**
@@ -50,7 +50,7 @@ class Measurements {
         addNewLatencySum(timeStamp, latencySum);
         addNewQueueSizeSum(timeStamp, queueSizeSum);
         addNewAvailGlobalBufferSum(timeStamp, availGlobalBufferSum);
-        addNewAvailFixedBufferSum(timeStamp,availFixedBufferSum);
+        addNewAvailFixedBufferSum(timeStamp, availFixedBufferSum);
     }
 
     /**
@@ -109,14 +109,18 @@ class Measurements {
      * @param timestamp
      * @param availGlobalBufferSum
      */
-    void addNewAvailGlobalBufferSum(size_t timestamp, size_t availGlobalBufferSum) { allAvailGlobalBufferSum[timestamp] += availGlobalBufferSum; }
+    void addNewAvailGlobalBufferSum(size_t timestamp, size_t availGlobalBufferSum) {
+        allAvailGlobalBufferSum[timestamp] += availGlobalBufferSum;
+    }
 
     /**
      * @brief adds availFixedBufferSum
      * @param timestamp
      * @param availFixedBufferSum
      */
-    void addNewAvailFixedBufferSum(size_t timestamp, size_t availFixedBufferSum) { allAvailFixedBufferSum[timestamp] += availFixedBufferSum; }
+    void addNewAvailFixedBufferSum(size_t timestamp, size_t availFixedBufferSum) {
+        allAvailFixedBufferSum[timestamp] += availFixedBufferSum;
+    }
 
   private:
     std::vector<size_t> timestamps;

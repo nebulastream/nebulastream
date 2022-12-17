@@ -114,8 +114,8 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                             messages.back().get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
                 buffer.setCreationTimestamp(timeStamp);
-#else//use wrap buffer
-                //this method wraps a buffer around  payload of the kafka message
+#else//use wrap buffer                                                                                                           \
+     //this method wraps a buffer around  payload of the kafka message
                 const unsigned char* ptr = messages.back().get_payload().get_data();
                 uint8_t* p8 = const_cast<uint8_t*>(ptr);
                 auto buffer = Runtime::TupleBuffer::wrapMemory(p8, localBufferManager->getBufferSize(), this);
