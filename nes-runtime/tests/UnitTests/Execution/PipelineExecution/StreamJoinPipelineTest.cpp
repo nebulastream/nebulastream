@@ -38,7 +38,7 @@ namespace NES::Runtime::Execution {
 class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     StreamJoinMockedPipelineExecutionContext(BufferManagerPtr bufferManager, uint64_t noWorkerThreads,
-                                           OperatorHandlerPtr lazyJoinOpHandler, uint64_t pipelineId)
+                                           OperatorHandlerPtr streamJoinOpHandler, uint64_t pipelineId)
                                              : PipelineExecutionContext(pipelineId,// mock pipeline id
                                                                         1, // mock query id
                                                                         bufferManager,
@@ -49,7 +49,7 @@ class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipe
                                                                         [this](TupleBuffer& buffer) {
                                                                             this->emittedBuffers.emplace_back(std::move(buffer));
                                                                         },
-                                                                        {lazyJoinOpHandler}) {};
+                                                                        {streamJoinOpHandler}) {};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
@@ -84,7 +84,7 @@ class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExec
 };
 
 
-TEST_P(StreamJoinPipelineTest, lazyJoinPipeline) {
+TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -136,7 +136,7 @@ TEST_P(StreamJoinPipelineTest, lazyJoinPipeline) {
     auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
                                                                         timeStampField, rightSchema);
     auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
+    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
                                                                        noWorkerThreads * 2,
                                                                        numSourcesLeft + numSourcesRight,
@@ -154,9 +154,9 @@ TEST_P(StreamJoinPipelineTest, lazyJoinPipeline) {
     pipelineSink->setRootOperator(joinSink);
 
     auto curPipelineId = 0;
-    auto pipelineExecCtxLeft = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxRight = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
-    auto pipelineExecCtxSink = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, lazyJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxLeft = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxRight = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
+    auto pipelineExecCtxSink = StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
 
 
     auto executablePipelineLeft = provider->create(pipelineBuildLeft);
@@ -298,14 +298,14 @@ TEST_P(StreamJoinPipelineTest, lazyJoinPipeline) {
     ASSERT_EQ(sortNLJBuffers.size(), sortedMergedEmittedBuffers.size());
     for (auto i = 0UL; i < sortNLJBuffers.size(); ++i) {
         auto nljBuffer = sortNLJBuffers[i];
-        auto lazyJoinBuf = sortedMergedEmittedBuffers[i];
+        auto streamJoinBuf = sortedMergedEmittedBuffers[i];
 
-        NES_DEBUG("Comparing nljBuffer\n" << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and lazyJoinBuf\n" <<
-                  Util::printTupleBufferAsCSV(lazyJoinBuf, joinSchema));
+        NES_DEBUG("Comparing nljBuffer\n" << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and streamJoinBuf\n" <<
+                  Util::printTupleBufferAsCSV(streamJoinBuf, joinSchema));
 
-        ASSERT_EQ(nljBuffer.getNumberOfTuples(), lazyJoinBuf.getNumberOfTuples());
-        ASSERT_EQ(nljBuffer.getBufferSize(), lazyJoinBuf.getBufferSize());
-        ASSERT_TRUE(memcmp(nljBuffer.getBuffer(), lazyJoinBuf.getBuffer(), lazyJoinBuf.getBufferSize()) == 0);
+        ASSERT_EQ(nljBuffer.getNumberOfTuples(), streamJoinBuf.getNumberOfTuples());
+        ASSERT_EQ(nljBuffer.getBufferSize(), streamJoinBuf.getBufferSize());
+        ASSERT_TRUE(memcmp(nljBuffer.getBuffer(), streamJoinBuf.getBuffer(), streamJoinBuf.getBufferSize()) == 0);
     }
 
 
