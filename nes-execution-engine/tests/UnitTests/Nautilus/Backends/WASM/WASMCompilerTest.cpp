@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <binaryen-c.h>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <gtest/gtest.h>
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -348,12 +349,16 @@ TEST_F(WASMCompilerTest, loopFunctionTest) {
 }
 
 Value<> tmpExpression(Value<Int32> y) {
-    int intV = 42;
-    int *x = &intV;
-    if (y == 5) {
-        *x = 11;
+    Value<Int32> x = y;
+    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(nullptr)));
+    RecordBuffer recordBuffer = RecordBuffer(memRef);
+    /*
+    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    if (y == 9) {
+        memRef.store(x);
     }
-    return *x;
+     */
+    return memRef;
 }
 
 TEST_F(WASMCompilerTest, tmpExpressionTest) {
@@ -362,12 +367,17 @@ TEST_F(WASMCompilerTest, tmpExpressionTest) {
     auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([tempx]() {
         return tmpExpression(tempx);
     });
-    //std::cout << *executionTrace.get() << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    wasmCompiler.lower(ir);
+
+    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
+    auto wasm = wasmCompiler->lower(ir);
+    auto proxies = wasmCompiler->getProxyFunctionNames();
+    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    engine->setup(proxies);
+    engine->run(wasm.first, wasm.second);
 }
 
 

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Backends/WASM/WASMRuntime.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -26,6 +26,10 @@ namespace NES::Nautilus::Backends::WASM {
 WASMRuntime::WASMRuntime() : linker(engine), store(engine) {}
 
 void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
+    config.wasm_memory64(true);
+    engine = Engine(std::move(config));
+    linker = Linker(engine);
+    store = Store(engine);
     for (const auto& proxy : proxyFunctions) {
         linkHostFunction(proxy);
     }
@@ -57,9 +61,9 @@ void WASMRuntime::run(size_t binaryLength, char *queryBinary) {
 
     auto instance = wasmtime::Instance::create(store, module, {}).unwrap();
     auto execute = std::get<wasmtime::Func>(*instance.get(store, "execute"));
-
-    auto results = execute.call(store, {5}).unwrap();
-    std::cout << results[0].i32();
+    int64_t x = 4;
+    auto results = execute.call(store, {x, 9}).unwrap();
+    std::cout << results[0].i64();
 }
 
 void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
@@ -72,7 +76,7 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
     } else if (proxyFunctionName == "NES__Runtime__TupleBuffer__setNumberOfTuples") {
         host_NES__Runtime__TupleBuffer__setNumberOfTuples(proxyFunctionName);
     } else {
-        NES_NOT_IMPLEMENTED();
+        //NES_NOT_IMPLEMENTED();
     }
 }
 
@@ -81,8 +85,8 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
         auto ptr1 = params[0].i32();
         auto ptr2 = params[1].i32();
         auto mem = std::get<Memory>(*caller.get_export("memory"));
-        //int32_t *ptr3 = ptr1;
-        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer(ptr3);
+
+        //auto res = NES::Nautilus::RecordBuffer::NES__Runtime__TupleBuffer // ::NES__Runtime__TupleBuffer__getBuffer(nullptr);
         results[0] = 0;
         return std::monostate();
     });
@@ -93,7 +97,7 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
         auto ptr2 = params[1].i32();
         auto mem = std::get<Memory>(*caller.get_export("memory"));
         //int32_t *ptr3 = ptr1;
-        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer(ptr3);
+        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBufferSize(ptr3);
         results[0] = 0;
         return std::monostate();
     });
@@ -104,7 +108,7 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
         auto ptr2 = params[1].i32();
         auto mem = std::get<Memory>(*caller.get_export("memory"));
         //int32_t *ptr3 = ptr1;
-        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer(ptr3);
+        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples(ptr3);
         results[0] = 0;
         return std::monostate();
     });
@@ -115,7 +119,7 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::s
         auto ptr2 = params[1].i32();
         auto mem = std::get<Memory>(*caller.get_export("memory"));
         //int32_t *ptr3 = ptr1;
-        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer(ptr3);
+        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples(ptr3);
         results[0] = 0;
         return std::monostate();
     });
@@ -123,7 +127,17 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::s
 
 
 void WASMRuntime::prepareCPython() {
-
+    auto res = linker.func_new("cpython", "cpython", FuncType({ValKind::I32, ValKind::I64}, {}), [](auto caller, auto params, auto results) {
+        auto ptr1 = params[0].i32();
+        auto ptr2 = params[1].i32();
+        const std::vector<std::basic_string<char>> args;
+        //wasi.argv();
+        auto mem = std::get<Memory>(*caller.get_export("memory"));
+        //int32_t *ptr3 = ptr1;
+        //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples(ptr3);
+        results[0] = 0;
+        return std::monostate();
+    });
 }
 
 std::string WASMRuntime::parseWASMFile(const char* fileName) {

@@ -31,6 +31,7 @@ class WASMRuntime {
     wasmtime::Linker linker;
     wasmtime::Store store;
     wasmtime::WasiConfig wasi;
+    wasmtime::Config config;
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
     std::string proxyFunctionModule = "ProxyFunction";

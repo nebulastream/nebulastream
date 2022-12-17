@@ -26,7 +26,7 @@ WASMCompiler::WASMCompiler() = default;
 std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     wasm = BinaryenModuleCreate();
     BinaryenSetColorsEnabled(true);
-    //BinaryenModuleSetFeatures(wasm, BinaryenFeatureMemory64());
+    BinaryenModuleSetFeatures(wasm, BinaryenFeatureMemory64());
 
     relooper = RelooperCreate(wasm);
     consumed.clear();
@@ -119,7 +119,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
     /**
      * Memory stuff here, extract it later on
      */
-    BinaryenSetMemory(wasm, 64, 64, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, false, memoryName);
+    BinaryenSetMemory(wasm, 64, 64, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, true, memoryName);
 
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), j);
     BinaryenExpressionRef body = generateBody();
@@ -247,7 +247,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperat
     auto z = loadOp->getAddress()->getIdentifier();
     auto ptr = expressions.getValue(z);
 
-    auto y = BinaryenLoad(wasm, 8, false, 0, 0, BinaryenTypeInt32(), ptr, memoryName);
+    auto y = BinaryenLoad(wasm, 0, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
     consumed.emplace(z, ptr);
     expressions.setValue(x, y);
 }
@@ -255,7 +255,12 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperat
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp, BinaryenExpressions& expressions) {
     auto value = expressions.getValue(storeOp->getValue()->getIdentifier());
     auto address = expressions.getValue(storeOp->getAddress()->getIdentifier());
-    auto storeExpression = BinaryenStore(wasm, 8, 0, 0, address, value, BinaryenExpressionGetType(value), memoryName);
+    BinaryenExpressionRef storeExpression;
+    if (BinaryenExpressionGetType(value) == BinaryenTypeInt32()) {
+        storeExpression = BinaryenStore(wasm, 4, 0, 0, address, value, BinaryenExpressionGetType(value), memoryName);
+    } else {
+        storeExpression = BinaryenStore(wasm, 8, 0, 0, address, value, BinaryenExpressionGetType(value), memoryName);
+    }
 
     consumed.emplace(storeOp->getValue()->getIdentifier(), value);
     consumed.emplace(storeOp->getAddress()->getIdentifier(), address);
@@ -292,7 +297,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddOperati
     auto left = expressions.getValue(addOp->getLeftInput()->getIdentifier());
     auto right = expressions.getValue(addOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
-
+    std::cout << addOp->getStamp()->isAddress() << " HIIII\n";
     BinaryenExpressionRef add;
     if (type == BinaryenTypeInt32()) {
         add = BinaryenBinary(wasm, BinaryenAddInt32(), left, right);

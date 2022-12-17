@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <API/Schema.hpp>
@@ -30,7 +29,6 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <fstream>
@@ -73,7 +71,7 @@ TEST_F(WASMFunctionExecutionTest, emitQueryTest) {
     auto emit = std::make_shared<Emit>(memoryLayout);
     scan.setChild(emit);
 
-    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
+    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(nullptr)));
     RecordBuffer recordBuffer = RecordBuffer(memRef);
 
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
@@ -93,9 +91,9 @@ TEST_F(WASMFunctionExecutionTest, emitQueryTest) {
 
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
     auto wasm = wasmCompiler->lower(ir);
-    auto proxies = wasmCompiler->getProxyFunctionNames();
-    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
-    engine->setup(proxies);
+    //auto proxies = wasmCompiler->getProxyFunctionNames();
+    //auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    //engine->setup(proxies);
 
 }
 
