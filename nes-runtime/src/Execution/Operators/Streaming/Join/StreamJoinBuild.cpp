@@ -43,7 +43,6 @@ void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
 
     LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
 
-    NES_DEBUG("Inserting key " << key << " in the hash table");
     return localHashTable->insert(key);
 }
 

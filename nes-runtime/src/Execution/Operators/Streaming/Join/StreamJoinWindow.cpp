@@ -34,10 +34,6 @@ Operators::SharedJoinHashTable& StreamJoinWindow::getSharedJoinHashTable(bool is
     }
 }
 
-uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) {
-    return counterFinishedBuilding.fetch_sub(sub);
-}
-
 StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
                                size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
                                size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
@@ -58,20 +54,26 @@ StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFi
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
         localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
     }
+
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
         localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
     }
-
-
 }
 
 StreamJoinWindow::~StreamJoinWindow() {
     std::free(head);
 }
 
+uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) {
+    return counterFinishedBuilding.fetch_sub(sub);
+}
+
 uint64_t StreamJoinWindow::fetchSubSink(uint64_t sub) {
     return counterFinishedSink.fetch_sub(sub);
 }
 
-size_t StreamJoinWindow::getLastTupleTimeStamp() const { return lastTupleTimeStamp; }
+size_t StreamJoinWindow::getLastTupleTimeStamp() const {
+    return lastTupleTimeStamp;
+}
+
 } // namespace NES::Runtime::Execution

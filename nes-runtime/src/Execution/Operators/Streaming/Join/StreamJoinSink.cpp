@@ -133,7 +133,6 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
-                            NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
 
                             currentTupleBuffer = workerCtx->allocateTupleBuffer();
                             currentTupleBuffer.setNumberOfTuples(0);
@@ -146,7 +145,6 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
     if (currentTupleBuffer.getNumberOfTuples() > 0) {
         pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
-        NES_DEBUG("Emitting buffer " << Util::printTupleBufferAsCSV(currentTupleBuffer, joinSchema));
     }
 
     return joinedTuples;
@@ -168,7 +166,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     const auto partitionId = joinPartTimestamp->partitionId;
     const auto lastTupleTimeStamp = joinPartTimestamp->lastTupleTimeStamp;
 
-    NES_DEBUG("Joining for partition " << partitionId << " and lastTupleTimeStamp " << lastTupleTimeStamp);
+    NES_TRACE("Joining for partition " << partitionId << " and lastTupleTimeStamp " << lastTupleTimeStamp);
 
     auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
     auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);
@@ -188,7 +186,7 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 
     if (joinedTuples > 0) {
-        NES_DEBUG("Worker " << workerCtx->getId() << " got partitionId " << partitionId << " joined #tuple=" << joinedTuples);
+        NES_TRACE("Worker " << workerCtx->getId() << " got partitionId " << partitionId << " joined #tuple=" << joinedTuples);
         NES_ASSERT2_FMT(joinedTuples <= (leftBucketSize * rightBucketSize),
                         "Something wrong #joinedTuples= " << joinedTuples << " upper bound "
                                                           << (leftBucketSize * rightBucketSize));
