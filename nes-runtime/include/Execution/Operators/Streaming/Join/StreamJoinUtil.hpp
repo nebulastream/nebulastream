@@ -118,7 +118,7 @@ Runtime::TupleBuffer getBufferFromRecord(Nautilus::Record nautilusRecord, Schema
  * @param schema
  * @param bufferManager
  */
-void writeNautilusRecord(size_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+void writeNautilusRecord(uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
 
 /**
  * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
