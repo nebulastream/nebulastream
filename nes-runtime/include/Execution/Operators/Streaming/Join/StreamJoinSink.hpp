@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LAZYJOINSINK_HPP
-#define NES_LAZYJOINSINK_HPP
+#ifndef NES_STREAMJOINSINK_HPP
+#define NES_STREAMJOINSINK_HPP
 #include <Execution/Operators/Operator.hpp>
 
 
@@ -41,4 +41,4 @@ class StreamJoinSink : public Operator {
 
 
 } //namespace NES::Runtime::Execution::Operators
-#endif//NES_LAZYJOINSINK_HPP
+#endif//NES_STREAMJOINSINK_HPP
