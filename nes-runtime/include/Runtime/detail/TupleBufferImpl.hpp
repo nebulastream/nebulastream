@@ -40,6 +40,17 @@ class TupleBuffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
 
+/**
+ * @brief Computes aligned buffer size based on original buffer size and alignment
+ */
+constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
+    if (bufferSize % withAlignment) {
+        // make sure that each buffer is a multiple of the alignment
+        return bufferSize + (withAlignment - bufferSize % withAlignment);
+    }
+    return bufferSize;
+}
+
 namespace detail {
 
 class MemorySegment;
@@ -218,6 +229,7 @@ class alignas(64) BufferControlBlock {
 #endif
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
+static_assert(alignof(BufferControlBlock) % 64 == 0);
 /**
  * @brief The MemorySegment is a wrapper around a pointer to allocated memory of size bytes and a control block
  * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.

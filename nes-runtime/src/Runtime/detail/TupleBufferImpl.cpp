@@ -23,7 +23,9 @@
 #include <thread>
 #endif
 
-namespace NES::Runtime::detail {
+namespace NES::Runtime {
+
+namespace detail {
 
 // -----------------------------------------------------------------------------
 // ------------------ Core Mechanism for Buffer recycling ----------------------
@@ -288,5 +290,5 @@ bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& co
 
     return true;
 }
-
-}// namespace NES::Runtime::detail
+}// namespace detail
+}// namespace NES::Runtime
