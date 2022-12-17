@@ -18,7 +18,7 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <string>
 
-namespace NES {
+namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief This exception is thrown when an error occurs during window processing.
@@ -37,5 +37,5 @@ class WindowProcessingException : public Exceptions::RuntimeException {
     const std::string message;
 };
 
-}// namespace NES
+}// namespace NES::Runtime::Execution::Operators
 #endif// NES_CORE_INCLUDE_EXCEPTIONS_WINDOWPROCESSINGEXCEPTION_HPP_

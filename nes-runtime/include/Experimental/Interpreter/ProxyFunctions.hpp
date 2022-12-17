@@ -34,6 +34,12 @@ extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNum
     NES::Runtime::TupleBuffer* tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
+
+uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    return thisPtr_->getOriginId();
+};
+
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getWatermark();

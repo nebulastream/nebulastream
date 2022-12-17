@@ -27,6 +27,7 @@ class SumAggregationFunction : public AggregationFunction {
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) override;
     Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
+    uint64_t getSize() override;
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

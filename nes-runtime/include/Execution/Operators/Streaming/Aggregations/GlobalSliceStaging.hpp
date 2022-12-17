@@ -15,14 +15,14 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
 #include <cinttypes>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
 
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 class State;
 

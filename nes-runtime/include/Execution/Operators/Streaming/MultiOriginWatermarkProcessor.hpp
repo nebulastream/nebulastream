@@ -12,28 +12,28 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
-#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
+#ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
 
-namespace NES::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 using OriginId = uint64_t;
 /**
  * @brief A multi origin version of the lock free watermark processor.
  */
-class LockFreeMultiOriginWatermarkProcessor {
+class MultiOriginWatermarkProcessor {
   public:
-    explicit LockFreeMultiOriginWatermarkProcessor(const std::vector<OriginId> origins);
+    explicit MultiOriginWatermarkProcessor(const std::vector<OriginId> origins);
 
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param origins
      */
-    static std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> create(const std::vector<OriginId> origins);
+    static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId> origins);
 
     /**
      * @brief Updates the watermark timestamp and origin and emits the current watermark.
@@ -54,6 +54,6 @@ class LockFreeMultiOriginWatermarkProcessor {
     std::vector<std::shared_ptr<Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
 };
 
-}// namespace NES::Experimental
+}// namespace NES::Runtime::Execution::Operators
 
-#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
+#endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_MULTIORIGINWATERMARKPROCESSOR_HPP_

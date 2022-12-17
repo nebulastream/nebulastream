@@ -12,14 +12,11 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/WindowProcessingException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Experimental/SlidingWindowAssigner.hpp>
-namespace NES::Windowing::Experimental {
 
-SlidingWindowAssigner::SlidingWindowAssigner(uint64_t windowSize, uint64_t windowSlide)
-    : windowSize(windowSize), windowSlide(windowSlide) {
-    NES_ASSERT(windowSize >= windowSlide,
-               "Currently the window assigner dose not support windows with a larger slide then the window size.");
-}
+namespace NES::Runtime::Execution::Operators {
 
-}// namespace NES::Windowing::Experimental
+WindowProcessingException::WindowProcessingException(const std::string& message, const std::source_location location)
+    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
+}// namespace NES::Runtime::Execution::Operators

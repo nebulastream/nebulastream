@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <cinttypes>
 
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief The SlidingWindowAssigner assigner determines the start and end time stamp of a slice for

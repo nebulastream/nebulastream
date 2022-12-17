@@ -95,8 +95,8 @@ Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) 
     return FunctionCall<>("getGlobalOperatorHandlerProxy", getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-Value<MemRef> ExecutionContext::getPipelineContext() const { return pipelineContext; }
+const Value<MemRef>& ExecutionContext::getWorkerContext() const { return workerContext; }
+const Value<MemRef>& ExecutionContext::getPipelineContext() const { return pipelineContext; }
 
-Value<MemRef> ExecutionContext::getWorkerContext() const { return workerContext; }
 
 }// namespace NES::Runtime::Execution
