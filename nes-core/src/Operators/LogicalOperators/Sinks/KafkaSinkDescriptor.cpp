@@ -35,8 +35,7 @@ bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     }
     auto otherSinkDescriptor = other->as<KafkaSinkDescriptor>();
     return topic == otherSinkDescriptor->topic && brokers == otherSinkDescriptor->brokers
-    && sinkFormat == otherSinkDescriptor->sinkFormat
-    && timeout == otherSinkDescriptor->timeout;
+        && sinkFormat == otherSinkDescriptor->sinkFormat && timeout == otherSinkDescriptor->timeout;
 }
 
 std::string KafkaSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }

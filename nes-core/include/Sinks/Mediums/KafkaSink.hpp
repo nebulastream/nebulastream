@@ -21,19 +21,18 @@
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace cppkafka
-{
+namespace cppkafka {
 class Configuration;
 class Producer;
-class  MessageBuilder;
-}
+class MessageBuilder;
+}// namespace cppkafka
 namespace NES {
 
 class KafkaSink : public SinkMedium {
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
   public:
-   /**
+    /**
     * Constructor for a kafka Sink
     * @param format format of the sink
     * @param nodeEngine

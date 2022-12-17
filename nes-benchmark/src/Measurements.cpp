@@ -13,8 +13,8 @@
 */
 
 #include <Measurements.hpp>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 namespace NES::Benchmark::Measurements {
 
