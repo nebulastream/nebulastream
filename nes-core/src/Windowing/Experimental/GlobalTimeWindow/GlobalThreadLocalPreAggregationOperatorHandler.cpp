@@ -18,10 +18,8 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -33,15 +31,15 @@ namespace NES::Windowing::Experimental {
 GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     const std::vector<OriginId> origins,
-    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
+    std::weak_ptr<Runtime::Execution::Operators::GlobalSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
-    watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
+    watermarkProcessor = std::make_shared<Runtime::Execution::Operators::MultiOriginWatermarkProcessor>(origins);
     auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     windowSize = windowType->getSize().getTime();
     windowSlide = windowType->getSlide().getTime();
 }
 
-GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
+Runtime::Execution::Operators::GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
     if (threadLocalSliceStores.size() <= workerId) {
         throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
     }
@@ -51,7 +49,7 @@ GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::get
 void GlobalThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                                            uint64_t entrySize) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<GlobalThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
+        auto threadLocal = std::make_unique<Runtime::Execution::Operators::GlobalThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
         threadLocalSliceStores.push_back(std::move(threadLocal));
     }
 }

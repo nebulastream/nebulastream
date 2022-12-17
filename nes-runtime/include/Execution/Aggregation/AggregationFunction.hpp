@@ -49,6 +49,11 @@ class AggregationFunction {
      * @param memref the current aggragtion value which need to be reset
      */
     virtual void reset(Nautilus::Value<Nautilus::MemRef> memref) = 0;
+    /**
+     * @brief gets the size of the partial aggregate in byte.
+     * @return uint64_t
+     */
+    virtual uint64_t getSize() = 0;
 
     virtual ~AggregationFunction();
 

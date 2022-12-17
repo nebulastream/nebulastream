@@ -17,7 +17,7 @@
 #include <memory>
 #include <ostream>
 #include <stdlib.h>
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief State, to represent one or more aggregation values.
@@ -46,7 +46,6 @@ class State {
     ~State();
     const uint64_t stateSize;
     alignas(STATE_ALIGNMENT) void* ptr;
-    bool isInitialized = false;
 };
 
 /**
@@ -62,19 +61,7 @@ class GlobalSlice {
      * @param end of the slice
      * @param index of the slice (currently we assume that we can calculate a slice index, to which a specific stream event is assigned).
      */
-    GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end);
-
-    /**
-     * @brief Copy constructor to create a new slice
-     * @param slice
-     */
-    GlobalSlice(GlobalSlice& slice);
-
-    /**
-     * @brief Constructor to create a uninitialized slice.
-     * @param entrySize entry size of the content of a slice
-     */
-    GlobalSlice(uint64_t entrySize);
+    GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState);
 
     /**
      * @brief Start of the slice.
@@ -102,19 +89,12 @@ class GlobalSlice {
      */
     inline std::unique_ptr<State>& getState() { return state; }
 
-    /**
-     * @brief Reinitialize slice.
-     * @param start
-     * @param end
-     */
-    void reset(uint64_t start, uint64_t end);
-
   private:
     uint64_t start;
     uint64_t end;
     std::unique_ptr<State> state;
 };
 
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICE_HPP_

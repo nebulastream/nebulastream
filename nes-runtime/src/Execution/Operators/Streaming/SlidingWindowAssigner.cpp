@@ -12,6 +12,14 @@
     limitations under the License.
 */
 
-#include <Windowing/Experimental/GlobalSliceStore.hpp>
+#include <Execution/Operators/Streaming/SlidingWindowAssigner.hpp>
+#include <Util/Logger/Logger.hpp>
+namespace NES::Runtime::Execution::Operators {
 
-namespace NES::Windowing::Experimental {}// namespace NES::Windowing::Experimental
+SlidingWindowAssigner::SlidingWindowAssigner(uint64_t windowSize, uint64_t windowSlide)
+    : windowSize(windowSize), windowSlide(windowSlide) {
+    NES_ASSERT(windowSize >= windowSlide,
+               "Currently the window assigner dose not support windows with a larger slide then the window size.");
+}
+
+}// namespace NES::Runtime::Execution::Operators

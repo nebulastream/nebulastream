@@ -22,6 +22,7 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -40,27 +41,6 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
-};
-
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    explicit MockedPipelineExecutionContext(OperatorHandlerPtr handler)
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            nullptr,
-            1,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            {std::move(handler)}){
-            // nop
-        };
-
-    std::vector<TupleBuffer> buffers;
 };
 
 /**

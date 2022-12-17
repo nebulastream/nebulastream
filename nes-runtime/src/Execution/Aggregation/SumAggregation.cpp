@@ -45,5 +45,6 @@ void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = Nautilus::Value<Nautilus::Int64>((int64_t) 0);
     memref.store(zero);
 }
+uint64_t SumAggregationFunction::getSize() { return 8; }
 
 }// namespace NES::Runtime::Execution::Aggregation

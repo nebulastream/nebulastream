@@ -11,5 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(runtime-map-expression-test "MapOperatorTest.cpp")
-add_nes_runtime_test(runtime-selection-expression-test "SelectionOperatorTest.cpp")
+add_nes_runtime_test(runtime-map-operator-test "MapOperatorTest.cpp")
+add_nes_runtime_test(runtime-selection-operator-test "SelectionOperatorTest.cpp")
+add_nes_runtime_test(runtime-global-slice-pre-aggregation-test "GlobalSlicePreAggregationTest.cpp")
