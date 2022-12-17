@@ -174,7 +174,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
-    std::list<StreamJoinWindow> lazyJoinWindows;
+    std::list<StreamJoinWindow> streamJoinWindows;
     size_t maxNoWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
