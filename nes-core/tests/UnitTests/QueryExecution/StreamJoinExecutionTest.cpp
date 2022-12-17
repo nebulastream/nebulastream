@@ -105,11 +105,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto timeStampField = leftSchema->get(2)->getName();
     ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
 
-    ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Schema::create(leftSchema->getLayoutType());
-    joinSchema->addField("key", leftSchema->get(joinFieldNameLeft)->getDataType());
-    joinSchema->copyFields(leftSchema);
-    joinSchema->copyFields(rightSchema);
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
 
     // read values from csv file into one buffer for each join side and for one window

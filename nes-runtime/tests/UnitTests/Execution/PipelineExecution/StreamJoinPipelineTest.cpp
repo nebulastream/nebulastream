@@ -102,11 +102,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
 
     ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
-    const auto joinSchema = Schema::create(leftSchema->getLayoutType());
-    joinSchema->addField(leftSchema->get(joinFieldNameLeft));
-    joinSchema->copyFields(leftSchema);
-    joinSchema->copyFields(rightSchema);
-
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
     ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
     auto timeStampField = leftSchema->get(2)->getName();

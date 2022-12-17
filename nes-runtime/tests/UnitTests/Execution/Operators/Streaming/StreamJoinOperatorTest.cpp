@@ -293,10 +293,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     streamJoinOperatorTest->emittedBuffers.erase(streamJoinOperatorTest->emittedBuffers.begin(),
                                                streamJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
-    SchemaPtr joinSchema = Schema::create(streamJoinSinkHelper.leftSchema->getLayoutType());
-    joinSchema->addField(streamJoinSinkHelper.leftSchema->get(streamJoinSinkHelper.joinFieldNameLeft));
-    joinSchema->copyFields(streamJoinSinkHelper.leftSchema);
-    joinSchema->copyFields(streamJoinSinkHelper.rightSchema);
+    auto joinSchema = Util::createJoinSchema(streamJoinSinkHelper.leftSchema, streamJoinSinkHelper.rightSchema,
+                                             streamJoinSinkHelper.joinFieldNameLeft);
 
 
     /* Checking if all windows have been deleted except for one.
@@ -419,7 +417,7 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
     auto streamJoinBuild = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, isLeftSide, joinFieldNameRight,
                                                                     timeStampField, rightSchema);
     StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
-    
+
     ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
