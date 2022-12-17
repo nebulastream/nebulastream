@@ -11,12 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        Operator.cpp
-        ExecutableOperator.cpp
-        Emit.cpp
-        Scan.cpp
-        ExecutionContext.cpp)
-
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
-add_subdirectory(Streaming)
+        StreamJoinBuild.cpp
+        StreamJoinSink.cpp)

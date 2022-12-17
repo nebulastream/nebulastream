@@ -14,7 +14,7 @@
 #include <cmath>
 
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Execution/Operators/Streaming/Join/BloomFilter.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators {

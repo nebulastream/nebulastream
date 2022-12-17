@@ -13,7 +13,7 @@
 */
 
 #include <atomic>
-#include <Execution/Operators/Streaming/Join/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
