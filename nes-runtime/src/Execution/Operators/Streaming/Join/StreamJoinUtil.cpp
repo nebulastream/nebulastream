@@ -61,7 +61,7 @@ namespace NES::Runtime::Execution::Util {
         return buffer;
     }
 
-    void writeNautilusRecord(size_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
+    void writeNautilusRecord(uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
         Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
         Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
