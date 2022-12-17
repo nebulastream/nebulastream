@@ -20,7 +20,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinSink.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -56,8 +55,12 @@ class TestRunner : public NES::Exceptions::ErrorListener {
 };
 
 
-class StreamJoinOperatorTest : public testing::Test, public AbstractPipelineExecutionTest {
+class StreamJoinOperatorTest : public testing::Test {
   public:
+
+    std::shared_ptr<Runtime::BufferManager> bm;
+    std::vector<TupleBuffer> emittedBuffers;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinOperatorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -70,15 +73,15 @@ class StreamJoinOperatorTest : public testing::Test, public AbstractPipelineExec
         bm = std::make_shared<Runtime::BufferManager>();
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down StreamJoinOperatorTest test case."); }
+    /* Will be called after a test is executed. */
+    void TearDown() override {
+        NES_INFO("Tear down StreamJoinOperatorTest test case.");
+    }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StreamJoinOperatorTest test class."); }
-
-    ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
-    std::vector<TupleBuffer> emittedBuffers;
+    static void TearDownTestCase() {
+        NES_INFO("Tear down StreamJoinOperatorTest test class.");
+    }
 };
 
 struct StreamJoinBuildHelper {
@@ -87,6 +90,7 @@ struct StreamJoinBuildHelper {
     size_t numberOfTuplesToProduce;
     size_t numberOfBuffersPerWorker;
     size_t noWorkerThreads;
+    size_t totalNumSources = 2;
     size_t joinSizeInByte;
     size_t windowSize;
     Operators::StreamJoinBuildPtr lazyJoinBuild;
@@ -116,12 +120,15 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
     auto& timeStampField = buildHelper.timeStampField;
     auto& lazyJoinOperatorTest = buildHelper.lazyJoinOperatorTest;
     auto isLeftSide = buildHelper.isLeftSide;
+    auto totalNumSources = buildHelper.totalNumSources;
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, bufferManager, numberOfBuffersPerWorker);
     auto lazyJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(schema, schema,
-                                                                       joinFieldName, joinFieldName,
-                                                                       noWorkerThreads * 2, noWorkerThreads, joinSizeInByte,
-                                                                       windowSize, pageSize, numPartitions);
+                                                                         joinFieldName, joinFieldName,
+                                                                         noWorkerThreads * 2,
+                                                                         totalNumSources,
+                                                                         joinSizeInByte,
+                                                                         windowSize, pageSize, numPartitions);
 
     auto pipelineContext = PipelineExecutionContext(-1,// mock pipeline id
                                                     0, // mock query id
@@ -166,6 +173,7 @@ bool lazyJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
         }
 
         if (!correctlyInserted) {
+            NES_ERROR("correctlyInserted is false!");
             return false;
         }
     }
@@ -192,14 +200,15 @@ struct StreamJoinSinkHelper {
 };
 
 bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffers,
-                                 Runtime::TupleBuffer buffer,
+                                 Runtime::TupleBuffer expectedBuffer,
                                  size_t sizeJoinedTuple, SchemaPtr joinSchema,
                                  uint64_t& removedBuffer) {
+
     bool foundBuffer = false;
-    NES_DEBUG("NLJ buffer = " << Util::printTupleBufferAsCSV(buffer, joinSchema));
+    NES_DEBUG("NLJ buffer = " << Util::printTupleBufferAsCSV(expectedBuffer, joinSchema));
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
         NES_DEBUG("Comparing versus = " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
-        if (memcmp(tupleBufferIt->getBuffer(), buffer.getBuffer(), sizeJoinedTuple * buffer.getNumberOfTuples()) == 0) {
+        if (memcmp(tupleBufferIt->getBuffer(), expectedBuffer.getBuffer(), sizeJoinedTuple * expectedBuffer.getNumberOfTuples()) == 0) {
             NES_DEBUG("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema) << " of size " << sizeJoinedTuple);
             emittedBuffers.erase(tupleBufferIt);
             foundBuffer = true;
@@ -315,7 +324,11 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
     auto mergedEmittedBuffers = Util::mergeBuffersSameWindow(lazyJoinOperatorTest->emittedBuffers,
                                                              joinSchema, lazyJoinSinkHelper.timeStampField,
                                                              lazyJoinSinkHelper.bufferManager, lazyJoinSinkHelper.windowSize);
+    auto sortedEmittedBuffers = Util::sortBuffersInTupleBuffer(mergedEmittedBuffers, joinSchema, lazyJoinSinkHelper.timeStampField,
+                                                         lazyJoinSinkHelper.bufferManager);
+
     lazyJoinOperatorTest->emittedBuffers.clear();
+    mergedEmittedBuffers.clear();
 
     for (auto curWindow = 0UL; curWindow < leftRecords.size(); ++curWindow) {
         auto numberOfTuplesInBuffer = 0UL;
@@ -323,7 +336,7 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
             for (auto& rightRecord : rightRecords[curWindow]) {
                 if (leftRecord.read(lazyJoinSinkHelper.joinFieldNameLeft) == rightRecord.read(lazyJoinSinkHelper.joinFieldNameRight)) {
                     // We expect to have at least one more buffer that was created by our join
-                    if (mergedEmittedBuffers.size() == 0) {
+                    if (sortedEmittedBuffers.size() == 0) {
                         NES_ERROR("Expected at least one buffer!");
                         return false;
                     }
@@ -343,7 +356,11 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
                     buffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
                     if (numberOfTuplesInBuffer >= tuplePerBuffer) {
-                        bool foundBuffer = checkIfBufferFoundAndRemove(mergedEmittedBuffers, buffer, sizeJoinedTuple,
+                        std::vector<Runtime::TupleBuffer> bufVec({buffer});
+                        auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, lazyJoinSinkHelper.timeStampField,
+                                                                           lazyJoinSinkHelper.bufferManager);
+
+                        bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], sizeJoinedTuple,
                                                                        joinSchema, removedBuffer);
 
                         if (!foundBuffer) {
@@ -359,7 +376,10 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
         }
 
         if (numberOfTuplesInBuffer > 0) {
-            bool foundBuffer = checkIfBufferFoundAndRemove(mergedEmittedBuffers, buffer, sizeJoinedTuple,
+            std::vector<Runtime::TupleBuffer> bufVec({buffer});
+            auto sortedBuffer = Util::sortBuffersInTupleBuffer(bufVec, joinSchema, lazyJoinSinkHelper.timeStampField,
+                                                               lazyJoinSinkHelper.bufferManager);
+            bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], sizeJoinedTuple,
                                                            joinSchema, removedBuffer);
             if (!foundBuffer) {
                 NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema) << " in emittedBuffers!");
@@ -369,7 +389,7 @@ bool lazyJoinSinkAndCheck(StreamJoinSinkHelper lazyJoinSinkHelper) {
     }
 
     // Make sure that after we have joined all records together no more buffer exist
-    if (mergedEmittedBuffers.size() > 0) {
+    if (sortedEmittedBuffers.size() > 0) {
         NES_ERROR("Have not removed all buffers. So some tuples have not been joined together!");
         return false;
     }
@@ -482,7 +502,6 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     };
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
-
     ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
 }
 
@@ -524,7 +543,8 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     };
 
     ASSERT_TRUE(lazyJoinBuildAndCheck(buildHelper));
-    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
+    // As we are only building here the left side, we do not emit any buffers
+    ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTest) {
