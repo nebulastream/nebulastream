@@ -19,9 +19,7 @@ namespace NES {
 
 // polyfill because concepts do not exist on all platforms yet.
 template<typename _From, typename _To>
-concept convertible_to = std::is_convertible_v<_From, _To>&& requires {
-    static_cast<_To>(std::declval<_From>());
-};
+concept convertible_to = std::is_convertible_v<_From, _To> && requires { static_cast<_To>(std::declval<_From>()); };
 
 class TypeCastable {
   public:
@@ -42,17 +40,18 @@ class TypeCastable {
 
 template<typename T>
 concept GetType = requires(T a) {
-    { T::type }
-    ->convertible_to<TypeCastable::Kind>;
-};
+                      { T::type } -> convertible_to<TypeCastable::Kind>;
+                  };
 
 template<class X, class Y>
-requires(std::is_base_of<Y, X>::value == false) inline constexpr bool instanceOf(const std::unique_ptr<Y>&) {
+    requires(std::is_base_of<Y, X>::value == false)
+inline constexpr bool instanceOf(const std::unique_ptr<Y>&) {
     return false;
 }
 
 template<GetType X, class Y>
-requires(std::is_base_of<Y, X>::value == true) inline bool instanceOf(const std::unique_ptr<Y>& y) {
+    requires(std::is_base_of<Y, X>::value == true)
+inline bool instanceOf(const std::unique_ptr<Y>& y) {
     return X::type == y->getKind();
 }
 

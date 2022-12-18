@@ -28,7 +28,6 @@
 #include <thread>
 #include <unistd.h>
 
-
 namespace NES::Runtime {
 
 BufferManager::BufferManager(uint32_t bufferSize,
@@ -252,8 +251,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     // we could not find a buffer, allocate it
     // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto alignedBufferSizePlusControlBlock =
-        alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
+    auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
     if (ptr == nullptr) {

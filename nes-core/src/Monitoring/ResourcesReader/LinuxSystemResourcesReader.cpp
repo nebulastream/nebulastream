@@ -56,7 +56,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");
             output.memoryUsageInBytes = 0;
         }
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading memory metrics " << e.what());
     }
 
@@ -89,7 +89,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             NES_ERROR("LinuxSystemResourcesReader: File for cpuacct.stat not available");
             output.cpuLoadInJiffies = 0;
         }
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading cpu metrics " << e.what());
     }
 
@@ -120,7 +120,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             output.blkioBytesWritten = 0;
         }
 
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading disk metrics " << e.what());
     }
 
@@ -152,7 +152,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
             output.totalMemoryBytes = 0;
         }
 
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static memory metrics " << e.what());
     }
 
@@ -184,7 +184,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
             NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
             output.cpuQuotaUS = 0;
         }
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static cpu metrics " << e.what());
     }
     return output;
@@ -237,7 +237,7 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
                 i++;
             }
         }
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error calling readCpuStats() " << e.what());
     }
     return CpuMetricsWrapper{std::move(cpu)};
@@ -331,7 +331,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
         }
         fclose(fp);
 
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading network stats " << e.what());
     }
     return output;
@@ -364,7 +364,7 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
         output.LOADS_5MIN = sinfo->loads[1];
         output.LOADS_15MIN = sinfo->loads[2];
         free(sinfo);
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading memory stats " << e.what());
     }
     return output;
@@ -388,7 +388,7 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
         output.fBfree = svfs->f_bfree;
         output.fBavail = svfs->f_bavail;
         free(svfs);
-    } catch (const Exceptions::RuntimeException & e) {
+    } catch (const Exceptions::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading disk stats " << e.what());
     }
     return output;
