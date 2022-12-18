@@ -25,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-
 using namespace NES;
 
 class GlobalQueryPlanTest : public Testing::TestWithErrorHandling<testing::Test> {

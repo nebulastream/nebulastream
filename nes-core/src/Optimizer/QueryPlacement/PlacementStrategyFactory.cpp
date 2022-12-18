@@ -21,7 +21,6 @@
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
 
-
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,

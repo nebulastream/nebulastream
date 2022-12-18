@@ -32,7 +32,6 @@
 #include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-
 namespace NES::Runtime {
 
 class TupleBuffer;

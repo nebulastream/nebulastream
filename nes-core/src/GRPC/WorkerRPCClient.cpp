@@ -27,7 +27,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 
-
 namespace NES {
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {

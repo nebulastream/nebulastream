@@ -16,7 +16,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 

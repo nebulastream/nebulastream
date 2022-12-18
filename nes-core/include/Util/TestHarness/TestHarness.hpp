@@ -321,9 +321,9 @@ class TestHarness {
         for (const auto& workerConf : testHarnessWorkerConfigurations) {
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource && workerConf->getRecords().empty()) {
                 throw Exceptions::RuntimeException("TestHarness: No Record defined for Memory Source with logical source Name: "
-                                                  + workerConf->getLogicalSourceName()
-                                                  + " and Physical source name : " + workerConf->getPhysicalSourceName()
-                                                  + ". Please add data to the test harness.");
+                                                   + workerConf->getLogicalSourceName()
+                                                   + " and Physical source name : " + workerConf->getPhysicalSourceName()
+                                                   + ". Please add data to the test harness.");
             }
 
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::CSVSource
@@ -353,8 +353,9 @@ class TestHarness {
         }
 
         if (!schema) {
-            throw Exceptions::RuntimeException("Unable to find logical source with name " + logicalSourceName
-                                              + ". Make sure you are adding a logical source with the name to the test harness.");
+            throw Exceptions::RuntimeException(
+                "Unable to find logical source with name " + logicalSourceName
+                + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
         return PhysicalSource::create(logicalSourceName,
@@ -376,8 +377,9 @@ class TestHarness {
         }
 
         if (!schema) {
-            throw Exceptions::RuntimeException("Unable to find logical source with name " + logicalSourceName
-                                              + ". Make sure you are adding a logical source with the name to the test harness.");
+            throw Exceptions::RuntimeException(
+                "Unable to find logical source with name " + logicalSourceName
+                + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
         auto tupleSize = schema->getSchemaSizeInBytes();
