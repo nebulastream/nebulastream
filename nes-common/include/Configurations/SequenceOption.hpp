@@ -27,7 +27,8 @@ namespace NES::Configurations {
  * @tparam Type of the component.
  */
 template<class T>
-requires std::is_base_of_v<BaseOption, T> class SequenceOption : public BaseOption {
+    requires std::is_base_of_v<BaseOption, T>
+class SequenceOption : public BaseOption {
   public:
     /**
      * @brief Constructor to create a new option that sets a name, and description.
@@ -74,17 +75,18 @@ requires std::is_base_of_v<BaseOption, T> class SequenceOption : public BaseOpti
 };
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> SequenceOption<T>::SequenceOption(const std::string& name,
-                                                                            const std::string& description)
-    : BaseOption(name, description){};
+    requires std::is_base_of_v<BaseOption, T>
+SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description){};
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> void SequenceOption<T>::clear() {
+    requires std::is_base_of_v<BaseOption, T>
+void SequenceOption<T>::clear() {
     options.clear();
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
+    requires std::is_base_of_v<BaseOption, T>
+void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
     if (node.IsSequence()) {
         for (auto child = node.Begin(); child != node.End(); child++) {
             auto identifier = (*child).first;
@@ -98,35 +100,40 @@ requires std::is_base_of_v<BaseOption, T> void SequenceOption<T>::parseFromYAMLN
     }
 }
 template<class T>
-requires std::is_base_of_v<BaseOption, T> void
-SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+    requires std::is_base_of_v<BaseOption, T>
+void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     auto option = T();
     option.parseFromString(identifier, inputParams);
     options.push_back(option);
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> T SequenceOption<T>::operator[](size_t index) const {
+    requires std::is_base_of_v<BaseOption, T>
+T SequenceOption<T>::operator[](size_t index) const {
     return options[index];
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> size_t SequenceOption<T>::size() const {
+    requires std::is_base_of_v<BaseOption, T>
+size_t SequenceOption<T>::size() const {
     return options.size();
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> std::vector<T> SequenceOption<T>::getValues() const {
+    requires std::is_base_of_v<BaseOption, T>
+std::vector<T> SequenceOption<T>::getValues() const {
     return options;
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> bool SequenceOption<T>::empty() const {
+    requires std::is_base_of_v<BaseOption, T> bool
+SequenceOption<T>::empty() const {
     return options.empty();
 }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T> std::string SequenceOption<T>::toString() {
+    requires std::is_base_of_v<BaseOption, T>
+std::string SequenceOption<T>::toString() {
     std::stringstream os;
     os << "Name: " << name << "\n";
     os << "Description: " << description << "\n";

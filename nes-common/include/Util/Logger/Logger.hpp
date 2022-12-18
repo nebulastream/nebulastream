@@ -14,10 +14,10 @@
 
 #ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
@@ -129,7 +129,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
-            auto& __logger = NES::Logger::getInstance();                                                                      \
+            auto& __logger = NES::Logger::getInstance();                                                                         \
             std::stringbuf __buffer;                                                                                             \
             std::ostream __os(&__buffer);                                                                                        \
             __os << message;                                                                                                     \
@@ -142,7 +142,7 @@ struct LogCaller<LogLevel::LOG_WARNING> {
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
-            auto& __logger = NES::Logger::getInstance();                                                                      \
+            auto& __logger = NES::Logger::getInstance();                                                                         \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__);                \
         }                                                                                                                        \
     } while (0)

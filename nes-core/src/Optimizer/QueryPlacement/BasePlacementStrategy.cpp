@@ -138,7 +138,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
         if (topologyMap.find(pinnedNodeId) == topologyMap.end()) {
             NES_ERROR("BasePlacementStrategy: Topology node with id " << pinnedNodeId << " not considered for the placement.");
             throw Exceptions::RuntimeException("BasePlacementStrategy: Topology node with id " + std::to_string(pinnedNodeId)
-                                              + " not considered for the placement.");
+                                               + " not considered for the placement.");
         }
         auto pinnedNode = topologyMap[pinnedNodeId];
         // 2. If pinned up stream node was already placed then place all its downstream operators
@@ -285,7 +285,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
     if (found == topologyMap.end()) {
         NES_ERROR("BasePlacementStrategy: Topology node with id " << nodeId << " not considered for the placement.");
         throw Exceptions::RuntimeException("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
-                                          + " not considered for the placement.");
+                                           + " not considered for the placement.");
     }
 
     if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId)) {

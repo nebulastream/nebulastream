@@ -16,8 +16,8 @@
 #define NES_NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
 
 #include <Util/Logger/Logger.hpp>
-#include <folly/Portability.h>
 #include <folly/DiscriminatedPtr.h>
+#include <folly/Portability.h>
 
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
 #error "TaggedPointer is x64, arm64 and ppc64 specific code."
