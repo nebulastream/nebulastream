@@ -63,7 +63,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
                              uint64_t leafNodesPerNode,
                              uint64_t childThreshold,
                              uint64_t combinerThreshold,
-                             uint64_t expectedNumberBuffers) {
+                             uint64_t) {
         NES_INFO(" start coordinator");
         std::string outputFilePath = "windowOut.csv";
         remove(outputFilePath.c_str());

@@ -89,7 +89,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 }
 
 
-size_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
+uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
