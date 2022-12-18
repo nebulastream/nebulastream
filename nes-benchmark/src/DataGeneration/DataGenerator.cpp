@@ -22,6 +22,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
 
+#include <DataGeneration/NexmarkPerson.hpp>
+#include <DataGeneration/NexmarkAuction.hpp>
+#include <DataGeneration/NexmarkBid.hpp>
+#include <DataGeneration/NexmarkCategory.hpp>
+
 namespace NES::Benchmark::DataGeneration {
 
 DataGenerator::DataGenerator() {}
@@ -54,6 +59,39 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<DefaultDataGenerator>(minValue, maxValue);
 
+    } else if (type == "Zipfian") {
+    } else if (type == "Person") {   //same as Uniform except different schema
+        if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("MinValue and maxValue are necessary for a NexmarkPerson Datagenerator!");
+        }
+
+        auto minValue = generatorNode["minValue"].As<uint64_t>();
+        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+        return std::make_shared<NexmarkPerson>(minValue, maxValue);
+    } else if (type == "Auction") {   //same as Uniform except different schema
+        if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("MinValue and maxValue are necessary for a NexmarkAuction Datagenerator!");
+        }
+
+        auto minValue = generatorNode["minValue"].As<uint64_t>();
+        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+        return std::make_shared<NexmarkAuction>(minValue, maxValue);
+    } else if (type == "Bid") {   //same as Uniform except different schema
+        if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("MinValue and maxValue are necessary for a NexmarkBid Datagenerator!");
+        }
+
+        auto minValue = generatorNode["minValue"].As<uint64_t>();
+        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+        return std::make_shared<NexmarkBid>(minValue, maxValue);
+    } else if (type == "Category") {   //same as Uniform except different schema
+        if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
+            NES_THROW_RUNTIME_ERROR("MinValue and maxValue are necessary for a NexmarkCategory Datagenerator!");
+        }
+
+        auto minValue = generatorNode["minValue"].As<uint64_t>();
+        auto maxValue = generatorNode["maxValue"].As<uint64_t>();
+        return std::make_shared<NexmarkCategory>(minValue, maxValue);
     } else if (type == "Zipfian") {
         if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
             NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Zipfian Datagenerator!");

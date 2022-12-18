@@ -48,8 +48,13 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
+
+
+    //std::string auction =
+    //R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("itemname", UINT64))->addField(createField("description", UINT64))->addField(createField("initialbid", UINT64))->addField(createField("reserve", UINT64))->addField(createField("expires", UINT64))->addField(createField("seller", UINT64))->addField(createField("category", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("input1", input);
     crd->getSourceCatalogService()->registerLogicalSource("input2", input);
+    //crd->getSourceCatalogService()->registerLogicalSource("auction", auction);
 
     NES_DEBUG("E2EBase: Start worker 1");
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();

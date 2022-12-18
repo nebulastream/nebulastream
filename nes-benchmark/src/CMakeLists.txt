@@ -22,4 +22,8 @@ add_source_files(nes-benchmark
         DataProvider/InternalProvider.cpp
         Measurements.cpp
         E2E/E2ERunner.cpp
-        E2E/E2ESingleRun.cpp)
+        E2E/E2ESingleRun.cpp
+        DataGeneration/NexmarkAuction.cpp
+        DataGeneration/NexmarkBid.cpp
+        DataGeneration/NexmarkPerson.cpp
+        DataGeneration/NexmarkCategory.cpp)

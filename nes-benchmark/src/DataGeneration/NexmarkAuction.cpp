@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <DataGeneration/DefaultDataGenerator.hpp>
+#include <DataGeneration/NexmarkAuction.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
 
 namespace NES::Benchmark::DataGeneration {
-DefaultDataGenerator::DefaultDataGenerator(uint64_t minValue, uint64_t maxValue)
+NexmarkAuction::NexmarkAuction(uint64_t minValue, uint64_t maxValue)
     : DataGenerator(), minValue(minValue), maxValue(maxValue) {}
 
-std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> NexmarkAuction::createData(size_t numberOfBuffers, size_t bufferSize) {
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numberOfBuffers);
 
@@ -30,14 +30,14 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
     NES_INFO("Default source mode");
 
     // Prints every five percent the current progress
-    uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
+    uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        // using seed to generate a predictable sequence of values for deterministic behavior
-        std::mt19937 generator(GENERATOR_SEED_DEFAULT);
+        std::random_device randDev;
+        std::mt19937 generator(randDev());
         std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
         /* This branch is solely for performance reasons.
@@ -56,15 +56,19 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
             for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
                 auto value = uniformIntDistribution(generator);
                 dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["value"].write<uint64_t>(value);
-                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
-                //dynamicBuffer[curRecord]["category"].write<uint64_t>(curRecord);
-            }
+                dynamicBuffer[curRecord]["itemname"].write<uint64_t>(value);
+                dynamicBuffer[curRecord]["description"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["initialbid"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["reserve"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["expires"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["seller"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["category"].write<uint64_t>(curRecord);
+            }//Auction(id, itemname, description, initialbid, reserve, expires, seller, category)
+
         }
 
         if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO("DefaultDataGenerator: currently at " << (((double) curBuffer / numberOfBuffers) * 100) << "%");
+            NES_INFO("NexmarkAuction: currently at " << (((double) curBuffer / numberOfBuffers) * 100) << "%");
         }
 
         dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
@@ -75,18 +79,21 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
     return createdBuffers;
 }
 
-NES::SchemaPtr DefaultDataGenerator::getSchema() {
+NES::SchemaPtr NexmarkAuction::getSchema() {
     return Schema::create()
         ->addField(createField("id", NES::UINT64))
-        ->addField(createField("value", NES::UINT64))
-        ->addField(createField("payload", NES::UINT64))
-        ->addField(createField("timestamp", NES::UINT64));
-        //->addField(createField("category", NES::UINT64));
+        ->addField(createField("itemname", NES::UINT64))
+        ->addField(createField("description", NES::UINT64))
+        ->addField(createField("initialbid", NES::UINT64))
+        ->addField(createField("reserve", NES::UINT64))
+        ->addField(createField("expires", NES::UINT64))
+        ->addField(createField("seller", NES::UINT64))
+        ->addField(createField("category", NES::UINT64));
 }
 
-std::string DefaultDataGenerator::getName() { return "Uniform"; }
+std::string NexmarkAuction::getName() { return "NexmarkAuction"; }
 
-std::string DefaultDataGenerator::toString() {
+std::string NexmarkAuction::toString() {
     std::ostringstream oss;
 
     oss << getName() << " (" << minValue << ", " << maxValue << ")";
