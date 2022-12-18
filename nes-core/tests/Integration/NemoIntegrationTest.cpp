@@ -28,6 +28,7 @@
 #include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
+#include <assert.h>
 
 #include <REST/ServerTypes.hpp>
 
@@ -63,7 +64,7 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
                              uint64_t leafNodesPerNode,
                              uint64_t childThreshold,
                              uint64_t combinerThreshold,
-                             uint64_t) {
+                             uint64_t expectedNumberBuffers) {
         NES_INFO(" start coordinator");
         std::string outputFilePath = "windowOut.csv";
         remove(outputFilePath.c_str());
@@ -162,8 +163,11 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         NES_INFO("try to acc return");
         NES_INFO("Query ID: " << queryId);
 
-        assert(TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort)));
-        assert(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+        auto checkCompleted = TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort));
+        assert(checkCompleted);
+
+        auto queryStopped = TestUtils::stopQueryViaRest(queryId, std::to_string(restPort));
+        assert(queryStopped);
 
         std::ifstream ifs(outputFilePath.c_str());
         assert(ifs.good());
