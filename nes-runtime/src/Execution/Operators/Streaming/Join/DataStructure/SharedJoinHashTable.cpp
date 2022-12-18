@@ -28,7 +28,7 @@ void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedL
     for (auto* page : pagesLinkedList->getPages()) {
         auto oldHead = head.load(std::memory_order::relaxed);
         auto node = new InternalNode{FixedPage(page), oldHead};
-        while(!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::release)) {}
+        while(!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::relaxed)) {}
         numItems.fetch_add(page->size(), std::memory_order::relaxed);
     }
     numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);

@@ -126,9 +126,9 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
 
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>(i)},
-                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((i % 10) + 1)},
-                                        {buildHelper.schema->get(2)->getName(), Value<UInt64>(i)}});
+        auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t)i)},
+                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 1)},
+                                        {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t)i)}});
         buildHelper.streamJoinBuild->execute(executionContext, record);
 
         uint64_t joinKey = record.read(buildHelper.joinFieldName).as<UInt64>().getValue().getValue();
@@ -257,13 +257,13 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     std::vector<Nautilus::Record> tmpRecordsLeft, tmpRecordsRight;
 
     for (auto i = 0UL, curWindow = 0UL; i < streamJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto recordLeft = Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>(i)},
-                                            {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
-                                            {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>(i)}});
+        auto recordLeft = Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t)i)},
+                                            {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 10)},
+                                            {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t)i)}});
 
-        auto recordRight = Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>(i+1000)},
-                                             {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((i % 10) + 10)},
-                                             {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>(i)}});
+        auto recordRight = Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t)i+1000)},
+                                             {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 10)},
+                                             {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t)i)}});
 
         if (recordRight.read(streamJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {
             leftRecords.push_back(std::vector(tmpRecordsLeft.begin(), tmpRecordsLeft.end()));
@@ -306,7 +306,7 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
         return false;
     }
 
-    auto removedBuffer = 0UL;
+    uint64_t removedBuffer = 0UL;
     auto sizeJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto buffer = streamJoinSinkHelper.bufferManager->getBufferBlocking();
     auto tuplePerBuffer = streamJoinSinkHelper.bufferManager->getBufferSize() / sizeJoinedTuple;
