@@ -91,11 +91,7 @@ auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
     auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {consoleSink, fileSink});
 
     logger.set_level(spdlogLevel);
-#ifdef NES_DEBUG_MODE
     logger.flush_on(spdlog::level::debug);
-#else
-    logger.flush_on(spdlog::level::err);
-#endif
 
     return logger;
 }
