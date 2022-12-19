@@ -15,17 +15,44 @@ limitations under the License.
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalSliceMerging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getSliceStoreProxy(void* op, uint64_t workerId) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(op);
-    return handler->getThreadLocalSliceStore(workerId);
+void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
+    auto handler = static_cast<GlobalSliceMergingHandler*>(op);
+    auto sliceMergeTask = static_cast<SliceMergeTask*>(sliceMergeTaskPtr);
+    auto globalState = handler->createGlobalSlice(sliceMergeTask);
+    // we give nautilus the ownership, thus deletePartition must be called.
+    return globalState.release();
+}
+
+void* erasePartition(void* op, uint64_t ts) {
+    auto handler = static_cast<GlobalSliceMergingHandler*>(op);
+    auto partition = handler->getSliceStaging().erasePartition(ts);
+    // we give nautilus the ownership, thus deletePartition must be called.
+    return partition.release();
+}
+
+uint64_t getSizeOfPartition(void* p) {
+    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    return partition->partialStates.size();
+}
+
+void* getPartitionState(void* p, uint64_t index) {
+    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    return partition->partialStates[index].get();
+}
+
+void deletePartition(void* p) {
+    auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
+    delete partition;
 }
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
@@ -40,7 +67,7 @@ void triggerThreadLocalStateProxy(void* op,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t watermarkTs) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(op);
+    auto handler = static_cast<GlobalSliceMergingHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
@@ -55,12 +82,6 @@ void* getDefaultState(void* ss) {
     auto handler = static_cast<GlobalSlicePreAggregationHandler*>(ss);
     return handler->getDefaultState()->ptr;
 }
-
-class LocalSliceStoreState : public Operators::OperatorState {
-  public:
-    explicit LocalSliceStoreState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
-    const Value<MemRef> sliceStoreState;
-};
 
 GlobalSliceMerging::GlobalSliceMerging(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
     : aggregationFunctions(aggregationFunctions) {}
@@ -83,33 +104,56 @@ void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     }
 }
 
-void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer&) const {
+
+
+void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(0);
+    auto sliceMergeTask = buffer.getBuffer();
+    Value<> startSliceTs = (sliceMergeTask + offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
+    Value<> endSliceTs = (sliceMergeTask + offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
-    // 3. store the reference to the slice store in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalSliceStoreState>(sliceStore);
-    ctx.setLocalOperatorState(this, std::move(sliceStoreState));
+    auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
+    // emit global slice when we have a tumbling window.
+    emitWindow(ctx, startSliceTs, endSliceTs, globalSliceState);
 }
 
-
-void GlobalSliceMerging::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
-
-    // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
-    // with the current watermark ts to check if we can trigger a window.
-    Nautilus::FunctionCall("triggerThreadLocalStateProxy",
-                           triggerThreadLocalStateProxy,
-                           globalOperatorHandler,
-                           executionCtx.getWorkerContext(),
-                           executionCtx.getPipelineContext(),
-                           executionCtx.getWorkerId(),
-                           recordBuffer.getOriginId(),
-                           recordBuffer.getSequenceNr(),
-                           recordBuffer.getWatermarkTs());
+Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
+                                                           Value<MemRef>& sliceMergeTask,
+                                                           Value<>& endSliceTs) const {
+    auto globalSliceState = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
+    auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
+    auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
+    for (Value<UInt64> i = 0ul; i < sizeOfPartitions; i = i + 1ul) {
+        auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
+        for (const auto& function : aggregationFunctions) {
+            function->combine(globalSliceState, partitionState);
+            partitionState = partitionState + function->getSize();
+            globalSliceState = globalSliceState + function->getSize();
+        }
+    }
+    Nautilus::FunctionCall("deletePartition", deletePartition, partition);
+    return globalSliceState;
 }
+
+void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
+                                    Value<>& windowStart,
+                                    Value<>& windowEnd,
+                                    Value<MemRef>& globalSliceState) const {
+
+    Record resultWindow;
+    resultWindow.write("start_ts", windowStart);
+    resultWindow.write("start_ts", windowEnd);
+    for (const auto& function : aggregationFunctions) {
+        auto finalAggregationValue = function->lower(globalSliceState);
+        resultWindow.write("f1", finalAggregationValue);
+        globalSliceState = globalSliceState + function->getSize();
+    }
+    child->execute(ctx, resultWindow);
+}
+
+void GlobalSliceMerging::close(ExecutionContext&, RecordBuffer&) const {}
 
 }// namespace NES::Runtime::Execution::Operators

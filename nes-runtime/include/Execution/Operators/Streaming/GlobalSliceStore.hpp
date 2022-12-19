@@ -24,7 +24,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-namespace NES::Windowing::Experimental {
+namespace NES::Runtime::Execution::Operators {
 
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
@@ -35,12 +35,12 @@ using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
  * Thus we can concurrently, read them from multiple threads.
  */
 template<typename SliceType>
-class GlobalSliceStore {
+class SlidingWindowSliceStore {
   public:
     using SliceTypeSharedPtr = std::shared_ptr<SliceType>;
-    ~GlobalSliceStore() {
+    ~SlidingWindowSliceStore() {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        NES_DEBUG("~GlobalSliceStore")
+        NES_DEBUG("~SlidingWindowSliceStore")
         slices.clear();
     }
 
