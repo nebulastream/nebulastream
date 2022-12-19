@@ -50,7 +50,6 @@ class QueryPlanBuilderTest : public Testing::TestWithErrorHandling<testing::Test
 TEST_F(QueryPlanBuilderTest, testHasOperator) {
     //test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
-    queryPlan->getSourceOperators()[0];
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
     //test addRename
     queryPlan = QueryPlanBuilder::addRename("testStream", queryPlan);

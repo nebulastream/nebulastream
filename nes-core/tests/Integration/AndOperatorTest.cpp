@@ -144,6 +144,9 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    NES_DEBUG("contents=" << content);
+
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 

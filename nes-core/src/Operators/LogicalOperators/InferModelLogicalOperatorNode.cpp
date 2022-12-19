@@ -20,19 +20,17 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <utility>
 
 namespace NES::InferModel {
 
-#ifdef TFDEF
-InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
+InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string  model,
                                                              std::vector<ExpressionItemPtr> inputFields,
                                                              std::vector<ExpressionItemPtr> outputFields,
                                                              OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id) {
-    NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << model);
-    this->model = model;
-    this->inputFieldsPtr = inputFields;
-    this->outputFieldsPtr = outputFields;
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), model(std::move(model)), inputFields(std::move(inputFields)),
+      outputFields(std::move(outputFields)) {
+    NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << this->model);
 }
 
 std::string InferModelLogicalOperatorNode::toString() const {
@@ -42,7 +40,7 @@ std::string InferModelLogicalOperatorNode::toString() const {
 }
 
 OperatorNodePtr InferModelLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr, id);
+    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
@@ -88,7 +86,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
 
     auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFieldsPtr) {
+    for (auto inputField : inputFields) {
         auto inputExpression = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(typeInferencePhaseContext, inputSchema);
@@ -96,7 +94,7 @@ bool InferModelLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }
 
-    for (auto outputField : outputFieldsPtr) {
+    for (auto outputField : outputFields) {
         auto outputExpression = outputField->getExpressionNode()->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
@@ -143,9 +141,8 @@ const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     return path;
 }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() { return inputFieldsPtr; }
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() { return outputFieldsPtr; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() { return inputFields; }
 
-#endif// TFDEF
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() { return outputFields; }
 
 }// namespace NES::InferModel

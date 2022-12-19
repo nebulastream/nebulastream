@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <algorithm>
+
 namespace NES::Nautilus::Tracing {
 
 /**
