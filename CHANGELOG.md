@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.6](https://github.com/nebulastream/nebulastream/tree/v0.4.6) (2022-12-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.5...v0.4.6)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] MacOS support for tracing [\#3017](https://github.com/nebulastream/nebulastream/issues/3017)
+
 ## [v0.4.5](https://github.com/nebulastream/nebulastream/tree/v0.4.5) (2022-12-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.4...v0.4.5)
