@@ -70,7 +70,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
     void popOperation();
-    
+
     /**
      * @brief Depending on the terminator operation, returns one(branch) or two (if/loop) or zero(return) next blocks.
      * 

@@ -94,7 +94,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         std::stack<IR::BasicBlockPtr> newBlocks;
         std::unordered_set<IR::BasicBlock*> visitedBlocks;
         std::vector<IR::BasicBlockPtr> dpsSortedIRGraph;
-    
+
         uint32_t currentId = 0;
         newBlocks.emplace(ir->getRootOperation()->getFunctionBasicBlock());
         do {
@@ -104,10 +104,10 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
             dpsSortedIRGraph.emplace_back(newBlocks.top());
             auto nextBlocks = newBlocks.top()->getNextBlocks();
             newBlocks.pop();
-            if(nextBlocks.second && !visitedBlocks.contains(nextBlocks.first.get())) {
+            if (nextBlocks.second && !visitedBlocks.contains(nextBlocks.first.get())) {
                 newBlocks.emplace(nextBlocks.second);
             }
-            if(nextBlocks.first && !visitedBlocks.contains(nextBlocks.first.get())) {
+            if (nextBlocks.first && !visitedBlocks.contains(nextBlocks.first.get())) {
                 newBlocks.emplace(nextBlocks.first);
             }
         } while (!newBlocks.empty());
@@ -118,8 +118,8 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                                const std::unordered_map<std::string, CorrectBlockValuesPtr>& correctBlocks) {
         bool mergeBlocksAreCorrect = true;
         bool backLinksAreCorrect = true;
-        for(auto currentBlock : dpsSortedBlocks) {
-            if(currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
+        for (auto currentBlock : dpsSortedBlocks) {
+            if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
                 // Check that the currentBlock is actually part of the solution set.
                 if (correctBlocks.contains(currentBlock->getIdentifier())) {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
@@ -128,44 +128,51 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                         == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
                     if (!backLinksAreCorrect) {
                         NES_ERROR("\nBlock -" << currentBlock->getIdentifier() << "- contained -"
-                                            << currentBlock->getNumLoopBackEdges() << "- backLinks instead of: -"
-                                            << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks << "-.");
+                                              << currentBlock->getNumLoopBackEdges() << "- backLinks instead of: -"
+                                              << correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks
+                                              << "-.");
                     }
                     // Check that the merge-block id is set correctly, if the if-operation has a merge-block.
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
                     if (!correctMergeBlockId.empty()) {
-                        if(!ifOp->getMergeBlock()) {
-                            NES_ERROR("CurrentBlock: " << currentBlock->getIdentifier() << " did not contain a merge block" <<
-                                        " even though the solution suggest it has a merge-block with id: " << correctMergeBlockId);
+                        if (!ifOp->getMergeBlock()) {
+                            NES_ERROR("CurrentBlock: " << currentBlock->getIdentifier() << " did not contain a merge block"
+                                                       << " even though the solution suggest it has a merge-block with id: "
+                                                       << correctMergeBlockId);
                             mergeBlocksAreCorrect = false;
                         } else {
                             bool correctMergeBlock = ifOp->getMergeBlock()->getIdentifier() == correctMergeBlockId;
                             mergeBlocksAreCorrect &= correctMergeBlock;
-                            if(!correctMergeBlock) {
+                            if (!correctMergeBlock) {
                                 NES_ERROR("\nMerge-Block mismatch for block "
-                                    << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier() << " instead of "
-                                    << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId << "(correct).");
+                                          << currentBlock->getIdentifier() << ": " << ifOp->getMergeBlock()->getIdentifier()
+                                          << " instead of "
+                                          << correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId
+                                          << "(correct).");
                             }
                         }
                     } else {
                         bool noMergeBlockCorrectlySet = !ifOp->getMergeBlock();
                         mergeBlocksAreCorrect &= noMergeBlockCorrectlySet;
-                        if(!noMergeBlockCorrectlySet) {
-                            NES_ERROR("The current merge block: " << currentBlock->getIdentifier() 
-                            << " contains a merge-block with id: " << ifOp->getMergeBlock()->getIdentifier() << 
-                            ", even though it should not contain a merge-block.");
+                        if (!noMergeBlockCorrectlySet) {
+                            NES_ERROR("The current merge block: " << currentBlock->getIdentifier()
+                                                                  << " contains a merge-block with id: "
+                                                                  << ifOp->getMergeBlock()->getIdentifier()
+                                                                  << ", even though it should not contain a merge-block.");
                         }
                     }
                 } else {
                     mergeBlocksAreCorrect = false;
-                    NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
-                                << " was not part of solution set(correctBlocks), but it contains an if-operation.");
+                    NES_ERROR("CurrentBlock with id: "
+                              << currentBlock->getIdentifier()
+                              << " was not part of solution set(correctBlocks), but it contains an if-operation.");
                 }
             } else {
                 if (correctBlocks.contains(currentBlock->getIdentifier())) {
                     mergeBlocksAreCorrect = false;
-                    NES_ERROR("CurrentBlock with id: " << currentBlock->getIdentifier() 
-                                << " was part of solution set(correctBlocks), but it does not contain an if-operation.");
+                    NES_ERROR("CurrentBlock with id: "
+                              << currentBlock->getIdentifier()
+                              << " was part of solution set(correctBlocks), but it does not contain an if-operation.");
                 }
             }
         }
@@ -320,7 +327,8 @@ TEST_P(StructuredControlFlowPhaseTest, 5_oneMergeBlockThatClosesOneIfAndBecomesM
     createCorrectBlock(correctBlocks, "1", 0, "5");
     createCorrectBlock(correctBlocks, "6", 1, "");
     createCorrectBlock(correctBlocks, "9", 0, "5");
-    auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
+    auto dpsSortedBlocks =
+        createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
     ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
@@ -508,8 +516,8 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
         }
     }
     for (Value start = 0; start < 10; start = start + 1) {
-        if (agg < 50) { //3
-            while (agg < limit) { //9
+        if (agg < 50) {          //3
+            while (agg < limit) {//9
                 agg = agg + 1;
             }
         } else {
@@ -517,7 +525,7 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
                 agg = agg + 1;
             }
         }
-        if (agg < 150) { //16
+        if (agg < 150) {//16
 
         } else {
             if (agg < 250) {
@@ -567,7 +575,8 @@ TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNes
     createCorrectBlock(correctBlocks, "32", 0, "31");
     createCorrectBlock(correctBlocks, "39", 1, "");
     createCorrectBlock(correctBlocks, "43", 0, "3");
-    auto dpsSortedBlocks = createTraceAndApplyPhases(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
+    auto dpsSortedBlocks =
+        createTraceAndApplyPhases(&IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops_11);
     ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
@@ -583,8 +592,7 @@ TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
     auto dpsSortedBlocks = createTraceAndApplyPhases(&emptyIfElse_12);
     auto convertedIfOperation = dpsSortedBlocks.at(0)->getTerminatorOp();
     ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
-    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(
-        dpsSortedBlocks.at(0)->getTerminatorOp());
+    auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(dpsSortedBlocks.at(0)->getTerminatorOp());
     ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "2");
 }
 

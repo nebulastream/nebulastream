@@ -98,10 +98,7 @@ class ExecutionTrace {
 
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-
-
   private:
-
     uint32_t currentBlock;
     std::vector<Block> blocks;
     std::vector<ValueRef> arguments;
