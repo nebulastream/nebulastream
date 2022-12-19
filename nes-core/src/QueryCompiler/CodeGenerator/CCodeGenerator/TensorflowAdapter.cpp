@@ -47,105 +47,129 @@ double NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
 void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
+    va_list vl;
+    va_start(vl, n);
+
+    //create input for tensor
+    TfLiteTensor* inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+    int inputSize = (int) (TfLiteTensorByteSize(inputTensor));
+
+    //Prepare input parameters based on data type
     if (dataType == BasicPhysicalType::NativeType::INT_64){
-        va_list vl;
-        va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
-        int* input = (int*) malloc(input_size);
-
+        int * inputData = (int*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
-            input[i] = (int) va_arg(vl, int);
+            inputData[i] = (int) va_arg(vl, int);
         }
         va_end(vl);
 
-        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
-        free(input);
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
         if (output != nullptr) {
             free(output);
         }
-        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
         output = (double*) malloc(output_size);
-        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
     } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
-        std::cout << "Are you going here? " << dataType << std::endl;
-        va_list vl;
-        va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
-
-        float* input = (float*) malloc(input_size);
-
+        //create input for tensor
+        float* inputData = (float*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
-            input[i] = (float) va_arg(vl, double);
+            inputData[i] = (float) va_arg(vl, double);
         }
         va_end(vl);
 
-        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
         TfLiteInterpreterInvoke(interpreter);
 
-        const TfLiteTensor* output_tensor = (TfLiteInterpreterGetOutputTensor(interpreter, 0));
+        //Release allocated memory for input
+        free(inputData);
 
-        free(input);
+        //Clear allocated memory to output
         if (output != nullptr) {
             free(output);
         }
-        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
         output = (double*) malloc(output_size);
-        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
     } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
-        va_list vl;
-        va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
-
-        double* input = (double*) malloc(input_size);
-
+        //create input for tensor
+        double* inputData = (double*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
-            input[i] = (double) va_arg(vl, double);
+            inputData[i] = (double) va_arg(vl, double);
         }
         va_end(vl);
 
-        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
         TfLiteInterpreterInvoke(interpreter);
 
-        const TfLiteTensor* output_tensor = (TfLiteInterpreterGetOutputTensor(interpreter, 0));
+        //Release allocated memory for input
+        free(inputData);
 
-        free(input);
+        //Clear allocated memory to output
         if (output != nullptr) {
             free(output);
         }
-        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
         output = (double*) malloc(output_size);
-        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
     } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
-        va_list vl;
-        va_start(vl, n);
-        TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-        int input_size = (int) (TfLiteTensorByteSize(input_tensor));
-
-        bool* input = (bool*) malloc(input_size);
-
+        //create input for tensor
+        bool* inputData = (bool*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
-            input[i] = (bool) va_arg(vl, int);
+            inputData[i] = (bool) va_arg(vl, int);
         }
         va_end(vl);
 
-        TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
         TfLiteInterpreterInvoke(interpreter);
-        const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
-        free(input);
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
         if (output != nullptr) {
             free(output);
         }
-        int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
         output = (double*) malloc(output_size);
-        TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
     }
 }
 
