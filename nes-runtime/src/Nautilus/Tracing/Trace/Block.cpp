@@ -14,6 +14,7 @@
 
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+#include <algorithm>
 
 namespace NES::Nautilus::Tracing {
 

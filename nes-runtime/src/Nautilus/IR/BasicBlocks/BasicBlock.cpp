@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <algorithm>
 
 namespace NES::Nautilus::IR {
 BasicBlock::BasicBlock(std::string identifier,

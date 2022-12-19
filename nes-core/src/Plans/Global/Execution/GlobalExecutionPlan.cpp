@@ -18,6 +18,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
 
 namespace NES {
 

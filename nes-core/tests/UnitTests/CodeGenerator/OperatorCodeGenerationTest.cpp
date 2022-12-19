@@ -972,7 +972,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
     codeGenerator->generateInferModelSetup(context, inferModelOperatorHandler);
-    codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
+    codeGenerator->generateCodeForInferModel(context, imop->getInputFields(), imop->getOutputFields());
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, QueryCompilation::FIELD_COPY, context);
