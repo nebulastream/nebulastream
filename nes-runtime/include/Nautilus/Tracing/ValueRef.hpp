@@ -30,7 +30,7 @@ class ValueRef {
      * @param operationId
      * @param type
      */
-    ValueRef(uint32_t blockId, uint32_t operationId, IR::Types::StampPtr  type);
+    ValueRef(uint32_t blockId, uint32_t operationId, IR::Types::StampPtr type);
 
     /**
      * @brief Copy constructor

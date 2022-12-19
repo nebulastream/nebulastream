@@ -17,7 +17,6 @@
 namespace NES::Nautilus::Tracing {
 TagVector::TagVector(const std::vector<TagAddress>& addresses) : addresses(addresses) {}
 
-
 std::ostream& operator<<(std::ostream& os, const TagVector& tag) {
     os << "addresses: [";
     for (auto address : tag.addresses) {

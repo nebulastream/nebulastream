@@ -267,7 +267,5 @@ Value<> TracingBreaker() {
     return agg;
 }
 
-
-
 }// namespace NES::Nautilus::Tracing
 #endif//NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_
