@@ -59,7 +59,7 @@ MemorySegment::MemorySegment(uint8_t* ptr,
     : ptr(ptr), size(size) {
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
-    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)), 1);
+    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)), Wrapped);
     controlBlock->prepare();
 }
 
