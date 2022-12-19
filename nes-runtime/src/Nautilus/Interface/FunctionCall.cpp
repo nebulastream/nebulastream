@@ -27,7 +27,7 @@ void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector
 
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
     if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
-       // auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
+        // auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
         ctx->traceFunctionCall(arguments);
     }
 }

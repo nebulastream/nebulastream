@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES::Nautilus::Tracing {

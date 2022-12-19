@@ -14,8 +14,8 @@
 
 #include <Nautilus/Exceptions/TagCreationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <execinfo.h>
 #include <Util/Logger/Logger.hpp>
+#include <execinfo.h>
 
 namespace NES::Nautilus::Tracing {
 TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress) {}

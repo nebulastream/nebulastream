@@ -14,8 +14,8 @@
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/PluginRegistry.hpp>
 
@@ -27,7 +27,6 @@ Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampP
     }
     return Nautilus::Tracing::ValueRef(0, 0, nullptr);
 }
-
 
 std::optional<Value<>> CastToOp(const Value<>& left, const TypeIdentifier* toType) {
     auto& plugins = InvocationPluginRegistry::getPlugins();
@@ -91,7 +90,7 @@ Value<> AddOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->Add(left, right);
         if (result.has_value()) {
-           Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::ADD, result.value().ref, left.ref, right.ref);
+            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::ADD, result.value().ref, left.ref, right.ref);
         }
         return result;
     });
@@ -141,7 +140,10 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->LessThan(left, right);
         if (result.has_value()) {
-            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::LESS_THAN, result.value().ref, left.ref, right.ref);
+            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::LESS_THAN,
+                                                     result.value().ref,
+                                                     left.ref,
+                                                     right.ref);
         }
         return result;
     });
@@ -151,7 +153,10 @@ Value<> GreaterThanOp(const Value<>& left, const Value<>& right) {
     return evalWithCast(left, right, [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right) {
         auto result = plugin->GreaterThan(left, right);
         if (result.has_value()) {
-            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::GREATER_THAN, result.value().ref, left.ref, right.ref);
+            Tracing::TraceUtil::traceBinaryOperation(Nautilus::Tracing::OpCode::GREATER_THAN,
+                                                     result.value().ref,
+                                                     left.ref,
+                                                     right.ref);
         }
         return result;
     });

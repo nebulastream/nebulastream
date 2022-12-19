@@ -14,12 +14,12 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <functional>
 #include <memory>
 
