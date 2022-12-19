@@ -247,6 +247,11 @@ class MemorySegment {
     friend class NES::Runtime::BufferManager;
     friend class NES::Runtime::detail::BufferControlBlock;
 
+    enum MemorySegmentType {
+        Native = 0,
+        Wrapped = 1
+    };
+
   public:
     MemorySegment(const MemorySegment& other);
 
