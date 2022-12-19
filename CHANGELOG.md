@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.4.7](https://github.com/nebulastream/nebulastream/tree/v0.4.7) (2022-12-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.6...v0.4.7)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix TraceTest [\#2972](https://github.com/nebulastream/nebulastream/issues/2972)
+
+#### Monitoring 🚥
+
+- Create FactoryPattern for SystemResourcesReader [\#2456](https://github.com/nebulastream/nebulastream/issues/2456)
+
+#### User Defined Functions
+
+- Enable passing input arguments with different data types for mlInfer operator [\#3078](https://github.com/nebulastream/nebulastream/issues/3078)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Reduce complexity of Symbolic Tracing [\#3021](https://github.com/nebulastream/nebulastream/issues/3021)
+
 ## [v0.4.6](https://github.com/nebulastream/nebulastream/tree/v0.4.6) (2022-12-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.5...v0.4.6)
