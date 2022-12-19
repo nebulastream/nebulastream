@@ -422,8 +422,9 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     std::shared_ptr<DataType> commonStamp;
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
-        if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()){
-            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: " << field->getStamp()->toString());
+        if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
+            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: "
+                      << field->getStamp()->toString());
         }
         if (!firstIter) {
             commonStamp = field->getStamp();
@@ -433,18 +434,23 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     }
     NES_DEBUG("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: " << commonStamp->toString());
     if (commonStamp->isInteger()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
+            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
     } else if (commonStamp->isFloat()) {
         std::shared_ptr<Float> floatStamp = commonStamp->as<Float>(commonStamp);
         if (floatStamp->getBits() == 32) {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::FLOAT)))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
+                DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::FLOAT)))));
         } else {
-            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::DOUBLE)))));
+            generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
+                DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::DOUBLE)))));
         }
     } else if (commonStamp->isBoolean()) {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::BOOLEAN)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
+            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::BOOLEAN)))));
     } else {
-        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::UNDEFINED)))));
+        generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
+            DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::UNDEFINED)))));
     }
     generateTensorFlowInferCall->addParameter(
         Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));

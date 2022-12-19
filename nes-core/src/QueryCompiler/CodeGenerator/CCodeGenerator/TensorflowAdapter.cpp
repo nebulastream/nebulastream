@@ -55,9 +55,9 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
     int inputSize = (int) (TfLiteTensorByteSize(inputTensor));
 
     //Prepare input parameters based on data type
-    if (dataType == BasicPhysicalType::NativeType::INT_64){
+    if (dataType == BasicPhysicalType::NativeType::INT_64) {
 
-        int * inputData = (int*) malloc(inputSize);
+        int* inputData = (int*) malloc(inputSize);
         for (int i = 0; i < n; ++i) {
             inputData[i] = (int) va_arg(vl, int);
         }

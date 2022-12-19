@@ -91,21 +91,11 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
         float iris2;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2);
-        }
+        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 }};
+    std::vector<Output> expectedOutput =
+        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -157,21 +147,11 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
         float iris2;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2);
-        }
+        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 }};
+    std::vector<Output> expectedOutput =
+        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -222,21 +202,11 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentMixedTypes) {
         float iris2;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2);
-        }
+        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 }};
+    std::vector<Output> expectedOutput =
+        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -278,21 +248,11 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
         float iris2;
 
         // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const {
-            return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2);
-        }
+        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
     };
 
-    std::vector<Output> expectedOutput = {{0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 },
-                                          {0, 1, 0 }};
+    std::vector<Output> expectedOutput =
+        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
