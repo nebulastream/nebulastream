@@ -26,7 +26,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libopencv4.5-java \
     libopencv4.5d-jni \
     cmake \
-    software-properties-common
+    software-properties-common \
+    openjdk-8-jdk
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
