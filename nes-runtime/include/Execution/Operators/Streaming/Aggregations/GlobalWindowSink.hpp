@@ -20,23 +20,20 @@ limitations under the License.
 namespace NES::Runtime::Execution::Operators {
 
 /**
-* @brief GlobalSliceMerging operator that performs the pre-aggregation step for a global window aggregation.
+* @brief GlobalWindowSink operator that performs the pre-aggregation step for a global window aggregation.
 */
-class GlobalSliceMerging : public Operator {
+class GlobalWindowSink : public ExecutableOperator {
   public:
     /**
-     * @brief Creates a GlobalSliceMerging operator
+     * @brief Creates a GlobalWindowSink operator
      */
-    GlobalSliceMerging(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+    GlobalWindowSink(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
-    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                           Value<MemRef>& sliceMergeTask,
-                                           Value<>& endSliceTs) const;
-    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
