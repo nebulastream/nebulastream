@@ -17,10 +17,10 @@
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <algorithm>
 
 namespace NES::Nautilus::IR {
 BasicBlock::BasicBlock(std::string identifier,

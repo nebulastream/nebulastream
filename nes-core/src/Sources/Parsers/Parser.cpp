@@ -147,8 +147,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(value);
                 break;
             }
-            case NES::BasicPhysicalType::UNDEFINED:
-                NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
+            case NES::BasicPhysicalType::UNDEFINED: NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
         }
     } else {// char array(string) case
         // obtain pointer from buffer to fill with content via strcpy

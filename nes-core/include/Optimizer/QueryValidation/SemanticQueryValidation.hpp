@@ -67,7 +67,6 @@ class SemanticQueryValidation {
                                              const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
   private:
-
     /**
      * Check if infer model operator is correctly defined or not
      * @param queryPlan: query plan to check

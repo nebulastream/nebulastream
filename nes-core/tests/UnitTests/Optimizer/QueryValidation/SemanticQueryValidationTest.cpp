@@ -240,7 +240,8 @@ TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("irisData")
-                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
@@ -272,7 +273,8 @@ TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("irisData")
-                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
@@ -304,7 +306,8 @@ TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true, udfCatalog);
 
     auto query = Query::from("irisData")
-                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite", {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+                                 {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(FileSinkDescriptor::create(""));
 
