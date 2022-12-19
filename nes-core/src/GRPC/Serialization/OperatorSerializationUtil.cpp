@@ -1339,7 +1339,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto* mqttSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(mqttSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->sourceschema());
         auto sourceConfig = MQTTSourceType::create();
         auto mqttSourceConfig = new SerializablePhysicalSourceType_SerializableMQTTSourceType();
         mqttSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(mqttSourceConfig);
