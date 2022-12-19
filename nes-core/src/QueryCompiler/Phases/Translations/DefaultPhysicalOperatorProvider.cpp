@@ -222,8 +222,8 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, Logi
         PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
                                                               inferModelOperator->getOutputSchema(),
                                                               inferModelOperator->getModel(),
-                                                              inferModelOperator->getInputFieldsAsPtr(),
-                                                              inferModelOperator->getOutputFieldsAsPtr(),
+                                                              inferModelOperator->getInputFields(),
+                                                                                            inferModelOperator->getOutputFields(),
                                                               inferModelOperatorHandler);
     operatorNode->replace(physicalInferModelOperator);
 }

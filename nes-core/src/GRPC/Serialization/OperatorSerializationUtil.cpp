@@ -158,11 +158,11 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         auto inferModelDetails = SerializableOperator_InferModelDetails();
         auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
 
-        for (auto& exp : inferModelOperator->getInputFieldsAsPtr()) {
+        for (auto& exp : inferModelOperator->getInputFields()) {
             auto* mutableInputFields = inferModelDetails.mutable_inputfields()->Add();
             ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableInputFields);
         }
-        for (auto& exp : inferModelOperator->getOutputFieldsAsPtr()) {
+        for (auto& exp : inferModelOperator->getOutputFields()) {
             auto* mutableOutputFields = inferModelDetails.mutable_outputfields()->Add();
             ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableOutputFields);
         }
