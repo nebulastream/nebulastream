@@ -2132,7 +2132,6 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
     uint64_t numCpuMetrics = cpuMetrics.size();
     ASSERT_TRUE(numCpuMetrics > 0);
 
-
     auto schema = Monitoring::CpuMetrics::getSchema("");
     auto bufferSize = (numCpuMetrics - 1) * schema->getSchemaSizeInBytes();
 
