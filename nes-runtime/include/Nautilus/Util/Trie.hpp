@@ -14,10 +14,10 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_TAGTRIE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TAG_TAGTRIE_HPP_
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <algorithm>
 
 namespace NES::Nautilus::Tracing {
 

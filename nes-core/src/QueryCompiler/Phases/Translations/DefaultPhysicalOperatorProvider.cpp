@@ -218,13 +218,12 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
 void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto inferModelOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
     auto inferModelOperatorHandler = InferModel::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
-    auto physicalInferModelOperator =
-        PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
-                                                              inferModelOperator->getOutputSchema(),
-                                                              inferModelOperator->getModel(),
-                                                              inferModelOperator->getInputFields(),
+    auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
+                                                                                            inferModelOperator->getOutputSchema(),
+                                                                                            inferModelOperator->getModel(),
+                                                                                            inferModelOperator->getInputFields(),
                                                                                             inferModelOperator->getOutputFields(),
-                                                              inferModelOperatorHandler);
+                                                                                            inferModelOperatorHandler);
     operatorNode->replace(physicalInferModelOperator);
 }
 #endif// TFDEF

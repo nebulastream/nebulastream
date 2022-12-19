@@ -24,7 +24,7 @@
 
 namespace NES::InferModel {
 
-InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string  model,
+InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
                                                              std::vector<ExpressionItemPtr> inputFields,
                                                              std::vector<ExpressionItemPtr> outputFields,
                                                              OperatorId id)
