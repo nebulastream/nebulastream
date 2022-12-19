@@ -27,9 +27,8 @@
 namespace NES::Nautilus::IR {
 
 /**
- * @brief This phase takes an IR graph with blocks that either have branch- or if-operations as terminator-operations.
- *        Subsequently, this phase detects which if-operations are loop operations, converts them and enriches them with
- *        relevant information.
+ * @brief This phase takes an IR graph that contains information on loop-headers, merge-blocks, and for all 
+ *        BasicBlockArguments, it is known which n possible base operations the argument references.
  */
 class ValueScopingPhase {
   public:
@@ -40,12 +39,15 @@ class ValueScopingPhase {
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
     private:
+    struct IfOpCandidate {
+        std::shared_ptr<IR::Operations::IfOperation> ifOp;
+        bool isTrueBranch;
+    };
     /**
      * @brief Internal context object contains phase logic and state.
      */
     class ValueScopingPhaseContext {
       public:
-
         /**
          * @brief Constructor for the context of the ValueScopingPhaseContext.
          * 
@@ -59,11 +61,10 @@ class ValueScopingPhase {
 
       private:
         /**
-         * @brief Iterates over IR graph, finds all loop-header-blocks, and marks them.
-         * 
-         * @param currentBlock: Initially will be the body-block of the root operation.
+         * @brief Iterates over all operations of all blocks. Replaces references to arguments with base operations, if
+         *        arguments are only referenced by a single unique base operation.
          */
-        void applyValueScoping();
+        void replaceArguments();
       private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;

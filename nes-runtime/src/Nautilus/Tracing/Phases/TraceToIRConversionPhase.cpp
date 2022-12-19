@@ -180,7 +180,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
     createBlockArguments(frame, blockInvocation, blockRef);
 
     if (blockMap.contains(blockRef.block)) {
-        block->addNextBlock(blockMap[blockRef.block], blockInvocation.getArguments());
+        block->addNextBlock(blockMap[blockRef.block], blockInvocation.getBranchOps());
         return;
     }
     auto targetBlock = trace->getBlock(blockRef.block);
@@ -213,7 +213,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
 
     auto resultTargetBlock = processBlock(scope - 1, trace->getBlock(blockRef.block));
     blockMap[blockRef.block] = resultTargetBlock;
-    block->addNextBlock(resultTargetBlock, blockInvocation.getArguments());
+    block->addNextBlock(resultTargetBlock, blockInvocation.getBranchOps());
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,

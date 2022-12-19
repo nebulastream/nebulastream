@@ -63,13 +63,13 @@ LoopDetectionPhase::LoopDetectionPhaseContext::getCompareOpConstants(const Basic
             for(auto& operation : loopBeforeBlock->getOperations()) {
                 if(leftInputArg >= 0 
                     && operation->getIdentifier() == branchOp->getNextBlockInvocation()
-                        .getArguments().at(leftInputArg)->getIdentifier() 
+                        .getBranchOps().at(leftInputArg)->getIdentifier() 
                     && operation->getOperationType() == Operations::Operation::ConstIntOp) {
                     compareOpConstants.first = std::static_pointer_cast<Operations::ConstIntOperation>(operation);
                 }
                 if(rightInputArg >= 0 
                     && operation->getIdentifier() == branchOp->getNextBlockInvocation()
-                        .getArguments().at(rightInputArg)->getIdentifier() 
+                        .getBranchOps().at(rightInputArg)->getIdentifier() 
                     && operation->getOperationType() == Operations::Operation::ConstIntOp) {
                     compareOpConstants.second = std::static_pointer_cast<Operations::ConstIntOperation>(operation);
                 }
@@ -128,7 +128,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
         auto terminatorOp = currentBlock->getTerminatorOp();
         if(terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
             auto nextBlock = std::static_pointer_cast<IR::Operations::BranchOperation>(
-                terminatorOp)->getNextBlockInvocation().getBlock();
+                terminatorOp)->getNextBlockInvocation().getNextBlock();
             visitedBlocks.emplace(currentBlock->getIdentifier());
             priorBlock = currentBlock;
             currentBlock = nextBlock;
@@ -138,27 +138,31 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
             ifBlocks.emplace(currentBlock);
             visitedBlocks.emplace(currentBlock->getIdentifier());
             priorBlock = currentBlock;
-            currentBlock = ifOp->getTrueBlockInvocation().getBlock();
+            currentBlock = ifOp->getTrueBlockInvocation().getNextBlock();
         }
     }
     // If currentBlock is an already visited block that also is a loopHeaderCandidate, we found a loop-header-block.
     if(loopHeaderCandidates.contains(currentBlock->getIdentifier())) {
+        //Todo introducing a single loop end block: (can move loop info filling to later phase)
+        // -> if currentBlock->getNumLoopBackEdges() > 2
+        //  -> problem: how to differentiate between before loop 
         currentBlock->incrementNumLoopBackEdge();
         // Loop header blocks always have an if-operation as their terminator operation.
         // But because we convert it to a loop-operation, the below condition is only true on the first visit.
         if(currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::IfOp) {
             // We convert this if-operation to a general loop operation.
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-            auto loopOp = std::make_shared<Operations::LoopOperation>(Operations::LoopOperation::LoopType::DefaultLoop);
+            auto loopOp = std::make_shared<Operations::LoopOperation>(
+                Operations::LoopOperation::LoopType::DefaultLoop, ifOp->getValue());
             loopOp->getLoopHeadBlock().setBlock(currentBlock);
-            loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
+            loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getNextBlock());
             loopOp->getLoopEndBlock().setBlock(priorBlock);
             // Copy the arguments of the if-operation's true- and false-block to the newly created loop-operation.
-            for(auto& arg: ifOp->getTrueBlockInvocation().getArguments()) {
+            for(auto& arg: ifOp->getTrueBlockInvocation().getBranchOps()) {
                 loopOp->getLoopBodyBlock().addArgument(arg);
             }
-            loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getBlock());
-            for(auto& arg: ifOp->getFalseBlockInvocation().getArguments()) {
+            loopOp->getLoopFalseBlock().setBlock(ifOp->getFalseBlockInvocation().getNextBlock());
+            for(auto& arg: ifOp->getFalseBlockInvocation().getBranchOps()) {
                 loopOp->getLoopFalseBlock().addArgument(arg);
             }
             currentBlock->replaceTerminatorOperation(loopOp);
@@ -319,10 +323,10 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
             // The false branch might contain nested loop-operations.
             if(ifBlocks.top()->getTerminatorOp()->getOperationType() == Operations::Operation::IfOp) {
                 currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())
-                                ->getFalseBlockInvocation().getBlock();
+                                ->getFalseBlockInvocation().getNextBlock();
             } else {
                 currentBlock = std::static_pointer_cast<IR::Operations::LoopOperation>(ifBlocks.top()->getTerminatorOp())
-                                ->getLoopFalseBlock().getBlock();
+                                ->getLoopFalseBlock().getNextBlock();
             }
             ifBlocks.pop();
         }

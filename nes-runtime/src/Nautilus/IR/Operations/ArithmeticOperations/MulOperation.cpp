@@ -29,4 +29,6 @@ bool MulOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr MulOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr MulOperation::getRightInput() { return rightInput.lock(); }
+void MulOperation::setLeftInput(OperationPtr leftInput) {  this->leftInput = leftInput; }
+void MulOperation::setRightInput(OperationPtr rightInput) { this->rightInput = rightInput; }
 }// namespace NES::Nautilus::IR::Operations

@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
 
+// #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
@@ -22,6 +23,9 @@
 
 namespace NES::Nautilus::IR {
 
+namespace Operations {
+class BasicBlockInvocation;
+}
 class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
   public:
     /**
@@ -59,6 +63,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     [[nodiscard]] Operations::OperationPtr getOperationAt(size_t index);
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
+    void clearArguments();
 
     // NESIR Assembly
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
@@ -72,9 +77,11 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
-    // void popOperation();
+    void addArgument(std::shared_ptr<Operations::BasicBlockArgument> arg);
+
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
     [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
+    [[nodiscard]] std::vector<Operations::BasicBlockInvocation*> getNextBlockInvocations();
   
   private:
     std::string identifier;

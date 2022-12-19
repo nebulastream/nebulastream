@@ -242,7 +242,7 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> negateOperation, ValueFrame& frame) {
-    auto input = frame.getValue(negateOperation->getInput()->getIdentifier());
+    auto input = frame.getValue(negateOperation->getNegateInput()->getIdentifier());
     auto negate = builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
                                                        mlir::arith::CmpIPredicate::eq,
                                                        input,
@@ -297,7 +297,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::Function
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, ValueFrame& frame) {
     std::vector<mlir::Value> mlirTargetBlockArguments;
     auto loopHeadBlock = loopOp->getLoopHeadBlock();
-    for (auto targetBlockArgument : loopHeadBlock.getArguments()) {
+    for (auto targetBlockArgument : loopHeadBlock.getBranchOps()) {
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
     }
     auto* mlirTargetBlock = generateBasicBlock(loopHeadBlock, frame);
@@ -534,13 +534,13 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
 
     std::vector<mlir::Value> trueBlockArgs;
     mlir::Block* trueBlock = generateBasicBlock(ifOp->getTrueBlockInvocation(), frame);
-    for (auto blockArg : ifOp->getTrueBlockInvocation().getArguments()) {
+    for (auto blockArg : ifOp->getTrueBlockInvocation().getBranchOps()) {
         trueBlockArgs.push_back(frame.getValue(blockArg->getIdentifier()));
     }
 
     std::vector<mlir::Value> elseBlockArgs;
     mlir::Block* elseBlock = generateBasicBlock(ifOp->getFalseBlockInvocation(), frame);
-    for (auto blockArg : ifOp->getFalseBlockInvocation().getArguments()) {
+    for (auto blockArg : ifOp->getFalseBlockInvocation().getBranchOps()) {
         elseBlockArgs.push_back(frame.getValue(blockArg->getIdentifier()));
     }
 
@@ -555,10 +555,10 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
     printf("BranchOperation.getNextBlock.getIdentifier: %s\n",
-           branchOp->getNextBlockInvocation().getBlock()->getIdentifier().c_str());
+           branchOp->getNextBlockInvocation().getNextBlock()->getIdentifier().c_str());
     printf("BranchOperation first BlockArg name:\n");
     std::vector<mlir::Value> mlirTargetBlockArguments;
-    for (auto targetBlockArgument : branchOp->getNextBlockInvocation().getArguments()) {
+    for (auto targetBlockArgument : branchOp->getNextBlockInvocation().getBranchOps()) {
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
     }
     auto* mlirTargetBlock = generateBasicBlock(branchOp->getNextBlockInvocation(), frame);
@@ -566,7 +566,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOp
 }
 
 mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame&) {
-    auto targetBlock = blockInvocation.getBlock();
+    auto targetBlock = blockInvocation.getNextBlock();
     // Check if the block already exists.
     if (blockMapping.contains(targetBlock->getIdentifier())) {
         return blockMapping[targetBlock->getIdentifier()];
@@ -586,7 +586,7 @@ mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlock
         blockFrame.setValue(targetBlock->getArguments()[i]->getIdentifier(), mlirBasicBlock->getArgument(i));
     }
 
-    blockMapping[blockInvocation.getBlock()->getIdentifier()] = mlirBasicBlock;
+    blockMapping[blockInvocation.getNextBlock()->getIdentifier()] = mlirBasicBlock;
     builder->setInsertionPointToStart(mlirBasicBlock);
     generateMLIR(targetBlock, blockFrame);
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
@@ -597,8 +597,8 @@ mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlock
 MLIRLoweringProvider::ValueFrame
 MLIRLoweringProvider::createFrameFromParentBlock(MLIRLoweringProvider::ValueFrame& frame,
                                                  IR::Operations::BasicBlockInvocation& invocation) {
-    auto invocationArguments = invocation.getArguments();
-    auto childBlockArguments = invocation.getBlock()->getArguments();
+    auto invocationArguments = invocation.getBranchOps();
+    auto childBlockArguments = invocation.getNextBlock()->getArguments();
     NES_ASSERT(invocationArguments.size() == childBlockArguments.size(),
                "the number of invocation parameters has to be the same as the number of block arguments in the invoked block.");
     ValueFrame childFrame;

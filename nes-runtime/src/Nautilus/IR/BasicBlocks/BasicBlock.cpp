@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+// #include "Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp"
 #include <Util/Logger/Logger.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -37,11 +38,12 @@ void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLe
 uint32_t BasicBlock::getNumLoopBackEdges() { return numLoopBackEdges; }
 void BasicBlock::incrementNumLoopBackEdge() { ++this->numLoopBackEdges; }
 bool BasicBlock::isLoopHeaderBlock() { return numLoopBackEdges > 0; }
-bool BasicBlock::isMergeBlock() { return predecessors.size() - numLoopBackEdges > 1; }
+bool BasicBlock::isMergeBlock() { return predecessors.size() - numLoopBackEdges > 1 || numLoopBackEdges > 1; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 [[nodiscard]] Operations::OperationPtr BasicBlock::getOperationAt(size_t index) { return operations.at(index); }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
+void BasicBlock::clearArguments() { this->arguments.clear(); }
 uint64_t BasicBlock::getIndexOfArgument(Operations::OperationPtr arg) {
     for (uint64_t i = 0; i < arguments.size(); i++) {
         if (arguments[i] == arg) {
@@ -49,6 +51,9 @@ uint64_t BasicBlock::getIndexOfArgument(Operations::OperationPtr arg) {
         }
     }
     return -1;
+}
+void BasicBlock::addArgument(std::shared_ptr<Operations::BasicBlockArgument> arg) {
+    arguments.emplace_back(arg);
 }
 
 // void BasicBlock::popOperation() { operations.pop_back(); }
@@ -105,13 +110,33 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     // std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> nextBlocks;
     if (operations.back()->getOperationType() == IR::Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operations.back());
-        return std::make_pair(branchOp->getNextBlockInvocation().getBlock(), nullptr);
+        return std::make_pair(branchOp->getNextBlockInvocation().getNextBlock(), nullptr);
     } else if (operations.back()->getOperationType() == IR::Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operations.back());
-        return std::make_pair(ifOp->getTrueBlockInvocation().getBlock(), ifOp->getFalseBlockInvocation().getBlock());
+        return std::make_pair(ifOp->getTrueBlockInvocation().getNextBlock(), ifOp->getFalseBlockInvocation().getNextBlock());
     } else if (operations.back()->getOperationType() == IR::Operations::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(operations.back());
-        return std::make_pair(loopOp->getLoopBodyBlock().getBlock(), loopOp->getLoopFalseBlock().getBlock());
+        return std::make_pair(loopOp->getLoopBodyBlock().getNextBlock(), loopOp->getLoopFalseBlock().getNextBlock());
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::ReturnOp) {
+        return {};
+    } else {
+        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: " 
+                    << operations.back()->getOperationType());
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+[[nodiscard]] std::vector<Operations::BasicBlockInvocation*> BasicBlock::getNextBlockInvocations() {
+    // Todo does returning by reference lead to dangling pointers here?
+    if (operations.back()->getOperationType() == IR::Operations::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operations.back());
+        return {&branchOp->getNextBlockInvocation()};
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::IfOp) {
+        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(operations.back());
+        return {&ifOp->getTrueBlockInvocation(), &ifOp->getFalseBlockInvocation()};
+    } else if (operations.back()->getOperationType() == IR::Operations::Operation::LoopOp) {
+        auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(operations.back());
+        return {&loopOp->getLoopBodyBlock(), &loopOp->getLoopFalseBlock()};
     } else if (operations.back()->getOperationType() == IR::Operations::Operation::ReturnOp) {
         return {};
     } else {

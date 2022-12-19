@@ -17,6 +17,8 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
+#include <Nautilus/IR/Types/BasicTypes.hpp>
+
 
 namespace NES::Nautilus::IR::Operations {
 class AddressOperation : public Operation {

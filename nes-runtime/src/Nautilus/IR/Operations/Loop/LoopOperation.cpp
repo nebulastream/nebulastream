@@ -17,17 +17,15 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <utility>
 namespace NES::Nautilus::IR::Operations {
-LoopOperation::LoopOperation(LoopType loopType)
-    : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
+LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopCondition)
+    : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType), 
+        loopCondition(loopCondition){}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-// Todo leads to segfault
 void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
 
 BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }
 BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock; }
-// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
-// void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
 BasicBlockInvocation& LoopOperation::getLoopEndBlock() { return loopEndBlock; }
 
@@ -36,12 +34,20 @@ void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loop
 std::shared_ptr<LoopInfo> LoopOperation::getLoopInfo() { return loopInfo; }
 
 std::string LoopOperation::toString() {
-    std::string baseString = "loop " + loopHeadBlock.getBlock()->getIdentifier() + "(";
-    auto loopBlockArgs = loopHeadBlock.getArguments();
-    if (loopBlockArgs.size() > 0) {
-        baseString += loopBlockArgs[0]->getIdentifier();
-        for (int i = 1; i < (int) loopBlockArgs.size(); ++i) {
-            baseString += ", " + loopBlockArgs.at(i)->getIdentifier();
+    std::string baseString = "loop " + loopCondition.lock()->getIdentifier() + " ? b" + loopBodyBlock.getNextBlock()->getIdentifier() + '(';
+    if (loopBodyBlock.getBranchOps().size() > 0) {
+        baseString += loopBodyBlock.getBranchOps()[0]->getIdentifier();
+        for (int i = 1; i < (int) loopBodyBlock.getBranchOps().size(); ++i) {
+            baseString += ", " + loopBodyBlock.getBranchOps().at(i)->getIdentifier();
+        }
+    }
+    if (loopFalseBlock.getNextBlock()) {
+        baseString += ") : b" + loopFalseBlock.getNextBlock()->getIdentifier() + '(';
+        if (loopFalseBlock.getBranchOps().size() > 0) {
+            baseString += loopFalseBlock.getBranchOps()[0]->getIdentifier();
+            for (int i = 1; i < (int) loopFalseBlock.getBranchOps().size(); ++i) {
+                baseString += ", " + loopFalseBlock.getBranchOps().at(i)->getIdentifier();
+            }
         }
     }
     return baseString + ")";

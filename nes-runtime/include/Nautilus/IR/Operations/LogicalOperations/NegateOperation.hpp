@@ -23,12 +23,13 @@ class NegateOperation : public Operation {
   public:
     NegateOperation(OperationIdentifier identifier, OperationPtr input);
     ~NegateOperation() override = default;
-    OperationPtr getInput();
+    OperationPtr getNegateInput();
+    void setNegateInput(OperationPtr input);
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
-    OperationWPtr input;
+    OperationWPtr negateInput;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_

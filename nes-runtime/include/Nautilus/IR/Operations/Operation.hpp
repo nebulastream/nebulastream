@@ -15,8 +15,6 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 
-#include <Nautilus/IR/Types/BasicTypes.hpp>
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <memory>
 #include <vector>
 
@@ -68,6 +66,8 @@ class Operation {
     const std::vector<const Operation*>& getUsages();
     bool isLoopOperation();
     bool isIfOperation();
+    std::vector<std::shared_ptr<Operation>> getInputs(std::shared_ptr<Operation> operation);
+    void setInput(std::shared_ptr<Operation> operation, std::shared_ptr<Operation> newOperation, size_t index);
 
   protected:
     OperationType opType;

@@ -27,4 +27,6 @@ std::string SubOperation::toString() {
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
 OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
+void SubOperation::setLeftInput(OperationPtr leftInput) {  this->leftInput = leftInput; }
+void SubOperation::setRightInput(OperationPtr rightInput) { this->rightInput = rightInput; }
 }// namespace NES::Nautilus::IR::Operations

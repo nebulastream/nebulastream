@@ -25,7 +25,8 @@ class BasicBlockArgument : public Operation {
     ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
-    std::vector<OperationPtr> getBaseOperations();
+    // void setIdentifier(const std::string& identifier);
+    std::vector<OperationPtr>& getBaseOps();
     void addBaseOperation(OperationPtr baseOperation);
   private:
     std::vector<OperationPtr> baseOperations;

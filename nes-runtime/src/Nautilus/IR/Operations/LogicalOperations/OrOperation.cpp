@@ -30,4 +30,6 @@ std::string OrOperation::toString() {
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr OrOperation::getRightInput() { return rightInput.lock(); }
+void OrOperation::setLeftInput(OperationPtr leftInput) {  this->leftInput = leftInput; }
+void OrOperation::setRightInput(OperationPtr rightInput) { this->rightInput = rightInput; }
 }// namespace NES::Nautilus::IR::Operations

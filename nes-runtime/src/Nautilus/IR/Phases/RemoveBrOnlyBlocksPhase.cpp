@@ -46,19 +46,19 @@ void inline addPredecessorToBlock(IR::BasicBlockPtr currentBlock,
     auto terminatorOp = currentBlock->getTerminatorOp();
     if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
-        branchOp->getNextBlockInvocation().getBlock()->addPredecessor(currentBlock);
-        if (!newBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-            candidates.emplace(branchOp->getNextBlockInvocation().getBlock());
+        branchOp->getNextBlockInvocation().getNextBlock()->addPredecessor(currentBlock);
+        if (!newBlocks.contains(branchOp->getNextBlockInvocation().getNextBlock()->getIdentifier())) {
+            candidates.emplace(branchOp->getNextBlockInvocation().getNextBlock());
         }
     } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-        ifOp->getFalseBlockInvocation().getBlock()->addPredecessor(currentBlock);
-        ifOp->getTrueBlockInvocation().getBlock()->addPredecessor(currentBlock);
-        if (!newBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
-            candidates.emplace(ifOp->getFalseBlockInvocation().getBlock());
+        ifOp->getFalseBlockInvocation().getNextBlock()->addPredecessor(currentBlock);
+        ifOp->getTrueBlockInvocation().getNextBlock()->addPredecessor(currentBlock);
+        if (!newBlocks.contains(ifOp->getFalseBlockInvocation().getNextBlock()->getIdentifier())) {
+            candidates.emplace(ifOp->getFalseBlockInvocation().getNextBlock());
         }
-        if (!newBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
-            candidates.emplace(ifOp->getTrueBlockInvocation().getBlock());
+        if (!newBlocks.contains(ifOp->getTrueBlockInvocation().getNextBlock()->getIdentifier())) {
+            candidates.emplace(ifOp->getTrueBlockInvocation().getNextBlock());
         }
     }
 }
@@ -99,17 +99,17 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, IR::B
             // If the predecessor is a branch-operation, simply set the non-branch-block as the new next-block.
             if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-                if (ifOp->getTrueBlockInvocation().getBlock()->getIdentifier() == brOnlyBlock->getIdentifier()) {
+                if (ifOp->getTrueBlockInvocation().getNextBlock()->getIdentifier() == brOnlyBlock->getIdentifier()) {
                     ifOp->getTrueBlockInvocation().setBlock(nonBrOnlyBlock);
                 } else {
                     ifOp->getFalseBlockInvocation().setBlock(nonBrOnlyBlock);
                     // Check if control flow along the true- and false-branch now lead to the same block.
-                    if (ifOp->getTrueBlockInvocation().getBlock()->getIdentifier() == nonBrOnlyBlock->getIdentifier()) {
+                    if (ifOp->getTrueBlockInvocation().getNextBlock()->getIdentifier() == nonBrOnlyBlock->getIdentifier()) {
                         newPredecessorBlocks.pop_back();
                         predecessor.lock()->removeOperation(predecessor.lock()->getTerminatorOp());
                         auto newBranchOperation = std::make_shared<Operations::BranchOperation>();
                         newBranchOperation->getNextBlockInvocation().setBlock(nonBrOnlyBlock);
-                        for (auto arg : ifOp->getFalseBlockInvocation().getArguments()) {
+                        for (auto arg : ifOp->getFalseBlockInvocation().getBranchOps()) {
                             newBranchOperation->getNextBlockInvocation().addArgument(arg);
                         }
                         predecessor.lock()->addOperation(std::move(newBranchOperation));
@@ -157,7 +157,7 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBr
                 brOnlyBlocks.emplace_back(currentBlock);
                 visitedBlocks.emplace(currentBlock->getIdentifier());// put every visited br only block in visitedBlocks
                 branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
-                currentBlock = branchOp->getNextBlockInvocation().getBlock();
+                currentBlock = branchOp->getNextBlockInvocation().getNextBlock();
             }
             // brOnlyBlocks now contains a br-only-block-chain of at least one br-only-block.
             // currentBlock now is the first block after the br-only-block-chain that is not a br-only-block.
@@ -168,17 +168,17 @@ void RemoveBrOnlyBlocksPhase::RemoveBrOnlyBlocksPhaseContext::processPotentialBr
                 newBlocks.emplace(currentBlock);
             }
         } else {
-            if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
-                newBlocks.emplace(branchOp->getNextBlockInvocation().getBlock());
+            if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getNextBlock()->getIdentifier())) {
+                newBlocks.emplace(branchOp->getNextBlockInvocation().getNextBlock());
             }
         }
     } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-        if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
-            newBlocks.emplace(ifOp->getFalseBlockInvocation().getBlock());
+        if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getNextBlock()->getIdentifier())) {
+            newBlocks.emplace(ifOp->getFalseBlockInvocation().getNextBlock());
         }
-        if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())) {
-            newBlocks.emplace(ifOp->getTrueBlockInvocation().getBlock());
+        if (!visitedBlocks.contains(ifOp->getTrueBlockInvocation().getNextBlock()->getIdentifier())) {
+            newBlocks.emplace(ifOp->getTrueBlockInvocation().getNextBlock());
         }
     }
 }

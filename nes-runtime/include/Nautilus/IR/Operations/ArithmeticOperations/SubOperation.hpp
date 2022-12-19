@@ -26,6 +26,9 @@ class SubOperation : public Operation {
 
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
+    void setLeftInput(OperationPtr leftInput);
+    void setRightInput(OperationPtr leftInput);
+    
     std::string toString() override;
     bool classof(const Operation* Op);
 

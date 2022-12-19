@@ -21,30 +21,40 @@ BasicBlockInvocation::BasicBlockInvocation()
 
 void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = block; }
 
-BasicBlockPtr BasicBlockInvocation::getBlock() { return basicBlock; }
+BasicBlockPtr BasicBlockInvocation::getNextBlock() { return basicBlock; }
 
 void BasicBlockInvocation::addArgument(OperationPtr argument) {
-    this->operations.emplace_back(argument);
+    this->branchOps.emplace_back(argument);
     argument->addUsage(this);
 }
 
-void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.erase(operations.begin() + argumentIndex); }
+void BasicBlockInvocation::setBranchOpAt(size_t index, Operations::OperationPtr operation) { 
+    this->branchOps.at(index) = operation; 
+}
+void BasicBlockInvocation::clearBranchOps() { this->branchOps.clear(); }
+
+//Todo remove
+void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { branchOps.erase(branchOps.begin() + argumentIndex); }
 
 int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
-    for (uint64_t i = 0; i < operations.size(); i++) {
-        if (operations[i].lock() == arg) {
+    for (uint64_t i = 0; i < branchOps.size(); i++) {
+        if (branchOps[i] == arg) {
+        // if (operations[i].lock() == arg) {
             return i;
         }
     }
     return -1;
 }
 
-std::vector<OperationPtr> BasicBlockInvocation::getArguments() {
-    std::vector<OperationPtr> arguments;
-    for (auto& arg : this->operations) {
-        arguments.emplace_back(arg.lock());
-    }
-    return arguments;
+std::vector<OperationPtr> BasicBlockInvocation::getBranchOps() {
+    // std::vector<OperationPtr> arguments;
+    // for (auto& arg : this->operations) {
+    //     arguments.emplace_back(arg.lock());
+    // }
+    // return arguments;
+    // changed because StructuredControlFlowPhaseTest 9 with value scoping lead to weak pointer returning null pointer 
+    // even though the underlying pointer of the shared pointer was still alive
+    return this->branchOps;
 }
 std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
 

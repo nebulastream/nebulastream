@@ -29,7 +29,7 @@ namespace NES::Nautilus::IR::Operations {
 class LoopOperation : public Operation {
   public:
     enum LoopType { DefaultLoop, CountedLoop };
-    LoopOperation(LoopType loopType);
+    LoopOperation(LoopType loopType, OperationPtr loopCondition);
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
@@ -45,6 +45,7 @@ class LoopOperation : public Operation {
 
   private:
     LoopType loopType;
+    OperationWPtr loopCondition;
     BasicBlockInvocation loopHeadBlock;
     BasicBlockInvocation loopBodyBlock;
     BasicBlockInvocation loopFalseBlock;

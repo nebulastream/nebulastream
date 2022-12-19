@@ -39,23 +39,23 @@ void IfOperation::setCountedLoopInfo(std::unique_ptr<CountedLoopInfo> countedLoo
 std::unique_ptr<CountedLoopInfo> IfOperation::getCountedLoopInfo() { return std::move(countedLoopInfo);}
 
 std::string IfOperation::toString() {
-    std::string baseString = "if " + getValue()->getIdentifier() + " ? b" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
-    if (trueBlockInvocation.getArguments().size() > 0) {
-        baseString += trueBlockInvocation.getArguments()[0]->getIdentifier();
-        for (int i = 1; i < (int) trueBlockInvocation.getArguments().size(); ++i) {
-            baseString += ", " + trueBlockInvocation.getArguments().at(i)->getIdentifier();
+    std::string baseString = "if " + getValue()->getIdentifier() + " ? b" + trueBlockInvocation.getNextBlock()->getIdentifier() + '(';
+    if (trueBlockInvocation.getBranchOps().size() > 0) {
+        baseString += trueBlockInvocation.getBranchOps().at(0)->getIdentifier();
+        for (int i = 1; i < (int) trueBlockInvocation.getBranchOps().size(); ++i) {
+            baseString += ", " + trueBlockInvocation.getBranchOps().at(i)->getIdentifier();
         }
     }
-    if (falseBlockInvocation.getBlock()) {
-        baseString += ") : b" + falseBlockInvocation.getBlock()->getIdentifier() + '(';
-        if (falseBlockInvocation.getArguments().size() > 0) {
-            baseString += falseBlockInvocation.getArguments()[0]->getIdentifier();
-            for (int i = 1; i < (int) falseBlockInvocation.getArguments().size(); ++i) {
-                baseString += ", " + falseBlockInvocation.getArguments().at(i)->getIdentifier();
+    if (falseBlockInvocation.getNextBlock()) {
+        baseString += ") : b" + falseBlockInvocation.getNextBlock()->getIdentifier() + '(';
+        if (falseBlockInvocation.getBranchOps().size() > 0) {
+            baseString += falseBlockInvocation.getBranchOps().at(0)->getIdentifier();
+            for (int i = 1; i < (int) falseBlockInvocation.getBranchOps().size(); ++i) {
+                baseString += ", " + falseBlockInvocation.getBranchOps().at(i)->getIdentifier();
             }
         }
     }
     return baseString += ')';
 }
-bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getBlock() != nullptr; }
+bool IfOperation::hasFalseCase() { return this->falseBlockInvocation.getNextBlock() != nullptr; }
 }// namespace NES::Nautilus::IR::Operations

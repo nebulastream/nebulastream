@@ -54,6 +54,9 @@ bool CompareOperation::isGreater() {
     return isGreaterThan() || isGreaterEqual();
 }
 
+void CompareOperation::setLeftInput(OperationPtr leftInput) {this->leftInput = leftInput; leftInput->addUsage(this); }
+void CompareOperation::setRightInput(OperationPtr rightInput){ this->rightInput = rightInput; rightInput->addUsage(this); }
+
 std::string CompareOperation::toString() {
     std::string comperator;
     switch (comparator) {

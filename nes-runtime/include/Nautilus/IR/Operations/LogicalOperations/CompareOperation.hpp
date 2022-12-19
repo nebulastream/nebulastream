@@ -55,6 +55,9 @@ class CompareOperation : public Operation {
     bool isLessThanOrGreaterThan();
     bool isLess();
     bool isGreater();
+    
+    void setLeftInput(OperationPtr leftInput);
+    void setRightInput(OperationPtr leftInput);
 
     std::string toString() override;
 

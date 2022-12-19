@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/Operation.hpp"
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <string>
 namespace NES::Nautilus::IR::Operations {
@@ -29,4 +30,6 @@ bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() 
 
 OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
+void DivOperation::setLeftInput(OperationPtr leftInput) {  this->leftInput = leftInput; }
+void DivOperation::setRightInput(OperationPtr rightInput) { this->rightInput = rightInput; }
 }// namespace NES::Nautilus::IR::Operations

@@ -17,11 +17,12 @@
 namespace NES::Nautilus::IR::Operations {
 
 NegateOperation::NegateOperation(OperationIdentifier identifier, OperationPtr input)
-    : Operation(OperationType::NegateOp, identifier, Types::StampFactory::createBooleanStamp()), input(std::move(input)) {
+    : Operation(OperationType::NegateOp, identifier, Types::StampFactory::createBooleanStamp()), negateInput(std::move(input)) {
     input->addUsage(this);
 }
 
-std::string NegateOperation::toString() { return identifier + "= not " + getInput()->getIdentifier(); }
+std::string NegateOperation::toString() { return identifier + "= not " + getNegateInput()->getIdentifier(); }
 bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
-OperationPtr NegateOperation::getInput() { return input.lock(); }
+OperationPtr NegateOperation::getNegateInput() { return negateInput.lock(); }
+void NegateOperation::setNegateInput(OperationPtr input) { this->negateInput = input; }
 }// namespace NES::Nautilus::IR::Operations

@@ -21,8 +21,12 @@ std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument) {
     return os;
 }
 
-std::vector<OperationPtr> BasicBlockArgument::getBaseOperations() { return baseOperations; }
-void BasicBlockArgument::addBaseOperation(OperationPtr baseOperation) { this->baseOperations.emplace_back(baseOperation); }
+std::vector<OperationPtr>& BasicBlockArgument::getBaseOps() { return baseOperations; }
+void BasicBlockArgument::addBaseOperation(OperationPtr baseOperation) { 
+    if(this->baseOperations.empty() || this->baseOperations.at(0) != baseOperation) {
+        this->baseOperations.emplace_back(baseOperation); 
+    }
+}
 
 std::string BasicBlockArgument::toString() { return identifier; }
 }// namespace NES::Nautilus::IR::Operations

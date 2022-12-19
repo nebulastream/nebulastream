@@ -22,16 +22,20 @@ class BasicBlockInvocation : public Operation {
   public:
     BasicBlockInvocation();
     void setBlock(BasicBlockPtr block);
-    BasicBlockPtr getBlock();
+    BasicBlockPtr getNextBlock();
     void addArgument(OperationPtr argument);
-    void removeArgument(uint64_t argumentIndex);
+    void setBranchOpAt(size_t index, Operations::OperationPtr operation);
+    void clearBranchOps();
+    void removeArgument(uint64_t argumentIndex); //Todo remove
     int getOperationArgIndex(Operations::OperationPtr);
-    std::vector<OperationPtr> getArguments();
+    std::vector<OperationPtr> getBranchOps();
     std::string toString() override;
 
   private:
     BasicBlockPtr basicBlock;
-    std::vector<OperationWPtr> operations;
+    // changed because StructuredControlFlowPhaseTest 9 with value scoping lead to weak pointer returning null pointer 
+    // even though the underlying pointer of the shared pointer was still alive
+    std::vector<OperationPtr> branchOps;
 };
 
 }// namespace NES::Nautilus::IR::Operations

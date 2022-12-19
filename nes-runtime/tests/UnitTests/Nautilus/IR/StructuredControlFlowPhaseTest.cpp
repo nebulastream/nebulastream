@@ -70,6 +70,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         removeBrOnlyBlocksPhase.apply(ir);
         loopDetectionPhase.apply(ir);
         structuredControlFlowPhase.apply(ir);
+        valueScopingPhase.apply(ir);
         return dpsSortedGraphNodes;
     }
 
@@ -214,13 +215,13 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                                 loopInfoIsCorrect &= countedLoopInfo->lowerBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound;
                                 loopInfoIsCorrect &= countedLoopInfo->upperBound == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound;
                                 loopInfoIsCorrect &= countedLoopInfo->stepSize == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize;
-                                loopInfoIsCorrect &= loopOp->getLoopEndBlock().getBlock()->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
+                                loopInfoIsCorrect &= loopOp->getLoopEndBlock().getNextBlock()->getIdentifier() == correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId;
                                 if(!loopInfoIsCorrect) {
                                     NES_ERROR("Loop info set incorrectly. Check values: " << 
                                                 "LowerBound: " << countedLoopInfo->lowerBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->lowerBound <<
                                                 ", UpperBound: " << countedLoopInfo->upperBound << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->upperBound <<
                                                 ", StepSize: " << countedLoopInfo->stepSize << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->stepSize <<
-                                                ", LoopEndBlock: " << loopOp->getLoopEndBlock().getBlock()->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
+                                                ", LoopEndBlock: " << loopOp->getLoopEndBlock().getNextBlock()->getIdentifier() << " vs " << correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo->loopEndBlockId
                                                 );
                                 }
                             }
@@ -680,7 +681,7 @@ TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
     ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(
         dpsSortedBlocks.at(0)->getTerminatorOp());
-    ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "2");
+    ASSERT_EQ(branchOp->getNextBlockInvocation().getNextBlock()->getIdentifier(), "2");
 }
 
 Value<> MergeBlockRightAfterBranchSwitch_13() {
@@ -1047,7 +1048,7 @@ Value<> twoCountedLoopsOneLargeOneSmall_23() {
     }
     return agg;
 }
-TEST_P(StructuredControlFlowPhaseTest, twoCountedLoopsOneLargeOneSmall) {
+TEST_P(StructuredControlFlowPhaseTest, 23_twoCountedLoopsOneLargeOneSmall) {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
     createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 1000, 1, "15"));
     createCorrectBlock(correctBlocks, "2", 0, "15");

@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #include <Nautilus/IR/Operations/CastOperation.hpp>
+// #include <Nautilus/IR/Types/BasicTypes.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 
 namespace NES::Nautilus::IR::Operations {
 

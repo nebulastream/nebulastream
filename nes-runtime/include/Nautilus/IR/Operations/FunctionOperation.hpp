@@ -17,6 +17,9 @@
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/BasicTypes.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 
 namespace NES::Nautilus::IR::Operations {
 class FunctionOperation : public Operation {

@@ -26,6 +26,7 @@ class ReturnOperation : public Operation {
     ~ReturnOperation() override = default;
 
     OperationPtr getReturnValue();
+    void setReturnValue(OperationPtr returnValue);
     bool hasReturnValue();
 
     std::string toString() override;

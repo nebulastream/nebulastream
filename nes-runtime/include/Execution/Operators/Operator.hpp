@@ -18,9 +18,10 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class ExecutionContext;
-class RecordBuffer;
+  class ExecutionContext;
+  class RecordBuffer;
 }// namespace NES::Runtime::Execution
+
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
 class ExecutableOperator;

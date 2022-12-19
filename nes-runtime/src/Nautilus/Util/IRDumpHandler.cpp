@@ -33,26 +33,24 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
     auto terminatorOp = thenBlock->getOperations().back();
     if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-        if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
-            return branchOp->getNextBlockInvocation().getBlock();
+        if (branchOp->getNextBlockInvocation().getNextBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
+            return branchOp->getNextBlockInvocation().getNextBlock();
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlockInvocation().getBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(branchOp->getNextBlockInvocation().getNextBlock(), ifParentBlockLevel);
         }
     } else if (terminatorOp->getOperationType() == Operations::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
-        auto loopIfOp =
-            std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getOperations().back());
-        if (loopIfOp->getTrueBlockInvocation().getBlock()->getScopeLevel() <= (uint32_t) ifParentBlockLevel) {
-            return loopIfOp->getTrueBlockInvocation().getBlock();
+        if (loopOp->getLoopFalseBlock().getNextBlock() != nullptr) {
+            return getNextLowerOrEqualLevelBasicBlock(loopOp->getLoopFalseBlock().getNextBlock(), ifParentBlockLevel);
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(loopIfOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(loopOp->getLoopBodyBlock().getNextBlock(), ifParentBlockLevel);
         }
     } else if (terminatorOp->getOperationType() == Operations::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
-        if (ifOp->getFalseBlockInvocation().getBlock() != nullptr) {
-            return getNextLowerOrEqualLevelBasicBlock(ifOp->getFalseBlockInvocation().getBlock(), ifParentBlockLevel);
+        if (ifOp->getFalseBlockInvocation().getNextBlock() != nullptr) {
+            return getNextLowerOrEqualLevelBasicBlock(ifOp->getFalseBlockInvocation().getNextBlock(), ifParentBlockLevel);
         } else {
-            return getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getBlock(), ifParentBlockLevel);
+            return getNextLowerOrEqualLevelBasicBlock(ifOp->getTrueBlockInvocation().getNextBlock(), ifParentBlockLevel);
         }
     } else {//ReturnOp todo changed #3234
         return nullptr;
@@ -64,25 +62,37 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
             //if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
-            dumpHelper(branchOp->getNextBlockInvocation().getBlock());
+            dumpHelper(branchOp->getNextBlockInvocation().getNextBlock());
             //}
             break;
         }
         case Operations::Operation::OperationType::LoopOp: {
             auto loopOperation = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
-            dumpHelper(loopOperation->getLoopHeadBlock().getBlock());
+            // dumpHelper(loopOperation->getLoopHeadBlock().getBlock());
+            BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(
+                loopOperation->getLoopBodyBlock().getNextBlock(),
+                loopOperation->getLoopBodyBlock().getNextBlock()->getScopeLevel() - 1);//todo can lead to error #3234
+            dumpHelper(loopOperation->getLoopBodyBlock().getNextBlock());
+            if (loopOperation->getLoopFalseBlock().getNextBlock()
+                && loopOperation->getLoopFalseBlock().getNextBlock()->getScopeLevel()
+                    >= (uint32_t) scopeLevel) {//todo remove scopeLevel check #3234
+                dumpHelper(loopOperation->getLoopFalseBlock().getNextBlock());
+            }
+            if (lastTerminatorOp) {
+                dumpHelper(lastTerminatorOp);
+            }
             break;
         }
         case Operations::Operation::OperationType::IfOp: {
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
             BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(
-                ifOp->getTrueBlockInvocation().getBlock(),
-                ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1);//todo can lead to error #3234
-            dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
-            if (ifOp->getFalseBlockInvocation().getBlock()
-                && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel()
+                ifOp->getTrueBlockInvocation().getNextBlock(),
+                ifOp->getTrueBlockInvocation().getNextBlock()->getScopeLevel() - 1);//todo can lead to error #3234
+            dumpHelper(ifOp->getTrueBlockInvocation().getNextBlock());
+            if (ifOp->getFalseBlockInvocation().getNextBlock()
+                && ifOp->getFalseBlockInvocation().getNextBlock()->getScopeLevel()
                     >= (uint32_t) scopeLevel) {//todo remove scopeLevel check #3234
-                dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
+                dumpHelper(ifOp->getFalseBlockInvocation().getNextBlock());
             }
             if (lastTerminatorOp) {
                 dumpHelper(lastTerminatorOp);
@@ -114,6 +124,9 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
             //  out << std::string(indent * 4, ' ') << operation->toString() << std::endl;
         }
         OperationPtr terminatorOp = basicBlock->getOperations().back();
+        std::stringstream ss;
+        ss << out.rdbuf();
+        NES_DEBUG(ss.str());
         dumpHelper(terminatorOp, basicBlock->getScopeLevel());
     }
 }

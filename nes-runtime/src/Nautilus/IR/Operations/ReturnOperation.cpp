@@ -14,6 +14,7 @@
 
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
 #include <string>
 namespace NES::Nautilus::IR::Operations {
@@ -31,6 +32,7 @@ std::string ReturnOperation::toString() {
     }
 }
 OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
+void ReturnOperation::setReturnValue(OperationPtr returnValue) { this->returnValue = returnValue; }
 bool ReturnOperation::hasReturnValue() { return !stamp->isVoid(); }
 
 }// namespace NES::Nautilus::IR::Operations
