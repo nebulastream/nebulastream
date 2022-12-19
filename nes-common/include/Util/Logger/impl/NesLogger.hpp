@@ -15,7 +15,7 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_LOGGER_NESLOGGER_HPP_
 
-#include "Util/Logger/LogLevel.hpp"
+#include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
