@@ -20,7 +20,7 @@ ReconnectSchedule::ReconnectSchedule(uint64_t currentParentId,
                                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
                                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
                                      const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
-                                     std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> reconnectVector)
+                                     std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector)
     : currentParentId(currentParentId), pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
       lastIndexUpdatePosition(std::move(lastIndexUpdatePosition)), reconnectVector(std::move(reconnectVector)) {}
 
@@ -28,7 +28,7 @@ NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathSta
 
 NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathEnd() const { return pathEnd; }
 
-std::shared_ptr<std::vector<std::shared_ptr<ReconnectPoint>>> ReconnectSchedule::getReconnectVector() const {
+std::shared_ptr<std::vector<ReconnectPoint>> ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
 }
 

@@ -158,11 +158,11 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-void TopologyNode::setSpatialType(NES::Spatial::Index::Experimental::SpatialType spatialType) {
+void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatialType) {
     nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] = spatialType;
 }
 
-Spatial::Index::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
-    return std::any_cast<Spatial::Index::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
+Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
+    return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
 }
 }// namespace NES
