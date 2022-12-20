@@ -19,6 +19,13 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+namespace detail {
+struct LoggerShutdownHelper {
+    ~LoggerShutdownHelper() { NES::Logger::getInstance().shutdown(); }
+};
+static LoggerShutdownHelper helper;
+}// namespace detail
+
 namespace NES {
 
 namespace Logger {
@@ -71,12 +78,7 @@ auto toSpdlogLevel(LogLevel level) {
     return spdlogLevel;
 }
 
-auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
-    auto sink = std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL);
-    std::vector<spdlog::sink_ptr> sinks = {sink};
-    auto logger = std::make_shared<spdlog::logger>(SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end());
-    return logger;
-}
+auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> { return nullptr; }
 
 auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spdlog::logger> {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
@@ -102,16 +104,16 @@ auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spd
                                                          sinks.end(),
                                                          spdlog::thread_pool(),
                                                          spdlog::async_overflow_policy::block);
-
+    
     logger->set_level(spdlogLevel);
     logger->flush_on(spdlog::level::debug);
-
-    spdlog::register_logger(logger);
 
     return logger;
 }
 
-Logger::~Logger() { shutdown(); }
+Logger::~Logger() {
+    //shutdown();
+}
 
 void Logger::forceFlush() {
     for (auto& sink : impl->sinks()) {
@@ -121,14 +123,13 @@ void Logger::forceFlush() {
 }
 
 void Logger::shutdown() {
-    forceFlush();
-    spdlog::shutdown();
+    bool expected = false;
+    if (isShutdown.compare_exchange_strong(expected, true)) {
+        spdlog::shutdown();
+    }
 }
 
 void Logger::configure(const std::string& logFileName, LogLevel level) {
-    if (impl) {
-        spdlog::drop(impl->name());
-    }
     auto configuredLogger = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
@@ -142,6 +143,5 @@ void Logger::changeLogLevel(LogLevel newLevel) {
     impl->set_level(spdNewLogLevel);
     std::swap(newLevel, currentLogLevel);
 }
-
 }// namespace detail
 }// namespace NES
