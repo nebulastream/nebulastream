@@ -51,10 +51,13 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DistributeWindowRuleTest test case.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() override {
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -64,12 +67,6 @@ class DistributeWindowRuleTest : public Testing::TestWithErrorHandling<testing::
         distributeWindowRule = Optimizer::DistributedWindowRule::create(optimizerConfiguration);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup DistributeWindowRuleTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DistributeWindowRuleTest test class."); }
 };
 
 void setupSensorNodeAndSourceCatalogTwoNodes(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {

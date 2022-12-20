@@ -39,10 +39,13 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
   public:
     SchemaPtr schema;
 
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("FilterPushDownRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup FilterPushDownRuleTest test case.");
+    }
+
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("FilterPushDownTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FilterPushDownTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 

@@ -22,12 +22,10 @@ using namespace z3;
 namespace NES {
 class Z3ValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3ValidationTest test class.");
     }
-
-    void TearDown() override { NES_INFO("Tear down Z3ValidationTest test class."); }
 };
 
 /**

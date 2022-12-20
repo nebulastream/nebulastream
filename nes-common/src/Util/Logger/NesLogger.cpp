@@ -78,7 +78,9 @@ auto toSpdlogLevel(LogLevel level) {
     return spdlogLevel;
 }
 
-auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> { return nullptr; }
+auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
+    return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
+}
 
 auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spdlog::logger> {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
@@ -104,7 +106,7 @@ auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spd
                                                          sinks.end(),
                                                          spdlog::thread_pool(),
                                                          spdlog::async_overflow_policy::block);
-    
+
     logger->set_level(spdlogLevel);
     logger->flush_on(spdlog::level::debug);
 
