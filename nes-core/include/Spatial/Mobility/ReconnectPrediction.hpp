@@ -20,10 +20,12 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
- * @brief a struct containing data about the predicted next reconnect of a mobile worker
+ * @brief a struct containing data about:
+ * 1. The id of the next worker that this worker can connect to.
+ * 2. The time when the reconnection will occur.
  */
 struct ReconnectPrediction {
-    uint64_t expectedNewParentId;
+    uint64_t newParentId;
     Timestamp expectedTime;
 };
 }// namespace NES::Spatial::Mobility::Experimental

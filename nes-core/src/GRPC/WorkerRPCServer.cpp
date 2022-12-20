@@ -260,7 +260,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
             reconnectLocation->set_lat(loc.getLatitude());
             reconnectLocation->set_lng(loc.getLongitude());
             auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
-            reconnectPrediction->set_id(elem->reconnectPrediction.expectedNewParentId);
+            reconnectPrediction->set_id(elem->reconnectPrediction.newParentId);
             reconnectPrediction->set_time(elem->reconnectPrediction.expectedTime);
         }
     }

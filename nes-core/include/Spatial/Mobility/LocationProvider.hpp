@@ -14,7 +14,6 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -26,9 +25,6 @@
 #include <s2/s2point_index.h>
 #endif
 
-class S2Polyline;
-using S2PolylinePtr = std::shared_ptr<S2Polyline>;
-
 namespace NES {
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -38,10 +34,8 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 namespace Spatial::DataTypes::Experimental {
 class GeoLocation;
-using GeoLocationPtr = std::shared_ptr<GeoLocation>;
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
-using NodeIdsMapPtr = std::shared_ptr<std::unordered_map<uint64_t, GeoLocation>>;
+using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Configurations {
@@ -64,19 +58,16 @@ class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
 /**
- * @brief this class is the worker-side interface to access all location related information. It is allows querying for the fixed
- * position of a field node or the current position of a mobile node as well as making calls to the coordinator in order to
- * download field node spatial data to a mobile worker. To allow querying for the position of a mobile device, the class needs to
- * be subclassed to integrate with the device specific interfaces
+ * @brief this class is the worker-side interface to access all location related information. It allows querying for the fixed position of a field node or the current position of a mobile node.
  */
 class LocationProvider {
   public:
     /**
      * Constructor
      * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
-     * @param fieldNodeLoc the fixed location if this worker is a field node. Will be ignored if the spatial type is not FIXED_LOCATION
+     * @param geoLocation the location of this worker node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(Index::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation fieldNodeLoc);
+    explicit LocationProvider(Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief default destructor
@@ -87,7 +78,7 @@ class LocationProvider {
      * Experimental
      * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
      */
-    [[nodiscard]] Index::Experimental::SpatialType getSpatialType() const;
+    [[nodiscard]] Spatial::Experimental::SpatialType getSpatialType() const;
 
     /**
      * Experimental
@@ -104,7 +95,8 @@ class LocationProvider {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    DataTypes::Experimental::NodeIdsMapPtr getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location, double radius);
+    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
+                                                                      double radius);
 
     /**
      * Experimental
@@ -112,20 +104,13 @@ class LocationProvider {
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::shared_ptr<std::unordered_map<uint64_t, DataTypes::Experimental::GeoLocation>> getNodeIdsInRange(double radius);
-
-    /**
-     * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
-     * @param geoLoc: The new fixed Location to be set
-     * @return success of operation
-     */
-    bool setFixedLocationCoordinates(const DataTypes::Experimental::GeoLocation&& geoLoc);
+    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(double radius);
 
     /**
      * @brief pass a pointer to this worker coordinator rpc client, so the location provider can query information from the coordinator
      * @param coordinatorClient : a smart pointer to the coordinator rpc client object
      */
-    void setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient);
+    void setCoordinatorRPCClient(CoordinatorRPCClientPtr coordinatorClient);
 
     /**
      * Experimental
@@ -144,8 +129,8 @@ class LocationProvider {
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    DataTypes::Experimental::GeoLocation fixedLocationCoordinates;
-    Index::Experimental::SpatialType spatialType;
+    DataTypes::Experimental::GeoLocation workerGeoLocation;
+    Spatial::Experimental::SpatialType spatialType;
     TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental

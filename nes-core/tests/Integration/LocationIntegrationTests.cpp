@@ -823,7 +823,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                                 || !lastReconnectPositionAndTime.first->isValid())) {
                             NES_TRACE("path stabilized after reconnect")
                             NES_TRACE(
-                                "new predicted parent = " << newPredictedReconnect->reconnectPrediction.expectedNewParentId);
+                                "new predicted parent = " << newPredictedReconnect->reconnectPrediction.newParentId);
                             predictedReconnect = newPredictedReconnect;
                             firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
 
@@ -876,9 +876,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin();
                          prediction != checkVectorForCoordinatorPrediction.end();
                          ++prediction) {
-                        NES_DEBUG("comparing prediction to node with id " << prediction->expectedNewParentId)
+                        NES_DEBUG("comparing prediction to node with id " << prediction->newParentId)
                         predictedAtCoord =
-                            prediction->expectedNewParentId == predictedReconnect->reconnectPrediction.expectedNewParentId;
+                            prediction->newParentId == predictedReconnect->reconnectPrediction.newParentId;
                         if (predictedAtCoord) {
                             checkVectorForCoordinatorPrediction.erase(checkVectorForCoordinatorPrediction.begin(), prediction);
                             break;
@@ -899,8 +899,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         auto currentPredictionAtCoordinator = crd->getTopology()->getLocationIndex()->getScheduledReconnect(wrk1->getWorkerId());
         if (currentPredictionAtCoordinator
             && (checkVectorForCoordinatorPrediction.empty()
-                || checkVectorForCoordinatorPrediction.back().expectedNewParentId
-                    != currentPredictionAtCoordinator.value().expectedNewParentId)) {
+                || checkVectorForCoordinatorPrediction.back().newParentId
+                    != currentPredictionAtCoordinator.value().newParentId)) {
             NES_DEBUG("adding new prediction from coordinator")
             checkVectorForCoordinatorPrediction.push_back(currentPredictionAtCoordinator.value());
         }

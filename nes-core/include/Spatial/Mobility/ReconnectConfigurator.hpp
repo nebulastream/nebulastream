@@ -43,9 +43,13 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 namespace Spatial {
 namespace Mobility::Experimental {
 /**
-     * @brief runs at worker side and sends periodic updates about location and reconnect predictions to the coordinator. Also
-     * allows to trigger a change of the workers parent (reconnect)
-     */
+* @brief This class runs in an independent thread at worker side and is responsible for mobility aspect of a worker.
+ * It has the following three functions:
+ * 1. Updates coordinator about the current location (*whenever location is changed)
+ * 2. Updates coordinator about the next predicted re-connection point based on the current location.
+ * 3. Performs reconnection to a new base worker and informs coordinator about change to the parent worker.
+ * 4. Initiates mechanisms to prevent query interruption (Un-/buffering, reconfigure sink operators)
+*/
 class ReconnectConfigurator {
   public:
     /**
