@@ -21,7 +21,9 @@
 
 namespace NES::Runtime::Execution {
 
-
+/**
+ * @brief This class is a data container for all the necessary objects in a window of the StreamJoin
+ */
 class StreamJoinWindow {
 
   public:

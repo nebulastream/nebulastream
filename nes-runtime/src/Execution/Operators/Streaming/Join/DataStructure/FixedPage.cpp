@@ -13,11 +13,10 @@
 */
 
 #include <atomic>
-
+#include <cstring>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <cstring>
+#include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -48,7 +47,7 @@ uint8_t* FixedPage::append(const uint64_t hash)  {
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
     uint64_t totalKey;
     memcpy(&totalKey, keyPtr, sizeOfKey);
-    uint64_t hash = Util::murmurHash(totalKey);
+    uint64_t hash = Execution::Util::murmurHash(totalKey);
 
     return bloomFilter->checkContains(hash);
 }

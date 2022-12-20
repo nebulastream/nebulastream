@@ -23,9 +23,14 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 
 namespace NES::Runtime::Execution::Operators {
+
+/**
+ * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
+ * consisting of a FixedPagesLinkedList.
+ */
 class LocalHashTable {
 
-  public:
+public:
     /**
      * @brief Constructor for a HashTable that is only accessed by a single thread
      * @param sizeOfRecord
@@ -36,12 +41,14 @@ class LocalHashTable {
      */
     explicit LocalHashTable(size_t sizeOfRecord,
                             size_t numPartitions,
-                            std::atomic<uint64_t>& tail,
+                            std::atomic<uint64_t> &tail,
                             size_t overrunAddress,
                             size_t pageSize);
 
-    LocalHashTable(const LocalHashTable&) = delete;
-    LocalHashTable& operator=(const LocalHashTable&) = delete;
+    LocalHashTable(const LocalHashTable &) = delete;
+
+    LocalHashTable &operator=(const LocalHashTable &) = delete;
+
     virtual ~LocalHashTable() = default;
 
     /**
@@ -49,14 +56,14 @@ class LocalHashTable {
      * @param key
      * @return Pointer to free memory space where the data shall be written
      */
-    uint8_t* insert(uint64_t key) const;
+    uint8_t *insert(uint64_t key) const;
 
     /**
      * @brief Returns the bucket at bucketPos
      * @param bucketPos
      * @return bucket
      */
-    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos);
+    FixedPagesLinkedList *getBucketLinkedList(size_t bucketPos);
 
     /**
      * @brief Calculates the bucket position for the hash
@@ -65,7 +72,7 @@ class LocalHashTable {
      */
     size_t getBucketPos(uint64_t hash) const;
 
-  private:
+private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
 
