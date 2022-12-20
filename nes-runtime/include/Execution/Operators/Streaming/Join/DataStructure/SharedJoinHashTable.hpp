@@ -25,8 +25,8 @@
 namespace NES::Runtime::Execution::Operators {
 
 /**
- * @brief This class implements a shared hash table for one of the join sides
- *
+ * @brief This class represents a hash map that is thread safe. It consists of multiple buckets each
+ * consisting of a linked list of FixedPages
  */
 class SharedJoinHashTable {
   private:

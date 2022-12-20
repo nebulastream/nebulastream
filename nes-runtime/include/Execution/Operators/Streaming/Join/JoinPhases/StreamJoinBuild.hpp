@@ -23,6 +23,11 @@ namespace NES::Runtime::Execution::Operators {
 class StreamJoinBuild;
 using StreamJoinBuildPtr = std::shared_ptr<StreamJoinBuild>;
 
+/**
+ * @brief This class is the first phase of the StreamJoin. Each thread builds a LocalHashTable until the window is finished.
+ * Then, each threads inserts the LocalHashTable into the SharedHashTable.
+ * Afterwards, the second phase (StreamJoinSink) will start if both sides of the join have seen the end of the window.
+ */
 class StreamJoinBuild : public ExecutableOperator {
 
   public:

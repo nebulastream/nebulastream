@@ -13,6 +13,7 @@
 */
 #include <cmath>
 
+#include <Runtime/Allocator/MemoryUtil.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,7 +35,7 @@ BloomFilter::BloomFilter(uint64_t entries, double falsePositiveRate) {
     }
 
     noHashes = (uint16_t) std::ceil(std::log(2) * bitsPerEntry);
-    bitField = NES::Runtime::Execution::detail::allocAligned<uint8_t>(bytes, 64);
+    bitField = NES::Runtime::detail::allocAligned<uint8_t>(bytes, 64);
     std::memset(bitField, 0, bytes);
 }
 
