@@ -59,11 +59,14 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     TopologyPtr topology;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup ILPPlacementTest test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup ILPPlacementTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+
         NES_DEBUG("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

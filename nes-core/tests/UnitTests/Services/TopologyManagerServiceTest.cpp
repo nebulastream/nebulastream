@@ -39,12 +39,14 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup NES TopologyManagerService test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TopologyManager.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup NES TopologyManagerService test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_DEBUG("Setup NES TopologyManagerService test case.");
-        NES::Logger::setupLogging("TopologyManager.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

@@ -43,10 +43,14 @@ class LogicalSourceExpansionRuleTest : public Testing::TestWithErrorHandling<tes
   public:
     SchemaPtr schema;
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    /* Will be called before all tests in this class are started. */
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() override {
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
