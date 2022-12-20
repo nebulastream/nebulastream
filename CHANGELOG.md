@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.10](https://github.com/nebulastream/nebulastream/tree/v0.4.10) (2022-12-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.9...v0.4.10)
+
+#### User Defined Functions
+
+- \[Feature\] Add Protobuf representation of MapJavaUDF operator and serialization logic [\#3309](https://github.com/nebulastream/nebulastream/issues/3309)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Kafka Sink [\#3214](https://github.com/nebulastream/nebulastream/issues/3214)
+
 ## [v0.4.9](https://github.com/nebulastream/nebulastream/tree/v0.4.9) (2022-12-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.8...v0.4.9)
