@@ -46,6 +46,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+# TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 
 # Enable exception interception (for debugging purpose)
@@ -420,13 +421,20 @@ endif ()
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
+    # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
         include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1)
         add_compile_definitions(ENABLE_KAFKA_BUILD)
+        add_library(cppkafka::cppkafka SHARED IMPORTED)
+        set_target_properties(cppkafka::cppkafka
+                PROPERTIES
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1
+                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
+                )
+        install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
     endif ()
-
 endif ()
 
 # Library containing OPC client
