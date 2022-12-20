@@ -54,8 +54,8 @@ namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-class TrajectoryPredictor;
-using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
+class ReconnectSchedulePredictor;
+using TrajectoryPredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
 /**
  * @brief this class is the worker-side interface to access all location related information. It allows querying for the fixed position of a field node or the current position of a mobile node.

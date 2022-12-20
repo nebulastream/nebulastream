@@ -42,6 +42,12 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 
 namespace Spatial {
 namespace Mobility::Experimental {
+class ReconnectSchedulePredictor;
+using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
+
+class ReconnectSchedule;
+using ReconnectSchedulePtr;
+
 /**
 * @brief This class runs in an independent thread at worker side and is responsible for mobility aspect of a worker.
  * It has the following three functions:
@@ -50,7 +56,7 @@ namespace Mobility::Experimental {
  * 3. Performs reconnection to a new base worker and informs coordinator about change to the parent worker.
  * 4. Initiates mechanisms to prevent query interruption (Un-/buffering, reconfigure sink operators)
 */
-class ReconnectConfigurator {
+class WorkerMobilityHandler {
   public:
     /**
      * Constructor
@@ -58,7 +64,7 @@ class ReconnectConfigurator {
      * @param coordinatorRpcClient This workers rpc client for communicating with the coordinator
      * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
      */
-    explicit ReconnectConfigurator(
+    explicit WorkerMobilityHandler(
         NesWorker& worker,
         CoordinatorRPCCLientPtr coordinatorRpcClient,
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
@@ -67,7 +73,7 @@ class ReconnectConfigurator {
      * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
      * and if so, send the new location and the time it was recorded to the coordinator and safe it as the last transmitted position
      */
-    void checkThresholdAndSendLocationUpdate();
+    void checkThresholdAndSendLocationUpdate(const DataTypes::Experimental::Waypoint &currentWaypoint);
 
     /**
      * @brief keep the coordinator updated about this devices position by periodically calling checkThresholdAndSendLocationUpdate()
@@ -81,7 +87,7 @@ class ReconnectConfigurator {
     bool stopPeriodicUpdating();
 
     /**
-     * @brief inform the ReconnectConfigurator about the latest scheduled reconnect. If the supplied reconnect data differs
+     * @brief inform the WorkerMobilityHandler about the latest scheduled reconnect. If the supplied reconnect data differs
      * from the previous prediction, it will be sent to the coordinator and also saved as a member of this object
      * @param scheduledReconnect : an optional containing a tuple made up of the id of the expected new parent, the expected
      * Location where the reconnect will happen, and the expected time of the reconnect. Or nullopt in case no prediction
@@ -89,7 +95,7 @@ class ReconnectConfigurator {
      * @return true if the the supplied prediction differed from the previous prediction. false if the value did not change
      * and therefore no update was sent to the coordinator
      */
-    bool updateScheduledReconnect(const std::optional<Mobility::Experimental::ReconnectPrediction>& scheduledReconnect);
+    bool sendScheduledReconnect(const std::optional<Mobility::Experimental::ReconnectPrediction>& scheduledReconnect);
 
     /**
      * @brief change the mobile workers position in the topology by giving it a new parent
@@ -111,8 +117,36 @@ class ReconnectConfigurator {
 #endif
     uint64_t locationUpdateInterval;
     std::shared_ptr<std::thread> sendLocationUpdateThread;
+
+    double nodeInfoDownloadRadius;
+    LocationProviderPtr locationProvider;
+    std::unordered_map<uint64_t, S2Point> fieldNodeMap;
+    std::optional<S2Point> positionOfLastNodeIndexUpdate;
+    S2PointIndex<uint64_t> fieldNodeIndex;
+    ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
+
+    DataTypes::Experimental::GeoLocation currentParentLocation; //todo: make this a function parameter
+    uint64_t parentId;
+    S1Angle coveredRadiusWithoutThreshold;
+
+    /**
+     * @brief download the the field node locations within the configured distance around the devices position. If the list of the
+     * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
+     * @param currentLocation : the device position
+     * @return true if the received list of node positions was not empty
+     */
+    bool downloadFieldNodes(const DataTypes::Experimental::GeoLocation& currentLocation);
+
+    /**
+     * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
+     * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
+     * @param ownLocation: This workers current location
+     */
+    bool reconnectToClosestNode(const DataTypes::Experimental::Waypoint& ownLocation, double maxDistance);
+    bool updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
+    void HandleScheduledReconnect(ReconnectSchedulePtr reconnectSchedule);
 };
-using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+using ReconnectConfiguratorPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Mobility::Experimental
 }// namespace Spatial
 }// namespace NES

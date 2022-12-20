@@ -21,8 +21,8 @@ add_source_files(nes-core
         LocationIndex.cpp
         Mobility/LocationProvider.cpp
         Mobility/ReconnectSchedule.cpp
-        Mobility/TrajectoryPredictor.cpp
-        Mobility/ReconnectConfigurator.cpp
+        Mobility/ReconnectSchedulePredictor.cpp
+        Mobility/WorkerMobilityHandler.cpp
         DataTypes/GeoLocation.cpp
         )
 
