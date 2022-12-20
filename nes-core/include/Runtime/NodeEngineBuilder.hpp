@@ -34,8 +34,7 @@ class NodeEngineBuilder {
      * @param workerConfiguration contains values that configure aspects of the NodeEngine
      * @return NodeEngineBuilder
      */
-    static NodeEngineBuilder
-    create(Configurations::WorkerConfigurationPtr workerConfiguration = std::make_shared<Configurations::WorkerConfiguration>());
+    static NodeEngineBuilder create(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     /**
      * setter used to pass NesWorker to NodeEngineBuilder. Optional

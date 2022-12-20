@@ -15,10 +15,8 @@
 #define NES_FIXEDPAGE_HPP
 
 #include <atomic>
-
-#include <Nautilus/Interface/Record.hpp>
+#include <cstddef>
 #include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {
@@ -37,11 +35,6 @@ class FixedPage{
      * @param pageSize
      */
     explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize);
-
-    /**
-     * @brief Default constructor
-     */
-    FixedPage() = default;
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
