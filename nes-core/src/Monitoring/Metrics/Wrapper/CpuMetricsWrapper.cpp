@@ -39,10 +39,10 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     if (schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
         NES_ERROR("CpuMetricsWrapper: At least one tuple of CpuMetrics has to fit into buffer");
-    }
-    else if (totalSize > buf.getBufferSize()) {
+    } else if (totalSize > buf.getBufferSize()) {
         NES_WARNING("CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" << totalSize << " > "
-                       << " getBufferSize:" << buf.getBufferSize());
+                                                                                        << " getBufferSize:"
+                                                                                        << buf.getBufferSize());
     }
 
     for (unsigned int i = 0; i < size(); i++) {
