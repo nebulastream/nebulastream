@@ -36,7 +36,7 @@
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
