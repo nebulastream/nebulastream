@@ -16,11 +16,11 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -29,7 +29,7 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-TrajectoryPredictor::TrajectoryPredictor(
+ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
 #ifdef S2DEF
 
@@ -43,17 +43,16 @@ TrajectoryPredictor::TrajectoryPredictor(
                         << "These values will lead to gaps in reconnect planning. Exiting");
         exit(EXIT_FAILURE);
     }
-    pathPredictionUpdateInterval = configuration->pathPredictionUpdateInterval.getValue();
     locationBufferSize = configuration->locationBufferSize.getValue();
     locationBufferSaveRate = configuration->locationBufferSaveRate.getValue();
     pathDistanceDeltaAngle = S2Earth::MetersToAngle(configuration->pathDistanceDelta.getValue());
     predictedPathLengthAngle = S2Earth::MetersToAngle(configuration->pathPredictionLength);
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(configuration->defaultCoverageRadius.getValue());
-    coveredRadiusWithoutThreshold =
-        S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
-    updatePrediction = false;
     speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
     bufferAverageMovementSpeed = 0;
+    stepsSinceLastLocationSave = 0;
+
+    reconnectVector = std::make_shared<std::vector<ReconnectPoint>>();
 
 #else
     (void) configuration;
@@ -62,39 +61,38 @@ TrajectoryPredictor::TrajectoryPredictor(
 #endif
 }
 
-Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSchedule() {
+//todo: remove this function?
+Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReconnectSchedule() {
 #ifdef S2DEF
     DataTypes::Experimental::GeoLocation start;
     DataTypes::Experimental::GeoLocation end;
 
     //check if a path exists and insert invalid locations if it doesn't
     if (trajectoryLine) {
-        std::unique_lock lineLock(trajectoryLineMutex);
         S2LatLng startLatLng(trajectoryLine->vertices_span()[0]);
         start = DataTypes::Experimental::GeoLocation(startLatLng.lat().degrees(), startLatLng.lng().degrees());
         S2LatLng endLatLng(trajectoryLine->vertices_span()[1]);
         end = DataTypes::Experimental::GeoLocation(endLatLng.lat().degrees(), endLatLng.lng().degrees());
-        lineLock.unlock();
     } else {
         //todo #2918: make create method
         start = DataTypes::Experimental::GeoLocation();
         end = DataTypes::Experimental::GeoLocation();
     }
 
-    std::unique_lock reconnectVectorLock(reconnectVectorMutex);
     //get a shared ptr to a vector containing predicted reconnect inf oconsisting of expected parent id, expected reconnect location and expected time
-    reconnectVectorLock.unlock();
 
     /*get a pointer to the position of the device at the time the local field node index was updated
     if no such update has happened so for, set the pointer to nullptr */
     DataTypes::Experimental::GeoLocation indexUpdatePointer;
-    std::unique_lock indexUpdatePosLock(indexUpdatePositionMutex);
+    //todo: remove position of last index update from the reonnect schedule?
+    /*
     if (positionOfLastNodeIndexUpdate) {
         indexUpdatePointer = Spatial::Util::S2Utilities::s2pointToLocation(positionOfLastNodeIndexUpdate.value());
     } else {
         indexUpdatePointer = DataTypes::Experimental::GeoLocation();
     }
     indexUpdatePosLock.unlock();
+     */
 
     //construct a schedule object and return it
     return std::make_unique<Mobility::Experimental::ReconnectSchedule>(parentId, start, end, indexUpdatePointer, reconnectVector);
@@ -104,210 +102,126 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
 #endif
 }
 
-bool TrajectoryPredictor::downloadFieldNodes(const DataTypes::Experimental::GeoLocation& currentLocation) {
-#ifdef S2DEF
-    if (!currentLocation.isValid()) {
-        NES_WARNING("invalid location, cannot download field nodes");
-        return false;
-    }
-    NES_DEBUG("Downloading nodes in range")
-    //get current position and download node information from coordinator
-    //divide the download radius by 1000 to convert meters to kilometers
-    auto nodeMapPtr = locationProvider->getNodeIdsInRange(currentLocation, nodeInfoDownloadRadius / 1000);
-
-    //if we actually received nodes in our vicinity, we can clear the old nodes
-    std::unique_lock nodeIndexLock(nodeIndexMutex);
-    if (!nodeMapPtr.empty()) {
-        fieldNodeMap.clear();
-        fieldNodeIndex.Clear();
-    } else {
-        return false;
+Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReconnectSchedule(const DataTypes::Experimental::Waypoint &currentOwnLocation,
+                                                                                              const DataTypes::Experimental::GeoLocation &parentLocation,
+                                                                                              const S2PointIndex<uint64_t> &fieldNodeIndex,
+                                                                                              const std::unordered_map<uint64_t, S2Point> &fieldNodeMap,
+                                                                                              bool indexUpdated) {
+    //if the device location has not changed, there are no new calculations to be made
+    if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
+        NES_DEBUG("Location has not changed, do not recalculate schedule")
+        return nullptr;
     }
 
-    //insert node info into spatial index and map on node ids
-    for (auto [nodeId, location] : nodeMapPtr) {
-        NES_TRACE("adding node " << nodeId << " with location " << location.toString())
-        fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
-        fieldNodeMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});
-    }
-    nodeIndexLock.unlock();
-
-    //save the position of the update so we can check how far we have moved from there later on
-    std::unique_lock positionAtUpdateLock(indexUpdatePositionMutex);
-    positionOfLastNodeIndexUpdate = Spatial::Util::S2Utilities::geoLocationToS2Point(currentLocation);
-    NES_TRACE("setting last index update position to " << currentLocation.toString())
-    return true;
-#else
-    (void) currentLocation;
-    NES_WARNING("s2 library is needed to download field node information")
-    return false;
-#endif
-}
-
-void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator) {
-#ifdef S2DEF
-    if (updatePrediction) {
-        NES_WARNING("there is already a prediction thread running, cannot start another one")
-        return;
-    }
-
-    //set this boolean to tell the locationUpdate thread to keep looping after it started
-    //the thread will only terminate when this is set to false
-    updatePrediction = true;
-
-    //set the reconnect configurator so it can be called in case of a reconnect
-    this->reconnectConfigurator = std::move(reconnectConfigurator);
-
-    //get the current position and download the locations of the field nodes in the vicinity
-    auto currentPosition = locationProvider->getWaypoint();
-    downloadFieldNodes(currentPosition.getLocation());
-
-    //find the current parent node among the downloaded field node data
-    std::unique_lock nodeIndexLock(nodeIndexMutex);
-    auto iterator = S2PointIndex<uint64_t>::Iterator(&fieldNodeIndex);
-    iterator.Begin();
-    while (!iterator.done()) {
-        if (iterator.data() == parentId) {
-            currentParentLocation = iterator.point();
-            break;
-        }
-        iterator.Next();
-    }
-    nodeIndexLock.unlock();
-
-    std::unique_lock vectorLock(reconnectVectorMutex);
-    reconnectVector = std::make_shared<std::vector<ReconnectPoint>>();
-    vectorLock.unlock();
-
-    //if this workers current parent could not be found among the data, reconnect planning is not possible
-    if (iterator.done()) {
-        NES_DEBUG("parent id does not match any field node in the coverage area. Changing parent now")
-        reconnectToClosestNode(locationProvider->getCurrentWaypoint());
-        NES_DEBUG("set parent to " << parentId);
-    }
-
-    //start reconnect planner thread
-    locationUpdateThread = std::make_shared<std::thread>(&TrajectoryPredictor::startReconnectPlanning, this);
-#else
-    (void) reconnectConfigurator;
-    NES_WARNING("s2 library is needed to start reconnect planning")
-#endif
-}
-
-void TrajectoryPredictor::startReconnectPlanning() {
-#ifdef S2DEF
-    updateDownloadedNodeIndex(locationProvider->getCurrentWaypoint().getLocation());
-    //fill up the buffer before starting to calculate path
-    while (locationBuffer.size() < locationBufferSize) {
-        auto currentLocation = locationProvider->getCurrentWaypoint();
-        if (!locationBuffer.empty() && currentLocation.getLocation() == locationBuffer.back().getLocation()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
-            continue;
-        }
-        locationBuffer.push_back(currentLocation);
-        NES_DEBUG("added: " << locationBuffer.back().getLocation().toString() << ", "
-                            << locationBuffer.back().getTimestamp().value());
-        std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval * locationBufferSaveRate));
-    }
-    NES_TRACE("Location buffer is filled");
-
-    NES_DEBUG("Saving a location to buffer each " << locationBufferSaveRate << " location updates");
-    //set steps to max to trigger a location save right away
-    size_t stepsSinceLastLocationSave = locationBufferSaveRate;
-    S2Point nextReconnectNodeLocation;
-    auto oldestKnownOwnLocation = locationBuffer.front();
-
-    while (updatePrediction) {
-        auto currentOwnLocation = locationProvider->getCurrentWaypoint();
-        if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
-            continue;
-        }
-
-        //if locationBufferSaveRate updates have been done since last save: save current location to buffer and reset save counter
+    //if the location buffer is not filled yet, do not schedule anything
+    if (locationBuffer.size() < locationBufferSize) {
         if (stepsSinceLastLocationSave == locationBufferSaveRate) {
-            oldestKnownOwnLocation = locationBuffer.front();
-            locationBuffer.pop_front();
             locationBuffer.push_back(currentOwnLocation);
             stepsSinceLastLocationSave = 0;
+            NES_DEBUG("added: " << locationBuffer.back().getLocation().toString() << ", "
+                                << locationBuffer.back().getTimestamp().value());
+            NES_DEBUG("Location buffer is not filled yet, do not recalculate schedule")
         } else {
             ++stepsSinceLastLocationSave;
         }
+        return nullptr;
+    }
 
-        //update the spatial index if necessary
-        bool indexUpdated = updateDownloadedNodeIndex(currentOwnLocation.getLocation());
-        //check if we deviated more than delta from the old predicted path and update it if needed
-        bool pathUpdated = updatePredictedPath(oldestKnownOwnLocation.getLocation(), currentOwnLocation.getLocation());
-        //update average movement speed
-        bool speedChanges = updateAverageMovementSpeed();
-        //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
-        if (indexUpdated || pathUpdated || speedChanges) {
-            NES_INFO("reconnect prediction data has changed")
-            //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
-            scheduleReconnects();
+    //todo: check if it makes sense to seave this as a member variable or not
+    S2Point nextReconnectNodeLocation;
 
-            //check if scheduled reconnects exist and inform the coordinator about any changes
-            std::unique_lock reconnectVectorLock(reconnectVectorMutex);
-            if (!reconnectVector->empty()) {
-                nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0).reconnectPrediction.newParentId);
-                auto updatedReconnectPoint = getNextPredictedReconnect();
-                std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
-                if (updatedReconnectPoint) {
-                    updatedPrediction = updatedReconnectPoint->reconnectPrediction;
-                } else {
-                    updatedPrediction = {};
-                }
-                reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
+    //if locationBufferSaveRate updates have been done since last save: save current location to buffer and reset save counter
+    auto oldestKnownOwnLocation = locationBuffer.front();
+    if (stepsSinceLastLocationSave == locationBufferSaveRate) {
+        oldestKnownOwnLocation = locationBuffer.front();
+        locationBuffer.pop_front();
+        locationBuffer.push_back(currentOwnLocation);
+        stepsSinceLastLocationSave = 0;
+    } else {
+        ++stepsSinceLastLocationSave;
+    }
+
+    //check if we deviated more than delta from the old predicted path and update it if needed
+    bool pathUpdated = updatePredictedPath(oldestKnownOwnLocation.getLocation(), currentOwnLocation.getLocation());
+    //update average movement speed
+    bool speedChanges = updateAverageMovementSpeed();
+    //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
+
+    //checked until here
+
+    if (indexUpdated || pathUpdated || speedChanges) {
+        NES_INFO("reconnect prediction data has changed")
+        //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
+        scheduleReconnects();
+
+        //check if scheduled reconnects exist and inform the coordinator about any changes
+        if (!reconnectVector->empty()) {
+            nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0).reconnectPrediction.newParentId);
+            auto updatedReconnectPoint = getNextPredictedReconnect();
+            std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
+            if (updatedReconnectPoint) {
+                updatedPrediction = updatedReconnectPoint->reconnectPrediction;
             } else {
-                NES_INFO("rescheduled after reconnect but there is no next reconnect in list")
-                reconnectConfigurator->updateScheduledReconnect(std::nullopt);
+                updatedPrediction = {};
             }
+            reconnectConfigurator->sendScheduledReconnect(updatedPrediction);
+        } else {
+            NES_INFO("rescheduled after reconnect but there is no next reconnect in list")
+            reconnectConfigurator->sendScheduledReconnect(std::nullopt);
+        }
+    }
+
+    //check if we are connected to a parent with a knwon position of if we can connect to one
+    if (currentParentLocation || reconnectToClosestNode(currentOwnLocation)) {
+        //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
+        S1Angle currentDistFromParent(Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation.getLocation()),
+                                      currentParentLocation.value());
+
+        //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
+        if (reconnectVector->empty() && currentDistFromParent > defaultCoverageRadiusAngle) {
+            reconnectToClosestNode(currentOwnLocation);
         }
 
-        std::unique_lock reconnectVectorLock(reconnectVectorMutex);
+        if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
+            auto currentOwnPoint = Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation.getLocation());
 
-        //check if we are connected to a parent with a knwon position of if we can connect to one
-        if (currentParentLocation || reconnectToClosestNode(currentOwnLocation)) {
-            //if the we left the coverage radius of our current parent, check if the next node is close enough to reconnect
-            S1Angle currentDistFromParent(Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation.getLocation()),
-                                          currentParentLocation.value());
+            //if the next expected parent is closer than the current one: reconnect
+            if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
+                //reconnect and inform coordinator about upcoming reconnect
+                auto newParentId = reconnectVector->front().reconnectPrediction.newParentId;
+                reconnect(newParentId);
+                reconnectVector->erase(reconnectVector->begin());
 
-            //if we are connected to a parent somewhere else, and have no reconnect data, connect to the closest node we can find
-            if (reconnectVector->empty() && currentDistFromParent > defaultCoverageRadiusAngle) {
-                reconnectToClosestNode(currentOwnLocation);
-            }
-
-            if (!reconnectVector->empty() && currentDistFromParent >= defaultCoverageRadiusAngle) {
-                auto currentOwnPoint = Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnLocation.getLocation());
-
-                //if the next expected parent is closer than the current one: reconnect
-                if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
-                    //reconnect and inform coordinator about upcoming reconnect
-                    auto newParentId = reconnectVector->front().reconnectPrediction.newParentId;
-                    reconnect(newParentId);
-                    reconnectVector->erase(reconnectVector->begin());
-
-                    //after reconnect, check if there is a next point on the schedule
-                    if (!reconnectVector->empty()) {
-                        auto coverageEndLoc = reconnectVector->front().predictedReconnectLocation;
-                        nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0).reconnectPrediction.newParentId);
-                        NES_INFO("reconnect point: " << coverageEndLoc.toString());
-                    } else {
-                        NES_INFO("no next reconnect scheduled")
-                    }
+                //after reconnect, check if there is a next point on the schedule
+                if (!reconnectVector->empty()) {
+                    auto coverageEndLoc = reconnectVector->front().predictedReconnectLocation;
+                    nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0).reconnectPrediction.newParentId);
+                    NES_INFO("reconnect point: " << coverageEndLoc.toString());
+                } else {
+                    NES_INFO("no next reconnect scheduled")
                 }
             }
         }
-        reconnectVectorLock.unlock();
-        //sleep for the specified amount of time
-        std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
+    }
+    reconnectVectorLock.unlock();
+    //sleep for the specified amount of time
+    std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
+}
+
+void ReconnectSchedulePredictor::startReconnectPlanning() {
+#ifdef S2DEF
+
+
+    while (updatePrediction) {
+
+
     }
 #else
     NES_WARNING("s2 library is needed to start reconnect planning")
 #endif
 }
 
-void TrajectoryPredictor::reconnect(uint64_t newParentId) {
+void ReconnectSchedulePredictor::reconnect(uint64_t newParentId) {
     std::unique_lock lastReconnectLock(lastReconnectTupleMutex);
     //todo #2918: pass pointer here
     reconnectConfigurator->reconnect(parentId, newParentId);
@@ -319,7 +233,7 @@ void TrajectoryPredictor::reconnect(uint64_t newParentId) {
     } else {
         updatedPrediction = {};
     }
-    reconnectConfigurator->updateScheduledReconnect(updatedPrediction);
+    reconnectConfigurator->sendScheduledReconnect(updatedPrediction);
 
     //update locally saved information about parent
     parentId = newParentId;
@@ -328,28 +242,8 @@ void TrajectoryPredictor::reconnect(uint64_t newParentId) {
 #endif
 }
 
-bool TrajectoryPredictor::reconnectToClosestNode(const DataTypes::Experimental::Waypoint& ownLocation) {
-#ifdef S2DEF
-    std::unique_lock nodeIndexLock(nodeIndexMutex);
-    if (fieldNodeIndex.num_points() == 0) {
-        return false;
-    }
-    S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
-    query.mutable_options()->set_max_distance(defaultCoverageRadiusAngle);
-    S2ClosestPointQuery<int>::PointTarget target(Spatial::Util::S2Utilities::geoLocationToS2Point(ownLocation.getLocation()));
-    auto closestNode = query.FindClosestPoint(&target);
-    if (closestNode.is_empty()) {
-        return false;
-    }
-    reconnect(closestNode.data());
-    return true;
-#else
-    (void) ownLocation;
-    return false;
-#endif
-}
 
-bool TrajectoryPredictor::updateAverageMovementSpeed() {
+bool ReconnectSchedulePredictor::updateAverageMovementSpeed() {
 #ifdef S2DEF
     //calculate the movement speed based on the locations and timestamps in the locationBuffer
     Timestamp bufferTravelTime = locationBuffer.back().getTimestamp().value() - locationBuffer.front().getTimestamp().value();
@@ -372,7 +266,7 @@ bool TrajectoryPredictor::updateAverageMovementSpeed() {
 #endif
 }
 
-bool TrajectoryPredictor::stopReconnectPlanning() {
+bool ReconnectSchedulePredictor::stopReconnectPlanning() {
     if (!updatePrediction) {
         return false;
     }
@@ -382,32 +276,8 @@ bool TrajectoryPredictor::stopReconnectPlanning() {
     return true;
 }
 
-bool TrajectoryPredictor::updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation) {
-#ifdef S2DEF
-    S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
-    std::unique_lock nodeIndexLock(nodeIndexMutex);
 
-    /*check if we have moved close enough to the edge of the area covered by the current node index so the we need to
-    download new node information */
-    if (!positionOfLastNodeIndexUpdate
-        || S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
-        //if new nodes were downloaded, make sure that the current parent becomes part of the index by adding it if it was not downloaded anyway
-        if (downloadFieldNodes(currentLocation) && currentParentLocation && fieldNodeMap.count(parentId) == 0) {
-            NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
-            fieldNodeMap.insert({parentId, currentParentLocation.value()});
-            fieldNodeIndex.Add(currentParentLocation.value(), parentId);
-        }
-        return true;
-    }
-    return false;
-#else
-    (void) currentLocation;
-    NES_WARNING("s2 library is needed to update downloaded node index")
-    return false;
-#endif
-}
-
-bool TrajectoryPredictor::updatePredictedPath(const Spatial::DataTypes::Experimental::GeoLocation& newPathStart,
+bool ReconnectSchedulePredictor::updatePredictedPath(const Spatial::DataTypes::Experimental::GeoLocation& newPathStart,
                                               const Spatial::DataTypes::Experimental::GeoLocation& currentLocation) {
 #ifdef S2DEF
     //if path end and beginning are the same location, we cannot construct a path out of that data
@@ -452,7 +322,7 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::DataTypes::Experime
 
 #ifdef S2DEF
 std::pair<S2Point, S1Angle>
-TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
+ReconnectSchedulePredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
     int vertexIndex = 0;
     auto projectedPoint = path->Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
@@ -484,7 +354,7 @@ TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coverin
 }
 #endif
 
-void TrajectoryPredictor::scheduleReconnects() {
+void ReconnectSchedulePredictor::scheduleReconnects() {
 #ifdef S2DEF
     if (!currentParentLocation) {
         return;
@@ -572,7 +442,7 @@ void TrajectoryPredictor::scheduleReconnects() {
 #endif
 }
 
-std::optional<ReconnectPoint> TrajectoryPredictor::getNextPredictedReconnect() {
+std::optional<ReconnectPoint> ReconnectSchedulePredictor::getNextPredictedReconnect() {
     //if no reconnect vector exists, return a nullpointer
     if (!reconnectVector) {
         NES_WARNING("Trying to obtain next predicted reconnect, but reconnect vector does not exist");
@@ -587,7 +457,7 @@ std::optional<ReconnectPoint> TrajectoryPredictor::getNextPredictedReconnect() {
 }
 
 #ifdef S2DEF
-NES::Spatial::DataTypes::Experimental::GeoLocation TrajectoryPredictor::getNodeLocationById(uint64_t id) {
+NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedulePredictor::getNodeLocationById(uint64_t id) {
     std::unique_lock lock(nodeIndexMutex);
     try {
         return Spatial::Util::S2Utilities::s2pointToLocation(fieldNodeMap.at(id));
@@ -596,7 +466,7 @@ NES::Spatial::DataTypes::Experimental::GeoLocation TrajectoryPredictor::getNodeL
         return {};
     }
 }
-size_t TrajectoryPredictor::getSizeOfSpatialIndex() {
+size_t ReconnectSchedulePredictor::getSizeOfSpatialIndex() {
     std::unique_lock lock(nodeIndexMutex);
     return fieldNodeMap.size();
 }

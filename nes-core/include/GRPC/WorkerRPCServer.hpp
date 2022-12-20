@@ -37,8 +37,8 @@ namespace Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-class TrajectoryPredictor;
-using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
+class ReconnectSchedulePredictor;
+using TrajectoryPredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 }// namespace Spatial::Mobility::Experimental
 
 class WorkerRPCServer final : public WorkerRPCService::Service {

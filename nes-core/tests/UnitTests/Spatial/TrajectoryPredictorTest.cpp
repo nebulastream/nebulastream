@@ -15,7 +15,7 @@
 
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <thread>
@@ -32,8 +32,8 @@ namespace NES {
 class TrajectoryPredictorTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TrajectoryPredictor.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TrajectoryPredictor test class.");
+        NES::Logger::setupLogging("ReconnectSchedulePredictor.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ReconnectSchedulePredictor test class.");
     }
 };
 
@@ -56,7 +56,7 @@ TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
     coveringPointOnLine = path->Interpolate(0.5);
     NES_DEBUG("coordinates of covering point on line: " << S2LatLng(coveringPointOnLine))
     std::pair<S2Point, S1Angle> resultOnLinePoint =
-        NES::Spatial::Mobility::Experimental::TrajectoryPredictor::findPathCoverage(path, coveringPointOnLine, coverage);
+        NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointOnLine, coverage);
     NES_DEBUG("point on line coverage in meters: " << S2Earth::ToMeters(resultOnLinePoint.second))
     EXPECT_TRUE(
         S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
@@ -72,7 +72,7 @@ TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
     //we create a point which is exactly at the boundary of the coverage area and should therefore not cover anything of the line
     auto coveringPointCovAwayFromLine = S2::GetPointOnLine(coveringPointOnLine, ortoVec, coverage);
     auto resultCovaway =
-        NES::Spatial::Mobility::Experimental::TrajectoryPredictor::findPathCoverage(path, coveringPointCovAwayFromLine, coverage);
+        NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointCovAwayFromLine, coverage);
     EXPECT_TRUE(resultCovaway.second.degrees() == 0);
 
     //test different distances from the line which are greater than zero but smaller than coverage
@@ -81,7 +81,7 @@ TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
         NES_DEBUG("testing coverage of point which is coverage * " << coverageFactor << " away from path")
         auto coveringPointAwayFromPath = S2::GetPointOnLine(coveringPointOnLine, ortoVec, coverage * coverageFactor);
         NES_DEBUG("covering point coordinates are: " << S2LatLng(coveringPointAwayFromPath))
-        auto result = NES::Spatial::Mobility::Experimental::TrajectoryPredictor::findPathCoverage(path,
+        auto result = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path,
                                                                                                   coveringPointAwayFromPath,
                                                                                                   coverage);
         NES_DEBUG("coverage on line in meters is: " << S2Earth::ToMeters(result.second))

@@ -33,8 +33,8 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectConfigurator.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
@@ -160,7 +160,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
         if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-            trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider,
+            trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(locationProvider,
                                                                                                               mobilityConfig,
                                                                                                               parentId);
         }
@@ -335,7 +335,7 @@ bool NesWorker::connect() {
             locationProvider->setCoordinatorRPCClient(coordinatorRpcClient);
             if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
                 reconnectConfigurator =
-                    std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this,
+                    std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(*this,
                                                                                                   coordinatorRpcClient,
                                                                                                   mobilityConfig);
             }
