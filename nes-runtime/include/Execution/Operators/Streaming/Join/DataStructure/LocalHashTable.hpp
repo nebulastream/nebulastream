@@ -40,6 +40,10 @@ class LocalHashTable {
                             size_t overrunAddress,
                             size_t pageSize);
 
+    LocalHashTable(const LocalHashTable&) = delete;
+    LocalHashTable& operator=(const LocalHashTable&) = delete;
+    virtual ~LocalHashTable() = default;
+
     /**
      * @brief Inserts the key into this hash table by returning a pointer to a free memory space
      * @param key
@@ -52,7 +56,7 @@ class LocalHashTable {
      * @param bucketPos
      * @return bucket
      */
-    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos) const;
+    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos);
 
     /**
      * @brief Calculates the bucket position for the hash
@@ -62,7 +66,7 @@ class LocalHashTable {
     size_t getBucketPos(uint64_t hash) const;
 
   private:
-    std::vector<FixedPagesLinkedList*> buckets;
+    std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
 
 };

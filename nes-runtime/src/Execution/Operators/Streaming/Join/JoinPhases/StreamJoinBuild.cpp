@@ -37,7 +37,7 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     StreamJoinOperatorHandler* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(&opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    return static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
 }
 
 
@@ -61,11 +61,11 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     auto workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
     auto& sharedJoinHashTable = opHandler->getWindowToBeFilled(isLeftSide).getSharedJoinHashTable(isLeftSide);
-    auto& localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
+    auto localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
 
 
     for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
-        sharedJoinHashTable.insertBucket(a, localHashTable.getBucketLinkedList(a));
+        sharedJoinHashTable.insertBucket(a, localHashTable->getBucketLinkedList(a));
     }
 
     // If the last thread/worker is done with building, then start the second phase (comparing buckets)
