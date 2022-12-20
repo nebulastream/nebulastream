@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -46,7 +47,6 @@
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -85,10 +85,10 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
-#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 
 #include <fstream>
 #ifdef ENABLE_OPC_BUILD
@@ -1487,8 +1487,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         logicalSourceDescriptor->setPhysicalSourceName(logicalSourceSerializedSourceDescriptor.physicalsourcename());
         // check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema()) {
-            auto schema =
-                SchemaSerializationUtil::deserializeSchema(logicalSourceSerializedSourceDescriptor.sourceschema());
+            auto schema = SchemaSerializationUtil::deserializeSchema(logicalSourceSerializedSourceDescriptor.sourceschema());
             logicalSourceDescriptor->setSchema(schema);
         }
 

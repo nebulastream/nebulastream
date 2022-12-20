@@ -20,8 +20,8 @@ using namespace std::string_literals;
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/UdfException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/JavaUdfDescriptorBuilder.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Catalogs::UDF {
 

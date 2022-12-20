@@ -16,6 +16,7 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestUtils.hpp>
@@ -26,8 +27,6 @@
 #include <nes-grpc/UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
 #include <oatpp/web/protocol/http/Http.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
-
 
 namespace NES {
 using namespace std::string_literals;

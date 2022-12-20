@@ -207,7 +207,9 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorNodePtr createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr
+    createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                    OperatorId id = Util::getNextOperatorId());
 };
 
 }// namespace NES
