@@ -201,10 +201,9 @@ void Text::write(Value<UInt32> index, Value<Int8> value) {
     FunctionCall<>("writeTextIndex", writeTextIndex, rawReference, index, value);
 }
 
-uint32_t getBitLength(const TextValue* text) { return (text->length()*(uint32_t) 8); }
+uint32_t getBitLength(const TextValue* text) { return (text->length() * (uint32_t) 8); }
 
 const Value<UInt32> Text::bitLength() const { return FunctionCall<>("getBitLength", getBitLength, rawReference); }
-
 
 TextValue* uppercaseText(const TextValue* text) {
     auto resultText = TextValue::create(text->length());
@@ -224,10 +223,10 @@ TextValue* lowercaseText(const TextValue* text) {
     return resultText;
 }
 
-const Value<Text> Text::lower() const { return  FunctionCall<>("lowercaseText", lowercaseText, rawReference); }
+const Value<Text> Text::lower() const { return FunctionCall<>("lowercaseText", lowercaseText, rawReference); }
 
 TextValue* leftCharacters(const TextValue* text, uint32_t index) {
-    if(index>text->length()){
+    if (index > text->length()) {
         index = text->length();
     }
     auto resultText = TextValue::create(index);
@@ -237,20 +236,24 @@ TextValue* leftCharacters(const TextValue* text, uint32_t index) {
     return resultText;
 }
 
-const Value<Text> Text::left(Value<UInt32> index) { return FunctionCall<>("leftCharacters", leftCharacters, rawReference, index); }
+const Value<Text> Text::left(Value<UInt32> index) {
+    return FunctionCall<>("leftCharacters", leftCharacters, rawReference, index);
+}
 
 TextValue* rightCharacters(const TextValue* text, uint32_t index) {
-    if(index>text->length()){
+    if (index > text->length()) {
         index = text->length();
     }
     auto resultText = TextValue::create(index);
     for (uint32_t i = 0; i < index; i++) {
-        resultText->str()[i] = text->c_str()[i+index];
+        resultText->str()[i] = text->c_str()[i + index];
     }
     return resultText;
 }
 
-const Value<Text> Text::right(Value<UInt32> index) { return FunctionCall<>("rightCharacters", rightCharacters, rawReference, index); }
+const Value<Text> Text::right(Value<UInt32> index) {
+    return FunctionCall<>("rightCharacters", rightCharacters, rawReference, index);
+}
 
 TextValue* rightPad(const TextValue* text, uint32_t targetLength, int8_t value) {
     auto resultText = TextValue::create(targetLength);
@@ -263,7 +266,9 @@ TextValue* rightPad(const TextValue* text, uint32_t targetLength, int8_t value) 
     return resultText;
 }
 
-const Value<Text> Text::rpad(Value<UInt32> index, Value<Int8> value) { return FunctionCall<>("rightPad", rightPad, rawReference, index, value); }
+const Value<Text> Text::rpad(Value<UInt32> index, Value<Int8> value) {
+    return FunctionCall<>("rightPad", rightPad, rawReference, index, value);
+}
 
 TextValue* leftPad(const TextValue* text, uint32_t targetLength, int8_t value) {
     auto resultText = TextValue::create(targetLength);
@@ -271,7 +276,7 @@ TextValue* leftPad(const TextValue* text, uint32_t targetLength, int8_t value) {
         resultText->str()[p] = value;
     }
     auto count = 0;
-    for (uint32_t i = (targetLength-text->length()); i < targetLength; i++) {
+    for (uint32_t i = (targetLength - text->length()); i < targetLength; i++) {
         resultText->str()[i] = text->c_str()[count];
         count++;
     }
@@ -279,10 +284,12 @@ TextValue* leftPad(const TextValue* text, uint32_t targetLength, int8_t value) {
     return resultText;
 }
 
-const Value<Text> Text::lpad(Value<UInt32> index, Value<Int8> value) { return FunctionCall<>("leftPad", leftPad, rawReference, index, value); }
+const Value<Text> Text::lpad(Value<UInt32> index, Value<Int8> value) {
+    return FunctionCall<>("leftPad", leftPad, rawReference, index, value);
+}
 
 TextValue* leftTrim(const TextValue* text, const TextValue* target) {
-    if (text->length() <=1) {
+    if (text->length() <= 1) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     auto position = uint32_t(textPosition(text, target));
@@ -292,8 +299,8 @@ TextValue* leftTrim(const TextValue* text, const TextValue* target) {
         char temp = text->c_str()[i];
         if (temp == space) {
             spaceCount++;
-        }else{
-            break ;
+        } else {
+            break;
         }
     }
     auto resultText = TextValue::create(text->length() - spaceCount);
@@ -306,7 +313,7 @@ const Value<Text> Text::ltrim(Value<Text>& other) const {
 }
 
 TextValue* rightTrim(const TextValue* text, const TextValue* target) {
-    if (text->length() <=1) {
+    if (text->length() <= 1) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     auto position = uint32_t(textPosition(text, target));
@@ -321,7 +328,7 @@ const Value<Text> Text::rtrim(Value<Text>& other) const {
     return FunctionCall<>("rightTrim", rightTrim, rawReference, other.value->rawReference);
 }
 TextValue* lrTrim(const TextValue* text) {
-    if (text->length() <=1) {
+    if (text->length() <= 1) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
     }
     char space = ' ';
@@ -337,17 +344,16 @@ TextValue* lrTrim(const TextValue* text) {
 
     for (uint32_t p = 0; p < text->length(); p++) {
         auto temp = text->c_str()[p];
-        if (!(temp == space )) {
+        if (!(temp == space)) {
             resultText->str()[count] = text->c_str()[p];
             count++;
-            }
+        }
     }
 
     return resultText;
 }
 
-const Value<Text> Text::trim() const { return  FunctionCall<>("lrTrim", lrTrim, rawReference); }
-
+const Value<Text> Text::trim() const { return FunctionCall<>("lrTrim", lrTrim, rawReference); }
 
 IR::Types::StampPtr Text::getType() const { return rawReference.getType(); }
 const TypedRef<TextValue>& Text::getReference() const { return rawReference; }

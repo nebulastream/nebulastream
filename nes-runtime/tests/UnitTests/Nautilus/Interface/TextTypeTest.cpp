@@ -72,8 +72,6 @@ TEST_F(TextTypeTest, createTextTest) {
 
     auto bitLength = textValue->bitLength();
     ASSERT_EQ(bitLength, (uint32_t) 32);
-
-
 }
 
 TEST_F(TextTypeTest, LowerUpperTest) {
@@ -109,7 +107,7 @@ TEST_F(TextTypeTest, PadTest) {
 }
 
 TEST_F(TextTypeTest, TrimTest) {
-    auto TrimSpaceTest = Value<Text>("  Test"  );
+    auto TrimSpaceTest = Value<Text>("  Test");
     auto TrimTest0 = Value<Text>("Test");
     auto TrimTest1 = Value<Text>("  Test");
     auto TrimTest2 = TrimTest1->ltrim(TrimTest0);
@@ -126,8 +124,6 @@ TEST_F(TextTypeTest, TrimTest) {
     auto TrimTest7 = TrimSpaceTest->ltrim(TrimTest0);
     TrimTest7 = TrimTest7->rtrim(TrimTest0);
     ASSERT_EQ(TrimTest7, TrimTest0);
-
-
 }
 
 TEST_F(TextTypeTest, prefixTest) {
