@@ -2132,7 +2132,7 @@ TEST_F(SourceTest, testMonitoringSourceBufferSmallerThanMetric) {
     auto bufferSize = (numCpuMetrics - 1) * schema->getSchemaSizeInBytes();
 
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 12);
-    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value(); // MetricCollectorTest.cpp l. 80
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();// MetricCollectorTest.cpp l. 80
 
     MonitoringSourceProxy monitoringDataSource(testCollector,
                                                MonitoringSource::DEFAULT_WAIT_TIME,
