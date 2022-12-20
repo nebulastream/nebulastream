@@ -498,27 +498,27 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto lastUpdatePosition = Spatial::DataTypes::Experimental::GeoLocation(schedule.lastindexupdateposition().geolocation());
 
         //iterate of the vector of reconnects and get all planned reconnects
-        auto vec = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>();
+        auto vec = std::make_shared<std::vector<Spatial::Mobility::Experimental::ReconnectPoint>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
             auto geoLocation = reconnectData.waypoint().geolocation();
             auto loc = NES::Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng());
-            vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
+            vec->push_back(
                 Spatial::Mobility::Experimental::ReconnectPoint{
                     loc,
                     NES::Spatial::Mobility::Experimental::ReconnectPrediction{reconnectData.reconnectprediction().id(),
-                                                                              reconnectData.reconnectprediction().time()}}));
+                                                                              reconnectData.reconnectprediction().time()}});
         }
 
         //construct a schedule from the received data
-        return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
+        return std::make_unique<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
                                                                                          std::move(end),
                                                                                          std::move(start),
                                                                                          std::move(lastUpdatePosition),
                                                                                          vec);
     }
     //if no schedule was received, return an empty schedule
-    return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(
+    return std::make_unique<Spatial::Mobility::Experimental::ReconnectSchedule>(
         Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
 }
 
