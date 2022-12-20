@@ -124,14 +124,7 @@ class TrajectoryPredictor {
      * @return an optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
      * nullopt if no reconnect has been calculated
      */
-    std::shared_ptr<ReconnectPoint> getNextPredictedReconnect();
-
-    /**
-     * @brief return position and time at which the last reconnect happened
-     * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
-     */
-    //todo 2951: change return type to struct
-    DataTypes::Experimental::Waypoint getLastReconnectLocationAndTime();
+    std::optional<ReconnectPoint> getNextPredictedReconnect();
 
   private:
     /**
@@ -181,7 +174,7 @@ class TrajectoryPredictor {
      * @param newParentId: The id of the new parent to connect to
      * @param ownLocation: This workers current location
      */
-    void reconnect(uint64_t newParentId, const DataTypes::Experimental::Waypoint& ownLocation);
+    void reconnect(uint64_t newParentId);
 
     /**
      * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
@@ -222,9 +215,9 @@ class TrajectoryPredictor {
     std::optional<S2Point> positionOfLastNodeIndexUpdate;
     S2PointIndex<uint64_t> fieldNodeIndex;
 #endif
-    uint64_t parentId;
+    uint64_t parentId; //todo: move this to reconnectConfigurator
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
-    std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
+    std::shared_ptr<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
 };

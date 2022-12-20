@@ -31,13 +31,13 @@ class GeoLocation;
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Index::Experimental {
+namespace Spatial::Experimental {
 enum class SpatialType;
 }// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
 /**
@@ -183,14 +183,14 @@ class TopologyNode : public Node {
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
      * @param spatialType
      */
-    void setSpatialType(NES::Spatial::Index::Experimental::SpatialType spatialType);
+    void setSpatialType(NES::Spatial::Experimental::SpatialType spatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    NES::Spatial::Index::Experimental::SpatialType getSpatialNodeType();
+    NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
   private:
     uint64_t id;

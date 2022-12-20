@@ -220,12 +220,12 @@ bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
     }
 
     if (geoLocation.isValid()
-        && topologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
+        && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
         locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
-        if (topologyNode->getSpatialNodeType() == Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
+        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
             NES_DEBUG("added node is a mobile node");
         } else {
@@ -269,7 +269,7 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
         currentNodeJsonValue["id"] = currentNode->getId();
         currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
         currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
-        if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
+        if (currentNode->getSpatialNodeType() != NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             NES::Spatial::DataTypes::Experimental::GeoLocation location = getGeoLocationForNode(currentNode->getId());
             auto locationInfo = nlohmann::json{};
             if (location.isValid()) {
