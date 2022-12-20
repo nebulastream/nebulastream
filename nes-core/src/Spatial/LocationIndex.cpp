@@ -79,7 +79,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
     NES_INFO("node id: " << node->getId());
     return {};
 #endif
-    if (node->getSpatialNodeType() == SpatialType::MOBILE_NODE) {
+    if (node->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
         workerNodeLocation.erase(node->getId());
     }
     return true;

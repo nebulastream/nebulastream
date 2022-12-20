@@ -28,7 +28,7 @@ namespace NES::Spatial::Mobility::Experimental {
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProviderCSV(csvPath, 0) {}
 
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime)
-    : LocationProvider(Index::Experimental::SpatialType::MOBILE_NODE, {}) {
+    : LocationProvider(Spatial::Experimental::SpatialType::MOBILE_NODE, {}) {
     if (simulatedStartTime == 0) {
         startTime = getTimestamp();
     } else {

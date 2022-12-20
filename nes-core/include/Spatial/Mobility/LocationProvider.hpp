@@ -67,7 +67,7 @@ class LocationProvider {
      * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
      * @param geoLocation the location of this worker node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation);
+    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief default destructor
@@ -78,7 +78,7 @@ class LocationProvider {
      * Experimental
      * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
      */
-    [[nodiscard]] Spatial::Experimental::SpatialType getSpatialType() const;
+    [[nodiscard]] NES::Spatial::Experimental::SpatialType getSpatialType() const;
 
     /**
      * Experimental
@@ -130,7 +130,7 @@ class LocationProvider {
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     DataTypes::Experimental::GeoLocation workerGeoLocation;
-    Spatial::Experimental::SpatialType spatialType;
+    NES::Spatial::Experimental::SpatialType spatialType;
     TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental
