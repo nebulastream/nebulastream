@@ -12,12 +12,12 @@ numberOfMeasurementsToCollect: 3
 
 numberOfSources: 2
 logicalSourceNames:
-  input1:
-    type: Uniform
+  Auction:
+    type: Auction
     minValue: 0
     maxValue: 250
-  input2:
-    type: Uniform
+  Person:
+    type: Person
     minValue: 0
     maxValue: 250
 
@@ -28,8 +28,8 @@ dataProviderMode: MemCopy
 dataProvider: Internal
 outputFile: q3.csv
 benchmarkName: q3
-query: 'Query::from("input1").filter(Attribute("value") < 100).joinWith(Query::from("input2").filter(Attribute("value") < 500))
-                                  .where(Attribute("value")).equalsTo(Attribute("value")))
-                                  
-                             
-                             .sink(NullOutputSinkDescriptor::create());'
+query:    'Query::from("Auction").filter(Attribute("category") == 10)
+          .joinWith(Query::from("Person").filter(Attribute("state") == 122 || Attribute("state") == 12 || Attribute("state") == 22))
+              .where(Attribute("seller")).equalsTo(Attribute("id"))
+              .window(TumblingWindow::of(EventTime(Attribute("id")), Milliseconds(500)))                
+          .sink(NullOutputSinkDescriptor::create());'
