@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -33,7 +34,6 @@
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 
 namespace NES {
@@ -131,8 +131,9 @@ LogicalOperatorFactory::createCEPIterationOperator(const uint64_t minIterations,
     return std::make_shared<IterationLogicalOperatorNode>(minIterations, maxIterations, id);
 }
 
-LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapJavaUdfLogicalOperator(
-    const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id) {
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                                        OperatorId id) {
     return std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
 }
 
