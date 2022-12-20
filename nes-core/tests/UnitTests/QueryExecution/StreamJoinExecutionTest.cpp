@@ -86,7 +86,6 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
         parser->writeInputTupleToTupleBuffer(line, buffer.getNumberOfTuples(), buffer, schema, bufferManager);
     }
 
-    NES_DEBUG("Created buffer \n" << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema) << " from csvFile = " << fullPath);
 
     return buffer;
 }

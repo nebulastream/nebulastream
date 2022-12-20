@@ -19,6 +19,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+/**
+ * @brief This class is the second and final phase of the StreamJoin. For each bucket in the SharedHashTable, we iterate
+ * through both buckets and check via the BloomFilter if a given key is in the bucket. If this is the case, the corresponding
+ * tuples will be joined together and emitted.
+ */
 class StreamJoinSink : public Operator {
 
   public:

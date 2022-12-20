@@ -15,7 +15,6 @@
 #include <atomic>
 #include <cstdint>
 
-#include <API/Schema.hpp>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

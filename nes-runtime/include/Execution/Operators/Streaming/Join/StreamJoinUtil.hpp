@@ -30,45 +30,6 @@ static constexpr auto CHUNK_SIZE = 128;
 static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
 static constexpr auto NUM_PARTITIONS = 16;
 
-namespace detail {
-
-/**
- * @brief allocates memory that is aligned
- * @tparam T
- * @param size
- * @param alignment
- * @return pointer to allocated memory
- */
-template<typename T = void>
-T* allocAligned(size_t size, size_t alignment = 16) {
-    void* tmp = nullptr;
-    NES_ASSERT2_FMT(0 == posix_memalign(&tmp, alignment, sizeof(T) * size),
-                    "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
-    return reinterpret_cast<T*>(tmp);
-}
-
-/**
- * @brief allocates memory that are pinned to memory
- * @tparam T
- * @tparam huge_page_size
- * @param size
- * @return pointer to allocated memory
- */
-template<typename T = void, size_t huge_page_size = 1 << 21>
-T* allocHugePages(size_t size) {
-    void* tmp = nullptr;
-    NES_ASSERT2_FMT(0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
-                    "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
-    #ifdef __linux__
-        madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
-    #endif
-        
-    NES_ASSERT2_FMT(tmp != nullptr, "Cannot remap as huge pages");
-    mlock(tmp, size * sizeof(T));
-    return reinterpret_cast<T*>(tmp);
-}
-} // namespace detail
-
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
     size_t partitionId;
