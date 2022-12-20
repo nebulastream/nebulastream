@@ -22,6 +22,7 @@ add_source_files(nes-runtime
         LocalBufferPool.cpp
         HardwareManager.cpp
         NesThread.cpp
+        BloomFilter.cpp
         )
 
 add_source_files(nes-runtime
