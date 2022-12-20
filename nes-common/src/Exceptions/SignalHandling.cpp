@@ -39,7 +39,7 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
             listener.lock()->onFatalException(exception, stacktrace);
         }
     }
-    Logger::getInstance().forceFlush();
+    Logger::getInstance().shutdown();
     std::exit(1);
 }
 
@@ -55,7 +55,7 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace) {
             listener.lock()->onFatalError(signal, stacktrace);
         }
     }
-    Logger::getInstance().forceFlush();
+    Logger::getInstance().shutdown();
     std::exit(1);
 }
 
@@ -71,7 +71,6 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener) 
     if (listener) {
         globalErrorListeners.emplace_back(listener);
     }
-    Logger::getInstance().forceFlush();
 }
 
 void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener) {
@@ -83,6 +82,5 @@ void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener) {
             return;
         }
     }
-    Logger::getInstance().forceFlush();
 }
 }// namespace NES::Exceptions
