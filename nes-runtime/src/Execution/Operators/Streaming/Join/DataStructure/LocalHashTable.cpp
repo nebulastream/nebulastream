@@ -33,12 +33,10 @@ uint8_t* LocalHashTable::insert(uint64_t key) const {
 }
 
 size_t LocalHashTable::getBucketPos(uint64_t hash) const {
-    return hash - hash;
-//    if (mask == 0) {
-//        return 0;
-//    }
-//
-//    return hash % mask;
+    if (mask == 0) {
+        return 0;
+    }
+    return hash % mask;
 }
 
 FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos)  {
