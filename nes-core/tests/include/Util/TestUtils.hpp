@@ -44,7 +44,7 @@ using std::string;
 using namespace std::string_literals;
 
 namespace NES {
-static const std::string BASE_URL = "http://127.0.0.1:";
+static const char* BASE_URL = "http://127.0.0.1:";
 
 /**
  * @brief this is a util class for the tests
