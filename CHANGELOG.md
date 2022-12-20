@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.8](https://github.com/nebulastream/nebulastream/tree/v0.4.8) (2022-12-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.7...v0.4.8)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Fix monitoring on ARM [\#2892](https://github.com/nebulastream/nebulastream/issues/2892)
+
 ## [v0.4.7](https://github.com/nebulastream/nebulastream/tree/v0.4.7) (2022-12-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.6...v0.4.7)
