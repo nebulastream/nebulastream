@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.11](https://github.com/nebulastream/nebulastream/tree/v0.4.11) (2022-12-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.10...v0.4.11)
+
+### Bug Fixes 🐛
+
+- \[BUG\] nes-executable-image does not start because of missing Kafka library. [\#3350](https://github.com/nebulastream/nebulastream/issues/3350)
+
 ## [v0.4.10](https://github.com/nebulastream/nebulastream/tree/v0.4.10) (2022-12-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.9...v0.4.10)
