@@ -17,11 +17,11 @@ namespace NES::Runtime::Execution {
 
 
 
-Operators::LocalHashTable& StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
+Operators::LocalHashTable* StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
     if (leftSide) {
-        return localHashTableLeftSide[index];
+        return localHashTableLeftSide[index].get();
     } else {
-        return localHashTableRightSide[index];
+        return localHashTableRightSide[index].get();
     }
 }
 
@@ -48,15 +48,12 @@ StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFi
     overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSizeForDataStructures;
     tail.store(reinterpret_cast<uintptr_t>(head));
 
-    localHashTableLeftSide.reserve(maxNoWorkerThreads);
-    localHashTableRightSide.reserve(maxNoWorkerThreads);
-
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableLeftSide.emplace_back(Operators::LocalHashTable(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
+        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
     }
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableRightSide.emplace_back(Operators::LocalHashTable(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
+        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
     }
 }
 

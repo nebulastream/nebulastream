@@ -20,13 +20,11 @@
 namespace NES::Runtime::Execution::Operators {
 
 LocalHashTable::LocalHashTable(size_t sizeOfRecord, size_t numPartitions, std::atomic<uint64_t>& tail,
-                               size_t overrunAddress, size_t pageSize) {
+                               size_t overrunAddress, size_t pageSize) : mask(numPartitions - 1) {
 
-    buckets.reserve(numPartitions);
     for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(new FixedPagesLinkedList(tail, overrunAddress, sizeOfRecord, pageSize));
+        buckets.emplace_back(std::make_unique<FixedPagesLinkedList>(tail, overrunAddress, sizeOfRecord, pageSize));
     }
-    mask = numPartitions - 1;
 }
 
 uint8_t* LocalHashTable::insert(uint64_t key) const {
@@ -35,17 +33,18 @@ uint8_t* LocalHashTable::insert(uint64_t key) const {
 }
 
 size_t LocalHashTable::getBucketPos(uint64_t hash) const {
-    if (mask == 0) {
-        return 0;
-    }
-
-    return hash % mask;
+    return hash - hash;
+//    if (mask == 0) {
+//        return 0;
+//    }
+//
+//    return hash % mask;
 }
 
-FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos) const {
+FixedPagesLinkedList* LocalHashTable::getBucketLinkedList(size_t bucketPos)  {
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in LocalHashTable!");
 
-    return buckets[bucketPos];
+    return buckets[bucketPos].get();
 }
 
 

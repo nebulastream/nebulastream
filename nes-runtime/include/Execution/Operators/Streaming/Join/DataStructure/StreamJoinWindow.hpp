@@ -52,7 +52,7 @@ class StreamJoinWindow {
      * @param leftSide
      * @return Reference to the hash table
      */
-    Operators::LocalHashTable& getLocalHashTable(size_t index, bool leftSide);
+    Operators::LocalHashTable* getLocalHashTable(size_t index, bool leftSide);
 
     /**
      * @brief Returns the shared hash table of either the left or the right side
@@ -82,8 +82,8 @@ class StreamJoinWindow {
     size_t getLastTupleTimeStamp() const;
 
   private:
-    std::vector<Operators::LocalHashTable> localHashTableLeftSide;
-    std::vector<Operators::LocalHashTable> localHashTableRightSide;
+    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
+    std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableRightSide;
     Operators::SharedJoinHashTable leftSideHashTable;
     Operators::SharedJoinHashTable rightSideHashTable;
     std::atomic<uint64_t> counterFinishedBuilding;
