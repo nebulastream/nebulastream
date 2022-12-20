@@ -26,7 +26,7 @@ namespace detail {
  * @brief Creates an empty logger that writes to /dev/null
  * @return
  */
-spdlog::logger createEmptyLogger();
+std::shared_ptr<spdlog::logger> createEmptyLogger();
 }// namespace detail
 
 namespace detail {
@@ -39,10 +39,7 @@ class Logger {
      */
     void configure(const std::string& logFileName, LogLevel level);
 
-    ~Logger() {
-        forceFlush();
-        spdlog::shutdown();
-    }
+    ~Logger();
 
     Logger() : impl(detail::createEmptyLogger()) {}
 
@@ -50,7 +47,8 @@ class Logger {
 
     void operator=(const Logger&) = delete;
 
-  private:
+    void shutdown();
+
   public:
     /**
      * @brief Logs a tracing message using a format, a source location, and a set of arguments to display
@@ -62,7 +60,7 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void trace(spdlog::source_loc&& loc, fmt::format_string<arguments...>&& format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::trace, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::trace, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
@@ -75,7 +73,7 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void warn(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::warn, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
@@ -88,7 +86,7 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void fatal(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::critical, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
@@ -101,7 +99,7 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void info(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::info, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::info, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
@@ -114,7 +112,7 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void debug(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::debug, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::debug, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
@@ -127,13 +125,13 @@ class Logger {
      */
     template<typename... arguments>
     constexpr inline void error(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        impl.log(std::move(loc), spdlog::level::err, std::move(format), std::forward<arguments>(args)...);
+        impl->log(std::move(loc), spdlog::level::err, std::move(format), std::forward<arguments>(args)...);
     }
 
     /**
      * @brief flushes the current log to filesystem
      */
-    void flush() { impl.flush(); }
+    void flush() { impl->flush(); }
 
     /**
      * @brief forcefully flushes the current log to filesystem
@@ -152,7 +150,7 @@ class Logger {
     void changeLogLevel(LogLevel newLevel);
 
   private:
-    spdlog::logger impl;
+    std::shared_ptr<spdlog::logger> impl;
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
 };
 }// namespace detail

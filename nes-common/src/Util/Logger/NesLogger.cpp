@@ -14,6 +14,8 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <spdlog/async.h>
+#include <spdlog/async_logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -69,13 +71,18 @@ auto toSpdlogLevel(LogLevel level) {
     return spdlogLevel;
 }
 
-auto createEmptyLogger() -> spdlog::logger {
+auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
     auto sink = std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL);
-    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {sink});
+    std::vector<spdlog::sink_ptr> sinks = {sink};
+    auto logger = std::make_shared<spdlog::logger>(SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end());
     return logger;
 }
 
-auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
+auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spdlog::logger> {
+    static constexpr auto QUEUE_SIZE = 8 * 1024;
+    static constexpr auto THREADS = 1;
+    spdlog::init_thread_pool(QUEUE_SIZE, THREADS);
+
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(loggerPath, true);
 
@@ -88,22 +95,40 @@ auto createLogger(std::string loggerPath, LogLevel level) -> spdlog::logger {
     consoleSink->set_pattern(SPDLOG_PATTERN);
     fileSink->set_pattern(SPDLOG_PATTERN);
 
-    auto logger = spdlog::logger(SPDLOG_NES_LOGGER_NAME, {consoleSink, fileSink});
+    std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
 
-    logger.set_level(spdlogLevel);
-    logger.flush_on(spdlog::level::debug);
+    auto logger = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
+                                                         sinks.begin(),
+                                                         sinks.end(),
+                                                         spdlog::thread_pool(),
+                                                         spdlog::async_overflow_policy::block);
+
+    logger->set_level(spdlogLevel);
+    logger->flush_on(spdlog::level::debug);
+
+    spdlog::register_logger(logger);
 
     return logger;
 }
 
+Logger::~Logger() { shutdown(); }
+
 void Logger::forceFlush() {
-    for (auto& sink : impl.sinks()) {
+    for (auto& sink : impl->sinks()) {
         sink->flush();
     }
-    impl.flush();
+    impl->flush();
+}
+
+void Logger::shutdown() {
+    forceFlush();
+    spdlog::shutdown();
 }
 
 void Logger::configure(const std::string& logFileName, LogLevel level) {
+    if (impl) {
+        spdlog::drop(impl->name());
+    }
     auto configuredLogger = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
@@ -111,10 +136,10 @@ void Logger::configure(const std::string& logFileName, LogLevel level) {
 
 void Logger::changeLogLevel(LogLevel newLevel) {
     auto spdNewLogLevel = detail::toSpdlogLevel(newLevel);
-    for (auto& sink : impl.sinks()) {
+    for (auto& sink : impl->sinks()) {
         sink->set_level(spdNewLogLevel);
     }
-    impl.set_level(spdNewLogLevel);
+    impl->set_level(spdNewLogLevel);
     std::swap(newLevel, currentLogLevel);
 }
 
