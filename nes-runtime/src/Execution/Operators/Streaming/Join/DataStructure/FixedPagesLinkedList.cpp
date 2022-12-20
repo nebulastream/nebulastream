@@ -18,38 +18,29 @@
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
-    uint8_t* retPointer = curPage->append(hash);
+    uint8_t* retPointer = pages[pos]->append(hash);
     if (retPointer == nullptr) {
-        if (++pos < pages.size()) {
-            curPage = pages[pos];
-        } else {
-            pages.emplace_back(curPage = new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
+        if (++pos >= pages.size()) {
+            pages.emplace_back(std::make_unique<FixedPage>(this->tail, overrunAddress, sizeOfRecord, pageSize));
         }
-        retPointer = curPage->append(hash);
+        retPointer = pages[pos]->append(hash);
     }
 
     return retPointer;
 }
 
-const std::vector<FixedPage*>& FixedPagesLinkedList::getPages() const { return pages; }
+const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
 FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress,
                                            size_t sizeOfRecord, size_t pageSize)
-    : tail(tail), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
+    : tail(tail), pos(0), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
-    const auto numPreAllocatedPage = PREALLOCATED_SIZE / pageSize;
+    const auto numPreAllocatedPage = 2; //PREALLOCATED_SIZE / pageSize;
     NES_ASSERT2_FMT(numPreAllocatedPage > 0, "numPreAllocatedPage is 0");
 
     for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
         pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
     }
-    curPage = pages[0];
-}
 
-FixedPagesLinkedList::~FixedPagesLinkedList() {
-    std::for_each(pages.begin(), pages.end(), [](FixedPage* p) {
-        delete p;
-    });
 }
-
 } // namespace NES::Runtime::Execution::Operators

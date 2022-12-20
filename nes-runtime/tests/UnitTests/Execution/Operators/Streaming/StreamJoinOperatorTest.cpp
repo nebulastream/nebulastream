@@ -135,10 +135,10 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
         uint64_t timeStamp = record.read(buildHelper.timeStampField).as<UInt64>().getValue().getValue();
         auto hash = Util::murmurHash(joinKey);
         auto hashTable = streamJoinOpHandler->getWindow(timeStamp).getLocalHashTable(workerContext->getId(), buildHelper.isLeftSide);
-        auto bucket = hashTable.getBucketLinkedList(hashTable.getBucketPos(hash));
+        auto bucket = hashTable->getBucketLinkedList(hashTable->getBucketPos(hash));
 
         bool correctlyInserted = false;
-        for (auto page : bucket->getPages()) {
+        for (auto&& page : bucket->getPages()) {
             for (auto k = 0UL; k < page->size(); ++k) {
                 uint8_t* recordPtr = page->operator[](k);
                 auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, buildHelper.bufferManager);
@@ -386,7 +386,32 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     return true;
 }
 
+class TestRunner : public NES::Exceptions::ErrorListener {
+public:
+    void onFatalError(int signalNumber, std::string callStack) override {
+        std::ostringstream fatalErrorMessage;
+        fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
+                          << callStack;
+
+        NES_FATAL_ERROR(fatalErrorMessage.str());
+        std::cerr << fatalErrorMessage.str() << std::endl;
+    }
+
+    void onFatalException(std::shared_ptr<std::exception> exceptionPtr, std::string callStack) override {
+        std::ostringstream fatalExceptionMessage;
+        fatalExceptionMessage << "onFatalException: exception=[" << exceptionPtr->what() << "] callstack=\n" << callStack;
+
+        NES_FATAL_ERROR(fatalExceptionMessage.str());
+        std::cerr << fatalExceptionMessage.str() << std::endl;
+    }
+};
+
 TEST_F(StreamJoinOperatorTest, joinBuildTest) {
+    // Activating and installing error listener
+    auto runner = std::make_shared<TestRunner>();
+    NES::Exceptions::installGlobalErrorListener(runner);
+
+
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField("f1_left", BasicType::UINT64)
                           ->addField("f2_left", BasicType::UINT64)
@@ -402,7 +427,8 @@ TEST_F(StreamJoinOperatorTest, joinBuildTest) {
 
     StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
-    ASSERT_EQ(emittedBuffers.size(), buildHelper.numPartitions * (buildHelper.numberOfTuplesToProduce / buildHelper.windowSize));
+    // As we are only building here the left side, we do not emit any buffers
+    ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {

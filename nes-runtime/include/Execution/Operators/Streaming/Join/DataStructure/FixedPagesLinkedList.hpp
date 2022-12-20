@@ -33,13 +33,8 @@ class FixedPagesLinkedList{
      * @param sizeOfRecord
      * @param pageSize
      */
-    FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord,
+    explicit FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord,
                          size_t pageSize);
-
-    /**
-     * @brief Deconstructor for a FixedPagesLinkedList
-     */
-    ~FixedPagesLinkedList();
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
@@ -52,16 +47,15 @@ class FixedPagesLinkedList{
      * @brief Returns all pages belonging to this list
      * @return Vector containing pointer to the FixedPages
      */
-    const std::vector<FixedPage*>& getPages() const;
+    const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
 
   private:
     std::atomic<uint64_t>& tail;
-    FixedPage* curPage;
     size_t pos;
-    uint64_t overrunAddress;
-    std::vector<FixedPage*> pages;
-    size_t sizeOfRecord;
-    size_t pageSize;
+    const uint64_t overrunAddress;
+    std::vector<std::unique_ptr<FixedPage>> pages;
+    const size_t sizeOfRecord;
+    const size_t pageSize;
 };
 }
 
