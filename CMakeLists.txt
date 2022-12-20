@@ -16,7 +16,7 @@ include(CMakeDependentOption)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v27)
 # Activate self hosting, such that the compiler from the dependencies is taken
-option(NES_SELF_HOSTING "use self hosting compiler" OFF)
+option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 # Enable local dependency building (this may take a long time)
@@ -230,7 +230,6 @@ if (ENABLE_PYTHON_UDF)
 endif ()
 
 # Native/Generic march support
-MESSAGE("CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 if (NES_BUILD_NATIVE)
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
