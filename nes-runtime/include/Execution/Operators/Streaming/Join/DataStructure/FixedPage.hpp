@@ -46,19 +46,13 @@ class FixedPage{
      * @brief Constructor for a FixedPage from another FixedPage
      * @param otherPage
      */
-    FixedPage(const FixedPage& that);
+    FixedPage(FixedPage&& otherPage);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
      * @param otherPage
      */
-    FixedPage(FixedPage&& that);
-
-    /**
-     * @brief Constructor for a FixedPage from another FixedPage
-     * @param otherPage
-     */
-    FixedPage& operator=(FixedPage&& that);
+    FixedPage& operator=(FixedPage&& otherPage);
 
     /**
      * @brief returns a pointer to the record at the given index
@@ -96,10 +90,10 @@ class FixedPage{
     void swap(FixedPage& lhs, FixedPage& rhs) noexcept;
 
   private:
-    size_t sizeOfRecord{0};
-    uint8_t* data{nullptr};
-    size_t pos{0};
-    size_t capacity{0};
+    size_t sizeOfRecord;
+    uint8_t* data;
+    size_t pos;
+    size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };
 

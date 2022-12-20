@@ -21,11 +21,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize) : sizeOfRecord(sizeOfRecord) {
+FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize)
+                    : sizeOfRecord(sizeOfRecord), capacity(pageSize / sizeOfRecord)  {
     auto ptr = tail.fetch_add(pageSize);
     NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
-
-    capacity = pageSize / sizeOfRecord;
     NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
 
     data = reinterpret_cast<uint8_t*>(ptr);
@@ -58,22 +57,20 @@ uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * size
 
 size_t FixedPage::size() const { return pos; }
 
-FixedPage::FixedPage(const FixedPage& that) : sizeOfRecord(that.sizeOfRecord), data(that.data), pos(that.pos),
-                                        capacity(that.capacity), bloomFilter(that.bloomFilter.get()){}
 
-FixedPage::FixedPage(FixedPage&& that) : sizeOfRecord(that.sizeOfRecord), data(that.data), pos(that.pos),
-                                         capacity(that.capacity), bloomFilter(std::move(that.bloomFilter)) {
-    that.sizeOfRecord = 0;
-    that.data = nullptr;
-    that.pos = 0;
-    that.capacity = 0;
+FixedPage::FixedPage(FixedPage&& otherPage) : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), pos(otherPage.pos),
+                                         capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
+    otherPage.sizeOfRecord = 0;
+    otherPage.data = nullptr;
+    otherPage.pos = 0;
+    otherPage.capacity = 0;
 }
-FixedPage& FixedPage::operator=(FixedPage&& that) {
-    if (this == std::addressof(that)) {
+FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
+    if (this == std::addressof(otherPage)) {
         return *this;
     }
 
-    swap(*this, that);
+    swap(*this, otherPage);
     return *this;
 }
 
