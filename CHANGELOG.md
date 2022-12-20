@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4.9](https://github.com/nebulastream/nebulastream/tree/v0.4.9) (2022-12-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.8...v0.4.9)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add bit\_length & length expression [\#3187](https://github.com/nebulastream/nebulastream/issues/3187)
+- \[DBPRO\] Add left & right & lpad & ltrim & trim & rtrim expression [\#3186](https://github.com/nebulastream/nebulastream/issues/3186)
+- \[DBPRO\] Add lower & upper  [\#3185](https://github.com/nebulastream/nebulastream/issues/3185)
+
 ## [v0.4.8](https://github.com/nebulastream/nebulastream/tree/v0.4.8) (2022-12-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.7...v0.4.8)
