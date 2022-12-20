@@ -19,8 +19,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace NES::Runtime::Execution {
-namespace Operators {
+namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief A bloom filter that works with 64-bit keys
@@ -60,5 +59,4 @@ class alignas(64) BloomFilter {
 };
 
 } // namespace NES::Runtime::Execution::Operator
-} // namespace NES::Runtime::Execution
 #endif//NES_BLOOMFILTER_HPP
