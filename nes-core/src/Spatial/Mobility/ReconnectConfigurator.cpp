@@ -50,7 +50,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
     bool predictionChanged = false;
     if (scheduledReconnect.has_value()) {
         // the new value represents a valid prediction
-        uint64_t reconnectId = scheduledReconnect.value().expectedNewParentId;
+        uint64_t reconnectId = scheduledReconnect.value().newParentId;
         Timestamp timestamp = scheduledReconnect.value().expectedTime;
         std::unique_lock lock(reconnectConfigMutex);
         if (!lastTransmittedReconnectPrediction.has_value()) {
@@ -58,7 +58,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateSchedule
             NES_DEBUG("transmitting predicted reconnect point. previous prediction did not exist")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
             predictionChanged = true;
-        } else if (reconnectId != lastTransmittedReconnectPrediction.value().expectedNewParentId
+        } else if (reconnectId != lastTransmittedReconnectPrediction.value().newParentId
                    || timestamp != lastTransmittedReconnectPrediction.value().expectedTime) {
             // there was a previous prediction but its values differ from the current one. Inform coordinator about the new prediciton
             NES_DEBUG("transmitting predicted reconnect point. current prediction differs from previous prediction")

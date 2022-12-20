@@ -332,7 +332,7 @@ bool NesWorker::connect() {
         healthCheckService->startHealthCheck();
 
         if (locationProvider) {
-            locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
+            locationProvider->setCoordinatorRPCClient(coordinatorRpcClient);
             if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
                 reconnectConfigurator =
                     std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this,

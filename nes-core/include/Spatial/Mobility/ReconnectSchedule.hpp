@@ -24,7 +24,8 @@ struct ReconnectPrediction;
 struct ReconnectPoint;
 
 /**
- * @brief contains a prediction about a mobile devices trajectory and the reconnects as they are expected to happen
+ * @brief contains the predicted reconnect points along the trajectory of this worker.
+ * Note: As the current location of this worker changes, the TrajectoryPredictor can potentially re-compute all previous predictions.
  */
 class ReconnectSchedule {
   public:

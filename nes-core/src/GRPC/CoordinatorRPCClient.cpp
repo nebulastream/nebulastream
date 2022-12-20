@@ -603,7 +603,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
 
     request.set_deviceid(nodeId);
     NES::Spatial::Protobuf::SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
-    reconnectPoint->set_id(scheduledReconnect.expectedNewParentId);
+    reconnectPoint->set_id(scheduledReconnect.newParentId);
     reconnectPoint->set_time(scheduledReconnect.expectedTime);
 
     coordinatorStub->SendScheduledReconnect(&context, request, &reply);

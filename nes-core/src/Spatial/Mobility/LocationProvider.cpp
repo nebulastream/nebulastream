@@ -24,45 +24,37 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-LocationProvider::LocationProvider(Index::Experimental::SpatialType spatialType,
-                                   DataTypes::Experimental::GeoLocation fieldNodeLoc) {
+LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialType,
+                                   DataTypes::Experimental::GeoLocation geoLocation) {
     this->spatialType = spatialType;
-    this->fixedLocationCoordinates = fieldNodeLoc;
+    this->workerGeoLocation = geoLocation;
 }
 
-Index::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
-
-bool LocationProvider::setFixedLocationCoordinates(const DataTypes::Experimental::GeoLocation&& geoLoc) {
-    if (spatialType != Index::Experimental::SpatialType::FIXED_LOCATION) {
-        return false;
-    }
-    fixedLocationCoordinates = geoLoc;
-    return true;
-}
+Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
 
 DataTypes::Experimental::Waypoint LocationProvider::getWaypoint() {
     switch (spatialType) {
-        case Index::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
-        case Index::Experimental::SpatialType::FIXED_LOCATION: return DataTypes::Experimental::Waypoint(fixedLocationCoordinates);
-        case Index::Experimental::SpatialType::NO_LOCATION:
-        case Index::Experimental::SpatialType::INVALID:
+        case Spatial::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
+        case Spatial::Experimental::SpatialType::FIXED_LOCATION:
+            return DataTypes::Experimental::Waypoint(workerGeoLocation);
+        case Spatial::Experimental::SpatialType::NO_LOCATION:
+        case Spatial::Experimental::SpatialType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
             return DataTypes::Experimental::Waypoint(DataTypes::Experimental::Waypoint::invalid());
     }
 }
 
-DataTypes::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
-                                                                           double radius) {
+DataTypes::Experimental::NodeIdToGeoLocationMap
+LocationProvider::getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location, double radius) {
     if (!coordinatorRpcClient) {
         NES_WARNING("worker has no coordinator rpc client, cannot download node index");
         return {};
     }
     auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(location, radius);
-    return std::make_shared<std::unordered_map<uint64_t, DataTypes::Experimental::GeoLocation>>(nodeVector.begin(),
-                                                                                                nodeVector.end());
+    return DataTypes::Experimental::NodeIdToGeoLocationMap{nodeVector.begin(), nodeVector.end()};
 }
 
-DataTypes::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(double radius) {
+DataTypes::Experimental::NodeIdToGeoLocationMap LocationProvider::getNodeIdsInRange(double radius) {
     auto location = getWaypoint().getLocation();
     if (location.isValid()) {
         return getNodeIdsInRange(std::move(location), radius);
@@ -71,7 +63,7 @@ DataTypes::Experimental::NodeIdsMapPtr LocationProvider::getNodeIdsInRange(doubl
     return {};
 }
 
-void LocationProvider::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient) {
+void LocationProvider::setCoordinatorRPCClient(CoordinatorRPCClientPtr coordinatorClient) {
     coordinatorRpcClient = coordinatorClient;
 }
 

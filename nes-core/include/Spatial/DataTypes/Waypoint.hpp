@@ -30,35 +30,35 @@ namespace Experimental {
 class Waypoint {
   public:
     /**
-* @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
-* @param location The location of the device
-*/
+     * @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
+     * @param location The location of the device
+     */
     Waypoint(GeoLocation location);
 
     /**
-* @brief Construct a waypoint with a certain timestamp
-* @param location the geaographical location of the device
-* @param timestamp the expected or actual time
-*/
+     * @brief Construct a waypoint with a certain timestamp
+     * @param location the geaographical location of the device
+     * @param timestamp the expected or actual time
+     */
     Waypoint(GeoLocation location, Timestamp timestamp);
 
     /**
-* @brief return a waypoint signaling that no location data is available. Location wil be invalid and timestamp will be
-* nulltopt_t
-* @return invalid waypoint
-*/
+     * @brief return a waypoint signaling that no location data is available. Location wil be invalid and timestamp will be
+     * nulltopt_t
+     * @return invalid waypoint
+     */
     static Waypoint invalid();
 
     /**
-* @brief Getter function for the location
-* @return the geographical location
-*/
+     * @brief Getter function for the location
+     * @return the geographical location
+     */
     GeoLocation getLocation() const;
 
     /**
-* @brief Getter function for the timestamp
-* @return the actual of expected time when the device is at the specified location
-*/
+     * @brief Getter function for the timestamp
+     * @return the actual of expected time when the device is at the specified location
+     */
     std::optional<Timestamp> getTimestamp() const;
 
   private:
