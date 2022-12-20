@@ -16,7 +16,7 @@
 
 #include <atomic>
 #include <cstddef>
-#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
+#include <Runtime/BloomFilter.hpp>
 
 
 namespace NES::Runtime::Execution::Operators {
@@ -34,7 +34,7 @@ class FixedPage{
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize);
+    explicit FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
@@ -92,7 +92,7 @@ class FixedPage{
   private:
     size_t sizeOfRecord;
     uint8_t* data;
-    size_t pos;
+    size_t currentPos;
     size_t capacity;
     std::unique_ptr<BloomFilter> bloomFilter;
 };

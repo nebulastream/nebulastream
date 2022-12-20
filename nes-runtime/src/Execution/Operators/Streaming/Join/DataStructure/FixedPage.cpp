@@ -20,26 +20,23 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-FixedPage::FixedPage(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord, size_t pageSize)
-                    : sizeOfRecord(sizeOfRecord), capacity(pageSize / sizeOfRecord)  {
-    auto ptr = tail.fetch_add(pageSize);
-    NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize)
+                    : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord)  {
     NES_ASSERT2_FMT(0 < capacity, "Capacity is zero " << capacity);
 
-    data = reinterpret_cast<uint8_t*>(ptr);
 
     bloomFilter = std::make_unique<BloomFilter>(capacity, BLOOM_FALSE_POSITIVE_RATE);
-    pos = 0;
+    currentPos = 0;
 }
 
 uint8_t* FixedPage::append(const uint64_t hash)  {
-    if (pos >= capacity) {
+    if (currentPos >= capacity) {
         return nullptr;
     }
 
     bloomFilter->add(hash);
-    uint8_t* ptr = &data[pos * sizeOfRecord];
-    pos++;
+    uint8_t* ptr = &data[currentPos * sizeOfRecord];
+    currentPos++;
     return ptr;
 }
 
@@ -54,14 +51,14 @@ bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
 
 uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * sizeOfRecord]); }
 
-size_t FixedPage::size() const { return pos; }
+size_t FixedPage::size() const { return currentPos; }
 
 
-FixedPage::FixedPage(FixedPage&& otherPage) : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), pos(otherPage.pos),
-                                         capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
+FixedPage::FixedPage(FixedPage&& otherPage) : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos),
+                                              capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
     otherPage.sizeOfRecord = 0;
     otherPage.data = nullptr;
-    otherPage.pos = 0;
+    otherPage.currentPos = 0;
     otherPage.capacity = 0;
 }
 FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
@@ -78,13 +75,13 @@ FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
 void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
     std::swap(lhs.data, rhs.data);
-    std::swap(lhs.pos, rhs.pos);
+    std::swap(lhs.currentPos, rhs.currentPos);
     std::swap(lhs.capacity, rhs.capacity);
     std::swap(lhs.bloomFilter, rhs.bloomFilter);
 }
 
-FixedPage::FixedPage(FixedPage* otherPage) : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), pos(otherPage->pos),
-                                        capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
+FixedPage::FixedPage(FixedPage* otherPage) : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
+                                             capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
 
 
 } // namespace NES::Runtime::Execution::Operators

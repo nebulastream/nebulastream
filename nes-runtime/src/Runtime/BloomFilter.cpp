@@ -15,10 +15,10 @@
 
 #include <Runtime/Allocator/MemoryUtil.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
+#include <Runtime/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime {
 
 BloomFilter::BloomFilter(uint64_t entries, double falsePositiveRate) {
     NES_ASSERT2_FMT(falsePositiveRate < 1.0 && falsePositiveRate > 0.0, "BloomFilter false positive rate has to be in the range of (0.0, 1.0)!");

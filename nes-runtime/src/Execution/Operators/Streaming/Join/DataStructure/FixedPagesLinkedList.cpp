@@ -21,7 +21,9 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
     uint8_t* retPointer = pages[pos]->append(hash);
     if (retPointer == nullptr) {
         if (++pos >= pages.size()) {
-            pages.emplace_back(std::make_unique<FixedPage>(this->tail, overrunAddress, sizeOfRecord, pageSize));
+            auto ptr = tail.fetch_add(pageSize);
+            NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+            pages.emplace_back(std::make_unique<FixedPage>(reinterpret_cast<uint8_t*>(ptr), sizeOfRecord, pageSize));
         }
         retPointer = pages[pos]->append(hash);
     }
@@ -39,7 +41,9 @@ FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t
     NES_ASSERT2_FMT(numPreAllocatedPage > 0, "numPreAllocatedPage is 0");
 
     for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
-        pages.emplace_back(new FixedPage(this->tail, overrunAddress, sizeOfRecord, pageSize));
+        auto ptr = tail.fetch_add(pageSize);
+        NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
+        pages.emplace_back(new FixedPage(reinterpret_cast<uint8_t*>(ptr), sizeOfRecord, pageSize));
     }
 
 }
