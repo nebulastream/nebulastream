@@ -45,6 +45,8 @@ StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFi
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
 
+    
+
     head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
     overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSizeForDataStructures;
     tail.store(reinterpret_cast<uintptr_t>(head));

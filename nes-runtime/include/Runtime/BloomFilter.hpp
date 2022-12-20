@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime {
 
 /**
  * @brief A bloom filter that works with 64-bit keys
