@@ -17,7 +17,7 @@
 #include <WorkerLocation.grpc.pb.h>
 #include <string>
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES::Spatial::Experimental {
 
 /**
  * this enum defines different types workers can have regarding their spatial information

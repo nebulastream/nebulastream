@@ -30,13 +30,12 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 TrajectoryPredictor::TrajectoryPredictor(
-    LocationProviderPtr locationProvider,
-    const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration,
-    uint64_t parentId)
-    : locationProvider(std::move(locationProvider)), lastReconnectWaypoint(DataTypes::Experimental::Waypoint::invalid()) {
+    const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
 #ifdef S2DEF
-    if (!(configuration->defaultCoverageRadius.getValue() < configuration->nodeIndexUpdateThreshold.getValue()
-          < configuration->nodeInfoDownloadRadius.getValue())) {
+
+    nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
+    if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()
+        > nodeInfoDownloadRadius) {
         NES_FATAL_ERROR("Default Coverage Radius: "
                         << configuration->defaultCoverageRadius.getValue()
                         << ", node index update threshold: " << configuration->nodeIndexUpdateThreshold.getValue()
@@ -48,18 +47,15 @@ TrajectoryPredictor::TrajectoryPredictor(
     locationBufferSize = configuration->locationBufferSize.getValue();
     locationBufferSaveRate = configuration->locationBufferSaveRate.getValue();
     pathDistanceDeltaAngle = S2Earth::MetersToAngle(configuration->pathDistanceDelta.getValue());
-    nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
-    defaultCoverageRadiusAngle = S2Earth::MetersToAngle(configuration->defaultCoverageRadius.getValue());
     predictedPathLengthAngle = S2Earth::MetersToAngle(configuration->pathPredictionLength);
+    defaultCoverageRadiusAngle = S2Earth::MetersToAngle(configuration->defaultCoverageRadius.getValue());
     coveredRadiusWithoutThreshold =
         S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
-    this->parentId = parentId;
     updatePrediction = false;
     speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
     bufferAverageMovementSpeed = 0;
 #else
     (void) configuration;
-    (void) parentId;
     NES_FATAL_ERROR("cannot construct trajectory predictor without s2 library");
     exit(EXIT_FAILURE);
 #endif
@@ -252,7 +248,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             //check if scheduled reconnects exist and inform the coordinator about any changes
             std::unique_lock reconnectVectorLock(reconnectVectorMutex);
             if (!reconnectVector->empty()) {
-                nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.expectedNewParentId);
+                nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.newParentId);
                 auto updatedReconnectPoint = getNextPredictedReconnect();
                 std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction> updatedPrediction;
                 if (updatedReconnectPoint) {
@@ -286,15 +282,14 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 //if the next expected parent is closer than the current one: reconnect
                 if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= currentDistFromParent) {
                     //reconnect and inform coordinator about upcoming reconnect
-                    auto newParentId = reconnectVector->front()->reconnectPrediction.expectedNewParentId;
+                    auto newParentId = reconnectVector->front()->reconnectPrediction.newParentId;
                     reconnect(newParentId, currentOwnLocation);
                     reconnectVector->erase(reconnectVector->begin());
 
                     //after reconnect, check if there is a next point on the schedule
                     if (!reconnectVector->empty()) {
                         auto coverageEndLoc = reconnectVector->front()->predictedReconnectLocation;
-                        nextReconnectNodeLocation =
-                            fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.expectedNewParentId);
+                        nextReconnectNodeLocation = fieldNodeMap.at(reconnectVector->at(0)->reconnectPrediction.newParentId);
                         NES_INFO("reconnect point: " << coverageEndLoc.toString());
                     } else {
                         NES_INFO("no next reconnect scheduled")

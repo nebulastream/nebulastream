@@ -15,8 +15,6 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <deque>
@@ -33,31 +31,27 @@
 #include <s2/s2point.h>
 #include <s2/s2point_index.h>
 #include <s2/s2polyline.h>
-#endif
 
-namespace NES::Configurations::Spatial::Mobility::Experimental {
-class WorkerMobilityConfiguration;
-using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}// namespace NES::Configurations::Spatial::Mobility::Experimental
-
-#ifdef S2DEF
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 #endif
 
-namespace NES::Spatial::Mobility::Experimental {
-class LocationProvider;
-using LocationProviderPtr = std::shared_ptr<LocationProvider>;
+namespace NES {
+
+namespace Configurations::Spatial::Mobility::Experimental {
+class WorkerMobilityConfiguration;
+using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
+}// namespace Configurations::Spatial::Mobility::Experimental
+
+namespace Spatial::DataTypes::Experimental {
+using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
+}// namespace Spatial::DataTypes::Experimental
+
+namespace Spatial::Mobility::Experimental {
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
-
-class ReconnectConfigurator;
-using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 
 struct ReconnectPrediction;
-using ReconnectPredictionPtr = std::shared_ptr<ReconnectPrediction>;
-struct ReconnectPoint;
-using ReconnectPointPtr = std::shared_ptr<ReconnectPoint>;
 
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
@@ -65,9 +59,7 @@ using ReconnectPointPtr = std::shared_ptr<ReconnectPoint>;
  */
 class TrajectoryPredictor {
   public:
-    TrajectoryPredictor(LocationProviderPtr locationProvider,
-                        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration,
-                        uint64_t parentId);
+    TrajectoryPredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
     /**
      * Experimental
@@ -235,7 +227,8 @@ class TrajectoryPredictor {
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
-    DataTypes::Experimental::Waypoint lastReconnectWaypoint;
 };
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace Spatial::Mobility::Experimental
+}// namespace NES
+
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
