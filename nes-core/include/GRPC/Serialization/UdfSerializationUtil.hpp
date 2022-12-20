@@ -38,7 +38,8 @@ class UdfSerializationUtil {
      * @param javaUdfDescriptorMessage The Java UDF descriptor protobuf message.
      * @return A Java UDF descriptor that was deserialized from the protobuf message.
      */
-    static Catalogs::UDF::JavaUdfDescriptorPtr deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
+    static Catalogs::UDF::JavaUdfDescriptorPtr
+    deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessage& javaUdfDescriptorMessage);
 };
 
 }// namespace NES

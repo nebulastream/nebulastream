@@ -68,6 +68,7 @@
 #include <API/Windowing.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -79,7 +80,6 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
 
 using namespace NES;
 using namespace Configurations;

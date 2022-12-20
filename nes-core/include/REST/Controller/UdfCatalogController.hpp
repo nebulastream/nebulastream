@@ -20,6 +20,7 @@
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <UdfCatalogService.pb.h>
@@ -27,7 +28,6 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
-#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
