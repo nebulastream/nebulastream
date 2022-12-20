@@ -25,6 +25,7 @@
 #include <vector>
 
 #ifdef S2DEF
+#include "ReconnectPoint.hpp"
 #include <s2/s1chord_angle.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
@@ -57,9 +58,9 @@ struct ReconnectPrediction;
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
  */
-class TrajectoryPredictor {
+class ReconnectSchedulePredictor {
   public:
-    TrajectoryPredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+    ReconnectSchedulePredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
     /**
      * Experimental
@@ -78,7 +79,7 @@ class TrajectoryPredictor {
     /**
      * Experimental
      * @brief enter loop to periodically query for the current device location and update path prediction and reconnect schedule
-     * accordingly as well as instructing the ReconnectConfigurator to perform a reconnect if the device is close enough to the new parent
+     * accordingly as well as instructing the WorkerMobilityHandler to perform a reconnect if the device is close enough to the new parent
      */
     void startReconnectPlanning();
 
@@ -126,6 +127,11 @@ class TrajectoryPredictor {
      */
     std::optional<ReconnectPoint> getNextPredictedReconnect();
 
+    ReconnectSchedulePtr getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
+                                              const DataTypes::Experimental::GeoLocation& parentLocation,
+                                              const S2PointIndex<uint64_t>& fieldNodeIndex,
+                                              const std::unordered_map<uint64_t, S2Point>& fieldNodeMap,
+                                              bool indexUpdated);
   private:
     /**
      * check if the device deviated further than the defined distance threshold from the predicted path. If so, interpolate a new
@@ -153,14 +159,6 @@ class TrajectoryPredictor {
     bool updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
 
     /**
-     * @brief download the the field node locations within the configured distance around the devices position. If the list of the
-     * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
-     * @param currentLocation : the device position
-     * @return true if the received list of node positions was not empty
-     */
-    bool downloadFieldNodes(const DataTypes::Experimental::GeoLocation& currentLocation);
-
-    /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the
      * time interval covered by the location buffer and compare it to the previous movements speed. update the saved movement speed
      * if the new one differs more than the threshold.
@@ -176,28 +174,8 @@ class TrajectoryPredictor {
      */
     void reconnect(uint64_t newParentId);
 
-    /**
-     * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
-     * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
-     * @param ownLocation: This workers current location
-     */
-    bool reconnectToClosestNode(const DataTypes::Experimental::Waypoint& ownLocation);
-
-    LocationProviderPtr locationProvider;
-    ReconnectConfiguratorPtr reconnectConfigurator;
-
-    std::shared_ptr<std::thread> locationUpdateThread;
-
-    //mutexes
-    std::recursive_mutex trajectoryLineMutex;
-    std::recursive_mutex indexUpdatePositionMutex;
-    std::recursive_mutex nodeIndexMutex;
-    std::recursive_mutex reconnectVectorMutex;
-    std::recursive_mutex lastReconnectTupleMutex;
-    std::atomic<bool> updatePrediction;
-
     //configuration
-    uint64_t pathPredictionUpdateInterval;
+    //uint64_t pathPredictionUpdateInterval;
     size_t locationBufferSize;
     size_t locationBufferSaveRate;
     double nodeInfoDownloadRadius;
@@ -205,21 +183,16 @@ class TrajectoryPredictor {
     S1Angle predictedPathLengthAngle;
     S1Angle pathDistanceDeltaAngle;
     S1Angle reconnectSearchRadius;
-    S1Angle coveredRadiusWithoutThreshold;
     S1Angle defaultCoverageRadiusAngle;
 
     //prediction data
-    std::optional<S2Point> currentParentLocation;
     S2PolylinePtr trajectoryLine;
-    std::unordered_map<uint64_t, S2Point> fieldNodeMap;
-    std::optional<S2Point> positionOfLastNodeIndexUpdate;
-    S2PointIndex<uint64_t> fieldNodeIndex;
 #endif
-    uint64_t parentId; //todo: move this to reconnectConfigurator
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
     std::shared_ptr<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
+    size_t stepsSinceLastLocationSave;
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES

@@ -25,7 +25,7 @@ struct ReconnectPoint;
 
 /**
  * @brief contains the predicted reconnect points along the trajectory of this worker.
- * Note: As the current location of this worker changes, the TrajectoryPredictor can potentially re-compute all previous predictions.
+ * Note: As the current location of this worker changes, the ReconnectSchedulePredictor can potentially re-compute all previous predictions.
  */
 class ReconnectSchedule {
   public:
