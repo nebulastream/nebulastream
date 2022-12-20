@@ -26,16 +26,10 @@ namespace NES {
 class NonBlockingMonotonicSeqQueueTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup NonBlockingMonotonicSeqQueueTest test class."); }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("NonBlockingMonotonicSeqQueueTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup NonBlockingMonotonicSeqQueueTest test case.");
+        NES_DEBUG("Setup NonBlockingMonotonicSeqQueueTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down NonBlockingMonotonicSeqQueueTest test case."); }
 };
 
 /**

@@ -67,11 +67,14 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup QueryPlacementTest test class."); }
+
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup QueryPlacementTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup QueryPlacementTest test case.");
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();

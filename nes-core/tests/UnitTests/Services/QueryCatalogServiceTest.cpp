@@ -39,11 +39,14 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::T
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup QueryCatalogServiceTest test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("QueryCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup QueryCatalogServiceTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("QueryCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
+
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();

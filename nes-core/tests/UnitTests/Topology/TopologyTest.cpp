@@ -25,16 +25,11 @@ using namespace NES;
 /* - TopologyTest ---------------------------------------------------- */
 class TopologyTest : public Testing::NESBaseTest {
   public:
-    /* Will be called before any test in this class are executed. */
-
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES_DEBUG("Setup NesTopologyManager test case.");
         NES::Logger::setupLogging("NesTopologyManager.log", NES::LogLevel::LOG_DEBUG);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down NesTopologyManager test case."); }
 };
 /* - Nodes ----------------------------------------------------------------- */
 /**

@@ -63,11 +63,13 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
     QueryParsingServicePtr queryParsingService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup NemoPlacementTest test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("NemoPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup NemoPlacementTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("NemoPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup NemoPlacementTest test case.");
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();

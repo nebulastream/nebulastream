@@ -35,16 +35,12 @@ class PatternParsingServiceTest : public Testing::TestWithErrorHandling<testing:
 
   public:
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryPlanTest test case.");
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup QueryPlanTest test case."); }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryPlanTest test class."); }
 };
 
 std::string queryPlanToString(const QueryPlanPtr queryPlan) {

@@ -35,11 +35,14 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
     RequestQueuePtr nesRequestQueue;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup MaintenanceService test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup MaintenanceService test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
+
         NES_DEBUG("Setup MaintenanceService test case.");
         topology = Topology::create();
         TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources);

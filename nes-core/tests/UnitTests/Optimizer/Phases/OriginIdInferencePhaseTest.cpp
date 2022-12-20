@@ -22,6 +22,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -47,12 +48,17 @@
 using namespace NES;
 using namespace Configurations;
 
-class OriginIdInferencePhaseTest : public testing::Test {
+class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     Optimizer::OriginIdInferencePhasePtr originIdInferenceRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
+
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup OriginIdInferencePhaseTest test case.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -68,12 +74,6 @@ class OriginIdInferencePhaseTest : public testing::Test {
         topologySpecificQueryRewritePhase =
             Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(), sourceCatalog, optimizerConfiguration);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup OriginIdInferencePhaseTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down OriginIdInferencePhaseTest test class."); }
 
     void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
         NES_INFO("Setup FilterPushDownTest test case.");

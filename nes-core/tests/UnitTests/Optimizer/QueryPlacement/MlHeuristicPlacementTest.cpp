@@ -52,11 +52,13 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup MlHeuristicPlacementTest test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MlHeuristicPlacementTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup MlHeuristicPlacementTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("MlHeuristicPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
