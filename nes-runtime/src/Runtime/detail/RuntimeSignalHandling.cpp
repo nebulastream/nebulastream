@@ -28,6 +28,7 @@ static backward::SignalHandling sh;
 void nesErrorHandler(int signal) {
     auto stacktrace = collectAndPrintStacktrace();
     Exceptions::invokeErrorHandlers(signal, std::move(stacktrace));
+    Logger::getInstance().forceFlush();
 }
 
 /// called when std::terminate() is invoked
@@ -48,6 +49,7 @@ void nesTerminateHandler() {
         currentException = std::make_shared<std::runtime_error>("Unknown exception caught");
     }
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
+    Logger::getInstance().forceFlush();
 }
 
 /// called when an exception is not caught in our code
@@ -67,6 +69,7 @@ void nesUnexpectedException() {
         currentException = std::make_shared<std::runtime_error>("Unknown exception caught");
     }
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
+    Logger::getInstance().forceFlush();
 }
 #ifdef __linux__
 #ifdef NES_ENABLE_CXA_THROW_HOOK
