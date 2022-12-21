@@ -46,7 +46,6 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {

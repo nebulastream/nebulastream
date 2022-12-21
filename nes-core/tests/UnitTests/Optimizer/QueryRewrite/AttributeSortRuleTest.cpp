@@ -44,7 +44,6 @@ class AttributeSortRuleTest : public Testing::TestWithErrorHandling<testing::Tes
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
-
 };
 
 TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {

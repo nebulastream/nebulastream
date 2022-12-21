@@ -24,7 +24,6 @@ class TopologyPropertiesTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("TopologyPropertiesTest.log", NES::LogLevel::LOG_DEBUG);

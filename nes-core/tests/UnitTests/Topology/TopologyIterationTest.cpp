@@ -38,7 +38,6 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
         src4 = TopologyNode::create(7, "localhost", 4007, 5007, 4);
     }
 
-
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);

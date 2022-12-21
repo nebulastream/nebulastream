@@ -39,8 +39,6 @@ class PatternParsingServiceTest : public Testing::TestWithErrorHandling<testing:
         NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryPlanTest test case.");
     }
-
-
 };
 
 std::string queryPlanToString(const QueryPlanPtr queryPlan) {
