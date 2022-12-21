@@ -297,8 +297,7 @@ bool NesWorker::connect() {
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
-    //Todo: why did that give an error?
-    //registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
+    registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
