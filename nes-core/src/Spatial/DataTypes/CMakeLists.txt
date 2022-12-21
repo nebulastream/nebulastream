@@ -12,9 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        LocationIndex.cpp
+        Circle.cpp
+        Point.cpp
+        Polygon.cpp
+        Rectangle.cpp
+        Waypoint.cpp
+        GeoLocation.cpp
         )
-
-add_subdirectory(DataTypes)
-add_subdirectory(Mobility)
-

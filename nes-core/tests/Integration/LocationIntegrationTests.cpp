@@ -28,15 +28,17 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
@@ -45,8 +47,6 @@
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
-#include <Services/TopologyManagerService.hpp>
-#include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 
 using std::map;
 using std::string;
