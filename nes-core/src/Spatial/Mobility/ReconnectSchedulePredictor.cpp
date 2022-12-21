@@ -117,17 +117,12 @@ Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReco
         if (stepsSinceLastLocationSave == locationBufferSaveRate) {
             locationBuffer.push_back(currentOwnLocation);
             stepsSinceLastLocationSave = 0;
-            NES_DEBUG("added: " << locationBuffer.back().getLocation().toString() << ", "
-                                << locationBuffer.back().getTimestamp().value());
             NES_DEBUG("Location buffer is not filled yet, do not recalculate schedule")
         } else {
             ++stepsSinceLastLocationSave;
         }
         return nullptr;
     }
-
-    //todo: check if it makes sense to seave this as a member variable or not
-    S2Point nextReconnectNodeLocation;
 
     //if locationBufferSaveRate updates have been done since last save: save current location to buffer and reset save counter
     auto oldestKnownOwnLocation = locationBuffer.front();
