@@ -59,6 +59,7 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -66,12 +67,6 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
         queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Setup MlHeuristicPlacementTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down MlHeuristicPlacementTest test class."); }
 
     void topologyGenerator() {
         topology = Topology::create();

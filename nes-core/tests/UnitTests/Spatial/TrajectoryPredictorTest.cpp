@@ -34,10 +34,6 @@ class TrajectoryPredictorTest : public testing::Test {
         NES::Logger::setupLogging("TrajectoryPredictor.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TrajectoryPredictor test class.");
     }
-
-    void SetUp() override {}
-
-    static void TearDownTestCase() { NES_INFO("Tear down TrajectoryPredictor test class."); }
 };
 
 #ifdef S2DEF

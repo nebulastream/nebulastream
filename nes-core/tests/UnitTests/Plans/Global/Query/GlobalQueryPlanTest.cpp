@@ -34,15 +34,6 @@ class GlobalQueryPlanTest : public Testing::TestWithErrorHandling<testing::Test>
         Logger::setupLogging("GlobalQueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryPlanTest test case.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {}
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup GlobalQueryPlanTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryPlanTest test class."); }
 };
 
 /**

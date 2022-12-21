@@ -35,11 +35,11 @@ class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testi
     }
 
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
-    void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
     static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
 

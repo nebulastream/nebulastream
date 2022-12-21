@@ -62,7 +62,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         Catalogs::Source::SourceCatalogPtr sourceCatalog =

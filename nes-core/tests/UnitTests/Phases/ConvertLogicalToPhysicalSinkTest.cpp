@@ -31,19 +31,20 @@
 #include <Util/TestUtils.hpp>
 
 namespace NES {
-class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("Tear down ConvertLogicalToPhysicalSinkTest test class."); }
-
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
+        port = getAvailablePort();
+        workerConfiguration->dataPort = *port;
         workerConfiguration->physicalSources.add(physicalSource);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
@@ -56,8 +57,11 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<t
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         nodeEngine.reset();
+        port.reset();
+        Testing::NESBaseTest::TearDown();
     }
 
+    Testing::BorrowedPortPtr port{nullptr};
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     QueryCompilation::PipelineQueryPlanPtr testPlan;
 };

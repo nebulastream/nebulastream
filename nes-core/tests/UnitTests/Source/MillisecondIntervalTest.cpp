@@ -85,8 +85,6 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         NES_INFO("Setup MillisecondIntervalTest test class.");
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down MillisecondIntervalTest test class."); }
-
     void SetUp() override {
 
         Testing::NESBaseTest::SetUp();

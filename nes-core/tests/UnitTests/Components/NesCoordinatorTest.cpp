@@ -22,8 +22,6 @@ namespace NES {
 class NesCoordinatorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("CoordinatorTest.log", NES::LogLevel::LOG_DEBUG); }
-
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
 };
 
 // Test that the worker configuration from the coordinator configuration is passed to the internal worker.

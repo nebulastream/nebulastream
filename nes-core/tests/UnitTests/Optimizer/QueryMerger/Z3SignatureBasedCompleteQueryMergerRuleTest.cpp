@@ -54,6 +54,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::TestWithErro
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -67,12 +68,6 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::TestWithErro
         sourceCatalog->addLogicalSource("truck", schema);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureBasedCompleteQueryMergerRuleTest test class."); }
 };
 
 /**

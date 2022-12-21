@@ -89,19 +89,10 @@ class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Tes
 
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_INFO("Setup SerializationUtilTest test class."); }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SerializationUtilTest test case.");
+        NES_INFO("Setup SerializationUtilTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup SerializationUtilTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SerializationUtilTest test class."); }
 };
 
 TEST_F(SerializationUtilTest, dataTypeSerialization) {

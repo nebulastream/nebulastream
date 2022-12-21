@@ -57,6 +57,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()
@@ -66,12 +67,6 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
 
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down MemoryLayoutSelectionPhase test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down MemoryLayoutSelectionPhase test class."); }
 
     SchemaPtr testSchema;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;

@@ -49,17 +49,12 @@ class SourceCatalogTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down SourceCatalogTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SourceCatalogTest test class."); }
 };
 
 TEST_F(SourceCatalogTest, testAddGetLogSource) {

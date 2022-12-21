@@ -42,19 +42,15 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
         NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest class."); }
-
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
     }
-
-    /* Will be called after a test is executed. */
-    void TearDown() override { NES_DEBUG("UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest test case."); }
 };
 
 TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
