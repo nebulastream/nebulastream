@@ -15,7 +15,7 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>

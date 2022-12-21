@@ -12,9 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        LocationIndex.cpp
+        ReconnectSchedule.cpp
+        ReconnectSchedulePredictor.cpp
+        WorkerMobilityHandler.cpp
         )
 
-add_subdirectory(DataTypes)
-add_subdirectory(Mobility)
+add_subdirectory(LocationProviders)
 

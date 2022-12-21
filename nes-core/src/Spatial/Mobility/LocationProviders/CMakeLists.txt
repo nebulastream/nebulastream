@@ -12,9 +12,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        LocationIndex.cpp
+        LocationProviderCSV.cpp
+        LocationProvider.cpp
         )
-
-add_subdirectory(DataTypes)
-add_subdirectory(Mobility)
 

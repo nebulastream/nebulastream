@@ -17,12 +17,12 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <utility>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
 #ifdef S2DEF
 #include <Util/Experimental/S2Utilities.hpp>
 #include <s2/s1angle.h>
