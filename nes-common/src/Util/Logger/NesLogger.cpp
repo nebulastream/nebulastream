@@ -19,27 +19,15 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace detail {
-struct LoggerShutdownHelper {
-    ~LoggerShutdownHelper() { NES::Logger::getInstance().shutdown(); }
-};
-static LoggerShutdownHelper helper;
-}// namespace detail
-
 namespace NES {
 
-namespace Logger {
-
-void setupLogging(const std::string& logFileName, LogLevel level) { Logger::getInstance().configure(logFileName, level); }
-
-detail::Logger& getInstance() {
-    static detail::Logger singleton;
-
-    return singleton;
-}
-}// namespace Logger
-
 namespace detail {
+
+struct LoggerHolder {
+    ~LoggerHolder() { NES::Logger::getInstance().shutdown(); }
+};
+static LoggerHolder helper;
+
 static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
 static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
@@ -146,4 +134,15 @@ void Logger::changeLogLevel(LogLevel newLevel) {
     std::swap(newLevel, currentLogLevel);
 }
 }// namespace detail
+
+namespace Logger {
+
+void setupLogging(const std::string& logFileName, LogLevel level) { Logger::getInstance().configure(logFileName, level); }
+
+detail::Logger& getInstance() {
+    static detail::Logger singleton;
+    return singleton;
+}
+}// namespace Logger
+
 }// namespace NES
