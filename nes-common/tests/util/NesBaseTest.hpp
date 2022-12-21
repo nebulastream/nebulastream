@@ -37,17 +37,18 @@ namespace Testing {
 namespace detail {
 class TestWaitingHelper {
   public:
-    void startWaitingThread();
+    TestWaitingHelper();
+    void startWaitingThread(std::string testName);
     void completeTest();
     void failTest();
 
   private:
     std::unique_ptr<std::thread> waitThread;
-    std::promise<bool> testCompletion;
+    std::shared_ptr<std::promise<bool>> testCompletion;
     std::atomic<bool> testCompletionSet{false};
     static constexpr uint64_t WAIT_TIME_SETUP = 5;
 };
-}
+}// namespace detail
 template<typename T>
 class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public detail::TestWaitingHelper {
     struct Deleter {
@@ -58,7 +59,7 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public
     void SetUp() override {
         T::SetUp();
         Exceptions::installGlobalErrorListener(self = std::shared_ptr<Exceptions::ErrorListener>(this, Deleter()));
-        startWaitingThread();
+        startWaitingThread(typeid(*this).name());
     }
 
     void TearDown() override {
