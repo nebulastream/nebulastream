@@ -118,36 +118,41 @@ class ShmFixedVector {
     bool created;
 };
 
+TestWaitingHelper::TestWaitingHelper() {
+    testCompletion = std::make_shared<std::promise<bool>>();
+}
+
 void TestWaitingHelper::failTest() {
     auto expected = false;
     if (testCompletionSet.compare_exchange_strong(expected, true)) {
-        testCompletion.set_value(false);
+        testCompletion->set_value(false);
     }
 }
 
 void TestWaitingHelper::completeTest() {
     auto expected = false;
     if (testCompletionSet.compare_exchange_strong(expected, true)) {
-        testCompletion.set_value(true);
+        testCompletion->set_value(true);
         waitThread->join();
         waitThread.reset();
     }
 }
 
-void TestWaitingHelper::startWaitingThread() {
-    auto future = testCompletion.get_future();
+void TestWaitingHelper::startWaitingThread(std::string testName) {
     auto self = this;
-    waitThread = std::make_unique<std::thread>([future = std::move(future), self = std::move(self)]() mutable {
+    waitThread = std::make_unique<std::thread>([this, testName = std::move(testName)]() mutable {
+        auto future = testCompletion->get_future();
         switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP))) {
             case std::future_status::ready: {
                 try {
                     auto res = future.get();
                     ASSERT_TRUE(res);
                     if (!res) {
+                        NES_FATAL_ERROR2("Got error in test [{}]", testName);
                         std::exit(-1);
                     }
                 } catch (std::exception const& exception) {
-                    NES_FATAL_ERROR("Got exception in test [" << typeid(*self).name() << "]: " << exception.what();)
+                    NES_FATAL_ERROR2("Got exception in test [{}]: {}", testName, exception.what());
                     FAIL();
                     std::exit(-1);
                 }
@@ -155,7 +160,7 @@ void TestWaitingHelper::startWaitingThread() {
             }
             case std::future_status::timeout:
             case std::future_status::deferred: {
-                NES_ERROR("Cannot terminate test [" << typeid(*self).name() << "] within deadline");
+                NES_ERROR("Cannot terminate test [" << testName << "] within deadline");
                 FAIL();
                 std::exit(-1);
                 break;
