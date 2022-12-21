@@ -59,7 +59,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
         LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
         LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);

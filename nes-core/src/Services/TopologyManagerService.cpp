@@ -103,6 +103,11 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         healthCheckService->removeNodeFromHealthCheck(physicalNode);
     }
 
+    auto spatialType = physicalNode->getSpatialNodeType();
+    if (spatialType == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
+        removeGeoLocation(nodeId);
+    }
+
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
     bool successTopology = topology->removePhysicalNode(physicalNode);
