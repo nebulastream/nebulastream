@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTCONFIGURATOR_HPP_
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>
@@ -35,7 +35,7 @@ using CoordinatorRPCCLientPtr = std::shared_ptr<CoordinatorRPCClient>;
 namespace Runtime {
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
-}
+}// namespace Runtime
 
 namespace Configurations::Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
@@ -72,7 +72,7 @@ class WorkerMobilityHandler {
      */
     explicit WorkerMobilityHandler(
         std::vector<uint64_t> currentParentWorkerIds,
-        LocationProviderPtr locationProvider,
+        const LocationProviderPtr& locationProvider,
         CoordinatorRPCCLientPtr coordinatorRpcClient,
         Runtime::NodeEnginePtr nodeEngine,
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration);
@@ -106,17 +106,17 @@ class WorkerMobilityHandler {
     /**
      * @brief check if the device has moved closer than the threshold to the edge of the area covered by the current local
      * spatial index. If so download new node data around the current location
-     * @param currentLocation : the current location of the mobile device
+     * @param currentWaypoint : the current location of the mobile device
      * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
      */
-    void updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
+    void updateDownloadedNodeIndex(const DataTypes::Experimental::Waypoint& currentWaypoint);
 
   private:
     /**
      * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
      * and if so, send the new location and the time it was recorded to the coordinator and safe it as the last transmitted position
      */
-    void sendLocationUpdate(const DataTypes::Experimental::Waypoint &currentWaypoint);
+    void sendLocationUpdate(const DataTypes::Experimental::Waypoint& currentWaypoint);
 
     /**
      * @brief inform the WorkerMobilityHandler about the latest scheduled reconnect. If the supplied reconnect data differs
@@ -157,10 +157,10 @@ class WorkerMobilityHandler {
     /**
      * @brief checks if the supplied position is less then the defined threshold away from the fringe of the area covered by the
      * nodes which are currently in the neighbouring worker spatial index.
-     * @param currentLocation: current location of this worker
+     * @param currentWaypoint: current location of this worker
      * @return true if the device is close to the fringe and the index should be updated
      */
-    bool shouldUpdateNeighbouringWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation);
+    bool shouldUpdateNeighbouringWorkerInformation(const DataTypes::Experimental::Waypoint& currentWaypoint);
 
     /**
      * @brief Fetch the next reconnect point where this worker needs to connect
@@ -168,16 +168,17 @@ class WorkerMobilityHandler {
      * @param currentParentLocation Current parent location
      * @return nothing if no reconnection point is available else returns the new reconnection point
      */
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> getNextReconnectPoint(const DataTypes::Experimental::GeoLocation &currentOwnLocation,
-                                                                                              const DataTypes::Experimental::GeoLocation& currentParentLocation);
+    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>
+    getNextReconnectPoint(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+                          const DataTypes::Experimental::GeoLocation& currentParentLocation);
 
     /**
      * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
      * that was transmitted to the coordinator.
-     * @param currentLocation
+     * @param currentWaypoint: current waypoint of the worker node
      * @return true if the distance is larger than the threshold
      */
-    bool shouldSendCurrentWorkerPositionToCoordinator(const DataTypes::Experimental::GeoLocation& currentLocation);
+    bool shouldSendCurrentWorkerPositionToCoordinator(const DataTypes::Experimental::Waypoint& currentWaypoint);
 
     /**
      * @brief sets the position at which the worker was located when it last fetched an index of field nodes from the
@@ -212,7 +213,6 @@ class WorkerMobilityHandler {
     LocationProviderPtr locationProvider;
     ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
     CoordinatorRPCCLientPtr coordinatorRpcClient;
-
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Mobility::Experimental
