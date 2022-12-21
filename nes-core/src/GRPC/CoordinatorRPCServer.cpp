@@ -453,6 +453,7 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
               << request->workerid() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
               << timestamp);
     //todo #2862: update coordinator trajectory prediction
+    topologyManagerService->updateGeoLocation(request->workerid(), NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates));
     reply->set_success(true);
     return Status::OK;
 }

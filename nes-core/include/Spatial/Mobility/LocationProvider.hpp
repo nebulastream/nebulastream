@@ -19,7 +19,6 @@
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
@@ -27,35 +26,14 @@
 #endif
 
 namespace NES {
-class CoordinatorRPCClient;
-using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
-
-class NesWorker;
-using NesWorkerPtr = std::shared_ptr<NesWorker>;
-
 namespace Spatial::DataTypes::Experimental {
 class Waypoint;
-using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
+class GeoLocation;
 }// namespace Spatial::DataTypes::Experimental
 
-namespace Configurations {
-
-class WorkerConfiguration;
-using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
-
 namespace Spatial::Mobility::Experimental {
-class WorkerMobilityConfiguration;
-using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}// namespace Spatial::Mobility::Experimental
-}// namespace Configurations
-}// namespace NES
-
-namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
-
-class ReconnectSchedulePredictor;
-using TrajectoryPredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
 /**
  * @brief this class is the worker-side interface to access all location related information. It allows querying for the fixed position of a field node or the current position of a mobile node.
@@ -67,7 +45,8 @@ class LocationProvider {
      * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
      * @param geoLocation the location of this worker node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation);
+    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType,
+                              DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief default destructor
@@ -82,14 +61,6 @@ class LocationProvider {
 
     /**
      * Experimental
-     * @brief get the workers location.
-     * @return Location object containig the current location if the worker runs on a mobile device, the fixed location if
-     * the worker is a field node or an invalid location if there is no known location
-     */
-    DataTypes::Experimental::Waypoint getWaypoint();
-
-    /**
-     * Experimental
      * @brief construct a mobile workers location provider. The supplied worker mobility configuration will be used to determine
      * which subclass of LocationProvider should be used. This function is experimental.
      * @param workerConfig : this workers WorkerConfiguration
@@ -98,16 +69,15 @@ class LocationProvider {
     static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig);
 
     /**
-     * @brief get the last known location of the device
-     * @return a pair containing a goegraphical location and the time when this location was recorded
-     */
+     * @brief get the current location of the worker
+     * @return a waypoint indicating current location and the timestamp when that location was obtained
+     * */
     virtual DataTypes::Experimental::Waypoint getCurrentWaypoint();
 
   private:
-    CoordinatorRPCClientPtr coordinatorRpcClient;
     DataTypes::Experimental::GeoLocation workerGeoLocation;
     NES::Spatial::Experimental::SpatialType spatialType;
-    TrajectoryPredictorPtr trajectoryPredictor;
 };
 }//namespace NES::Spatial::Mobility::Experimental
+}
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_

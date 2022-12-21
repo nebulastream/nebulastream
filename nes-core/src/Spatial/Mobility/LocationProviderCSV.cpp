@@ -28,16 +28,15 @@ namespace NES::Spatial::Mobility::Experimental {
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProviderCSV(csvPath, 0) {}
 
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime)
-    : LocationProvider(Spatial::Experimental::SpatialType::MOBILE_NODE, {}) {
+    : LocationProvider(Spatial::Experimental::SpatialType::MOBILE_NODE, {}), csvPath(std::move(csvPath)) {
     if (simulatedStartTime == 0) {
         startTime = getTimestamp();
     } else {
         startTime = simulatedStartTime;
     }
-    readMovementSimulationDataFromCsv(csvPath);
 }
 
-void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& csvPath) {
+void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string latitudeString;
@@ -77,6 +76,9 @@ void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& c
 }
 
 DataTypes::Experimental::Waypoint LocationProviderCSV::getCurrentWaypoint() {
+    if (waypoints.empty()){
+        loadMovementSimulationDataFromCsv();
+    }
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -100,8 +102,6 @@ DataTypes::Experimental::Waypoint LocationProviderCSV::getCurrentWaypoint() {
 }
 
 Timestamp LocationProviderCSV::getStartTime() const { return startTime; }
-
-const std::vector<DataTypes::Experimental::Waypoint>& LocationProviderCSV::getWaypoints() const { return waypoints; }
 
 DataTypes::Experimental::Waypoint LocationProviderCSV::getWaypointAt(size_t index) { return waypoints.at(index); }
 }// namespace NES::Spatial::Mobility::Experimental

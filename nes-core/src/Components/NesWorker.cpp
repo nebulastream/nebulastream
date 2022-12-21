@@ -355,7 +355,8 @@ bool NesWorker::connect() {
         if (locationProvider) {
             if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
                 mobilityHandler =
-                    std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
+                    std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(workerConfig->parentId.getValue(),
+                                                                                                  locationProvider,
                                                                                                   coordinatorRpcClient,
                                                                                                   nodeEngine,
                                                                                                   mobilityConfig);

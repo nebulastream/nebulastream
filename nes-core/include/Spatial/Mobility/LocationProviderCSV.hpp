@@ -14,7 +14,8 @@
 
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
-#include "LocationProvider.hpp"
+
+#include <Spatial/Mobility/LocationProvider.hpp>
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -28,12 +29,6 @@ class LocationProviderCSV : public LocationProvider {
     explicit LocationProviderCSV(const std::string& csvPath);
 
     explicit LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime);
-
-    /**
-     * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
-     * @param csvPath: The path of the csv file
-     */
-    void readMovementSimulationDataFromCsv(const std::string& csvPath);
 
     /**
      * @brief default destructor
@@ -55,13 +50,12 @@ class LocationProviderCSV : public LocationProvider {
     //todo: #2951: change return type
     [[nodiscard]] DataTypes::Experimental::Waypoint getCurrentWaypoint() override;
 
-    /**
-     * @brief return a vector containing all the waypoints read from the csv file
-     * @return a vector of pairs of Locations and Timestamps
-     */
-    [[nodiscard]] const std::vector<DataTypes::Experimental::Waypoint>& getWaypoints() const;
-
   private:
+    /**
+     * @brief  that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
+     */
+    void loadMovementSimulationDataFromCsv();
+
     /**
      * @brief get the waypoint at the position of the iterator
      * @param index: the iterator which marks the position in the vector of waypoints
@@ -72,6 +66,7 @@ class LocationProviderCSV : public LocationProvider {
     Timestamp startTime;
     std::vector<DataTypes::Experimental::Waypoint> waypoints;
     size_t nextWaypoint;
+    std::string csvPath;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 

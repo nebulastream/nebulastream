@@ -21,7 +21,7 @@ Waypoint::Waypoint(GeoLocation location) : location(location), timestamp(std::nu
 
 Waypoint::Waypoint(GeoLocation location, Timestamp timestamp) : location(location), timestamp(timestamp) {}
 
-Waypoint Waypoint::invalid() { return {GeoLocation()}; };
+Waypoint Waypoint::invalid() { return Waypoint(GeoLocation()); };
 
 GeoLocation Waypoint::getLocation() const { return location; }
 

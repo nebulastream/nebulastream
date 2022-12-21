@@ -13,14 +13,13 @@
 */
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
-#include <GRPC/CoordinatorRPCClient.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/LocationProviderCSV.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -32,7 +31,7 @@ LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialTyp
 
 Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
 
-DataTypes::Experimental::Waypoint LocationProvider::getWaypoint() {
+DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     switch (spatialType) {
         case Spatial::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
         case Spatial::Experimental::SpatialType::FIXED_LOCATION:
@@ -42,12 +41,6 @@ DataTypes::Experimental::Waypoint LocationProvider::getWaypoint() {
             NES_WARNING("Location Provider has invalid spatial type")
             return DataTypes::Experimental::Waypoint(DataTypes::Experimental::Waypoint::invalid());
     }
-}
-
-
-DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
-    //location provider base class will always return invalid current locations
-    return DataTypes::Experimental::Waypoint(DataTypes::Experimental::Waypoint::invalid());
 }
 
 LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig) {
