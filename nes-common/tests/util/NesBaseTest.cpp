@@ -143,9 +143,13 @@ void TestWaitingHelper::startWaitingThread() {
                 try {
                     auto res = future.get();
                     ASSERT_TRUE(res);
+                    if (!res) {
+                        std::exit(-1);
+                    }
                 } catch (std::exception const& exception) {
                     NES_FATAL_ERROR("Got exception in test [" << typeid(*self).name() << "]: " << exception.what();)
                     FAIL();
+                    std::exit(-1);
                 }
                 break;
             }
@@ -153,6 +157,7 @@ void TestWaitingHelper::startWaitingThread() {
             case std::future_status::deferred: {
                 NES_ERROR("Cannot terminate test [" << typeid(*self).name() << "] within deadline");
                 FAIL();
+                std::exit(-1);
                 break;
             }
         }
