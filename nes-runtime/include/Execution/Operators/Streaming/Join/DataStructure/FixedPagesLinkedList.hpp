@@ -17,8 +17,6 @@
 #include <vector>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
 
-
-
 namespace NES::Runtime::Execution::Operators {
 
 /**

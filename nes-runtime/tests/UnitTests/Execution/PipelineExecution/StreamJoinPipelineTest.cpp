@@ -242,7 +242,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     auto joinBuildRight = std::make_shared<Operators::StreamJoinBuild>(handlerIndex, /*isLeftSide*/ false, joinFieldNameRight,
                                                                         timeStampField, rightSchema);
     auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto streamJoinOpHandler = std::make_shared<StreamJoinOperatorHandler>(leftSchema, rightSchema,
+    auto streamJoinOpHandler = std::make_shared<Operators::StreamJoinOperatorHandler>(leftSchema, rightSchema,
                                                                        joinFieldNameLeft, joinFieldNameRight,
                                                                        noWorkerThreads * 2, numSourcesLeft + numSourcesRight,
                                                                        joinSizeInByte, windowSize);

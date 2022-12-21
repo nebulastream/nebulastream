@@ -36,16 +36,14 @@ Operators::SharedJoinHashTable& StreamJoinWindow::getSharedJoinHashTable(bool is
 }
 
 StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                               size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                               size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
+                                   size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
+                                   uint64_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
                         : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
       rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), lastTupleTimeStamp(lastTupleTimeStamp)
 {
 
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
-
-    
 
     head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
     overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSizeForDataStructures;
@@ -72,7 +70,7 @@ uint64_t StreamJoinWindow::fetchSubSink(uint64_t sub) {
     return counterFinishedSink.fetch_sub(sub);
 }
 
-size_t StreamJoinWindow::getLastTupleTimeStamp() const {
+uint64_t StreamJoinWindow::getLastTupleTimeStamp() const {
     return lastTupleTimeStamp;
 }
 
