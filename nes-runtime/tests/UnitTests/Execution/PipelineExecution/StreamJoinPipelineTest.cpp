@@ -212,10 +212,10 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     const auto joinFieldNameRight = rightSchema->get(1)->getName();
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
 
-    ASSERT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
+    EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
-    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
+    EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
     auto timeStampField = leftSchema->get(2)->getName();
 
 
@@ -267,9 +267,9 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     auto executablePipelineRight = provider->create(pipelineBuildRight);
     auto executablePipelineSink = provider->create(pipelineSink);
 
-    ASSERT_EQ(executablePipelineLeft->setup(pipelineExecCtxLeft), 0);
-    ASSERT_EQ(executablePipelineRight->setup(pipelineExecCtxRight), 0);
-    ASSERT_EQ(executablePipelineSink->setup(pipelineExecCtxSink), 0);
+    EXPECT_EQ(executablePipelineLeft->setup(pipelineExecCtxLeft), 0);
+    EXPECT_EQ(executablePipelineRight->setup(pipelineExecCtxRight), 0);
+    EXPECT_EQ(executablePipelineSink->setup(pipelineExecCtxSink), 0);
 
     // Filling left and right hash tables
     std::vector<Runtime::TupleBuffer> allBuffersLeft, allBuffersRight;
@@ -279,7 +279,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
                                workerContext, numberOfTuplesToProduce);
 
     // Assure that at least one buffer has been emitted
-    ASSERT_TRUE(pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
+    EXPECT_TRUE(pipelineExecCtxLeft.emittedBuffers.size() > 0 || pipelineExecCtxRight.emittedBuffers.size() > 0);
 
     // Calling join Sink
     std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
@@ -308,7 +308,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     mergedEmittedBuffers.clear();
     nljBuffers.clear();
 
-    ASSERT_EQ(sortNLJBuffers.size(), sortedMergedEmittedBuffers.size());
+    EXPECT_EQ(sortNLJBuffers.size(), sortedMergedEmittedBuffers.size());
     for (auto i = 0UL; i < sortNLJBuffers.size(); ++i) {
         auto nljBuffer = sortNLJBuffers[i];
         auto streamJoinBuf = sortedMergedEmittedBuffers[i];
@@ -316,16 +316,16 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
         NES_DEBUG("Comparing nljBuffer\n" << Util::printTupleBufferAsCSV(nljBuffer, joinSchema) << "\n and streamJoinBuf\n" <<
                   Util::printTupleBufferAsCSV(streamJoinBuf, joinSchema));
 
-        ASSERT_EQ(nljBuffer.getNumberOfTuples(), streamJoinBuf.getNumberOfTuples());
-        ASSERT_EQ(nljBuffer.getBufferSize(), streamJoinBuf.getBufferSize());
-        ASSERT_TRUE(memcmp(nljBuffer.getBuffer(), streamJoinBuf.getBuffer(), streamJoinBuf.getBufferSize()) == 0);
+        EXPECT_EQ(nljBuffer.getNumberOfTuples(), streamJoinBuf.getNumberOfTuples());
+        EXPECT_EQ(nljBuffer.getBufferSize(), streamJoinBuf.getBufferSize());
+        EXPECT_TRUE(memcmp(nljBuffer.getBuffer(), streamJoinBuf.getBuffer(), streamJoinBuf.getBufferSize()) == 0);
     }
 
 
     // Stopping all executable pipelines
-    ASSERT_EQ(executablePipelineLeft->stop(pipelineExecCtxLeft), 0);
-    ASSERT_EQ(executablePipelineLeft->stop(pipelineExecCtxRight), 0);
-    ASSERT_EQ(executablePipelineSink->stop(pipelineExecCtxSink), 0);
+    EXPECT_EQ(executablePipelineLeft->stop(pipelineExecCtxLeft), 0);
+    EXPECT_EQ(executablePipelineLeft->stop(pipelineExecCtxRight), 0);
+    EXPECT_EQ(executablePipelineSink->stop(pipelineExecCtxSink), 0);
 }
 
 
