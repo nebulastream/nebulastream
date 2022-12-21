@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.4.13](https://github.com/nebulastream/nebulastream/tree/v0.4.13) (2022-12-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.12...v0.4.13)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Replace log4cxx with spdlog [\#3213](https://github.com/nebulastream/nebulastream/issues/3213)
+- Reduce Usage of log4cxx::helpers::Exception [\#2480](https://github.com/nebulastream/nebulastream/issues/2480)
+
 ## [v0.4.12](https://github.com/nebulastream/nebulastream/tree/v0.4.12) (2022-12-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.11...v0.4.12)
