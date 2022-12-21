@@ -14,9 +14,9 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALWINDOWGLOBALSLICESTOREAPPENDOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALWINDOWGLOBALSLICESTOREAPPENDOPERATORHANDLER_HPP_
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
+#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
 #include <memory>
 
 namespace NES::Experimental {
@@ -32,7 +32,7 @@ using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 
 namespace NES::Windowing::Experimental {
 class GlobalThreadLocalSliceStore;
-using GlobalSlicePtr = std::unique_ptr<Runtime::Execution::Operators::GlobalSlice>;
+using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 
 /**
  * @brief Operator handler, which appends merged slices to the global slice store.
@@ -50,9 +50,8 @@ class GlobalWindowGlobalSliceStoreAppendOperatorHandler
      * @param windowDefinition logical window definition
      * @param globalSliceStore reference to the global slice store
      */
-    GlobalWindowGlobalSliceStoreAppendOperatorHandler(
-        const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-        std::weak_ptr<GlobalSliceStore<Runtime::Execution::Operators::GlobalSlice>> globalSliceStore);
+    GlobalWindowGlobalSliceStoreAppendOperatorHandler(const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                                      std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore);
 
     ~GlobalWindowGlobalSliceStoreAppendOperatorHandler();
 
@@ -89,7 +88,7 @@ class GlobalWindowGlobalSliceStoreAppendOperatorHandler
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<GlobalSliceStore<Runtime::Execution::Operators::GlobalSlice>> globalSliceStore;
+    std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };
