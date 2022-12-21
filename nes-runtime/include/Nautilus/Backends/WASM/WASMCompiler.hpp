@@ -12,7 +12,8 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_
-#include <binaryen-c.h>
+
+#include <Nautilus/Backends/WASM/Mapping.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
@@ -37,7 +38,7 @@
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
-#include <Nautilus/Util/Mapping.hpp>
+#include <binaryen-c.h>
 #include <map>
 #include <memory>
 
@@ -63,53 +64,60 @@ class WASMCompiler {
 
   private:
     /**
- * Binaryen module which generates the final wasm binary code
- */
+     * Binaryen module which generates the final wasm binary code
+     */
     BinaryenModuleRef wasm;
     /**
- * The Relooper instance used for creating structured CFGs
- */
+     * The Relooper instance used for creating structured CFGs
+     */
     RelooperRef relooper;
     /**
- * Create RelooperBlock from BinaryenBlocks and store them
- */
+     * Create RelooperBlock from BinaryenBlocks and store them
+     */
     RelooperBlocks relooperBlocks;
     /**
- * Save variable s
- */
+     * Save locals (variables) generated during compilation of expressions.
+     * The whole list of locals ist needed in the last compilation step, when generating the execute function
+     */
     Mapping<std::string, BinaryenType> localVariables;
     /**
- * Local variables mapped to BinaryenIndex
- */
+     * Local variables mapped to BinaryenIndex.
+     */
     Mapping<std::string, BinaryenExpressionRef> localVarMapping;
     /**
- * Contains all expressions that have been already added. That way we prevent adding duplicate
- * expressions.
- */
+     * Contains all expressions that are already used in another expression. That way we prevent adding duplicate
+     * expressions on the stack. For example, in
+     * 0_0 = 7 :i64
+     * 0_1 = 0_103 + 0_0 :i64
+     * 0_0 would end up in consumed as 0_1 already "defines" it
+     */
     std::map<std::string, BinaryenExpressionRef> consumed;
     /**
- * Contains branches between blocks, which need to be added after all blocks are created
- */
+     * Contains branches between blocks, which need to be added after all blocks are created
+     */
     std::vector<std::tuple<std::string, std::string, BinaryenExpressionRef>> blockLinking;
     /**
- * Stores created blocks before we link them via branches
- */
+     * Stores created blocks before we link them via branches
+     */
     BlockExpressions blocks;
     /**
- * Current block over which we iterate
- */
+     * Current block over which we iterate
+     */
     IR::BasicBlockPtr currentBlock;
     /**
- * Proxy functions used. Contains the proxy function name as key and a vector with the parameter &
- * return types as value => {param_1, ..., param_n, return}
- */
+     * Proxy functions used. Contains the proxy function name as key and a vector with the parameter &
+     * return types as value => {param_1, ..., param_n, return}
+     */
     ProxyFunctions proxyFunctions;
 
     const char* memoryName = "memory";
     const char* proxyFunctionModule = "ProxyFunction";
 
-    int index;
-    int argIndex;
+    /**
+     * Function arguments and locals share te same index space in Webassembly. When creating new locals, we need to track
+     * the index.
+     */
+    int localsIndex;
 
     void generateWASM(const IR::BasicBlockPtr& basicBlock, BinaryenExpressions& expressions);
     void generateWASM(const IR::Operations::OperationPtr& operation, BinaryenExpressions& module);
@@ -141,8 +149,8 @@ class WASMCompiler {
     static BinaryenOp convertToFloat64Comparison(IR::Operations::CompareOperation::Comparator comparisonType);
 
     void generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, BinaryenExpressions blockArgs);
-    void genBody(BinaryenExpressions expressions);
-    BinaryenExpressionRef generateBody();
+    void generateBody(BinaryenExpressions expressions);
+    BinaryenExpressionRef generateCFG();
     static BinaryenType getBinaryenType(const IR::Types::StampPtr& stampPtr);
 };
 }// namespace NES::Nautilus::Backends::WASM

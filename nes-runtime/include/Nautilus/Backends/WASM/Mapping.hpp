@@ -11,12 +11,16 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_MAPPING_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_MAPPING_HPP_
+#include "Util/Logger/Logger.hpp"
 #include <algorithm>
-#include <Util/Logger/Logger.hpp>
 #include <vector>
 
 namespace NES::Nautilus {
-
+/**
+ * Helper class for managing mappings used in the creation of WebAssembly code
+ * @tparam K Most of the time a string used as an ID
+ * @tparam V Usually a binaryen reference such as an expression or block reference
+ */
 template<class K, class V>
 class Mapping {
   public:
