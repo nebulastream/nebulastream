@@ -55,31 +55,13 @@ void deletePartition(void* p) {
     delete partition;
 }
 
-void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
-    auto sliceStore = static_cast<GlobalThreadLocalSliceStore*>(ss);
-    return sliceStore->findSliceByTs(ts)->getState()->ptr;
-}
-
-void triggerThreadLocalStateProxy(void* op,
-                                  void* wctx,
-                                  void* pctx,
-                                  uint64_t workerId,
-                                  uint64_t originId,
-                                  uint64_t sequenceNumber,
-                                  uint64_t watermarkTs) {
-    auto handler = static_cast<GlobalSliceMergingHandler*>(op);
-    auto workerContext = static_cast<WorkerContext*>(wctx);
-    auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
-    handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
-}
-
-void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(ss);
+void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
+    auto handler = static_cast<GlobalSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size);
 }
-void* getDefaultState(void* ss) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(ss);
+void* getDefaultMergingState(void* ss) {
+    auto handler = static_cast<GlobalSliceMergingHandler*>(ss);
     return handler->getDefaultState()->ptr;
 }
 
@@ -92,12 +74,12 @@ void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
-    Nautilus::FunctionCall("setupWindowHandler",
-                           setupWindowHandler,
+    Nautilus::FunctionCall("setupSliceMergingHandler",
+                           setupSliceMergingHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
                            entrySize);
-    auto defaultState = Nautilus::FunctionCall("getDefaultState", getDefaultState, globalOperatorHandler);
+    auto defaultState = Nautilus::FunctionCall("getDefaultMergingState", getDefaultMergingState, globalOperatorHandler);
     for (auto& function : aggregationFunctions) {
         function->reset(defaultState);
         defaultState = defaultState + function->getSize();

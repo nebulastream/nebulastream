@@ -18,5 +18,4 @@ add_source_files(nes-runtime
         GlobalThreadLocalSliceStore.cpp
         GlobalSliceMerging.cpp
         GlobalSliceMergingHandler.cpp
-        GlobalWindowSink.cpp
         )

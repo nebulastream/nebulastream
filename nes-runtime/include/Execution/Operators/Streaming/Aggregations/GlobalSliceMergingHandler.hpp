@@ -66,13 +66,14 @@ class GlobalSliceMergingHandler
      * @return GlobalSlicePtr
      */
     GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
-
+    const State* getDefaultState() const;
 
     ~GlobalSliceMergingHandler();
 
   private:
     uint64_t entrySize;
     std::shared_ptr<GlobalSliceStaging> sliceStaging;
+    std::unique_ptr<State> defaultState;
 };
 
 }// namespace NES::Windowing::Experimental
