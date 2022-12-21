@@ -609,7 +609,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(Spatial::Mobility::Experiment
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint&& locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint& locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
