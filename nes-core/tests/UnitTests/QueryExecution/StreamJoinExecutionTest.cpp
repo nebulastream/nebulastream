@@ -39,7 +39,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
-        ASSERT_TRUE(executionEngine->stop());
+        EXPECT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
@@ -104,7 +104,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     const auto joinFieldNameLeft = leftSchema->get(1)->getName();
     const auto joinFieldNameRight = rightSchema->get(1)->getName();
     const auto timeStampField = leftSchema->get(2)->getName();
-    ASSERT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
+    EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
 
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
@@ -135,8 +135,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    ASSERT_TRUE(!!sourceLeft);
-    ASSERT_TRUE(!!sourceRight);
+    EXPECT_TRUE(!!sourceLeft);
+    EXPECT_TRUE(!!sourceRight);
 
     sourceLeft->emitBuffer(leftBuffer);
     sourceRight->emitBuffer(rightBuffer);

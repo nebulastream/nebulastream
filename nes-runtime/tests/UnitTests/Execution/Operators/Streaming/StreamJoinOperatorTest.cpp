@@ -427,9 +427,9 @@ TEST_F(StreamJoinOperatorTest, joinBuildTest) {
                                                                     timeStampField, leftSchema);
 
     StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    EXPECT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
-    ASSERT_EQ(emittedBuffers.size(), 0);
+    EXPECT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
@@ -447,9 +447,9 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestRight) {
                                                                     timeStampField, rightSchema);
     StreamJoinBuildHelper buildHelper(streamJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    EXPECT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
-    ASSERT_EQ(emittedBuffers.size(), 0);
+    EXPECT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
@@ -471,9 +471,9 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultiplePagesPerBucket) {
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
     buildHelper.numPartitions = 1;
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    EXPECT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
-    ASSERT_EQ(emittedBuffers.size(), 0);
+    EXPECT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
@@ -496,9 +496,9 @@ TEST_F(StreamJoinOperatorTest, joinBuildTestMultipleWindows) {
     buildHelper.numPartitions = 1;
     buildHelper.windowSize = 5;
 
-    ASSERT_TRUE(streamJoinBuildAndCheck(buildHelper));
+    EXPECT_TRUE(streamJoinBuildAndCheck(buildHelper));
     // As we are only building here the left side, we do not emit any buffers
-    ASSERT_EQ(emittedBuffers.size(), 0);
+    EXPECT_EQ(emittedBuffers.size(), 0);
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTest) {
@@ -512,7 +512,7 @@ TEST_F(StreamJoinOperatorTest, joinSinkTest) {
                            ->addField("f2_right", BasicType::UINT64)
                            ->addField("timestamp", BasicType::UINT64);
 
-    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
+    EXPECT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
 
     StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
@@ -520,7 +520,7 @@ TEST_F(StreamJoinOperatorTest, joinSinkTest) {
     streamJoinSinkHelper.numPartitions = 2;
     streamJoinSinkHelper.windowSize = 20;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    EXPECT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
@@ -534,13 +534,13 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
                                  ->addField("f2_right", BasicType::UINT64)
                                  ->addField("timestamp", BasicType::UINT64);
 
-    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
+    EXPECT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
     streamJoinSinkHelper.numPartitions = 128;
     streamJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    EXPECT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
@@ -555,13 +555,13 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleWindows) {
                                  ->addField("f2_right", BasicType::UINT64)
                                  ->addField("timestamp", BasicType::UINT64);
 
-    ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
+    EXPECT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
     streamJoinSinkHelper.numPartitions = 1;
     streamJoinSinkHelper.windowSize = 10;
 
-    ASSERT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
+    EXPECT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));
 }
 
 
