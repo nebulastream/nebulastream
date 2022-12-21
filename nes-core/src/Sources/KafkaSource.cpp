@@ -70,15 +70,6 @@ KafkaSource::~KafkaSource() {
               << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
               << " failedFullPollCnt=" << failedFullPollCnt << "reuseCnt=" << reuseCnt << std::endl;
 }
-
-void KafkaSource::recyclePooledBuffer(Runtime::detail::MemorySegment*){};
-
-/**
-     * @brief Interface method for unpooled buffer recycling
-     * @param buffer the buffer to recycle
-     */
-void KafkaSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment*){};
-
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     if (!connect()) {
         NES_DEBUG("Connect Kafa Source");
@@ -104,8 +95,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                                                      << ", msg: " << messages.back().get_payload());
                 auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
                 auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
-#define COPYBUFFER
-#ifdef COPYBUFFER
+
                 //this method copies the payload of the kafka message into a buffer
                 Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
                 NES_ASSERT(messages.back().get_payload().get_size() <= buffer.getBufferSize(), "The buffer is not large enough");
@@ -114,14 +104,6 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                             messages.back().get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
                 buffer.setCreationTimestamp(timeStamp);
-#else//use wrap buffer                                                                                                           \
-     //this method wraps a buffer around  payload of the kafka message
-                const unsigned char* ptr = messages.back().get_payload().get_data();
-                uint8_t* p8 = const_cast<uint8_t*>(ptr);
-                auto buffer = Runtime::TupleBuffer::wrapMemory(p8, localBufferManager->getBufferSize(), this);
-                buffer.setCreationTimestamp(timeStamp);
-                buffer.setNumberOfTuples(numberOfTuplesPerBuffer);
-#endif
                 bufferProducedCnt++;
                 messages.pop_back();
                 return buffer;

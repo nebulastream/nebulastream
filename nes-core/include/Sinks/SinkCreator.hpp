@@ -316,8 +316,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 /**
  * @brief create kafka sink
  * @param schema: schema of the data
- * @param queryId
- * @param querySubPlanId
+ * @param queryId of the query that writes to the sink
+ * @param querySubPlanId of the query that writes to the sink
  * @param nodeEngine
  * @param activeProducers how many different queries write to this sink which is needed for sink shutdown
  * @param brokers: broker list
