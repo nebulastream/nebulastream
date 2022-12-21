@@ -13,7 +13,7 @@
 */
 #include <gtest/gtest.h>
 
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
