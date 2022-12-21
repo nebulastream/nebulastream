@@ -73,6 +73,7 @@ class WorkerMobilityHandler {
      * @param mobilityConfiguration the configuration containing settings related to the operation of the mobile device
      */
     explicit WorkerMobilityHandler(
+        uint64_t parentId,
         LocationProviderPtr locationProvider,
         CoordinatorRPCCLientPtr coordinatorRpcClient,
         Runtime::NodeEnginePtr nodeEngine,
@@ -132,34 +133,6 @@ class WorkerMobilityHandler {
      */
     DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(double radius);
 
-  private:
-    std::atomic<bool> sendUpdates{};
-    std::recursive_mutex reconnectConfigMutex;
-    CoordinatorRPCCLientPtr coordinatorRpcClient;
-    std::optional<ReconnectPrediction> lastTransmittedReconnectPrediction;
-#ifdef S2DEF
-    S2Point lastTransmittedLocation;
-    S1Angle locationUpdateThreshold;
-#endif
-    uint64_t locationUpdateInterval;
-    std::shared_ptr<std::thread> sendLocationUpdateThread;
-
-    double nodeInfoDownloadRadius;
-    LocationProviderPtr locationProvider;
-    std::unordered_map<uint64_t, S2Point> fieldNodeMap;
-    std::optional<S2Point> positionOfLastNodeIndexUpdate;
-    S2PointIndex<uint64_t> fieldNodeIndex;
-    ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
-    ReconnectSchedulePtr reconnectSchedule;
-
-    std::optional<S2Point> currentParentLocation; //todo: make this a function parameter
-    uint64_t parentId;
-    S1Angle coveredRadiusWithoutThreshold;
-
-    //todo: do we want to keep this here?
-    S1Angle defaultCoverageRadiusAngle;
-    Runtime::NodeEnginePtr nodeEngine;
-
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
      * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
@@ -173,18 +146,77 @@ class WorkerMobilityHandler {
      * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
      * @param ownLocation: This workers current location
      */
-    bool reconnectToClosestNode(const DataTypes::Experimental::Waypoint& ownLocation, S1Angle maxDistance);
+    bool reconnectToClosestNode(const DataTypes::Experimental::GeoLocation& ownLocation, S1Angle maxDistance);
 
-
+    /**
+     * @brief check if the device has moved closer than the threshold to the edge of the area covered by the current local
+     * spatial index. If so download new node data around the current location
+     * @param currentLocation : the current location of the mobile device
+     * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
+     */
     void updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
-    void HandleScheduledReconnect(ReconnectSchedulePtr reconnectSchedule);
-    static std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> getNewParentToReconnect(const ReconnectSchedule &reconnectSchedule);
-    std::optional<uint64_t> getReconnectParent(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
-                                            const DataTypes::Experimental::GeoLocation& currentParentLocation);
 
-    bool checkNodeIndexRadius(const DataTypes::Experimental::GeoLocation& currentLocation);
-    bool checkPositionThreshold(const DataTypes::Experimental::Waypoint& currentWaypoint);
+    /**
+     * @brief determines if the device should reconnect to a new parent and returns the parent id if the need for a reconnect
+     * exists
+     * @param currentOwnLocation The devices own location
+     * @param currentParentLocation
+     * @return
+     */
+    std::optional<uint64_t> getReconnectParent(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+                                               const DataTypes::Experimental::GeoLocation& currentParentLocation);
+
+    /**
+     * @brief checks if the supplied position is less then the defined threshold away from the fringe of the area covered by the
+     * nodes which are currently in the index.
+     * @param currentLocation
+     * @return true if the device is close to the fringe and the index should be updated
+     */
+    bool checkNodeIndexThreshold(const DataTypes::Experimental::GeoLocation& currentLocation);
+
+    /**
+     * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
+     * that was transmitted to the coordinator.
+     * @param currentLocation
+     * @return true if the distance is larger than the threshold
+     */
+    bool checkPositionThreshold(const DataTypes::Experimental::GeoLocation& currentLocation);
+
+    /**
+     * @brief sets the position at which the device was located when it last fetched an index of field nodes from the
+     * coordinator. This position marks the center of the area covered by the downloaded field nodes.
+     * @param currentLocation The device position at the time when the download was made
+     */
     void setPositionOfLastIndexUpdate(const DataTypes::Experimental::GeoLocation& currentLocation);
+
+  private:
+    std::atomic<bool> sendUpdates{};
+    std::recursive_mutex reconnectConfigMutex;
+    CoordinatorRPCCLientPtr coordinatorRpcClient;
+    std::optional<ReconnectPrediction> lastTransmittedReconnectPrediction;
+#ifdef S2DEF
+    S2Point lastTransmittedLocation;
+    S1Angle locationUpdateThreshold;
+#endif
+    uint64_t locationUpdateInterval;
+    //todo: instead of both of these have one interval and 2 rates?
+    uint64_t pathPredictionUpdateInterval;
+    std::shared_ptr<std::thread> sendLocationUpdateThread;
+
+    double nodeInfoDownloadRadius;
+    LocationProviderPtr locationProvider;
+    std::unordered_map<uint64_t, S2Point> fieldNodeMap;
+    std::optional<S2Point> positionOfLastNodeIndexUpdate;
+    S2PointIndex<uint64_t> fieldNodeIndex;
+    ReconnectSchedulePredictorPtr reconnectSchedulePredictor;
+    ReconnectSchedulePtr reconnectSchedule;
+
+    std::optional<S2Point> currentParentLocation;
+    uint64_t parentId;
+    S1Angle coveredRadiusWithoutThreshold;
+
+    Runtime::NodeEnginePtr nodeEngine;
+
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 }// namespace Mobility::Experimental

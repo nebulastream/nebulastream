@@ -103,6 +103,7 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         healthCheckService->removeNodeFromHealthCheck(physicalNode);
     }
 
+    //todo: remove mobile nodes here too?
     auto spatialType = physicalNode->getSpatialNodeType();
     if (spatialType == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         removeGeoLocation(nodeId);
@@ -227,7 +228,8 @@ bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
     if (geoLocation.isValid()
         && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
-        locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+        //locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+        locationIndex->updateFieldNodeCoordinates(topologyNode, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
         if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
