@@ -15,17 +15,9 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLIDINGWINDOWSINKOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLIDINGWINDOWSINKOPERATORHANDLER_HPP_
 
-#include <Execution/Operators/Streaming/GlobalSliceStore.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Windowing/Experimental/GlobalSliceStore.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
-namespace NES::Runtime::Execution::Operators {
-class KeyedThreadLocalSliceStore;
-class WindowTriggerTask;
-class GlobalSlice;
-using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
-using GlobalSliceSharedPtr = std::shared_ptr<GlobalSlice>;
-}// namespace NES::Runtime::Execution::Operators
 
 namespace NES::Experimental {
 class HashMapFactory;
@@ -34,6 +26,11 @@ class LockFreeMultiOriginWatermarkProcessor;
 }// namespace NES::Experimental
 
 namespace NES::Windowing::Experimental {
+class KeyedThreadLocalSliceStore;
+class WindowTriggerTask;
+class GlobalSlice;
+using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+using GlobalSliceSharedPtr = std::shared_ptr<GlobalSlice>;
 
 /**
  * @brief Operator handler for the final window sink of global (non-keyed) sliding windows.
@@ -51,9 +48,8 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowDefinition
      * @param globalSliceStore
      */
-    GlobalSlidingWindowSinkOperatorHandler(
-        const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-        std::shared_ptr<GlobalSliceStore<Runtime::Execution::Operators::GlobalSlice>>& globalSliceStore);
+    GlobalSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                           std::shared_ptr<GlobalSliceStore<GlobalSlice>>& globalSliceStore);
 
     /**
      * @brief Initializes the operator handler.
@@ -81,7 +77,7 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowTriggerTask WindowTriggerTask to identify the start and end ts of the window
      * @return GlobalSlicePtr
      */
-    Runtime::Execution::Operators::GlobalSlicePtr createGlobalSlice(WindowTriggerTask* windowTriggerTask);
+    GlobalSlicePtr createGlobalSlice(WindowTriggerTask* windowTriggerTask);
 
     /**
      * @brief This function accesses the global slice store and returns a list of slices,
@@ -89,14 +85,14 @@ class GlobalSlidingWindowSinkOperatorHandler
      * @param windowTriggerTask identifies the window, which we want to trigger.
      * @return std::vector<GlobalSliceSharedPtr> list of global slices.
      */
-    std::vector<Runtime::Execution::Operators::GlobalSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
+    std::vector<GlobalSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
 
     /**
      * @brief Returns a reference to the global slice store. This should only be used by the generated code,
      * to access functions on the global slice sotre.
      * @return GlobalSliceStore<GlobalSlice>&
      */
-    GlobalSliceStore<Runtime::Execution::Operators::GlobalSlice>& getGlobalSliceStore();
+    GlobalSliceStore<GlobalSlice>& getGlobalSliceStore();
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
@@ -104,7 +100,7 @@ class GlobalSlidingWindowSinkOperatorHandler
 
   private:
     uint64_t entrySize;
-    std::shared_ptr<GlobalSliceStore<Runtime::Execution::Operators::GlobalSlice>> globalSliceStore;
+    std::shared_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };
