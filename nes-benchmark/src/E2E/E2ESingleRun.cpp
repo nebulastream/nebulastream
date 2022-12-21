@@ -169,7 +169,6 @@ void E2ESingleRun::runQuery() {
         for (auto id : submittedIds) {
             bool res = waitForQueryToStart(id, queryCatalog, std::chrono::seconds(180));
             if (!res) {
-                std::cout << "run does not succeed for id=" << id << std::endl;
                 NES_THROW_RUNTIME_ERROR("run does not succeed for id=" << id);
             }
             std::cout << "E2EBase: query started with id=" << id << std::endl;
@@ -247,8 +246,6 @@ void E2ESingleRun::runQuery() {
                           << " processedBuffers=" << processedBuffers << " processedTuples=" << processedTuples
                           << " latencySum=" << latencySum << std::endl;
             }
-
-            std::cout << "Measurement processedBuffers=" << processedBuffers << std::endl;
         }
 
         // Calculating the time to sleep
