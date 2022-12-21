@@ -32,7 +32,6 @@ class SpatialExpressionNodeTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SpatialExpressionNodeTest test class."); }
-
 };
 
 // This tests the circle expression node

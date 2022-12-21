@@ -52,7 +52,6 @@ class MetricStoreTest : public Testing::NESBaseTest {
         bufferSize = (numCPU + 1) * sizeof(Monitoring::CpuMetrics) + sizeof(Monitoring::CpuMetricsWrapper);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
     }
-
 };
 
 TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
