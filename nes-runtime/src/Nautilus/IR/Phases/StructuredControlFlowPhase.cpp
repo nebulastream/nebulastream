@@ -38,17 +38,24 @@ using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
 
 void StructuredControlFlowPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
-    auto phaseContext = StructuredControlFlowPhaseContext(std::move(ir));
-    phaseContext.process();
+    if(ir->getAppliedPhases() == IRGraph::AppliedPhases::LoopDetectionPhase) {
+        auto phaseContext = StructuredControlFlowPhaseContext(std::move(ir));
+        phaseContext.process();
+    } else {
+        NES_ERROR("LoopDetectionPhase::applyLoopDetection: Could not apply LoopDetectionPhase. Requires IRGraph " <<
+                    "to have BrOnlyBlocksPhase applied, but applied phase was: " << ir->printAppliedPhases());
+    }
 };
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
+    ir->setAppliedPhases(IRGraph::AppliedPhases::StructuredControlFlowPhase);
     createIfOperations(rootOperation->getFunctionBasicBlock());
 }
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::forwardArgs(BasicBlockPtr& currentBlock) {
     // Iterate over the next blocks of the current block (0:ReturnOp, 1:BranchOp, 2:IfOp or LoopOp)
+    // Todo: We process a merge-block before all branches have been taken!
     for(auto& nextBlockInvocation : currentBlock->getNextBlockInvocations()) {
         // Iterate over all args, of the terminator operation. If the arg is a non-BasicBlockArgument, add it.
         // If it is a BasicBlockArgument, check if it is a merge-argument (references more than one unique 
@@ -57,7 +64,7 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::forwardArgs(
             if(nextBlockInvocation->getBranchOps().at(i)->getOperationType() == Operation::BasicBlockArgument) {
                 auto blockArg = std::static_pointer_cast<BasicBlockArgument>(
                         nextBlockInvocation->getBranchOps().at(i));
-                if(blockArg->getBaseOps().size() < 2 && !currentBlock->isLoopHeaderBlock()) {
+                if(blockArg->getBaseOps().size() < 2 && !currentBlock->isLoopHeaderBlock()) { //We check if its a loop header to forward args
                     nextBlockInvocation->getNextBlock()->getArguments().at(i)
                     ->addBaseOperation(blockArg->getBaseOps().at(0));
                 } else {
@@ -172,15 +179,15 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
             // or set it as current if-operation's false-branch-block.
             if(ifOperations.top()->isTrueBranch) {
                 // We explored the current if-operation's true-branch and now switch to its false-branch.
-                if(!visitedBlocks.contains(currentBlock.get()) && !currentBlock->isLoopHeaderBlock()) {
-                    forwardArgs(currentBlock);
-                    visitedBlocks.emplace(currentBlock.get());
-                }
                 ifOperations.top()->isTrueBranch = false; 
                 mergeBlocks.emplace(currentBlock);
                 currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getNextBlock();
                 newVisit = true;
             } else {
+                if(!visitedBlocks.contains(currentBlock.get()) && !currentBlock->isLoopHeaderBlock()) {
+                    forwardArgs(currentBlock);
+                    visitedBlocks.emplace(currentBlock.get());
+                }
                 // Make sure that we found the current merge-block for the current if-operation.
                 assert(mergeBlocks.top()->getIdentifier() == currentBlock->getIdentifier());
                 // Set currentBlock as merge-block for the current if-operation and all if-operations on the stack that:

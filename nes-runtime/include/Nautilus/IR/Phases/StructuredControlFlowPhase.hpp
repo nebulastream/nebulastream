@@ -36,6 +36,7 @@ class StructuredControlFlowPhase {
   public:
     /**
      * @brief Applies the StructuredControlFlowPhase to the supplied IR graph.
+     * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection
      * @param IR graph that the StructuredControlFlowPhase is applied to.
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);

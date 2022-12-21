@@ -55,6 +55,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversi
         returnType);
     functionOperation->addFunctionBasicBlock(rootIrBlock);
     ir->addRootOperation(functionOperation);
+    ir->setAppliedPhases(NES::Nautilus::IR::IRGraph::AppliedPhases::TraceToIRConversionPhase);
     return ir;
 }
 

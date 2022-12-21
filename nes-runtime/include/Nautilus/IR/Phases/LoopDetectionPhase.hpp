@@ -14,30 +14,49 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace NES::Nautilus::IR {
+  namespace Operations {
+    class Operation;
+    using OperationPtr = std::shared_ptr<Operation>;
+    class LoopOperation;
+  }
+  class IRGraph;
+  class BasicBlock;
+  using BasicBlockPtr = std::shared_ptr<BasicBlock>;
+}
+namespace std {
+  template<typename>
+  class optional;
+}
 
+namespace NES::Nautilus::IR {
 /**
- * @brief This phase takes an IR graph with blocks that either have branch- or if-operations as terminator-operations.
- *        Subsequently, this phase detects which if-operations are loop operations, converts them and enriches them with
- *        relevant information.
+ * @brief The first phase(LoopDetection) takes an IR graph with blocks that either have branch- or if-operations as 
+ *        terminator-operations. Subsequently, this phase detects which if-operations are loop operations. 
+ *        The second phase(CountedLoopDetection) requires the ValueScoping phase to be applied before. It analyzes all
+ *        loops found in the LoopDetection phase and tries to map them to counted loops.
  */
 class LoopDetectionPhase {
   public:
     /**
      * @brief Applies the LoopDetectionPhase to the supplied IR graph.
+     * @requirements RemoveBrOnlyPhase
      * @param IR graph that the LoopDetectionPhase is applied to.
      */
-    void apply(std::shared_ptr<IR::IRGraph> ir);
+    void applyLoopDetection(std::shared_ptr<IR::IRGraph> ir);
+
+    /** 
+     * @brief Applies the CountedLoopDetectionPhase to the supplied IR graph.
+     * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection, StructuredControlFlowPhase, 
+                     ValueScopingPhase
+     */
+    void applyCountedLoopDetection();
 
     private:
     /**
@@ -52,10 +71,17 @@ class LoopDetectionPhase {
          * @param ir: IRGraph to which LoopDetectionPhaseContext will be applied.
          */
         LoopDetectionPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+
         /**
          * @brief Actually applies the LoopDetectionPhaseContext to the IR.
          */
-        void process();
+        void processLoopDetection();
+
+        /**
+         * @brief Iterates over loop operations found in 'applyLoopDetection()', and tries to convert each loop 
+         *        operation into a counted loop operation. REQUIRES to apply ValueScopingPhase beforehand.
+         */
+        void processCountedLoopDetection();
 
       private:
         /**
@@ -82,33 +108,25 @@ class LoopDetectionPhase {
                         std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock);
 
         /**
-         * @brief Checks the loop-header-block and block that appears in front of the loop-header-block in the control 
-         * flow (from root) for constant values that represent the loop-iteration-variable and/or the upperBound.
+         * @brief NES IR compare operations can be represented by up to three operations (e.g. '<=' is ('<', 'or', '==')
+         *        getCompareOp tries to detect the underlying compare operation and returns its first operation.
          * 
-         * @param loopHeaderBlock: The loopHeaderBlock can contain the definition for the upperBound.
-         * @param loopBeforeBlock: The loopBeforeBlock can contain the definition of the loop-iteration-variable and 
-         *                          the definition of the upperBound.
-         * @param compareOp: Contains the loop-induction-variable, and the upperBound as inputs.
-         * @return A pair that may contain the values for the loop-induction-variable and the upperBound. 
-         *         However, the pair might also contain nullptrs, which we must handle.
+         * @param conditionOp: The condition operation (e.g. of if- or loop-operation)
+         * @return std::optional<Operations::OperationPtr> : nullopt if we cannot detect the higher level compare 
+         *                                                operation, else, the first operation of the compare operation. 
          */
-        std::pair<std::shared_ptr<IR::Operations::ConstIntOperation>, std::shared_ptr<IR::Operations::ConstIntOperation>>
-        getCompareOpConstants(const BasicBlockPtr& loopHeaderBlock, const BasicBlockPtr& loopBeforeBlock, 
-                      const std::shared_ptr<Operations::CompareOperation>& compareOp);
-
+        std::optional<Operations::OperationPtr> getCompareOp(Operations::OperationPtr conditionOp);
         /**
-         * @brief Check the loopEndBlock for a constant operation that matches the step size used in countOp.
+         * @brief TODO
          * 
-         * @param loopEndBlock: We currently assume that the step size is defined as constant in the loopEndBlock.
-         * @param countOp: The stepSize is used to increment the loop-induction-variable in the countOp.
-         * @return std::shared_ptr<IR::Operations::ConstIntOperation>: stepSize
          */
-        std::shared_ptr<IR::Operations::ConstIntOperation> 
-        inline getStepSize(const BasicBlockPtr& loopEndBlock, const Operations::OperationPtr& countOp);
+        void findCountedLoops();
       private:
         std::shared_ptr<IR::IRGraph> ir;
-        std::unordered_set<std::string> visitedBlocks;
+        std::vector<std::shared_ptr<Operations::LoopOperation>> loopOps;
     };
+    private:
+      std::unique_ptr<LoopDetectionPhaseContext> loopDetectionPhaseContext;
 };
 
 }// namespace NES::Nautilus::IR::LoopDetectionPhase

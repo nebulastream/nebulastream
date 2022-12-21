@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Phases/LoopDetectionPhase.hpp"
+#include "Nautilus/IR/Phases/StructuredControlFlowPhase.hpp"
+#include "Nautilus/IR/Phases/ValueScopingPhase.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
@@ -28,6 +31,25 @@ IRGraph::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOpe
 }
 
 std::shared_ptr<Operations::FunctionOperation> IRGraph::getRootOperation() { return rootOperation; }
+
+void IRGraph::setAppliedPhases(IRGraph::AppliedPhases appliedPhases) { this->appliedPhases = appliedPhases; };
+IRGraph::AppliedPhases IRGraph::getAppliedPhases() { return appliedPhases; }
+const std::string IR::IRGraph::printAppliedPhases() {
+    switch(this->appliedPhases) {
+        case TraceToIRConversionPhase:
+            return "TraceToIRConversionPhase";
+        case RemoveBrOnlyBlocksPhase:
+            return "BrOnlyBlocksPhase";
+        case LoopDetectionPhase:
+            return "LoopDetectionPhase";
+        case StructuredControlFlowPhase:
+            return "StructuredControlFlowPhase";
+        case ValueScopingPhase:
+            return "ValueScopingPhase";
+        case CountedLoopDetectionPhase:
+            return "CountedLoopDetectionPhase";
+    }
+}
 
 std::string IRGraph::toString() {
     std::stringstream ss;

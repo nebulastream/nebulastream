@@ -62,7 +62,7 @@ class ValueScopingPhaseTest : public testing::Test, public AbstractCompilationBa
         auto ir = irCreationPhase.apply(executionTrace);
         // auto dpsSortedGraphNodes = enumerateIRForTests(ir);
         removeBrOnlyBlocksPhase.apply(ir);
-        loopDetectionPhase.apply(ir);
+        loopDetectionPhase.applyLoopDetection(ir);
         structuredControlFlowPhase.apply(ir);
         // return enumerateIRForTests(ir);
         valueScopingPhase.apply(ir);

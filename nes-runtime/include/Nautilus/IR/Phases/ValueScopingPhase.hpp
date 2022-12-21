@@ -34,6 +34,7 @@ class ValueScopingPhase {
   public:
     /**
      * @brief Applies the ValueScopingPhase to the supplied IR graph.
+     * @requirements RemoveBrOnlyPhase, LoopDetectionPhase::applyLoopDetection, StructuredControlFlowPhase
      * @param IR graph that the ValueScopingPhase is applied to.
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);

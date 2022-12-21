@@ -29,10 +29,25 @@ class DefaultLoopInfo : public LoopInfo {};
 
 class CountedLoopInfo : public LoopInfo {
   public:
-    uint64_t lowerBound;
-    uint64_t upperBound;
-    uint64_t stepSize;
+    CountedLoopInfo(const OperationPtr inductionVariable, const OperationPtr limit, const OperationPtr stepSize, 
+                    const std::vector<OperationPtr> iterationArgIndexes, const std::vector<OperationPtr> yieldArgs) : 
+      inductionVariable(inductionVariable), limit(limit), stepSize(stepSize), 
+      iterationArgs(iterationArgIndexes), yieldOps(yieldArgs) {}
+    ~CountedLoopInfo() = default;
+
+    OperationPtr getInductionVariable() { return this->inductionVariable; }
+    OperationPtr getLimit() { return this->limit; }
+    OperationPtr getStepSize() { return this->stepSize; }
+    const std::vector<OperationPtr> getIterationArgs() { return this->iterationArgs; }
+    const std::vector<OperationPtr> getYieldOps() { return this->yieldOps; }
+
     bool isCountedLoop() override { return true; }
+  private:
+    const OperationPtr inductionVariable;
+    const OperationPtr limit;
+    const OperationPtr stepSize;
+    const std::vector<OperationPtr> iterationArgs;
+    const std::vector<OperationPtr> yieldOps;
 };
 
 }// namespace NES::Nautilus::IR::Operations

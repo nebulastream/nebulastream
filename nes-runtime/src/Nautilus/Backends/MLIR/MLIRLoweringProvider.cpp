@@ -346,6 +346,18 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOper
     frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
 }
 
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame) {
+    auto value = frame.getValue(storeOp->getValue()->getIdentifier());
+    auto address = frame.getValue(storeOp->getAddress()->getIdentifier());
+    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+                                                          mlir::LLVM::LLVMPointerType::get(value.getType()),
+                                                          address);
+    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"), value, bitcast);
+}
+
+//==-------------------------==//
+//==-- Constant Operations --==//
+//==-------------------------==//
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp, ValueFrame& frame) {
     if (!frame.contains(constIntOp->getIdentifier())) {
         frame.setValue(constIntOp->getIdentifier(),
@@ -366,6 +378,15 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFlo
                                                     floatType,
                                                     builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue())));
     }
+}
+
+void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp,
+                                        MLIRLoweringProvider::ValueFrame& frame) {
+    auto constOp =
+        builder->create<mlir::arith::ConstantOp>(getNameLoc("location"),
+                                                 builder->getI1Type(),
+                                                 builder->getIntegerAttr(builder->getI1Type(), constBooleanOp->getValue()));
+    frame.setValue(constBooleanOp->getIdentifier(), constOp);
 }
 
 //==---------------------------==//
@@ -391,13 +412,8 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddOpera
         frame.setValue(addOp->getIdentifier(), mlirAddOp);
     } else {
         if (!inductionVars.contains(addOp->getLeftInput()->getIdentifier())) {
-            if (!frame.contains(addOp->getIdentifier())) {
-                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
-                frame.setValue(addOp->getIdentifier(), mlirAddOp);
-            } else {
-                auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
-                frame.setValue(addOp->getIdentifier(), mlirAddOp);
-            }
+            auto mlirAddOp = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"), leftInput, rightInput);
+            frame.setValue(addOp->getIdentifier(), mlirAddOp);
         }
     }
 }
@@ -454,15 +470,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::DivOpera
             frame.setValue(divIntOp->getIdentifier(), mlirDivOp);
         }
     }
-}
-
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame) {
-    auto value = frame.getValue(storeOp->getValue()->getIdentifier());
-    auto address = frame.getValue(storeOp->getAddress()->getIdentifier());
-    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
-                                                          mlir::LLVM::LLVMPointerType::get(value.getType()),
-                                                          address);
-    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"), value, bitcast);
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame) {
@@ -635,15 +642,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOper
         NES_THROW_RUNTIME_ERROR("Cast from " << inputStamp->toString() << " to " << outputStamp->toString()
                                              << " is not supported.");
     }
-}
-
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstBooleanOperation> constBooleanOp,
-                                        MLIRLoweringProvider::ValueFrame& frame) {
-    auto constOp =
-        builder->create<mlir::arith::ConstantOp>(getNameLoc("location"),
-                                                 builder->getI1Type(),
-                                                 builder->getIntegerAttr(builder->getI1Type(), constBooleanOp->getValue()));
-    frame.setValue(constBooleanOp->getIdentifier(), constOp);
 }
 
 std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols() { return std::move(jitProxyFunctionSymbols); }

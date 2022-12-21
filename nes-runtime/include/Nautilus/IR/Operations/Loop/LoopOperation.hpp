@@ -36,20 +36,24 @@ class LoopOperation : public Operation {
     BasicBlockInvocation& getLoopBodyBlock();
     BasicBlockInvocation& getLoopFalseBlock();
     BasicBlockInvocation& getLoopHeadBlock();
-    BasicBlockInvocation& getLoopEndBlock();
-    void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
+    std::vector<BasicBlockPtr>& getLoopEndBlocks();
+    void addLoopEndBlock(BasicBlockPtr loopEndBlock);
     std::shared_ptr<LoopInfo> getLoopInfo();
+    void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
     void setLoopType(LoopOperation::LoopType loopType);
+    OperationPtr getLoopCondition();
+    void setLoopCondition(OperationPtr conditionOp);
 
     std::string toString() override;
 
   private:
     LoopType loopType;
     OperationWPtr loopCondition;
+    //Todo change to BasicBlockPtr
     BasicBlockInvocation loopHeadBlock;
     BasicBlockInvocation loopBodyBlock;
     BasicBlockInvocation loopFalseBlock;
-    BasicBlockInvocation loopEndBlock;
+    std::vector<BasicBlockPtr> loopEndBlocks;
     std::shared_ptr<LoopInfo> loopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations
