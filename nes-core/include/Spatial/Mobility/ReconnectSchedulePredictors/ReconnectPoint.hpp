@@ -11,22 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
-#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
+
+#ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
+#define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
+
 #include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <cstdint>
 
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
- * @brief a struct containing data about:
- * 1. The id of the next worker that this worker can connect to.
- * 2. The time when the reconnection will occur.
+ * @brief A struct containing the reconnect prediction consisting of expected reconnect time and expected new parent as well as
+ * the location where the device is expected to be located at the time of reconnect
+ * 1. The location where the reconnect is expected to take place
+ * 2. The id of the next worker that this worker can connect to.
+ * 3. The time when the reconnection will occur.
  */
-struct ReconnectPrediction {
+struct ReconnectPoint {
+    NES::Spatial::DataTypes::Experimental::GeoLocation pointGeoLocation;
     uint64_t newParentId;
     Timestamp expectedTime;
 };
 }// namespace NES::Spatial::Mobility::Experimental
-#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPREDICTION_HPP_
+#endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_

@@ -33,8 +33,8 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
@@ -242,7 +242,7 @@ bool NesWorker::stop(bool) {
         if (locationProvider
             && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             if (mobilityHandler) {
-                mobilityHandler->stopPeriodicUpdating();
+                mobilityHandler->stop();
                 NES_TRACE("triggered stopping of location update push thread");
             }
         }

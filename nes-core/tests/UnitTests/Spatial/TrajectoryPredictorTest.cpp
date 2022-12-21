@@ -15,7 +15,7 @@
 
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <thread>

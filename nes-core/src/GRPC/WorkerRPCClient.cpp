@@ -21,9 +21,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <log4cxx/helpers/exception.h>
 

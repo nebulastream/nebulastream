@@ -34,10 +34,10 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -841,8 +841,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                             firstPrediction = predictedReconnect->reconnectPrediction.expectedTime;
 
                             if (predictedReconnect
-                                && predictedReconnect->predictedReconnectLocation
-                                    == newPredictedReconnect->predictedReconnectLocation
+                                && predictedReconnect->pointGeoLocation
+                                    == newPredictedReconnect->pointGeoLocation
                                 && predictedReconnect->reconnectPrediction.expectedTime
                                     != newPredictedReconnect->reconnectPrediction.expectedTime) {
                                 NES_DEBUG("updating ETA")
