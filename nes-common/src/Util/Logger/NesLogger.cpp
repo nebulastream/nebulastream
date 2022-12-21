@@ -24,7 +24,10 @@ namespace NES {
 namespace detail {
 
 struct LoggerHolder {
-    ~LoggerHolder() { NES::Logger::getInstance().shutdown(); }
+    ~LoggerHolder() {
+        NES::Logger::getInstance().shutdown();
+        spdlog::shutdown();
+    }
 };
 static LoggerHolder helper;
 
@@ -70,10 +73,11 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spdlog::logger> {
+auto createLogger(std::string loggerPath, LogLevel level)
+    -> std::tuple<std::shared_ptr<spdlog::logger>, std::shared_ptr<spdlog::details::thread_pool>> {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
-    spdlog::init_thread_pool(QUEUE_SIZE, THREADS);
+    auto tp = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
 
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(loggerPath, true);
@@ -92,18 +96,16 @@ auto createLogger(std::string loggerPath, LogLevel level) -> std::shared_ptr<spd
     auto logger = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
                                                          sinks.begin(),
                                                          sinks.end(),
-                                                         spdlog::thread_pool(),
+                                                         tp,
                                                          spdlog::async_overflow_policy::block);
 
     logger->set_level(spdlogLevel);
     logger->flush_on(spdlog::level::debug);
 
-    return logger;
+    return std::make_tuple(logger, tp);
 }
 
-Logger::~Logger() {
-    //shutdown();
-}
+Logger::~Logger() { shutdown(); }
 
 void Logger::forceFlush() {
     for (auto& sink : impl->sinks()) {
@@ -115,14 +117,16 @@ void Logger::forceFlush() {
 void Logger::shutdown() {
     bool expected = false;
     if (isShutdown.compare_exchange_strong(expected, true)) {
-        spdlog::shutdown();
+        impl.reset();
+        tp.reset();
     }
 }
 
 void Logger::configure(const std::string& logFileName, LogLevel level) {
-    auto configuredLogger = detail::createLogger(logFileName, level);
+    auto [configuredLogger, tp] = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
+    std::swap(tp, this->tp);
 }
 
 void Logger::changeLogLevel(LogLevel newLevel) {
