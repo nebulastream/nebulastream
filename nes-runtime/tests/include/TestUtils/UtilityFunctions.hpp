@@ -32,6 +32,13 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution::Util {
+    /**
+     * @brief Creates a TupleBuffer from recordPtr
+     * @param recordPtr
+     * @param schema
+     * @param bufferManager
+     * @return Filled tupleBuffer
+     */
     Runtime::TupleBuffer getBufferFromPointer(uint8_t *recordPtr, SchemaPtr schema, BufferManagerPtr bufferManager) {
         auto buffer = bufferManager->getBufferBlocking();
         uint8_t *bufferPtr = buffer.getBuffer();
@@ -47,6 +54,14 @@ namespace NES::Runtime::Execution::Util {
         return buffer;
     }
 
+    /**
+     * @brief Writes from the nautilusRecord to the record at index recordIndex
+     * @param recordIndex
+     * @param baseBufferPtr
+     * @param nautilusRecord
+     * @param schema
+     * @param bufferManager
+     */
     void
     writeNautilusRecord(uint64_t recordIndex, int8_t *baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema,
                         BufferManagerPtr bufferManager) {
@@ -70,6 +85,15 @@ namespace NES::Runtime::Execution::Util {
         }
     }
 
+    /**
+     * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
+     * contain as much tuples as possible. Additionally, there are only tuples in a buffer that belong to the same window
+     * @param buffers
+     * @param schema
+     * @param timeStampFieldName
+     * @param bufferManager
+     * @return buffer of tuples
+     */
     std::vector <Runtime::TupleBuffer>
     mergeBuffersSameWindow(std::vector <Runtime::TupleBuffer> &buffers, SchemaPtr schema,
                            const std::string &timeStampFieldName,
@@ -125,7 +149,14 @@ namespace NES::Runtime::Execution::Util {
         return retVector;
     }
 
-
+    /**
+     * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
+     * @param buffersToSort
+     * @param schema
+     * @param sortFieldName
+     * @param bufferManager
+     * @return sorted buffers
+     */
     std::vector <Runtime::TupleBuffer>
     sortBuffersInTupleBuffer(std::vector <Runtime::TupleBuffer> &buffersToSort, SchemaPtr schema,
                              const std::string &sortFieldName, BufferManagerPtr bufferManager) {
@@ -178,6 +209,13 @@ namespace NES::Runtime::Execution::Util {
         return retVector;
     }
 
+    /**
+     * @brief Creates a TupleBuffer from a Nautilus::Record
+     * @param nautilusRecord
+     * @param schema
+     * @param bufferManager
+     * @return Filled TupleBuffer
+     */
     Runtime::TupleBuffer
     getBufferFromRecord(Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager) {
         auto buffer = bufferManager->getBufferBlocking();
@@ -189,6 +227,12 @@ namespace NES::Runtime::Execution::Util {
         return buffer;
     }
 
+    /**
+     * @brief create CSV lines from the tuples
+     * @param tbuffer the tuple buffer
+     * @param schema how to read the tuples from the buffer
+     * @return a full string stream as string
+     */
     std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr &schema) {
         std::stringstream ss;
         auto numberOfTuples = tbuffer.getNumberOfTuples();

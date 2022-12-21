@@ -13,7 +13,6 @@
 */
 
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 

@@ -19,7 +19,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution::Operators {
 
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                  SchemaPtr joinSchemaRight,
@@ -82,7 +82,7 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
                                  joinSchemaRight->getSchemaSizeInBytes(), lastTupleTimeStamp, pageSize, numPartitions);
 }
 
-void StreamJoinOperatorHandler::deleteWindow(size_t timeStamp) {
+void StreamJoinOperatorHandler::deleteWindow(uint64_t timeStamp) {
     for (auto it = streamJoinWindows.begin(); it != streamJoinWindows.end(); ++it) {
         if (timeStamp <= it->getLastTupleTimeStamp()) {
             streamJoinWindows.erase(it);
@@ -91,7 +91,7 @@ void StreamJoinOperatorHandler::deleteWindow(size_t timeStamp) {
     }
 }
 
-bool StreamJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
+bool StreamJoinOperatorHandler::checkWindowExists(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
         if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
             return true;
@@ -101,7 +101,7 @@ bool StreamJoinOperatorHandler::checkWindowExists(size_t timeStamp) {
     return false;
 }
 
-StreamJoinWindow& StreamJoinOperatorHandler::getWindow(size_t timeStamp) {
+StreamJoinWindow& StreamJoinOperatorHandler::getWindow(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
         if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
             return streamJoinWindow;
@@ -137,9 +137,7 @@ void StreamJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool i
 }
 
 
-size_t StreamJoinOperatorHandler::getWindowSize() const {
-    return windowSize;
-}
+size_t StreamJoinOperatorHandler::getWindowSize() const { return windowSize; }
 size_t StreamJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 size_t StreamJoinOperatorHandler::getNumActiveWindows() { return streamJoinWindows.size(); }

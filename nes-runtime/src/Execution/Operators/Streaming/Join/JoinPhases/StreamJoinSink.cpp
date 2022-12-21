@@ -86,8 +86,8 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
  * @param buildSide
  * @return number of joined tuples
  */
-size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, StreamJoinOperatorHandler* operatorHandler,
-                   std::vector<FixedPage>&& probeSide, std::vector<FixedPage>&& buildSide) {
+size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, StreamJoinOperatorHandler* operatorHandler,
+                             std::vector<FixedPage>&& probeSide, std::vector<FixedPage>&& buildSide) {
 
     auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinSchemaRight(),
                                              operatorHandler->getJoinFieldNameLeft());
@@ -109,10 +109,13 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
 
             for(auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
+
+                // Checking if the key is on the page with the bloom filter
                 if (rhsLen == 0 || !rhsPage.bloomFilterCheck(lhsKeyPtr, sizeOfKey)) {
                     continue;
                 }
 
+                // Iterating through all tuples of the page as we do not know where the exact tuple is
                 for (auto j = 0UL; j < rhsLen; ++j) {
                     auto rhsRecordPtr = rhsPage[j];
                     auto rhsRecordKeyPtr = getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
@@ -124,6 +127,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
                         auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
+                        // Building the join tuple ( key | left tuple | right tuple)
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
@@ -131,6 +135,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
                         numberOfTuplesInBuffer += 1;
                         currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
 
+                        // If the buffer is full, then emitting the current one and allocating a new one
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
 
@@ -143,6 +148,7 @@ size_t executeJoin(PipelineExecutionContext* pipelineCtx, WorkerContext* workerC
         }
     }
 
+    // If in the current buffer are any tuples, we have to emit then before returning
     if (currentTupleBuffer.getNumberOfTuples() > 0) {
         pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
     }
@@ -179,9 +185,11 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
         if (leftBucketSize > rightBucketSize) {
-            joinedTuples = executeJoin(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket));
+            joinedTuples = executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket),
+                                                 std::move(leftBucket));
         } else {
-            joinedTuples = executeJoin(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket));
+            joinedTuples = executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket),
+                                                 std::move(rightBucket));
         }
     }
 

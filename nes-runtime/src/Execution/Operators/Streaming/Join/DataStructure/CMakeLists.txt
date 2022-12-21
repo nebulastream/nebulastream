@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        BloomFilter.cpp
         FixedPage.cpp
         FixedPagesLinkedList.cpp
         LocalHashTable.cpp
