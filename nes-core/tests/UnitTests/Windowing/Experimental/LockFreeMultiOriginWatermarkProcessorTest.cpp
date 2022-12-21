@@ -30,19 +30,10 @@ using OriginId = uint64_t;
 class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup LockFreeWatermarkManagerTest test class."); }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("LockFreeWatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup LockFreeWatermarkManagerTest test case.");
+        NES_DEBUG("Setup LockFreeWatermarkManagerTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down LockFreeWatermarkManagerTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down LockFreeWatermarkManagerTest test class."); }
 };
 
 TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterTest) {

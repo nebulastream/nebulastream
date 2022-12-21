@@ -36,14 +36,11 @@ class LogicalExpressionTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
-
-    void TearDown() override { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case."); }
-
-    static void TearDownTestCase() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class."); }
 
     inline void testBinaryOperator(std::string const& op) noexcept {
 

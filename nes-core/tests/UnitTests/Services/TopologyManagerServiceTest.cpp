@@ -46,23 +46,21 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("Setup NES TopologyManagerService test case.");
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        borrowed_publish_port = getAvailablePort();
+        publish_port = *borrowed_publish_port;
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Setup NES TopologyManagerService test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down NES TopologyManagerService test class."); }
 
     std::string ip = "127.0.0.1";
     uint16_t receive_port = 0;
     std::string host = "localhost";
-    uint16_t publish_port = 4711;
+    Testing::BorrowedPortPtr borrowed_publish_port;
+    int publish_port;
     //std::string sensor_type = "default";
 };
 

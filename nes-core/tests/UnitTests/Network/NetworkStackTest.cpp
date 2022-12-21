@@ -75,8 +75,6 @@ class NetworkStackTest : public Testing::NESBaseTest {
         NES_INFO("SetUpTestCase NetworkStackTest");
     }
 
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackTest."); }
-
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();

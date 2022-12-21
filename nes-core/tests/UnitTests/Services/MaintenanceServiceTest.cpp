@@ -42,7 +42,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup MaintenanceService test case.");
         topology = Topology::create();
         TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
@@ -50,12 +50,6 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         nesRequestQueue = std::make_shared<RequestQueue>(1);
         maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, nesRequestQueue);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down MaintenanceService test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down MaintenanceService test class."); }
 
     std::string ip = "127.0.0.1";
     uint32_t grpcPort = 1;

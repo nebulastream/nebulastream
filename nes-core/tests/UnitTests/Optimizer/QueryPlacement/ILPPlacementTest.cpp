@@ -66,7 +66,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -79,12 +79,6 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         cfg.set("type_check", false);
         z3Context = std::make_shared<z3::context>(cfg);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Setup ILPPlacementTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down ILPPlacementTest test class."); }
 
     void setupTopologyAndSourceCatalogForILP() {
 

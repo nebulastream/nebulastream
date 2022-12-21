@@ -44,13 +44,12 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
     }
 
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    void TearDown() override { NES_INFO("Tear down SemanticQueryValidationTest class."); }
 
     static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
 
@@ -216,6 +215,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
 
+#ifdef TFDEF
 /**
  * Test ML inference operator input with valid input
  */
@@ -247,7 +247,7 @@ TEST_F(SemanticQueryValidationTest, validMLInferenceOperatorTest) {
 
     semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan());
 }
-
+#endif
 /**
  * Test ML inference operator input with invalid mixed input
  */
@@ -280,7 +280,7 @@ TEST_F(SemanticQueryValidationTest, invalidMixedInputMLInferenceOperatorTest) {
 
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
-
+#ifdef TFDEF
 /**
  * Test ML inference operator input with invalid input
  */
@@ -313,7 +313,7 @@ TEST_F(SemanticQueryValidationTest, invalidInputMLInferenceOperatorTest) {
 
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
-
+#endif
 // Test a query with an invalid logical source having to physical source defined
 TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
     NES_INFO("Invalid projection test");
