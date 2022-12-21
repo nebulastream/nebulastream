@@ -61,7 +61,7 @@ ReconnectSchedulePredictor::ReconnectSchedulePredictor(
 #endif
 }
 
-//todo: remove this function?
+//todo: remove this function
 Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReconnectSchedule() {
 #ifdef S2DEF
     DataTypes::Experimental::GeoLocation start;
