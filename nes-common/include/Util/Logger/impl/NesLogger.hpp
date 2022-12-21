@@ -17,6 +17,7 @@
 
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
+#include <spdlog/async.h>
 #include <spdlog/spdlog.h>
 
 namespace NES {
@@ -153,6 +154,7 @@ class Logger {
     std::shared_ptr<spdlog::logger> impl;
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
     std::atomic<bool> isShutdown{false};
+    std::shared_ptr<spdlog::details::thread_pool> tp;
 };
 }// namespace detail
 

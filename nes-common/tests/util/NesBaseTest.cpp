@@ -149,7 +149,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
                     ASSERT_TRUE(res);
                     if (!res) {
                         NES_FATAL_ERROR2("Got error in test [{}]", testName);
-                        std::exit(-1);
+                        std::exit(-127);
                     }
                 } catch (std::exception const& exception) {
                     NES_FATAL_ERROR2("Got exception in test [{}]: {}", testName, exception.what());
@@ -160,9 +160,9 @@ void TestWaitingHelper::startWaitingThread(std::string testName) {
             }
             case std::future_status::timeout:
             case std::future_status::deferred: {
-                NES_ERROR("Cannot terminate test [" << testName << "] within deadline");
+                NES_ERROR2("Cannot terminate test [{}] within deadline", testName);
                 FAIL();
-                std::exit(-1);
+                std::exit(-127);
                 break;
             }
         }
@@ -286,7 +286,7 @@ void NESBaseTest::TearDown() {
 }
 
 void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
     failTest();
 }
 
