@@ -57,6 +57,7 @@ struct ReconnectPrediction;
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
+ * This class is not thread safe!
  */
 class ReconnectSchedulePredictor {
   public:
@@ -69,26 +70,6 @@ class ReconnectSchedulePredictor {
      * @return a smart pointer to the reconnect schedule object
      */
     Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
-
-    /**
-     * Experimental
-     * @brief Download the field node locations in the vicinity into the local spatial index and start the reconnect planning thread
-     */
-    void setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator);
-
-    /**
-     * Experimental
-     * @brief enter loop to periodically query for the current device location and update path prediction and reconnect schedule
-     * accordingly as well as instructing the WorkerMobilityHandler to perform a reconnect if the device is close enough to the new parent
-     */
-    void startReconnectPlanning();
-
-    /**
-     * Experimental
-     * @brief Stop the reconnect planner thread
-     * @return true if a thread was running, false otherwise
-     */
-    bool stopReconnectPlanning();
 
     /**
      * @brief calculate the distance between the projected point on the path which is closest to coveringNode and the a point on the path
@@ -108,29 +89,9 @@ class ReconnectSchedulePredictor {
     static std::pair<S2Point, S1Angle> findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage);
 #endif
 
-    /**
-     * @brief returns the location of a field node if it exists in the local index
-     * @param id : the id of the field node
-     * @return the location of the node of an invalid Location if the node does not exist in the local index
-     */
-    NES::Spatial::DataTypes::Experimental::GeoLocation getNodeLocationById(uint64_t id);
-
-    /**
-     * @return the amount of field node locations saved locally
-     */
-    size_t getSizeOfSpatialIndex();
-
-    /**
-     * @brief return the predicted next reconnect of the device
-     * @return an optional containing a tuple consisting of the id of the expected new parent and reconnect location and time or
-     * nullopt if no reconnect has been calculated
-     */
-    std::optional<ReconnectPoint> getNextPredictedReconnect();
-
     ReconnectSchedulePtr getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                               const DataTypes::Experimental::GeoLocation& parentLocation,
                                               const S2PointIndex<uint64_t>& fieldNodeIndex,
-                                              const std::unordered_map<uint64_t, S2Point>& fieldNodeMap,
                                               bool indexUpdated);
   private:
     /**
@@ -147,8 +108,10 @@ class ReconnectSchedulePredictor {
      * @brief find the minimal covering set of field nodes covering the predicted path. This represents the reconnect schedule
      * with the least possible reconnects along the predicted trajectory. Use the average movement speed to estimate the time
      * at which each reconnect will happen.
+     * @param currentParendLocation : The location of the workers current parent
+     * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-    void scheduleReconnects();
+    void scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
 
     /**
      * @brief check if the device has moved closer than the threshold to the edge of the area covered by the current local

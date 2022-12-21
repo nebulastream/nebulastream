@@ -92,7 +92,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         topology = Topology::create();
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
         rootNode->addNodeProperty("tf_installed", true);
@@ -136,7 +136,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
         rootNode->addNodeProperty("tf_installed", true);
@@ -1020,7 +1020,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     // srcNode -> midNode -> sinkNode
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
     auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
@@ -1146,7 +1146,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
@@ -1295,7 +1295,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);
@@ -1413,7 +1413,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     // Setup the topology
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);

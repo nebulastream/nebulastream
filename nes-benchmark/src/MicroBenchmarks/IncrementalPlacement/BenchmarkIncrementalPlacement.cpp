@@ -44,6 +44,7 @@
 #include <iostream>
 #include <thread>
 #include <z3++.h>
+#include <Spatial/Index/LocationIndex.hpp>
 
 using namespace NES;
 using namespace NES::Benchmark;
@@ -155,10 +156,11 @@ void setupTopology(uint64_t noOfTopologyNodes = 5) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     topology = Topology::create();
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
     //Register root worker
     topologyManagerService->registerWorker("1", 0, 0, UINT16_MAX, properties);
     //register child workers

@@ -47,6 +47,7 @@
 #include <iomanip>
 
 #include <utility>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -157,12 +158,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                             << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
-    if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION) {
+    if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
-        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-            trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(locationProvider,
-                                                                                                              mobilityConfig,
-                                                                                                              parentId);
+        if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(mobilityConfig);
         }
     }
 
@@ -188,11 +187,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         bool success = replaceParent(NesCoordinator::NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
-    }
-
-    if (coordinatorRpcClient && trajectoryPredictor) {
-        NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
-        trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
     }
 
     if (workerConfig->enableStatisticOuput) {
@@ -246,13 +240,9 @@ bool NesWorker::stop(bool) {
         }
 
         if (locationProvider
-            && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-            if (trajectoryPredictor) {
-                trajectoryPredictor->stopReconnectPlanning();
-                NES_TRACE("triggered stopping of reconnect planner thread");
-            }
-            if (reconnectConfigurator) {
-                reconnectConfigurator->stopPeriodicUpdating();
+            && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            if (mobilityHandler) {
+                mobilityHandler->stopPeriodicUpdating();
                 NES_TRACE("triggered stopping of location update push thread");
             }
         }
@@ -295,7 +285,7 @@ bool NesWorker::connect() {
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation{};
     if (locationProvider
-        && locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION) {
+        && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         geoLocation = locationProvider->getWaypoint().getLocation();
     }
 
@@ -307,7 +297,8 @@ bool NesWorker::connect() {
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
-    registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
+    //Todo: why did that give an error?
+    //registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
@@ -332,11 +323,11 @@ bool NesWorker::connect() {
         healthCheckService->startHealthCheck();
 
         if (locationProvider) {
-            locationProvider->setCoordinatorRPCClient(coordinatorRpcClient);
-            if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
-                reconnectConfigurator =
-                    std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(*this,
+            if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+                mobilityHandler =
+                    std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
                                                                                                   coordinatorRpcClient,
+                                                                                                  nodeEngine,
                                                                                                   mobilityConfig);
             }
         }
@@ -544,5 +535,9 @@ TopologyNodeId NesWorker::getTopologyNodeId() const { return workerId; }
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
 
 NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr NesWorker::getTrajectoryPredictor() { return trajectoryPredictor; }
+
+NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() {
+    return mobilityHandler;
+}
 
 }// namespace NES
