@@ -26,7 +26,6 @@ on:
       - README.md
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
-      - '.github/**'
   workflow_dispatch:
     inputs:
       version:
@@ -82,12 +81,12 @@ jobs:
       - name: preamble-check
         run: |
           docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
-#      - name: format-check
-#        run: |
-#          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
-#      - name: guard-check
-#        run: |
-#          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+  #      - name: format-check
+  #        run: |
+  #          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+  #      - name: guard-check
+  #        run: |
+  #          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
   
 
   build-x64-linux-code-coverage:
@@ -102,7 +101,7 @@ jobs:
         include:
           - osversion: ubuntu-20_04
             require_build: "true"
-            require_test: "true"
+            require_test: "false"
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v3
@@ -156,25 +155,34 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
-  build-x64-linux:
+  build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, linux, X64, Build ]
+    name: ${{ matrix.osversion }} ${{ matrix.arch }}
     needs: [ pre-build-checks ]
     timeout-minutes: 300
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
     strategy:
       fail-fast: false
       matrix:
         include:
           - osversion: ubuntu-18_04
+            arch: "X64"
             require_build: "true"
             require_test: "true"
           - osversion: ubuntu-20_04
+            arch: "X64"
             require_build: "true"
             require_test: "true"
           - osversion: ubuntu-22_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+          - osversion: ubuntu-22_04
+            arch: "arm64"
             require_build: "true"
             require_test: "true"
           - osversion: alpine-3.15
+            arch: "X64"
             require_build: "true"
             require_test: "false"
     steps:
@@ -211,50 +219,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
-
-  build-arm64-linux:
+  build-macos:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, linux, arm64, Build ]
-    needs: [ pre-build-checks ]
-    timeout-minutes: 240
-    continue-on-error: true
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
-      #TODO: 2268 remove the environment variable to allow test execution on arm server
-      - name: Run build and test
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE -eNesTestParallelism="12" -eNesBuildParallelism="28" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: docker cleanup build
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-        run: |
-          docker rm -f ${{ github.run_id }}_build
-      - name: docker cleanup test
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-        run: |
-          docker rm -f ${{ github.run_id }}_test
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
-
-  build-x64-macos:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, macos, X64 ]
+    runs-on: [ self-hosted, macos, '${{ matrix.arch }}', Build ]
+    name: macos ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ "ARM64", "X64" ]
     needs: [ pre-build-checks ]
     timeout-minutes: 120
     continue-on-error: true
@@ -282,42 +254,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
-
-  build-arm64-macos:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, macos, ARM64 ]
-    needs: [ pre-build-checks ]
-    timeout-minutes: 120
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
-      #TODO: 2268 remove the environment variable to allow test execution on arm server
-      - name: Run build
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
-
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
-    needs: [ build-x64-linux, build-arm64-linux, build-x64-macos, build-arm64-macos ]
+    needs: [ build-linux, build-macos ]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
