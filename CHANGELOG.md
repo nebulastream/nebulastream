@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.4.12](https://github.com/nebulastream/nebulastream/tree/v0.4.12) (2022-12-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.11...v0.4.12)
+
+**Implemented enhancements:**
+
+- \[Feature\] Increase support of e2e benchmark parameters [\#3137](https://github.com/nebulastream/nebulastream/issues/3137)
+
+### Bug Fixes 🐛
+
+- \[BUG\] e2e-benchmark-test-join-different-data-generators failing randomly [\#3330](https://github.com/nebulastream/nebulastream/issues/3330)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Multiple Source with one Stream [\#3258](https://github.com/nebulastream/nebulastream/issues/3258)
+- \[Feature\] Test Infrastructure for Benchmark [\#3227](https://github.com/nebulastream/nebulastream/issues/3227)
+- \[DBPRO\] Add random\(\) expression [\#3050](https://github.com/nebulastream/nebulastream/issues/3050)
+
 ## [v0.4.11](https://github.com/nebulastream/nebulastream/tree/v0.4.11) (2022-12-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.10...v0.4.11)
@@ -73,7 +91,6 @@
 ### Bug Fixes 🐛
 
 - \[BUG\] Bug in Nemo integration test [\#3316](https://github.com/nebulastream/nebulastream/issues/3316)
-- \[BUG\] AllowedLatenessTest fails randomly  [\#3241](https://github.com/nebulastream/nebulastream/issues/3241)
 
 ### Miscellaneous Issues ✌️
 
