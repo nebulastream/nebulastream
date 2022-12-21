@@ -25,7 +25,7 @@
 #include <vector>
 
 #ifdef S2DEF
-#include "ReconnectPoint.hpp"
+#include "Spatial/Mobility/ReconnectPoint.hpp"
 #include <s2/s1chord_angle.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
