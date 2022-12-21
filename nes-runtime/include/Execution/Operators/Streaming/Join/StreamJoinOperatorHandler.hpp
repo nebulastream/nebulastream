@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <queue>
 #include <vector>
+#include <list>
 
 namespace NES::Runtime::Execution::Operators {
 
