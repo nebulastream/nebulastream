@@ -18,9 +18,9 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <utility>
 #ifdef S2DEF
@@ -33,16 +33,17 @@
 
 namespace NES {
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandler(
-    uint64_t parentId,
+    std::vector<uint64_t> currentParentWorkerIds,
     LocationProviderPtr locationProvider,
     CoordinatorRPCClientPtr coordinatorRpcClient,
     Runtime::NodeEnginePtr nodeEngine,
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration)
-    : coordinatorRpcClient(std::move(coordinatorRpcClient)),  locationProvider(locationProvider), parentId(parentId), nodeEngine(nodeEngine)  {
+    : coordinatorRpcClient(std::move(coordinatorRpcClient)),  locationProvider(locationProvider), currentParentWorkerIds(currentParentWorkerIds), nodeEngine(nodeEngine)  {
     locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
     pathPredictionUpdateInterval = mobilityConfiguration->pathPredictionUpdateInterval.getValue();
 
-    sendUpdates = false;
+    //todo: only do init here, move everything to start
+    isRunning = false;
     coveredRadiusWithoutThreshold =
         S2Earth::MetersToAngle(nodeInfoDownloadRadius - mobilityConfiguration->nodeIndexUpdateThreshold.getValue());
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(mobilityConfiguration->defaultCoverageRadius.getValue());
@@ -51,11 +52,12 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
 
     //get the current position and download the locations of the field nodes in the vicinity
     auto currentPosition = locationProvider->getWaypoint();
-    //downloadFieldNodes(currentPosition.getLocation());
+    //updateNeighbourWorkerInformation(currentPosition.getLocation());
     updateDownloadedNodeIndex(currentPosition.getLocation());
 
+    //todo: move this to start()
     //find the current parent node among the downloaded field node data
-    auto iterator = S2PointIndex<uint64_t>::Iterator(&fieldNodeIndex);
+    auto iterator = S2PointIndex<uint64_t>::Iterator(&neighbourWorkerSpatialIndex);
     iterator.Begin();
     while (!iterator.done()) {
         if (iterator.data() == parentId) {
@@ -75,19 +77,19 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::WorkerMobilityHandl
 
     locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
     if (mobilityConfiguration->pushDeviceLocationUpdates) {
-        sendUpdates = true;
-        sendLocationUpdateThread = std::make_shared<std::thread>(&WorkerMobilityHandler::startLocationUpdatingAndReconnectScheduling, this);
+        isRunning = true;
+        workerMobilityHandlerThread = std::make_shared<std::thread>(&WorkerMobilityHandler::start, this);
     }
 #endif
 }
 
-void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::setPositionOfLastIndexUpdate(const DataTypes::Experimental::GeoLocation& currentLocation) {
+void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::setCentroidOfNeighbouringWorkerIndex(const DataTypes::Experimental::GeoLocation& currentLocation) {
     //save the position of the update so we can check how far we have moved from there later on
-    positionOfLastNodeIndexUpdate = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentLocation);
+    centroidOfNeighbouringWorkerSpatialIndex = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentLocation);
     NES_TRACE("setting last index update position to " << currentLocation.toString())
 }
 
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::downloadFieldNodes(const DataTypes::Experimental::GeoLocation& currentLocation) {
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::updateNeighbourWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation) {
 #ifdef S2DEF
     if (!currentLocation.isValid()) {
         NES_WARNING("invalid location, cannot download field nodes");
@@ -100,8 +102,8 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::downloadFieldN
 
     //if we actually received nodes in our vicinity, we can clear the old nodes
     if (!nodeMapPtr.empty()) {
-        fieldNodeMap.clear();
-        fieldNodeIndex.Clear();
+        neighbourWorkerIdToLocationMap.clear();
+        neighbourWorkerSpatialIndex.Clear();
     } else {
         return false;
     }
@@ -109,8 +111,8 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::downloadFieldN
     //insert node info into spatial index and map on node ids
     for (auto [nodeId, location] : nodeMapPtr) {
         NES_TRACE("adding node " << nodeId << " with location " << location.toString())
-        fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
-        fieldNodeMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});
+        neighbourWorkerSpatialIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
+        neighbourWorkerIdToLocationMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});
     }
     return true;
 #else
@@ -122,10 +124,10 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::downloadFieldN
 
 bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::reconnectToClosestNode(const DataTypes::Experimental::GeoLocation& ownLocation, S1Angle maxDistance) {
 #ifdef S2DEF
-    if (fieldNodeIndex.num_points() == 0) {
+    if (neighbourWorkerSpatialIndex.num_points() == 0) {
         return false;
     }
-    S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
+    S2ClosestPointQuery<uint64_t> query(&neighbourWorkerSpatialIndex);
     query.mutable_options()->set_max_distance(maxDistance);
     S2ClosestPointQuery<int>::PointTarget target(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(ownLocation));
     auto closestNode = query.FindClosestPoint(&target);
@@ -140,24 +142,27 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::reconnectToClo
 #endif
 }
 
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::checkNodeIndexThreshold(const DataTypes::Experimental::GeoLocation& currentLocation) {
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::shouldUpdateNeighbouringWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation) {
     S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
     /*check if we have moved close enough to the edge of the area covered by the current node index so the we need to
     download new node information */
-    return !positionOfLastNodeIndexUpdate || S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold;
+    return !centroidOfNeighbouringWorkerSpatialIndex
+        || S1Angle(currentS2Point, centroidOfNeighbouringWorkerSpatialIndex.value()) > coveredRadiusWithoutThreshold;
 }
 
+//todo: remove
 void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation) {
 #ifdef S2DEF
     S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
     //if new nodes were downloaded, make sure that the current parent becomes part of the index by adding it if it was not downloaded anyway
-    bool downloadSuccesfull = downloadFieldNodes(currentLocation);
+    bool downloadSuccesfull = updateNeighbourWorkerInformation(currentLocation);
     if (downloadSuccesfull) {
-        setPositionOfLastIndexUpdate(currentLocation);
-        if (currentParentLocation && fieldNodeMap.count(parentId) == 0) {
+        //todo: move out
+        setCentroidOfNeighbouringWorkerIndex(currentLocation);
+        if (currentParentLocation && neighbourWorkerIdToLocationMap.count(parentId) == 0) {
             NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
-            fieldNodeMap.insert({parentId, currentParentLocation.value()});
-            fieldNodeIndex.Add(currentParentLocation.value(), parentId);
+            neighbourWorkerIdToLocationMap.insert({parentId, currentParentLocation.value()});
+            neighbourWorkerSpatialIndex.Add(currentParentLocation.value(), parentId);
         }
     }
 #else
@@ -166,7 +171,7 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::updateDownload
 #endif
 }
 
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendScheduledReconnect(
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendNextPredictedReconnect(
     const std::optional<NES::Spatial::Mobility::Experimental::ReconnectPrediction>& scheduledReconnect) {
     if (scheduledReconnect.has_value()) {
         return coordinatorRpcClient->sendReconnectPrediction(scheduledReconnect.value());
@@ -176,7 +181,8 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendScheduledR
     }
 }
 
-std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getReconnectParent(const DataTypes::Experimental::GeoLocation &currentOwnLocation, const DataTypes::Experimental::GeoLocation &currentParentLocation) {
+//todo: handle case "no known parent"
+std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoint(const DataTypes::Experimental::GeoLocation &currentOwnLocation, const DataTypes::Experimental::GeoLocation &currentParentLocation) {
     if (!reconnectSchedule) {
         return std::nullopt;
     }
@@ -196,7 +202,7 @@ std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHand
     if (currentDistFromParent >= defaultCoverageRadiusAngle) {
         //if there is not reconnect scheduled connect to the closest node we can find
         if (!nextScheduledReconnect) {
-            S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
+            S2ClosestPointQuery<uint64_t> query(&neighbourWorkerSpatialIndex);
             query.mutable_options()->set_max_distance(defaultCoverageRadiusAngle);
             S2ClosestPointQuery<int>::PointTarget target(currentOwnPoint);
             auto closestNode = query.FindClosestPoint(&target);
@@ -204,17 +210,17 @@ std::optional<uint64_t> NES::Spatial::Mobility::Experimental::WorkerMobilityHand
                 return std::nullopt;
             }
             return closestNode.data();
-        } else if (S1Angle(currentOwnPoint, NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextScheduledReconnect->predictedReconnectLocation)) <= currentDistFromParent) {
+        } else if (S1Angle(currentOwnPoint, NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextScheduledReconnect->pointGeoLocation)) <= currentDistFromParent) {
             //if the next scheduled parent is closer than the current parent, reconnect to the scheduled parent
             //todo: keep this here or after reconnect?
             reconnectVector->erase(reconnectVector->begin());
-            return nextScheduledReconnect.value().reconnectPrediction.newParentId;
+            return nextScheduledReconnect.value();
         }
     }
     return std::nullopt;
 }
 
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::reconnect(uint64_t oldParent, uint64_t newParent) {
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconnectionRoutine(uint64_t oldParent, uint64_t newParent) {
     nodeEngine->bufferAllData();
     //todo #3027: wait until all upstream operators have received data which has not been buffered
     //todo #3027: trigger replacement and migration of operators
@@ -229,37 +235,34 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::reconnect(uint
     nodeEngine->stopBufferingAllData();
 
     //update locally saved information about parent
-    parentId = newParent;
+    parentId[0] = newParent;
 #ifdef S2DEF
-    currentParentLocation = fieldNodeMap.at(newParent);
+    currentParentLocation = neighbourWorkerIdToLocationMap.at(newParent);
 #endif
     return success;
 }
 
 #ifdef S2DEF
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::checkPositionThreshold(const DataTypes::Experimental::GeoLocation &currentLocation) {
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::shouldSendCurrentWorkerPositionToCoordinator(const DataTypes::Experimental::GeoLocation &currentLocation) {
     auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentLocation);
-    std::unique_lock lock(reconnectConfigMutex);
     return S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold;
 }
 
 void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::sendLocationUpdate(const DataTypes::Experimental::Waypoint &currentWaypoint) {
     auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentWaypoint.getLocation());
-    std::unique_lock lock(reconnectConfigMutex);
     //check if we moved further than the threshold. if so, tell the coordinator about the devices new position
     coordinatorRpcClient->sendLocationUpdate(std::move(currentWaypoint));
     lastTransmittedLocation = currentPoint;
 }
 
-void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::startLocationUpdatingAndReconnectScheduling() {
+void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::start() {
     //get the devices current location
-    auto currentWaypoint = locationProvider->getCurrentWaypoint();
-    auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentWaypoint.getLocation());
+    auto currentOwnWaypoint = locationProvider->getCurrentWaypoint();
+    auto currentPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(currentOwnWaypoint.getLocation());
 
     //initialize sending of location updates
     NES_DEBUG("transmitting initial location")
-    coordinatorRpcClient->sendLocationUpdate(std::move(currentWaypoint));
-    std::unique_lock lock(reconnectConfigMutex);
+    coordinatorRpcClient->sendLocationUpdate(std::move(currentOwnWaypoint));
     lastTransmittedLocation = currentPoint;
     lock.unlock();
 
@@ -267,26 +270,27 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::startLocationU
     updateDownloadedNodeIndex(locationProvider->getCurrentWaypoint().getLocation());
 
     //start periodically pulling location updates and inform coordinator about location changes
-    while (sendUpdates) {
-        currentWaypoint = locationProvider->getCurrentWaypoint();
-        if (!checkPositionThreshold(currentWaypoint.getLocation())) {
+    while (isRunning) {
+        currentOwnWaypoint = locationProvider->getCurrentWaypoint();
+        if (!shouldSendCurrentWorkerPositionToCoordinator(currentOwnWaypoint.getLocation())) {
             //std::this_thread::sleep_for(std::chrono::milliseconds(locationUpdateInterval));
             std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
             NES_DEBUG("device has not moved further than threshold, location will not be transmitted");
             continue;
         }
         NES_DEBUG("device has moved further then threshold, sending location")
-        sendLocationUpdate(currentWaypoint);
+        sendLocationUpdate(currentOwnWaypoint);
 
         //update the spatial index if necessary
-        bool indexUpdated = fieldNodeMap.empty() || checkNodeIndexThreshold(currentWaypoint.getLocation());
+        bool indexUpdated = neighbourWorkerIdToLocationMap.empty() || shouldUpdateNeighbouringWorkerInformation(currentOwnWaypoint.getLocation());
         if (indexUpdated) {
-            updateDownloadedNodeIndex(currentWaypoint.getLocation());
+            updateDownloadedNodeIndex(currentOwnWaypoint.getLocation());
         }
 
         //if the worker is not connected to a parent with a known location, continue
         if (!currentParentLocation) {
-            reconnectToClosestNode(currentWaypoint.getLocation(), defaultCoverageRadiusAngle);
+            //todo: only check if parent existst here
+            reconnectToClosestNode(currentOwnWaypoint.getLocation(), defaultCoverageRadiusAngle);
             //std::this_thread::sleep_for(std::chrono::milliseconds(locationUpdateInterval));
             std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
             continue;
@@ -294,10 +298,10 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::startLocationU
 
         //todo: would it make sense to pass s2points here?
         //recalculate scheduling
-        auto newReconnectSchedule = reconnectSchedulePredictor->getReconnectSchedule(currentWaypoint,
-                                                                                  NES::Spatial::Util::S2Utilities::s2pointToLocation(currentParentLocation.value()),
-                                                                                  fieldNodeIndex,
-                                                                                  indexUpdated);
+        auto newReconnectSchedule = reconnectSchedulePredictor->getReconnectSchedule(currentOwnWaypoint,
+                                                                                     NES::Spatial::Util::S2Utilities::s2pointToLocation(currentParentLocation.value()),
+                                                                                     neighbourWorkerSpatialIndex,
+                                                                                     indexUpdated);
 
         //if the reconnect schedule did not change, there is not more to do in this iteration
         bool reconnectScheduleWasUpdated = (bool) newReconnectSchedule;
@@ -307,19 +311,19 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::startLocationU
 
         //check if a reconnect is scheduled
         auto reconnectToPerform =
-            getReconnectParent(currentWaypoint.getLocation(),
-                               NES::Spatial::Util::S2Utilities::s2pointToLocation(currentParentLocation.value()));
+            getNextReconnectPoint(currentOwnWaypoint.getLocation(),
+                                  NES::Spatial::Util::S2Utilities::s2pointToLocation(currentParentLocation.value()));
         if (reconnectToPerform) {
-            reconnect(parentId, reconnectToPerform.value());
+            triggerReconnectionRoutine(currentParentWorkerIds[0], reconnectToPerform.value());
         }
 
         //if the schedule changed or the worker reconnected, the coordinator has to be informed about the changed schedule
         if (reconnectScheduleWasUpdated || reconnectToPerform) {
             auto reconnectVec = reconnectSchedule->getReconnectVector();
             if (!reconnectVec->empty()) {
-                sendScheduledReconnect(reconnectVec->front().reconnectPrediction);
+                sendNextPredictedReconnect(reconnectVec->front().reconnectPrediction);
             } else {
-                sendScheduledReconnect(std::nullopt);
+                sendNextPredictedReconnect(std::nullopt);
             }
         }
 
@@ -330,11 +334,12 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::startLocationU
 }
 #endif
 
-bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::stopPeriodicUpdating() {
-    if (!sendUpdates) {
+//todo: check if we need insert poison pill: request processor service for reference
+bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::stop() {
+    if (!isRunning) {
         return false;
     }
-    sendUpdates = false;
+    isRunning = false;
     return true;
 }
 
@@ -348,13 +353,4 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeIdsInRange(c
     return DataTypes::Experimental::NodeIdToGeoLocationMap{nodeVector.begin(), nodeVector.end()};
 }
 
-NES::Spatial::DataTypes::Experimental::NodeIdToGeoLocationMap
-NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNodeIdsInRange(double radius) {
-    auto location = locationProvider->getWaypoint().getLocation();
-    if (location.isValid()) {
-        return getNodeIdsInRange(std::move(location), radius);
-    }
-    NES_WARNING("Trying to get the nodes in the range of a node without location");
-    return {};
-}
 }// namespace NES

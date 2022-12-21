@@ -20,10 +20,10 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 
@@ -253,7 +253,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
             auto reconnectPoint = scheduleMsg->add_reconnectpoints();
             auto reconnectWayPoint = reconnectPoint->mutable_waypoint();
             auto reconnectLocation = reconnectWayPoint->mutable_geolocation();
-            auto loc = elem.predictedReconnectLocation;
+            auto loc = elem.pointGeoLocation;
             reconnectLocation->set_lat(loc.getLatitude());
             reconnectLocation->set_lng(loc.getLongitude());
             auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();

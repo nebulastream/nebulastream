@@ -16,8 +16,8 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
@@ -61,7 +61,7 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
         for (auto elem : reconnectVector) {
             nlohmann::json elemJson;
             elemJson["id"] = elem->reconnectPrediction.expectedNewParentId;
-            elemJson["reconnectPoint"] = convertLocationToJson(std::move(elem->predictedReconnectLocation));
+            elemJson["reconnectPoint"] = convertLocationToJson(std::move(elem->pointGeoLocation));
             elemJson["time"] = elem->reconnectPrediction.expectedTime;
             reconnectArray[i] = elemJson;
             i++;
