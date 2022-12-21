@@ -17,6 +17,8 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -85,7 +87,7 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
 }
 
 /**
-* @brief Test simple UDF with float objects as input and output (IntegerMapFunction<Float, Float>)
+* @brief Test simple UDF with float objects as input and output (FloatMapFunction<Float, Float>)
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
@@ -108,7 +110,7 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
 }
 
 /**
-* @brief Test simple UDF with boolean objects as input and output (IntegerMapFunction<Float, Float>)
+* @brief Test simple UDF with boolean objects as input and output (BooleanMapFunction<Boolean, Boolean>)
  * The UDF sets incoming tuples to false.
 */
 TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
@@ -128,6 +130,56 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     auto record = Record({{"id", Value<>(initalValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), false);
+}
+
+/**
+* @brief Test simple UDF with string objects as input and output (StringMapFunction<String, String>)
+ * The UDF appends incoming tuples the postfix 'appended'.
+*/
+TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::TEXT);
+    SchemaPtr output = Schema::create()->addField("id", NES::TEXT);
+    std::string method = "map";
+    std::string clazz = "StringMapFunction";
+    std::string inputProxy = "java/lang/String";
+    std::string outputProxy = "java/lang/String";
+
+    auto map = MapJavaUdf(clazz, method, inputProxy, outputProxy, { }, { }, input, output, path);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto record = Record({{"id", Value<Text>("testValue")}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), "testValue_appended");
+}
+
+/**
+ * @brief Test simple UDF with loaded java classes as input and output (StringMapFunction<ComplexPojo, ComplexPojo>)
+ * The UDF appends incoming tuples the postfix 'appended'.
+*/
+TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
+    SchemaPtr output = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
+    std::string method = "map";
+    std::string clazz = "ComplexPojoMapFunction";
+    std::string inputProxy = "ComplexPojo";
+    std::string outputProxy = "ComplexPojo";
+
+    auto initialInt = 10;
+    auto initialFloat = 10.0f;
+    auto initalBool = true;
+    auto map = MapJavaUdf(clazz, method, inputProxy, outputProxy, { }, { }, input, output, path);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto record = Record({{"intVariable", Value<>(initialInt)}, {"floatVariable", Value<>(initialFloat)}, {"booleanVariable", Value<>(initalBool)}});
+    map.execute(ctx, record);
+
+    ASSERT_EQ(record.read("intVariable"), initialInt + 10);
+    ASSERT_EQ(record.read("floatVariable"), initialFloat + 10.0);
+    ASSERT_EQ(record.read("booleanVariable"), false);
 }
 
 /**

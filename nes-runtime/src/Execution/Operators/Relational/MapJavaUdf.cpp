@@ -199,16 +199,18 @@ MapJavaUdf::~MapJavaUdf() {
     jvm->DetachCurrentThread();
 }
 
-void* findClassProxyInput(void* operatorPtr) {
+void* findInputProxyClass(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getInputProxyName().c_str());
+    //jclass pojoClass = mapUDF->getEnvironment()->FindClass("java/lang/Integer");
     jniErrorCheck(mapUDF);
     return pojoClass;
 }
 
-void* findClassProxyOutput(void* operatorPtr) {
+void* findOutputProxyClass(void* operatorPtr) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     jclass pojoClass = mapUDF->getEnvironment()->FindClass(mapUDF->getOutputProxyName().c_str());
+    //jclass pojoClass = mapUDF->getEnvironment()->FindClass("java/lang/Integer");
     jniErrorCheck(mapUDF);
     return pojoClass;
 }
@@ -344,7 +346,7 @@ void setBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr,
     jniErrorCheck(mapUDF);
 }
 
-float getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
+bool getBooleanField(void* operatorPtr, void* pojoClassPtr, void* pojoObjectPtr, int fieldIndex) {
     auto mapUDF = (MapJavaUdf*) operatorPtr;
     auto pojoClass = (jclass) pojoClassPtr;
     auto pojo = (jobject) pojoObjectPtr;
@@ -440,6 +442,7 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
         jobject instance = mapUDF->getEnvironment()->NewObject(clazz, constr);
         jniErrorCheck(mapUDF);
 
+        // Call udf function
         udf_result = mapUDF->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
         jniErrorCheck(mapUDF);
     }
@@ -447,10 +450,10 @@ void* executeUdf(void* operatorPtr, void* pojoObjectPtr) {
 }
 
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
-    auto thisOperatorPtr = Value<MemRef>((std::int8_t*) this);
+    auto thisOperatorPtr = Value<MemRef>(MemRef((std::int8_t *) this));
 
     // Create proxy input pojo and load record values
-    auto inputClassPtr = FunctionCall<>("findClassProxyInput", findClassProxyInput, thisOperatorPtr);
+    auto inputClassPtr = FunctionCall<>("findInputProxyClass", findInputProxyClass, thisOperatorPtr);
     auto inputPojoPtr = FunctionCall<>("allocateObject", allocateObject, thisOperatorPtr, inputClassPtr);
 
     // Loading record values into java objects
@@ -468,6 +471,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         } else if (field->getDataType()->isBoolean()) {
             inputPojoPtr = FunctionCall<>("createBooleanObject", createBooleanObject, thisOperatorPtr, record.read(fieldName).as<Boolean>());
         } else if (field->getDataType()->isText()) {
+            //inputPojoPtr = FunctionCall<>("createStringObject", createStringObject, thisOperatorPtr, record.read(fieldName).as<Text>());
         }
     } else {
         // 2. Plain old java object as map input
@@ -504,7 +508,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     }
 
     // Get proxy pojo and call Udf
-    auto outputClassPtr = FunctionCall<>("findClassProxyOutput", findClassProxyOutput, thisOperatorPtr);
+    auto outputClassPtr = FunctionCall<>("findOutputProxyClass", findOutputProxyClass, thisOperatorPtr);
     auto outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, thisOperatorPtr, inputPojoPtr);
 
     // Write result into new record
@@ -550,7 +554,6 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             }
         }
     }
-
     // release objects auch strings in pojo
 
     // Trigger execution of next operator
