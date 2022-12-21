@@ -16,10 +16,10 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -86,8 +86,8 @@ Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReco
     DataTypes::Experimental::GeoLocation indexUpdatePointer;
     //todo: remove position of last index update from the reonnect schedule?
     /*
-    if (positionOfLastNodeIndexUpdate) {
-        indexUpdatePointer = Spatial::Util::S2Utilities::s2pointToLocation(positionOfLastNodeIndexUpdate.value());
+    if (centroidOfNeighbouringWorkerSpatialIndex) {
+        indexUpdatePointer = Spatial::Util::S2Utilities::s2pointToLocation(centroidOfNeighbouringWorkerSpatialIndex.value());
     } else {
         indexUpdatePointer = DataTypes::Experimental::GeoLocation();
     }
