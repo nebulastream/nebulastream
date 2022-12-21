@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-RandomExpression::RandomExpression(NES::Runtime::Execution::Expressions::ExpressionPtr  subExpression)
+RandomExpression::RandomExpression(NES::Runtime::Execution::Expressions::ExpressionPtr subExpression)
     : subExpression(std::move(subExpression)) {}
 
 double random(uint32_t seed) {
