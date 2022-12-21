@@ -25,7 +25,9 @@ namespace NES::Runtime {
 enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, kStartSourceEvent };
 
 template<typename T>
-concept IsNesEvent = requires(T t) { t.getEventType(); };
+concept IsNesEvent = requires(T t) {
+    t.getEventType();
+};
 
 /// Design rationale: create an own event that inherits from BaseEvent for internal system events (e.g., the checkpoint barrier, the upstream ACK).
 /// Use the custom event for user-specific events, e.g., feedback loops for toggling source sampling fequency.

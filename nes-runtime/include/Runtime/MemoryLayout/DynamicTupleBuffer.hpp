@@ -53,8 +53,7 @@ class DynamicField {
      * @return Pointer type
      */
     template<class Type>
-        requires IsNesType<Type> && std::is_pointer<Type>::value
-    inline Type read() const {
+    requires IsNesType<Type>&& std::is_pointer<Type>::value inline Type read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -69,8 +68,7 @@ class DynamicField {
      * @return Value of the field.
      */
     template<class Type>
-        requires(IsNesType<Type> && not std::is_pointer<Type>::value)
-    inline Type& read() const {
+    requires(IsNesType<Type> && not std::is_pointer<Type>::value) inline Type& read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -85,8 +83,7 @@ class DynamicField {
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      */
     template<class Type>
-        requires(IsNesType<Type>)
-    inline void write(Type value) {
+    requires(IsNesType<Type>) inline void write(Type value) {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
