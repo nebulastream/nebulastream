@@ -27,7 +27,7 @@ class Message;
 
 namespace NES {
 
-class KafkaSource : public DataSource, public Runtime::BufferRecycler {
+class KafkaSource : public DataSource {
   public:
     KafkaSource(SchemaPtr schema,
                 Runtime::BufferManagerPtr bufferManager,
@@ -92,18 +92,6 @@ class KafkaSource : public DataSource, public Runtime::BufferRecycler {
      * @brief Get kafka connection timeout
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
-
-    /**
-     * @brief Interface method for pooled buffer recycling
-     * @param buffer the buffer to recycle
-     */
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override;
-
-    /**
-     * @brief Interface method for unpooled buffer recycling
-     * @param buffer the buffer to recycle
-     */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override;
 
   private:
     /**

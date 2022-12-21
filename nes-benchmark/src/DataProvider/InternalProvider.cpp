@@ -15,7 +15,6 @@
 #include <DataProvider/InternalProvider.hpp>
 
 namespace NES::Benchmark::DataProviding {
-
 InternalProvider::InternalProvider(uint64_t id,
                                    DataProvider::DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
@@ -26,6 +25,7 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
     ((void) sourceId);
     while (!started) {
         //wait with data production until the source is really started and also block if the source gets stopped
+        sleep(1);
     }
     if (!preAllocatedBuffers.empty()) {
         auto buffer = preAllocatedBuffers[currentlyEmittedBuffer % preAllocatedBuffers.size()];

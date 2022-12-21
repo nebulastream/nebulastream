@@ -54,15 +54,15 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_DEBUG("KAFKASINK " << this << ": writes buffer " << inputBuffer);
+    NES_TRACE("KAFKASINK " << this << ": writes buffer " << inputBuffer);
     try {
         std::stringstream outputStream;
         NES_TRACE("KafkaSink::getData: write data");
         auto dataBuffers = sinkFormat->getData(inputBuffer);
         for (auto buffer : dataBuffers) {
             NES_TRACE("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-            cppkafka::Buffer cppBuffer(buffer.getBuffer(), buffer.getBufferSize());
-            msgBuilder->payload(cppBuffer);
+            cppkafka::Buffer kafkaBuffer(buffer.getBuffer(), buffer.getBufferSize());
+            msgBuilder->payload(kafkaBuffer);
             producer->produce(*msgBuilder);
         }
         producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
