@@ -16,16 +16,15 @@
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 
 #include <Util/TimeMeasurement.hpp>
-#include <atomic>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
 #include <vector>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 
 #ifdef S2DEF
-#include "Spatial/Mobility/ReconnectPoint.hpp"
 #include <s2/s1chord_angle.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
@@ -33,7 +32,6 @@
 #include <s2/s2point_index.h>
 #include <s2/s2polyline.h>
 
-using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 #endif
 
 namespace NES {
@@ -54,6 +52,7 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 
 struct ReconnectPrediction;
 
+//todo: remove index update postition
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
@@ -63,13 +62,6 @@ class ReconnectSchedulePredictor {
   public:
     ReconnectSchedulePredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
-    /**
-     * Experimental
-     * @brief construct a reconnect schedule object containing beggining and end of the current predicted path, the position of the last
-     * update of the local spatial index and a vector containing the scheduled reconnects
-     * @return a smart pointer to the reconnect schedule object
-     */
-    Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
 
     /**
      * @brief calculate the distance between the projected point on the path which is closest to coveringNode and the a point on the path
@@ -91,7 +83,7 @@ class ReconnectSchedulePredictor {
 
     ReconnectSchedulePtr getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                               const DataTypes::Experimental::GeoLocation& parentLocation,
-                                              const S2PointIndex<uint64_t>& fieldNodeIndex,
+                                              const S2PointIndex<uint64_t>& neighbouringWorkerIndex,
                                               bool indexUpdated);
   private:
     /**
@@ -121,6 +113,14 @@ class ReconnectSchedulePredictor {
      */
     bool updateAverageMovementSpeed();
 
+    /**
+     * Experimental
+     * @brief construct a reconnect schedule object containing beggining and end of the current predicted path, the position of the last
+     * update of the local spatial index and a vector containing the scheduled reconnects
+     * @return a smart pointer to the reconnect schedule object
+     */
+    Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
+
     //configuration
     //uint64_t pathPredictionUpdateInterval;
     size_t locationBufferSize;
@@ -136,7 +136,7 @@ class ReconnectSchedulePredictor {
     S2PolylinePtr trajectoryLine;
 #endif
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
-    std::shared_ptr<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
+    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectPoints;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     size_t stepsSinceLastLocationSave;

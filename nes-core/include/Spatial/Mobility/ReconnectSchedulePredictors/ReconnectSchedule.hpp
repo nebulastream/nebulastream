@@ -40,8 +40,9 @@ class ReconnectSchedule {
     ReconnectSchedule(const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
                       const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
                       const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
-                      std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector);
+                      std::vector<ReconnectPoint> reconnectVector);
 
+    //todo: clean up vector
     /**
      * @brief getter function for the start location of the current predicted path
      * @return a smart pointer to a location object with the coordinates of the path beginning
@@ -65,7 +66,7 @@ class ReconnectSchedule {
      * @brief getter function for the vector containing the scheduled reconnects
      * @return a vector containing tuples consisting of expected next parent id, estimated reconnect location, estimated reconnect time
      */
-    [[nodiscard]] std::shared_ptr<std::vector<ReconnectPoint>> getReconnectVector() const;
+    [[nodiscard]] std::vector<ReconnectPoint>& getReconnectVector() const;
 
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
@@ -74,10 +75,7 @@ class ReconnectSchedule {
     static ReconnectSchedule Empty();
 
   private:
-    NES::Spatial::DataTypes::Experimental::GeoLocation pathStart;
-    NES::Spatial::DataTypes::Experimental::GeoLocation pathEnd;
-    NES::Spatial::DataTypes::Experimental::GeoLocation lastIndexUpdatePosition;
-    std::shared_ptr<std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>> reconnectVector;
+    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectVector;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
