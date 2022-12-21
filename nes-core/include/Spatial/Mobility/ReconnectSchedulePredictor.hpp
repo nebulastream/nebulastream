@@ -114,28 +114,12 @@ class ReconnectSchedulePredictor {
     void scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
 
     /**
-     * @brief check if the device has moved closer than the threshold to the edge of the area covered by the current local
-     * spatial index. If so download new node data around the current location
-     * @param currentLocation : the current location of the mobile device
-     * @return true if the index was updated, false if the device is still further than the threshold away from the edge.
-     */
-    bool updateDownloadedNodeIndex(const DataTypes::Experimental::GeoLocation& currentLocation);
-
-    /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the
      * time interval covered by the location buffer and compare it to the previous movements speed. update the saved movement speed
      * if the new one differs more than the threshold.
      * @return true if the movement speed has changed more than threshold and the variable was therefore updated
      */
     bool updateAverageMovementSpeed();
-
-    /**
-     * @brief: Perform a reconnect to change this workers parent in the topology and update devicePositionTuplesAtLastReconnect,
-     * ParentId and currentParentLocation.
-     * @param newParentId: The id of the new parent to connect to
-     * @param ownLocation: This workers current location
-     */
-    void reconnect(uint64_t newParentId);
 
     //configuration
     //uint64_t pathPredictionUpdateInterval;

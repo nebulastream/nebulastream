@@ -34,9 +34,13 @@ bool LocationIndex::initializeFieldNodeCoordinates(const TopologyNodePtr& node,
 bool LocationIndex::updateFieldNodeCoordinates(const TopologyNodePtr& node,
                                                Spatial::DataTypes::Experimental::GeoLocation&& geoLoc) {
 #ifdef S2DEF
+    /*
     if (removeNodeFromSpatialIndex(node)) {
         return setFieldNodeCoordinates(node, std::move(geoLoc));
     }
+     */
+    removeNodeFromSpatialIndex(node);
+    return setFieldNodeCoordinates(node, std::move(geoLoc));
     return false;
 #else
     return setFieldNodeCoordinates(node, geoLoc);
@@ -172,6 +176,7 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
 
 void LocationIndex::addMobileNode(TopologyNodeId nodeId, NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     std::unique_lock lock(locationIndexMutex);
+    workerNodeLocation.erase(nodeId);
     workerNodeLocation.insert({nodeId, geoLocation});
 }
 

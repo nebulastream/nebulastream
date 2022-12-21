@@ -33,7 +33,7 @@ class Waypoint {
      * @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
      * @param location The location of the device
      */
-    Waypoint(GeoLocation location);
+    explicit Waypoint(GeoLocation location);
 
     /**
      * @brief Construct a waypoint with a certain timestamp
