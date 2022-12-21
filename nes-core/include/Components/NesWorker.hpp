@@ -292,7 +292,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
-    NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr mobilityHandler;
+    NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
     TopologyNodeId workerId;
     HealthCheckServicePtr healthCheckService;

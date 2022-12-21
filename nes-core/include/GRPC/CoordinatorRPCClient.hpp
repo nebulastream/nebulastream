@@ -251,7 +251,7 @@ class CoordinatorRPCClient {
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint&& locationUpdate);
+    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint& locationUpdate);
 
   private:
     uint64_t workerId;
