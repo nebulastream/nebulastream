@@ -32,7 +32,8 @@
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
+#include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
@@ -47,7 +48,6 @@
 #include <iomanip>
 
 #include <utility>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 

@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>

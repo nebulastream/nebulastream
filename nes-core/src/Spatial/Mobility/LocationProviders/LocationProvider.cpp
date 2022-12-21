@@ -13,13 +13,13 @@
 */
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/LocationProviderCSV.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 

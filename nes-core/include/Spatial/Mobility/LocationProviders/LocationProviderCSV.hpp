@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDERCSV_HPP_
 
-#include <Spatial/Mobility/LocationProvider.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
