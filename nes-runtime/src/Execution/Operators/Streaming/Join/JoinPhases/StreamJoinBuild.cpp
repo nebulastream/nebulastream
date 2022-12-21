@@ -95,8 +95,6 @@ uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
-
-
 void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
