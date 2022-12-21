@@ -595,13 +595,12 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     return softStopCompletionReply.success();
 }
 
-bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
-                                                   Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
+bool CoordinatorRPCClient::sendReconnectPrediction(Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
-    request.set_deviceid(nodeId);
+    request.set_deviceid(workerId);
     NES::Spatial::Protobuf::SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
     reconnectPoint->set_id(scheduledReconnect.newParentId);
     reconnectPoint->set_time(scheduledReconnect.expectedTime);
@@ -610,7 +609,7 @@ bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t workerId, Spatial::DataTypes::Experimental::Waypoint&& locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint&& locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;

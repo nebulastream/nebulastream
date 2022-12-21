@@ -44,28 +44,6 @@ DataTypes::Experimental::Waypoint LocationProvider::getWaypoint() {
     }
 }
 
-DataTypes::Experimental::NodeIdToGeoLocationMap
-LocationProvider::getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location, double radius) {
-    if (!coordinatorRpcClient) {
-        NES_WARNING("worker has no coordinator rpc client, cannot download node index");
-        return {};
-    }
-    auto nodeVector = coordinatorRpcClient->getNodeIdsInRange(location, radius);
-    return DataTypes::Experimental::NodeIdToGeoLocationMap{nodeVector.begin(), nodeVector.end()};
-}
-
-DataTypes::Experimental::NodeIdToGeoLocationMap LocationProvider::getNodeIdsInRange(double radius) {
-    auto location = getWaypoint().getLocation();
-    if (location.isValid()) {
-        return getNodeIdsInRange(std::move(location), radius);
-    }
-    NES_WARNING("Trying to get the nodes in the range of a node without location");
-    return {};
-}
-
-void LocationProvider::setCoordinatorRPCClient(CoordinatorRPCClientPtr coordinatorClient) {
-    coordinatorRpcClient = coordinatorClient;
-}
 
 DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     //location provider base class will always return invalid current locations

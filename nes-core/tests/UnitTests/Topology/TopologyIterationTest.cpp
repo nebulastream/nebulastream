@@ -33,7 +33,7 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
-        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         rootNode = TopologyNode::create(0, "localhost", 4000, 5000, 4, properties);
         mid1 = TopologyNode::create(1, "localhost", 4001, 5001, 4, properties);

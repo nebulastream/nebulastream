@@ -16,12 +16,11 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-ReconnectSchedule::ReconnectSchedule(uint64_t currentParentId,
-                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
+ReconnectSchedule::ReconnectSchedule(const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
                                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
                                      const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
                                      std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector)
-    : currentParentId(currentParentId), pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
+    :  pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
       lastIndexUpdatePosition(std::move(lastIndexUpdatePosition)), reconnectVector(std::move(reconnectVector)) {}
 
 NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathStart() const { return pathStart; }
@@ -32,11 +31,10 @@ std::shared_ptr<std::vector<ReconnectPoint>> ReconnectSchedule::getReconnectVect
     return reconnectVector;
 }
 
-ReconnectSchedule ReconnectSchedule::Empty() { return {0, {}, {}, {}, {}}; }
+ReconnectSchedule ReconnectSchedule::Empty() { return {{}, {}, {}, {}}; }
 
 NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getLastIndexUpdatePosition() const {
     return lastIndexUpdatePosition;
 }
 
-uint64_t ReconnectSchedule::getCurrentParentId() { return currentParentId; }
 }// namespace NES::Spatial::Mobility::Experimental
