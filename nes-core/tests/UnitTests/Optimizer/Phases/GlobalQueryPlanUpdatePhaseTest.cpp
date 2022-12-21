@@ -55,6 +55,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
@@ -70,12 +71,6 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
         sourceCatalog->addPhysicalSource("default_logical", sourceCatalogEntry1);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test class."); }
 
     z3::ContextPtr context;
 };

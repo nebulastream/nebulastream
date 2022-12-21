@@ -45,9 +45,8 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("Tear down ConvertLogicalToPhysicalSourceTest test class."); }
-
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -64,6 +63,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
         ASSERT_TRUE(engine->stop());
         engine.reset();
+        Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 };
 

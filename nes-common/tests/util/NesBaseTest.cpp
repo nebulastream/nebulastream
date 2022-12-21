@@ -126,6 +126,8 @@ void TestWaitingHelper::failTest() {
     auto expected = false;
     if (testCompletionSet.compare_exchange_strong(expected, true)) {
         testCompletion->set_value(false);
+        waitThread->join();
+        waitThread.reset();
     }
 }
 

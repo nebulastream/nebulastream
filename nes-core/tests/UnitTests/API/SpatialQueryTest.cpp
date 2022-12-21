@@ -32,13 +32,6 @@ class SpatialQueryTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("SpatialQueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SpatialQueryTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {}
-
-    static void TearDownTestCase() { NES_INFO("Tear down SpatialQueryTest test class."); }
-
-    void TearDown() override {}
 };
 
 // This tests various shape expressions and spatial predicate expressions

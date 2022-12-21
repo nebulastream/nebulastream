@@ -31,8 +31,6 @@ class LocationProviderCSVTest : public testing::Test {
         NES_INFO("Setup LocationProviderCSV test class.");
     }
 
-    void SetUp() override {}
-
     //wrapper function so allow the generic utility function to call the mamber function of LocationProvider
     static std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> getLocationFromProvider(std::shared_ptr<void> provider) {
         auto casted = std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(provider);

@@ -63,15 +63,6 @@ class TypeInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Te
         NES::Logger::setupLogging("TypeInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TypeInferencePhaseTest test class.");
     }
-
-    /* Will be called before a  test is executed. */
-    void SetUp() override { NES_INFO("Setup TypeInferencePhaseTest test case."); }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down TypeInferencePhaseTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TypeInferencePhaseTest test class."); }
 };
 
 /**

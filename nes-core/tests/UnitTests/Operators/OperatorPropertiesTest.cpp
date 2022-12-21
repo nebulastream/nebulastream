@@ -27,10 +27,6 @@ class OperatorPropertiesTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down OperatorPropertiesTest Test."); }
-
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);

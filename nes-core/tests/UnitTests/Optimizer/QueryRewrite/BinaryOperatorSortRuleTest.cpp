@@ -42,13 +42,11 @@ class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { udfCatalog = Catalogs::UDF::UdfCatalog::create(); }
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        udfCatalog = Catalogs::UDF::UdfCatalog::create();
+    }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup BinaryOperatorSortRuleTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BinaryOperatorSortRuleTest test class."); }
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {

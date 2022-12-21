@@ -39,13 +39,16 @@ class TupleBufferTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024); }
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024);
+    }
 
     /* Will be called after a test is executed. */
-    void TearDown() override { bufferManager->destroy(); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase TupleBufferTest test case."); }
+    void TearDown() override {
+        bufferManager->destroy();
+        Testing::NESBaseTest::TearDown();
+    }
 };
 
 TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {

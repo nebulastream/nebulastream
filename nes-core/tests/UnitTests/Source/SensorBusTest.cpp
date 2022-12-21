@@ -55,8 +55,6 @@ class SensorBusTest : public Testing::TestWithErrorHandling<testing::Test> {
         NES_INFO("Setup SourceBusTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("Tear down NetworkStackTest class."); }
-
     /**
    * Assume file descriptor will be in /dev/i2c-1.
    * This is allocated randomly in a real test.
@@ -67,6 +65,7 @@ class SensorBusTest : public Testing::TestWithErrorHandling<testing::Test> {
    * Create an int64_t value to write and later read.
    */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup SourceBusTest test case.");
         bus_file_allocated_id = 1;
         snprintf(path_to_bus_str, 19, "/dev/i2c-%d", bus_file_allocated_id);
@@ -76,8 +75,6 @@ class SensorBusTest : public Testing::TestWithErrorHandling<testing::Test> {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         sensorBus = std::make_shared<I2CBus>(path_to_bus_str);
     }
-
-    void TearDown() override { NES_DEBUG("Tear down SourceBusTest test case."); }
 };
 
 /**

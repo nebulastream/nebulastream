@@ -62,12 +62,6 @@ class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
         compiler = compilerBuilder.build();
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down JITCompilerTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down JITCompilerTest test class." << std::endl; }
-
     std::shared_ptr<JITCompiler> compiler;
 };
 

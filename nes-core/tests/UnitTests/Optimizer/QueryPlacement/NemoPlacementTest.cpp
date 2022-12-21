@@ -70,6 +70,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup NemoPlacementTest test case.");
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
@@ -77,12 +78,6 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
         queryParsingService = QueryParsingService::create(jitCompiler);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Setup NemoPlacementTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down NemoPlacementTest test class."); }
 
     void setupTopologyAndSourceCatalog(uint64_t layers, uint64_t nodesPerNode, uint64_t leafNodesPerNode) {
         uint64_t resources = 100;

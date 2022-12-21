@@ -26,12 +26,6 @@ class ArrayTypeTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("ArrayTypeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ArrayType test class.");
     }
-
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down ArrayType Test."); }
-
-  protected:
 };
 /// Check that the null-terminator has to be present for fixed-size strings only.
 TEST_F(ArrayTypeTest, testCheckNullTerminator) {
