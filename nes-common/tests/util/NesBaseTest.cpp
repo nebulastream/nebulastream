@@ -118,9 +118,7 @@ class ShmFixedVector {
     bool created;
 };
 
-TestWaitingHelper::TestWaitingHelper() {
-    testCompletion = std::make_shared<std::promise<bool>>();
-}
+TestWaitingHelper::TestWaitingHelper() { testCompletion = std::make_shared<std::promise<bool>>(); }
 
 void TestWaitingHelper::failTest() {
     auto expected = false;

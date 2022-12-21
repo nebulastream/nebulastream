@@ -57,7 +57,6 @@ class SourceCatalogServiceTest : public Testing::NESBaseTest {
         publish_port = *borrowed_publish_port;
     }
 
-
     std::string ip = "127.0.0.1";
     uint16_t receive_port = 0;
     std::string host = "localhost";
