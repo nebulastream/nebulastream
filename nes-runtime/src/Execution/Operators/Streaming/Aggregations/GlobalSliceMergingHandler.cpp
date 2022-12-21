@@ -29,22 +29,24 @@ GlobalSliceMergingHandler::GlobalSliceMergingHandler() : sliceStaging(std::make_
 
 void GlobalSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
+    defaultState = std::make_unique<State>(entrySize);
+    defaultState = std::make_unique<State>(entrySize);
 }
 
-void GlobalSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                              Runtime::StateManagerPtr,
-                                              uint32_t) {
+void GlobalSliceMergingHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
     NES_DEBUG("start GlobalSliceMergingHandler");
 }
 
 void GlobalSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminationType,
-                                             Runtime::Execution::PipelineExecutionContextPtr) {
+                                     Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop GlobalSliceMergingHandler: " << queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
-    return std::make_unique<GlobalSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
+    return std::make_unique<GlobalSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
 }
+const State* GlobalSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
+
 GlobalSliceMergingHandler::~GlobalSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 std::weak_ptr<GlobalSliceStaging> GlobalSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
