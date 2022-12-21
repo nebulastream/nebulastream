@@ -94,7 +94,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     uint64_t resources = 4;
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto rootNode = TopologyNode::create(node1Id, node1Address, grpcPort, dataPort, resources, properties);
     topology->setAsRoot(rootNode);
 

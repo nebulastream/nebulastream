@@ -19,6 +19,7 @@
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
@@ -33,7 +34,6 @@ class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 namespace Spatial::DataTypes::Experimental {
-class GeoLocation;
 class Waypoint;
 using NodeIdToGeoLocationMap = std::unordered_map<uint64_t, GeoLocation>;
 }// namespace Spatial::DataTypes::Experimental
@@ -87,30 +87,6 @@ class LocationProvider {
      * the worker is a field node or an invalid location if there is no known location
      */
     DataTypes::Experimental::Waypoint getWaypoint();
-
-    /**
-     * Experimental
-     * @brief Method to get all field nodes within a certain range around a geographical point
-     * @param coord: Location representing the center of the query area
-     * @param radius: radius in km to define query area
-     * @return list of node IDs and their corresponding GeographicalLocations
-     */
-    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
-                                                                      double radius);
-
-    /**
-     * Experimental
-     * @brief Method to get all field nodes within a certain range around the location of this node
-     * @param radius = radius in km to define query area
-     * @return list of node IDs and their corresponding GeographicalLocations
-     */
-    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(double radius);
-
-    /**
-     * @brief pass a pointer to this worker coordinator rpc client, so the location provider can query information from the coordinator
-     * @param coordinatorClient : a smart pointer to the coordinator rpc client object
-     */
-    void setCoordinatorRPCClient(CoordinatorRPCClientPtr coordinatorClient);
 
     /**
      * Experimental

@@ -80,13 +80,13 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
     topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
@@ -94,7 +94,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -141,16 +141,16 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::NO_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
     auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node4Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk4, 0, 0, properties);
 
     topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
@@ -162,7 +162,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -190,7 +190,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->rpcPort = rpcPortWrk4;
-    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf4->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf4->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
@@ -240,13 +240,13 @@ TEST_F(LocationServiceTest, testRequestEmptyReconnectSchedule) {
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
 
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
     auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
 
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");

@@ -242,7 +242,7 @@ class CoordinatorRPCClient {
      * and the expected time of the reconnect
      * @return true if the information was succesfully saved at coordinator side
      */
-    bool sendReconnectPrediction(uint64_t nodeId, NES::Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect);
+    bool sendReconnectPrediction(NES::Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect);
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
@@ -251,7 +251,7 @@ class CoordinatorRPCClient {
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(uint64_t workerId, NES::Spatial::DataTypes::Experimental::Waypoint&& locationUpdate);
+    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint&& locationUpdate);
 
   private:
     uint64_t workerId;

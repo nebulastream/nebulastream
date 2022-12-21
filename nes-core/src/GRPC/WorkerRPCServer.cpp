@@ -217,7 +217,8 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
     //obtain the current schedule form the trajectory predictor
     auto schedule = trajectoryPredictor->getReconnectSchedule();
     auto scheduleMsg = reply->mutable_schedule();
-    scheduleMsg->set_parentid(schedule->getCurrentParentId());
+    //todo: remove this also from the grpc message
+    //scheduleMsg->set_parentid(schedule->getCurrentParentId());
 
     //if a predicted path was calculated, insert its start and endpoint into the message to be sent
     auto startLoc = schedule->getPathStart();
@@ -249,19 +250,15 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
     if (reconnectVectorPtr) {
         auto reconnectVector = *reconnectVectorPtr;
         for (const auto& elem : reconnectVector) {
-            if (!elem) {
-                NES_WARNING("reconnect vector contains nullpointer");
-                continue;
-            }
             auto reconnectPoint = scheduleMsg->add_reconnectpoints();
             auto reconnectWayPoint = reconnectPoint->mutable_waypoint();
             auto reconnectLocation = reconnectWayPoint->mutable_geolocation();
-            auto loc = elem->predictedReconnectLocation;
+            auto loc = elem.predictedReconnectLocation;
             reconnectLocation->set_lat(loc.getLatitude());
             reconnectLocation->set_lng(loc.getLongitude());
             auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
-            reconnectPrediction->set_id(elem->reconnectPrediction.newParentId);
-            reconnectPrediction->set_time(elem->reconnectPrediction.expectedTime);
+            reconnectPrediction->set_id(elem.reconnectPrediction.newParentId);
+            reconnectPrediction->set_time(elem.reconnectPrediction.expectedTime);
         }
     }
     return Status::OK;

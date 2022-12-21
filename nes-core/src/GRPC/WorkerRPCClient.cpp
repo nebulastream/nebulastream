@@ -511,8 +511,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         }
 
         //construct a schedule from the received data
-        return std::make_unique<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
-                                                                                         std::move(end),
+        return std::make_unique<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(std::move(end),
                                                                                          std::move(start),
                                                                                          std::move(lastUpdatePosition),
                                                                                          vec);

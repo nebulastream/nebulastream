@@ -37,8 +37,7 @@ class ReconnectSchedule {
      * was downloaded from the coordinator
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
-    ReconnectSchedule(uint64_t currentParentId,
-                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
+    ReconnectSchedule(const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
                       const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
                       const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<ReconnectPoint>> reconnectVector);
@@ -68,8 +67,6 @@ class ReconnectSchedule {
      */
     [[nodiscard]] std::shared_ptr<std::vector<ReconnectPoint>> getReconnectVector() const;
 
-    [[nodiscard]] uint64_t getCurrentParentId();
-
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
      * @return a reconnect schedule with all its members set to nullptr
@@ -77,7 +74,6 @@ class ReconnectSchedule {
     static ReconnectSchedule Empty();
 
   private:
-    uint64_t currentParentId;
     NES::Spatial::DataTypes::Experimental::GeoLocation pathStart;
     NES::Spatial::DataTypes::Experimental::GeoLocation pathEnd;
     NES::Spatial::DataTypes::Experimental::GeoLocation lastIndexUpdatePosition;

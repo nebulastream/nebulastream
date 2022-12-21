@@ -75,7 +75,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
-    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
 
     uint64_t nodeId = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
