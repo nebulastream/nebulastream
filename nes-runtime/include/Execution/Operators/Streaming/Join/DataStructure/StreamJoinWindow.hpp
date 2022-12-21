@@ -40,8 +40,8 @@ class StreamJoinWindow {
      * @param numPartitions
      */
     explicit StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                            size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                            size_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions);
+                                size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
+                                uint64_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions);
 
     /**
      * @brief Deconstructor of a StreamJoinWindow
@@ -81,7 +81,7 @@ class StreamJoinWindow {
      * @brief Returns the last tuple that can be inserted into this window
      * @return lastTupleTimeStamp
      */
-    size_t getLastTupleTimeStamp() const;
+    uint64_t getLastTupleTimeStamp() const;
 
   private:
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
@@ -93,7 +93,7 @@ class StreamJoinWindow {
     uint8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
-    size_t lastTupleTimeStamp;
+    uint64_t lastTupleTimeStamp;
 };
 
 } // namespace NES::Runtime::Execution

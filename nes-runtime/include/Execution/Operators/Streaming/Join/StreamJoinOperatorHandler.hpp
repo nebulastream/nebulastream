@@ -24,9 +24,12 @@
 #include <queue>
 #include <vector>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution::Operators {
 
 
+/**
+ * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
+ */
 class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
   public:
@@ -114,14 +117,14 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @brief deletes the window corresponding to this window
      * @param timeStamp
      */
-    void deleteWindow(size_t timeStamp);
+    void deleteWindow(uint64_t timeStamp);
 
     /**
      * @brief Returns the window corresponding to the timeStamp
      * @param timeStamp
      * @return Reference to the Window
      */
-    StreamJoinWindow& getWindow(size_t timeStamp);
+    StreamJoinWindow& getWindow(uint64_t timeStamp);
 
     /**
      * @brief Returning the number of active windows
@@ -167,7 +170,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param timeStamp
      * @return true if exists, false otherwise
      */
-    bool checkWindowExists(size_t timeStamp);
+    bool checkWindowExists(uint64_t timeStamp);
 
   private:
     SchemaPtr joinSchemaLeft;

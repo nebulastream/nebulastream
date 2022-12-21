@@ -17,7 +17,7 @@
 #include <atomic>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/DataStructure/BloomFilter.hpp>
+#include <Runtime/BloomFilter.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
