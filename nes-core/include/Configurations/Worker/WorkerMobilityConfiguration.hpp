@@ -40,13 +40,6 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
     static std::shared_ptr<WorkerMobilityConfiguration> create() { return std::make_shared<WorkerMobilityConfiguration>(); }
 
     /**
-     * @brief defines how many milliseconds to wait, between recalculations of the devices predicted path
-     */
-    UIntOption pathPredictionUpdateInterval = {PATH_PREDICTION_UPDATE_INTERVAL_CONFIG,
-                                               1000,
-                                               "Sleep time after the last update of the predicted path"};
-
-    /**
      * @brief defines how many locations should be saved in the buffer which is used to calculate the predicted path
      */
     UIntOption locationBufferSize = {LOCATION_BUFFER_SIZE_CONFIG,
@@ -123,13 +116,12 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                                             "determines if position updates should be sent to the coordinator"};
 
     /**
-     * @brief the time between 2 checks if the location has changes more than the defined threshold and a location update might
-     * have to be sent to the coordinator
+     * @brief the time which the thread running at the worker mobility handler will sleep after each iteration
      */
-    UIntOption sendLocationUpdateInterval = {
+    UIntOption mobilityHandlerUpdateInterval = {
         SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
         10000,
-        "the sleep amount between 2 checks if a location update should be sent to the coordinator"};
+        "the time which the thread running at the worker mobility handler will sleep after each iteration"};
 
     /**
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
@@ -155,8 +147,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&pathPredictionUpdateInterval,
-                &locationBufferSize,
+        return {&locationBufferSize,
                 &locationBufferSaveRate,
                 &pathDistanceDelta,
                 &nodeInfoDownloadRadius,
@@ -166,7 +157,7 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &speedDifferenceThresholdFactor,
                 &sendDevicePositionUpdateThreshold,
                 &pushDeviceLocationUpdates,
-                &sendLocationUpdateInterval,
+                &mobilityHandlerUpdateInterval,
                 &locationProviderType,
                 &locationProviderConfig,
                 &locationProviderSimulatedStartTime};

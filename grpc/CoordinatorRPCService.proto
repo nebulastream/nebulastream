@@ -195,7 +195,8 @@ message GetNodesInRangeReply{
 
 message SendScheduledReconnectRequest {
   uint64 deviceId = 1;
-  NES.Spatial.Protobuf.SerializableReconnectPrediction reconnect = 2;
+  repeated NES.Spatial.Protobuf.SerializableReconnectPoint addReconnects = 2;
+  repeated NES.Spatial.Protobuf.SerializableReconnectPoint removeReconnects = 3;
 }
 
 message SendScheduledReconnectReply {

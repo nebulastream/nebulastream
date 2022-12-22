@@ -17,6 +17,7 @@
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <memory>
 #include <vector>
 #ifdef S2DEF
@@ -26,9 +27,12 @@
 #endif
 
 namespace NES {
+namespace Configurations {
+class WorkerConfiguration;
+using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
+}
 namespace Spatial::DataTypes::Experimental {
 class Waypoint;
-class GeoLocation;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {

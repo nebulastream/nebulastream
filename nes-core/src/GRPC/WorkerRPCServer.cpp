@@ -20,7 +20,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
@@ -191,7 +190,7 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         //return an empty reply
         return Status::OK;
     }
-    auto waypoint = locationProvider->getWaypoint();
+    auto waypoint = locationProvider->getCurrentWaypoint();
     auto loc = waypoint.getLocation();
     auto protoWaypoint = reply->mutable_waypoint();
     if (loc.isValid()) {
@@ -201,65 +200,6 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     }
     if (waypoint.getTimestamp()) {
         protoWaypoint->set_timestamp(waypoint.getTimestamp().value());
-    }
-    return Status::OK;
-}
-
-Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
-                                             const GetReconnectScheduleRequest* request,
-                                             GetReconnectScheduleReply* reply) {
-    (void) request;
-    NES_DEBUG("WorkerRPCServer received reconnect schedule request")
-    if (!trajectoryPredictor) {
-        NES_DEBUG("WorkerRPCServer: trajectory planner not set")
-        return Status::CANCELLED;
-    }
-    //obtain the current schedule form the trajectory predictor
-    auto schedule = trajectoryPredictor->getReconnectSchedule();
-    auto scheduleMsg = reply->mutable_schedule();
-    //todo: remove this also from the grpc message
-    //scheduleMsg->set_parentid(schedule->getCurrentParentId());
-
-    //if a predicted path was calculated, insert its start and endpoint into the message to be sent
-    auto startLoc = schedule->getPathStart();
-    if (startLoc.isValid()) {
-        auto startWaypoint = scheduleMsg->mutable_pathstart();
-        auto startCoord = startWaypoint->mutable_geolocation();
-        startCoord->set_lat(startLoc.getLatitude());
-        startCoord->set_lng(startLoc.getLongitude());
-    }
-    auto endLoc = schedule->getPathEnd();
-    if (endLoc.isValid()) {
-        auto endWaypoint = scheduleMsg->mutable_pathend();
-        auto endCoord = endWaypoint->mutable_geolocation();
-        endCoord->set_lat(endLoc.getLatitude());
-        endCoord->set_lng(endLoc.getLongitude());
-    }
-
-    //if the device downloaded nodes to the local index, insert the location of the device at the time of the update into the message
-    auto updateLocation = schedule->getLastIndexUpdatePosition();
-    if (updateLocation.isValid()) {
-        auto updatedWaypoint = scheduleMsg->mutable_lastindexupdateposition();
-        auto updateCoordinates = updatedWaypoint->mutable_geolocation();
-        updateCoordinates->set_lat(updateLocation.getLatitude());
-        updateCoordinates->set_lng(updateLocation.getLongitude());
-    }
-
-    //insert the predicted reconnects into the message (if there are any)
-    auto reconnectVectorPtr = schedule->getReconnectVector();
-    if (reconnectVectorPtr) {
-        auto reconnectVector = *reconnectVectorPtr;
-        for (const auto& elem : reconnectVector) {
-            auto reconnectPoint = scheduleMsg->add_reconnectpoints();
-            auto reconnectWayPoint = reconnectPoint->mutable_waypoint();
-            auto reconnectLocation = reconnectWayPoint->mutable_geolocation();
-            auto loc = elem.pointGeoLocation;
-            reconnectLocation->set_lat(loc.getLatitude());
-            reconnectLocation->set_lng(loc.getLongitude());
-            auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
-            reconnectPrediction->set_id(elem.reconnectPrediction.newParentId);
-            reconnectPrediction->set_time(elem.reconnectPrediction.expectedTime);
-        }
     }
     return Status::OK;
 }

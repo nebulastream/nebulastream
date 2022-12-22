@@ -14,7 +14,6 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -31,6 +30,10 @@ namespace Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 }// namespace Spatial::Index::Experimental
+
+namespace Spatial::Mobility::Experimental {
+struct ReconnectPoint;
+}
 
 class LocationService {
   public:
@@ -107,7 +110,7 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, NES::Spatial::Mobility::Experimental::ReconnectPrediction);
+    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions );
 
   private:
     /**

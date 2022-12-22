@@ -37,7 +37,6 @@ service WorkerRPCService {
 
   rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
 
-  rpc GetReconnectSchedule(GetReconnectScheduleRequest) returns (GetReconnectScheduleReply) {}
   rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}

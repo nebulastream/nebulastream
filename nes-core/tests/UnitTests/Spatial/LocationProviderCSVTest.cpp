@@ -22,6 +22,7 @@
 
 namespace NES {
 
+//todo: add negative tests
 class LocationProviderCSVTest : public testing::Test {
     using Waypoint = std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>;
 
