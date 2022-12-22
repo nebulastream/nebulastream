@@ -178,8 +178,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto listRight = rightStore->getAppendList();
 
         if (leftStore->empty() || rightStore->empty()) {
-            NES_WARNING("Found left store empty: " << leftStore->empty() << " and right store empty: " << rightStore->empty());
-            NES_WARNING("Skipping join as left or right slices should not be empty");
+            NES_WARNING2("Found left store empty: {} and right store empty: {}", leftStore->empty(), rightStore->empty());
+            NES_WARNING2("Skipping join as left or right slices should not be empty");
             return 0;
         }
 

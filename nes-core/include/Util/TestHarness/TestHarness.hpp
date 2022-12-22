@@ -542,7 +542,7 @@ class TestHarness {
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false for query with id " << queryId << " file path=" << filePath);
+            NES_WARNING2("TestHarness:ifs.good() returns false for query with id {} file path= {}", queryId, filePath);
         }
 
         // check the length of the output file
