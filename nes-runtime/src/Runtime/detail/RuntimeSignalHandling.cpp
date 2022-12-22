@@ -30,6 +30,11 @@ void nesErrorHandler(int signal) {
     Exceptions::invokeErrorHandlers(signal, std::move(stacktrace));
 }
 
+void nesKillHandler(int signal) {
+    ((void) signal);
+    NES::Logger::getInstance().flush();
+}
+
 /// called when std::terminate() is invoked
 void nesTerminateHandler() {
     auto stacktrace = collectAndPrintStacktrace();
@@ -110,6 +115,7 @@ struct ErrorHandlerLoader {
         std::signal(SIGABRT, nesErrorHandler);
         std::signal(SIGSEGV, nesErrorHandler);
         std::signal(SIGBUS, nesErrorHandler);
+        std::signal(SIGKILL, nesKillHandler);
     }
 };
 static ErrorHandlerLoader loader;

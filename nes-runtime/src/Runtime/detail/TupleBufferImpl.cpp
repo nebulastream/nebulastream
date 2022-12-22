@@ -77,7 +77,7 @@ MemorySegment::~MemorySegment() {
 
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
         // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
-        if (controlBlock.tag()) {
+        if (controlBlock.tag() == Wrapped) {
             delete controlBlock.get();
         } else {
             controlBlock->~BufferControlBlock();
