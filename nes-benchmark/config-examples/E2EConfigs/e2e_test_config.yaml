@@ -12,7 +12,6 @@ logicalSourceName:
   ysb:
     type: YSB
 
-numberOfSources: 1
 numberOfPreAllocatedBuffer: 1000
 dataProvider: Internal
 dataProviderMode: ZeroCopy

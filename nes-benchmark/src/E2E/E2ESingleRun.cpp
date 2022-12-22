@@ -37,20 +37,19 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf = Configurations::CoordinatorConfiguration::create();
 
     // Coordinator configuration
-    coordinatorConf->rpcPort = 5000 + portOffSet;
-    coordinatorConf->restPort = 9082 + portOffSet;
+    coordinatorConf->rpcPort = rpcPortSingleRun;
+    coordinatorConf->restPort = restPortSingleRun;
     coordinatorConf->enableMonitoring = false;
     coordinatorConf->optimizer.distributedWindowChildThreshold = 100;
     coordinatorConf->optimizer.distributedWindowCombinerThreshold = 100;
 
     // Worker configuration
-    coordinatorConf->worker.numWorkerThreads = configPerRun.numWorkerOfThreads->getValue();
+    coordinatorConf->worker.numWorkerThreads = configPerRun.numberOfWorkerThreads->getValue();
     coordinatorConf->worker.bufferSizeInBytes = configPerRun.bufferSizeInBytes->getValue();
 
     coordinatorConf->worker.numberOfBuffersInGlobalBufferManager = configPerRun.numberOfBuffersInGlobalBufferManager->getValue();
     coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool =
         configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
-    coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool = configPerRun.numberOfBuffersPerPipeline->getValue();
 
     coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
     coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
@@ -93,7 +92,7 @@ void E2ESingleRun::createSources() {
 
         size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
 
-        //TODO: static query manager mode is currently not ported therefore only one queue
+        //TODO #3336: static query manager mode is currently not ported therefore only one queue
         size_t taskQueueId = 0;
         if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
 #ifdef ENABLE_KAFKA_BUILD
@@ -345,7 +344,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << configOverAllRuns.benchmarkName->getValue();
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
-        outputCsvStream << "," << configPerRun.numWorkerOfThreads->getValue();
+        outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
         outputCsvStream << "," << configPerRun.numberOfSources->getValue();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
@@ -370,8 +369,8 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 
 E2ESingleRun::E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
                            const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                           int portOffSet)
-    : configPerRun(configPerRun), configOverAllRuns(configOverAllRuns), portOffSet(portOffSet) {}
+                           int rpcPort, int restPort)
+    : configPerRun(configPerRun), configOverAllRuns(configOverAllRuns), rpcPortSingleRun(rpcPort), restPortSingleRun(restPort) {}
 
 E2ESingleRun::~E2ESingleRun() {
     coordinatorConf.reset();
@@ -441,5 +440,9 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
     NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
     return false;
 }
+
+    const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const {
+        return coordinatorConf;
+    }
 
 }// namespace NES::Benchmark

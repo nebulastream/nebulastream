@@ -10,7 +10,6 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
-numberOfSources: 3
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv
