@@ -27,8 +27,17 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-
-
+/**
+ * This is a description of the StreamJoin and its data structure. The stream join consists of two phases, build and sink.
+ * In the build phase, each thread builds a local hash table and once it is done, e.g., seen all tuples of a window, it
+ * appends its buckets to a global hash table. Once both sides (left and right) have finished appending all buckets to
+ * the global hash table, a buffer will be created with the bucket id (partition id) and the corresponding window id.
+ * The join sink operates on the created buffers and performs a join for the corresponding window and bucket of the window.
+ *
+ * Both hash tables (LocalHashTable and SharedHashTable) consist of pages (FixedPage) that store the tuples belonging to
+ * a certain bucket / partition. All pages are pre-allocated and moved from the LocalHashTable to the SharedHashTable and
+ * thus, the StreamJoin only has to allocate memory once.
+ */
 
 
 /**
@@ -190,7 +199,6 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;
-
 };
 
 } // namespace NES::Runtime::Execution::Operators
