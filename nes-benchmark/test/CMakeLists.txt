@@ -21,6 +21,8 @@ message(STATUS "Building benchmarks tests...")
 # TODO create unit tests and a similar test infrastructure than the other folders see issue #3227
 # Adding e2e tests
 add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
+add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/join_multiple_sources)
+add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/join_multiple_phys_and_logical_sources.yaml)
 
 # Adding unit test for DefaultDataGenerator
 add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
@@ -33,5 +35,10 @@ target_link_libraries(zipfian-data-generator-test nes-benchmark)
 # Adding unit test for InternalProvider
 add_nes_unit_test(internal-provider-test "UnitTests/DataProvider/InternalProviderTest.cpp")
 target_link_libraries(internal-provider-test nes-benchmark)
+
+# Adding unit test for E2ESingleRunTest
+add_nes_unit_test(e2e-single-run-test "UnitTests/E2E/E2ESingleRunTest.cpp")
+
+
 
 message(STATUS "Done building benchmarks tests")

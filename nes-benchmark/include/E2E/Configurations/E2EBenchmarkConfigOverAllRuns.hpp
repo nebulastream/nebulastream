@@ -58,8 +58,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    Configurations::StringConfigOption dataGenerator;
-    Configurations::StringConfigOption logicalSourceName;
+    std::map<std::string, DataGeneration::DataGeneratorPtr> mapLogicalSrcNameToDataGenerator;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

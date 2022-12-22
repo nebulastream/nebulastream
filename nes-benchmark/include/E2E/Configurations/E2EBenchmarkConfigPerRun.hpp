@@ -25,29 +25,28 @@ class E2EBenchmarkConfigPerRun {
 
   public:
     /**
-         * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
-         */
+     * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
+     */
     explicit E2EBenchmarkConfigPerRun();
 
     /**
-         * @brief creates a string representation of this object
-         * @return the string representation
-         */
+     * @brief creates a string representation of this object
+     * @return the string representation
+     */
     std::string toString();
 
     /**
-         * @brief parses and generates the config for the parameters changing per run
-         * runs by parsing the yamlConfig
-         * @param yamlConfig
-         * @return
-         */
+     * @brief parses and generates the config for the parameters changing per run
+     * runs by parsing the yamlConfig
+     * @param yamlConfig
+     * @return
+     */
     static std::vector<E2EBenchmarkConfigPerRun> generateAllConfigsPerRun(Yaml::Node yamlConfig);
 
-    Configurations::IntConfigOption numWorkerOfThreads;
-    Configurations::IntConfigOption numberOfSources;
+    Configurations::IntConfigOption numberOfWorkerThreads;
+    std::map<std::string, Configurations::IntConfigOption> mapLogicalSrcNumberOfPhysSrc;
     Configurations::IntConfigOption bufferSizeInBytes;
     Configurations::IntConfigOption numberOfBuffersInGlobalBufferManager;
-    Configurations::IntConfigOption numberOfBuffersPerPipeline;
     Configurations::IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     Configurations::IntConfigOption numberOfQueriesToDeploy;
 };

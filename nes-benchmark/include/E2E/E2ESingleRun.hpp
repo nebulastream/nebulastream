@@ -49,7 +49,7 @@ class E2ESingleRun {
      */
     explicit E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
                           const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          int portOffSet);
+                          int rpcPort, int restPort);
 
     /**
      * @brief destroying this object and taking care of
@@ -62,7 +62,12 @@ class E2ESingleRun {
      */
     void run();
 
-  private:
+    /**
+     * @brief Getter for the coordinator config
+     * @return Returns the coordinatorconfig
+     */
+    const CoordinatorConfigurationPtr &getCoordinatorConf() const;
+
     /**
      * @brief sets up the coordinator config and worker config
      */
@@ -95,14 +100,15 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId,
-                                    const QueryCatalogServicePtr& queryCatalogService,
+    static bool waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
-  private:
-    E2EBenchmarkConfigPerRun configPerRun;
-    E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-    int portOffSet;
+
+private:
+    E2EBenchmarkConfigPerRun& configPerRun;
+    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+    int rpcPortSingleRun;
+    int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
     std::vector<DataProviding::DataProviderPtr> allDataProviders;
