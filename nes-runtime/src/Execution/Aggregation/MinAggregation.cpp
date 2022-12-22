@@ -23,21 +23,30 @@ void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
     // load
     auto oldValue = memref.load<Nautilus::Int64>();
     // compare
-    auto newValue = (value < oldValue) ? value : oldValue;
-    // store
-    memref.store(newValue);
+    auto isLessThan = Nautilus::LessThanOp(value, oldValue);
+
+    if (isLessThan) {
+        // store
+        memref.store(value);
+    }
 }
 
 void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
     auto left = memref1.load<Nautilus::Int64>();
     auto right = memref2.load<Nautilus::Int64>();
-    auto tmp = std::min(left, right);
-    memref1.store(tmp);
+
+    auto isLeftLessThanRight = Nautilus::LessThanOp(left, right);
+
+    if (isLeftLessThanRight) {
+        memref1.store(left);
+    } else {
+        memref1.store(right);
+    }
 }
 
 Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
     auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
-    return memref.load<Nautilus::Int64>();
+    return finalVal;
 }
 
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {

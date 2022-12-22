@@ -22,16 +22,25 @@ void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
     // load
     auto oldValue = memref.load<Nautilus::Int64>();
     // compare
-    auto newValue = (value > oldValue) ? value : oldValue;
-    // store
-    memref.store(newValue);
+    auto isGreaterThan = Nautilus::GreaterThanOp(value, oldValue);
+
+    if (isGreaterThan) {
+        // store
+        memref.store(value);
+    }
 }
 
 void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
     auto left = memref1.load<Nautilus::Int64>();
     auto right = memref2.load<Nautilus::Int64>();
-    auto tmp = std::max(left, right);
-    memref1.store(tmp);
+
+    auto isLeftGreaterThanRight = Nautilus::GreaterThanOp(left, right);
+
+    if (isLeftGreaterThanRight) {
+        memref1.store(left);
+    } else {
+        memref1.store(right);
+    }
 }
 
 Nautilus::Value<> MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
