@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Execution/Aggregation/AvgAggregation.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -62,9 +62,9 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abstract
 };
 
 /**
- * @brief Test running a pipeline containing a threshold window with a sum aggregation
+ * @brief Test running a pipeline containing a threshold window with a Avg aggregation
  */
-TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
+TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
@@ -77,15 +77,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
-    auto aggregationResultFieldName = "test$sum";
+    auto aggregationResultFieldName = "test$Avg";
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType);
     auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
+        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, avgAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    emitSchema->addField("test$sum", BasicType::INT64);
+    emitSchema->addField("test$Avg", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
@@ -112,8 +112,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+    auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue>();
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(avgAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -125,7 +125,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 25);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,

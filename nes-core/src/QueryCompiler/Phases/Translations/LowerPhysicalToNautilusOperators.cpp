@@ -149,11 +149,36 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        // TODO 3280 change with a factory for different aggregation values
-        auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
+        // TODO #3294: Support multiple aggregation functions
+        auto aggregationType = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
+                                   ->getOperatorHandler()
+                                   ->getWindowDefinition()
+                                   ->getWindowAggregation()[0]
+                                   ->getType();
+
+        auto aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AggregationValue>();
+
+        switch (aggregationType) {
+            case Windowing::WindowAggregationDescriptor::Avg:
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue>();
+                break;
+            case Windowing::WindowAggregationDescriptor::Count:
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue>();
+                break;
+            case Windowing::WindowAggregationDescriptor::Max:
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue>();
+                break;
+            case Windowing::WindowAggregationDescriptor::Min:
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue>();
+                break;
+            case Windowing::WindowAggregationDescriptor::Sum:
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
+                break;
+            default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
+        }
 
         auto handler =
-            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggregationValue));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -294,25 +319,58 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
+    // TODO 3280: Support multiple aggregation functions
+    if (aggregations.size() != 1) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        auto aggregation = aggregations[0];
+        switch (aggregation->getType()) {
 
-    // Currently only support a single aggregation and must be a Sum aggregation
-    // TODO 3280: Support other aggregation functions
-    NES_ASSERT(aggregations.size() == 1, "currently we only support a single aggregation function");
-    auto aggregationFunction = lowerAggregations(aggregations)[0];
+            case Windowing::WindowAggregationDescriptor::Avg:
+                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+                    aggregation->getInputStamp(),
+                    aggregation->getFinalAggregateStamp());
+                break;
+            case Windowing::WindowAggregationDescriptor::Count:
+                // TODO 3280: Fix threhsold window with count, i.e., no aggregated field
+//                NES_NOT_IMPLEMENTED();
+                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
+                    aggregation->getInputStamp(),
+                    aggregation->getFinalAggregateStamp());
+                break;
+            case Windowing::WindowAggregationDescriptor::Max:
+                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+                    aggregation->getInputStamp(),
+                    aggregation->getFinalAggregateStamp());
+                break;
+            case Windowing::WindowAggregationDescriptor::Min:
+                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
+                    aggregation->getInputStamp(),
+                    aggregation->getFinalAggregateStamp());
+                break;
+            case Windowing::WindowAggregationDescriptor::Sum:
+                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
+                    aggregation->getInputStamp(),
+                    aggregation->getFinalAggregateStamp());
+                break;
+            default: NES_NOT_IMPLEMENTED();
+        }
+        // Obtain the field name used to store the aggregation result
+        auto thresholdWindowResultSchema =
+            operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
+        auto aggregationResultFieldName =
+            thresholdWindowResultSchema->getSourceNameQualifier() + "$" + aggregation->getTypeAsString();
 
-    // Obtain the field name used to store the aggregation result
-    auto thresholdWindowResultSchema =
-        operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
-    auto aggregationResultFieldName = thresholdWindowResultSchema->getSourceNameQualifier() + "$sum";
+        auto aggregatedFieldAccess = lowerExpression(aggregation->on());
 
-    auto aggregatedFieldAccess = lowerExpression(aggregations[0]->on());
-
-    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
-                                                                            minCount,
-                                                                            aggregatedFieldAccess,
-                                                                            aggregationResultFieldName,
-                                                                            aggregationFunction,
-                                                                            handlerIndex);
+        return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
+                                                                                minCount,
+                                                                                aggregatedFieldAccess,
+                                                                                aggregationResultFieldName,
+                                                                                aggregationFunction,
+                                                                                handlerIndex);
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>

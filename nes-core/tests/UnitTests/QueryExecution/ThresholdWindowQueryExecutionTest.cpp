@@ -58,24 +58,26 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(recordIndex * 10);
+        NES_DEBUG("Input tuples: f1=" << recordIndex << " f2=" << recordIndex*10);
     }
     // close the window
     buf[9][0].write<int64_t>(0);
     buf[9][1].write<int64_t>(0);
     buf.setNumberOfTuples(10);
+    NES_DEBUG("Input tuples: f1=" << 0 << " f2="<< 0);
 }
 
-TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
-    auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+    auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::INT64);
     auto testSink = executionEngine->createDateSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(ThresholdWindow::of(Attribute("test$f1") > 5))
-                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$Sum")))
                      .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
@@ -93,6 +95,138 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 210LL);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Max", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Max(Attribute("test$f2", INT64))->as(Attribute("test$Max")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 80LL);// Max
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Min", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Min(Attribute("test$f2", INT64))->as(Attribute("test$Min")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// Min
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Avg", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 6))
+                     .apply(Avg(Attribute("test$f2", INT64))->as(Attribute("test$Avg")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 75LL);// Avg
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Count", BasicType::INT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Count()->as(Attribute("test$Count")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 3LL);// Count
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
