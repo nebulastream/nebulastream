@@ -23,7 +23,7 @@
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -700,15 +700,30 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     return softStopCompletionReply.success();
 }
 
-bool CoordinatorRPCClient::sendReconnectPrediction(Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
+bool CoordinatorRPCClient::sendReconnectPrediction(const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions ) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
     request.set_deviceid(workerId);
-    NES::Spatial::Protobuf::SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
-    reconnectPoint->set_id(scheduledReconnect.newParentId);
-    reconnectPoint->set_time(scheduledReconnect.expectedTime);
+    auto pointsToAdd = request.mutable_addreconnects();
+    for (auto addedPrediction : addPredictions) {
+        auto addedPoint = pointsToAdd->Add();
+        addedPoint->set_id(addedPrediction.newParentId);
+        addedPoint->set_time(addedPrediction.expectedTime);
+        auto pointLocation = addedPoint->mutable_geolocation();
+        pointLocation->set_lat(addedPrediction.pointGeoLocation.getLatitude());
+        pointLocation->set_lat(addedPrediction.pointGeoLocation.getLongitude());
+    }
+    auto pointsToRemove = request.mutable_removereconnects();
+    for (auto removedPrediction : removePredictions) {
+        auto addedPoint = pointsToAdd->Add();
+        addedPoint->set_id(removedPrediction.newParentId);
+        addedPoint->set_time(removedPrediction.expectedTime);
+        auto pointLocation = addedPoint->mutable_geolocation();
+        pointLocation->set_lat(removedPrediction.pointGeoLocation.getLatitude());
+        pointLocation->set_lat(removedPrediction.pointGeoLocation.getLongitude());
+    }
 
     coordinatorStub->SendScheduledReconnect(&context, request, &reply);
     return reply.success();

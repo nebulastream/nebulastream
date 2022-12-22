@@ -26,6 +26,7 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -435,9 +436,20 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
-    auto reconnectPoint = request->reconnect();
-    const NES::Spatial::Mobility::Experimental::ReconnectPrediction prediction = {reconnectPoint.id(), reconnectPoint.time()};
-    bool success = locationService->updatePredictedReconnect(request->deviceid(), prediction);
+    auto reconnectsToAddMessage = request->addreconnects();
+    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> addedReconnects;
+    for (const auto& toAdd : reconnectsToAddMessage) {
+        NES::Spatial::DataTypes::Experimental::GeoLocation location(toAdd.geolocation());
+        addedReconnects.emplace_back(NES::Spatial::Mobility::Experimental::ReconnectPoint{location, toAdd.id(), toAdd.time()});
+    }
+    auto reconnectsToRemoveMessage = request->removereconnects();
+    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> removedReconnects;
+
+    for (const auto& toRemove : reconnectsToRemoveMessage) {
+        NES::Spatial::DataTypes::Experimental::GeoLocation location(toRemove.geolocation());
+        removedReconnects.emplace_back(NES::Spatial::Mobility::Experimental::ReconnectPoint{location, toRemove.id(), toRemove.time()});
+    }
+    bool success = locationService->updatePredictedReconnect(addedReconnects, removedReconnects);
     reply->set_success(success);
     if (success) {
         return Status::OK;

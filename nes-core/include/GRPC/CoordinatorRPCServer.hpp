@@ -274,9 +274,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief inform the coordinator that a mobile devices reconnect prediction has changed
-     * @param request : sent from worker to coordinator containing the id of the mobile device and the scheduled reconnect
-     * consisting of the id of the field node which the mobile device expects to connect to and the location and time at which
-     * the reconnect is expected to happen
+     * @param request : sent from worker to coordinator containing the id of the mobile device and a list of the old scheduled
+     * reconnects to be removed as well as the new scheduled reconnects to be added. With each reconnect consisting of
+     * the id of the node which the mobile device expects to connect to and the location and time at which the
+     * reconnect is expected to happen
      * @param reply : sent from coordinator to worker not containing any data
      * @return OK if the coordinator succesfully recorded the data, CANCELLED otherwise
      */

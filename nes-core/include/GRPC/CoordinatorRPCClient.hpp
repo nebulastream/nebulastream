@@ -42,7 +42,7 @@ class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
-struct ReconnectPrediction;
+struct ReconnectPoint;
 }
 
 /**
@@ -237,12 +237,11 @@ class CoordinatorRPCClient {
     /**
      * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect
      * have changed or that the worker expects a reconnect to a different parent than the previously scheduled one
-     * @param nodeId The id of the calling worker
-     * @param scheduledReconnect a tuple containing the id of the new parent. The location where the reconnect is scheduled to happen
-     * and the expected time of the reconnect
-     * @return true if the information was succesfully saved at coordinator side
+     * @param removePredictions old predictions which should be removed
+     * @param addPredictions new predictions to be added
+     * @return true if the information was successfully received at coordinator side
      */
-    bool sendReconnectPrediction(NES::Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect);
+    bool sendReconnectPrediction(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions );
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed

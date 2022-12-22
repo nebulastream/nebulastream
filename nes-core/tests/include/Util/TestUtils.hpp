@@ -985,5 +985,22 @@ void checkDeviceMovement(std::string csvPath,
         currentLocTime = getLocation(functionParameters);
     }
 }
+
+
+void checkDeviceMovement(std::string csvPath,
+                         NES::Spatial::DataTypes::Experimental::GeoLocation (*getLocation)(std::shared_ptr<void>),
+                         std::shared_ptr<void> functionParameters) {
+    std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, 0);
+    NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
+
+    while (waypoints.size() > 1) {
+        auto currentLocation = getLocation(functionParameters);
+        while (!waypoints.empty() && currentLocation != waypoints.front().first) {
+           waypoints.erase(waypoints.begin());
+        }
+        NES_DEBUG("checking location " << currentLocation.toString() << ": " << waypoints.size() << " waypoints remaining");
+    }
+    EXPECT_EQ(waypoints.size(), 1);
+}
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

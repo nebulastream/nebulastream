@@ -50,9 +50,6 @@ namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 
-struct ReconnectPrediction;
-
-//todo: remove index update postition
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
  * of planned reconnects to new field nodes. It also triggers the reconnect process when the device is sufficiently close to the new parent
@@ -62,13 +59,12 @@ class ReconnectSchedulePredictor {
   public:
     ReconnectSchedulePredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
-
     /**
      * @brief calculate the distance between the projected point on the path which is closest to coveringNode and the a point on the path
      * which is at a distance of exactly the coverage. This distance equals half of the entire distance on the line covered by a
      * circle with a radius equal to coverage. The function also returns a Location object for the point which is at exactly a distance
      * of coverage and is further away from the beginning of the path (from the vertex with index 0) than the point which is
-     * closest to coveringNode. We can call this function on multiple coverngNodes within range of the device or the end of the
+     * closest to coveringNode. We can call this function on multiple coveringNodes within range of the device or the end of the
      * previous coverage to compare which field nodes coverage ends at the point which is closest to the end of the path and
      * therefore represents a good reconnect decision.
      * @param path : a polyline representing the predicted device trajectory
@@ -78,13 +74,26 @@ class ReconnectSchedulePredictor {
      * projected point closest to covering node and the end of coverage (half of the entire covered distance)
      */
 #ifdef S2DEF
-    static std::pair<S2Point, S1Angle> findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage);
+    static std::pair<S2Point, S1Angle> findPathCoverage(const S2Polyline& path, S2Point coveringNode, S1Angle coverage);
 #endif
 
-    ReconnectSchedulePtr getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
+    /**
+     * @brief calculate a new reconnect schedule based on the location of other workers (potential parents to reconnect
+     * to), this devices own position and the position of the current parent. A new reconnect schedule will only be calculated,
+     * if the workers trajectory or speed has changed enough to pass the thresholds which were set at object construction
+     * since the last schedule was calculated or if the spatial index containing the neighbouring worker locations has been updated in the meantime.
+     * If none of the above conditions are true, this function will return nullopt because the previously calculated
+     * schedule is assumed to be still correct.
+     * @param currentLocation the mobile workers current location
+     * @param parentLocation the location of the mobile workers current parent
+     * @param FieldNodeIndex a spatial index containing data about other workers in the area
+     * @param isIndexUpdted indicates if the index was updated or has remained the same since the last schedule was calculated
+     * @return the new schedule if one was calculated or nullopt else
+     */
+    std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                               const DataTypes::Experimental::GeoLocation& parentLocation,
-                                              const S2PointIndex<uint64_t>& neighbouringWorkerIndex,
-                                              bool indexUpdated);
+                                                          const S2PointIndex<uint64_t> &FieldNodeIndex,
+                                                          bool isIndexUpdted);
   private:
     /**
      * check if the device deviated further than the defined distance threshold from the predicted path. If so, interpolate a new
@@ -113,16 +122,9 @@ class ReconnectSchedulePredictor {
      */
     bool updateAverageMovementSpeed();
 
-    /**
-     * Experimental
-     * @brief construct a reconnect schedule object containing beggining and end of the current predicted path, the position of the last
-     * update of the local spatial index and a vector containing the scheduled reconnects
-     * @return a smart pointer to the reconnect schedule object
-     */
-    Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
+    //todo #3365: implement a reset function to lose all non-config state
 
     //configuration
-    //uint64_t pathPredictionUpdateInterval;
     size_t locationBufferSize;
     size_t locationBufferSaveRate;
     double nodeInfoDownloadRadius;
@@ -133,7 +135,7 @@ class ReconnectSchedulePredictor {
     S1Angle defaultCoverageRadiusAngle;
 
     //prediction data
-    S2PolylinePtr trajectoryLine;
+    std::optional<S2Polyline> trajectoryLine;
 #endif
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
     std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectPoints;
