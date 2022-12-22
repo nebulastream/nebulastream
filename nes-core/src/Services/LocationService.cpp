@@ -29,10 +29,15 @@ LocationService::LocationService(TopologyPtr topology, Spatial::Index::Experimen
     : locationIndex(locationIndex), topology(topology){};
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
-    auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
-    if (!geoLocation.isValid()) {
+    if (!topology->findNodeWithId(nodeId)) {
         return nullptr;
     }
+    auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
+    /*
+    if (!geoLocation.isValid()) {
+        return convertNodeLocationInfoToJson(nodeId, std::move(geoLocation));
+    }
+     */
     return convertNodeLocationInfoToJson(nodeId, std::move(geoLocation));
 }
 
@@ -102,7 +107,9 @@ nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id,
     return nodeInfo;
 }
 
-bool LocationService::updatePredictedReconnect(uint64_t, NES::Spatial::Mobility::Experimental::ReconnectPrediction) {
+bool LocationService::updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions ) {
+    (void) addPredictions;
+    (void) removePredictions;
     NES_NOT_IMPLEMENTED();//Will be implemented as part of #
 }
 }// namespace NES

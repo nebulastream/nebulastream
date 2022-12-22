@@ -69,9 +69,6 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
-    Status
-    GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) override;
-
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;

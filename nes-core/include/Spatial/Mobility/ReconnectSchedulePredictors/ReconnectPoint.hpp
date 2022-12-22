@@ -17,7 +17,10 @@
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
 
-namespace NES::Spatial::Mobility::Experimental {
+namespace NES {
+using Timestamp = uint64_t;
+
+namespace Spatial::Mobility::Experimental {
 
 /**
  * @brief A struct containing the reconnect prediction consisting of expected reconnect time and expected new parent as well as
@@ -31,5 +34,6 @@ struct ReconnectPoint {
     uint64_t newParentId;
     Timestamp expectedTime;
 };
+}
 }// namespace NES::Spatial::Mobility::Experimental
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_

@@ -29,7 +29,7 @@
 
 namespace NES {
 
-class TrajectoryPredictorTest : public testing::Test {
+class ReconnectSchedulePredictorTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ReconnectSchedulePredictor.log", NES::LogLevel::LOG_DEBUG);
@@ -38,10 +38,10 @@ class TrajectoryPredictorTest : public testing::Test {
 };
 
 #ifdef S2DEF
-TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
+TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     S2Point coveringPointOnLine;
     S1Angle coverage = S2Earth::MetersToAngle(1000);
-    std::shared_ptr<S2Polyline> path;
+    S2Polyline path;
     std::vector<S2Point> pointvec;
     //allow an absolute error of 0.01 millimeters
     S1Angle allowedError = S2Earth::MetersToAngle(0.00001);
@@ -50,10 +50,10 @@ TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
     S2Point lineEnd(S2LatLng::FromDegrees(52.436244793720014, 13.708629778786937));
     pointvec.push_back(lineStart);
     pointvec.push_back(lineEnd);
-    path = std::make_shared<S2Polyline>(pointvec);
+    path = S2Polyline(pointvec);
 
     //we chose a point on the path as a covering point. so its coverage should be equal to the supplied coverage
-    coveringPointOnLine = path->Interpolate(0.5);
+    coveringPointOnLine = path.Interpolate(0.5);
     NES_DEBUG("coordinates of covering point on line: " << S2LatLng(coveringPointOnLine))
     std::pair<S2Point, S1Angle> resultOnLinePoint =
         NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointOnLine, coverage);

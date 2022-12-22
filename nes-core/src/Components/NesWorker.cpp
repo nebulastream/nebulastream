@@ -291,17 +291,21 @@ bool NesWorker::connect() {
     registrationRequest.set_dataport(nodeEngine->getNetworkManager()->getServerDataPort());
     registrationRequest.set_numberofslots(workerConfig->numberOfSlots.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(monitoringAgent->getRegistrationMetrics().serialize().get());
-    registrationRequest.set_tfsupported(workerConfig->isTensorflowSupported.getValue());
+    //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
-        NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(locationProvider->getSpatialType()));
+        NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
 
-    auto waypoint = registrationRequest.mutable_waypoint();
-    auto currentWaypoint = locationProvider->getCurrentWaypoint();
-    waypoint->set_timestamp(currentWaypoint.getTimestamp().value());
-    auto geolocation = waypoint->mutable_geolocation();
-    geolocation->set_lat(currentWaypoint.getLocation().getLatitude());
-    geolocation->set_lng(currentWaypoint.getLocation().getLongitude());
+    if (locationProvider) {
+        auto waypoint = registrationRequest.mutable_waypoint();
+        auto currentWaypoint = locationProvider->getCurrentWaypoint();
+        if (currentWaypoint.getTimestamp()) {
+            waypoint->set_timestamp(currentWaypoint.getTimestamp().value());
+        }
+        auto geolocation = waypoint->mutable_geolocation();
+        geolocation->set_lat(currentWaypoint.getLocation().getLatitude());
+        geolocation->set_lng(currentWaypoint.getLocation().getLongitude());
+    }
 
     bool successPRCRegister = coordinatorRpcClient->registerWorker(registrationRequest);
 
@@ -320,11 +324,12 @@ bool NesWorker::connect() {
 
         if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             workerMobilityHandler =
-                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>({workerConfig->parentId.getValue()},
-                                                                                              locationProvider,
+                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
                                                                                               coordinatorRpcClient,
                                                                                               nodeEngine,
                                                                                               mobilityConfig);
+            //FIXME: currently the worker mobility handler will only work with exactly one parent
+            workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
         }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
