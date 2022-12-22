@@ -19,6 +19,7 @@
 
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 
@@ -41,8 +42,7 @@ public:
      */
     explicit LocalHashTable(size_t sizeOfRecord,
                             size_t numPartitions,
-                            std::atomic<uint64_t> &tail,
-                            size_t overrunAddress,
+                            FixedPagesAllocator& fixedPagesAllocator,
                             size_t pageSize);
 
     LocalHashTable(const LocalHashTable &) = delete;
