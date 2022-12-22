@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/Allocator/MemoryUtil.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
@@ -39,27 +38,20 @@ StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFi
                                    size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
                                    uint64_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
                         : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
-      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), lastTupleTimeStamp(lastTupleTimeStamp)
+      rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), lastTupleTimeStamp(lastTupleTimeStamp),
+      fixedPagesAllocator(totalSizeForDataStructures)
 {
 
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
 
-    head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSizeForDataStructures);
-    overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSizeForDataStructures;
-    tail.store(reinterpret_cast<uintptr_t>(head));
-
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, tail, overrunAddress, pageSize));
+        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, fixedPagesAllocator, pageSize));
     }
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, tail, overrunAddress, pageSize));
+        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, fixedPagesAllocator, pageSize));
     }
-}
-
-StreamJoinWindow::~StreamJoinWindow() {
-    std::free(head);
 }
 
 uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) {

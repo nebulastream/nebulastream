@@ -18,11 +18,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-    LocalHashTable::LocalHashTable(size_t sizeOfRecord, size_t numPartitions, std::atomic<uint64_t> &tail,
-                                   size_t overrunAddress, size_t pageSize) : mask(numPartitions - 1) {
+    LocalHashTable::LocalHashTable(size_t sizeOfRecord, size_t numPartitions,
+                                   FixedPagesAllocator& fixedPagesAllocator, size_t pageSize) : mask(numPartitions - 1) {
 
         for (auto i = 0UL; i < numPartitions; ++i) {
-            buckets.emplace_back(std::make_unique<FixedPagesLinkedList>(tail, overrunAddress, sizeOfRecord, pageSize));
+            buckets.emplace_back(std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize));
         }
     }
 

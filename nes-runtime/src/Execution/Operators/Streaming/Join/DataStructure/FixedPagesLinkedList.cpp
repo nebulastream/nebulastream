@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -20,9 +21,8 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
     uint8_t* retPointer = pages[pos]->append(hash);
     if (retPointer == nullptr) {
         if (++pos >= pages.size()) {
-            auto ptr = tail.fetch_add(pageSize);
-            NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
-            pages.emplace_back(std::make_unique<FixedPage>(reinterpret_cast<uint8_t*>(ptr), sizeOfRecord, pageSize));
+            auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+            pages.emplace_back(std::make_unique<FixedPage>(ptr, sizeOfRecord, pageSize));
         }
         retPointer = pages[pos]->append(hash);
     }
@@ -32,17 +32,15 @@ uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {
 
 const std::vector<std::unique_ptr<FixedPage>>& FixedPagesLinkedList::getPages() const { return pages; }
 
-FixedPagesLinkedList::FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress,
-                                           size_t sizeOfRecord, size_t pageSize)
-    : tail(tail), pos(0), overrunAddress(overrunAddress), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
+FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize)
+    : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize) {
 
-    const auto numPreAllocatedPage = 2; //PREALLOCATED_SIZE / pageSize;
+    const auto numPreAllocatedPage = PREALLOCATED_SIZE / pageSize;
     NES_ASSERT2_FMT(numPreAllocatedPage > 0, "numPreAllocatedPage is 0");
 
     for (auto i = 0UL; i < numPreAllocatedPage; ++i) {
-        auto ptr = tail.fetch_add(pageSize);
-        NES_ASSERT2_FMT(ptr < overrunAddress, "Invalid address " << ptr << " < " << overrunAddress);
-        pages.emplace_back(new FixedPage(reinterpret_cast<uint8_t*>(ptr), sizeOfRecord, pageSize));
+        auto ptr = fixedPagesAllocator.getNewPage(pageSize);
+        pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
     }
 
 }

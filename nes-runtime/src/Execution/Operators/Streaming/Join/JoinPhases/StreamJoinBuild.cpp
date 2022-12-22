@@ -79,9 +79,8 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 
             pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
         }
-
-
     }
+    
     opHandler->incLastTupleTimeStamp(opHandler->getWindowSize(), isLeftSide);
     opHandler->createNewWindow(isLeftSide);
 }
