@@ -140,7 +140,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/status", getStatusOfQuery, QUERY(UInt64, queryId, "queryId")) {
         try {
-            NES_DEBUG("Get current status of the query");
+            NES_DEBUG2("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
             nlohmann::json response;
             response["queryId"] = queryId.getValue(0);
@@ -158,7 +158,7 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("GET", "/getNumberOfProducedBuffers", getNumberOfProducedBuffers, QUERY(UInt64, queryId, "queryId")) {
         try {
-            NES_DEBUG("getNumberOfProducedBuffers called");
+            NES_DEBUG2("getNumberOfProducedBuffers called");
             //Prepare Input query from user string
             SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
             if (sharedQueryId == INVALID_SHARED_QUERY_ID) {

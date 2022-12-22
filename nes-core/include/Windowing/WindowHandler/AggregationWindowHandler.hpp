@@ -63,7 +63,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     ~AggregationWindowHandler() override {
-        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "," << id << ")  finished destructor");
+        NES_DEBUG2("~AggregationWindowHandler({}, {}) finished destructor", handlerType, id);
         stop();
     }
 
@@ -94,14 +94,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
+        NES_DEBUG2("AggregationWindowHandler({}, {}): stop called", handlerType, id);
         auto expected = true;
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
             result = executablePolicyTrigger->stop();
             stateManager->unRegisterState(windowStateVariable);
         }
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);
+        NES_DEBUG2("AggregationWindowHandler({}, {}):  stop result = {}", handlerType, id, result);
         return result;
     }
 

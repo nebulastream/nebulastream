@@ -149,7 +149,7 @@ class QueryPlan {
     template<class T>
     std::vector<std::shared_ptr<T>> getOperatorByType() {
         // Find all the nodes in the query plan
-        NES_DEBUG("QueryPlan: Get all  nodes in the query plan.");
+        NES_DEBUG2("QueryPlan: Get all  nodes in the query plan.");
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
         std::set<uint64_t> visitedOpIds;

@@ -96,7 +96,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
-            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.dump());
+            NES_DEBUG2("QueryController:: execution-plan: {}", executionPlanJson.dump());
             return createResponse(Status::CODE_200, executionPlanJson.dump());
         } catch (QueryNotFoundException e) {
             return errorHandler->handleError(Status::CODE_404, "No query with given ID: " + std::to_string(queryId));
@@ -125,7 +125,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/optimization-phase", getOptimizationPhase, QUERY(UInt64, queryId, "queryId")) {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+            NES_DEBUG2("UtilityFunctions: Getting the json representation of the query plan");
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
             nlohmann::json response;
             for (auto const& [phaseName, queryPlan] : optimizationPhases) {
@@ -146,7 +146,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         //NOTE: QueryController has "query-status" endpoint. QueryCatalogController has "status" endpoint with same functionality.
         //Functionality has been duplicated for compatibility.
         try {
-            NES_DEBUG("Get current status of the query");
+            NES_DEBUG2("Get current status of the query");
             const Catalogs::Query::QueryCatalogEntryPtr catalogEntry = queryCatalogService->getEntryForQuery(queryId);
             nlohmann::json response;
             response["queryId"] = queryId.getValue(0);
@@ -204,9 +204,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             }
             auto faultToleranceMode = FaultToleranceType::getFromString(faultToleranceString);
             auto lineageMode = LineageType::getFromString(lineageString);
-            NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
-                      << userQuery << ", strategyName= " << placement << ", faultTolerance= " << faultToleranceString
-                      << ", lineage= " << lineageString);
+            NES_DEBUG2("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}, faultTolerance= {}, lineage= {}", userQuery, placement, faultToleranceString, lineageString);
             QueryId queryId =
                 queryService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode, lineageMode);
             //Prepare the response

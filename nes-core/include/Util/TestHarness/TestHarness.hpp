@@ -383,8 +383,8 @@ class TestHarness {
         }
 
         auto tupleSize = schema->getSchemaSizeInBytes();
-        NES_DEBUG("Tuple Size: " << tupleSize);
-        NES_DEBUG("currentSourceNumOfRecords: " << currentSourceNumOfRecords);
+        NES_DEBUG2("Tuple Size: {}", tupleSize);
+        NES_DEBUG2("currentSourceNumOfRecords: {}", currentSourceNumOfRecords);
         auto memAreaSize = currentSourceNumOfRecords * tupleSize;
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
@@ -516,7 +516,7 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG("TestHarness: outputSchema: " << queryCatalogService->getEntryForQuery(queryId)
+        NES_DEBUG2("TestHarness: outputSchema: {}", queryCatalogService->getEntryForQuery(queryId)
                                                        ->getInputQueryPlan()
                                                        ->getSinkOperators()[0]
                                                        ->getOutputSchema()
@@ -556,8 +556,7 @@ class TestHarness {
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
-        NES_DEBUG("TestHarness: ExecutedQueryPlan: "
-                  << queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+        NES_DEBUG2("TestHarness: ExecutedQueryPlan: {}",queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
         queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
 
         for (const auto& worker : testHarnessWorkerConfigurations) {

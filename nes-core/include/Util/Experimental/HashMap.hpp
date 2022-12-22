@@ -176,7 +176,7 @@ class Hashmap {
                     current = current->next;
                     counter++;
                 }
-                NES_DEBUG("pos: " << e << " length: " << counter);
+                NES_DEBUG2("pos: {} length: {}", e, counter);
             };
         }
     }
