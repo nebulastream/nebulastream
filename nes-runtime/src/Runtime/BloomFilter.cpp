@@ -13,7 +13,7 @@
 */
 #include <cmath>
 
-#include <Runtime/Allocator/MemoryUtil.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -15,6 +15,7 @@
 #define NES_FIXEDPAGESLINKEDLIST_HPP
 
 #include <vector>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -26,13 +27,11 @@ class FixedPagesLinkedList{
   public:
     /**
      * @brief Constructor for a FixedPagesLinkedList
-     * @param tail
-     * @param overrunAddress
+     * @param fixedPagesAllocator
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPagesLinkedList(std::atomic<uint64_t>& tail, uint64_t overrunAddress, size_t sizeOfRecord,
-                         size_t pageSize);
+    explicit FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space.
@@ -48,9 +47,8 @@ class FixedPagesLinkedList{
     const std::vector<std::unique_ptr<FixedPage>>& getPages() const;
 
   private:
-    std::atomic<uint64_t>& tail;
     size_t pos;
-    const uint64_t overrunAddress;
+    FixedPagesAllocator& fixedPagesAllocator;
     std::vector<std::unique_ptr<FixedPage>> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;
