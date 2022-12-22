@@ -28,6 +28,9 @@
 namespace NES::Runtime::Execution::Operators {
 
 
+
+
+
 /**
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
@@ -187,6 +190,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;
+
 };
 
 } // namespace NES::Runtime::Execution::Operators
