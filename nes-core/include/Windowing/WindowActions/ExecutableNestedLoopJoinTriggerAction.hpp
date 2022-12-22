@@ -110,7 +110,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                               lastWatermark,
                                                               workerContext);
                     } else {
-                        NES_ERROR("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType " << joinDefinition->getJoinType());
+                        NES_ERROR2("ExecutableNestedLoopJoinTriggerAction: Unknown JoinType {}", joinDefinition->getJoinType());
                     }
                 }
             }

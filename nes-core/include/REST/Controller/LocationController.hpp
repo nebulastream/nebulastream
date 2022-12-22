@@ -59,7 +59,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
-            NES_ERROR("node with id " << nodeId << " does not exist");
+            NES_ERROR2("node with id {} does not exist", nodeIde);
             return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, nodeLocationJson.dump());
@@ -73,7 +73,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/reconnectSchedule", getReconnectionScheduleOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
         auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeId);
         if (reconnectScheduleJson == nullptr) {
-            NES_ERROR("node with id " << nodeId << " does not exist");
+            NES_ERROR2("node with id {} does not exist", nodeId);
             return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, reconnectScheduleJson.dump());

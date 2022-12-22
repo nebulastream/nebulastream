@@ -61,9 +61,8 @@ class WindowedJoinSliceListStore {
         //                In order to not copy code and enable the same logging, I return inside the loop.
         auto const isDefault = timestamp == -1;
         if (timestamp < 0 and !isDefault) {
-            NES_ERROR("getSliceIndexByTs for could not find a slice, because the timestamp is "
-                      "neither -1 nor positive: "
-                      << timestamp);
+            NES_ERROR2("getSliceIndexByTs for could not find a slice, because the timestamp is "
+                      "neither -1 nor positive: {}", timestamp);
             NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen.");
         }
         auto const ts = isDefault ? 0ULL : static_cast<uint64_t>(timestamp);
@@ -77,7 +76,7 @@ class WindowedJoinSliceListStore {
                 return i;
             }
         }
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp << " " << ts);
+        NES_ERROR2("getSliceIndexByTs for could not find a slice, this should not happen ts {} {}", timestamp, ts);
         return UINT64_MAX;
     }
 

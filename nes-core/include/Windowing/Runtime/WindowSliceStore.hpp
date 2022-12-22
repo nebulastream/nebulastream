@@ -45,8 +45,7 @@ class WindowSliceStore {
             }
         }
         auto lastSlice = sliceMetaData.back();
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen. current ts"
-                  << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
+        NES_ERROR2("getSliceIndexByTs for could not find a slice, this should not happen. current ts {} last slice {} - {}", ts, lastSlice.getStartTs(), lastSlice.getEndTs());
         NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts"
                                 << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
         //TODO: change this back once we have the vector clocks

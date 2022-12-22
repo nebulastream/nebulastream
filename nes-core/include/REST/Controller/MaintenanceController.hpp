@@ -62,11 +62,11 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
         std::string req = request.getValue("{}");
         nlohmann::json requestJson = nlohmann::json::parse(req);
         if (!requestJson.contains("id")) {
-            NES_ERROR("MaintenanceController: Unable to find Field: id ");
+            NES_ERROR2("MaintenanceController: Unable to find Field: id ");
             return errorHandler->handleError(Status::CODE_400, "Field 'id' must be provided");
         }
         if (!requestJson.contains("migrationType")) {
-            NES_ERROR("MaintenanceController: Unable to find Field: migrationType ");
+            NES_ERROR2("MaintenanceController: Unable to find Field: migrationType ");
             return errorHandler->handleError(Status::CODE_400, "Field 'migrationType' must be provided");
         }
         uint64_t id = requestJson["id"];
