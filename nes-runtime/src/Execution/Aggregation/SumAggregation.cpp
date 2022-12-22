@@ -20,7 +20,7 @@ SumAggregationFunction::SumAggregationFunction(const DataTypePtr& inputType, con
 
 void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load memref
-    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3250 check the type
+    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3280 check the type
     // add the value
     auto newValue = oldValue + value;
     // put back to the memref

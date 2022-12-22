@@ -129,11 +129,23 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
     auto minValue = Aggregation::MinAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
 
     // lift value in minAgg
-    minAgg.lift(memref, incomingValue);
-    ASSERT_EQ(minValue.min, incomingValue);
+    minAgg.lift(memref, incomingValueFive);
+    ASSERT_EQ(minValue.min, incomingValueFive);
+
+    minAgg.lift(memref, incomingValueTen);
+    ASSERT_EQ(minValue.min, incomingValueFive);
+
+    minAgg.lift(memref, incomingValueOne);
+    ASSERT_EQ(minValue.min, incomingValueOne);
+
+    minAgg.lift(memref, incomingValueTwo);
+    ASSERT_EQ(minValue.min, incomingValueOne);
 
     // combine memrefs in minAgg
     minAgg.combine(memref, memref);
@@ -156,19 +168,28 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
     auto maxValue = Aggregation::MaxAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
 
     // lift value in minAgg
-    maxAgg.lift(memref, incomingValue);
-    ASSERT_EQ(maxValue.max, incomingValue);
+    maxAgg.lift(memref, incomingValueFive);
+    ASSERT_EQ(maxValue.max, incomingValueFive);
+    maxAgg.lift(memref, incomingValueTen);
+    ASSERT_EQ(maxValue.max, incomingValueTen);
+    maxAgg.lift(memref, incomingValueOne);
+    ASSERT_EQ(maxValue.max, incomingValueTen);
+    maxAgg.lift(memref, incomingValueFifteen);
+    ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
     // combine memrefs in minAgg
     maxAgg.combine(memref, memref);
-    ASSERT_EQ(maxValue.max, 2);
+    ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
     // lower value in minAgg
     auto aggregationResult = maxAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);
+    ASSERT_EQ(aggregationResult, incomingValueFifteen);
 
     // test reset
     maxAgg.reset(memref);

@@ -61,8 +61,10 @@ Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     auto sum = memref.load<Nautilus::Int64>();// TODO 3280 check the type
     auto countMemref = (memref + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
     auto count = countMemref.load<Nautilus::Int64>();
+
     // calc the average
-    auto finalVal = sum / count;
+    auto finalVal = DivOp(sum, count);
+
     // return the average
     return finalVal;
 }
