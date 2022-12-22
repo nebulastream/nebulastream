@@ -69,8 +69,7 @@ class ExecutableCompleteAggregationTriggerAction
         : executableWindowAggregation(std::move(executableWindowAggregation)), windowDefinition(std::move(windowDefinition)),
           id(id), partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
 
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
-                                                                                       << " id=" << id);
+        NES_DEBUG2("ExecutableCompleteAggregationTriggerAction intialized with schema:{} id=", outputSchema->toString(), id);
         this->windowSchema = outputSchema;
     }
 

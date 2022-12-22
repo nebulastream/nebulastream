@@ -74,7 +74,7 @@ class JoinHandler : public AbstractJoinHandler {
             StateId leftStateId = {stateManager->getNodeId(), id, localStateVariableId};
             localStateVariableId++;
             StateId rightStateId = {stateManager->getNodeId(), id, localStateVariableId};
-            NES_DEBUG("JoinHandler start id=" << id << " " << this);
+            NES_DEBUG2("JoinHandler start id={} {}", id, this);
 
             //Defines a callback to execute every time a new key-value pair is created
             auto leftDefaultCallback = [](const KeyType&) {
@@ -102,7 +102,7 @@ class JoinHandler : public AbstractJoinHandler {
      */
     bool stop() override {
         std::unique_lock lock(mutex);
-        NES_DEBUG("JoinHandler stop id=" << id << ": stop");
+        NES_DEBUG2("JoinHandler stop id={}: stop", id);
         auto expected = true;
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
@@ -220,8 +220,7 @@ class JoinHandler : public AbstractJoinHandler {
     bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         this->originId = 0;
 
-        NES_DEBUG("JoinHandler " << id << ": setup Join handler with join def=" << joinDefinition
-                                 << " string=" << joinDefinition->getOutputSchema()->toString());
+        NES_DEBUG2("JoinHandler {}: setup Join handler with join def={} string={}", id, joinDefinition, joinDefinition->getOutputSchema()->toString());
         // Initialize JoinHandler Manager
         //TODO: note allowed lateness is currently not supported for windwos
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType(), 0, id);
@@ -283,10 +282,10 @@ class JoinHandler : public AbstractJoinHandler {
             } else {
                 NES_ASSERT(false, "Invalid window");
             }
-            //            NES_DEBUG("Going to flush window " << toString());
+            //            NES_DEBUG2("Going to flush window {}", toString());
             //            trigger(true);
             //            executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
-            //            NES_DEBUG("Flushed window content after end of stream message " << toString());
+            //            NES_DEBUG2("Flushed window content after end of stream message {}", toString());
         };
 
         auto cleanup = [this]() {
@@ -301,22 +300,20 @@ class JoinHandler : public AbstractJoinHandler {
             }
             case Runtime::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("SoftEndOfStream received on join handler " << toString()
-                                                                          << ": going to flush in-flight windows and cleanup");
+                    NES_DEBUG2("SoftEndOfStream received on join handler {}: going to flush in-flight windows and cleanup", toString());
                     flushInflightWindows();
                     cleanup();
                 } else {
-                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
+                    NES_DEBUG2("SoftEndOfStream received on join handler {}: ref counter is: {} ", toString(), refCnt.load());
                 }
                 break;
             }
             case Runtime::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("HardEndOfStream received on join handler " << toString()
-                                                                          << ": going to flush in-flight windows and cleanup");
+                    NES_DEBUG2("HardEndOfStream received on join handler {} going to flush in-flight windows and cleanup", toString());
                     cleanup();
                 } else {
-                    NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
+                    NES_DEBUG2("HardEndOfStream received on join handler {}: ref counter is:{} ", toString(), refCnt.load());
                 }
                 break;
             }

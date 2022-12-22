@@ -51,10 +51,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id)
         : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
+        NES_DEBUG2("ExecutableNestedLoopJoinTriggerAction {} join output schema= {}", id, windowSchema->toString());
     }
 
-    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction " << id << ":()"); }
+    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG2("~ExecutableNestedLoopJoinTriggerAction {}}:()", id); }
 
     bool doAction(Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,

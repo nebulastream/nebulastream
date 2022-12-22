@@ -105,7 +105,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             uint64_t childId = reqJson["childId"].get<uint64_t>();
             bool added = topologyManagerService->addParent(childId, parentId);
             if (added) {
-                NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
+                NES_DEBUG2("TopologyController::handlePost:addParent: created link successfully new topology is=");
+                topology->print();
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
@@ -137,7 +138,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             uint64_t childId = reqJson["childId"].get<uint64_t>();
             bool removed = topologyManagerService->removeParent(childId, parentId);
             if (removed) {
-                NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
+                NES_DEBUG2("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
