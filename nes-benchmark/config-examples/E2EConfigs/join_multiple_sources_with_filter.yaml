@@ -9,8 +9,7 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
-numberOfSources: 3
-logicalSourceName:
+logicalSources:
   input1:
     type: Uniform
     minValue: 0

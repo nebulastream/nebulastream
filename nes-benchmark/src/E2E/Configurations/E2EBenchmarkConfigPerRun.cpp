@@ -20,7 +20,7 @@
 namespace NES::Benchmark {
 E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
     using namespace Configurations;
-    numWorkerOfThreads = ConfigurationOption<uint32_t>::create("numWorkerOfThreads", 1, "No. Worker Threads");
+    numberOfWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerOfThreads", 1, "No. Worker Threads");
     numberOfSources = ConfigurationOption<uint32_t>::create("numberOfSources", 1, "No. sources");
     bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 1024, "Buffer size in bytes");
     numberOfQueriesToDeploy = ConfigurationOption<uint32_t>::create("numberOfQueriesToDeploy", 1, "Number of Queries to use");
@@ -33,7 +33,7 @@ E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
 
 std::string E2EBenchmarkConfigPerRun::toString() {
     std::stringstream oss;
-    oss << "- numWorkerOfThreads: " << numWorkerOfThreads->getValueAsString() << std::endl
+    oss << "- numWorkerOfThreads: " << numberOfWorkerThreads->getValueAsString() << std::endl
         << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl
         << "- numberOfQueriesToDeploy: " << numberOfQueriesToDeploy->getValueAsString() << std::endl
         << "- numberOfSources: " << numberOfSources->getValueAsString() << std::endl
@@ -52,7 +52,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
     /* Getting all parameters per experiment run in vectors */
     auto numWorkerOfThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
-                                                                  configPerRun.numWorkerOfThreads->getDefaultValue());
+                                                                  configPerRun.numberOfWorkerThreads->getDefaultValue());
 
     auto numberOfSources = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfSources"].As<std::string>(),
                                                                configPerRun.numberOfSources->getDefaultValue());
@@ -99,7 +99,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     allConfigPerRuns.reserve(totalBenchmarkRuns);
     for (size_t i = 0; i < totalBenchmarkRuns; ++i) {
         E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
-        e2EBenchmarkConfigPerRun.numWorkerOfThreads->setValue(numWorkerOfThreads[i]);
+        e2EBenchmarkConfigPerRun.numberOfWorkerThreads->setValue(numWorkerOfThreads[i]);
         e2EBenchmarkConfigPerRun.numberOfSources->setValue(numberOfSources[i]);
         e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
         e2EBenchmarkConfigPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy[i]);
