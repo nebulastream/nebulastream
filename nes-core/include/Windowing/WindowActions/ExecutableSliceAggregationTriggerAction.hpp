@@ -72,8 +72,7 @@ class ExecutableSliceAggregationTriggerAction
                                                              << " lastWatermark=" << lastWatermark);
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableSliceAggregationTriggerAction " << id
-                                                                       << ": the weakExecutionContext was already expired!");
+            NES_FATAL_ERROR2("ExecutableSliceAggregationTriggerAction {}: the weakExecutionContext was already expired!", id);
             return false;
         }
         auto executionContext = this->weakExecutionContext.lock();
@@ -131,7 +130,7 @@ class ExecutableSliceAggregationTriggerAction
         // TODO we should add a allowed lateness to support out of order events
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            NES_FATAL_ERROR2("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return;
         }
         auto executionContext = this->weakExecutionContext.lock();

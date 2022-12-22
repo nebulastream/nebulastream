@@ -83,7 +83,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
+            NES_FATAL_ERROR2("ExecutableCompleteAggregationTriggerAction: the weakExecutionContext was already expired!");
             return false;
         }
 
@@ -152,8 +152,7 @@ class ExecutableCompleteAggregationTriggerAction
         auto windows = std::vector<WindowState>();
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR(
-                "ExecutableCompleteAggregationTriggerAction id=" << id << ": the weakExecutionContext was already expired!");
+            NES_FATAL_ERROR2("ExecutableCompleteAggregationTriggerAction id={}: the weakExecutionContext was already expired!", id);
         }
         auto executionContext = this->weakExecutionContext.lock();
 
