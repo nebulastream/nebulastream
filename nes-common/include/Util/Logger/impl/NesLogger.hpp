@@ -154,7 +154,7 @@ class Logger {
     std::shared_ptr<spdlog::logger> impl;
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
     std::atomic<bool> isShutdown{false};
-    std::shared_ptr<spdlog::details::thread_pool> tp;
+    std::shared_ptr<spdlog::details::thread_pool> loggerThreadPool;
 };
 }// namespace detail
 

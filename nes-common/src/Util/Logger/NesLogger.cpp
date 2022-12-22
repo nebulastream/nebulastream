@@ -117,8 +117,9 @@ void Logger::forceFlush() {
 void Logger::shutdown() {
     bool expected = false;
     if (isShutdown.compare_exchange_strong(expected, true)) {
+        forceFlush();
         impl.reset();
-        tp.reset();
+        loggerThreadPool.reset();
     }
 }
 
@@ -126,7 +127,7 @@ void Logger::configure(const std::string& logFileName, LogLevel level) {
     auto [configuredLogger, tp] = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
-    std::swap(tp, this->tp);
+    std::swap(tp, this->loggerThreadPool);
 }
 
 void Logger::changeLogLevel(LogLevel newLevel) {
