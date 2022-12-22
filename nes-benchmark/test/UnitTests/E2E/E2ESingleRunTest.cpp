@@ -88,13 +88,18 @@ namespace NES::Benchmark {
     TEST_F(E2ESingleRunTest, createSources) {
         // test here if we can create different logical sources in terms of data generators
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-        E2EBenchmarkConfigPerRun configPerRun;
+        std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
 
         auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         configOverAllRuns.mapLogicalSrcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
                                                               {zipfianDataGenerator->getName(), zipfianDataGenerator}};
 
+        for (auto i = 0; i < 3; ++i) {
+            E2EBenchmarkConfigPerRun configPerRun;
+            configPerRun.mapLogicalSrcToNumberOfPhysSrc{{defaultDataGenerator->getName(), }};
+            Hier weiter machen mit dem Erstellen der Create Sources Test
+        }
 
 
 
