@@ -18,7 +18,7 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1
 
-logicalSourceName: ysb
+logicalSources: ysb
 numberOfSources: 1
 inputType: MemoryMode
 dataGenerator: YSB

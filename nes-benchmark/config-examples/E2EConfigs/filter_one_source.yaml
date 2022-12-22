@@ -10,7 +10,6 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
-numberOfSources: 1
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
 outputFile: FilterOneSource.csv

@@ -13,8 +13,10 @@ numberOfMeasurementsToCollect: 3
 logicalSources:
   input1:
     type: Default
+    numberOfPhysicalSources: 2, 3, 4
   input2:
     type: Uniform
+    numberOfPhysicalSources: 2
     minValue: 0
     maxValue: 250
   input3:
