@@ -149,7 +149,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");
         } catch (const UdfException& e) {
-            NES_WARNING("Exception occurred during UDF registration: " << e.what());
+            NES_WARNING2("Exception occurred during UDF registration: {}", e.what());
             // Just return the exception message to the client, not the stack trace.
             return errorHandler->handleError(Status::CODE_400, e.getMessage());
         } catch (...) {
