@@ -59,7 +59,7 @@ class CUDAKernelWrapper {
                  uint64_t numberOfOutputTuples,
                  std::string kernelName) {
         if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord)) {
-            NES_ERROR("Tuples to process exceed the allocated GPU buffer.");
+            NES_ERROR2("Tuples to process exceed the allocated GPU buffer.");
             throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
         }
 

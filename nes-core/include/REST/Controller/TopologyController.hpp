@@ -79,9 +79,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
-            NES_ERROR("TopologyController: handleGet -getTopology: Exception occurred while building the "
-                      "topology:"
-                      << exc.what());
+            NES_ERROR2("TopologyController: handleGet -getTopology: Exception occurred while building the "
+                      "topology: {}", exc.what());
             return errorHandler->handleError(Status::CODE_500,
                                              "Exception occurred while building topology" + std::string(exc.what()));
         } catch (...) {
@@ -108,7 +107,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 NES_DEBUG2("TopologyController::handlePost:addParent: created link successfully new topology is=");
                 topology->print();
             } else {
-                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                NES_ERROR2("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
             }
             //Prepare the response
@@ -140,7 +139,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             if (removed) {
                 NES_DEBUG2("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
-                NES_ERROR("TopologyController::handlePost:addParent: Failed");
+                NES_ERROR2("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:removeParent: Failed");
             }
             //Prepare the response
