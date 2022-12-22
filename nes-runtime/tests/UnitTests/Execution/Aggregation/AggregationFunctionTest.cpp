@@ -217,7 +217,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     maxAgg.lift(memref, incomingValueFifteen);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
-    // combine memrefs in minAgg
+    // combine memrefs in maxAgg
     auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMaxValue);
     maxAgg.lift(anotherMemref, incomingValueOne);
