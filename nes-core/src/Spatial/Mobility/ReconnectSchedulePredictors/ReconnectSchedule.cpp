@@ -11,30 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp"
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <utility>
 
 namespace NES::Spatial::Mobility::Experimental {
 
-ReconnectSchedule::ReconnectSchedule(const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
-                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
-                                     const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
-                                     std::vector<ReconnectPoint> reconnectVector)
-    :  pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)),
-      lastIndexUpdatePosition(std::move(lastIndexUpdatePosition)), reconnectVector(std::move(reconnectVector)) {}
+ReconnectSchedule::ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector) : reconnectVector(std::move(reconnectVector)) {}
 
-NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathStart() const { return pathStart; }
-
-NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getPathEnd() const { return pathEnd; }
-
-std::vector<ReconnectPoint>& ReconnectSchedule::getReconnectVector() const {
+const std::vector<ReconnectPoint>& ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
 }
 
-ReconnectSchedule ReconnectSchedule::Empty() { return {{}, {}, {}, {}}; }
+ReconnectSchedule ReconnectSchedule::Empty() { return ReconnectSchedule({}); }
 
-NES::Spatial::DataTypes::Experimental::GeoLocation ReconnectSchedule::getLastIndexUpdatePosition() const {
-    return lastIndexUpdatePosition;
-}
+void ReconnectSchedule::removeNextReconnect() { reconnectVector.erase(reconnectVector.begin()); }
 
 }// namespace NES::Spatial::Mobility::Experimental

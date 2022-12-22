@@ -16,7 +16,6 @@
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
@@ -27,9 +26,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace NES::Spatial::Mobility::Experimental {
-
-ReconnectSchedulePredictor::ReconnectSchedulePredictor(
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
 #ifdef S2DEF
 
@@ -52,8 +49,6 @@ ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     bufferAverageMovementSpeed = 0;
     stepsSinceLastLocationSave = 0;
 
-    reconnectVector = std::make_shared<std::vector<ReconnectPoint>>();
-
 #else
     (void) configuration;
     NES_FATAL_ERROR("cannot construct trajectory predictor without s2 library");
@@ -61,55 +56,14 @@ ReconnectSchedulePredictor::ReconnectSchedulePredictor(
 #endif
 }
 
-//todo: remove this function
-Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReconnectSchedule() {
-#ifdef S2DEF
-    DataTypes::Experimental::GeoLocation start;
-    DataTypes::Experimental::GeoLocation end;
-
-    //check if a path exists and insert invalid locations if it doesn't
-    if (trajectoryLine) {
-        S2LatLng startLatLng(trajectoryLine->vertices_span()[0]);
-        start = DataTypes::Experimental::GeoLocation(startLatLng.lat().degrees(), startLatLng.lng().degrees());
-        S2LatLng endLatLng(trajectoryLine->vertices_span()[1]);
-        end = DataTypes::Experimental::GeoLocation(endLatLng.lat().degrees(), endLatLng.lng().degrees());
-    } else {
-        //todo #2918: make create method
-        start = DataTypes::Experimental::GeoLocation();
-        end = DataTypes::Experimental::GeoLocation();
-    }
-
-    //get a shared ptr to a vector containing predicted reconnect inf oconsisting of expected parent id, expected reconnect location and expected time
-
-    /*get a pointer to the position of the device at the time the local field node index was updated
-    if no such update has happened so for, set the pointer to nullptr */
-    DataTypes::Experimental::GeoLocation indexUpdatePointer;
-    //todo: remove position of last index update from the reonnect schedule?
-    /*
-    if (centroidOfNeighbouringWorkerSpatialIndex) {
-        indexUpdatePointer = Spatial::Util::S2Utilities::s2pointToLocation(centroidOfNeighbouringWorkerSpatialIndex.value());
-    } else {
-        indexUpdatePointer = DataTypes::Experimental::GeoLocation();
-    }
-    indexUpdatePosLock.unlock();
-     */
-
-    //construct a schedule object and return it
-    return std::make_unique<Mobility::Experimental::ReconnectSchedule>(start, end, indexUpdatePointer, reconnectVector);
-#else
-    NES_WARNING("trying to get reconnect schedule but s2 library is not used")
-    return nullptr;
-#endif
-}
-
-Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReconnectSchedule(const DataTypes::Experimental::Waypoint &currentOwnLocation,
+std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule> NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSchedule(const DataTypes::Experimental::Waypoint &currentOwnLocation,
                                                                                               const DataTypes::Experimental::GeoLocation &parentLocation,
                                                                                               const S2PointIndex<uint64_t> &fieldNodeIndex,
-                                                                                              bool indexUpdated) {
+                                                                                              bool isIndexUpdated) {
     //if the device location has not changed, there are no new calculations to be made
     if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
         NES_DEBUG("Location has not changed, do not recalculate schedule")
-        return nullptr;
+        return std::nullopt;
     }
 
     //if the location buffer is not filled yet, do not schedule anything
@@ -121,7 +75,7 @@ Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReco
         } else {
             ++stepsSinceLastLocationSave;
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     //if locationBufferSaveRate updates have been done since last save: save current location to buffer and reset save counter
@@ -138,18 +92,16 @@ Mobility::Experimental::ReconnectSchedulePtr ReconnectSchedulePredictor::getReco
     //check if we deviated more than delta from the old predicted path and update it if needed
     bool isPathUpdated = updatePredictedPath(oldestKnownOwnLocation.getLocation(), currentOwnLocation.getLocation());
     //update average movement speed
-    bool speedChanges = updateAverageMovementSpeed();
+    bool isSpeedChanged = updateAverageMovementSpeed();
     //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
 
-    //todo: change names
-    if (indexUpdated || isPathUpdated || speedChanges) {
+    if (isIndexUpdated || isPathUpdated || isSpeedChanged) {
         NES_INFO("reconnect prediction data has changed")
         //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
         scheduleReconnects(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(parentLocation), fieldNodeIndex);
-        return getReconnectSchedule();
+        return ReconnectSchedule(reconnectPoints);
     }
-    return nullptr;
-    }
+    return std::nullopt;
 }
 
 bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updateAverageMovementSpeed() {
@@ -203,7 +155,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updatePre
         auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
         //we need to extrapolate backwards as well to make sure, that triangulation still works even if covering nodes lie behind the device
         auto backwardsExtrapolation = S2::GetPointOnLine(currentPoint, oldPoint, defaultCoverageRadiusAngle * 2);
-        trajectoryLine = std::make_shared<S2Polyline>(std::vector({backwardsExtrapolation, extrapolatedPoint}));
+        trajectoryLine = S2Polyline({backwardsExtrapolation, extrapolatedPoint});
         return true;
     }
 
@@ -219,9 +171,9 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updatePre
 
 #ifdef S2DEF
 std::pair<S2Point, S1Angle>
-NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(const S2Polyline& path, S2Point coveringNode, S1Angle coverage) {
     int vertexIndex = 0;
-    auto projectedPoint = path->Project(coveringNode, &vertexIndex);
+    auto projectedPoint = path.Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
     NES_TRACE("distance from path in meters: " << S2Earth::ToMeters(distanceAngle))
 
@@ -244,7 +196,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
     double coverageRadiansOnLine = acos(cos(coverage) / divisor);
     auto coverageAngleOnLine = S1Angle::Radians(coverageRadiansOnLine);
 
-    auto verticeSpan = path->vertices_span();
+    auto verticeSpan = path.vertices_span();
     //the polyline always only consists of 2 points, so index 1 is its end
     S2Point coverageEnd = S2::GetPointOnLine(projectedPoint, verticeSpan[1], coverageAngleOnLine);
     return {coverageEnd, coverageAngleOnLine};
@@ -255,11 +207,14 @@ void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
                                                                                           const S2PointIndex<uint64_t> &fieldNodeIndex ) {
 #ifdef S2DEF
     double remainingTime;
-    reconnectVector->clear();
+    reconnectPoints.clear();
+    if (!trajectoryLine) {
+        return;
+    }
 
     //find the end of path coverage of our curent parent
     auto reconnectionPointTuple =
-        findPathCoverage(trajectoryLine, currentParentLocation, S1Angle(defaultCoverageRadiusAngle));
+        findPathCoverage(trajectoryLine.value(), currentParentLocation, S1Angle(defaultCoverageRadiusAngle));
     if (reconnectionPointTuple.second.degrees() == 0) {
         return;
     }
@@ -295,7 +250,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
         //iterate over all nodes which cover the reconnect location to find out which one will give us the longest coverage in the direction of the path end point
         for (auto result : closestNodeList) {
             //calculate how much of the path will remain uncovered if we pick this node
-            auto coverageTuple = findPathCoverage(trajectoryLine, result.point(), defaultCoverageRadiusAngle);
+            auto coverageTuple = findPathCoverage(trajectoryLine.value(), result.point(), defaultCoverageRadiusAngle);
             currentUncoveredRemainingPathDistance = S1Angle(coverageTuple.first, trajectoryLine->vertices_span()[1]);
 
             //if the distance that remains uncovered is less then the current minimum, pick this node as the new optimal choice
@@ -316,11 +271,11 @@ void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
             auto currLatLng = S2LatLng(reconnectLocationOnPath);
             auto currLoc =
                 std::make_shared<DataTypes::Experimental::GeoLocation>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
-            reconnectVector->emplace_back(
+            reconnectPoints.emplace_back(
                 NES::Spatial::Mobility::Experimental::ReconnectPoint{
                     *currLoc,
-                    NES::Spatial::Mobility::Experimental::ReconnectPrediction{reconnectParentId,
-                                                                              (uint64_t) estimatedReconnectTime}});
+                    reconnectParentId,
+                    estimatedReconnectTime});
             NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
             reconnectLocationOnPath = nextReconnectLocationOnPath;
             estimatedReconnectTime = nextEstimatedReconnectTime;
@@ -332,4 +287,4 @@ void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
 #else
     NES_WARNING("s2 library is required to schedule reconnects")
 #endif
-}// namespace NES::Spatial::Mobility::Experimental
+}

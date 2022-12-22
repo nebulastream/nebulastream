@@ -15,13 +15,12 @@
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTSCHEDULE_HPP_
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
-struct ReconnectPrediction;
-struct ReconnectPoint;
 
 /**
  * @brief contains the predicted reconnect points along the trajectory of this worker.
@@ -31,42 +30,19 @@ class ReconnectSchedule {
   public:
     /**
      * Constructor
-     * @param pathBeginning the starting point of the predicted path
-     * @param pathEnd the endpoint of the predicted path
-     * @param lastIndexUpdatePosition the device position at the moment when the info in the local index of field node positions
-     * was downloaded from the coordinator
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
      */
-    ReconnectSchedule(const NES::Spatial::DataTypes::Experimental::GeoLocation& pathBeginning,
-                      const NES::Spatial::DataTypes::Experimental::GeoLocation& pathEnd,
-                      const NES::Spatial::DataTypes::Experimental::GeoLocation& lastIndexUpdatePosition,
-                      std::vector<ReconnectPoint> reconnectVector);
-
-    //todo: clean up vector
-    /**
-     * @brief getter function for the start location of the current predicted path
-     * @return a smart pointer to a location object with the coordinates of the path beginning
-     */
-    [[nodiscard]] DataTypes::Experimental::GeoLocation getPathStart() const;
-
-    /**
-     * @brief getter function for the end location of the current predicted path
-     * @return a smart pointer to a location object with the coordinates of the path end
-     */
-    [[nodiscard]] DataTypes::Experimental::GeoLocation getPathEnd() const;
-
-    /**
-     * @brief getter function for the location at which the device was located when the last download of field node location data
-     * to the local spatial index happened
-     * @return a smart pointer to a location object with the coordinates of the device position of the time of updating
-     */
-    [[nodiscard]] DataTypes::Experimental::GeoLocation getLastIndexUpdatePosition() const;
-
+    explicit ReconnectSchedule(std::vector<ReconnectPoint> reconnectVector);
     /**
      * @brief getter function for the vector containing the scheduled reconnects
-     * @return a vector containing tuples consisting of expected next parent id, estimated reconnect location, estimated reconnect time
+     * @return a vector containing reconnect points consisting of expected next parent id, estimated reconnect location, estimated reconnect time
      */
-    [[nodiscard]] std::vector<ReconnectPoint>& getReconnectVector() const;
+    [[nodiscard]] const std::vector<ReconnectPoint>& getReconnectVector() const;
+
+    /**
+     * @brief removes the upcoming scheduled reconnect point from the front of the list
+     */
+    void removeNextReconnect();
 
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists

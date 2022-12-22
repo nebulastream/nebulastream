@@ -39,7 +39,7 @@ TEST_F(LocationUnitTest, testExceptionHandling) {
     EXPECT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200, 0"),
                  NES::Spatial::Exception::CoordinatesOutOfRangeException);
     EXPECT_THROW(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("200. 0"),
-                 NES::Spatial::Index::Experimental::InvalidCoordinateFormatException);
+                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
 
     auto geoLoc = NES::Spatial::DataTypes::Experimental::GeoLocation::fromString("23, 110");
     EXPECT_EQ(geoLoc.getLatitude(), 23);

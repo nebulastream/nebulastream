@@ -12,37 +12,24 @@
     limitations under the License.
 */
 
-syntax = "proto3";
+#include <NesBaseTest.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 
-package NES.Spatial.Protobuf;
+namespace NES {
 
-message Waypoint {
-  GeoLocation geoLocation = 1;
-  uint64 timestamp = 2;
+class WorkerMobilityHandlerUnitTests : public Testing::TestWithErrorHandling<testing::Test> {
+  public:
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MobilityHanlderUnitTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Set up mobility handler unit test class.");
+    }
+
+    static void TearDownTestCase() { NES_INFO("Tear down Mobility Handler unit test class test class."); }
+};
+
 }
 
-message GeoLocation {
-  double lat = 1;
-  double lng = 2;
-}
 
-enum SpatialType {
-  NO_LOCATION = 0;
-  FIXED_LOCATION = 1;
-  MOBILE_NODE = 2;
-}
 
-message WorkerLocationInfo {
-  uint64 id = 1;
-  GeoLocation geoLocation = 2;
-}
-
-message ReconnectSchedule {
-  repeated SerializableReconnectPoint reconnectPoints = 5;
-}
-
-message SerializableReconnectPoint {
-  uint64 id = 1;
-  uint64 time = 2;
-  GeoLocation geoLocation = 3;
-}
