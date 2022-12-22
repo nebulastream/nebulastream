@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_MAPPING_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_MAPPING_HPP_
-#include "Util/Logger/Logger.hpp"
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_MAPPING_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_MAPPING_HPP_
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <vector>
 
@@ -73,4 +73,4 @@ class Mapping {
 
 }// namespace NES::Nautilus
 
-#endif//NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_MAPPING_HPP_
+#endif//NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_MAPPING_HPP_

@@ -11,15 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Tracing/TraceContext.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Backends/WASM/WASMCompiler.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
-#include <Util/Logger/Logger.hpp>
+#include "Nautilus/Backends/WASM/WASMCompiler.hpp"
+#include "Execution/RecordBuffer.hpp"
+#include "Nautilus/Interface/DataTypes/MemRef.hpp"
+#include "Nautilus/Interface/DataTypes/Value.hpp"
+#include "Nautilus/Tracing/Phases/SSACreationPhase.hpp"
+#include "Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp"
+#include "Nautilus/Tracing/Trace/ExecutionTrace.hpp"
+#include "Nautilus/Tracing/TraceContext.hpp"
+#include "Util/Logger/Logger.hpp"
 #include <binaryen-c.h>
 #include <gtest/gtest.h>
 

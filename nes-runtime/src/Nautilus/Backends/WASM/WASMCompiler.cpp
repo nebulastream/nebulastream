@@ -90,8 +90,8 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
      */
     auto argsArray = std::make_unique<BinaryenType[]>(args.size());
     int funcArgsIndex = 0;
-    for (const auto& x : args) {
-        argsArray[funcArgsIndex] = x;
+    for (const auto& arg : args) {
+        argsArray[funcArgsIndex] = arg;
         funcArgsIndex++;
     }
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), funcArgsIndex);
@@ -100,10 +100,10 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
      * Extract variables and set them as locals
      */
     auto varArray = std::make_unique<BinaryenType[]>(localVariables.size());
-    int localsIndex = 0;
-    for (const auto& x : localVariables.getMapping()) {
-        varArray[localsIndex] = x.second;
-        localsIndex++;
+    int numLocalsTypes = 0;
+    for (const auto& mapping : localVariables.getMapping()) {
+        varArray[numLocalsTypes] = mapping.second;
+        numLocalsTypes++;
     }
 
     /**
@@ -133,7 +133,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
                                                        arguments,
                                                        getBinaryenType(functionOp->getOutputArg()),
                                                        varArray.get(),
-                                                       localsIndex,
+                                                       localVariables.size(),
                                                        body);
     /**
      * Need to export the execute function so it is callable
@@ -272,13 +272,13 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddressOpe
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp, BinaryenExpressions& expressions) {
-    auto x = loadOp->getIdentifier();
-    auto z = loadOp->getAddress()->getIdentifier();
-    auto ptr = expressions.getValue(z);
+    auto loadOpId = loadOp->getIdentifier();
+    auto addressId = loadOp->getAddress()->getIdentifier();
+    auto ptr = expressions.getValue(addressId);
 
-    auto y = BinaryenLoad(wasm, 0, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
-    consumed.emplace(z, ptr);
-    expressions.setValue(x, y);
+    auto loadExpression = BinaryenLoad(wasm, 0, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
+    consumed.emplace(addressId, ptr);
+    expressions.setValue(loadOpId, loadExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp,
@@ -294,7 +294,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOpera
 
     consumed.emplace(storeOp->getValue()->getIdentifier(), value);
     consumed.emplace(storeOp->getAddress()->getIdentifier(), address);
-    expressions.setValue("", storeExpression);
+    expressions.setValue("store_" + storeOp->getIdentifier(), storeExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ConstIntOperation>& constIntOp,
