@@ -91,7 +91,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
 
     auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinSchemaRight(),
                                              operatorHandler->getJoinFieldNameLeft());
-    size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
+    const size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
     auto sizeOfJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
@@ -99,6 +99,8 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
     auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
     currentTupleBuffer.setNumberOfTuples(0);
     size_t joinedTuples = 0;
+    const auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
+    const auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
     for(auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
@@ -124,8 +126,6 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
 
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
-                        auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
-                        auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
                         // Building the join tuple ( key | left tuple | right tuple)
                         memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
