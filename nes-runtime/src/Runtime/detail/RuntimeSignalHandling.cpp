@@ -32,7 +32,7 @@ void nesErrorHandler(int signal) {
 
 void nesKillHandler(int signal) {
     ((void) signal);
-    NES::Logger::getInstance().flush();
+    NES::Logger::getInstance().forceFlush();
 }
 
 /// called when std::terminate() is invoked
