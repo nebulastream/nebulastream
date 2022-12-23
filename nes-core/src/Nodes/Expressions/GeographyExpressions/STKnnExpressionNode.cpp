@@ -47,7 +47,7 @@ bool STKnnExpressionNode::equal(NodePtr const& rhs) const {
 
 std::string STKnnExpressionNode::toString() const {
     if (children.size() != 3) {
-        NES_FATAL_ERROR("A STKnnExpressionNode should always access two children, but it had: " << children.size());
+        NES_FATAL_ERROR2("A STKnnExpressionNode should always access two children, but it had: {}",  children.size());
         throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::toString(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -72,7 +72,7 @@ void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
 
 ExpressionNodePtr STKnnExpressionNode::getPoint() const {
     if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An ST_Knn Expression should always have three children, but it has: {}",  children.size());
         throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getPoint(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -81,7 +81,7 @@ ExpressionNodePtr STKnnExpressionNode::getPoint() const {
 
 ShapeExpressionNodePtr STKnnExpressionNode::getQueryPoint() const {
     if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An ST_Knn Expression should always have three children, but it has: {}",  children.size());
         throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getQueryPoint(): children.size() = ",
                                        std::to_string(children.size()));
     }
@@ -90,7 +90,7 @@ ShapeExpressionNodePtr STKnnExpressionNode::getQueryPoint() const {
 
 ExpressionNodePtr STKnnExpressionNode::getK() const {
     if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
+        NES_FATAL_ERROR2("An ST_Knn Expression should always have three children, but it has: {}",  children.size());
         throw InvalidArgumentException("Invalid number of children in STKnnExpressionNode::getK(): children.size() = ",
                                        std::to_string(children.size()));
     }

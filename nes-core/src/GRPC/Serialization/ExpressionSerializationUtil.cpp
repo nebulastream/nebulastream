@@ -143,7 +143,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         // serialize udf call expression node
         serializeUdfCallExpressions(expression, serializedExpression);
     } else {
-        NES_FATAL_ERROR("ExpressionSerializationUtil: could not serialize this expression: " << expression->toString());
+        NES_FATAL_ERROR2("ExpressionSerializationUtil: could not serialize this expression: {}", expression->toString());
     }
     DataTypeSerializationUtil::serializeDataType(expression->getStamp(), serializedExpression->mutable_stamp());
     NES_DEBUG("ExpressionSerializationUtil:: serialize expression node to "
@@ -192,9 +192,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto originalFieldAccessExpression =
                 deserializeExpression(serializedFieldRenameExpression.mutable_originalfieldaccessexpression());
             if (!originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
-                NES_FATAL_ERROR("ExpressionSerializationUtil: the original field access expression "
-                                "should be of type FieldAccessExpressionNode, but was a "
-                                << originalFieldAccessExpression->toString());
+                NES_FATAL_ERROR2("ExpressionSerializationUtil: the original field access expression "
+                                "should be of type FieldAccessExpressionNode, but was a {}", originalFieldAccessExpression->toString());
             }
             auto newFieldName = serializedFieldRenameExpression.newfieldname();
             expressionNodePtr =
@@ -247,12 +246,12 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             return CaseExpressionNode::create(leftExps, right);
 
         } else {
-            NES_FATAL_ERROR("ExpressionSerializationUtil: could not de-serialize this expression");
+            NES_FATAL_ERROR2("ExpressionSerializationUtil: could not de-serialize this expression");
         }
     }
 
     if (!expressionNodePtr) {
-        NES_FATAL_ERROR(
+        NES_FATAL_ERROR2(
             "ExpressionSerializationUtil:: fatal error during de-serialization. The expression node must not be null");
     }
     // deserialize expression stamp
@@ -363,8 +362,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
         serializeExpression(sqrtExpressionNode->child(), serializedExpressionNode.mutable_child());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
-        NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: "
-                        << expression->toString());
+        NES_FATAL_ERROR2("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: {}", expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -439,8 +437,8 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
         serializeExpression(equalsExpressionNode->child(), serializedExpressionNode.mutable_child());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
-        NES_FATAL_ERROR("ExpressionSerializationUtil: No serialization implemented for this logical expression node: "
-                        << expression->toString());
+        NES_FATAL_ERROR2("ExpressionSerializationUtil: No serialization implemented for this logical expression node: {}",
+                        expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -484,8 +482,7 @@ void ExpressionSerializationUtil::serializeGeographyExpressions(const Expression
         DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue->mutable_value());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
-        NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this geography expression node: "
-                        << expression->toString());
+        NES_FATAL_ERROR2("TranslateToLegacyPhase: No serialization implemented for this geography expression node: {}", expression->toString());
         NES_NOT_IMPLEMENTED();
     }
 }

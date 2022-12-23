@@ -234,7 +234,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
             *details.mutable_javaudfdescriptor());
         serializedOperator.mutable_details()->PackFrom(details);
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: " << operatorNode->toString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
     }
 
     // serialize input schema
@@ -580,7 +580,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
             case Windowing::WindowAggregationDescriptor::Median:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
                 break;
-            default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+            default: NES_FATAL_ERROR2("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
     auto* windowTrigger = windowDetails.mutable_triggerpolicy();
@@ -606,7 +606,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not cast aggregation type");
         }
     }
 
@@ -621,7 +621,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
             break;
         }
         default: {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not cast action type");
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not cast action type");
         }
     }
 
@@ -786,8 +786,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN) {
             aggregation.emplace_back(Windowing::MedianAggregationDescriptor::create(onField, asField));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
-                            << serializedWindowAggregation.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window aggregation: {}",
+                             serializedWindowAggregation.DebugString());
         }
     }
 
@@ -801,7 +801,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else if (serializedTriggerPolicy.type() == SerializableOperator_WindowDetails_TriggerPolicy_Type_triggerOnWatermarkChange) {
         trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize trigger:{}", serializedTriggerPolicy.DebugString());
     }
 
     Windowing::WindowActionDescriptorPtr action;
@@ -810,7 +810,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else if (serializedAction.type() == SerializableOperator_WindowDetails_TriggerAction_Type_Slicing) {
         action = Windowing::SliceAggregationTriggerActionDescriptor::create();
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize action: {}", serializedAction.DebugString());
     }
 
     Windowing::WindowTypePtr window;
@@ -829,8 +829,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
-                            << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
+                             serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_WindowDetails_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_WindowDetails_SlidingWindow();
@@ -847,8 +847,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
-                            << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}", serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_WindowDetails_ThresholdWindow>()) {
         auto serializedThresholdWindow = SerializableOperator_WindowDetails_ThresholdWindow();
@@ -857,7 +856,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             ExpressionSerializationUtil::deserializeExpression(serializedThresholdWindow.mutable_predicate());
         window = Windowing::ThresholdWindow::of(thresholdExpression);
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
     auto distrChar = windowDetails->distrchar();
@@ -940,7 +939,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     } else if (serializedTriggerPolicy.type() == SerializableOperator_JoinDetails_TriggerPolicy_Type_triggerOnWatermarkChange) {
         trigger = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize trigger: " << serializedTriggerPolicy.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize trigger: {}", serializedTriggerPolicy.DebugString());
     }
 
     auto serializedJoinType = joinDetails->jointype();
@@ -956,7 +955,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     if (serializedAction.type() == SerializableOperator_JoinDetails_TriggerAction_Type_LazyNestedLoop) {
         action = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize action: " << serializedAction.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize action: {}", serializedAction.DebugString());
     }
 
     Windowing::WindowTypePtr window;
@@ -973,8 +972,8 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
             window = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                    Windowing::TimeMeasure(serializedTumblingWindow.size()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
-                            << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
+                             serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_JoinDetails_SlidingWindow>()) {
         auto serializedSlidingWindow = SerializableOperator_JoinDetails_SlidingWindow();
@@ -991,11 +990,11 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
-            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
-                            << serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
+                            serializedTimeCharacterisitc.DebugString());
         }
     } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: " << serializedWindowType.DebugString());
+        NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
     LogicalOperatorNodePtr ptr;

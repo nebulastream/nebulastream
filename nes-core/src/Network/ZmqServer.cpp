@@ -376,8 +376,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 }
                 case MessageType::ErrorMessage: {
                     // if server receives a message that an error occured
-                    NES_FATAL_ERROR("ZmqServer(" << this->hostname << ":" << this->currentPort
-                                                 << "):  ErrorMessage not supported yet");
+                    NES_FATAL_ERROR2("ZmqServer({}:{}):  ErrorMessage not supported yet", this->hostname, this->currentPort);
                     break;
                 }
                 case MessageType::EndOfStream: {
