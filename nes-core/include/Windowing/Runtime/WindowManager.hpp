@@ -81,7 +81,7 @@ class WindowManager {
                 NES_TRACE2("WindowManager {}: for SlidingWindow sliceStream empty store, set ts as LastWatermark, startTs={} nextWindowEnd={} key={}",
                           id, store->nextEdge - window->getSlide().getTime(), store->nextEdge, key);
             } else {
-                NES_THROW_RUNTIME_ERROR2("WindowManager: Undefined Window Type");
+                NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
         NES_TRACE2("WindowManager {}: sliceStream check store-nextEdge={} <= ts={} key={}", id, store->nextEdge, ts, key);
@@ -129,7 +129,7 @@ class WindowManager {
                 NES_TRACE2("WindowManager list {}: for SlidingWindow sliceStream empty store, set ts as LastWatermark, startTs={} nextWindowEnd={}  key={}",
                            id, store->nextEdge - window->getSize().getTime(), store->nextEdge, key);
             } else {
-                NES_THROW_RUNTIME_ERROR2("WindowManager: Undefined Window Type");
+                NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
         NES_TRACE2("WindowManager list {}: sliceStream check store-nextEdge={} <= ts={}  key={}", id, store->nextEdge, ts, key);
