@@ -226,7 +226,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             NES_DEBUG2("SourceCatalogController: updateLogicalSource: Try to update  Logical Source {} with schema {}",
                        sourceName, schema);
             bool updated = sourceCatalogService->updateLogicalSource(sourceName, schema);
-            NES_DEBUG2("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?", updated);
+            NES_DEBUG2("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", updated);
             // Prepare the response
             if (updated) {
                 nlohmann::json success;
