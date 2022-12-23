@@ -163,6 +163,24 @@ if (NES_RUNTIME_BENCHMARKS)
     message(STATUS "Runtime benchmarks are enabled")
 endif ()
 
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
+    # Wasmtime
+    add_library(wasmtime SHARED IMPORTED)
+    set_target_properties(wasmtime PROPERTIES IMPORTED_LOCATION /home/victor/wasmtime-c-api/lib/libwasmtime.so)
+    set_target_properties(wasmtime PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/victor/wasmtime-c-api/lib)
+    target_include_directories(nes-runtime PUBLIC /home/victor/wasmtime-c-api/include)
+    target_link_libraries(nes-runtime PUBLIC wasmtime)
+
+    # Binaryen
+    add_library(binaryen SHARED IMPORTED)
+    set_target_properties(binaryen PROPERTIES IMPORTED_LOCATION /home/victor/binaryen/lib/libbinaryen.so)
+    set_target_properties(binaryen PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/victor/binaryen/lib/)
+    target_include_directories(nes-runtime PUBLIC
+            $<BUILD_INTERFACE:/home/victor/binaryen/src/>
+            $<INSTALL_INTERFACE:/home/victor/binaryen/src/>)
+    target_link_libraries(nes-runtime PUBLIC binaryen)
+endif()
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
