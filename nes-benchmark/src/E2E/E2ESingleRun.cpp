@@ -334,7 +334,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-           "numWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
+           "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
         << std::endl;
 
     std::stringstream outputCsvStream;
@@ -346,12 +346,11 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
-        outputCsvStream << "," << configPerRun.numberOfSources->getValue();
+        outputCsvStream << "," << getNumberOfPhysicalSources();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
-        outputCsvStream << ","
-                        << "\"" << queryString << "\"";
+        outputCsvStream << "," << "\"" << queryString << "\"";
         outputCsvStream << "\n";
     }
 
@@ -443,6 +442,24 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
 
     const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const {
         return coordinatorConf;
+    }
+
+    const Measurements::Measurements& E2ESingleRun::getMeasurements() const {
+        return measurements;
+    }
+
+    std::string E2ESingleRun::getNumberOfPhysicalSources() {
+        std::stringstream stringStream;
+        auto map = configPerRun.mapLogicalSrcToNumberOfPhysSrc;
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            if (it != map.begin()) {
+                stringStream << ", ";
+            }
+
+            stringStream << it->first << ": " << it->second;
+        }
+
+        return stringStream.str();
     }
 
 }// namespace NES::Benchmark

@@ -94,6 +94,19 @@ class E2ESingleRun {
     void writeMeasurementsToCsv();
 
     /**
+     * @brief Creates string representation of the number of physical sources
+     * @return string representation
+     */
+    std::string getNumberOfPhysicalSources();
+
+
+    /**
+     * @brief Getter for the Measurements of this run
+     * @return Reference to the Measurements
+     */
+    const Measurements::Measurements& getMeasurements() const;
+
+    /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
      * @param queryCatalogService: the catalog to look into for status change
@@ -105,8 +118,8 @@ class E2ESingleRun {
 
 
 private:
-    E2EBenchmarkConfigPerRun& configPerRun;
-    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+    const E2EBenchmarkConfigPerRun& configPerRun;
+    const E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
     int rpcPortSingleRun;
     int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
