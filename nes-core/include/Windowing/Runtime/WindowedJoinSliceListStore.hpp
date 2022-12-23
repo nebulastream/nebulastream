@@ -70,9 +70,9 @@ class WindowedJoinSliceListStore {
         std::lock_guard lock(internalMutex);
         for (uint64_t i = 0ULL; i < sliceMetaData.size(); ++i) {
             auto slice = sliceMetaData[i];
-            NES_TRACE("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
+            NES_TRACE2("slice begin={} slice end ={}", slice.getStartTs(), slice.getEndTs());
             if (isDefault || (slice.getStartTs() <= ts && slice.getEndTs() > ts)) {
-                NES_TRACE("return slice id=" << i);
+                NES_TRACE2("return slice id={}", i);
                 return i;
             }
         }
@@ -104,17 +104,15 @@ class WindowedJoinSliceListStore {
             if (itSlice->getEndTs() > watermark) {
                 break;
             }
-            NES_TRACE("WindowedJoinSliceListStore removeSlicesUntil: watermark="
-                      << watermark << " from slice endts=" << itSlice->getEndTs()
-                      << " sliceMetaData size=" << sliceMetaData.size() << " content size=" << content.size());
+            NES_TRACE2("WindowedJoinSliceListStore removeSlicesUntil: watermark={} from slice endts={}, sliceMetaData size={} content size={}",
+                      watermark, itSlice->getEndTs(), sliceMetaData.size(), content.size());
 
             itAggs++;
         }
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         content.erase(content.begin(), itAggs);
-        NES_TRACE("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-                                                                                            << " content=" << content.size());
+        NES_TRACE2("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice={} content={}", sliceMetaData.size(), content.size());
     }
 
     /**
@@ -122,7 +120,7 @@ class WindowedJoinSliceListStore {
      * @param slice the slice to add
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_TRACE("appendSlice with start " << slice.getStartTs());
+        NES_TRACE2("appendSlice with start {}", slice.getStartTs());
         std::lock_guard lock(internalMutex);
         sliceMetaData.emplace_back(slice);
         content.emplace_back(std::vector<ValueType>());
