@@ -16,6 +16,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
+#include <spdlog/details/periodic_worker.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -73,8 +74,9 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-auto createLogger(std::string loggerPath, LogLevel level)
-    -> std::tuple<std::shared_ptr<spdlog::logger>, std::shared_ptr<spdlog::details::thread_pool>> {
+auto createLogger(std::string loggerPath, LogLevel level) -> std::tuple<std::shared_ptr<spdlog::logger>,
+                                                                        std::shared_ptr<spdlog::details::thread_pool>,
+                                                                        std::unique_ptr<spdlog::details::periodic_worker>> {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
     auto tp = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
@@ -102,8 +104,16 @@ auto createLogger(std::string loggerPath, LogLevel level)
     logger->set_level(spdlogLevel);
     logger->flush_on(spdlog::level::debug);
 
-    return std::make_tuple(logger, tp);
+    auto flusher = std::make_unique<spdlog::details::periodic_worker>(
+        [logger]() {
+            logger->flush();
+        },
+        std::chrono::seconds(1));
+
+    return std::make_tuple(logger, tp, std::move(flusher));
 }
+
+Logger::Logger() : impl(detail::createEmptyLogger()) {}
 
 Logger::~Logger() { shutdown(); }
 
@@ -118,16 +128,18 @@ void Logger::shutdown() {
     bool expected = false;
     if (isShutdown.compare_exchange_strong(expected, true)) {
         forceFlush();
+        flusher.reset();
         impl.reset();
         loggerThreadPool.reset();
     }
 }
 
 void Logger::configure(const std::string& logFileName, LogLevel level) {
-    auto [configuredLogger, tp] = detail::createLogger(logFileName, level);
+    auto [configuredLogger, tp, flusher] = detail::createLogger(logFileName, level);
     std::swap(configuredLogger, impl);
     std::swap(level, currentLogLevel);
-    std::swap(tp, this->loggerThreadPool);
+    std::swap(tp, loggerThreadPool);
+    std::swap(flusher, this->flusher);
 }
 
 void Logger::changeLogLevel(LogLevel newLevel) {

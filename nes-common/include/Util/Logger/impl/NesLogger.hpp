@@ -42,7 +42,7 @@ class Logger {
 
     ~Logger();
 
-    Logger() : impl(detail::createEmptyLogger()) {}
+    Logger();
 
     Logger(const Logger&) = delete;
 
@@ -151,10 +151,11 @@ class Logger {
     void changeLogLevel(LogLevel newLevel);
 
   private:
-    std::shared_ptr<spdlog::logger> impl;
+    std::shared_ptr<spdlog::logger> impl{nullptr};
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
     std::atomic<bool> isShutdown{false};
-    std::shared_ptr<spdlog::details::thread_pool> loggerThreadPool;
+    std::shared_ptr<spdlog::details::thread_pool> loggerThreadPool{nullptr};
+    std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };
 }// namespace detail
 
