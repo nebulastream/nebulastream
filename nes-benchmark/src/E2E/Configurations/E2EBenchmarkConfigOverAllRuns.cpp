@@ -41,7 +41,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
 
-    srcNameDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
+    srcNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
 
 }
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -86,12 +86,12 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
         for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
             auto sourceName = (*entry).first;
             auto node = (*entry).second;
-            if (configOverAllRuns.srcNameDataGenerator.contains(sourceName)) {
+            if (configOverAllRuns.srcNameToDataGenerator.contains(sourceName)) {
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
             auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(sourceName, node);
-            configOverAllRuns.srcNameDataGenerator[sourceName] = dataGenerator;
+            configOverAllRuns.srcNameToDataGenerator[sourceName] = dataGenerator;
         }
     }
 
@@ -101,8 +101,8 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
 
 std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
     std::stringstream stringStream;
-    for (auto it = srcNameDataGenerator.begin(); it != srcNameDataGenerator.end(); ++it) {
-        if (it != srcNameDataGenerator.begin()) {
+    for (auto it = srcNameToDataGenerator.begin(); it != srcNameToDataGenerator.end(); ++it) {
+        if (it != srcNameToDataGenerator.begin()) {
             stringStream << ", ";
         }
         stringStream << it->first << ": " << it->second;

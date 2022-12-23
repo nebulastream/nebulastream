@@ -91,13 +91,13 @@ namespace NES::Benchmark {
 
         auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        configOverAllRuns.srcNameDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
-                                                  {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
+                                                    {zipfianDataGenerator->getName(), zipfianDataGenerator}};
 
         for (auto i = 0; i < 3; ++i) {
             E2EBenchmarkConfigPerRun configPerRun;
-            configPerRun.mapLogicalSrcToNumberOfPhysSrc = {{defaultDataGenerator->getName(), i + 1},
-                                                           {zipfianDataGenerator->getName(), i + 2}};
+            configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), i + 1},
+                                                      {zipfianDataGenerator->getName(), i + 2}};
             allConfigPerRuns.emplace_back(configPerRun);
         }
 
@@ -128,8 +128,8 @@ namespace NES::Benchmark {
         auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         E2EBenchmarkConfigPerRun configPerRun;
-        configPerRun.mapLogicalSrcToNumberOfPhysSrc = {{defaultDataGenerator->getName(), 123},
-                                                       {zipfianDataGenerator->getName(), 456}};
+        configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), 123},
+                                                  {zipfianDataGenerator->getName(), 456}};
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort);
@@ -138,7 +138,7 @@ namespace NES::Benchmark {
         expected << defaultDataGenerator->getName() << ": " << 123 << ", "
                  << zipfianDataGenerator->getName() << ": " << 456;
 
-        EXPECT_EQ(expected.str(), singleRun.getNumberOfPhysicalSources());
+        EXPECT_EQ(expected.str(), configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc());
     }
 
 
@@ -153,15 +153,15 @@ namespace NES::Benchmark {
                              zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
 
         E2EBenchmarkConfigPerRun configPerRun;
-        configPerRun.mapLogicalSrcToNumberOfPhysSrc = {{defaultDataGenerator->getName(), 2},
-                                                       {zipfianDataGenerator->getName(), 23}};
+        configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), 2},
+                                                  {zipfianDataGenerator->getName(), 23}};
         configPerRun.numberOfWorkerThreads->setValue(numberOfWorkerThreads);
         configPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy);
         configPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes);
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
-        configOverAllRuns.srcNameDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator}};
+        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator}};
         configOverAllRuns.inputType->setValue(inputType);
         configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
         configOverAllRuns.query->setValue(queryString);
@@ -207,7 +207,7 @@ namespace NES::Benchmark {
                             // tuplesPerSecond, tasksPerSecond, bufferPerSecond, mebiPerSecond
                             << "," << 1 << "," << 1 << "," << 1 << "," << 1
                             << "," << numberOfWorkerThreads << "," << numberOfQueriesToDeploy
-                            << "," << "\"" << singleRun.getNumberOfPhysicalSources() << "\""
+                            << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\""
                             << "," << bufferSizeInBytes << "," << inputType
                             << "," << dataProviderMode << "\"" << queryString << "\"" << "\n";
         }

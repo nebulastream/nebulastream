@@ -38,6 +38,7 @@ target_link_libraries(internal-provider-test nes-benchmark)
 
 # Adding unit test for E2ESingleRunTest
 add_nes_unit_test(e2e-single-run-test "UnitTests/E2E/E2ESingleRunTest.cpp")
+target_link_libraries(e2e-single-run-test nes-benchmark)
 
 
 
