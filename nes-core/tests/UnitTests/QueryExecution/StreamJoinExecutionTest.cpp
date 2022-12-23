@@ -86,10 +86,10 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
         parser->writeInputTupleToTupleBuffer(line, buffer.getNumberOfTuples(), buffer, schema, bufferManager);
     }
 
-
     return buffer;
 }
 
+// TODO: Enable this test in issue #3339
 TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
@@ -107,7 +107,6 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
 
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 20UL;
@@ -148,7 +147,6 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
     EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(), expectedSinkBuffer.getBuffer().getBuffer(),
                        expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes()) == 0);
-
 }
 
 

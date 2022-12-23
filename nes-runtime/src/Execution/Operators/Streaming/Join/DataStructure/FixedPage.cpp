@@ -40,7 +40,6 @@ uint8_t* FixedPage::append(const uint64_t hash)  {
     return ptr;
 }
 
-
 bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
     uint64_t totalKey;
     memcpy(&totalKey, keyPtr, sizeOfKey);
@@ -52,7 +51,6 @@ bool FixedPage::bloomFilterCheck(uint8_t* keyPtr, size_t sizeOfKey) const  {
 uint8_t* FixedPage::operator[](size_t index) const  { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return currentPos; }
-
 
 FixedPage::FixedPage(FixedPage&& otherPage) : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos),
                                               capacity(otherPage.capacity), bloomFilter(std::move(otherPage.bloomFilter)) {
@@ -70,8 +68,6 @@ FixedPage& FixedPage::operator=(FixedPage&& otherPage) {
     return *this;
 }
 
-
-
 void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
     std::swap(lhs.sizeOfRecord, rhs.sizeOfRecord);
     std::swap(lhs.data, rhs.data);
@@ -82,6 +78,4 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept {
 
 FixedPage::FixedPage(FixedPage* otherPage) : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos),
                                              capacity(otherPage->capacity), bloomFilter(std::move(otherPage->bloomFilter)) {}
-
-
 } // namespace NES::Runtime::Execution::Operators
