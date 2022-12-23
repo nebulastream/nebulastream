@@ -47,8 +47,7 @@ class E2ESingleRun {
      * @param configOverAllRuns
      * @param portOffSet
      */
-    explicit E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
-                          const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                           int rpcPort, int restPort);
 
     /**
@@ -94,13 +93,6 @@ class E2ESingleRun {
     void writeMeasurementsToCsv();
 
     /**
-     * @brief Creates string representation of the number of physical sources
-     * @return string representation
-     */
-    std::string getNumberOfPhysicalSources();
-
-
-    /**
      * @brief Getter for the Measurements of this run
      * @return Reference to the Measurements
      */
@@ -118,8 +110,8 @@ class E2ESingleRun {
 
 
 private:
-    const E2EBenchmarkConfigPerRun& configPerRun;
-    const E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+    E2EBenchmarkConfigPerRun& configPerRun;
+    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
     int rpcPortSingleRun;
     int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
