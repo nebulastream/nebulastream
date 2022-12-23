@@ -117,7 +117,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
         } else if (side == rightSide) {
             return watermarkProcessorRight->getCurrentWatermark();
         } else {
-            NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
+            NES_THROW_RUNTIME_ERROR2("getNumberOfMappings: invalid side");
             return -1;
         }
     }
