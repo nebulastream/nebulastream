@@ -101,7 +101,7 @@ class TestHarness {
     template<typename T>
     TestHarness& pushElement(T element, uint64_t workerId) {
         if (workerId > topologyId) {
-            NES_THROW_RUNTIME_ERROR2("TestHarness: workerId  {} does not exists",  std::to_string(workerId));
+            NES_THROW_RUNTIME_ERROR("TestHarness: workerId " + std::to_string(workerId) + " does not exists");
         }
 
         bool found = false;
@@ -109,11 +109,11 @@ class TestHarness {
             if (harnessWorkerConfig->getWorkerId() == workerId) {
                 found = true;
                 if (!std::is_class<T>::value) {
-                    NES_THROW_RUNTIME_ERROR2("TestHarness: tuples must be instances of struct");
+                    NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
                 }
 
                 if (harnessWorkerConfig->getSourceType() != TestHarnessWorkerConfiguration::MemorySource) {
-                    NES_THROW_RUNTIME_ERROR2("TestHarness: Record can be pushed only for source of Memory type.");
+                    NES_THROW_RUNTIME_ERROR("TestHarness: Record can be pushed only for source of Memory type.");
                 }
 
                 SchemaPtr schema;
@@ -125,11 +125,13 @@ class TestHarness {
                 }
 
                 if (!schema) {
-                    NES_THROW_RUNTIME_ERROR2("TestHarness: Unable to find schema for logical source {}. Make sure you have defined a logical source with this name in test harness", harnessWorkerConfig->getLogicalSourceName());
+                    NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find schema for logical source "
+                                            + harnessWorkerConfig->getLogicalSourceName()
+                                            + ". Make sure you have defined a logical source with this name in test harness");
                 }
 
                 if (sizeof(T) != schema->getSchemaSizeInBytes()) {
-                    NES_THROW_RUNTIME_ERROR2("TestHarness: tuple size and schema size does not match");
+                    NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
                 }
 
                 auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
@@ -140,7 +142,7 @@ class TestHarness {
         }
 
         if (!found) {
-            NES_THROW_RUNTIME_ERROR2("TestHarness: Unable to locate worker with id {}", std::to_string(workerId));
+            NES_THROW_RUNTIME_ERROR("TestHarness: Unable to locate worker with id " + std::to_string(workerId));
         }
 
         return *this;
@@ -405,7 +407,7 @@ class TestHarness {
                                    [](CoordinatorConfigurationPtr) {
                                    }) {
         if (!validationDone) {
-            NES_THROW_RUNTIME_ERROR2("Please call validate before calling setup.");
+            NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
 
         //Start Coordinator
@@ -499,7 +501,7 @@ class TestHarness {
                                                                         lineageMode);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
-            NES_THROW_RUNTIME_ERROR2("TestHarness: waitForQueryToStart returns false");
+            NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }
 
         // Check if the size of output struct match with the size of output schema
@@ -526,12 +528,13 @@ class TestHarness {
                                                                    numberOfContentToExpect,
                                                                    filePath,
                                                                    testTimeout)) {
-            NES_THROW_RUNTIME_ERROR2("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
-                                    "number of buffers to expect={}", std::to_string(numberOfContentToExpect));
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
+                                    "number of buffers to expect="
+                                    << std::to_string(numberOfContentToExpect));
         }
 
         if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
-            NES_THROW_RUNTIME_ERROR2("TestHarness: checkStoppedOrTimeout returns false for query with id= {}", queryId);
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
         }
 
         std::ifstream ifs(filePath.c_str());
