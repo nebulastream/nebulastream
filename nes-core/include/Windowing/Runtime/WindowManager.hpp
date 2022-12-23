@@ -140,10 +140,10 @@ class WindowManager {
             NES_TRACE2("WindowManager: sliceStream currentSlice={} key={}", key, currentSlice);
             auto& sliceMetaData = store->getSliceMetadata();
             auto newStart = sliceMetaData[currentSlice].getEndTs();
-            NES_TRACE2("WindowManager: sliceStream newStart={} key={}" newStart, key);
+            NES_TRACE2("WindowManager: sliceStream newStart={} key={}", newStart, key);
             auto nextEdge = timeBasedWindowType->calculateNextWindowEnd(store->nextEdge);
             NES_TRACE2("WindowManager: sliceStream nextEdge={} key={}", nextEdge, key);
-            NES_TRACE2("WindowManager list {}: append new slide for start={} end={} key={}" << id, newStart, nextEdge, key);
+            NES_TRACE2("WindowManager list {}: append new slide for start={} end={} key={}", id, newStart, nextEdge, key);
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
