@@ -71,7 +71,7 @@ ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp
 ExpressionItem ExpressionItem::as(std::string newName) {
     //rename expression node
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Renaming is only allowed on Field Access Attributes");
+        NES_ERROR2("Renaming is only allowed on Field Access Attributes");
         NES_NOT_IMPLEMENTED();
     }
     auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
@@ -86,7 +86,7 @@ FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr ass
     if (expression->instanceOf<FieldAccessExpressionNode>()) {
         return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
     }
-    NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
+    NES_FATAL_ERROR2("Expression API: we can only assign something to a field access expression");
     throw Exceptions::RuntimeException("Expression API: we can only assign something to a field access expression");
 }
 

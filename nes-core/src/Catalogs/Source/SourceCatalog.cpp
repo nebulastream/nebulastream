@@ -28,11 +28,11 @@ namespace NES::Catalogs::Source {
 
 void SourceCatalog::addDefaultSources() {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("Sourcecatalog addDefaultSources");
+    NES_DEBUG2("Sourcecatalog addDefaultSources");
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     bool success = addLogicalSource("default_logical", schema);
     if (!success) {
-        NES_ERROR("SourceCatalog::addDefaultSources: error while add default_logical");
+        NES_ERROR2("SourceCatalog::addDefaultSources: error while add default_logical");
         throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
 
@@ -56,7 +56,7 @@ void SourceCatalog::addDefaultSources() {
 
     bool success2 = addLogicalSource("exdra", schemaExdra);
     if (!success2) {
-        NES_ERROR("SourceCatalog::addDefaultSources: error while adding exdra logical source");
+        NES_ERROR2("SourceCatalog::addDefaultSources: error while adding exdra logical source");
         throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     }
 
@@ -70,21 +70,21 @@ void SourceCatalog::addDefaultSources() {
     //                            ->addField(createField("CreationTime", UINT64));
     //    bool success3 = addLogicalSource("iris", iris);
     //    if (!success3) {
-    //        NES_ERROR("SourceCatalog::addDefaultSources: error while adding iris logical source");
+    //        NES_ERROR2("SourceCatalog::addDefaultSources: error while adding iris logical source");
     //        throw Exceptions::RuntimeException("Error while addDefaultSources SourceCatalog");
     //    }
 }
 
 SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
-    NES_DEBUG("SourceCatalog: construct source catalog");
+    NES_DEBUG2("SourceCatalog: construct source catalog");
     addDefaultSources();
-    NES_DEBUG("SourceCatalog: construct source catalog successfully");
+    NES_DEBUG2("SourceCatalog: construct source catalog successfully");
 }
 
 bool SourceCatalog::addLogicalSource(const std::string& sourceName, const std::string& sourceSchema) {
     std::unique_lock lock(catalogMutex);
     SchemaPtr schema = queryParsingService->createSchemaFromCode(sourceSchema);
-    NES_DEBUG("SourceCatalog: schema successfully created");
+    NES_DEBUG2("SourceCatalog: schema successfully created");
     return addLogicalSource(sourceName, schema);
 }
 
@@ -94,46 +94,46 @@ bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schem
     NES_DEBUG2("SourceCatalog: Check if logical source {} already exist.", logicalSourceName);
 
     if (!containsLogicalSource(logicalSourceName)) {
-        NES_DEBUG("SourceCatalog: add logical source " << logicalSourceName);
+        NES_DEBUG2("SourceCatalog: add logical source {}", logicalSourceName);
         logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schemaPtr);
         return true;
     }
-    NES_ERROR("SourceCatalog: logical source " << logicalSourceName << " already exists");
+    NES_ERROR2("SourceCatalog: logical source {} already exists", logicalSourceName);
     return false;
 }
 
 bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical source in removeLogicalSource() " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: search for logical source in removeLogicalSource() {}", logicalSourceName);
 
     //if log source does not exists
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
-        NES_ERROR("SourceCatalog: logical source " << logicalSourceName << " does not exists");
+        NES_ERROR2("SourceCatalog: logical source {} already exists", logicalSourceName);
         return false;
     }
-    NES_DEBUG("SourceCatalog: remove logical source " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: remove logical source {}", logicalSourceName);
     if (logicalToPhysicalSourceMapping[logicalSourceName].size() != 0) {
-        NES_DEBUG("SourceCatalog: cannot remove " << logicalSourceName << " because there are physical entries for this source");
+        NES_DEBUG2("SourceCatalog: cannot remove {} because there are physical entries for this source", logicalSourceName);
         return false;
     }
     uint64_t cnt = logicalSourceNameToSchemaMapping.erase(logicalSourceName);
-    NES_DEBUG("SourceCatalog: removed " << cnt << " copies of the source");
+    NES_DEBUG2("SourceCatalog: removed {} copies of the source", cnt);
     NES_ASSERT(!containsLogicalSource(logicalSourceName), "log source should not exist");
     return true;
 }
 
 bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, const SourceCatalogEntryPtr& newSourceCatalogEntry) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical source in addPhysicalSource() " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: search for logical source in addPhysicalSource() {}", logicalSourceName);
 
     // check if logical source exists
     if (!containsLogicalSource(logicalSourceName)) {
-        NES_ERROR("SourceCatalog: logical source " << logicalSourceName << " does not exists when inserting physical source "
-                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+        NES_ERROR2("SourceCatalog: logical source {} does not exists when inserting physical source {} ",
+                  logicalSourceName, newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
     } else {
-        NES_DEBUG("SourceCatalog: logical source " << logicalSourceName << " exists try to add physical source "
-                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+        NES_DEBUG2("SourceCatalog: logical source {} exists try to add physical source {}", logicalSourceName,
+                       newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
         //get current physical source for this logical source
         std::vector<SourceCatalogEntryPtr> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
@@ -141,34 +141,31 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         //check if physical source does not exist yet
         for (const SourceCatalogEntryPtr& sourceCatalogEntry : physicalSources) {
             auto physicalSourceToTest = sourceCatalogEntry->getPhysicalSource();
-            NES_DEBUG("test node id=" << sourceCatalogEntry->getNode()->getId()
-                                      << " phyStr=" << physicalSourceToTest->getPhysicalSourceName());
+            NES_DEBUG2("test node id={} phyStr={}", sourceCatalogEntry->getNode()->getId(), physicalSourceToTest->getPhysicalSourceName());
             if (physicalSourceToTest->getPhysicalSourceName()
                     == newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
                 && sourceCatalogEntry->getNode()->getId() == newSourceCatalogEntry->getNode()->getId()) {
-                NES_ERROR("SourceCatalog: node with id=" << sourceCatalogEntry->getNode()->getId() << " name="
-                                                         << physicalSourceToTest->getPhysicalSourceName() << " already exists");
+                NES_ERROR2("SourceCatalog: node with id={} name={} already exists",
+                           sourceCatalogEntry->getNode()->getId(), physicalSourceToTest->getPhysicalSourceName());
                 return false;
             }
         }
     }
 
-    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
-                                                << " does not exist, try to add");
+    NES_DEBUG2("SourceCatalog: physical source  {} does not exist, try to add", newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
     //if first one
     if (testIfLogicalSourceExistsInLogicalToPhysicalMapping(logicalSourceName)) {
-        NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
+        NES_DEBUG2("SourceCatalog: Logical source already exists, add new physical entry");
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     } else {
-        NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
+        NES_DEBUG2("SourceCatalog: Logical source does not exist, create new item");
         logicalToPhysicalSourceMapping.insert(
             std::pair<std::string, std::vector<SourceCatalogEntryPtr>>(logicalSourceName, std::vector<SourceCatalogEntryPtr>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     }
 
-    NES_DEBUG("SourceCatalog: physical source " << newSourceCatalogEntry->getPhysicalSource()
-                                                << " id=" << newSourceCatalogEntry->getNode()->getId() << " successful added");
+    NES_DEBUG2("SourceCatalog: physical source {} id={} successful added", newSourceCatalogEntry->getPhysicalSource(), newSourceCatalogEntry->getNode()->getId());
     return true;
 }
 
@@ -181,55 +178,50 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
                                          const std::string& physicalSourceName,
                                          std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical source in removePhysicalSource() " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: search for logical source in removePhysicalSource() {}", logicalSourceName);
 
     // check if logical source exists
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end()) {
-        NES_ERROR("SourceCatalog: logical source "
-                  << logicalSourceName << " does not exists when trying to remove physical source with hashId" << hashId);
+        NES_ERROR2("SourceCatalog: logical source {} does not exists when trying to remove physical source with hashId {}", logicalSourceName, hashId);
         return false;
     }
-    NES_DEBUG("SourceCatalog: logical source " << logicalSourceName << " exists try to remove physical source"
-                                               << physicalSourceName << " from node " << hashId);
+    NES_DEBUG2("SourceCatalog: logical source {} exists try to remove physical source{} from node {}", logicalSourceName, physicalSourceName, hashId);
     for (auto entry = logicalToPhysicalSourceMapping[logicalSourceName].cbegin();
          entry != logicalToPhysicalSourceMapping[logicalSourceName].cend();
          entry++) {
-        NES_DEBUG("test node id=" << entry->get()->getNode()->getId()
-                                  << " phyStr=" << entry->get()->getPhysicalSource()->getPhysicalSourceName());
-        NES_DEBUG("test to be deleted id=" << hashId << " phyStr=" << physicalSourceName);
+        NES_DEBUG2("test node id={} phyStr={}", entry->get()->getNode()->getId(), entry->get()->getPhysicalSource()->getPhysicalSourceName());
+        NES_DEBUG2("test to be deleted id={} phyStr={}", hashId, physicalSourceName);
         if (entry->get()->getPhysicalSource()->getPhysicalSourceName() == physicalSourceName) {
-            NES_DEBUG("SourceCatalog: node with name=" << physicalSourceName << " exists try match hashId" << hashId);
+            NES_DEBUG2("SourceCatalog: node with name={} exists try match hashId {}", physicalSourceName, hashId);
 
             if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("SourceCatalog: node with id=" << hashId << " name=" << physicalSourceName << " exists try to erase");
+                NES_DEBUG2("SourceCatalog: node with id={} name={} exists try to erase", hashId, physicalSourceName);
                 logicalToPhysicalSourceMapping[logicalSourceName].erase(entry);
-                NES_DEBUG("SourceCatalog: number of entries afterwards "
-                          << logicalToPhysicalSourceMapping[logicalSourceName].size());
+                NES_DEBUG2("SourceCatalog: number of entries afterwards {}",
+                          logicalToPhysicalSourceMapping[logicalSourceName].size());
                 return true;
             }
         }
     }
-    NES_DEBUG("SourceCatalog: physical source " << physicalSourceName << " does not exist on node with id" << hashId
-                                                << " and with logicalSourceName " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: physical source {} does not exist on node with id {} and with logicalSourceName {}",
+               physicalSourceName, hashId, logicalSourceName);
 
-    NES_DEBUG("SourceCatalog: physical source " << physicalSourceName << " does not exist on node with id" << hashId);
+    NES_DEBUG2("SourceCatalog: physical source {} does not exist on node with id {}", physicalSourceName, hashId);
     return false;
 }
 
 bool SourceCatalog::removePhysicalSourceByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     for (const auto& logSource : logicalToPhysicalSourceMapping) {
-        NES_DEBUG("SourceCatalog: check log source " << logSource.first);
+        NES_DEBUG2("SourceCatalog: check log source {}", logSource.first);
         for (auto entry = logicalToPhysicalSourceMapping[logSource.first].cbegin();
              entry != logicalToPhysicalSourceMapping[logSource.first].cend();
              entry++) {
             if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("SourceCatalog: found entry with nodeid=" << entry->get()->getNode()->getId() << " physicalSource="
-                                                                    << entry->get()->getPhysicalSource()->getPhysicalSourceName()
-                                                                    << " logicalSource=" << logSource.first);
+                NES_DEBUG2("SourceCatalog: found entry with nodeid={} physicalSource={} logicalSource={}",
+                           entry->get()->getNode()->getId(), entry->get()->getPhysicalSource()->getPhysicalSourceName(), logSource.first);
                 //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                NES_DEBUG("SourceCatalog: deleted physical source with hashID"
-                          << hashId << "and name" << entry->get()->getPhysicalSource()->getPhysicalSourceName());
+                NES_DEBUG2("SourceCatalog: deleted physical source with hashID {} and name {}", hashId, entry->get()->getPhysicalSource()->getPhysicalSourceName());
                 logicalToPhysicalSourceMapping[logSource.first].erase(entry);
                 return true;
             }
@@ -256,7 +248,7 @@ LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::stri
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) != logicalSourceNameToSchemaMapping.end()) {
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
-    NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists " << logicalSourceName);
+    NES_ERROR2("SourceCatalog::getLogicalSourceOrThrowException: source does not exists {}", logicalSourceName);
     throw Exceptions::RuntimeException("Required source does not exists " + logicalSourceName);
 }
 
@@ -291,12 +283,12 @@ std::vector<TopologyNodePtr> SourceCatalog::getSourceNodesForLogicalSource(const
 
 bool SourceCatalog::reset() {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: reset Source Catalog");
+    NES_DEBUG2("SourceCatalog: reset Source Catalog");
     logicalSourceNameToSchemaMapping.clear();
     logicalToPhysicalSourceMapping.clear();
 
     addDefaultSources();
-    NES_DEBUG("SourceCatalog: reset Source Catalog completed");
+    NES_DEBUG2("SourceCatalog: reset Source Catalog completed");
     return true;
 }
 
@@ -315,7 +307,7 @@ std::string SourceCatalog::getPhysicalSourceAndSchemaAsString() {
 
 std::vector<SourceCatalogEntryPtr> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) {
     if (logicalToPhysicalSourceMapping.find(logicalSourceName) == logicalToPhysicalSourceMapping.end()) {
-        NES_ERROR("SourceCatalog: Unable to find source catalog entry with logical source name " + logicalSourceName);
+        NES_ERROR2("SourceCatalog: Unable to find source catalog entry with logical source name {}", logicalSourceName);
         throw MapEntryNotFoundException("SourceCatalog: Logical source(s) [" + logicalSourceName
                                         + "] are found to have no physical source(s) defined. ");
     }
@@ -339,13 +331,13 @@ bool SourceCatalog::updateLogicalSource(const std::string& sourceName, const std
     NES_INFO2("SourceCatalog: Update the logical source {} with the schema {} ", sourceName, sourceSchema);
     std::unique_lock lock(catalogMutex);
 
-    NES_TRACE("SourceCatalog: Check if logical source exists in the catalog.");
+    NES_TRACE2("SourceCatalog: Check if logical source exists in the catalog.");
     if (!containsLogicalSource(sourceName)) {
-        NES_ERROR("SourceCatalog: Unable to find logical source " << sourceName << " to update.");
+        NES_ERROR2("SourceCatalog: Unable to find logical source {} to update.", sourceName);
         return false;
     }
 
-    NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
+    NES_TRACE2("SourceCatalog: create a new schema object and add to the catalog");
     SchemaPtr schema = queryParsingService->createSchemaFromCode(sourceSchema);
     logicalSourceNameToSchemaMapping[sourceName] = schema;
     return true;
@@ -354,13 +346,13 @@ bool SourceCatalog::updateLogicalSource(const std::string& sourceName, const std
 bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
     std::unique_lock lock(catalogMutex);
     //check if source already exist
-    NES_DEBUG("SourceCatalog: search for logical source in addLogicalSource() " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: search for logical source in addLogicalSource() {}", logicalSourceName);
 
     if (!containsLogicalSource(logicalSourceName)) {
-        NES_ERROR("SourceCatalog: Unable to find logical source " << logicalSourceName << " to update.");
+        NES_ERROR2("SourceCatalog: Unable to find logical source {} to update.", logicalSourceName);
         return false;
     }
-    NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
+    NES_TRACE2("SourceCatalog: create a new schema object and add to the catalog");
     logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schemaPtr);
     return true;
 }

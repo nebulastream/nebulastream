@@ -280,7 +280,7 @@ void TCPSourceType::setSocketDomainViaString(std::string domainValue) {
     } else if (strcasecmp(domainValue.c_str(), "AF_INET6") == 0) {
         setSocketDomain(AF_INET6);
     } else {
-        NES_ERROR("TCPSourceType::setSocketDomainViaString: Value unknown.");
+        NES_ERROR2("TCPSourceType::setSocketDomainViaString: Value unknown.");
     }
 }
 
@@ -300,7 +300,7 @@ void TCPSourceType::setSocketTypeViaString(std::string typeValue) {
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RDM") == 0) {
         setSocketType(SOCK_RDM);
     } else {
-        NES_ERROR("TCPSourceType::setSocketDomainViaString: Value unknown.");
+        NES_ERROR2("TCPSourceType::setSocketDomainViaString: Value unknown.");
     }
 }
 
