@@ -167,7 +167,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
                 windowSize = window->getSize().getTime();
             } else {
-                NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+                NES_THROW_RUNTIME_ERROR2("AggregationWindowHandler: Undefined Window Type");
             }
 
             auto allowedLateness = windowManager->getAllowedLateness();

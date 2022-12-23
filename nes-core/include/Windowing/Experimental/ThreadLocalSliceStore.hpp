@@ -83,9 +83,7 @@ class ThreadLocalSliceStore {
             // Thus, we return a reference to the slice.
             return *sliceIter;
         } else {
-            NES_THROW_RUNTIME_ERROR("Error during slice lookup: We looked for ts: " << ts << " current front: "
-                                                                                    << getLastSlice()->getStart() << " - "
-                                                                                    << getLastSlice()->getEnd());
+            NES_THROW_RUNTIME_ERROR2("Error during slice lookup: We looked for ts: {} current front: {} - {} ", ts, getLastSlice()->getStart(), getLastSlice()->getEnd());
         }
     }
 
