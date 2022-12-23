@@ -81,10 +81,5 @@ class SharedJoinHashTable {
     std::vector<std::atomic<size_t>> bucketNumItems;
     std::vector<std::atomic<size_t>> bucketNumPages;
 };
-
-
-
-
-
 } // namespace NES::Runtime::Execution::Operators
 #endif//NES_SHAREDJOINHASHTABLE_HPP

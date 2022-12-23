@@ -14,9 +14,6 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
 
 namespace NES::Runtime::Execution {
-
-
-
 Operators::LocalHashTable* StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
     if (leftSide) {
         return localHashTableLeftSide[index].get();

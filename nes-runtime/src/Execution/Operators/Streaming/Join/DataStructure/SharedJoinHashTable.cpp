@@ -16,10 +16,6 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-
-
-
 void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
     auto& head = bucketHeads[bucketPos];
     auto& numItems = bucketNumItems[bucketPos];
