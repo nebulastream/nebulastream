@@ -10,10 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
-    add_subdirectory(MLIR)
-endif()
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
-    add_subdirectory(WASM)
-endif ()
+add_source_files(nes-runtime
+        WASMCompiler.cpp
+        )
