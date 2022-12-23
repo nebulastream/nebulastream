@@ -43,6 +43,12 @@ class E2EBenchmarkConfigOverAllRuns {
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
+     * @brief creates a string representation of mapLogicalSrcNameToDataGenerator
+     * @return string representation
+     */
+    std::string getStrLogicalSrcDataGenerators();
+
+    /**
      * @brief all configurations that are constant over all runs
      */
   public:
@@ -58,7 +64,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    std::map<std::string, DataGeneration::DataGeneratorPtr> mapLogicalSrcNameToDataGenerator;
+    std::map<std::string, DataGeneration::DataGeneratorPtr> srcNameDataGenerator;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark
