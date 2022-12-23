@@ -125,7 +125,7 @@ class JoinHandler : public AbstractJoinHandler {
     */
     void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(mutex);
-        NES_TRACE2("JoinHandler {}: run window action {} forceFlush={}" << id, executableJoinAction->toString(), forceFlush);
+        NES_TRACE2("JoinHandler {}: run window action {} forceFlush={}", id, executableJoinAction->toString(), forceFlush);
 
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
@@ -198,7 +198,7 @@ class JoinHandler : public AbstractJoinHandler {
                 afterMin = getMinWatermark(rightSide);
             }
 
-            NES_TRACE2("JoinHandler {}: updateAllMaxTs with beforeMin={}  afterMin={}" id, beforeMin, afterMin);
+            NES_TRACE2("JoinHandler {}: updateAllMaxTs with beforeMin={}  afterMin={}", id, beforeMin, afterMin);
             if (beforeMin < afterMin) {
                 trigger(workerContext);
             }
