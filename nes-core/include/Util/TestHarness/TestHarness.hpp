@@ -170,15 +170,12 @@ class TestHarness {
             // Check if logical source already exists
             auto sourceCatalog = nesCoordinator->getSourceCatalog();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-                NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source "
-                          << logicalSourceName);
+                NES_TRACE2("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}", logicalSourceName);
                 sourceCatalog->addLogicalSource(logicalSourceName, schema);
             } else {
                 // Check if it has the same schema
                 if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
-                    NES_TRACE("TestHarness: logical source " << logicalSourceName
-                                                             << " exists in the source catalog with "
-                                                                "different schema, replacing it with a new schema");
+                    NES_TRACE2("TestHarness: logical source {} exists in the source catalog with different schema, replacing it with a new schema", logicalSourceName);
                     sourceCatalog->removeLogicalSource(logicalSourceName);
                     sourceCatalog->addLogicalSource(logicalSourceName, schema);
                 }

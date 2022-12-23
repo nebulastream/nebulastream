@@ -47,7 +47,7 @@ class JoinHandler : public AbstractJoinHandler {
         this->watermarkProcessorLeft = Windowing::MultiOriginWatermarkProcessor::create(numberOfInputEdgesLeft);
         this->watermarkProcessorRight = Windowing::MultiOriginWatermarkProcessor::create(numberOfInputEdgesRight);
         lastWatermark = 0;
-        NES_TRACE("Created join handler with id=" << id);
+        NES_TRACE2("Created join handler with id={}", id);
     }
 
     static AbstractJoinHandlerPtr create(Join::LogicalJoinDefinitionPtr joinDefinition,
@@ -57,7 +57,7 @@ class JoinHandler : public AbstractJoinHandler {
         return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id);
     }
 
-    ~JoinHandler() override { NES_TRACE("~JoinHandler()"); }
+    ~JoinHandler() override { NES_TRACE2("~JoinHandler()"); }
 
     /**
    * @brief Starts thread to check if the window should be triggered.
@@ -125,14 +125,12 @@ class JoinHandler : public AbstractJoinHandler {
     */
     void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(mutex);
-        NES_TRACE("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
-                                 << " forceFlush=" << forceFlush);
+        NES_TRACE2("JoinHandler {}: run window action {} forceFlush={}" << id, executableJoinAction->toString(), forceFlush);
 
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
-        NES_TRACE("JoinHandler " << id << ": run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
-                                 << " lastWatermark=" << lastWatermark);
+        NES_TRACE2("JoinHandler {}: run for watermarkLeft={} watermarkRight={} lastWatermark={}", id, watermarkLeft, watermarkRight, lastWatermark);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
@@ -154,17 +152,16 @@ class JoinHandler : public AbstractJoinHandler {
                     lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
-            NES_TRACE("JoinHandler " << id << ": set lastWatermarkLeft to min value of stores=" << lastWatermark);
+            NES_TRACE2("JoinHandler {}: set lastWatermarkLeft to min value of stores={}", id, lastWatermark);
         }
 
-        NES_TRACE("JoinHandler " << id << ": run doing with watermarkLeft=" << watermarkLeft
-                                 << " watermarkRight=" << watermarkRight << " lastWatermark=" << lastWatermark);
+        NES_TRACE2("JoinHandler {}: run doing with watermarkLeft={} watermarkRight={} lastWatermark={}", id,  watermarkLeft,  watermarkRight, lastWatermark);
         lock.unlock();
 
         auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
         executableJoinAction->doAction(leftJoinState, rightJoinState, minMinWatermark, lastWatermark, workerContext);
         lock.lock();
-        NES_TRACE("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
+        NES_TRACE2("JoinHandler {}: set lastWatermarkLeft to={}", id, minMinWatermark);
         lastWatermark = minMinWatermark;
 
         if (forceFlush) {
@@ -187,7 +184,7 @@ class JoinHandler : public AbstractJoinHandler {
                      bool isLeftSide) override {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";
-        NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
+        NES_TRACE2("JoinHandler {}: updateAllMaxTs with ts={} originId={} side={}", id, ts, originId, side);
         if (joinDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             uint64_t beforeMin = 0;
             uint64_t afterMin = 0;
@@ -201,7 +198,7 @@ class JoinHandler : public AbstractJoinHandler {
                 afterMin = getMinWatermark(rightSide);
             }
 
-            NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with beforeMin=" << beforeMin << " afterMin=" << afterMin);
+            NES_TRACE2("JoinHandler {}: updateAllMaxTs with beforeMin={}  afterMin={}" id, beforeMin, afterMin);
             if (beforeMin < afterMin) {
                 trigger(workerContext);
             }

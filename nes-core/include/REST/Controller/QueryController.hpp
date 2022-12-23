@@ -110,7 +110,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/query-plan", getQueryPlan, QUERY(UInt64, queryId, "queryId")) {
         try {
             const Catalogs::Query::QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            NES_TRACE("UtilityFunctions: Getting the json representation of the query plan");
+            NES_TRACE2("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
             return createResponse(Status::CODE_200, basePlan.dump());
         } catch (QueryNotFoundException e) {
