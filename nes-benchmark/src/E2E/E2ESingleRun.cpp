@@ -71,79 +71,78 @@ void E2ESingleRun::setupCoordinatorConfig() {
 void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
-    auto dataGenerator =
-        NES::Benchmark::DataGeneration::DataGenerator::createGeneratorByName(configOverAllRuns.dataGenerator->getValue(),
-                                                                             Yaml::Node());
+
     auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
                                                                   configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+    for (const auto& [logicalSourceName, dataGenerator] : configOverAllRuns.srcNameToDataGenerator) {
+        dataGenerator->setBufferManager(bufferManager);
+        auto schema = dataGenerator->getSchema();
+        auto logicalSource = LogicalSource::create(logicalSourceName, schema);
+        coordinatorConf->logicalSources.add(logicalSource);
+        auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
+        NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source " << logicalSource->getLogicalSourceName());
+        for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
-    dataGenerator->setBufferManager(bufferManager);
-    auto schema = dataGenerator->getSchema();
-    auto logicalSourceName = configOverAllRuns.logicalSourceName->getValue();
-    auto logicalSource = LogicalSource::create(logicalSourceName, schema);
-    coordinatorConf->logicalSources.add(logicalSource);
+            auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
 
-    for (uint64_t i = 0; i < configPerRun.numberOfSources->getValue(); i++) {
+            auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
+                                                            configPerRun.bufferSizeInBytes->getValue());
 
-        auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
+            size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
 
-        auto createdBuffers = dataGenerator->createData(configOverAllRuns.numberOfPreAllocatedBuffer->getValue(),
-                                                        configPerRun.bufferSizeInBytes->getValue());
+            //TODO #3336: static query manager mode is currently not ported therefore only one queue
+            size_t taskQueueId = 0;
+            if (dataGenerator->getName() == "YSBKafka") {
+    #ifdef ENABLE_KAFKA_BUILD
+                //Kafka is not using a data provider as Kafka itself is the provider
+                auto connectionStringVec =
+                    NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
 
-        size_t sourceAffinity = std::numeric_limits<uint64_t>::max();
+                std::string destinationTopic;
 
-        //TODO #3336: static query manager mode is currently not ported therefore only one queue
-        size_t taskQueueId = 0;
-        if (configOverAllRuns.dataGenerator->getValue() == "YSBKafka") {
-#ifdef ENABLE_KAFKA_BUILD
-            //Kafka is not using a data provider as Kafka itself is the provider
-            auto connectionStringVec =
-                NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
+                NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << connectionStringVec[1])
+                auto kafkaSourceType = KafkaSourceType::create();
+                kafkaSourceType->setBrokers(connectionStringVec[0]);
+                kafkaSourceType->setTopic(connectionStringVec[1]);
+                kafkaSourceType->setConnectionTimeout(1000);
 
-            std::string destinationTopic;
+                //we use the group id
+                kafkaSourceType->setGroupId(std::to_string(i));
+                kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
+                kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
 
-            NES_DEBUG("Source no=" << sourceCnt << " connects to topic=" << connectionStringVec[1])
-            auto kafkaSourceType = KafkaSourceType::create();
-            kafkaSourceType->setBrokers(connectionStringVec[0]);
-            kafkaSourceType->setTopic(connectionStringVec[1]);
-            kafkaSourceType->setConnectionTimeout(1000);
+                auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
+                coordinatorConf->worker.physicalSources.add(physicalSource);
 
-            //we use the group id
-            kafkaSourceType->setGroupId(std::to_string(i));
-            kafkaSourceType->setNumberOfBuffersToProduce(configOverAllRuns.numberOfBuffersToProduce->getValue());
-            kafkaSourceType->setBatchSize(configOverAllRuns.batchSize->getValue());
+                allBufferManagers.emplace_back(bufferManager);
+    #else
+                NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
+    #endif
+            } else {
+                auto dataProvider =
+                    DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
+                // Adding necessary items to the corresponding vectors
+                allDataProviders.emplace_back(dataProvider);
+                allBufferManagers.emplace_back(bufferManager);
+                allDataGenerators.emplace_back(dataGenerator);
 
-            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
-            coordinatorConf->worker.physicalSources.add(physicalSource);
+                size_t generatorQueueIndex = 0;
+                auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
+                    allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
+                };
 
-            allBufferManagers.emplace_back(bufferManager);
-#else
-            NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
-#endif
-        } else {
-            auto dataProvider =
-                DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
-            // Adding necessary items to the corresponding vectors
-            allDataProviders.emplace_back(dataProvider);
-            allBufferManagers.emplace_back(bufferManager);
-            allDataGenerators.emplace_back(dataGenerator);
+                LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
+                                                                            configOverAllRuns.numberOfBuffersToProduce->getValue(),
+                                                                            /* gatheringValue */ 0,
+                                                                            GatheringMode::INTERVAL_MODE,
+                                                                            sourceAffinity,
+                                                                            taskQueueId);
 
-            size_t generatorQueueIndex = 0;
-            auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
-                allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
-            };
-
-            LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
-                                                                        configOverAllRuns.numberOfBuffersToProduce->getValue(),
-                                                                        /* gatheringValue */ 0,
-                                                                        GatheringMode::INTERVAL_MODE,
-                                                                        sourceAffinity,
-                                                                        taskQueueId);
-
-            auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
-            coordinatorConf->worker.physicalSources.add(physicalSource);
+                auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
+                coordinatorConf->worker.physicalSources.add(physicalSource);
+            }
+            sourceCnt += 1;
         }
-        sourceCnt += 1;
     }
     NES_INFO("Created sources and the accommodating data generation and data providing!");
 }
@@ -346,7 +345,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
-        outputCsvStream << "," << getNumberOfPhysicalSources();
+        outputCsvStream << "," << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc();
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
@@ -366,8 +365,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
 }
 
-E2ESingleRun::E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
-                           const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                            int rpcPort, int restPort)
     : configPerRun(configPerRun), configOverAllRuns(configOverAllRuns), rpcPortSingleRun(rpcPort), restPortSingleRun(restPort) {}
 
@@ -446,20 +444,6 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
 
     const Measurements::Measurements& E2ESingleRun::getMeasurements() const {
         return measurements;
-    }
-
-    std::string E2ESingleRun::getNumberOfPhysicalSources() {
-        std::stringstream stringStream;
-        auto map = configPerRun.mapLogicalSrcToNumberOfPhysSrc;
-        for (auto it = map.begin(); it != map.end(); ++it) {
-            if (it != map.begin()) {
-                stringStream << ", ";
-            }
-
-            stringStream << it->first << ": " << it->second;
-        }
-
-        return stringStream.str();
     }
 
 }// namespace NES::Benchmark
