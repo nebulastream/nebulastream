@@ -36,6 +36,12 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
     ~InternalProvider();
 
     /**
+         * @brief returns preAllocatedBuffers
+         * @return preAllocatedBuffers
+         */
+    std::vector<Runtime::TupleBuffer> getPreAllocatedBuffers();
+
+    /**
          * @brief overrides readNextBuffer by poviding the next buffer to be added to NES
          * @param sourceId
          * @return
