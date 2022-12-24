@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.14](https://github.com/nebulastream/nebulastream/tree/v0.4.14) (2022-12-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.13...v0.4.14)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add openjdk-8 to CI dockerfiles [\#3343](https://github.com/nebulastream/nebulastream/issues/3343)
+
 ## [v0.4.13](https://github.com/nebulastream/nebulastream/tree/v0.4.13) (2022-12-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.12...v0.4.13)
