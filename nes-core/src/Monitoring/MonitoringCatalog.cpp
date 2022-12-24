@@ -46,7 +46,7 @@ MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) 
     if (metricMap.contains(metricType)) {
         return metricMap[metricType];
     }
-    NES_ERROR("MonitoringCatalog: MetricType " << toString(metricType) << " is not in catalog.");
+    NES_ERROR2("MonitoringCatalog: MetricType {} is not in catalog.", toString(metricType));
     return nullptr;
 }
 

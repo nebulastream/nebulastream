@@ -127,7 +127,7 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
                 auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
                 status = call->status.ok();
                 if (!status) {
-                    NES_ERROR("RPC Failed: " << call->status.error_message());
+                    NES_ERROR2("RPC Failed: {}", call->status.error_message());
                 }
                 delete call;
             } else {
@@ -274,9 +274,7 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
         NES_DEBUG("WorkerRPCClient::markQueryForStop: status ok return success=" << reply.success());
         return reply.success();
     }
-    NES_ERROR(" WorkerRPCClient::markQueryForStop "
-              "error="
-              << status.error_code() << ": " << status.error_message());
+    NES_ERROR2(" WorkerRPCClient::markQueryForStop error={}: {}", status.error_code(), status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
@@ -389,9 +387,8 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_ERROR(" WorkerRPCClient::BeginBuffer "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
+        NES_ERROR2(" WorkerRPCClient::BeginBuffer "
+                   "error={} : {}", status.error_code(), status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
     return false;
@@ -419,9 +416,7 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
         NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
         return reply.success();
     } else {
-        NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
+        NES_ERROR2(" WorkerRPCClient::UpdateNetworkSinks error={}: {}", status.error_code(), status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
@@ -440,7 +435,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
         NES_TRACE("WorkerRPCClient::checkHealth: status ok return success=" << response.status());
         return response.status();
     } else {
-        NES_ERROR(" WorkerRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
+        NES_ERROR2(" WorkerRPCClient::checkHealth error={}: {}", status.error_code(), status.error_message());
         return response.status();
     }
 }

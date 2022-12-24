@@ -46,12 +46,12 @@ bool Node::addChildWithEqual(const NodePtr& newNode) {
 
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_ERROR("Node: Adding node to its self so will skip add child operation.");
+        NES_ERROR2("Node: Adding node to its self so will skip add child operation.");
         return false;
     }
     // checks if current new node is not part of children
     if (vectorContainsTheNode(children, newNode)) {
-        NES_ERROR("Node: the node is already part of its children so skip add chld operation.");
+        NES_ERROR2("Node: the node is already part of its children so skip add chld operation.");
         return false;
     }
     // add the node to the children
@@ -67,7 +67,7 @@ bool Node::addChild(const NodePtr newNode) {
 bool Node::removeChild(NodePtr const& node) {
 
     if (!node) {
-        NES_ERROR("Node: Can't remove null node");
+        NES_ERROR2("Node: Can't remove null node");
         return false;
     }
 
@@ -132,7 +132,7 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
                 parent->children[i] = newNode;
                 NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
                 if (!newNode->addParent(parent)) {
-                    NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+                    NES_ERROR2("Node: Unable to add parent of this node as parent to input node.");
                     return false;
                 }
             }
@@ -143,7 +143,7 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
     removeAllParent();
 
     if (!addParent(newNode)) {
-        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        NES_ERROR2("Node: Unable to add input node as parent to this node.");
         return false;
     }
     return true;
@@ -168,14 +168,14 @@ bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
     removeChildren();
 
     if (!addChild(newNode)) {
-        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        NES_ERROR2("Node: Unable to add input node as parent to this node.");
         return false;
     }
 
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
     for (const NodePtr& child : copyOfChildren) {
         if (!newNode->addChild(child)) {
-            NES_ERROR("Node: Unable to add child of this node as child to input node.");
+            NES_ERROR2("Node: Unable to add child of this node as child to input node.");
             return false;
         }
     }
@@ -208,7 +208,7 @@ void Node::removeChildren() {
 bool Node::removeParent(NodePtr const& node) {
 
     if (!node) {
-        NES_ERROR("Node: Can't remove null node");
+        NES_ERROR2("Node: Can't remove null node");
         return false;
     }
 
@@ -234,7 +234,7 @@ bool Node::replace(NodePtr newNode) { return replace(std::move(newNode), shared_
 bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
 
     if (!newNode || !oldNode) {
-        NES_ERROR("Node: Can't replace null node");
+        NES_ERROR2("Node: Can't replace null node");
         return false;
     }
 
@@ -265,10 +265,10 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;
     }
-    NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
+    NES_ERROR2("Node: could not remove child from  old node: {}", oldNode->toString());
 
     success = removeParent(oldNode);
-    NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
+    NES_DEBUG("Node: remove parent old node: {}", oldNode->toString());
     if (success) {
         parents.push_back(newNode);
         for (auto&& currentNode : oldNode->parents) {
@@ -276,7 +276,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;//TODO: I think this is wrong
     }
-    NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
+    NES_ERROR2("Node: could not remove parent from  old node: {}", oldNode->toString());
 
     return false;
 }
@@ -360,7 +360,7 @@ bool Node::removeAndJoinParentAndChildren() {
         }
         return true;
     } catch (...) {
-        NES_ERROR("Node: Error ocurred while joining this node's children and parents");
+        NES_ERROR2("Node: Error ocurred while joining this node's children and parents");
         return false;
     }
 }

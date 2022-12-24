@@ -68,7 +68,7 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
             break;
         }
         default: {
-            NES_ERROR("SchemaSerializationUtil:: Wrong memory layout in serialization format");
+            NES_ERROR2("SchemaSerializationUtil:: Wrong memory layout in serialization format");
         }
     }
     return deserializedSchema;

@@ -37,7 +37,7 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
-        NES_ERROR("MemoryCollector: Error while collecting metrics " << ex.what());
+        NES_ERROR2("MemoryCollector: Error while collecting metrics {}", ex.what());
         return false;
     }
     return true;

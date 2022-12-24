@@ -84,15 +84,15 @@ MonitoringManager::~MonitoringManager() {
 
 bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+        NES_ERROR2("MonitoringManager: Register plan failed. Monitoring is disabled.");
         return false;
     }
     if (!monitoringPlan) {
-        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+        NES_ERROR2("MonitoringManager: Register monitoring plan failed, no plan is provided.");
         return false;
     }
     if (nodeIds.empty()) {
-        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+        NES_ERROR2("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
         return false;
     }
 
@@ -111,11 +111,11 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
                 NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
                 monitoringPlanMap[nodeId] = monitoringPlan;
             } else {
-                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
+                NES_ERROR2("MonitoringManager: Node with ID {} failed to register plan over GRPC.", std::to_string(nodeId));
                 return false;
             }
         } else {
-            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
+            NES_ERROR2("MonitoringManager: Node with ID {} does not exit.", std::to_string(nodeId));
             return false;
         }
     }
@@ -125,9 +125,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     nlohmann::json metricsJson;
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
-                                                                            << " failed. Monitoring is disabled, "
-                                                                               "returning empty object");
+        NES_ERROR2("MonitoringManager: Requesting monitoring data for node {} failed. Monitoring is disabled, returning empty object", nodeId);
         return metricsJson;
     }
 
@@ -204,7 +202,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
     QueryId queryId = 0;
 
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
+        NES_ERROR2("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
     }
 
     bool success;
@@ -231,18 +229,18 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
             NES_INFO("MonitoringManager: Successfully started query " << queryId << "::" << monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
         } else {
-            NES_ERROR("MonitoringManager: Query " << queryId << "::" << monitoringStream << " failed to start in time.");
+            NES_ERROR2("MonitoringManager: Query {} :: {} failed to start in time.", queryId, monitoringStream);
         }
     } else {
-        NES_ERROR("MonitoringManager: Failed to deploy monitoring query. Queries are still running and could not be stopped for "
-                  << monitoringStream);
+        NES_ERROR2("MonitoringManager: Failed to deploy monitoring query. Queries are still running and could not be stopped for {}",
+                  monitoringStream);
     }
     return queryId;
 }
 
 std::unordered_map<std::string, QueryId> MonitoringManager::startOrRedeployMonitoringQueries(bool sync) {
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
+        NES_ERROR2("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
         return deployedMonitoringQueries;
     }
 
@@ -271,11 +269,11 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
             if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
                 NES_INFO("MonitoringManager: Query " << queryId << "::" << metricType << " terminated.");
             } else {
-                NES_ERROR("MonitoringManager: Failed to stop query " << queryId << "::" << metricType);
+                NES_ERROR2("MonitoringManager: Failed to stop query {}::{}", queryId , metricType);
                 success = false;
             }
         } else {
-            NES_ERROR("MonitoringManager: Failed to validate query " << queryId << "::" << metricType);
+            NES_ERROR2("MonitoringManager: Failed to validate query {}::{}", queryId , metricType);
             success = false;
         }
     }
@@ -289,7 +287,7 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
 bool MonitoringManager::stopRunningMonitoringQueries(bool sync) {
     bool success = true;
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
+        NES_ERROR2("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
     }
 
     // params for iteration
@@ -326,7 +324,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
     while (std::chrono::system_clock::now() < start_timestamp + timeout) {
         auto queryCatalogEntry = catalogService->getEntryForQuery(queryId);
         if (!queryCatalogEntry) {
-            NES_ERROR("MonitoringManager: unable to find the entry for query " << queryId << " in the query catalog.");
+            NES_ERROR2("MonitoringManager: unable to find the entry for query {} in the query catalog.", queryId);
             return false;
         }
         NES_TRACE("MonitoringManager: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
@@ -343,7 +341,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
         }
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
-    NES_ERROR("MonitoringManager: Starting query " << queryId << " has timed out.");
+    NES_ERROR2("MonitoringManager: Starting query {} has timed out.", queryId;
     return false;
 }
 

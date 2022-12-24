@@ -126,7 +126,7 @@ template<typename ReturnType, typename RequestType, typename ReplyType>
             return func(&context, request, reply);
         }
         bool onSuccess(const ReplyType& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::: status ok return success=" << reply.success());
+            NES_DEBUG("CoordinatorRPCClient::: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
@@ -149,7 +149,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
                                            uint32_t rpcRetryAttemps,
                                            std::chrono::milliseconds rpcBackoff)
     : address(address), rpcRetryAttemps(rpcRetryAttemps), rpcBackoff(rpcBackoff) {
-    NES_DEBUG("CoordinatorRPCClient(): creating channels to address =" << address);
+    NES_DEBUG("CoordinatorRPCClient(): creating channels to address ={}", address);
     rpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     if (rpcChannel) {
@@ -163,7 +163,7 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
 
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got "
-              << physicalSources.size() << " physical sources to register for worker with id " << workerId);
+              << physicalSources.size() << " physical sources to register for worker with id {}", workerId);
 
     RegisterPhysicalSourcesRequest request;
     request.set_workerid(workerId);
@@ -175,7 +175,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         physicalSourceDefinition->set_logicalsourcename(physicalSource->getLogicalSourceName());
     }
 
-    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply>(
         request,
@@ -192,7 +192,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
     if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
-        NES_ERROR("CoordinatorRPCClient: file does not exits");
+        NES_ERROR2("CoordinatorRPCClient: file does not exits");
         throw Exceptions::RuntimeException("files does not exist");
     }
 
@@ -204,7 +204,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
     request.set_sourceschema(fileContent);
-    NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterLogicalSourceRequest, RegisterLogicalSourceReply>(
         request,
@@ -234,12 +234,12 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSo
 }
 
 bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSourceName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source" << logicalSourceName);
+    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source{}", logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
     request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
-    NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, UnregisterLogicalSourceRequest, UnregisterLogicalSourceReply>(
         request,
@@ -256,7 +256,7 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
     AddParentRequest request;
     request.set_parentid(parentId);
     request.set_childid(workerId);
-    NES_DEBUG("CoordinatorRPCClient::AddParentRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::AddParentRequest request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, AddParentRequest, AddParentReply>(
         request,
@@ -400,7 +400,7 @@ bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrat
             return true;
         }
         bool onPartialFailure(const Status& status) override {
-            NES_ERROR(" CoordinatorRPCClient::registerWorker error=" << status.error_code() << ": " << status.error_message());
+            NES_ERROR2(" CoordinatorRPCClient::registerWorker error={}:{}", status.error_code(), status.error_message());
             switch (status.error_code()) {
                 case grpc::UNIMPLEMENTED:
                 case grpc::UNAVAILABLE: {
@@ -495,7 +495,7 @@ bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
         NES_TRACE("CoordinatorRPCClient::checkHealth: status ok return success=" << response.status());
         return response.status();
     } else {
-        NES_ERROR(" CoordinatorRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
+        NES_ERROR2(" CoordinatorRPCClient::checkHealth error={}:{}", status.error_code(), status.error_message());
         return response.status();
     }
 }
