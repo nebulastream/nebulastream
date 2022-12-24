@@ -37,7 +37,7 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
     auto schema = NetworkMetrics::getSchema("");
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     if (schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
-        NES_ERROR("NetworkMetricsWrapper: At least one tuple of NetworkMetrics has to fit into buffer");
+        NES_ERROR2("NetworkMetricsWrapper: At least one tuple of NetworkMetrics has to fit into buffer");
     } else if (totalSize > buf.getBufferSize()) {
         NES_WARNING("NetworkMetricsWrapper: Content does not fit in TupleBuffer totalSize:" << totalSize << " > "
                                                                                             << " getBufferSize:"

@@ -248,7 +248,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
-            NES_ERROR("NesCoordinator::stop node engine stop not successful");
+            NES_ERROR2("NesCoordinator::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
         }
         NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
@@ -256,7 +256,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
-            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
+            NES_ERROR2("NesCoordinator::stopCoordinator: error while stopping restServer");
             NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
@@ -265,7 +265,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_DEBUG("NesCoordinator: join restThread");
             restThread->join();
         } else {
-            NES_ERROR("NesCoordinator: rest thread not joinable");
+            NES_ERROR2("NesCoordinator: rest thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
@@ -275,7 +275,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             queryRequestProcessorThread->join();
             NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
         } else {
-            NES_ERROR("NesCoordinator: query processor thread not joinable");
+            NES_ERROR2("NesCoordinator: query processor thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
@@ -289,7 +289,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             rpcThread.reset();
 
         } else {
-            NES_ERROR("NesCoordinator: rpc thread not joinable");
+            NES_ERROR2("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 

@@ -147,7 +147,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         }
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
-        NES_ERROR("NesWorker: node engine could not be started");
+        NES_ERROR2("NesWorker: node engine could not be started");
         throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
@@ -254,7 +254,7 @@ bool NesWorker::stop(bool) {
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
-            NES_ERROR("NesWorker::stop node engine stop not successful");
+            NES_ERROR2("NesWorker::stop node engine stop not successful");
             NES_THROW_RUNTIME_ERROR("NesWorker::stop  error while stopping node engine");
         }
         NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
@@ -492,7 +492,7 @@ bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
 }
 
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack {} ", signalNumber, strerror(errno), callstack);
     std::string errorMsg;
     std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
@@ -509,7 +509,7 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[" << ptr->what() << "] callstack=\n" << callstack);
+    NES_ERROR2("onFatalException: exception=[{}] callstack={}", ptr->what(), callstack);
     std::string errorMsg;
     std::cerr << "NesWorker failed fatally" << std::endl;
     std::cerr << "Error: " << strerror(errno) << std::endl;

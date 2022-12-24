@@ -126,7 +126,7 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
         case MetricType::NetworkMetric: return MetricCollectorType::NETWORK_COLLECTOR;
         case MetricType::WrappedNetworkMetrics: return MetricCollectorType::NETWORK_COLLECTOR;
         default: {
-            NES_ERROR("MetricUtils: Metric type not supported " << NES::Monitoring::toString(type));
+            NES_ERROR2("MetricUtils: Metric type not supported {}", NES::Monitoring::toString(type));
             return MetricCollectorType::INVALID;
         }
     }

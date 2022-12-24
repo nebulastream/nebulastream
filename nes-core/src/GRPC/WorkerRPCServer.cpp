@@ -46,7 +46,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);
     } catch (std::exception& error) {
-        NES_ERROR("Register query crashed: " << error.what());
+        NES_ERROR2("Register query crashed: {}", error.what());
         success = false;
     }
     if (success) {
@@ -54,7 +54,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
+    NES_ERROR2("WorkerRPCServer::RegisterQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -67,7 +67,7 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("WorkerRPCServer::UnregisterQuery: failed");
+    NES_ERROR2("WorkerRPCServer::UnregisterQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -80,7 +80,7 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("WorkerRPCServer::StartQuery: failed");
+    NES_ERROR2("WorkerRPCServer::StartQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -97,7 +97,7 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("WorkerRPCServer::StopQuery: failed");
+    NES_ERROR2("WorkerRPCServer::StopQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -115,7 +115,7 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
         monitoringAgent->setMonitoringPlan(plan);
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
+        NES_ERROR2("WorkerRPCServer: Registering monitoring plan failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
@@ -128,20 +128,19 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
         reply->set_metricsasjson(metrics);
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
+        NES_ERROR2("WorkerRPCServer: Requesting monitoring data failed: {}", ex.what());
     }
     return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
     try {
-        NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
-                  << request->timestamp() << " and a queryId " << request->queryid());
+        NES_ERROR2("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {} and a queryId {}", request->timestamp(), request->queryid());
         reply->set_success(true);
         nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;
     } catch (std::exception& ex) {
-        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        NES_ERROR2("WorkerRPCServer: received a broken punctuation message: {}", ex.what());
         return Status::CANCELLED;
     }
 }
@@ -157,7 +156,7 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         reply->set_success(true);
         return Status::OK;
     } else {
-        NES_ERROR("WorkerRPCServer::StopQuery: failed");
+        NES_ERROR2("WorkerRPCServer::StopQuery: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
@@ -177,7 +176,7 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
         reply->set_success(true);
         return Status::OK;
     } else {
-        NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: failed");
+        NES_ERROR2("WorkerRPCServer::UpdateNetworkSinks: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }

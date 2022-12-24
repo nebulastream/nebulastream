@@ -55,14 +55,14 @@ int main(int argc, const char* argv[]) {
         NES_INFO("Stopping Coordinator");
         crd->stopCoordinator(true);
     } catch (std::exception& exp) {
-        NES_ERROR("Problem with coordinator: " << exp.what());
+        NES_ERROR2("Problem with coordinator: {}", exp.what());
         return 1;
     } catch (...) {
-        NES_ERROR("Unknown exception was thrown");
+        NES_ERROR2("Unknown exception was thrown");
         try {
             std::rethrow_exception(std::current_exception());
         } catch (std::exception& ex) {
-            NES_ERROR(ex.what());
+            NES_ERROR2("{}",ex.what());
         }
         return 1;
     }
