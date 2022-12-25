@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.15](https://github.com/nebulastream/nebulastream/tree/v0.4.15) (2022-12-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.14...v0.4.15)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Make test CI required on ARM [\#3346](https://github.com/nebulastream/nebulastream/issues/3346)
+
 ## [v0.4.14](https://github.com/nebulastream/nebulastream/tree/v0.4.14) (2022-12-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.13...v0.4.14)
