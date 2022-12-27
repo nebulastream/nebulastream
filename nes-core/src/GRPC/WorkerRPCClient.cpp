@@ -38,7 +38,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
 
-    NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
+    NES_TRACE2("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
@@ -70,7 +70,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     auto serializableQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializableQueryPlan);
 
-    NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
+    NES_TRACE2("WorkerRPCClient:registerQuery -> {}", request.DebugString());
     RegisterQueryReply reply;
     ClientContext context;
 
@@ -329,7 +329,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     Status status = workerStub->RegisterMonitoringPlan(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        NES_DEBUG2("WorkerRPCClient::RequestMonitoringData: status ok");
         return true;
     }
     NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
@@ -366,7 +366,7 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        NES_DEBUG2("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;
     }
     return false;
@@ -432,7 +432,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     Status status = workerStub->Check(&context, request, &response);
 
     if (status.ok()) {
-        NES_TRACE("WorkerRPCClient::checkHealth: status ok return success=" << response.status());
+        NES_TRACE2("WorkerRPCClient::checkHealth: status ok return success={}", response.status());
         return response.status();
     } else {
         NES_ERROR2(" WorkerRPCClient::checkHealth error={}: {}", status.error_code(), status.error_message());

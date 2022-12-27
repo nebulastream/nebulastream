@@ -63,9 +63,9 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
-    NES_TRACE("context " << workerContext.getId() << " writing data");
+    NES_TRACE2("context {} writing data", workerContext.getId());
     if (reconnectBuffering) {
-        NES_TRACE("context " << workerContext.getId() << " buffering data");
+        NES_TRACE2("context {} buffering data", workerContext.getId());
         workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         return true;
     }
@@ -181,10 +181,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                     break;
                 }
                 if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer")
+                    NES_WARNING("could not send all data from buffer");
                     break;
                 }
-                NES_TRACE("buffer sent")
+                NES_TRACE2("buffer sent");
                 workerContext.removeTopTupleFromStorage(nesPartition);
                 topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
             }

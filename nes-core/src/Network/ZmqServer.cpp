@@ -206,7 +206,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
                                       << "tcp://" + hostname + ":" + std::to_string(actualPort));
             } else {
                 NES_ERROR2("ZmqServer({}:{}):{}",
-                           this->hostname, this->currentPort, zmqerror.what());
+                           this->hostname, this->currentPort, zmqError.what());
                 errorPromise.set_exception(eptr);
             }
         } catch (std::exception& error) {
@@ -296,11 +296,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto* bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = identityEnvelope.data<NesPartition>();
 
-                    NES_TRACE("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  DataBuffer received from origin="
-                                           << bufferHeader->originId << " and NesPartition=" << nesPartition->toString()
-                                           << " with payload size " << bufferHeader->payloadSize << " with num children buffer "
-                                           << bufferHeader->numOfChildren);
-
+                    NES_TRACE2("ZmqServer({}:{}):  DataBuffer received from origin={} and NesPartition={} with payload size {} with num children buffer {}", this->hostname, this->currentPort, bufferHeader->originId, nesPartition->toString(), bufferHeader->payloadSize, bufferHeader->numOfChildren);
                     // get children if necessary
                     std::vector<Runtime::TupleBuffer> children;
                     for (uint32_t i = 0u, numOfChildren = bufferHeader->numOfChildren; i < numOfChildren; ++i) {

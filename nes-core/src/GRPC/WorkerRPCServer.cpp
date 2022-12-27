@@ -35,7 +35,7 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
       locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
-    NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
+    NES_DEBUG2("WorkerRPCServer::WorkerRPCServer()");
 }
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
@@ -50,7 +50,7 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
         success = false;
     }
     if (success) {
-        NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
+        NES_DEBUG2("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -63,7 +63,7 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for " << request->queryid());
     bool success = nodeEngine->unregisterQuery(request->queryid());
     if (success) {
-        NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
+        NES_DEBUG2("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -76,7 +76,7 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for " << request->queryid());
     bool success = nodeEngine->startQuery(request->queryid());
     if (success) {
-        NES_DEBUG("WorkerRPCServer::StartQuery: success");
+        NES_DEBUG2("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
         return Status::OK;
     }

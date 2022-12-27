@@ -62,12 +62,12 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
     } else {
         NES_THROW_RUNTIME_ERROR("ShapeTypeSerializationUtil: serialization is not possible for " + shape->toString());
     }
-    NES_TRACE("ShapeTypeSerializationUtil:: serialized " << shape->toString() << " to " << serializedShape->SerializeAsString());
+    NES_TRACE2("ShapeTypeSerializationUtil:: serialized " << shape->toString() << " to " << serializedShape->SerializeAsString());
     return serializedShape;
 }
 
 ShapeExpressionNodePtr ShapeTypeSerializationUtil::deserializeShapeType(SerializableShapeType* serializedShapeType) {
-    NES_TRACE("ShapeTypeSerializationUtil:: de-serialized " << serializedShapeType->DebugString());
+    NES_TRACE2("ShapeTypeSerializationUtil:: de-serialized {}", serializedShapeType->DebugString());
     const auto& data = serializedShapeType->details();
     const auto shapeType = serializedShapeType->shapetype();
     if (shapeType == SerializableShapeType_ShapeType_CIRCLE) {

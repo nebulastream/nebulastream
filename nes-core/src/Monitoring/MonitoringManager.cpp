@@ -73,7 +73,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     this->queryService = queryService;
     this->catalogService = catalogService;
-    NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));
+    NES_DEBUG2("MonitoringManager: Init with monitoring= {} , storage= {} ", enableMonitoring, toString(metricStore->getType()));
 }
 
 MonitoringManager::~MonitoringManager() {
@@ -154,8 +154,7 @@ StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
-    NES_TRACE("MonitoringManager: Adding metrics of type " << toString(metrics->getMetricType()) << " for node " << nodeId
-                                                           << " in store " << metricStore);
+    NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {} in store {}", toString(metrics->getMetricType()), nodeId, metricStore);
     metricStore->addMetrics(nodeId, metrics);
 }
 
@@ -304,16 +303,16 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkStoppedOrTimeout: check query status for " << queryId);
+        NES_TRACE2("checkStoppedOrTimeout: check query status for {}", queryId);
         if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
-            NES_TRACE("checkStoppedOrTimeout: status for " << queryId << " reached stopped");
+            NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped",  queryId);
             return true;
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for "
                   << queryId << " as status is=" << catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
-    NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+    NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");
     return false;
 }
 
@@ -327,7 +326,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
             NES_ERROR2("MonitoringManager: unable to find the entry for query {} in the query catalog.", queryId);
             return false;
         }
-        NES_TRACE("MonitoringManager: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+        NES_TRACE2("MonitoringManager: Query {} is now in status {}", queryId, queryCatalogEntry->getQueryStatusAsString());
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
@@ -341,7 +340,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
         }
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
-    NES_ERROR2("MonitoringManager: Starting query {} has timed out.", queryId;
+    NES_ERROR2("MonitoringManager: Starting query {} has timed out.", queryId);
     return false;
 }
 

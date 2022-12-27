@@ -114,7 +114,7 @@ void STKnnExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext&
     }
 
     stamp = DataTypeFactory::createBoolean();
-    NES_TRACE("ST_KnnExpressionNode: The following stamp was assigned: " << toString());
+    NES_TRACE2("ST_KnnExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr STKnnExpressionNode::copy() {
