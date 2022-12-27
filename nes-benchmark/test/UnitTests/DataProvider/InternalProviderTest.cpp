@@ -28,13 +28,19 @@ namespace NES::Benchmark::DataProviding {
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { NES_INFO("Setup InternalProviderTest test case."); }
+        void SetUp() override {
+            NES_INFO("Setup InternalProviderTest test case.");
+            //std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
+        }
 
         /* Will be called before a test is executed. */
         void TearDown() override { NES_INFO("Tear down InternalProviderTest test case."); }
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
+
+      //protected:
+        //std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
     };
 
     TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
@@ -76,12 +82,7 @@ namespace NES::Benchmark::DataProviding {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
-
         auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
-        auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
-        auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
-
-        expectedNextBuffer.setCreationTimestamp(timeStamp);
         expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
@@ -131,12 +132,7 @@ namespace NES::Benchmark::DataProviding {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
-
         auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
-        auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
-        auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
-
-        expectedNextBuffer.setCreationTimestamp(timeStamp);
         expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
@@ -184,7 +180,7 @@ namespace NES::Benchmark::DataProviding {
 
         auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
 
-        ASSERT_EQ(preAllocatedBuffers.size(), 0);
+        ASSERT_EQ(preAllocatedBuffers->size(), 0);
     }
 
     TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
@@ -224,6 +220,6 @@ namespace NES::Benchmark::DataProviding {
 
         auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
 
-        ASSERT_EQ(preAllocatedBuffers.size(), 0);
+        ASSERT_EQ(preAllocatedBuffers->size(), 0);
     }
 }//namespace NES::Benchmark::DataGeneration
