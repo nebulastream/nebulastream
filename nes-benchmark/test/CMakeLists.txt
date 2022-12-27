@@ -32,6 +32,6 @@ target_link_libraries(zipfian-data-generator-test nes-benchmark)
 
 # Adding unit test for InternalProvider
 add_nes_unit_test(internal-provider-test "UnitTests/DataProvider/InternalProviderTest.cpp")
-target_link_libraries(internal-provider-test nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
+target_link_libraries(internal-provider-test nes-benchmark)
 
 message(STATUS "Done building benchmarks tests")
