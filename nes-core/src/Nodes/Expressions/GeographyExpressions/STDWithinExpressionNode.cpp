@@ -97,7 +97,7 @@ void STDWithinExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCont
     }
 
     stamp = DataTypeFactory::createBoolean();
-    NES_TRACE("ST_DWithinExpressionNode: The following stamp was assigned: " << toString());
+    NES_TRACE2("ST_DWithinExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr STDWithinExpressionNode::copy() {

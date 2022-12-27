@@ -47,7 +47,7 @@ void SqrtExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
 
     // increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
-    NES_TRACE("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: " << toString());
+    NES_TRACE2("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
 }
 
 bool SqrtExpressionNode::equal(NodePtr const& rhs) const {

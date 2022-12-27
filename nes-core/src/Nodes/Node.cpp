@@ -265,10 +265,10 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;
     }
-    NES_ERROR2("Node: could not remove child from  old node: {}", oldNode->toString());
+    NES_ERROR("Node: could not remove child from  old node: " << oldNode->toString());
 
     success = removeParent(oldNode);
-    NES_DEBUG("Node: remove parent old node: {}", oldNode->toString());
+    NES_DEBUG("Node: remove parent old node: " << oldNode->toString());
     if (success) {
         parents.push_back(newNode);
         for (auto&& currentNode : oldNode->parents) {
@@ -276,7 +276,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;//TODO: I think this is wrong
     }
-    NES_ERROR2("Node: could not remove parent from  old node: {}", oldNode->toString());
+    NES_ERROR("Node: could not remove parent from  old node: "<< oldNode->toString());
 
     return false;
 }
@@ -380,12 +380,12 @@ bool Node::containAsParent(NodePtr node) {
 bool Node::containAsGrandParent(NodePtr node) {
     std::vector<NodePtr> ancestors{};
     for (auto& parent : parents) {
-        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        NES_TRACE2("Node: Get this node, all its parents, and Ancestors");
         std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
-        NES_TRACE("Node: Add them to the result");
+        NES_TRACE2("Node: Add them to the result");
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
-    return vectorContainsTheNode(ancestors, std::move(node));
+    return vectorContainsTheNode(ancestors, std::move(node))
 }
 
 bool Node::containAsChild(NodePtr node) {
@@ -396,10 +396,10 @@ bool Node::containAsChild(NodePtr node) {
 bool Node::containAsGrandChild(NodePtr node) {
     std::vector<NodePtr> grandChildren{};
     for (auto& child : children) {
-        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        NES_TRACE2("Node: Get this node, all its parents, and Ancestors");
         std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(true);
         childAndGrandChildren.emplace_back(child);
-        NES_TRACE("Node: Add them to the result");
+        NES_TRACE2("Node: Add them to the result");
         grandChildren.insert(grandChildren.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
     }
     return vectorContainsTheNode(grandChildren, std::move(node));
@@ -611,9 +611,9 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
     NES_INFO("Node: Get this node, all its parents, and Ancestors");
     std::vector<NodePtr> result{shared_from_this()};
     for (auto& parent : parents) {
-        NES_TRACE("Node: Get this node, all its parents, and Ancestors");
+        NES_TRACE2("Node: Get this node, all its parents, and Ancestors");
         std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
-        NES_TRACE("Node: Add them to the result");
+        NES_TRACE2("Node: Add them to the result");
         result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
     return result;

@@ -106,7 +106,7 @@ void GeographyFieldsAccessExpressionNode::inferStamp(const Optimizer::TypeInfere
     }
 
     stamp = DataTypeFactory::createFloat();
-    NES_TRACE("GeographyFieldsAccessExpressionNode: The following stamp was assigned: " << toString());
+    NES_TRACE2("GeographyFieldsAccessExpressionNode: The following stamp was assigned: {}", toString());
 }
 
 ExpressionNodePtr GeographyFieldsAccessExpressionNode::copy() {

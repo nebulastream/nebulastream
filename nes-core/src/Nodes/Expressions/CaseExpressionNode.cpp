@@ -65,7 +65,7 @@ void CaseExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseContext& 
     }
 
     stamp = defaultExp->getStamp();
-    NES_TRACE("CaseExpressionNode: we assigned the following stamp: " << stamp->toString());
+    NES_TRACE2("CaseExpressionNode: we assigned the following stamp: {}", stamp->toString());
 }
 
 void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenExps, ExpressionNodePtr const& defaultExp) {

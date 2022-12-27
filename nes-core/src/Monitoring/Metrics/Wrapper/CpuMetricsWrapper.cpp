@@ -29,7 +29,7 @@ CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
-    NES_TRACE("CpuMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+    NES_TRACE2("CpuMetricsWrapper: Allocating memory for {} metrics.", std::to_string(arr.size()));
 }
 
 CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const { return cpuMetrics.at(cpuCore); }
@@ -55,7 +55,7 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
 void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto schema = CpuMetrics::getSchema("");
     auto cpuList = std::vector<CpuMetrics>();
-    NES_TRACE("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
+    NES_TRACE2("CpuMetricsWrapper: Parsing buffer with number of tuples {}", buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
@@ -95,7 +95,7 @@ bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
 
     for (unsigned int i = 0; i < cpuMetrics.size(); i++) {
         if (cpuMetrics[i] != rhs.cpuMetrics[i]) {
-            NES_ERROR2("CpuMetricsWrapper: Cpu core {}!={} are not equal.", i);
+            NES_ERROR2("CpuMetricsWrapper: Cpu core {} are not equal.", i);
             return false;
         }
     }

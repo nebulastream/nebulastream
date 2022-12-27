@@ -56,7 +56,7 @@ void ArithmeticalBinaryExpressionNode::inferStamp(const Optimizer::TypeInference
     }
 
     stamp = commonStamp;
-    NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE2("ArithmeticalBinaryExpressionNode: we assigned the following stamp: {}", toString());
 }
 
 bool ArithmeticalBinaryExpressionNode::equal(NodePtr const& rhs) const {

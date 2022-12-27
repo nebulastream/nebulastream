@@ -79,18 +79,18 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
     if (workerId != 0) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << workerId);
+        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id={}", workerId);
         reply->set_workerid(workerId);
         return Status::OK;
     }
-    NES_DEBUG("CoordinatorRPCServer::RegisterNode: failed");
+    NES_DEBUG2("CoordinatorRPCServer::RegisterNode: failed");
     reply->set_workerid(0);
     return Status::CANCELLED;
 }
 
 Status
 CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
+    NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: request ={}", request);
 
     auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
     bool success = topologyManagerService->removeGeoLocation(request->workerid())
@@ -98,7 +98,7 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
         || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
     if (success) {
         if (!topologyManagerService->unregisterNode(request->workerid())) {
-            NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
+            NES_ERROR2("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
             reply->set_success(false);
             return Status::CANCELLED;
         }
@@ -127,7 +127,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
             return Status::CANCELLED;
         }
     }
-    NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource Succeed");
+    NES_DEBUG2("CoordinatorRPCServer::RegisterPhysicalSource Succeed");
     reply->set_success(true);
     return Status::OK;
 }
@@ -142,7 +142,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
         sourceCatalogService->unregisterPhysicalSource(physicalNode, request->physicalsourcename(), request->logicalsourcename());
 
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource success");
+        NES_DEBUG2("CoordinatorRPCServer::UnregisterPhysicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -154,12 +154,13 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
 Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
                                                    const RegisterLogicalSourceRequest* request,
                                                    RegisterLogicalSourceReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request);
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request = " << request);
+    //NES_DEBUG2("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request);
 
     bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
 
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");
+        NES_DEBUG2("CoordinatorRPCServer::RegisterLogicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -171,11 +172,12 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
 Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
                                                      const UnregisterLogicalSourceRequest* request,
                                                      UnregisterLogicalSourceReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource: request ={}", request);
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request =" << request);
+    //NES_DEBUG2("CoordinatorRPCServer::UnregisterLogicalSource: request ={}", request);
 
     bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource success");
+        NES_DEBUG2("CoordinatorRPCServer::UnregisterLogicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -185,11 +187,12 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
 }
 
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::AddParent: request ={}", request);
+    NES_DEBUG("CoordinatorRPCServer::AddParent: request = " << request);
+    //NES_DEBUG2("CoordinatorRPCServer::AddParent: request ={}", request);
 
     bool success = topologyManagerService->addParent(request->childid(), request->parentid());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::AddParent success");
+        NES_DEBUG2("CoordinatorRPCServer::AddParent success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -199,14 +202,15 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 }
 
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request ={}", request);
+    NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request = " << request);
+    //NES_DEBUG2("CoordinatorRPCServer::ReplaceParent: request ={}", request);
 
     bool success = topologyManagerService->removeParent(request->childid(), request->oldparent());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::ReplaceParent success removeParent");
+        NES_DEBUG2("CoordinatorRPCServer::ReplaceParent success removeParent");
         bool success2 = topologyManagerService->addParent(request->childid(), request->newparent());
         if (success2) {
-            NES_DEBUG("CoordinatorRPCServer::ReplaceParent success addParent topo=");
+            NES_DEBUG2("CoordinatorRPCServer::ReplaceParent success addParent topo=");
             reply->set_success(true);
             return Status::OK;
         }
@@ -222,11 +226,12 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 }
 
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RemoveParent: request ={}", request);
+    NES_DEBUG("CoordinatorRPCServer::RemoveParent: request = " << request);
+    //NES_DEBUG2("CoordinatorRPCServer::RemoveParent: request ={}", request);
 
     bool success = topologyManagerService->removeParent(request->childid(), request->parentid());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RemoveParent success");
+        NES_DEBUG2("CoordinatorRPCServer::RemoveParent success");
         reply->set_success(true);
         return Status::OK;
     }
@@ -300,7 +305,7 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 
 Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
     try {
-        NES_ERROR2("CoordinatorRPCServer::sendErrors: failure message received."
+        NES_ERROR("CoordinatorRPCServer::sendErrors: failure message received."
                   << "Id of worker: " << request->workerid() << " Reason for failure: " << request->errormsg());
         // TODO implement here what happens with received Error Messages
         reply->set_success(true);
@@ -316,7 +321,7 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              ::StopRequestReply* response) {
     auto sharedQueryId = request->queryid();
     auto subQueryPlanId = request->subqueryid();
-    NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
+    NES_WARNING2("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
 
     //Check with query catalog service if the request possible
     auto sourceId = request->sourceid();
