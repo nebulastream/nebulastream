@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {

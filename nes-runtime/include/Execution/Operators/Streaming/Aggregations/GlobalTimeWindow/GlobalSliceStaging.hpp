@@ -15,7 +15,7 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
 #include <cinttypes>
 #include <map>
 #include <memory>
@@ -39,7 +39,7 @@ class GlobalSliceStaging {
      */
     class Partition {
       public:
-        Partition(uint64_t sliceIndex) : sliceIndex(sliceIndex) {}
+        explicit Partition(uint64_t sliceIndex) : sliceIndex(sliceIndex) {}
         std::vector<std::unique_ptr<State>> partialStates;
         uint64_t addedSlices = 0;
         const uint64_t sliceIndex;

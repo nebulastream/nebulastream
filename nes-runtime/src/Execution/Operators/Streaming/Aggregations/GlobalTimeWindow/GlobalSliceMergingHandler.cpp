@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Execution/Operators/Streaming/WindowProcessingTasks.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -25,7 +25,8 @@
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-GlobalSliceMergingHandler::GlobalSliceMergingHandler() : sliceStaging(std::make_shared<GlobalSliceStaging>()) {}
+GlobalSliceMergingHandler::GlobalSliceMergingHandler(std::shared_ptr<GlobalSliceStaging> globalSliceStaging)
+    : sliceStaging(globalSliceStaging) {}
 
 void GlobalSliceMergingHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;

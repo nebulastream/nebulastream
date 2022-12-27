@@ -17,6 +17,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 class SliceMergeTask;
+class State;
 class GlobalSlice;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 class GlobalSliceStaging;
@@ -25,9 +26,8 @@ class GlobalSliceStaging;
  * @brief The GlobalSliceMergingHandler merges thread local pre-aggregated slices for global
  * tumbling and sliding window aggregations.
  */
-class GlobalSliceMergingHandler
-    : public Runtime::Execution::OperatorHandler,
-      public detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false> {
+class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
+                                  public detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false> {
     using inherited0 = detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
@@ -36,7 +36,7 @@ class GlobalSliceMergingHandler
      * @brief Constructor for the GlobalSliceMergingHandler
      * @param windowDefinition
      */
-    GlobalSliceMergingHandler();
+    GlobalSliceMergingHandler(std::shared_ptr<GlobalSliceStaging> globalSliceStaging);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -76,5 +76,5 @@ class GlobalSliceMergingHandler
     std::unique_ptr<State> defaultState;
 };
 
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GlobalSliceMergingHandler_HPP_

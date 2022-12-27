@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(GlobalTimeWindow)
+
 add_source_files(nes-runtime
-        GlobalSlicePreAggregation.cpp
-        GlobalSlicePreAggregationHandler.cpp
-        GlobalSlice.cpp
-        GlobalSliceStaging.cpp
-        GlobalThreadLocalSliceStore.cpp
-        GlobalSliceMerging.cpp
-        GlobalSliceMergingHandler.cpp
+        WindowProcessingException.cpp
         )

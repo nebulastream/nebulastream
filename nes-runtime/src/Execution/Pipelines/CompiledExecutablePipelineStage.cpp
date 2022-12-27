@@ -78,7 +78,7 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto& compilationBackend = Nautilus::Backends::CompilationBackendRegistry::getPlugin("MLIR");
     auto executable = compilationBackend->compile(ir);
     timer.snapshot("MLIR Compilation");
-    NES_DEBUG(timer);
+    NES_INFO(timer);
     return executable;
 }
 
