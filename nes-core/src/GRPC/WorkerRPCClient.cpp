@@ -28,8 +28,7 @@ namespace NES {
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address=" << address << " queryId=" << queryId
-                                                        << " querySubPlanId = " << querySubPlanId);
+    NES_DEBUG2("WorkerRPCClient::registerQuery address={} queryId={} querySubPlanId = {} ", address, queryId, querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
@@ -47,12 +46,11 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     Status status = workerStub->RegisterQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::registerQuery: status ok return success={}", reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::registerQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
+    NES_DEBUG2(" WorkerRPCClient::registerQuery "
+              "error={}: {}", status.error_code(), status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
@@ -61,8 +59,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const CompletionQueuePtr& cq) {
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQueryAsync address=" << address << " queryId=" << queryId
-                                                             << " querySubPlanId = " << querySubPlanId);
+    NES_DEBUG2("WorkerRPCClient::registerQueryAsync address={} queryId={} querySubPlanId = {}", address, queryId, querySubPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
@@ -100,7 +97,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
 }
 
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
-    NES_DEBUG("start checkAsyncResult for mode=" << mode << " for " << queues.size() << " queues");
+    NES_DEBUG2("start checkAsyncResult for mode={} for {} queues", mode, queues.size());
     bool result = true;
     for (const auto& queue : queues) {
         //wait for all deploys to come back
@@ -142,11 +139,11 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             cnt++;
         }
     }
-    NES_DEBUG("checkAsyncResult for mode=" << mode << " succeed");
+    NES_DEBUG2("checkAsyncResult for mode={} succeed", mode);
     return result;
 }
 bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, queryId);
 
     UnregisterQueryRequest request;
     request.set_queryid(queryId);
@@ -178,7 +175,7 @@ bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId q
 }
 
 bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::unregisterQuery address={} queryId={}", address, queryId);
 
     UnregisterQueryRequest request;
     request.set_queryid(queryId);
@@ -191,17 +188,15 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryI
     Status status = workerStub->UnregisterQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::unregisterQuery: status ok return success={}",reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::unregisterQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
+    NES_DEBUG2(" WorkerRPCClient::unregisterQuery error={}: {}", status.error_code(), status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
 }
 
 bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::startQuery address={} queryId={}", address, queryId);
 
     StartQueryRequest request;
     request.set_queryid(queryId);
@@ -215,17 +210,15 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     Status status = workerStub->StartQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::startQuery: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::startQuery: status ok return success={}", reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::startQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
+    NES_DEBUG2(" WorkerRPCClient::startQuery error={}: {}", status.error_code(), status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
 bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::startQueryAsync address={} queryId={}", address, queryId);
 
     StartQueryRequest request;
     request.set_queryid(queryId);
@@ -257,7 +250,7 @@ bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId
 }
 
 bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType) {
-    NES_DEBUG("WorkerRPCClient::markQueryForStop address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::markQueryForStop address={} queryId={}", address, queryId);
 
     StopQueryRequest request;
     request.set_queryid(queryId);
@@ -271,7 +264,7 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
     Status status = workerStub->StopQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::markQueryForStop: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::markQueryForStop: status ok return success={}", reply.success());
         return reply.success();
     }
     NES_ERROR2(" WorkerRPCClient::markQueryForStop error={}: {}", status.error_code(), status.error_message());
@@ -282,7 +275,7 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address,
                                      QueryId queryId,
                                      Runtime::QueryTerminationType terminationType,
                                      const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
+    NES_DEBUG2("WorkerRPCClient::stopQueryAsync address={} queryId={}", address, queryId);
 
     StopQueryRequest request;
     request.set_queryid(queryId);
@@ -315,7 +308,7 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address,
 }
 
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
-    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+    NES_DEBUG2("WorkerRPCClient: Monitoring request address={}", address);
 
     MonitoringRegistrationRequest request;
     for (auto metric : plan->getMetricTypes()) {
@@ -338,7 +331,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
 }
 
 std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
-    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+    NES_DEBUG2("WorkerRPCClient: Monitoring request address={}", address);
     MonitoringDataRequest request;
     ClientContext context;
     MonitoringDataReply reply;
@@ -348,7 +341,7 @@ std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
     Status status = workerStub->GetMonitoringData(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: metrics received " << reply.metricsasjson());
+        NES_DEBUG2("WorkerRPCClient::RequestMonitoringData: metrics received {}", reply.metricsasjson());
         return reply.metricsasjson();
     }
     NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
@@ -373,7 +366,7 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
 }
 
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
-    NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
+    NES_DEBUG2("WorkerRPCClient::buffering Data on address={}", address);
     BufferRequest request;
     request.set_querysubplanid(querySubPlanId);
     request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
@@ -384,7 +377,7 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->BeginBuffer(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::BeginBuffer: status ok return success={}", reply.success());
         return reply.success();
     } else {
         NES_ERROR2(" WorkerRPCClient::BeginBuffer "
@@ -413,7 +406,7 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
+        NES_DEBUG2("WorkerRPCClient::UpdateNetworkSinks: status ok return success={}", reply.success());
         return reply.success();
     } else {
         NES_ERROR2(" WorkerRPCClient::UpdateNetworkSinks error={}: {}", status.error_code(), status.error_message());
@@ -441,7 +434,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
 }
 
 Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address) {
-    NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
+    NES_DEBUG2("WorkerRPCClient: Requesting location from {}", address)
     ClientContext context;
     GetLocationRequest request;
     GetLocationReply reply;

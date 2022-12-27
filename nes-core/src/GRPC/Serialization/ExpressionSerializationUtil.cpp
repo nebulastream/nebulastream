@@ -60,7 +60,7 @@ namespace NES {
 
 SerializableExpression* ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expression,
                                                                          SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: serialize expression " << expression->toString());
+    NES_DEBUG2("ExpressionSerializationUtil:: serialize expression {}", expression->toString());
     // serialize expression node depending on its type.
     if (expression->instanceOf<LogicalExpressionNode>()) {
         // serialize logical expression
@@ -146,13 +146,13 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         NES_FATAL_ERROR2("ExpressionSerializationUtil: could not serialize this expression: {}", expression->toString());
     }
     DataTypeSerializationUtil::serializeDataType(expression->getStamp(), serializedExpression->mutable_stamp());
-    NES_DEBUG("ExpressionSerializationUtil:: serialize expression node to "
-              << serializedExpression->mutable_details()->type_url());
+    NES_DEBUG2("ExpressionSerializationUtil:: serialize expression node to {}",
+              serializedExpression->mutable_details()->type_url());
     return serializedExpression;
 }
 
 ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: deserialize expression " << serializedExpression->details().type_url());
+    NES_DEBUG2("ExpressionSerializationUtil:: deserialize expression {}", serializedExpression->details().type_url());
     // de-serialize expression
     // 1. check if the serialized expression is a logical expression
     auto expressionNodePtr = deserializeLogicalExpressions(serializedExpression);
@@ -257,14 +257,14 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
     // deserialize expression stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression->mutable_stamp());
     expressionNodePtr->setStamp(stamp);
-    NES_DEBUG(
-        "ExpressionSerializationUtil:: deserialized expression node to the following node: " << expressionNodePtr->toString());
+    NES_DEBUG2(
+        "ExpressionSerializationUtil:: deserialized expression node to the following node: {}", expressionNodePtr->toString());
     return expressionNodePtr;
 }
 
 void ExpressionSerializationUtil::serializeArithmeticalExpressions(const ExpressionNodePtr& expression,
                                                                    SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: serialize arithmetical expression " << expression->toString());
+    NES_DEBUG2("ExpressionSerializationUtil:: serialize arithmetical expression {}", expression->toString());
     if (expression->instanceOf<AddExpressionNode>()) {
         // serialize add expression node.
         NES_TRACE2("ExpressionSerializationUtil:: serialize ADD arithmetical expression to SerializableExpression_AddExpression");
@@ -369,7 +369,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(const Express
 
 void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNodePtr& expression,
                                                               SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: serialize logical expression " << expression->toString());
+    NES_DEBUG2("ExpressionSerializationUtil:: serialize logical expression {}", expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {
         // serialize and expression node.
         NES_TRACE2("ExpressionSerializationUtil:: serialize AND logical expression to SerializableExpression_AndExpression");
@@ -445,7 +445,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
 
 void ExpressionSerializationUtil::serializeGeographyExpressions(const ExpressionNodePtr& expression,
                                                                 SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: serialize geography expression " << expression->toString());
+    NES_DEBUG2("ExpressionSerializationUtil:: serialize geography expression {}", expression->toString());
     if (expression->instanceOf<STWithinExpressionNode>()) {
         // serialize st_within expression node.
         NES_TRACE2("ExpressionSerializationUtil:: serialize ST_WITHIN geography expression to "
@@ -629,7 +629,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
 }
 
 ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: de-serialize logical expression" << serializedExpression->details().type_url());
+    NES_DEBUG2("ExpressionSerializationUtil:: de-serialize logical expression{}", serializedExpression->details().type_url());
     if (serializedExpression->details().Is<SerializableExpression_AndExpression>()) {
         NES_TRACE2("ExpressionSerializationUtil:: de-serialize logical expression as AND expression node.");
         // de-serialize and expression node.
@@ -699,7 +699,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(Ser
 }
 
 ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyExpressions(SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: de-serialize geography expression" << serializedExpression->details().type_url());
+    NES_DEBUG2("ExpressionSerializationUtil:: de-serialize geography expression{}", serializedExpression->details().type_url());
     if (serializedExpression->details().Is<SerializableExpression_ST_WithinExpression>()) {
         NES_TRACE2("ExpressionSerializationUtil:: de-serialize geography expression as ST_Within expression node.");
         // de-serialize ST_Within expression node.
@@ -769,7 +769,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessEx
 }
 
 ExpressionNodePtr ExpressionSerializationUtil::deserializeUdfCallExpressions(SerializableExpression* serializedExpression) {
-    NES_DEBUG("ExpressionSerializationUtil:: de-serialize udf call expression" << serializedExpression->details().type_url());
+    NES_DEBUG2("ExpressionSerializationUtil:: de-serialize udf call expression{}", serializedExpression->details().type_url());
     if (serializedExpression->details().Is<SerializableExpression_UdfCallExpression>()) {
         NES_TRACE2("ExpressionSerializationUtil:: de-serialize udf call expression as UdfCallExpressionNode.");
         std::vector<ExpressionNodePtr> functionArguments;

@@ -285,8 +285,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         }
     }
 
-    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
-                                                       << serializedOperator.details().type_url());
+    NES_DEBUG2("OperatorSerializationUtil:: serialize {} to {}", operatorNode->toString(), serializedOperator.details().type_url());
     return serializedOperator;
 }
 
@@ -864,23 +863,23 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         // `Unset' indicates that the logical operator has just been deserialized from a client.
         // We change it to `Complete' which is the default used in `Query::window' and `Query::windowByKey'.
         // TODO This logic should be revisited when #2884 is fixed.
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+        NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+        NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+        NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+        NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
-        NES_DEBUG("OperatorSerializationUtil::deserializeWindowOperator: "
+        NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Merging);
     } else {
@@ -1070,7 +1069,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                                                      bool isClientOriginated) {
 
     // serialize a source descriptor and all its properties depending of its type
-    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with =" << sourceDescriptor->toString());
+    NES_DEBUG2("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor->toString());
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         // serialize zmq source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -1321,7 +1320,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
 
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
         // de-serialize zmq source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as ZmqSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as ZmqSourceDescriptor");
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&zmqSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1333,7 +1332,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
 #ifdef ENABLE_MQTT_BUILD
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor>()) {
         // de-serialize mqtt source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
         auto* mqttSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(mqttSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1356,7 +1355,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
 #ifdef ENABLE_OPC_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
         // de-serialize opc source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as OPCSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as OPCSourceDescriptor");
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&opcSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1375,7 +1374,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
 #endif
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor>()) {
         // de-serialize tcp source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as TCPSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as TCPSourceDescriptor");
         auto* tcpSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(tcpSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1398,7 +1397,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor>()) {
         // de-serialize zmq source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as monitoringSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as monitoringSourceDescriptor");
         auto monitoringSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&monitoringSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1408,7 +1407,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
         // de-serialize zmq source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&networkSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1429,7 +1428,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as DefaultSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as DefaultSourceDescriptor");
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&defaultSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1440,7 +1439,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
         // de-serialize binary source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as BinarySourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as BinarySourceDescriptor");
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&binarySerializedSourceDescriptor);
         // de-serialize source schema
@@ -1449,7 +1448,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>()) {
         // de-serialize csv source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as CsvSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as CsvSourceDescriptor");
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1467,7 +1466,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as SenseSourceDescriptor");
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&senseSerializedSourceDescriptor);
         // de-serialize source schema
@@ -1475,7 +1474,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return SenseSourceDescriptor::create(schema, senseSerializedSourceDescriptor.udfs());
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>()) {
         // de-serialize logical source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalSourceDescriptor");
+        NES_DEBUG2("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalSourceDescriptor");
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalSourceSerializedSourceDescriptor);
 
@@ -1501,7 +1500,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
                                                    SerializableOperator_SinkDetails* sinkDetails,
                                                    uint64_t numberOfOrigins) {
     // serialize a sink descriptor and all its properties depending of its type
-    NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor ");
+    NES_DEBUG2("OperatorSerializationUtil:: serialized SinkDescriptor {}", );
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         // serialize print sink descriptor
         auto printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
@@ -1816,7 +1815,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
         auto onField =
             ExpressionSerializationUtil::deserializeExpression(serializedEventTimeWatermarkStrategyDescriptor.mutable_onfield())
                 ->as<FieldAccessExpressionNode>();
-        NES_DEBUG("OperatorSerializationUtil:: deserialized field name " << onField->getFieldName());
+        NES_DEBUG2("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
             Attribute(onField->getFieldName()),
             Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),

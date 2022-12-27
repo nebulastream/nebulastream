@@ -23,7 +23,7 @@
 namespace NES {
 
 SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& schema, SerializableSchema* serializedSchema) {
-    NES_DEBUG("SchemaSerializationUtil:: serialize schema " << schema->toString());
+    NES_DEBUG2("SchemaSerializationUtil:: serialize schema {}", schema->toString());
     // serialize all field in schema
     for (const auto& field : schema->fields) {
         auto* serializedField = serializedSchema->add_fields();
