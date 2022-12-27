@@ -446,7 +446,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
             return coordinatorStub->NotifyQueryFailure(&context, request, reply);
         }
         bool onSuccess(const QueryFailureNotificationReply&) override {
-            NES_DEBUG("WorkerRPCClient::NotifyQueryFailure: status ok");
+            NES_DEBUG2("WorkerRPCClient::NotifyQueryFailure: status ok");
             return true;
         }
         bool onPartialFailure(const Status&) override { return true; }
@@ -508,7 +508,7 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     ClientContext context;
     Status status = coordinatorStub->NotifyEpochTermination(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        NES_DEBUG2("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;
     }
     return false;
@@ -528,7 +528,7 @@ bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
     Status status = coordinatorStub->SendErrors(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::SendErrors: status ok");
+        NES_DEBUG2("WorkerRPCClient::SendErrors: status ok");
         return true;
     }
     return false;
