@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/SlidingWindowAssigner.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-SlidingWindowAssigner::SlidingWindowAssigner(uint64_t windowSize, uint64_t windowSlide)
+SliceAssigner::SliceAssigner(uint64_t windowSize, uint64_t windowSlide)
     : windowSize(windowSize), windowSlide(windowSlide) {
     NES_ASSERT(windowSize >= windowSlide,
                "Currently the window assigner dose not support windows with a larger slide then the window size.");

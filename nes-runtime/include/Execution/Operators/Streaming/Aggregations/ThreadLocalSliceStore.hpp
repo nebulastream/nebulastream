@@ -14,9 +14,9 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_
 
-#include <Execution/Operators/Streaming/WindowProcessingException.hpp>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Execution/Operators/Streaming/SlidingWindowAssigner.hpp>
 #include <list>
 #include <memory>
 
@@ -47,8 +47,8 @@ class ThreadLocalSliceStore {
      */
     SliceTypePtr& findSliceByTs(uint64_t ts) {
         if (ts < lastWatermarkTs) {
-            throw new WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
-                                                + std::to_string(lastWatermarkTs));
+            throw WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
+                                            + std::to_string(lastWatermarkTs));
         }
         // Find the correct slice.
         // Reverse iteration over all slices from the end to the start,
@@ -139,10 +139,10 @@ class ThreadLocalSliceStore {
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
   private:
-    const SlidingWindowAssigner windowAssigner;
+    const SliceAssigner windowAssigner;
     std::list<SliceTypePtr> slices;
     uint64_t lastWatermarkTs = 0;
 };
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_THREADLOCALSLICESTORE_HPP_

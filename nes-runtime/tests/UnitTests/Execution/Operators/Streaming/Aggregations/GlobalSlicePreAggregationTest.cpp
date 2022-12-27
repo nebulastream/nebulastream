@@ -21,11 +21,11 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlicePreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
-#include <Execution/Operators/Streaming/WindowProcessingTasks.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -84,7 +84,6 @@ class GlobalSlicePreAggregationTest : public testing::Test {
  * @brief Tests if the map operator creates a new field.
  */
 TEST_F(GlobalSlicePreAggregationTest, createNewFieldTest) {
-
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto integer = DataTypeFactory::createInt64();
@@ -125,7 +124,6 @@ TEST_F(GlobalSlicePreAggregationTest, createNewFieldTest) {
     ASSERT_EQ(smt->endSlice, 20);
     ASSERT_EQ(smt->sequenceNumber, 0);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
-
 }
 
 }// namespace NES::Runtime::Execution::Operators

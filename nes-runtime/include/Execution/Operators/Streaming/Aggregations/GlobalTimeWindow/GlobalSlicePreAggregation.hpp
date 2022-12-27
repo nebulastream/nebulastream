@@ -25,8 +25,8 @@ namespace NES::Runtime::Execution::Operators {
 class GlobalSlicePreAggregation : public ExecutableOperator {
   public:
     /**
- * @brief Creates a GlobalSlicePreAggregation operator
- */
+    * @brief Creates a GlobalSlicePreAggregation operator
+    */
     GlobalSlicePreAggregation(Expressions::ExpressionPtr timestampExpression,
                               const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                               const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
