@@ -16,7 +16,7 @@
 #include <cinttypes>
 #include <memory>
 #include <ostream>
-#include <stdlib.h>
+#include <cstdlib>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -33,7 +33,7 @@ class State {
      * As this represents a single aggregation value, it will result in a small dynamic allocation.
      * @param stateSize
      */
-    State(uint64_t stateSize);
+    explicit State(uint64_t stateSize);
 
     /**
      * @brief Resets the value of isInitialized
@@ -67,13 +67,13 @@ class GlobalSlice {
      * @brief Start of the slice.
      * @return uint64_t
      */
-    inline uint64_t getStart() const { return start; }
+    [[nodiscard]] inline uint64_t getStart() const { return start; }
 
     /**
      * @brief End of the slice.
      * @return uint64_t
      */
-    inline uint64_t getEnd() const { return end; }
+    [[nodiscard]] inline uint64_t getEnd() const { return end; }
 
     /**
      * @brief Checks if a slice covers a specific ts.
@@ -81,7 +81,7 @@ class GlobalSlice {
      * @param ts
      * @return
      */
-    inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
+    [[nodiscard]] inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
 
     /**
      * @brief State of the slice.

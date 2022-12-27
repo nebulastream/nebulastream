@@ -14,7 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_
-#include <Execution/Operators/Streaming/ThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/ThreadLocalSliceStore.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Operators {

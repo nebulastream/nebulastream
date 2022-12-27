@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
 #include <cstring>
 namespace NES::Runtime::Execution::Operators {
 

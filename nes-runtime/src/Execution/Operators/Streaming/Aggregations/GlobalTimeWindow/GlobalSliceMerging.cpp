@@ -13,12 +13,12 @@ limitations under the License.
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceMerging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
-#include <Execution/Operators/Streaming/WindowProcessingTasks.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <utility>
@@ -84,13 +84,13 @@ void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
         function->reset(defaultState);
         defaultState = defaultState + function->getSize();
     }
+    this->child->setup(executionCtx);
 }
-
-
 
 void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const {
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    this->child->open(ctx, buffer);
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(0);
     auto sliceMergeTask = buffer.getBuffer();
@@ -130,12 +130,11 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
     resultWindow.write("start_ts", windowEnd);
     for (const auto& function : aggregationFunctions) {
         auto finalAggregationValue = function->lower(globalSliceState);
-        resultWindow.write("f1", finalAggregationValue);
+        resultWindow.write("test$sum", finalAggregationValue);
         globalSliceState = globalSliceState + function->getSize();
     }
     child->execute(ctx, resultWindow);
 }
 
-void GlobalSliceMerging::close(ExecutionContext&, RecordBuffer&) const {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -12,12 +12,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlice.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSlicePreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlice.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Execution/Operators/Streaming/WindowProcessingTasks.hpp>
+#include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>

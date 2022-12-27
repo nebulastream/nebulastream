@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALPREAGGREGATIONOPERATOR_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALPREAGGREGATIONOPERATOR_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEMERGINGOPERATOR_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEMERGINGOPERATOR_HPP_
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -30,16 +30,14 @@ class GlobalSliceMerging : public Operator {
     GlobalSliceMerging(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
   private:
-    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                           Value<MemRef>& sliceMergeTask,
-                                           Value<>& endSliceTs) const;
+    Value<MemRef>
+    combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<>& endSliceTs) const;
     void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
 }// namespace NES::Runtime::Execution::Operators
 
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALPREAGGREGATIONOPERATOR_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEMERGINGOPERATOR_HPP_

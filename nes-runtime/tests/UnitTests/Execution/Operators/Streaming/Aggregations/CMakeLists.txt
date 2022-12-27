@@ -1,3 +1,4 @@
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,9 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
-add_subdirectory(Join)
-add_source_files(nes-runtime
-        MultiOriginWatermarkProcessor.cpp
-        SlidingWindowAssigner.cpp
-        )
+add_executable(runtime-global-slice-pre-aggregation-test "GlobalSlicePreAggregationTest.cpp")
+target_link_libraries(runtime-global-slice-pre-aggregation-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-global-slice-pre-aggregation-test COMMAND runtime-global-slice-pre-aggregation-test)
