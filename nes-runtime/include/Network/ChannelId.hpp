@@ -16,6 +16,8 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <spdlog/spdlog.h>
 
 namespace NES {
 namespace Network {
@@ -40,4 +42,14 @@ class ChannelId {
 };
 }// namespace Network
 }// namespace NES
+
+namespace fmt{
+template<>
+struct formatter<NES::Network::ChannelId> : formatter<std::string> {
+    auto format(const NES::Network::ChannelId& channel_id, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}:{}", channel_id.getThreadId(), channel_id.getNesPartition().toString());
+    }
+};
+}// namespace fmt
+
 #endif// NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
