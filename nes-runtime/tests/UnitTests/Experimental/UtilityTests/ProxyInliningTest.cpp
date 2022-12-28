@@ -44,24 +44,24 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests query execution using th mlir backend
  */
-class ProxyInliningTest : public testing::Test {
+class ProxyInliningTest : public Testing::NESBaseTest  {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProxyInliningTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ProxyInliningTest test class." << std::endl;
+        NES_INFO("Setup ProxyInliningTest test class." );
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ProxyInliningTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup ProxyInliningTest test case." ); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ProxyInliningTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down ProxyInliningTest test case." ); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ProxyInliningTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ProxyInliningTest test class." ); }
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -103,9 +103,9 @@ TEST_F(ProxyInliningTest, emitQueryTest) {
         scan.close(executionContext, recordBuffer);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
+    NES_INFO(*execution.get() );
     auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
+    NES_INFO(ir->toString() );
     auto engine = Backends::MLIR::MLIRUtility::compileNESIRToMachineCode(ir);
     assert(engine);
 }

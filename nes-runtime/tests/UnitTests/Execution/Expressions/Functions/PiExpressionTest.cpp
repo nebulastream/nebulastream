@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Expressions/Functions/PiExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
@@ -20,19 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class PiExpressionTest : public testing::Test {
+class PiExpressionTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("PiExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup PiExpressionTest test class." << std::endl;
+        NES_INFO("Setup PiExpressionTest test class." );
     }
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down PiExpressionTest test class." ); }
 };
 
 TEST_F(PiExpressionTest, evaluatePiExpressionInteger) {

@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Expressions/Functions/SqrtExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -20,22 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SqrtExpressionTest : public testing::Test {
+class SqrtExpressionTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SqrtExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup SqrtExpressionTest test class." << std::endl;
+        NES_INFO("Setup SqrtExpressionTest test class." );
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down SqrtExpressionTest test class." ); }
 };
 
 TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger) {
