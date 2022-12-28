@@ -38,9 +38,6 @@ class TextTypeTest : public Testing::NESBaseTest  {
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down TextTypeTest test case."); }
-
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
     std::shared_ptr<Runtime::BufferManager> bm;
