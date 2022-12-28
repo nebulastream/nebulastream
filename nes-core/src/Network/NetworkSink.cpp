@@ -174,11 +174,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 /*this will only work if guarantees are not set to at least once,
                 otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
                 if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING("buffer does not exist");
+                    NES_WARNING2(("buffer does not exist");
                     break;
                 }
                 if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer");
+                    NES_WARNING2(("could not send all data from buffer");
                     break;
                 }
                 NES_TRACE2("buffer sent");

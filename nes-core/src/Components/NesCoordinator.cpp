@@ -152,7 +152,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
         NES_INFO("NesCoordinator: started queryRequestProcessor");
         queryRequestProcessorService->start();
-        NES_WARNING("NesCoordinator: finished queryRequestProcessor");
+        NES_WARNING2("NesCoordinator: finished queryRequestProcessor");
     }));
 
     NES_DEBUG2("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");

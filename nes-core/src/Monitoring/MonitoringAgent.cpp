@@ -62,7 +62,7 @@ const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
             output.emplace_back(metric);
         }
     } else {
-        NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
+        NES_WARNING2("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
     }
     return output;
 }
@@ -93,7 +93,7 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
     if (enabled) {
         return SystemResourcesReaderFactory::getSystemResourcesReader()->readRegistrationMetrics();
     }
-    NES_WARNING("MonitoringAgent: Metrics disabled. Return empty metric object for registration.");
+    NES_WARNING2("MonitoringAgent: Metrics disabled. Return empty metric object for registration.");
     return RegistrationMetrics{};
 }
 
@@ -111,7 +111,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         }
         return true;
     }
-    NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
+    NES_WARNING2("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
 

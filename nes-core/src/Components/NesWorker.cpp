@@ -242,7 +242,7 @@ bool NesWorker::stop(bool) {
         if (healthCheckService) {
             healthCheckService->stopHealthCheck();
         } else {
-            NES_WARNING("No health check service was created");
+            NES_WARNING2("No health check service was created");
         }
 
         if (workerMobilityHandler) {
@@ -277,7 +277,7 @@ bool NesWorker::stop(bool) {
 
         return successShutdownNodeEngine;
     }
-    NES_WARNING("NesWorker::stop: already stopped");
+    NES_WARNING2("NesWorker::stop: already stopped");
     return true;
 }
 
@@ -391,8 +391,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     if (!success) {
-        NES_WARNING("NesWorker::replaceParent() failed to replace oldParent=" << oldParentId
-                                                                              << " with newParentId=" << newParentId);
+        NES_WARNING2("NesWorker::replaceParent() failed to replace oldParent={} with newParentId={}",  oldParentId, newParentId);
     }
     NES_DEBUG2(NesWorker::replaceParent() success={}", success);
     return success;
