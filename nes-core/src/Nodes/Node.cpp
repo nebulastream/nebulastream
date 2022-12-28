@@ -455,7 +455,7 @@ std::vector<NodePtr> Node::getAllLeafNodes() {
             }
         }
     }
-    NES_DEBUG("Node: Found " << leafNodes.size() << " leaf nodes");
+    NES_DEBUG2("Node: Found {} leaf nodes", leafNodes.size());
     return leafNodes;
 }
 
