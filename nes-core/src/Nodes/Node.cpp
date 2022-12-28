@@ -385,7 +385,7 @@ bool Node::containAsGrandParent(NodePtr node) {
         NES_TRACE2("Node: Add them to the result");
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
-    return vectorContainsTheNode(ancestors, std::move(node))
+    return vectorContainsTheNode(ancestors, std::move(node));
 }
 
 bool Node::containAsChild(NodePtr node) {
