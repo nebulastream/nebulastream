@@ -26,7 +26,7 @@ namespace NES::Monitoring {
 MemoryCollector::MemoryCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(MemoryMetrics::getSchema("")) {
-    NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
+    NES_INFO2("MemoryCollector: Init MemoryCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }

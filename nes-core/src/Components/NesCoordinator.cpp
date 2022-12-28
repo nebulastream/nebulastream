@@ -150,7 +150,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
         setThreadName("RqstProc");
 
-        NES_INFO("NesCoordinator: started queryRequestProcessor");
+        NES_INFO2("NesCoordinator: started queryRequestProcessor");
         queryRequestProcessorService->start();
         NES_WARNING2("NesCoordinator: finished queryRequestProcessor");
     }));
@@ -334,7 +334,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
 }
 
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
-    NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
+    NES_INFO2("NesCoordinator: Get query statistics for query Id {}", queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
 }
 

@@ -167,18 +167,18 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
             unbuffer*/
             reconnectBuffering = false;
-            NES_INFO("stop buffering data for context " << workerContext.getId());
+            NES_INFO2("stop buffering data for context {}", workerContext.getId());
             auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            NES_INFO("sending buffered data")
+            NES_INFO2("sending buffered data");
             while (topBuffer) {
                 /*this will only work if guarantees are not set to at least once,
                 otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
                 if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING2(("buffer does not exist");
+                    NES_WARNING2("buffer does not exist");
                     break;
                 }
                 if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING2(("could not send all data from buffer");
+                    NES_WARNING2("could not send all data from buffer");
                     break;
                 }
                 NES_TRACE2("buffer sent");

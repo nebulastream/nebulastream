@@ -26,7 +26,7 @@ namespace NES::Monitoring {
 CpuCollector::CpuCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(CpuMetrics::getSchema("")) {
-    NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+    NES_INFO2("CpuCollector: Init CpuCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }

@@ -275,8 +275,7 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
                                                     const EpochBarrierPropagationNotification* request,
                                                     EpochBarrierPropagationReply* reply) {
     try {
-        NES_INFO("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
-                 << request->timestamp() << "and querySubPlanId " << request->queryid());
+        NES_INFO2("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp  {} and querySubPlanId {}", request->timestamp(), request->queryid());
         this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
         reply->set_success(true);
         return Status::OK;
@@ -337,8 +336,7 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
-    NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : "
-             << querySubPlanId << " shared query plan id: " << sharedQueryId)
+    NES_INFO2("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}", querySubPlanId, sharedQueryId)
 
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SoftStopTriggered);
