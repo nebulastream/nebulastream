@@ -17,7 +17,6 @@
 
 #include <Network/NesPartition.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <spdlog/spdlog.h>
 
 namespace NES {
 namespace Network {
