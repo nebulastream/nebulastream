@@ -40,7 +40,7 @@ MonitoringAgent::MonitoringAgent(bool enabled)
 
 MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
     : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
-    NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
+    NES_DEBUG2("MonitoringAgent: Init with monitoring plan {} and enabled={}", monitoringPlan->toString(), enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
@@ -54,7 +54,7 @@ MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, Mon
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
     std::vector<MetricPtr> output;
     if (enabled) {
-        NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
+        NES_DEBUG2("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
             collector->setNodeId(nodeId);

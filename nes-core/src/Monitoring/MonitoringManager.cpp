@@ -77,7 +77,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
 }
 
 MonitoringManager::~MonitoringManager() {
-    NES_DEBUG("MonitoringManager: Shutting down");
+    NES_DEBUG2("MonitoringManager: Shutting down");
     workerClient.reset();
     topology.reset();
 }
@@ -97,7 +97,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
     }
 
     for (auto nodeId : nodeIds) {
-        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
+        NES_DEBUG2("MonitoringManager: Registering monitoring plan for worker id= {}", std::to_string(nodeId));
         TopologyNodePtr node = topology->findNodeWithId(nodeId);
 
         if (node) {
@@ -108,7 +108,7 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
             auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
 
             if (success) {
-                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
+                NES_DEBUG2("MonitoringManager: Node with ID {} registered successfully.", std::to_string(nodeId));
                 monitoringPlanMap[nodeId] = monitoringPlan;
             } else {
                 NES_ERROR2("MonitoringManager: Node with ID {} failed to register plan over GRPC.", std::to_string(nodeId));
@@ -129,7 +129,7 @@ nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
         return metricsJson;
     }
 
-    NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
+    NES_DEBUG2("MonitoringManager: Requesting metrics for node id={}", std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
 
     //getMonitoringPlan(..) checks if node exists, so no further check necessary
@@ -140,7 +140,7 @@ nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     auto metricsAsJsonString = workerClient->requestMonitoringData(destAddress);
 
     if (!metricsAsJsonString.empty()) {
-        NES_DEBUG("MonitoringManager: Received monitoring data " + metricsAsJsonString);
+        NES_DEBUG2("MonitoringManager: Received monitoring data {}", metricsAsJsonString);
         //convert string to json object
         metricsJson = metricsJson.parse(metricsAsJsonString);
         return metricsJson;
@@ -159,7 +159,7 @@ void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
 }
 
 void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
-    NES_DEBUG("MonitoringManager: Removing node and metrics for node " << nodeId);
+    NES_DEBUG2("MonitoringManager: Removing node and metrics for node {}", nodeId);
     monitoringPlanMap.erase(nodeId);
     metricStore->removeMetrics(nodeId);
 }
@@ -168,7 +168,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
     if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
         TopologyNodePtr node = topology->findNodeWithId(nodeId);
         if (node) {
-            NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
+            NES_DEBUG2("MonitoringManager: No registered plan found. Returning default plan for node {}", std::to_string(nodeId));
             return MonitoringPlan::defaultPlan();
         }
         NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
@@ -308,8 +308,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
             NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped",  queryId);
             return true;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached for "
-                  << queryId << " as status is=" << catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", queryId, catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
     NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -331,7 +330,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
 
         switch (queryCatalogEntry->getQueryStatus()) {
             case QueryStatus::Running: {
-                NES_DEBUG("MonitoringManager: Query is now running " << queryId);
+                NES_DEBUG2("MonitoringManager: Query is now running {}", queryId);
                 return true;
             }
             default: {
