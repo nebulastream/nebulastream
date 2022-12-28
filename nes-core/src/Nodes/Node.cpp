@@ -92,13 +92,13 @@ bool Node::removeChild(NodePtr const& node) {
 
 bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_WARNING("Node: Adding node to its self so will skip add parent operation.");
+        NES_WARNING2("Node: Adding node to its self so will skip add parent operation.");
         return false;
     }
 
     // checks if current new node is not part of parents
     if (vectorContainsTheNode(parents, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore add parent operation.");
+        NES_WARNING2("Node: the node is already part of its parents so ignore add parent operation.");
         return false;
     }
     // add the node to the parents
@@ -113,12 +113,12 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
 
     //Perform sanity checks
     if (newNode.get() == this) {
-        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        NES_WARNING2("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
     if (vectorContainsTheNode(parents, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        NES_WARNING2("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
@@ -152,12 +152,12 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
 bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
 
     if (newNode.get() == this) {
-        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        NES_WARNING2("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
     if (vectorContainsTheNode(children, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        NES_WARNING2("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
@@ -245,7 +245,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
     }
 
     if (oldNode->isIdentical(newNode)) {
-        NES_WARNING("Node: the new node was the same so will skip replace operation.");
+        NES_WARNING2("Node: the new node was the same so will skip replace operation.");
         return true;
     }
 

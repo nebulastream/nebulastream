@@ -68,8 +68,7 @@ ZmqServer::ZmqServer(std::string hostname,
       exchangeProtocol(exchangeProtocol), bufferManager(std::move(bufferManager)) {
     NES_DEBUG2("ZmqServer({}:{}) Creating ZmqServer()", this->hostname, this->currentPort);
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
-        NES_WARNING("ZmqServer(" << this->hostname << ":" << this->currentPort
-                                 << ") numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS");
+        NES_WARNING2("ZmqServer({}:{}) numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS", this->hostname, this->currentPort);
     }
 }
 
@@ -117,8 +116,8 @@ bool ZmqServer::stop() {
                 NES_DEBUG2("ZmqServer({}:{}): gracefully closed on: {}",
                            this->hostname, this->currentPort, hostname, this->currentPort);
             } else {
-                NES_WARNING("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  non gracefully closed on "
-                                         << hostname << ":" << this->currentPort);
+                NES_WARNING2("ZmqServer({}:{}): non gracefully closed on: {}",
+                            this->hostname, this->currentPort, hostname, this->currentPort);
             }
         } catch (std::exception& e) {
             NES_ERROR2("ZmqServer({}:{}):  Server failed to start due to {}",

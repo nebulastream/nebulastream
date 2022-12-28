@@ -69,8 +69,8 @@ void FieldRenameExpressionNode::inferStamp(const Optimizer::TypeInferencePhaseCo
     }
 
     if (fieldName == newFieldName) {
-        NES_WARNING("FieldRenameExpressionNode: Both existing and new fields are same: existing: " + fieldName
-                    + " new field name: " + newFieldName);
+        NES_WARNING2("FieldRenameExpressionNode: Both existing and new fields are same: existing: {} new field name: {}",
+                     fieldName, newFieldName);
     } else {
         auto newFieldAttribute = schema->hasFieldName(newFieldName);
         if (newFieldAttribute) {

@@ -246,7 +246,7 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     if (Runtime::QueryTerminationType::Graceful == terminationType) {
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
     } else {
-        NES_WARNING("Ignoring forceful EoS on " << nesPartition);
+        NES_WARNING2("Ignoring forceful EoS on {}", nesPartition);
     }
 }
 
