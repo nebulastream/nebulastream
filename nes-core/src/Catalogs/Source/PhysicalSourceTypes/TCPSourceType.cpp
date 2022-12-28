@@ -76,11 +76,11 @@ TCPSourceType::TCPSourceType()
           Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG,
           0,
           "Number of bytes used to identify the size of the next incoming message")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
 
 TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap) : TCPSourceType() {
-    NES_INFO("TCPSourceType: Init default TCP source config object with values from command line args.");
+    NES_INFO2("TCPSourceType: Init default TCP source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::SOCKET_HOST_CONFIG) != sourceConfigMap.end()) {
         socketHost->setValue(sourceConfigMap.find(Configurations::SOCKET_HOST_CONFIG)->second);
@@ -143,7 +143,7 @@ TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap)
 }
 
 TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
-    NES_INFO("TCPSourceType: Init default TCP source config object with values from YAML file.");
+    NES_INFO2("TCPSourceType: Init default TCP source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::SOCKET_HOST_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::SOCKET_HOST_CONFIG].As<std::string>() != "\n") {

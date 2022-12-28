@@ -31,7 +31,7 @@ KafkaSourceTypePtr KafkaSourceType::create(std::map<std::string, std::string> so
 KafkaSourceTypePtr KafkaSourceType::create() { return std::make_shared<KafkaSourceType>(KafkaSourceType()); }
 
 KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfigMap) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
+    NES_INFO2("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find(Configurations::BROKERS_CONFIG)->second);
@@ -71,7 +71,7 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
 }
 
 KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
+    NES_INFO2("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
     if (!yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>() != "\n") {
@@ -155,7 +155,7 @@ KafkaSourceType::KafkaSourceType()
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
                                                                                            Configurations::InputFormat::JSON,
                                                                                            "input data format")) {
-    NES_INFO("KafkaSourceType: Init source config object with default values.");
+    NES_INFO2("KafkaSourceType: Init source config object with default values.");
 }
 
 std::string KafkaSourceType::toString() {

@@ -30,7 +30,7 @@ OPCSourceTypePtr OPCSourceType::create(std::map<std::string, std::string> source
 OPCSourceTypePtr OPCSourceType::create() { return std::make_shared<OPCSourceType>(OPCSourceType()); }
 
 OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap) : OPCSourceType() {
-    NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
+    NES_INFO2("OPCSourceType: Init default OPC source config object with values from command line args.");
     if (sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
         namespaceIndex->setValue(std::stoi(sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG)->second));
     }
@@ -50,7 +50,7 @@ OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap)
 }
 
 OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
-    NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
+    NES_INFO2("OPCSourceType: Init default OPC source config object with values from YAML file.");
     if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
         namespaceIndex->setValue(yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::uint32_t>());
@@ -88,7 +88,7 @@ OPCSourceType::OPCSourceType()
       password(Configurations::ConfigurationOption<std::string>::create(Configurations::PASSWORD_CONFIG,
                                                                         "",
                                                                         "password, needed for: OPCSource")) {
-    NES_INFO("OPCSourceType: Init source config object with default values.");
+    NES_INFO2("OPCSourceType: Init source config object with default values.");
 }
 
 std::string OPCSourceType::toString() {
