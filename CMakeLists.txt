@@ -45,7 +45,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM "Enables the WebAssembly (WASM) backend." OFF)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM "Enables the WebAssembly (WASM) backend." ON)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
