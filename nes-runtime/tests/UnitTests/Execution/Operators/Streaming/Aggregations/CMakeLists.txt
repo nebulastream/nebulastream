@@ -14,3 +14,13 @@
 add_executable(runtime-global-slice-pre-aggregation-test "GlobalSlicePreAggregationTest.cpp")
 target_link_libraries(runtime-global-slice-pre-aggregation-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-global-slice-pre-aggregation-test COMMAND runtime-global-slice-pre-aggregation-test)
+
+
+add_executable(runtime-multi-origin-watermark-processor-test "MultiOriginWatermarkProcessorTest.cpp")
+target_link_libraries(runtime-multi-origin-watermark-processor-test nes-runtime-tests nes-tests-util)
+add_test(NAME runtime-multi-origin-watermark-processor-test COMMAND runtime-multi-origin-watermark-processor-test)
+
+
+add_executable(runtime-slice-assigner-test "SliceAssignerTest.cpp")
+target_link_libraries(runtime-slice-assigner-test nes-runtime-tests nes-tests-util)
+add_test(NAME runtime-slice-assigner-test COMMAND runtime-slice-assigner-test)
