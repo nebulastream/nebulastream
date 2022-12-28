@@ -18,6 +18,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -27,22 +28,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ScanOperatorTest : public testing::Test {
+class ScanOperatorTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ScanOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ScanOperatorTest test class." << std::endl;
+        NES_INFO("Setup ScanOperatorTest test class." );
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ScanOperatorTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ScanOperatorTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ScanOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ScanOperatorTest test class." ); }
 };
 
 /**

@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,7 +27,7 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests execution of scala expression
  */
-class ExpressionExecutionTest : public testing::Test, public AbstractCompilationBackendTest {
+class ExpressionExecutionTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -34,14 +35,8 @@ class ExpressionExecutionTest : public testing::Test, public AbstractCompilation
         NES_DEBUG("Setup ExpressionExecutionTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ExpressionExecutionTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ExpressionExecutionTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ExpressionExecutionTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ExpressionExecutionTest test class." ); }
 };
 
 Value<> int8AddExpression(Value<Int8> x) {

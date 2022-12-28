@@ -24,22 +24,22 @@
 
 namespace NES::Nautilus {
 
-class ValueTest : public testing::Test {
+class ValueTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ValueTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ValueTest test class." << std::endl;
+        NES_INFO("Setup ValueTest test class." );
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ValueTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup ValueTest test case." ); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ValueTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down ValueTest test case." ); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ValueTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ValueTest test class." ); }
 };
 
 TEST_F(ValueTest, assignMentTest) {

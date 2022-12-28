@@ -21,22 +21,22 @@
 
 namespace NES::Nautilus {
 
-class OperatorTest : public testing::Test {
+class OperatorTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("OperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup OperatorTest test class." << std::endl;
+        NES_INFO("Setup OperatorTest test class." );
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup OperatorTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup OperatorTest test case." ); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down OperatorTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down OperatorTest test case." ); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down OperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down OperatorTest test class." ); }
 };
 
 TEST_F(OperatorTest, FilterOperatorTest) {
