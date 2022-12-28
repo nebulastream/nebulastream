@@ -18,6 +18,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <optional>
 #include <unordered_map>
+#include <Util/Logger/Logger.hpp>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
@@ -104,6 +105,6 @@ class MemoryLayout {
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
-
 }// namespace NES::Runtime::MemoryLayouts
+
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
