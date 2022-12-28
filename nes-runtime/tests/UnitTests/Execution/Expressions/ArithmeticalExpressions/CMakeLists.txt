@@ -1,17 +1,17 @@
 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 
-add_executable(runtime-add-expression-test "AddExpressionTest.cpp")
-target_link_libraries(runtime-add-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-add-expression-test COMMAND runtime-add-expression-test)
+#    https://www.apache.org/licenses/LICENSE-2.0
 
-add_executable(runtime-sub-expression-test "SubExpressionTest.cpp")
-target_link_libraries(runtime-sub-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-sub-expression-test COMMAND runtime-sub-expression-test)
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-add_executable(runtime-mul-expression-test "MulExpressionTest.cpp")
-target_link_libraries(runtime-mul-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-mul-expression-test COMMAND runtime-mul-expression-test)
-
-add_executable(runtime-div-expression-test "DivExpressionTest.cpp")
-target_link_libraries(runtime-div-expression-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-div-expression-test COMMAND runtime-div-expression-test)
+add_nes_runtime_test(runtime-add-expression-test "AddExpressionTest.cpp")
+add_nes_runtime_test(runtime-sub-expression-test "SubExpressionTest.cpp")
+add_nes_runtime_test(runtime-mul-expression-test "MulExpressionTest.cpp")
+add_nes_runtime_test(runtime-div-expression-test "DivExpressionTest.cpp")

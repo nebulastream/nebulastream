@@ -17,6 +17,7 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -24,22 +25,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class SelectionOperatorTest : public testing::Test {
+class SelectionOperatorTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SelectionOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup SelectionOperatorTest test class." << std::endl;
+        NES_INFO("Setup SelectionOperatorTest test class." );
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup SelectionOperatorTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down SelectionOperatorTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down SelectionOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down SelectionOperatorTest test class." ); }
 };
 
 /**

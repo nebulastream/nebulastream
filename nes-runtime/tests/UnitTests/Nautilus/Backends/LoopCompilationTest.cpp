@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,19 +25,13 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class LoopCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class LoopCompilationTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup TraceTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override { NES_DEBUG("Setup TraceTest test case."); }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down TraceTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TraceTest test class."); }

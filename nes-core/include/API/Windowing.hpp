@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_API_WINDOWING_HPP_
 #define NES_CORE_INCLUDE_API_WINDOWING_HPP_
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
+#include <memory>
 
 namespace NES {
 
