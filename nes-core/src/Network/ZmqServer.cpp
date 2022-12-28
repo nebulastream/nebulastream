@@ -199,7 +199,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
                 shutdownComplete = true;
                 //                dispatcherSocket.close();
                 //                frontendSocket.close();
-                NES_INFO2("ZmqServer({}:{}): Frontend: Shutdown completed! address: tcp://{}:{}", this->hostname, this->currentPort, hostname, td::to_string(actualPort));
+                NES_INFO2("ZmqServer({}:{}): Frontend: Shutdown completed! address: tcp://{}:{}", this->hostname, this->currentPort, hostname, std::to_string(actualPort));
 
             } else {
                 NES_ERROR2("ZmqServer({}:{}):{}",
