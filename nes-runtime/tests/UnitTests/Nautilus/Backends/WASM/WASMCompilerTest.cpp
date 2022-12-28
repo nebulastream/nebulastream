@@ -13,6 +13,7 @@
 */
 #include "Nautilus/Backends/WASM/WASMCompiler.hpp"
 #include "Execution/RecordBuffer.hpp"
+#include "Nautilus/Backends/WASM/WASMRuntime.hpp"
 #include "Nautilus/Interface/DataTypes/MemRef.hpp"
 #include "Nautilus/Interface/DataTypes/Value.hpp"
 #include "Nautilus/Tracing/Phases/SSACreationPhase.hpp"
@@ -64,7 +65,12 @@ TEST_F(WASMCompilerTest, addIntFunctionTest) {
     std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    wasmCompiler.lower(ir);
+    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
+    auto wasm = wasmCompiler->lower(ir);
+    auto proxies = wasmCompiler->getProxyFunctionNames();
+    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
+    engine->setup(proxies);
+    engine->run(wasm.first, wasm.second);
 }
 
 Value<> int32SubExpression() {
