@@ -27,7 +27,7 @@ namespace NES::Monitoring {
 DiskCollector::DiskCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(DiskMetrics::getSchema("")) {
-    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
+    NES_INFO2("DiskCollector: Init DiskCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }

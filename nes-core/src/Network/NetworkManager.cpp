@@ -33,7 +33,7 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
 
     if (bool const success = server->start(); success) {
         nodeLocation = NodeLocation(nodeEngineId, hostname, server->getServerPort());
-        NES_INFO("NetworkManager: Server started successfully on " << nodeLocation.createZmqURI());
+        NES_INFO2("NetworkManager: Server started successfully on {}", nodeLocation.createZmqURI());
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start on " << hostname << ":" << port);
     }

@@ -22,10 +22,10 @@ namespace NES::Monitoring {
 AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResourcesReader() {
 #ifdef __linux__
     auto abstractReader = std::make_shared<LinuxSystemResourcesReader>();
-    NES_INFO("SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader");
+    NES_INFO2("SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader");
 #else
     auto abstractReader = std::make_shared<AbstractSystemResourcesReader>();
-    NES_INFO("SystemResourcesReaderFactory: OS not supported, return DefaultReader");
+    NES_INFO2("SystemResourcesReaderFactory: OS not supported, return DefaultReader");
 #endif
 
     return abstractReader;

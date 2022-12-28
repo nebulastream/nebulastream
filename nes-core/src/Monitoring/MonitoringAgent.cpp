@@ -77,14 +77,14 @@ nlohmann::json MonitoringAgent::getMetricsAsJson() {
     nlohmann::json metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
-            NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));
+            NES_INFO2("MonitoringAgent: Collecting metrics of type {}", toString(type));
             auto collector = catalog->getMetricCollector(type);
             collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
             metricsJson[toString(metric->getMetricType())] = asJson(metric);
         }
     }
-    NES_INFO("MonitoringAgent: Metrics collected " << metricsJson);
+    NES_INFO2("MonitoringAgent: Metrics collected {}", metricsJson);
 
     return metricsJson;
 }
@@ -105,7 +105,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
                 MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
             std::string metricTypeString = NES::Monitoring::toString(metricType);
 
-            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "_ph");
+            NES_INFO2("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);
             auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
             workerConfig->physicalSources.add(source);
         }

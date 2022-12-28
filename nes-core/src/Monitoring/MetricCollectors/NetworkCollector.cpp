@@ -27,7 +27,7 @@ namespace NES::Monitoring {
 NetworkCollector::NetworkCollector()
     : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(NetworkMetrics::getSchema("")) {
-    NES_INFO("NetworkCollector: Init NetworkCollector with schema " << schema->toString());
+    NES_INFO2("NetworkCollector: Init NetworkCollector with schema {}", schema->toString());
 }
 
 MetricCollectorType NetworkCollector::getType() { return NETWORK_COLLECTOR; }

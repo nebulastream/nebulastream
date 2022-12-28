@@ -94,7 +94,7 @@ bool ZmqServer::stop() {
     if (!isRunning.compare_exchange_strong(expected, false)) {
         return false;
     }
-    NES_INFO("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  Initiating shutdown");
+    NES_INFO2("ZmqServer({}:{}): Initiating shutdown", this->hostname, this->currentPort);
     if (!zmqContext) {
         return false;// start() not called
     }
@@ -127,9 +127,9 @@ bool ZmqServer::stop() {
             throw e;
         }
     }
-    NES_INFO("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  Going to close zmq context...");
+    NES_INFO2("ZmqServer({}:{}): Going to close zmq context...", this->hostname, this->currentPort);
     zmqContext->close();
-    NES_INFO("ZmqServer(" << this->hostname << ":" << this->currentPort << "):  Zmq context is now closed");
+    NES_INFO2("ZmqServer({}:{}): Zmq context is now closed", this->hostname, this->currentPort);
     zmqContext.reset();
     return true;
 }
@@ -199,9 +199,8 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, const std::shared_ptr<std
                 shutdownComplete = true;
                 //                dispatcherSocket.close();
                 //                frontendSocket.close();
-                NES_INFO("ZmqServer(" << this->hostname << ":" << this->currentPort
-                                      << "):  Frontend: Shutdown completed! address: "
-                                      << "tcp://" + hostname + ":" + std::to_string(actualPort));
+                NES_INFO2("ZmqServer({}:{}): Frontend: Shutdown completed! address: tcp://{}:{}", this->hostname, this->currentPort, hostname, td::to_string(actualPort));
+
             } else {
                 NES_ERROR2("ZmqServer({}:{}):{}",
                            this->hostname, this->currentPort, zmqError.what());

@@ -45,14 +45,14 @@ int main(int argc, const char* argv[]) {
 
         Logger::getInstance()->changeLogLevel(coordinatorConfig->logLevel.getValue());
 
-        NES_INFO("start coordinator with " << coordinatorConfig->toString());
+        NES_INFO2("start coordinator with {}", coordinatorConfig->toString());
 
-        NES_INFO("creating coordinator");
+        NES_INFO2("creating coordinator");
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
 
-        NES_INFO("Starting Coordinator");
+        NES_INFO2("Starting Coordinator");
         crd->startCoordinator(/**blocking**/ true);//This is a blocking call
-        NES_INFO("Stopping Coordinator");
+        NES_INFO2("Stopping Coordinator");
         crd->stopCoordinator(true);
     } catch (std::exception& exp) {
         NES_ERROR2("Problem with coordinator: {}", exp.what());

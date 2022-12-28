@@ -188,7 +188,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configuratio
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
             std::string logicalSourceName = NES::Monitoring::toString(metricType);
             logicalMonitoringSources.insert(logicalSourceName);
-            NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
+            NES_INFO2("MonitoringManager: Creating logical source {}", logicalSourceName);
             config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
         }
         return true;
@@ -221,11 +221,11 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
         query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorStr);
 
         // create new monitoring query
-        NES_INFO("MonitoringManager: Creating query for " << monitoringStream);
+        NES_INFO2("MonitoringManager: Creating query for {}", monitoringStream);
         queryId =
             queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
-            NES_INFO("MonitoringManager: Successfully started query " << queryId << "::" << monitoringStream);
+            NES_INFO2("MonitoringManager: Successfully started query {}::{}", queryId, monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
         } else {
             NES_ERROR2("MonitoringManager: Query {} :: {} failed to start in time.", queryId, monitoringStream);
@@ -263,10 +263,10 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
         auto metricType = streamName;
         auto queryId = deployedMonitoringQueries[streamName];
 
-        NES_INFO("MonitoringManager: Stopping query " << queryId << " for " << metricType);
+        NES_INFO2("MonitoringManager: Stopping query {} for {}", queryId, metricType);
         if (queryService->validateAndQueueStopQueryRequest(queryId)) {
             if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
-                NES_INFO("MonitoringManager: Query " << queryId << "::" << metricType << " terminated.");
+                NES_INFO2("MonitoringManager: Query {}::{} terminated", queryId , metricType);
             } else {
                 NES_ERROR2("MonitoringManager: Failed to stop query {}::{}", queryId , metricType);
                 success = false;
@@ -278,7 +278,7 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
     }
     if (success) {
         deployedMonitoringQueries.erase(streamName);
-        NES_INFO("MonitoringManager: Monitoring query stopped successfully " << streamName);
+        NES_INFO2("MonitoringManager: Monitoring query stopped successfully {}", streamName);
     }
     return success;
 }
@@ -316,7 +316,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
 }
 
 bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::seconds timeout) {
-    NES_INFO("MonitoringManager: wait till the query " << queryId << " gets into Running status.");
+    NES_INFO2("MonitoringManager: wait till the query {} gets into Running status.", queryId);
     auto start_timestamp = std::chrono::system_clock::now();
 
     while (std::chrono::system_clock::now() < start_timestamp + timeout) {
