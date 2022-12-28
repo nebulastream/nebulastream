@@ -11,12 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(nautilus-symbolic-tracing-test "SymbolicTracingTest.cpp")
-target_link_libraries(nautilus-symbolic-tracing-test
-        nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-symbolic-tracing-test COMMAND nautilus-symbolic-tracing-test)
-
-add_executable(nautilus-tag-creation-test "TagCreationTest.cpp")
-target_link_libraries(nautilus-tag-creation-test
-        nes-runtime ${GTEST_LIBRARIES})
-add_test(NAME nautilus-tag-creation-test COMMAND nautilus-tag-creation-test)
+add_nes_runtime_test(nautilus-symbolic-tracing-test "SymbolicTracingTest.cpp")
+add_nes_runtime_test(nautilus-tag-creation-test "TagCreationTest.cpp")

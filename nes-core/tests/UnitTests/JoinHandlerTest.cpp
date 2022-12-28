@@ -12,14 +12,9 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
-#include <map>
-#include <vector>
-
 #include <API/Windowing.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -42,6 +37,9 @@
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <gtest/gtest.h>
+#include <map>
+#include <vector>
 
 namespace NES {
 class JoinHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {

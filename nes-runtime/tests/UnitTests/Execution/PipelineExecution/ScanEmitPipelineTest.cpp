@@ -20,6 +20,7 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
@@ -29,7 +30,7 @@
 
 namespace NES::Runtime::Execution {
 
-class ScanEmitPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
+class ScanEmitPipelineTest : public Testing::NESBaseTest , public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -38,22 +39,20 @@ class ScanEmitPipelineTest : public testing::Test, public AbstractPipelineExecut
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ScanEmitPipelineTest test class." << std::endl;
+        NES_INFO("Setup ScanEmitPipelineTest test class." );
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup ScanEmitPipelineTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
+        NES_INFO("Setup ScanEmitPipelineTest test case." );
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ScanEmitPipelineTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ScanEmitPipelineTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ScanEmitPipelineTest test class." ); }
 };
 
 /**

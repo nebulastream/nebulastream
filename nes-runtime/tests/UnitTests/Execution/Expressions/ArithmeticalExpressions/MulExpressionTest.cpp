@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -21,22 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class MulExpressionTest : public testing::Test {
+class MulExpressionTest : public Testing::NESBaseTest  {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MulExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MulExpressionTest test class." << std::endl;
+        NES_INFO("Setup MulExpressionTest test class." );
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down MulExpressionTest test class." ); }
 };
 
 TEST_F(MulExpressionTest, mulIntegers) {
