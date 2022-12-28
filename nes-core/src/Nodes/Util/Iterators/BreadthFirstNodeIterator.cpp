@@ -40,7 +40,7 @@ NodePtr BreadthFirstNodeIterator::iterator::operator*() { return workQueue.front
 
 BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator++() {
     if (workQueue.empty()) {
-        NES_DEBUG("BF Iterator: we reached the end of this iterator and will not do anything.");
+        NES_DEBUG2("BF Iterator: we reached the end of this iterator and will not do anything.");
     } else {
         auto current = workQueue.front();
         workQueue.pop();

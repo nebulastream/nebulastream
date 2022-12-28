@@ -19,7 +19,7 @@
 
 namespace NES::Monitoring {
 
-AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG("AllEntriesMetricStore: Init NewestMetricStore"); }
+AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG2("AllEntriesMetricStore: Init NewestMetricStore"); }
 
 MetricStoreType AllEntriesMetricStore::getType() const { return AllEntries; }
 
