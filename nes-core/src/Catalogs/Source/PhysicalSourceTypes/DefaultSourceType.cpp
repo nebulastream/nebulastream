@@ -42,7 +42,7 @@ DefaultSourceType::DefaultSourceType()
           Configurations::ConfigurationOption<GatheringMode::Value>::create(Configurations::SOURCE_GATHERING_MODE_CONFIG,
                                                                             GatheringMode::INTERVAL_MODE,
                                                                             "Gathering mode of the source.")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
+    NES_INFO2("NesSourceConfig: Init source config object with default values.");
 }
 
 DefaultSourceType::DefaultSourceType(std::map<std::string, std::string>) : DefaultSourceType() {}
