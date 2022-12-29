@@ -27,11 +27,19 @@ void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
     config.wasm_memory64(true);
     engine = Engine(std::move(config));
     linker = Linker(engine);
-    auto t = linker.define_wasi();
     store = Store(engine);
-
-    auto tmp = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
+    /*
+    auto isPreOpened = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
+    if (!isPreOpened) {
+        NES_ERROR("Could not pre-open directory for python");
+    }
+     */
+    wasiConfig.inherit_env();
+    wasiConfig.inherit_stdin();
+    wasiConfig.inherit_stdout();
+    wasiConfig.inherit_stderr();
     store.context().set_wasi(std::move(wasiConfig)).unwrap();
+    linker.define_wasi().unwrap();
 
     for (const auto& proxy : proxyFunctions) {
         linkHostFunction(proxy);
@@ -40,19 +48,42 @@ void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
 }
 
 void WASMRuntime::run(size_t binaryLength, char* queryBinary) {
+
+    config.wasm_memory64(true);
+    engine = Engine(std::move(config));
+    linker = Linker(engine);
+    store = Store(engine);
+    /*
+    auto isPreOpened = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
+    if (!isPreOpened) {
+        NES_ERROR("Could not pre-open directory for python");
+    }
+     */
+    wasiConfig.inherit_env();
+    wasiConfig.inherit_stdin();
+    wasiConfig.inherit_stdout();
+    wasiConfig.inherit_stderr();
+    store.context().set_wasi(std::move(wasiConfig)).unwrap();
+    linker.define_wasi().unwrap();
+
     wasmtime::Span query{(uint8_t*) queryBinary, binaryLength};
     auto wat = parseWATFile("/home/victor/sketch.wat");
+    auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
 
     auto module = wasmtime::Module::compile(engine, wat).unwrap();
+    auto pyModule = wasmtime::Module::compile(engine, pyWat).unwrap();
 
-    Instance instance = linker.instantiate(store, module).unwrap();
-    auto execute = std::get<wasmtime::Func>(*instance.get(store, "execute"));
+    auto instance = linker.instantiate(store, module).unwrap();
+    auto pyInstance = linker.instantiate(store, pyModule).unwrap();
+
+    auto execute = std::get<Func>(*instance.get(store, "execute"));
+    pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
+
     auto memory = std::get<Memory>(*instance.get(store, "memory"));
-    Span<uint8_t> memSpan = memory.data(store.context());
-    auto memDataPtr = memSpan.data();
+    pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
 
     auto results = execute.call(store, {}).unwrap();
-    std::cout << results[0].i32() << "\n";
+    //std::cout << results[0].i32() << "\n";
 }
 
 void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
@@ -70,6 +101,9 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
 }
 
 void WASMRuntime::prepareCPython() {
+    /**
+     * For now allow UDFs with two arguments of type i32...
+     */
     auto prepareArgs = linker.func_new("cpython",
                                        "prepare_args",
                                        FuncType({ValKind::I32, ValKind::I32}, {}),
@@ -88,62 +122,25 @@ void WASMRuntime::prepareCPython() {
                                            return std::monostate();
                                        });
 
-    auto res = linker.func_new("cpython",
-                               "cpython",
-                               FuncType({ValKind::I32, ValKind::I32}, {ValKind::I32}),
-                               [this](auto caller, auto params, auto results) {
-                                   auto ptr1 = params[0].i32();
-                                   auto mem = std::get<Memory>(*caller.get_export("memory"));
-                                   WasiConfig conf;
-                                   auto tmp = conf.preopen_dir("/home/victor/wanes-engine/python", ".");
-                                   std::cout << "Preopen: " << tmp << "\n";
-                                   std::vector<std::basic_string<char>> args;
-                                   args.emplace_back("add.py");
-                                   //args.emplace_back("5");
-                                   //args.emplace_back("7");
-                                   conf.argv(args);
-                                   conf.inherit_env();
-                                   conf.inherit_stdin();
-                                   conf.inherit_stderr();
-                                   conf.inherit_stdout();
-                                   store.context().set_wasi(std::move(conf)).unwrap();
+    auto prepareCPython = linker.func_new("cpython",
+                                       "cpython",
+                                       FuncType({}, {}),
+                                       [&](auto caller, auto params, auto results) {
+                                           (void) caller;
+                                           (void) params;
+                                           (void) results;
+                                           auto data = pyMemory.data(caller);
+                                           for (size_t i = 0; i < 7; ++i) {
+                                               data[i] = udfFileName[i];
+                                           }
+                                           for (size_t i = 0; i < 10; i++)
+                                           {
+                                               std::cout << "MEM " << i << " - " << (char)pyMemory.data(store)[i] << "\n";
+                                           }
+                                           auto funcResult = pyExecute.call(store, {}).unwrap();
+                                           return std::monostate();
+                                       });
 
-                                   std::ifstream watFile;
-                                   watFile.open(cpythonFilePath);
-                                   std::stringstream strStream;
-                                   strStream << watFile.rdbuf();
-
-                                   auto wat = strStream.str();
-                                   auto ss = wat.size();
-                                   auto cc = wat.c_str();
-                                   Span q{(uint8_t*) cc, ss};
-
-                                   auto module = wasmtime::Module::compile(engine, q).unwrap();
-
-                                   Instance instance = linker.instantiate(store, module).unwrap();
-                                   auto execute = std::get<wasmtime::Func>(*instance.get(store, "_start"));
-
-                                   auto res = execute.call(store, {}).unwrap();
-
-                                   results[0] = 0;//res[0].i32();
-                                   return std::monostate();
-                               });
-}
-
-void WASMRuntime::hostFunction() {
-    auto res = linker.func_new(proxyFunctionModule, "test", FuncType({}, {}), [](auto caller, auto params, auto results) {
-        auto mem = std::get<Memory>(*caller.get_export("memory"));
-        (void) params;
-        (void) results;
-
-        mem.data(caller)[8] = (int8_t) 'h';
-        //results[0] = res;
-        for (int i = 0; i < 15; ++i) {
-            std::cout << "mem: " << static_cast<int>(mem.data(caller)[i]) << "\n";
-        }
-
-        return std::monostate();
-    });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName) {

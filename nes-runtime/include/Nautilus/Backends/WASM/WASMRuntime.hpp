@@ -30,8 +30,11 @@ wasmtime::Linker linker;
 wasmtime::Store store;
 wasmtime::WasiConfig wasiConfig;
 wasmtime::Config config;
+wasmtime::Memory pyMemory = wasmtime::Memory(wasmtime_memory());
+wasmtime::Func pyExecute = wasmtime::Func(wasmtime_func());
 
 const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
+const char udfFileName[7] = "udf.py";
 std::string proxyFunctionModule = "ProxyFunction";
 
 void linkHostFunction(const std::string& proxyFunction);
@@ -42,7 +45,6 @@ void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionN
 void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
 void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
 void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
-void hostFunction();
 };
 
 }// namespace NES::Nautilus::Backends::WASM
