@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_
 #include <Common/Identifiers.hpp>
 #include <cstdint>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 
 namespace NES::Network {
@@ -95,6 +96,14 @@ struct hash<NES::Network::NesPartition> {
             ^ ((hash<uint64_t>()(k.getPartitionId()) ^ (hash<uint64_t>()(k.getSubpartitionId()) << 1)) >> 1);
     }
 };
-
 }// namespace std
+
+namespace fmt {
+template<>
+struct formatter<NES::Network::NesPartition> : formatter<std::string> {
+    auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "query Id:{} OperatorId:{} PartitionId: {} SubpartitionID: {}", partition.getQueryId(), partition.getOperatorId(), partition.getPartitionId(), partition.getSubpartitionId());
+    }
+};
+} //namespace fmt
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NESPARTITION_HPP_

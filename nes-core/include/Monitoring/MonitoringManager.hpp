@@ -25,6 +25,7 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -224,5 +225,14 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 }// namespace Monitoring
 }// namespace NES
-
+/*
+namespace fmt {
+template<>
+struct formatter<NES::Monitoring::MonitoringManager> : formatter<std::string> {
+    auto format(const NES::Monitoring::MonitoringManager& monitoring_manager, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", monitoring_manager.getMetricStore().getType()
+    }
+};
+} //namespace fmt
+*/
 #endif// NES_CORE_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

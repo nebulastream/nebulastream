@@ -393,7 +393,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     if (!success) {
         NES_WARNING2("NesWorker::replaceParent() failed to replace oldParent={} with newParentId={}",  oldParentId, newParentId);
     }
-    NES_DEBUG2(NesWorker::replaceParent() success={}", success);
+    NES_DEBUG2("NesWorker::replaceParent() success={}", success);
     return success;
 }
 
