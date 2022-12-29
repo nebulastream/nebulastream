@@ -260,7 +260,7 @@ class ExecutableCompleteAggregationTriggerAction
                     currentNumberOfTuples++;
                 }
             }//end of for
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}}: ({}): remove slices until={}", id, this->windowDefinition->getDistributionType()->toString(), currentWatermark);
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): remove slices until={}", id, this->windowDefinition->getDistributionType()->toString(), currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
             if (largestClosedWindow != 0) {
                 store->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
