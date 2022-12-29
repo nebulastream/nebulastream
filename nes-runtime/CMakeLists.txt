@@ -48,6 +48,8 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
         message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
         message(STATUS "mlir_libs: ${mlir_libs}")
+        message(STATUS "dialect_libs: ${dialect_libs}")
+        message(STATUS "conversion_libs: ${MLIR_INCLUDE_DIRS}")
         target_link_libraries(nes-runtime PRIVATE ${mlir_libs} ${dialect_libs}
                 ${conversion_libs}
                 MLIRReconcileUnrealizedCasts

@@ -181,10 +181,6 @@ jobs:
             arch: "arm64"
             require_build: "true"
             require_test: "true"
-          - osversion: alpine-3.15
-            arch: "X64"
-            require_build: "true"
-            require_test: "false"
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v3
@@ -300,9 +296,7 @@ jobs:
           #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
           docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the build image"
-          docker buildx build . -f Dockerfile-NES-Build-alpine-3.15 -t nebulastream/nes-build-image:alpine --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the alpine image"
+          echo "Pushed the build image"        
           docker logout
       - name: "Build and Release NES Dev Image"
         if: github.event_name != 'workflow_dispatch' && (contains(steps.changed-files.outputs.modified_files, 'docker/buildImage/') || contains(steps.changed-files.outputs.modified_files, 'docker/devImage/'))
@@ -311,9 +305,7 @@ jobs:
           cd docker/devImage/
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
           docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the dev image"
-          docker buildx build . -f Dockerfile-NES-Dev-alpine-3.15 -t nebulastream/nes-dev-image:alpine --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the alpine image"
+          echo "Pushed the dev image"          
           docker logout
       - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3

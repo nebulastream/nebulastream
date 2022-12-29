@@ -20,9 +20,14 @@
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
+#include <mlir/Dialect/ControlFlow/IR/ControlFlowOps.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMTypes.h>
-#include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/Dialect/Func/Transforms/FuncConversions.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/BuiltinAttributes.h>
@@ -33,7 +38,6 @@
 #include <mlir/IR/TypeRange.h>
 #include <mlir/IR/Value.h>
 #include <mlir/IR/Verifier.h>
-#include <mlir/Parser.h>
 #include <mlir/Support/LLVM.h>
 
 namespace NES::Nautilus::Backends::MLIR {
@@ -144,8 +148,9 @@ mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(const std::
 MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context(&context) {
     // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
     builder = std::make_unique<mlir::OpBuilder>(&context);
-    builder->getContext()->loadDialect<mlir::StandardOpsDialect>();
+    builder->getContext()->loadDialect<mlir::cf::ControlFlowDialect>();
     builder->getContext()->loadDialect<mlir::LLVM::LLVMDialect>();
+    builder->getContext()->loadDialect<mlir::func::FuncDialect>();
     builder->getContext()->loadDialect<mlir::scf::SCFDialect>();
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
@@ -273,7 +278,9 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::Function
     llvm::SmallVector<mlir::Type, 4> outputTypes(1, getMLIRType(functionOp->getOutputArg()));
     auto functionInOutTypes = builder->getFunctionType(inputTypes, outputTypes);
 
-    auto mlirFunction = mlir::FuncOp::create(getNameLoc("EntryPoint"), functionOp->getName(), functionInOutTypes);
+    auto mlirFunction = builder->create<mlir::func::FuncOp>(
+        getNameLoc("EntryPoint"),
+        functionOp->getName(), functionInOutTypes);
 
     // Avoid function name mangling.
     mlirFunction->setAttr("llvm.emit_c_interface", mlir::UnitAttr::get(context));
@@ -301,7 +308,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoopOper
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
     }
     auto* mlirTargetBlock = generateBasicBlock(loopHeadBlock, frame);
-    builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
+    builder->create<mlir::cf::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
 }
 
 //==--------------------------==//
@@ -545,12 +552,12 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
     }
 
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
-    builder->create<mlir::CondBranchOp>(getNameLoc("branch"),
-                                        frame.getValue(ifOp->getValue()->getIdentifier()),
-                                        trueBlock,
-                                        trueBlockArgs,
-                                        elseBlock,
-                                        elseBlockArgs);
+    builder->create<mlir::cf::CondBranchOp>(getNameLoc("branch"),
+                                            frame.getValue(ifOp->getValue()->getIdentifier()),
+                                            trueBlock,
+                                            trueBlockArgs,
+                                            elseBlock,
+                                            elseBlockArgs);
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
@@ -562,7 +569,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOp
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));
     }
     auto* mlirTargetBlock = generateBasicBlock(branchOp->getNextBlockInvocation(), frame);
-    builder->create<mlir::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
+    builder->create<mlir::cf::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
 }
 
 mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame&) {
@@ -621,14 +628,14 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOper
         auto inputIntegerStamp = cast<IR::Types::IntegerStamp>(inputStamp);
         auto outputIntegerStamp = cast<IR::Types::IntegerStamp>(outputStamp);
         auto mlirInput = frame.getValue(castOperation->getInput()->getIdentifier());
-        auto mlirCast = builder->create<mlir::arith::ExtSIOp>(getNameLoc("location"), mlirInput, getMLIRType(outputStamp));
+        auto mlirCast = builder->create<mlir::arith::ExtSIOp>(getNameLoc("location"), getMLIRType(outputStamp), mlirInput);
         frame.setValue(castOperation->getIdentifier(), mlirCast);
         return;
     } else if (inputStamp->isFloat() && outputStamp->isFloat()) {
         auto inputFloatStamp = cast<IR::Types::FloatStamp>(inputStamp);
         auto outputFloatStamp = cast<IR::Types::FloatStamp>(outputStamp);
         auto mlirInput = frame.getValue(castOperation->getInput()->getIdentifier());
-        auto mlirCast = builder->create<mlir::arith::ExtFOp>(getNameLoc("location"), mlirInput, getMLIRType(outputFloatStamp));
+        auto mlirCast = builder->create<mlir::arith::ExtFOp>(getNameLoc("location"), getMLIRType(outputFloatStamp), mlirInput);
         frame.setValue(castOperation->getIdentifier(), mlirCast);
         return;
     } else {
