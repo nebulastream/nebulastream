@@ -125,8 +125,10 @@ if (NES_SELF_HOSTING)
     # Setting it afterwards has no effect. It will be reset to a previously set value
     # when executing the PROJECT directive.
     # See: https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html
-    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang")
-    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
+    #set(CMAKE_CXX_COMPILER "/home/pgrulich/projects/nes/nebulastream/cmake-build-debug/nes-dependencies-v27-x64-linux-nes/installed/x64-linux-nes/tools/llvm/clang++")
+    set(CMAKE_C_COMPILER "/home/pgrulich/projects/nes/nebulastream/cmake-build-debug/nes-dependencies-v27-x64-linux-nes/installed/x64-linux-nes/tools/llvm/clang")
+   # set(CMAKE_CXX_COMPILER "/home/pgrulich/Downloads/clang/bin/clang++")
+    set(CMAKE_CXX_COMPILER "/home/pgrulich/Downloads/clang/bin/clang++")
 else ()
     message(STATUS "Use system compiler")
 endif ()

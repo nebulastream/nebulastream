@@ -13,8 +13,8 @@
 */
 
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
-#include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
-#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
+#include <mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h>
+#include <mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/Pass/PassManager.h>
@@ -29,8 +29,8 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 std::unique_ptr<mlir::Pass> getMLIRLoweringPass(MLIRPassManager::LoweringPass loweringPass) {
     switch (loweringPass) {
-        case MLIRPassManager::LLVM: return mlir::createLowerToLLVMPass();
-        case MLIRPassManager::SCF: return mlir::createLowerToCFGPass();
+        case MLIRPassManager::LLVM: return mlir::cf::createConvertControlFlowToLLVMPass();
+        case MLIRPassManager::SCF: return mlir::createConvertSCFToCFPass();
     }
 }
 
@@ -66,8 +66,8 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(mlir::OwningOpRef<mlir::ModuleOp
             passManager.addPass(getMLIRLoweringPass(loweringPass));
         }
     } else {
-        passManager.addPass(mlir::createLowerToCFGPass());
-        passManager.addPass(mlir::createLowerToLLVMPass());
+        passManager.addPass(mlir::createConvertSCFToCFPass());
+        passManager.addPass(mlir::cf::createConvertControlFlowToLLVMPass());
     }
 
     // Run passes.

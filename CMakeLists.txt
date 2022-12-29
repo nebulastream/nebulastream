@@ -73,10 +73,9 @@ endif ()
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
-project(NES CXX)
+project(NES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
@@ -523,7 +522,13 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 14 CONFIG REQUIRED)
+message(STATUS " CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+set(LLVM_DIR "/home/pgrulich/Downloads/clang/lib/cmake/llvm")
+set(MLIR_DIR "/home/pgrulich/Downloads/clang/lib/cmake/mlir")
+#set(CMAKE_FIND_USE_CMAKE_SYSTEM_PATH "${CMAKE_FIND_USE_CMAKE_SYSTEM_PATH};/home/pgrulich/Downloads/clang/lib/cmake/llvm")
+#set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH "${CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH};/home/pgrulich/Downloads/clang/lib/cmake/llvm")
+#set(CMAKE_FIND_USE_CMAKE_PATH "/home/pgrulich/Downloads/clang/lib/cmake/llvm")
+find_package(LLVM 15 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
