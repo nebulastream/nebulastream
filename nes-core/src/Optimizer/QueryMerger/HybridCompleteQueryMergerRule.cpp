@@ -26,7 +26,7 @@
 namespace NES::Optimizer {
 
 HybridCompleteQueryMergerRule::HybridCompleteQueryMergerRule(z3::ContextPtr context) : BaseQueryMergerRule() {
-    this->context = move(context);
+    this->context = std::move(context);
     signatureEqualityUtil = SignatureEqualityUtil::create(this->context);
 }
 
