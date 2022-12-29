@@ -13,6 +13,19 @@
 
 include(ExternalProject)
 
+function(add_nes_runtime_test)
+    add_executable(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-runtime-tests)
+    if (CODE_COVERAGE)
+        target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes-runtime nes-common EXCLUDE tests/*)
+        message(STATUS "Added cc test ${TARGET_NAME}")
+    endif ()
+    add_test(NAME ${TARGET_NAME} COMMAND ${TARGET_NAME})
+    message(STATUS "Added ut test ${TARGET_NAME}")
+endfunction()
+
+
 add_library(nes-runtime-tests INTERFACE)
 target_include_directories(nes-runtime-tests INTERFACE "./include/")
 target_link_libraries(nes-runtime-tests INTERFACE nes-runtime nes-tests-util)
