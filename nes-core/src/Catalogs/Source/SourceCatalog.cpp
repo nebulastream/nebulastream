@@ -165,7 +165,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     }
 
-    NES_DEBUG2("SourceCatalog: physical source {} id={} successful added", newSourceCatalogEntry->getPhysicalSource(), newSourceCatalogEntry->getNode()->getId());
+    NES_DEBUG2("SourceCatalog: physical source {} id={} successful added", newSourceCatalogEntry->getPhysicalSource()->toString(), newSourceCatalogEntry->getNode()->getId());
     return true;
 }
 

@@ -62,7 +62,7 @@ SerializableShapeType* ShapeTypeSerializationUtil::serializeShapeType(const Shap
     } else {
         NES_THROW_RUNTIME_ERROR("ShapeTypeSerializationUtil: serialization is not possible for " + shape->toString());
     }
-    NES_TRACE2("ShapeTypeSerializationUtil:: serialized " << shape->toString() << " to " << serializedShape->SerializeAsString());
+    NES_TRACE2("ShapeTypeSerializationUtil:: serialized {} to {}", shape->toString(), serializedShape->SerializeAsString());
     return serializedShape;
 }
 

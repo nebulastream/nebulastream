@@ -24,7 +24,7 @@
 namespace NES::Catalogs::Query {
 
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus::Value status) {
-    NES_INFO2("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status " << status);
+    NES_INFO2("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status {}", status);
     std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueryCatalogEntries(status);
     std::map<uint64_t, std::string> result;
     for (auto const& [key, value] : queries) {

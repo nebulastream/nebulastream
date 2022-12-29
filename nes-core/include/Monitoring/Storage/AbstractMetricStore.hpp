@@ -19,6 +19,7 @@
 #include <Monitoring/Storage/MetricStoreType.hpp>
 #include <cstdint>
 #include <unordered_map>
+#include <Util/Logger/Logger.hpp>
 #include <vector>
 
 namespace NES::Monitoring {
@@ -64,5 +65,14 @@ class AbstractMetricStore {
     virtual bool hasMetrics(uint64_t nodeId) = 0;
 };
 }// namespace NES::Monitoring
+
+namespace fmt {
+template<>
+struct formatter<NES::Monitoring::AbstractMetricStore> : formatter<std::string> {
+    auto format(const NES::Monitoring::AbstractMetricStore& metric_store, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", metric_store.getType());
+    }
+};
+} //namespace fmt
 
 #endif// NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

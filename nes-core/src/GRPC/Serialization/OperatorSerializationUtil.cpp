@@ -1500,7 +1500,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
                                                    SerializableOperator_SinkDetails* sinkDetails,
                                                    uint64_t numberOfOrigins) {
     // serialize a sink descriptor and all its properties depending of its type
-    NES_DEBUG2("OperatorSerializationUtil:: serialized SinkDescriptor {}", );
+    NES_DEBUG2("OperatorSerializationUtil:: serialized SinkDescriptor");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         // serialize print sink descriptor
         auto printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
