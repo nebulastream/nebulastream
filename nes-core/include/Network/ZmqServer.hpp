@@ -80,7 +80,21 @@ class ZmqServer {
      * @return the current server port
      */
     [[nodiscard]] uint16_t getServerPort() const { return currentPort.load(); }
-
+    /**
+     * Returns the hostname
+     * @return the current hostname
+     */
+    [[nodiscard]] std::string getHostname() const { return hostname; }
+    /**
+     * Returns the hostname
+     * @return the current hostname
+     */
+    [[nodiscard]] uint16_t getNumOfThreads() const { return numNetworkThreads; }
+    /**
+     * Returns the hostname
+     * @return the current hostname
+     */
+    [[nodiscard]] uint16_t getRequestedPort() const { return requestedPort; }
     /**
      * @brief Retrieves the current server socket information
      * @param hostname the hostname in use
@@ -141,4 +155,15 @@ class ZmqServer {
 
 }// namespace Network
 }// namespace NES
+
+namespace fmt {
+template<>
+struct formatter<NES::Network::ZmqServer> : formatter<std::string> {
+    auto format(const NES::Network::ZmqServer& zmq, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(),
+                         "Hostname: {} requested Port:{} number of network threads: {}", zmq.getHostname(), zmq.getRequestedPort(), zmq.getNumOfThreads());
+    }
+};
+}// namespace fmt
+
 #endif// NES_CORE_INCLUDE_NETWORK_ZMQSERVER_HPP_
