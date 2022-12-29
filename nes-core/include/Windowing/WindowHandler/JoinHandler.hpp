@@ -18,6 +18,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -331,4 +332,15 @@ class JoinHandler : public AbstractJoinHandler {
     Runtime::StateManagerPtr stateManager;
 };
 }// namespace NES::Join
+
+namespace fmt {
+template<>
+struct formatter<NES::Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>> : formatter<std::string> {
+    auto format(const NES::Join::JoinHandler& jh, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(),
+                         "leftJoinState:{} RightJoinState:{}", jh.getLeftJoinState().toString(), jh.getRightJoinState().toString());
+    }
+};
+}// namespace fmt
+
 #endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
