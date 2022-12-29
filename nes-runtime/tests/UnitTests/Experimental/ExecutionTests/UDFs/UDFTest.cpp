@@ -279,7 +279,7 @@ TEST_P(UDFExecutionTest, longAggregationUDFQueryTest) {
         executablePipeline->execute(*runtimeWorkerContext, buffer);
         auto globalState = (GlobalAggregationState*) executablePipeline->getExecutionContext()->getGlobalOperatorState(0);
         auto sumState = (GlobalSumState*) globalState->threadLocalAggregationSlots[0].get();
-        NES_INFO("Result " << sumState->sum;
+        NES_INFO2("Result {}", sumState->sum);
         timer.snapshot("QueryExecutionTime");
         timer.pause();
         NES_INFO("QueryExecutionTime: " << timer);
