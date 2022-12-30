@@ -4,13 +4,18 @@ bufferSizeInBytes: 5120, 10240
 numberOfPreAllocatedBuffer: 1000
 
 
-# Benchmark parameter for the entire run
+# ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1
 
-numberOfSources: 3
+logicalSources:
+  input1:
+    type: Default
+    numberOfPhysicalSources: 3
+
+
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv

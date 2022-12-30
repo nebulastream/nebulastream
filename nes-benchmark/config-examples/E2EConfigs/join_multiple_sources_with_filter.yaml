@@ -3,6 +3,7 @@ numberOfWorkerThreads: 1, 2, 4, 1, 2, 4, 1, 2, 4
 bufferSizeInBytes: 1024, 1024, 1024, 5120, 5120, 5120, 10240, 10240, 10240
 numberOfPreAllocatedBuffer: 10000000
 
+
 # ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
@@ -22,6 +23,7 @@ logicalSources:
     type: Uniform
     minValue: 0
     maxValue: 1000
+
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
