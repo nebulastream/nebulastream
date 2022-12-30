@@ -12,9 +12,45 @@
     limitations under the License.
 */
 
+//- test für jede option, ob diese richtig geparsed wurde
+//- ein großer test oder mehrere kleine...
+//- wahrscheinlich mehrere, da so auch default werte geprüft werden können
 
-- test für jede option, ob diese richtig geparsed wurde
-- ein großer test oder mehrere kleine...
-- wahrscheinlich mehrere, da so auch default werte geprüft werden können
+#include <gtest/gtest.h>
+#include <Util/Logger/Logger.hpp>
 
+namespace NES::Benchmark {
+    class E2EBenchmarkConfigPerRunTest : public testing::Test {
+      public:
+        /* Will be called before any test in this class are executed. */
+        static void SetUpTestCase() {
+            NES::Logger::setupLogging("E2EBenchmarkConfigPerRunTest.log", NES::LogLevel::LOG_DEBUG);
+            NES_INFO("Setup E2EBenchmarkConfigPerRunTest test class.");
+        }
 
+        /* Will be called before a test is executed. */
+        void SetUp() override { NES_INFO("Setup E2EBenchmarkConfigPerRunTest test case."); }
+
+        /* Will be called before a test is executed. */
+        void TearDown() override { NES_INFO("Tear down E2EBenchmarkConfigPerRunTest test case."); }
+
+        /* Will be called after all tests in this class are finished. */
+        static void TearDownTestCase() { NES_INFO("Tear down E2EBenchmarkConfigPerRunTest test class."); }
+    };
+
+    TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest) {
+
+    }
+
+    TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
+
+    }
+
+    TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
+
+    }
+
+    TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest) {
+
+    }
+}//namespace NES::Benchmark
