@@ -219,4 +219,4 @@ namespace NES::Benchmark::DataProviding {
 
         ASSERT_EQ(preAllocatedBuffers->size(), 0);
     }
-}//namespace NES::Benchmark::DataGeneration
+}//namespace NES::Benchmark::DataProviding
