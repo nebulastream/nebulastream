@@ -81,7 +81,7 @@ namespace NES::Nautilus {
 /**
 * @brief This test tests query execution using th mlir backend
 */
-class EmitOperatorTest : public Testing::NESBaseTest , public ::testing::WithParamInterface<std::string> {
+class EmitOperatorTest : public Testing::NESBaseTest, public ::testing::WithParamInterface<std::string> {
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -89,13 +89,13 @@ class EmitOperatorTest : public Testing::NESBaseTest , public ::testing::WithPar
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryExecutionTest test class." );
+        NES_INFO("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
-        NES_INFO("Setup QueryExecutionTest test case." << param );
+        NES_INFO("Setup QueryExecutionTest test case." << param);
         if (param == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (param == "MLIR") {
@@ -120,10 +120,10 @@ class EmitOperatorTest : public Testing::NESBaseTest , public ::testing::WithPar
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case." ); }
+    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
 };
 
 class CollectPipeline : public ExecutablePipeline {

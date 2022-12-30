@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class SqrtExpressionTest : public Testing::NESBaseTest  {
+class SqrtExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SqrtExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SqrtExpressionTest test class." );
+        NES_INFO("Setup SqrtExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SqrtExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down SqrtExpressionTest test class."); }
 };
 
 TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger) {

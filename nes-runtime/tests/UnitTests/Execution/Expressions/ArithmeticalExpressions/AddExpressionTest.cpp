@@ -15,25 +15,25 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
-#include <NesBaseTest.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
 
-class AddExpressionTest : public Testing::NESBaseTest  {
+class AddExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddExpressionTest test class." );
+        NES_INFO("Setup AddExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AddExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down AddExpressionTest test class."); }
 };
 
 TEST_F(AddExpressionTest, addIntegers) {

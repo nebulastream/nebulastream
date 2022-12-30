@@ -16,22 +16,22 @@
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <NesBaseTest.hpp>
 namespace NES::Nautilus {
 
-class DataTypeTest : public Testing::NESBaseTest  {
+class DataTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DataTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DataTypeTest test class." );
+        NES_INFO("Setup DataTypeTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DataTypeTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down DataTypeTest test class."); }
 };
 
 TEST_F(DataTypeTest, ConstructValueTest) {

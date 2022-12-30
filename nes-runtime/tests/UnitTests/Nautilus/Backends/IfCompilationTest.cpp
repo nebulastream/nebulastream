@@ -24,7 +24,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class IfCompilationTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class IfCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -33,7 +33,7 @@ class IfCompilationTest : public Testing::NESBaseTest , public AbstractCompilati
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class."); }
 };
 
 Value<> ifThenCondition() {

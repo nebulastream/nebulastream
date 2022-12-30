@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class CeilExpressionTest : public Testing::NESBaseTest  {
+class CeilExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CeilExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup CeilExpressionTest test class." );
+        NES_INFO("Setup CeilExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down CeilExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down CeilExpressionTest test class."); }
 };
 
 TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat) {

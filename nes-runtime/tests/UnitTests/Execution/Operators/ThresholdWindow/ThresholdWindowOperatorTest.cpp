@@ -30,16 +30,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ThresholdWindowOperatorTest : public Testing::NESBaseTest  {
+class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowOperatorTest test class." );
+        NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {

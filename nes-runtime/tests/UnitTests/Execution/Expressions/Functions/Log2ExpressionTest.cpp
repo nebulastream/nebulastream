@@ -21,17 +21,17 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class Log2ExpressionTest : public Testing::NESBaseTest  {
+class Log2ExpressionTest : public Testing::NESBaseTest {
 
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Log2ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup Log2ExpressionTest test class." );
+        NES_INFO("Setup Log2ExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Log2ExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down Log2ExpressionTest test class."); }
 };
 
 TEST_F(Log2ExpressionTest, evaluateLog2ExpressionInteger) {

@@ -27,7 +27,7 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests execution of scala expression
  */
-class ExpressionExecutionTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class ExpressionExecutionTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -36,7 +36,7 @@ class ExpressionExecutionTest : public Testing::NESBaseTest , public AbstractCom
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ExpressionExecutionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExpressionExecutionTest test class."); }
 };
 
 Value<> int8AddExpression(Value<Int8> x) {

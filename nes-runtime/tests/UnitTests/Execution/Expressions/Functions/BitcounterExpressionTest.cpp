@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class BitcounterExpressionTest : public Testing::NESBaseTest  {
+class BitcounterExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("BitcounterExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup BitcounterExpressionTest test class." );
+        NES_INFO("Setup BitcounterExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down BitcounterExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down BitcounterExpressionTest test class."); }
 };
 TEST_F(BitcounterExpressionTest, divIntegers) {
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();

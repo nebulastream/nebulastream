@@ -47,24 +47,24 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests execution of scala expression
  */
-class FlounderExpressionExecutionTest : public Testing::NESBaseTest  {
+class FlounderExpressionExecutionTest : public Testing::NESBaseTest {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     Trace::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlounderExpressionExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FlounderExpressionExecutionTest test class." );
+        NES_INFO("Setup FlounderExpressionExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { NES_INFO("Setup TraceTest test case." ); }
+    void SetUp() override { NES_INFO("Setup TraceTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down FlounderExpressionExecutionTest test case." ); }
+    void TearDown() override { NES_INFO("Tear down FlounderExpressionExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down FlounderExpressionExecutionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down FlounderExpressionExecutionTest test class."); }
 };
 
 Value<> addExpression(Value<Int64> x) {
@@ -79,14 +79,14 @@ TEST_F(FlounderExpressionExecutionTest, addI8Test) {
         return addExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::uint64_t>(argument), 13);
 }
 
@@ -124,12 +124,12 @@ TEST_F(FlounderExpressionExecutionTest, bftest) {
         return sumLoop(tempPara);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     auto serializedIr = IRSerialization().serialize(ir);
-    NES_INFO(serializedIr );
+    NES_INFO(serializedIr);
 
     graal_isolatethread_t* thread = NULL;
     ASSERT_TRUE(graal_create_isolate(NULL, NULL, &thread) == 0);
@@ -161,14 +161,14 @@ TEST_F(FlounderExpressionExecutionTest, longExpressionTest) {
         return longExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 1;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(argument), 16);
 }
 
@@ -185,16 +185,16 @@ TEST_F(FlounderExpressionExecutionTest, ifConditionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenCondition();
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(argument), 43);
 }
 
@@ -213,17 +213,17 @@ TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return ifThenElseCondition();
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(argument), 85);
 }
 
@@ -243,16 +243,16 @@ TEST_F(FlounderExpressionExecutionTest, ifThenElseConditionParameterTests) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([tempx]() {
         return ifThenElseConditionParameter(tempx);
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(1), 42);
     ASSERT_EQ(ex->execute<std::int64_t>(4), 16);
 }
@@ -274,17 +274,17 @@ TEST_F(FlounderExpressionExecutionTest, nestedIFThenElseConditionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return nestedIfThenElseCondition();
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
-    NES_INFO(" == Execute == " );
-    NES_INFO(ex->code().value() );
+    NES_INFO(" == Execute == ");
+    NES_INFO(ex->code().value());
     ASSERT_EQ(ex->execute<std::int64_t>(), 5);
 }
 
@@ -321,15 +321,15 @@ TEST_F(FlounderExpressionExecutionTest, ifSumLoopTest) {
         return ifSumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    NES_INFO(*execution.get() );
+    NES_INFO(*execution.get());
     auto ir = irCreationPhase.apply(execution);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(), 51);
 }
 
@@ -343,16 +343,16 @@ TEST_F(FlounderExpressionExecutionTest, loadFunctionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([&tempPara]() {
         return loadFunction(tempPara);
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<std::int64_t>(&valI), 42);
 }
 
@@ -372,16 +372,16 @@ TEST_F(FlounderExpressionExecutionTest, storeFunctionTest) {
     auto executionTrace = Trace::traceFunctionSymbolically([&tempPara]() {
         storeFunction(tempPara);
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
 
     ex->execute<>(&valI);
     ASSERT_EQ(valI, 43);
@@ -402,17 +402,17 @@ TEST_F(FlounderExpressionExecutionTest, addIntFunctionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return addIntFunction();
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<int64_t>(), 5);
 }
 
@@ -430,17 +430,17 @@ TEST_F(FlounderExpressionExecutionTest, andIfFunctionTest) {
     auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
         return andIfFunction();
     });
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_INFO(*executionTrace.get() );
+    NES_INFO(*executionTrace.get());
     auto ir = irCreationPhase.apply(executionTrace);
-    NES_INFO(ir->toString() );
+    NES_INFO(ir->toString());
 
     // create and print MLIR
     auto lp = Flounder::FlounderLoweringProvider();
     auto ex = lp.lower(ir);
     constexpr std::int64_t argument = 11;
-    NES_INFO(" == Execute == " );
+    NES_INFO(" == Execute == ");
     ASSERT_EQ(ex->execute<int64_t>(), 5);
 }
 

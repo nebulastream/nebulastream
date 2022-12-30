@@ -22,17 +22,17 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class CotExpressionTest : public Testing::NESBaseTest  {
+class CotExpressionTest : public Testing::NESBaseTest {
 
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CotExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup CotExpressionTest test class." );
+        NES_INFO("Setup CotExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down CotExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down CotExpressionTest test class."); }
 };
 
 /**
