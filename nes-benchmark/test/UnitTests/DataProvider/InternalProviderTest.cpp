@@ -30,7 +30,7 @@ namespace NES::Benchmark::DataProviding {
         /* Will be called before a test is executed. */
         void SetUp() override {
             NES_INFO("Setup InternalProviderTest test case.");
-            //std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
+            std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
         }
 
         /* Will be called before a test is executed. */
@@ -40,7 +40,7 @@ namespace NES::Benchmark::DataProviding {
         static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
 
       //protected:
-        //std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
+      //  std::shared_ptr<Runtime::BufferManager> bufferManager =  std::make_shared<Runtime::BufferManager>();
     };
 
     TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
@@ -49,7 +49,7 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        //auto bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
@@ -99,7 +99,7 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        //auto bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
@@ -148,7 +148,7 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        //auto bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
@@ -188,7 +188,7 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        //auto bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
