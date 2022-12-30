@@ -30,7 +30,7 @@
 
 namespace NES::Runtime::Execution {
 
-class ScanEmitPipelineTest : public Testing::NESBaseTest , public AbstractPipelineExecutionTest {
+class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -39,20 +39,20 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest , public AbstractPipeli
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ScanEmitPipelineTest test class." );
+        NES_INFO("Setup ScanEmitPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup ScanEmitPipelineTest test case." );
+        NES_INFO("Setup ScanEmitPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ScanEmitPipelineTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down ScanEmitPipelineTest test class."); }
 };
 
 /**

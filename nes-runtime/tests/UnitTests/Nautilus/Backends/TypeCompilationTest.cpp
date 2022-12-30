@@ -29,16 +29,16 @@
 
 namespace NES::Nautilus {
 
-class TypeCompilationTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TypeCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TypeCompilationTest test class." );
+        NES_INFO("Setup TypeCompilationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TypeCompilationTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TypeCompilationTest test class."); }
 };
 
 Value<> negativeIntegerTest() {

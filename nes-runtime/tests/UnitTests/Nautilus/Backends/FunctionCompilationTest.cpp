@@ -25,7 +25,7 @@
 
 namespace NES::Nautilus {
 
-class FunctionCompilationTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -34,7 +34,7 @@ class FunctionCompilationTest : public Testing::NESBaseTest , public AbstractCom
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
 int64_t addInt(int64_t x, int64_t y) { return x + y; };

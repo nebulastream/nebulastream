@@ -19,14 +19,14 @@
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <NesBaseTest.hpp>
 namespace NES::Nautilus {
 
-class ListTypeTest : public Testing::NESBaseTest  {
+class ListTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,7 +29,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <NesBaseTest.hpp>
 
 namespace NES::Nautilus {
 /**
@@ -41,16 +41,16 @@ namespace NES::Nautilus {
  *          -> Lastly, we iterate over the resulting IR graph and check whether loop blocks have been marked as loop
  *             blocks, and whether if-operations have been matched with their correct corresponding merge-blocks
  */
-class StructuredControlFlowPhaseTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class StructuredControlFlowPhaseTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StructuredControlFlowPhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup StructuredControlFlowPhaseTest test class." );
+        NES_INFO("Setup StructuredControlFlowPhaseTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down StructuredControlFlowPhaseTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down StructuredControlFlowPhaseTest test class."); }
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::vector<IR::BasicBlockPtr> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {

@@ -35,7 +35,7 @@
 
 namespace NES::Runtime::Execution {
 
-class TextPipelineTest : public Testing::NESBaseTest , public AbstractPipelineExecutionTest {
+class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -44,20 +44,20 @@ class TextPipelineTest : public Testing::NESBaseTest , public AbstractPipelineEx
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TextPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TextPipelineTest test class." );
+        NES_INFO("Setup TextPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup TextPipelineTest test case." );
+        NES_INFO("Setup TextPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TextPipelineTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TextPipelineTest test class."); }
 };
 
 /**

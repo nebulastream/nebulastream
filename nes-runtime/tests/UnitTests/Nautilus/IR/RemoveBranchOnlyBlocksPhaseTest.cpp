@@ -20,32 +20,32 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <unordered_map>
-#include <NesBaseTest.hpp>
 
 namespace NES::Nautilus {
 
-class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest , public AbstractCompilationBackendTest {
+class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TraceTest test class." );
+        NES_INFO("Setup TraceTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { NES_INFO("Setup TraceTest test case." ); }
+    void SetUp() override { NES_INFO("Setup TraceTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down TraceTest test case." ); }
+    void TearDown() override { NES_INFO("Tear down TraceTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {

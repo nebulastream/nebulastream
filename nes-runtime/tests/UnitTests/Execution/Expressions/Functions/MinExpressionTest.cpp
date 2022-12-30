@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class MinExpressionTest : public Testing::NESBaseTest  {
+class MinExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MinExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MinExpressionTest test class." );
+        NES_INFO("Setup MinExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down MinExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down MinExpressionTest test class."); }
 };
 TEST_F(MinExpressionTest, evaluateMinExpressionInteger) {
     auto expression = BinaryExpressionWrapper<MinExpression>();

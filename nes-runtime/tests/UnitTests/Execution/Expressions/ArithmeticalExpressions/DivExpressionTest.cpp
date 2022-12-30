@@ -22,16 +22,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class DivExpressionTest : public Testing::NESBaseTest  {
+class DivExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DivExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DivExpressionTest test class." );
+        NES_INFO("Setup DivExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DivExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down DivExpressionTest test class."); }
 };
 
 TEST_F(DivExpressionTest, divIntegers) {

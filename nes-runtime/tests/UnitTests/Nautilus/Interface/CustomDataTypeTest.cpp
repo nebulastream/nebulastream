@@ -17,24 +17,24 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
-#include <NesBaseTest.hpp>
 
 namespace NES::Nautilus {
 
-class CustomDataTypeTest : public Testing::NESBaseTest  {
+class CustomDataTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CustomDataTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup CustomDataTypeTest test class." );
+        NES_INFO("Setup CustomDataTypeTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down CustomDataTypeTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down CustomDataTypeTest test class."); }
 };
 
 class CustomType : public Any {
