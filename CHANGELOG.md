@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.17](https://github.com/nebulastream/nebulastream/tree/v0.4.17) (2022-12-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.16...v0.4.17)
+
+#### Runtime 
+
+- \[Feature\] add test macro for nes-runtime tests [\#3369](https://github.com/nebulastream/nebulastream/issues/3369)
+
+## [v0.4.16](https://github.com/nebulastream/nebulastream/tree/v0.4.16) (2022-12-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.15...v0.4.16)
+
 ## [v0.4.15](https://github.com/nebulastream/nebulastream/tree/v0.4.15) (2022-12-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.14...v0.4.15)
