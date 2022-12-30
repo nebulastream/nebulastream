@@ -4,11 +4,14 @@ bufferSizeInBytes: 5120, 5120, 5120, 10240, 10240, 10240
 numberOfPreAllocatedBuffer: 10000000
 
 
-# Benchmark parameter for the entire run
+# ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
+
+#logicalSources:
+
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
