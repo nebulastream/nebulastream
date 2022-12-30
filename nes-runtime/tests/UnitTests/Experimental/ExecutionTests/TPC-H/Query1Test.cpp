@@ -81,7 +81,8 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests query execution using th mlir backend
  */
-class Query1Test : public Testing::NESBaseTest , public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
+class Query1Test : public Testing::NESBaseTest,
+                   public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -89,14 +90,14 @@ class Query1Test : public Testing::NESBaseTest , public ::testing::WithParamInte
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryExecutionTest test class." );
+        NES_INFO("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        NES_INFO("Setup Query6Test test case." << compiler );
+        NES_INFO("Setup Query6Test test case." << compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -121,10 +122,10 @@ class Query1Test : public Testing::NESBaseTest , public ::testing::WithParamInte
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case." ); }
+    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
 };
 
 TEST_P(Query1Test, tpchQ1) {

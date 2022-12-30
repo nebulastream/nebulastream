@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class RadiansExpressionTest : public Testing::NESBaseTest  {
+class RadiansExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RadiansExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup RadiansExpressionTest test class." );
+        NES_INFO("Setup RadiansExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down RadiansExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down RadiansExpressionTest test class."); }
 };
 
 TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger) {

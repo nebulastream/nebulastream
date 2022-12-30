@@ -20,16 +20,16 @@
 #include <memory>
 namespace NES::Runtime::Execution::Expressions {
 
-class AtanExpressionTest : public Testing::NESBaseTest  {
+class AtanExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AtanExpressionTest test class." );
+        NES_INFO("Setup AtanExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AtanExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down AtanExpressionTest test class."); }
 };
 
 TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {

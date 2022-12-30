@@ -36,7 +36,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class ThresholdWindowPipelineTest : public Testing::NESBaseTest , public AbstractPipelineExecutionTest {
+class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -45,20 +45,20 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest , public Abstrac
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowPipelineTest test class." );
+        NES_INFO("Setup ThresholdWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup ThresholdWindowPipelineTest test case." );
+        NES_INFO("Setup ThresholdWindowPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowPipelineTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowPipelineTest test class."); }
 };
 
 /**

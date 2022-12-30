@@ -21,16 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class DegreesExpressionTest : public Testing::NESBaseTest  {
+class DegreesExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DegreesExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DegreesExpressionTest test class." );
+        NES_INFO("Setup DegreesExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DegreesExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down DegreesExpressionTest test class."); }
 };
 
 double calculateDegrees(double x) { return (x * 180.0) / M_PI; }

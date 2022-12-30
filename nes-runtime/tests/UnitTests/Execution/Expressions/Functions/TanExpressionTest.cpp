@@ -21,17 +21,17 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class TanExpressionTest : public Testing::NESBaseTest  {
+class TanExpressionTest : public Testing::NESBaseTest {
 
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TanExpressionTest test class." );
+        NES_INFO("Setup TanExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TanExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TanExpressionTest test class."); }
 };
 
 TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {

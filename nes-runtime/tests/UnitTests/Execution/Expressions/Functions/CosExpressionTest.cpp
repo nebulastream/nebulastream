@@ -20,16 +20,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class CosExpressionTest : public Testing::NESBaseTest  {
+class CosExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CosExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup CosExpressionTest test class." );
+        NES_INFO("Setup CosExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down CosExpressionTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down CosExpressionTest test class."); }
 };
 
 TEST_F(CosExpressionTest, evaluateCosExpressionInteger) {

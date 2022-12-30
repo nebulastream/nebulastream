@@ -23,16 +23,16 @@
 
 namespace NES::Nautilus::Tracing {
 
-class TagCreationTest : public Testing::NESBaseTest  {
+class TagCreationTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TagCreationTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup TagCreationTest test class." );
+        NES_INFO("Setup TagCreationTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TagCreationTest test class." ); }
+    static void TearDownTestCase() { NES_INFO("Tear down TagCreationTest test class."); }
 };
 
 TEST_F(TagCreationTest, tagCreation) {
