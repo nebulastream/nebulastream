@@ -99,18 +99,18 @@ namespace NES::Benchmark {
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest) {
-        std::stringstream expectedStringStream;
+        std::stringstream expectedString;
 
         // set default E2EBenchmarkConfigOverAllRuns
         // call function getStrLogicalSrcDataGenerators()
 
         for (auto it = srcNameToDataGenerator.begin(); it != srcNameToDataGenerator.end(); ++it) {
             if (it != srcNameToDataGenerator.begin()) {
-                expectedStringStream << ", ";
+                expectedString << ", ";
             }
-            expectedStringStream << it->first << ": " << it->second;
+            expectedString << it->first << ": " << it->second;
         }
 
-        // ASSERT_EQ(stringDefault, expectedStringStream);
+        // ASSERT_EQ(stringDefault, expectedString);
     }
 }//namespace NES::Benchmark
