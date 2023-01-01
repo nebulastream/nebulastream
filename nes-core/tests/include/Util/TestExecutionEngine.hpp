@@ -134,6 +134,10 @@ class TestExecutionEngine {
     TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler) {
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.queryCompilerType = compiler;
+        workerConfiguration->queryCompiler.windowingStrategy =
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        workerConfiguration->queryCompiler.compilationStrategy =
+            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
         workerConfiguration->physicalSources.add(sourceConf);
@@ -166,6 +170,7 @@ class TestExecutionEngine {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
             inputSchema,
             [&](OperatorId id,
+                OriginId originId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr& nodeEngine,
                 size_t numSourceLocalBuffers,
@@ -174,7 +179,7 @@ class TestExecutionEngine {
                                                nodeEngine->getBufferManager(),
                                                nodeEngine->getQueryManager(),
                                                id,
-                                               0,
+                                               originId,
                                                numSourceLocalBuffers,
                                                std::move(successors));
             });
