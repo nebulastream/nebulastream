@@ -14,17 +14,6 @@
 add_nes_runtime_test(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_runtime_test(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
 add_nes_runtime_test(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
-add_nes_runtime_test(runtime-text-pipeline-test "SelectionPipelineTest.cpp")
+add_nes_runtime_test(runtime-global-window-pipeline-test "GlobalTimeWindowPipelineTest.cpp")
+add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_runtime_test(runtime-lazy-join-pipeline-test "StreamJoinPipelineTest.cpp")
-
-add_executable(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
-target_link_libraries(runtime-threshold-window-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-threshold-window-pipeline-test COMMAND runtime-threshold-window-pipeline-test)
-
-add_executable(runtime-global-window-pipeline-test "GlobalTimeWindowPipelineTest.cpp")
-target_link_libraries(runtime-global-window-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-global-window-pipeline-test COMMAND runtime-global-window-pipeline-test)
-
-add_executable(runtime-text-pipeline-test "TextPipelineTest.cpp")
-target_link_libraries(runtime-text-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-text-pipeline-test COMMAND runtime-text-pipeline-test)
