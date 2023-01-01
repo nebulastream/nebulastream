@@ -34,6 +34,7 @@ class TestSourceDescriptor : public SourceDescriptor {
     TestSourceDescriptor(
         SchemaPtr schema,
         std::function<DataSourcePtr(OperatorId,
+                                    OriginId,
                                     SourceDescriptorPtr,
                                     Runtime::NodeEnginePtr,
                                     size_t,
@@ -41,11 +42,13 @@ class TestSourceDescriptor : public SourceDescriptor {
         : SourceDescriptor(std::move(std::move(schema))), createSourceFunction(std::move(std::move(createSourceFunction))) {}
 
     DataSourcePtr create(OperatorId operatorId,
+                         OriginId originId,
                          SourceDescriptorPtr sourceDescriptor,
                          Runtime::NodeEnginePtr nodeEngine,
                          size_t numSourceLocalBuffers,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
         return createSourceFunction(operatorId,
+                                    originId,
                                     std::move(std::move(sourceDescriptor)),
                                     std::move(std::move(nodeEngine)),
                                     numSourceLocalBuffers,
@@ -58,6 +61,7 @@ class TestSourceDescriptor : public SourceDescriptor {
 
   private:
     std::function<DataSourcePtr(OperatorId,
+                                OriginId,
                                 SourceDescriptorPtr,
                                 Runtime::NodeEnginePtr,
                                 size_t,
@@ -105,6 +109,7 @@ class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
             return testSourceDescriptor->create(operatorId,
+                                                originId,
                                                 sourceDescriptor,
                                                 nodeEngine,
                                                 compilerOptions->getNumSourceLocalBuffers(),
