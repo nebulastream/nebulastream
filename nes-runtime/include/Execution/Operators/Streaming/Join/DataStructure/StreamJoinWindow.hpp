@@ -15,10 +15,10 @@
 #ifndef NES_STREAMJOINWINDOW_HPP
 #define NES_STREAMJOINWINDOW_HPP
 
-#include <vector>
-#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <vector>
 
 namespace NES::Runtime::Execution {
 
@@ -40,9 +40,15 @@ class StreamJoinWindow {
      * @param pageSize
      * @param numPartitions
      */
-    explicit StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                                size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                                uint64_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions);
+    explicit StreamJoinWindow(size_t maxNoWorkerThreads,
+                              uint64_t counterFinishedBuildingStart,
+                              uint64_t counterFinishedSinkStart,
+                              size_t totalSizeForDataStructures,
+                              size_t sizeOfRecordLeft,
+                              size_t sizeOfRecordRight,
+                              uint64_t lastTupleTimeStamp,
+                              size_t pageSize,
+                              size_t numPartitions);
 
     /**
      * @brief Returns the local hash table of either the left or the right join side
@@ -90,5 +96,5 @@ class StreamJoinWindow {
     Runtime::FixedPagesAllocator fixedPagesAllocator;
 };
 
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution
 #endif//NES_STREAMJOINWINDOW_HPP

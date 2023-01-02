@@ -21,34 +21,34 @@
 
 namespace NES::Runtime::Execution::Util {
 
-    uint64_t murmurHash(uint64_t key) {
-        uint64_t hash = key;
+uint64_t murmurHash(uint64_t key) {
+    uint64_t hash = key;
 
-        hash ^= hash >> 33;
-        hash *= UINT64_C(0xff51afd7ed558ccd);
-        hash ^= hash >> 33;
-        hash *= UINT64_C(0xc4ceb9fe1a85ec53);
-        hash ^= hash >> 33;
+    hash ^= hash >> 33;
+    hash *= UINT64_C(0xff51afd7ed558ccd);
+    hash ^= hash >> 33;
+    hash *= UINT64_C(0xc4ceb9fe1a85ec53);
+    hash ^= hash >> 33;
 
-        return hash;
-    }
-
-
-    SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
-        NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(), "Left and right schema do not have the same layout type");
-        NES_ASSERT(leftSchema->contains(keyFieldName) || rightSchema->contains(keyFieldName),
-                   "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
-
-        auto retSchema = Schema::create(leftSchema->getLayoutType());
-        if (leftSchema->contains(keyFieldName)) {
-            retSchema->addField(leftSchema->get(keyFieldName));
-        } else {
-            retSchema->addField(rightSchema->get(keyFieldName));
-        }
-
-        retSchema->copyFields(leftSchema);
-        retSchema->copyFields(rightSchema);
-
-        return retSchema;
-    }
+    return hash;
 }
+
+SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
+    NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
+               "Left and right schema do not have the same layout type");
+    NES_ASSERT(leftSchema->contains(keyFieldName) || rightSchema->contains(keyFieldName),
+               "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
+
+    auto retSchema = Schema::create(leftSchema->getLayoutType());
+    if (leftSchema->contains(keyFieldName)) {
+        retSchema->addField(leftSchema->get(keyFieldName));
+    } else {
+        retSchema->addField(rightSchema->get(keyFieldName));
+    }
+
+    retSchema->copyFields(leftSchema);
+    retSchema->copyFields(rightSchema);
+
+    return retSchema;
+}
+}// namespace NES::Runtime::Execution::Util

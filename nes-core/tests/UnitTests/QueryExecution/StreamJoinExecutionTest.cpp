@@ -14,10 +14,10 @@
 // clang-format: off
 #include "gtest/gtest.h"
 // clang-format: on
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -49,7 +49,6 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };
 
-
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
     std::vector<PhysicalTypePtr> retVector;
 
@@ -62,16 +61,15 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {
     return retVector;
 }
 
-std::istream &operator>>(std::istream &is, std::string &l)
-{
+std::istream& operator>>(std::istream& is, std::string& l) {
     std::getline(is, l);
     return is;
 }
 
 Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFileName,
-                     Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
-                     const SchemaPtr schema,
-                     BufferManagerPtr bufferManager) {
+                                                      Runtime::MemoryLayouts::DynamicTupleBuffer buffer,
+                                                      const SchemaPtr schema,
+                                                      BufferManagerPtr bufferManager) {
 
     auto fullPath = std::string(TEST_DATA_DIRECTORY) + csvFileName;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
@@ -125,7 +123,8 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
     auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
 
-    auto query = TestQuery::from(testSourceDescriptorLeft).joinWith(TestQuery::from(testSourceDescriptorRight))
+    auto query = TestQuery::from(testSourceDescriptorLeft)
+                     .joinWith(TestQuery::from(testSourceDescriptorRight))
                      .where(Attribute(joinFieldNameLeft))
                      .equalsTo(Attribute(joinFieldNameRight))
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
@@ -145,10 +144,11 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(), expectedSinkBuffer.getBuffer().getBuffer(),
-                       expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes()) == 0);
+    EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(),
+                       expectedSinkBuffer.getBuffer().getBuffer(),
+                       expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes())
+                == 0);
 }
-
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
@@ -158,5 +158,4 @@ INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                             return magic_enum::enum_flags_name(info.param);
                         });
 
-
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution

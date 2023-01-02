@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <atomic>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
+#include <atomic>
 
 namespace NES::Runtime::Execution::Operators {
 void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList) {
@@ -24,7 +24,8 @@ void SharedJoinHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedL
     for (auto&& page : pagesLinkedList->getPages()) {
         auto oldHead = head.load(std::memory_order::relaxed);
         auto node = new InternalNode{FixedPage(page.get()), oldHead};
-        while(!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::relaxed)) {}
+        while (!head.compare_exchange_weak(oldHead, node, std::memory_order::release, std::memory_order::relaxed)) {
+        }
         numItems.fetch_add(page->size(), std::memory_order::relaxed);
     }
     numPages.fetch_add(pagesLinkedList->getPages().size(), std::memory_order::relaxed);
@@ -34,7 +35,7 @@ std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) 
     std::vector<FixedPage> ret;
     ret.reserve(getNumPages(bucketPos));
     auto head = bucketHeads[bucketPos].load();
-    while(head != nullptr) {
+    while (head != nullptr) {
         auto* tmp = head;
         ret.insert(ret.begin(), std::move(tmp->dataPage));
         head = tmp->next;
@@ -43,14 +44,11 @@ std::vector<FixedPage> SharedJoinHashTable::getPagesForBucket(size_t bucketPos) 
     return ret;
 }
 
-size_t SharedJoinHashTable::getNumItems(size_t bucketPos) const {
-    return bucketNumItems[bucketPos].load();
-}
+size_t SharedJoinHashTable::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }
 
-size_t SharedJoinHashTable::getNumPages(size_t bucketPos) const {
-    return bucketNumPages[bucketPos].load();
-}
+size_t SharedJoinHashTable::getNumPages(size_t bucketPos) const { return bucketNumPages[bucketPos].load(); }
 
-SharedJoinHashTable::SharedJoinHashTable(size_t numBuckets) : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets) {}
+SharedJoinHashTable::SharedJoinHashTable(size_t numBuckets)
+    : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets) {}
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

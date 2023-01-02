@@ -25,10 +25,10 @@
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <assert.h>
 #include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
-#include <assert.h>
 
 #include <REST/ServerTypes.hpp>
 
