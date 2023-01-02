@@ -11,10 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
@@ -27,15 +26,15 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <Exceptions/ErrorListener.hpp>
+#include <NesBaseTest.hpp>
 
 
 namespace NES::Runtime::Execution {
 
-class StreamJoinOperatorTest : public testing::Test {
+class StreamJoinOperatorTest : public Testing::NESBaseTest {
   public:
 
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -49,6 +48,7 @@ class StreamJoinOperatorTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        NESBaseTest::SetUp();
         NES_INFO("Setup StreamJoinOperatorTest test case.");
         bm = std::make_shared<Runtime::BufferManager>();
     }
@@ -56,6 +56,7 @@ class StreamJoinOperatorTest : public testing::Test {
     /* Will be called after a test is executed. */
     void TearDown() override {
         NES_INFO("Tear down StreamJoinOperatorTest test case.");
+        NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -209,6 +210,16 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
 }
 
 bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
+
+    if (!streamJoinSinkHelper.leftSchema->contains(streamJoinSinkHelper.joinFieldNameLeft)) {
+        NES_ERROR("JoinFieldNameLeft " << streamJoinSinkHelper.joinFieldNameLeft << " is not in leftSchema!");
+        return false;
+    }
+    if (!streamJoinSinkHelper.rightSchema->contains(streamJoinSinkHelper.joinFieldNameRight)) {
+        NES_ERROR("JoinFieldNameLeft " << streamJoinSinkHelper.joinFieldNameRight << " is not in leftSchema!");
+        return false;
+    }
+
 
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0, streamJoinSinkHelper.bufferManager,
                                                          streamJoinSinkHelper.numberOfBuffersPerWorker);
@@ -537,7 +548,6 @@ TEST_F(StreamJoinOperatorTest, joinSinkTestMultipleBuckets) {
     EXPECT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     StreamJoinSinkHelper streamJoinSinkHelper("f2_left", "f2_right", bm, leftSchema, rightSchema, "timestamp", this);
-    streamJoinSinkHelper.numPartitions = 128;
     streamJoinSinkHelper.windowSize = 10;
 
     EXPECT_TRUE(streamJoinSinkAndCheck(streamJoinSinkHelper));

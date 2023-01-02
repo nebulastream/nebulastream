@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -33,6 +32,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+#include <NesBaseTest.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -55,7 +55,7 @@ class StreamJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipe
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };
 
-class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
+class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
 
   public:
 
@@ -71,14 +71,12 @@ class StreamJoinPipelineTest : public testing::Test, public AbstractPipelineExec
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        NESBaseTest::SetUp();
         NES_INFO("Setup StreamJoinPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down StreamJoinPipelineTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StreamJoinPipelineTest test class."); }
