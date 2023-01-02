@@ -14,9 +14,9 @@
 
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_INFERMODELOPERATORHANDLER_HPP_
-#include <Runtime/Reconfigurable.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Reconfigurable.hpp>
 
 namespace NES::InferModel {
 

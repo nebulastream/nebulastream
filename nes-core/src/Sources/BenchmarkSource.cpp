@@ -90,10 +90,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     NES_DEBUG("BenchmarkSource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
 }
 
-
-BenchmarkSource::~BenchmarkSource() {
-    numaLocalMemoryArea.release();
-}
+BenchmarkSource::~BenchmarkSource() { numaLocalMemoryArea.release(); }
 
 void BenchmarkSource::open() {
     DataSource::open();
@@ -118,7 +115,7 @@ void BenchmarkSource::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {
 void BenchmarkSource::runningRoutine() {
     try {
         open();
-        
+
         NES_INFO("Going to produce " << numberOfTuplesToProduce);
 
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {

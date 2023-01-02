@@ -35,7 +35,7 @@ const std::string logo = "/*****************************************************
                          " ********************************************************/";
 
 class BenchmarkRunner : public NES::Exceptions::ErrorListener {
-public:
+  public:
     void onFatalError(int signalNumber, std::string callStack) override {
         std::ostringstream fatalErrorMessage;
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "

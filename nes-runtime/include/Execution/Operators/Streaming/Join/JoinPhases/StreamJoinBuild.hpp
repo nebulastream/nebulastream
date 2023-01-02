@@ -17,7 +17,6 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
-
 namespace NES::Runtime::Execution::Operators {
 
 class StreamJoinBuild;
@@ -39,8 +38,11 @@ class StreamJoinBuild : public ExecutableOperator {
      * @param timeStampField
      * @param schema
      */
-    StreamJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
-                  const std::string& timeStampField, SchemaPtr schema);
+    StreamJoinBuild(uint64_t handlerIndex,
+                    bool isLeftSide,
+                    const std::string& joinFieldName,
+                    const std::string& timeStampField,
+                    SchemaPtr schema);
 
     /**
      * @brief builds a hash table with the record
@@ -48,7 +50,6 @@ class StreamJoinBuild : public ExecutableOperator {
      * @param record
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
-
 
   private:
     uint64_t handlerIndex;
@@ -58,6 +59,5 @@ class StreamJoinBuild : public ExecutableOperator {
     SchemaPtr schema;
 };
 
-
-}
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_STREAMJOINBUILD_HPP

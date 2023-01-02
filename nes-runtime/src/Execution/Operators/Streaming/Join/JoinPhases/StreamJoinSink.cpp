@@ -12,27 +12,24 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <cstring>
-#include <Execution/Operators/ExecutableOperator.hpp>
-
 
 namespace NES::Runtime::Execution::Operators {
 
-StreamJoinSink::StreamJoinSink(uint64_t handlerIndex)
-    : handlerIndex(handlerIndex) {}
-
+StreamJoinSink::StreamJoinSink(uint64_t handlerIndex) : handlerIndex(handlerIndex) {}
 
 /**
  * @brief Checks if two fields are similar
@@ -41,7 +38,7 @@ StreamJoinSink::StreamJoinSink(uint64_t handlerIndex)
  * @param sizeOfField
  * @return true if both fields are equal, false otherwise
  */
-bool compareField(uint8_t* fieldPtr1, uint8_t * fieldPtr2, size_t sizeOfField) {
+bool compareField(uint8_t* fieldPtr1, uint8_t* fieldPtr2, size_t sizeOfField) {
     return memcmp(fieldPtr1, fieldPtr2, sizeOfField) == 0;
 }
 
@@ -86,10 +83,14 @@ size_t getSizeOfKey(SchemaPtr joinSchema, const std::string& joinFieldName) {
  * @param buildSide
  * @return number of joined tuples
  */
-size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContext* workerCtx, StreamJoinOperatorHandler* operatorHandler,
-                             std::vector<FixedPage>&& probeSide, std::vector<FixedPage>&& buildSide) {
+size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
+                             WorkerContext* workerCtx,
+                             StreamJoinOperatorHandler* operatorHandler,
+                             std::vector<FixedPage>&& probeSide,
+                             std::vector<FixedPage>&& buildSide) {
 
-    auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinSchemaRight(),
+    auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(),
+                                             operatorHandler->getJoinSchemaRight(),
                                              operatorHandler->getJoinFieldNameLeft());
     const size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
@@ -102,14 +103,14 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
     const auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
     const auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
 
-    for(auto& lhsPage : probeSide) {
+    for (auto& lhsPage : probeSide) {
         auto lhsLen = lhsPage.size();
         for (auto i = 0UL; i < lhsLen; ++i) {
             auto lhsRecordPtr = lhsPage[i];
             auto lhsKeyPtr =
                 getField(lhsRecordPtr, operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
 
-            for(auto& rhsPage : buildSide) {
+            for (auto& rhsPage : buildSide) {
                 auto rhsLen = rhsPage.size();
 
                 // Checking if the key is on the page with the bloom filter
@@ -120,8 +121,9 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
                 // Iterating through all tuples of the page as we do not know where the exact tuple is
                 for (auto j = 0UL; j < rhsLen; ++j) {
                     auto rhsRecordPtr = rhsPage[j];
-                    auto rhsRecordKeyPtr = getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
-                    if (compareField(lhsKeyPtr, rhsRecordKeyPtr , sizeOfKey)) {
+                    auto rhsRecordKeyPtr =
+                        getField(rhsRecordPtr, operatorHandler->getJoinSchemaRight(), operatorHandler->getJoinFieldNameRight());
+                    if (compareField(lhsKeyPtr, rhsRecordKeyPtr, sizeOfKey)) {
                         ++joinedTuples;
 
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
@@ -156,13 +158,11 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx, WorkerContex
     return joinedTuples;
 }
 
-
 void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, void* joinPartitionTimeStampPtr) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
     NES_ASSERT2_FMT(joinPartitionTimeStampPtr != nullptr, "joinPartitionTimeStampPtr should not be null");
-
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
@@ -185,11 +185,11 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
         if (leftBucketSize > rightBucketSize) {
-            joinedTuples = executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket),
-                                                 std::move(leftBucket));
+            joinedTuples =
+                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket));
         } else {
-            joinedTuples = executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket),
-                                                 std::move(rightBucket));
+            joinedTuples =
+                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket));
         }
     }
 
@@ -200,21 +200,23 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
                                                           << (leftBucketSize * rightBucketSize));
     }
 
-
     if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
         // delete the current hash table
         opHandler->deleteWindow(lastTupleTimeStamp);
     }
 }
 
-void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const{
+void StreamJoinSink::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
     auto joinPartitionTimestampPtr = recordBuffer.getBuffer();
 
-    Nautilus::FunctionCall("performJoin", performJoin, operatorHandlerMemRef, ctx.getPipelineContext(), ctx.getWorkerContext(),
+    Nautilus::FunctionCall("performJoin",
+                           performJoin,
+                           operatorHandlerMemRef,
+                           ctx.getPipelineContext(),
+                           ctx.getWorkerContext(),
                            joinPartitionTimestampPtr);
 }
 
-
-} //namespace NES::Runtime::Execution::Operators
+}//namespace NES::Runtime::Execution::Operators

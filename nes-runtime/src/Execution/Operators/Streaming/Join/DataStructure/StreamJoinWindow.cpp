@@ -22,7 +22,6 @@ Operators::LocalHashTable* StreamJoinWindow::getLocalHashTable(size_t index, boo
     }
 }
 
-
 Operators::SharedJoinHashTable& StreamJoinWindow::getSharedJoinHashTable(bool isLeftSide) {
     if (isLeftSide) {
         return leftSideHashTable;
@@ -31,36 +30,37 @@ Operators::SharedJoinHashTable& StreamJoinWindow::getSharedJoinHashTable(bool is
     }
 }
 
-StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads, uint64_t counterFinishedBuildingStart, uint64_t counterFinishedSinkStart,
-                                   size_t totalSizeForDataStructures, size_t sizeOfRecordLeft, size_t sizeOfRecordRight,
-                                   uint64_t lastTupleTimeStamp, size_t pageSize, size_t numPartitions)
-                        : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
+StreamJoinWindow::StreamJoinWindow(size_t maxNoWorkerThreads,
+                                   uint64_t counterFinishedBuildingStart,
+                                   uint64_t counterFinishedSinkStart,
+                                   size_t totalSizeForDataStructures,
+                                   size_t sizeOfRecordLeft,
+                                   size_t sizeOfRecordRight,
+                                   uint64_t lastTupleTimeStamp,
+                                   size_t pageSize,
+                                   size_t numPartitions)
+    : leftSideHashTable(Operators::SharedJoinHashTable(numPartitions)),
       rightSideHashTable(Operators::SharedJoinHashTable(numPartitions)), lastTupleTimeStamp(lastTupleTimeStamp),
-      fixedPagesAllocator(totalSizeForDataStructures)
-{
+      fixedPagesAllocator(totalSizeForDataStructures) {
 
     counterFinishedBuilding.store(counterFinishedBuildingStart);
     counterFinishedSink.store(counterFinishedSinkStart);
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, fixedPagesAllocator, pageSize));
+        localHashTableLeftSide.emplace_back(
+            std::make_unique<Operators::LocalHashTable>(sizeOfRecordLeft, numPartitions, fixedPagesAllocator, pageSize));
     }
 
     for (auto i = 0UL; i < maxNoWorkerThreads; ++i) {
-        localHashTableRightSide.emplace_back(std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, fixedPagesAllocator, pageSize));
+        localHashTableRightSide.emplace_back(
+            std::make_unique<Operators::LocalHashTable>(sizeOfRecordRight, numPartitions, fixedPagesAllocator, pageSize));
     }
 }
 
-uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) {
-    return counterFinishedBuilding.fetch_sub(sub);
-}
+uint64_t StreamJoinWindow::fetchSubBuild(uint64_t sub) { return counterFinishedBuilding.fetch_sub(sub); }
 
-uint64_t StreamJoinWindow::fetchSubSink(uint64_t sub) {
-    return counterFinishedSink.fetch_sub(sub);
-}
+uint64_t StreamJoinWindow::fetchSubSink(uint64_t sub) { return counterFinishedSink.fetch_sub(sub); }
 
-uint64_t StreamJoinWindow::getLastTupleTimeStamp() const {
-    return lastTupleTimeStamp;
-}
+uint64_t StreamJoinWindow::getLastTupleTimeStamp() const { return lastTupleTimeStamp; }
 
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution
