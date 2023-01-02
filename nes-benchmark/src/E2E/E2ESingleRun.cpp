@@ -72,14 +72,17 @@ void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
 
-    auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                  configOverAllRuns.numberOfPreAllocatedBuffer->getValue());
     for (const auto& [logicalSourceName, dataGenerator] : configOverAllRuns.srcNameToDataGenerator) {
-        dataGenerator->setBufferManager(bufferManager);
         auto schema = dataGenerator->getSchema();
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
+
         auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
+        auto numberOfTotalBuffers = configOverAllRuns.numberOfPreAllocatedBuffer->getValue() * numberOfPhysicalSrc;
+        auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
+                                                                      numberOfTotalBuffers);
+        dataGenerator->setBufferManager(bufferManager);
+
         NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source " << logicalSource->getLogicalSourceName());
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
@@ -120,7 +123,8 @@ void E2ESingleRun::createSources() {
     #endif
             } else {
                 auto dataProvider =
-                    DataProviding::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
+                    DataProviding::DataProvider::createProvider(sourceCnt, configOverAllRuns, createdBuffers);
+
                 // Adding necessary items to the corresponding vectors
                 allDataProviders.emplace_back(dataProvider);
                 allBufferManagers.emplace_back(bufferManager);
@@ -142,6 +146,7 @@ void E2ESingleRun::createSources() {
                 coordinatorConf->worker.physicalSources.add(physicalSource);
             }
             sourceCnt += 1;
+            NES_INFO("Created physical source #" << numberOfPhysicalSrc << " for " << logicalSource->getLogicalSourceName());
         }
     }
     NES_INFO("Created sources and the accommodating data generation and data providing!");
@@ -324,13 +329,12 @@ void E2ESingleRun::stopQuery() {
 void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Writing the measurements to " << configOverAllRuns.outputFile->getValue() << "...");
 
-    auto schemaSizeInB = allDataGenerators[0]->getSchema()->getSchemaSizeInBytes();
+    auto schemaSizeInB = configOverAllRuns.getTotalSchemaSize();
     std::string queryString = configOverAllRuns.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
     std::stringstream header;
-    header
-        << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+    header << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
@@ -338,19 +342,19 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 
     std::stringstream outputCsvStream;
 
-    for (auto measurementsCsv :
+    for (const auto& measurementsCsv :
          measurements.getMeasurementsAsCSV(schemaSizeInB, configPerRun.numberOfQueriesToDeploy->getValue())) {
-        outputCsvStream << configOverAllRuns.benchmarkName->getValue();
+        outputCsvStream << "\"" << configOverAllRuns.benchmarkName->getValue() << "\"";
         outputCsvStream << "," << NES_VERSION << "," << schemaSizeInB;
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
-        outputCsvStream << "," << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc();
+        outputCsvStream << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\"";
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
         outputCsvStream << "," << "\"" << queryString << "\"";
-        outputCsvStream << "\n";
+        outputCsvStream << std::endl;
     }
 
     std::ofstream ofs;
@@ -442,7 +446,7 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
         return coordinatorConf;
     }
 
-    const Measurements::Measurements& E2ESingleRun::getMeasurements() const {
+    Measurements::Measurements& E2ESingleRun::getMeasurements() {
         return measurements;
     }
 
