@@ -26,4 +26,4 @@ dataGenerator: YSB
 dataProviderMode: ZeroCopy
 outputFile: FilterOneSource.csv
 benchmarkName: FilterOneSource
-query: 'Query::from("ysb").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());'

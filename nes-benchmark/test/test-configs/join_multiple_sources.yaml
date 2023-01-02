@@ -13,7 +13,7 @@ numberOfMeasurementsToCollect: 1
 logicalSources:
   input1:
     type: Default
-    numberOfPhysicalSources: 3
+    numberOfPhysicalSources: 1
 
 
 inputType: MemoryMode

@@ -46,6 +46,7 @@ class E2ESingleRun {
      * @param configPerRun
      * @param configOverAllRuns
      * @param portOffSet
+     * @param restPort
      */
     explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                           int rpcPort, int restPort);
@@ -65,7 +66,7 @@ class E2ESingleRun {
      * @brief Getter for the coordinator config
      * @return Returns the coordinatorconfig
      */
-    const CoordinatorConfigurationPtr &getCoordinatorConf() const;
+    [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
 
     /**
      * @brief sets up the coordinator config and worker config
@@ -96,7 +97,7 @@ class E2ESingleRun {
      * @brief Getter for the Measurements of this run
      * @return Reference to the Measurements
      */
-    const Measurements::Measurements& getMeasurements() const;
+    Measurements::Measurements& getMeasurements();
 
     /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
