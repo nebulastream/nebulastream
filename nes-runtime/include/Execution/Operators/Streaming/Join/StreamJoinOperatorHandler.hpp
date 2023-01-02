@@ -15,15 +15,15 @@
 #define NES_STREAMJOINOPERATORHANDLER_HPP
 
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <cstddef>
+#include <list>
 #include <queue>
 #include <vector>
-#include <list>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -56,15 +56,15 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param numPartitions
      */
     explicit StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
-                                     SchemaPtr joinSchemaRight,
-                                     std::string joinFieldNameLeft,
-                                     std::string joinFieldNameRight,
-                                     size_t maxNoWorkerThreads,
-                                     uint64_t counterFinishedBuildingStart,
-                                     size_t totalSizeForDataStructures,
-                                     size_t windowSize,
-                                     size_t pageSize = CHUNK_SIZE,
-                                     size_t numPartitions = NUM_PARTITIONS);
+                                       SchemaPtr joinSchemaRight,
+                                       std::string joinFieldNameLeft,
+                                       std::string joinFieldNameRight,
+                                       size_t maxNoWorkerThreads,
+                                       uint64_t counterFinishedBuildingStart,
+                                       size_t totalSizeForDataStructures,
+                                       size_t windowSize,
+                                       size_t pageSize = CHUNK_SIZE,
+                                       size_t numPartitions = NUM_PARTITIONS);
 
     /**
      * @brief Getter for the left join schema
@@ -197,5 +197,5 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t numPartitions;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_STREAMJOINOPERATORHANDLER_HPP

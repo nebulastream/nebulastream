@@ -16,7 +16,6 @@
 #define NES_STREAMJOINSINK_HPP
 #include <Execution/Operators/Operator.hpp>
 
-
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -44,6 +43,5 @@ class StreamJoinSink : public Operator {
     uint64_t handlerIndex;
 };
 
-
-} //namespace NES::Runtime::Execution::Operators
+}//namespace NES::Runtime::Execution::Operators
 #endif//NES_STREAMJOINSINK_HPP

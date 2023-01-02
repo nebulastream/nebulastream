@@ -42,6 +42,5 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
     }
-
 }
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

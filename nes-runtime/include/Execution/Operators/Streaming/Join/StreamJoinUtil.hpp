@@ -14,14 +14,14 @@
 #ifndef NES_STREAMJOINUTIL_HPP
 #define NES_STREAMJOINUTIL_HPP
 
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <sys/mman.h>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -35,7 +35,7 @@ struct __attribute__((packed)) JoinPartitionIdTumpleStamp {
     size_t partitionId;
     size_t lastTupleTimeStamp;
 };
-}
+}// namespace Operators
 
 namespace Util {
 
@@ -56,7 +56,6 @@ uint64_t murmurHash(uint64_t key);
  */
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName);
 
-
-} // namespace Util
-} // namespace NES::Runtime::Execution
+}// namespace Util
+}// namespace NES::Runtime::Execution
 #endif//NES_STREAMJOINUTIL_HPP

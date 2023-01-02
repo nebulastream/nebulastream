@@ -21,8 +21,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -39,7 +39,6 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     return static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
 }
 
-
 void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
 
@@ -48,12 +47,10 @@ void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
     return localHashTable->insert(key);
 }
 
-
 void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
-
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
@@ -61,7 +58,6 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 
     auto& sharedJoinHashTable = opHandler->getWindowToBeFilled(isLeftSide).getSharedJoinHashTable(isLeftSide);
     auto localHashTable = opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(workerCtx->getId(), isLeftSide);
-
 
     for (auto a = 0UL; a < opHandler->getNumPartitions(); ++a) {
         sharedJoinHashTable.insertBucket(a, localHashTable->getBucketLinkedList(a));
@@ -85,7 +81,6 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
     opHandler->createNewWindow(isLeftSide);
 }
 
-
 uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
 
@@ -97,13 +92,16 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    auto lastTupleWindowRef = Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow,
-                                                     operatorHandlerMemRef, Value<Boolean>(isLeftSide));
-
+    auto lastTupleWindowRef =
+        Nautilus::FunctionCall("getLastTupleWindow", getLastTupleWindow, operatorHandlerMemRef, Value<Boolean>(isLeftSide));
 
     if (record.read(timeStampField) > lastTupleWindowRef) {
-        Nautilus::FunctionCall("triggerJoinSink", triggerJoinSink, operatorHandlerMemRef, ctx.getPipelineContext(),
-                               ctx.getWorkerContext(), Value<Boolean>(isLeftSide));
+        Nautilus::FunctionCall("triggerJoinSink",
+                               triggerJoinSink,
+                               operatorHandlerMemRef,
+                               ctx.getPipelineContext(),
+                               ctx.getWorkerContext(),
+                               Value<Boolean>(isLeftSide));
     }
 
     auto localHashTableMemRef = Nautilus::FunctionCall("getLocalHashTableFunctionCall",
@@ -113,7 +111,10 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
                                                        Value<Boolean>(isLeftSide));
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall", insertFunctionCall, localHashTableMemRef, record.read(joinFieldName).as<UInt64>());
+    auto entryMemRef = Nautilus::FunctionCall("insertFunctionCall",
+                                              insertFunctionCall,
+                                              localHashTableMemRef,
+                                              record.read(joinFieldName).as<UInt64>());
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -121,14 +122,14 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
-
 }
 
-StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex, bool isLeftSide, const std::string& joinFieldName,
-                             const std::string& timeStampField, SchemaPtr schema)
+StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex,
+                                 bool isLeftSide,
+                                 const std::string& joinFieldName,
+                                 const std::string& timeStampField,
+                                 SchemaPtr schema)
     : handlerIndex(handlerIndex), isLeftSide(isLeftSide), joinFieldName(joinFieldName), timeStampField(timeStampField),
-      schema(schema) {
-}
+      schema(schema) {}
 
-
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators

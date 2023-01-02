@@ -14,10 +14,9 @@
 #ifndef NES_FIXEDPAGE_HPP
 #define NES_FIXEDPAGE_HPP
 
+#include <Runtime/BloomFilter.hpp>
 #include <atomic>
 #include <cstddef>
-#include <Runtime/BloomFilter.hpp>
-
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -25,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
  * @brief class that stores the tuples on a page.
  * It also contains a bloom filter to have a quick check if a tuple is not on the page
  */
-class FixedPage{
+class FixedPage {
   public:
     /**
      * @brief Constructor for a FixedPage
@@ -97,5 +96,5 @@ class FixedPage{
     std::unique_ptr<BloomFilter> bloomFilter;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_FIXEDPAGE_HPP

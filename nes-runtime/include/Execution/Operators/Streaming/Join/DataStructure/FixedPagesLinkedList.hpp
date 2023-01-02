@@ -14,16 +14,16 @@
 #ifndef NES_FIXEDPAGESLINKEDLIST_HPP
 #define NES_FIXEDPAGESLINKEDLIST_HPP
 
-#include <vector>
-#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
 
 /**
  * @brief This class implements a LinkedList consisting of FixedPages
  */
-class FixedPagesLinkedList{
+class FixedPagesLinkedList {
   public:
     /**
      * @brief Constructor for a FixedPagesLinkedList
@@ -53,6 +53,6 @@ class FixedPagesLinkedList{
     const size_t sizeOfRecord;
     const size_t pageSize;
 };
-}
+}// namespace NES::Runtime::Execution::Operators
 
 #endif//NES_FIXEDPAGESLINKEDLIST_HPP

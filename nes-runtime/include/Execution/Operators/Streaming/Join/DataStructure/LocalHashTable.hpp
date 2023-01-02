@@ -18,10 +18,10 @@
 #include <atomic>
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPage.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -31,7 +31,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class LocalHashTable {
 
-public:
+  public:
     /**
      * @brief Constructor for a HashTable that is only accessed by a single thread
      * @param sizeOfRecord
@@ -40,14 +40,11 @@ public:
      * @param overrunAddress
      * @param pageSize
      */
-    explicit LocalHashTable(size_t sizeOfRecord,
-                            size_t numPartitions,
-                            FixedPagesAllocator& fixedPagesAllocator,
-                            size_t pageSize);
+    explicit LocalHashTable(size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize);
 
-    LocalHashTable(const LocalHashTable &) = delete;
+    LocalHashTable(const LocalHashTable&) = delete;
 
-    LocalHashTable &operator=(const LocalHashTable &) = delete;
+    LocalHashTable& operator=(const LocalHashTable&) = delete;
 
     virtual ~LocalHashTable() = default;
 
@@ -56,14 +53,14 @@ public:
      * @param key
      * @return Pointer to free memory space where the data shall be written
      */
-    uint8_t *insert(uint64_t key) const;
+    uint8_t* insert(uint64_t key) const;
 
     /**
      * @brief Returns the bucket at bucketPos
      * @param bucketPos
      * @return bucket
      */
-    FixedPagesLinkedList *getBucketLinkedList(size_t bucketPos);
+    FixedPagesLinkedList* getBucketLinkedList(size_t bucketPos);
 
     /**
      * @brief Calculates the bucket position for the hash
@@ -72,10 +69,9 @@ public:
      */
     size_t getBucketPos(uint64_t hash) const;
 
-private:
+  private:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
-
 };
-} // namespace NES::Runtime::Execution::Operators
+}// namespace NES::Runtime::Execution::Operators
 #endif//NES_LOCALHASHTABLE_HPP

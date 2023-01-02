@@ -58,5 +58,5 @@ class alignas(64) BloomFilter {
     uint8_t* bitField;
 };
 
-} // namespace NES::Runtime::Execution::Operator
+}// namespace NES::Runtime
 #endif//NES_BLOOMFILTER_HPP
