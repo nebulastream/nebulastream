@@ -333,13 +333,6 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     std::string queryString = configOverAllRuns.query->getValue();
     std::replace(queryString.begin(), queryString.end(), ',', ' ');
 
-    std::stringstream header;
-    header << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
-           "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
-           "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-           "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
-        << std::endl;
-
     std::stringstream outputCsvStream;
 
     for (const auto& measurementsCsv :
@@ -359,12 +352,8 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 
     std::ofstream ofs;
     ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
-    ofs << header.str();
     ofs << outputCsvStream.str();
     ofs.close();
-
-    std::cout << "Measurements are:" << std::endl;
-    std::cout << header.str() << outputCsvStream.str() << std::endl;
 
     NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
 }
