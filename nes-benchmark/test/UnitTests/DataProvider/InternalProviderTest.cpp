@@ -28,7 +28,10 @@ namespace NES::Benchmark::DataProviding {
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { NES_INFO("Setup InternalProviderTest test case."); }
+        void SetUp() override {
+            bufferManager =  std::make_shared<Runtime::BufferManager>();
+            NES_INFO("Setup InternalProviderTest test case.");
+        }
 
         /* Will be called before a test is executed. */
         void TearDown() override { NES_INFO("Tear down InternalProviderTest test case."); }
@@ -36,7 +39,6 @@ namespace NES::Benchmark::DataProviding {
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
 
-      protected:
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
@@ -45,8 +47,6 @@ namespace NES::Benchmark::DataProviding {
         uint64_t currentlyEmittedBuffer = 0;
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
-
-        bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
@@ -96,8 +96,6 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        bufferManager =  std::make_shared<Runtime::BufferManager>();
-
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
@@ -145,8 +143,6 @@ namespace NES::Benchmark::DataProviding {
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
-        bufferManager =  std::make_shared<Runtime::BufferManager>();
-
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
 
@@ -184,8 +180,6 @@ namespace NES::Benchmark::DataProviding {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
-
-        bufferManager =  std::make_shared<Runtime::BufferManager>();
 
         std::vector<Runtime::TupleBuffer> createdBuffers;
         createdBuffers.reserve(numberOfBuffers);
