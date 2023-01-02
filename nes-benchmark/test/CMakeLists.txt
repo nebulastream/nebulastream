@@ -11,17 +11,16 @@
 # limitations under the License.
 
 function(add_benchmark_test TARGET_NAME CONFIG_FILE_NAME)
-    add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
+    add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-main --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
     message(STATUS "Added benchmark test ${TARGET_NAME} with config file ${CONFIG_FILE_NAME}")
 endfunction()
 
 message(STATUS "Building benchmarks tests...")
 
-
-# Adding e2e tests
-add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
-add_benchmark_test(e2e-benchmark-test-multiple-sources nes-benchmark/test/test-configs/join_multiple_sources)
-add_benchmark_test(e2e-benchmark-test-multiple-physical-logical-sources nes-benchmark/test/test-configs/join_multiple_phys_and_logical_sources.yaml)
+# Copy Test Data --------------------------------------------------------------
+file(COPY test-configs DESTINATION .)
+add_compile_definitions(TEST_CONFIGS_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test-configs/")
+message(STATUS "Test Data Directory: ${TEST_CONFIGS_DIRECTORY}/test-configs")
 
 # Adding unit test for DefaultDataGenerator
 add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
@@ -39,6 +38,8 @@ target_link_libraries(internal-provider-test nes-benchmark)
 add_nes_unit_test(e2e-single-run-test "UnitTests/E2E/E2ESingleRunTest.cpp")
 target_link_libraries(e2e-single-run-test nes-benchmark)
 
-
+# Adding unit test for different E2EBenchmark tests
+add_nes_unit_test(e2e-benchmark-runner-test "UnitTests/E2E/E2ERunnerTest.cpp")
+target_link_libraries(e2e-benchmark-runner-test nes-benchmark)
 
 message(STATUS "Done building benchmarks tests")
