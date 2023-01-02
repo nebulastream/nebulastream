@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/Schema.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
@@ -83,6 +83,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsMap()) {
+        configOverAllRuns.srcNameToDataGenerator.clear();
         for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
             auto sourceName = (*entry).first;
             auto node = (*entry).second;
@@ -90,7 +91,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
-            auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(sourceName, node);
+            auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
             configOverAllRuns.srcNameToDataGenerator[sourceName] = dataGenerator;
         }
     }
@@ -109,6 +110,15 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
     }
 
     return stringStream.str();
+}
+
+size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
+    size_t size = 0;
+    for (auto [logicalSource, dataGenerator] : srcNameToDataGenerator) {
+        size += dataGenerator->getSchema()->getSchemaSizeInBytes();
+    }
+
+    return size;
 }
 
 }// namespace NES::Benchmark

@@ -61,7 +61,7 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
 
-    } else if (name == "YSB" || name == "YSBKafka") {
+    } else if (name == "YSB" || name == "YSBKafka" || name == "ysb") {
         return std::make_shared<YSBDataGenerator>();
 
     } else {

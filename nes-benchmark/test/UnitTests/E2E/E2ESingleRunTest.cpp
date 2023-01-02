@@ -93,30 +93,33 @@ namespace NES::Benchmark {
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
                                                     {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        configOverAllRuns.numberOfPreAllocatedBuffer->setValue(10);
 
         for (auto i = 0; i < 3; ++i) {
             E2EBenchmarkConfigPerRun configPerRun;
             configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), i + 1},
                                                       {zipfianDataGenerator->getName(), i + 2}};
+            configPerRun.bufferSizeInBytes->setValue(512);
             allConfigPerRuns.emplace_back(configPerRun);
         }
 
         for (auto cnt = 0UL; cnt < allConfigPerRuns.size(); ++cnt) {
             E2ESingleRun singleRun(allConfigPerRuns[cnt], configOverAllRuns, *rpcCoordinatorPort, *restPort);
+            singleRun.setupCoordinatorConfig();
             singleRun.createSources();
 
             auto coordinatorConf = singleRun.getCoordinatorConf();
             EXPECT_EQ(coordinatorConf->logicalSources.size(), 2);
 
-            EXPECT_EQ(coordinatorConf->logicalSources[0].getName(), defaultDataGenerator->getName());
-            EXPECT_EQ(coordinatorConf->logicalSources[1].getName(), defaultDataGenerator->getName());
+            EXPECT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), defaultDataGenerator->getName());
+            EXPECT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), zipfianDataGenerator->getName());
             EXPECT_EQ(coordinatorConf->worker.physicalSources.size(), cnt + 1 + cnt + 2);
 
             std::map<std::string, uint64_t> tmpMap{{defaultDataGenerator->getName(), 0},
                                                    {zipfianDataGenerator->getName(), 0}};
             for (auto i = 0UL; i < coordinatorConf->worker.physicalSources.size(); ++i) {
                 auto physicalSource = coordinatorConf->worker.physicalSources[i];
-                tmpMap[physicalSource.getName()] += 1;
+                tmpMap[physicalSource.getValue()->getLogicalSourceName()] += 1;
             }
 
             EXPECT_EQ(tmpMap[defaultDataGenerator->getName()], cnt + 1);
@@ -161,15 +164,18 @@ namespace NES::Benchmark {
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
-        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator}};
+        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
+                                                    {zipfianDataGenerator->getName(), zipfianDataGenerator}};
         configOverAllRuns.inputType->setValue(inputType);
         configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
         configOverAllRuns.query->setValue(queryString);
         configOverAllRuns.outputFile->setValue(csvFile);
+        std::filesystem::remove(csvFile);
 
         E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort);
+        singleRun.setupCoordinatorConfig();
         singleRun.createSources();
-        auto measurements = singleRun.getMeasurements();
+        auto& measurements = singleRun.getMeasurements();
 
         auto processedTasksStart = 42;
         auto processedBuffersStart = 84;
@@ -178,6 +184,7 @@ namespace NES::Benchmark {
         auto queueSizeSumStart = 210;
         auto availGlobalBufferSumStart = 252;
         auto availFixedBufferSumStart = 294;
+        auto MAX_TIMESTAMP = 10;
 
         std::stringstream expectedCsvFile;
         expectedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
@@ -186,7 +193,7 @@ namespace NES::Benchmark {
                            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
                         << std::endl;
 
-        for (auto i = 0; i < 10; ++i) {
+        for (auto i = 0; i < MAX_TIMESTAMP; ++i) {
             auto timeStamp = i;
             measurements.addNewTimestamp(timeStamp);
             measurements.addNewMeasurement(processedTasksStart + i,
@@ -198,26 +205,28 @@ namespace NES::Benchmark {
                                            availFixedBufferSumStart + i,
                                            timeStamp);
 
-            expectedCsvFile << bmName
-                            << "," << NES_VERSION << "," << schemaSizeInB
-                            << "," << timeStamp << "," << processedTasksStart
-                            << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i)
-                            << "," << (latencySumStart + i) << "," << (queueSizeSumStart + i)
-                            << "," << (availGlobalBufferSumStart + i) << "," << (availFixedBufferSumStart + i)
-                            // tuplesPerSecond, tasksPerSecond, bufferPerSecond, mebiPerSecond
-                            << "," << 1 << "," << 1 << "," << 1 << "," << 1
-                            << "," << numberOfWorkerThreads << "," << numberOfQueriesToDeploy
-                            << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\""
-                            << "," << bufferSizeInBytes << "," << inputType
-                            << "," << dataProviderMode << "\"" << queryString << "\"" << "\n";
+            if (i < MAX_TIMESTAMP - 1) {
+                expectedCsvFile << "\"" << bmName << "\""
+                                << "," << NES_VERSION << "," << schemaSizeInB
+                                << "," << timeStamp << "," << (processedTasksStart + i)
+                                << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i)
+                                << "," << (latencySumStart + i) << "," << (queueSizeSumStart + i) / numberOfQueriesToDeploy
+                                << "," << (availGlobalBufferSumStart + i) / numberOfQueriesToDeploy
+                                << "," << (availFixedBufferSumStart + i) / numberOfQueriesToDeploy
+                                // tuplesPerSecond, tasksPerSecond, bufferPerSecond, mebiPerSecond
+                                << "," << 1 << "," << 1 << "," << 1 << "," << (1.0 * schemaSizeInB) / (1024.0 * 1024.0)
+                                << "," << numberOfWorkerThreads << "," << numberOfQueriesToDeploy
+                                << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\""
+                                << "," << bufferSizeInBytes << "," << inputType
+                                << "," << dataProviderMode << "," << "\"" << queryString << "\"" << std::endl;
+            }
         }
+
+        singleRun.writeMeasurementsToCsv();
 
 
         std::ifstream ifs(csvFile);
         std::string writtenCsvFile((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         EXPECT_EQ(writtenCsvFile, expectedCsvFile.str());
     }
-
-
-
 }
