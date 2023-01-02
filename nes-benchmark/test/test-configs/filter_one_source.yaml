@@ -2,7 +2,7 @@
 numberOfWorkerThreads: 1
 numberOfQueriesToDeploy: 1
 bufferSizeInBytes: 131072
-numberOfPreAllocatedBuffer: 100
+numberOfPreAllocatedBuffer: 1000
 numberOfBuffersInGlobalBufferManager: 1024
 numberOfBuffersPerPipeline: 128
 numberOfBuffersInSourceLocalBufferPool: 128
@@ -12,7 +12,7 @@ numberOfBuffersInSourceLocalBufferPool: 128
 # ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 0
+startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 1
 
 logicalSources:
