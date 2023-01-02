@@ -37,10 +37,6 @@ namespace NES::Runtime::Execution::Operators {
  * Both hash tables (LocalHashTable and SharedHashTable) consist of pages (FixedPage) that store the tuples belonging to
  * a certain bucket / partition. All pages are pre-allocated and moved from the LocalHashTable to the SharedHashTable and
  * thus, the StreamJoin only has to allocate memory once.
- */
-
-
-/**
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
 class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
