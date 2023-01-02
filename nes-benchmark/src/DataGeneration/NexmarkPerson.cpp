@@ -17,6 +17,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <random>
+#include <string>
+
 
 namespace NES::Benchmark::DataGeneration {
 NexmarkPerson::NexmarkPerson(uint64_t minValue, uint64_t maxValue)
@@ -60,7 +62,13 @@ std::vector<Runtime::TupleBuffer> NexmarkPerson::createData(size_t numberOfBuffe
                 dynamicBuffer[curRecord]["emailaddress"].write<uint64_t>(curRecord);
                 dynamicBuffer[curRecord]["creditcard"].write<uint64_t>(curRecord);
                 dynamicBuffer[curRecord]["city"].write<uint64_t>(curRecord);
+                /*auto stateText = NES::ExecutableTypes::Array<char, 3>();
+                stateText[0] = 'N';
+                stateText[1] = 'Y';
+                stateText[2] = '\0';
+                dynamicBuffer[curRecord]["state"].write<NES::ExecutableTypes::Array<char, 3>>(stateText);*/
                 dynamicBuffer[curRecord]["state"].write<uint64_t>(curRecord);
+
             }
         }
 
@@ -83,6 +91,7 @@ NES::SchemaPtr NexmarkPerson::getSchema() {
         ->addField(createField("emailaddress", NES::UINT64))
         ->addField(createField("creditcard", NES::UINT64))
         ->addField(createField("city", NES::UINT64))
+        //->addField(createField("state", NES::TEXT));
         ->addField(createField("state", NES::UINT64));
 }
 

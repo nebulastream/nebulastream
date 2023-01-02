@@ -1,0 +1,35 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 5120
+numberOfPreAllocatedBuffer: 100
+
+
+# ~~~ Benchmark parameter for the entire run ~~~
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 3
+
+numberOfSources: 2
+logicalSourceNames:
+  Auction:
+    type: Auction
+    minValue: 0
+    maxValue: 250
+  Person:
+    type: Person
+    minValue: 0
+    maxValue: 250
+
+
+
+inputType: MemoryMode
+dataProviderMode: MemCopy
+dataProvider: Internal
+outputFile: q3.csv
+benchmarkName: q3
+query:    'Query::from("Auction").filter(Attribute("category") == 10)
+          .joinWith(Query::from("Person").filter(Attribute("state") == 122 || Attribute("state") == 12 || Attribute("state") == 22))
+              .where(Attribute("seller")).equalsTo(Attribute("id"))
+              .window(TumblingWindow::of(EventTime(Attribute("id")), Milliseconds(500)))                
+          .sink(NullOutputSinkDescriptor::create());'

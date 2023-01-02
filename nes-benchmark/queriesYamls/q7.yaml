@@ -1,0 +1,35 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 5120
+numberOfPreAllocatedBuffer: 100
+
+
+# ~~~ Benchmark parameter for the entire run ~~~
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 1
+
+numberOfSources: 1
+logicalSourceNames:
+  Bid:
+    type: Bid
+    minValue: 0
+    maxValue: 250
+
+
+
+
+inputType: MemoryMode
+dataProviderMode: MemCopy
+dataProvider: Internal
+outputFile: q7.csv
+benchmarkName: q7
+query:    'Query::from("Bid").
+              .window(
+          SlidingWindow::of
+              (EventTime(Attribute("Id")), Minutes(1), Minutes()))
+      .byKey("Price")
+      .apply(Max("Price"))->as(Attribute("B1"))
+
+          .sink(NullOutputSinkDescriptor::create());'
