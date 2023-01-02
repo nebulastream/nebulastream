@@ -67,9 +67,10 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
 
 
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
-    if (!yamlConfig["logicalSources"].IsNone()) {
-        allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
+    if (yamlConfig["logicalSources"].IsNone()) {
+        NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
     }
+    allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
 
     /* Retrieving the maximum number of experiments to run */
     size_t totalBenchmarkRuns = numWorkerOfThreads.size();
@@ -151,6 +152,7 @@ std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateM
 
             map[logicalSourceName] = value;
         }
+        retVectorOfMaps.emplace_back(map);
     }
 
 

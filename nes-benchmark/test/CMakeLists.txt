@@ -11,18 +11,17 @@
 # limitations under the License.
 
 function(add_benchmark_test TARGET_NAME CONFIG_FILE_NAME)
-    #add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
+    add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
     message(STATUS "Added benchmark test ${TARGET_NAME} with config file ${CONFIG_FILE_NAME}")
 endfunction()
 
 message(STATUS "Building benchmarks tests...")
 
 
-# TODO create unit tests and a similar test infrastructure than the other folders see issue #3227
 # Adding e2e tests
 add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
-add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/join_multiple_sources)
-add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/join_multiple_phys_and_logical_sources.yaml)
+add_benchmark_test(e2e-benchmark-test-multiple-sources nes-benchmark/test/test-configs/join_multiple_sources)
+add_benchmark_test(e2e-benchmark-test-multiple-physical-logical-sources nes-benchmark/test/test-configs/join_multiple_phys_and_logical_sources.yaml)
 
 # Adding unit test for DefaultDataGenerator
 add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")

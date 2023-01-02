@@ -21,9 +21,6 @@
 #include <filesystem>
 #include <fstream>
 
-namespace NES::Exceptions {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}
 const std::string logo = "/********************************************************\n"
                          " *     _   _   ______    _____\n"
                          " *    | \\ | | |  ____|  / ____|\n"
@@ -115,12 +112,13 @@ int main(int argc, const char* argv[]) {
         << "\n";
     ofs.close();
 
-    int portOffset = 0;
+    int rpcPort = 8000, restPort = 9000;
     auto configOverAllRuns = e2EBenchmarkConfig.getConfigOverAllRuns();
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-        portOffset += 23;
-        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), portOffset);
+        rpcPort += 23;
+        restPort += 23;
 
+        NES::Benchmark::E2ESingleRun singleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), rpcPort, restPort);
         singleRun.run();
 
         NES_INFO("Done with single experiment run!");

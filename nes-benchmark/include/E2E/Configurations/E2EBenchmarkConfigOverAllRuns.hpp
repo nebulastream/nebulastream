@@ -43,6 +43,12 @@ class E2EBenchmarkConfigOverAllRuns {
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
+     * @brief calculates the total schema size for this run
+     * @return total schema size for all logical sources
+     */
+    size_t getTotalSchemaSize();
+
+    /**
      * @brief creates a string representation of mapLogicalSrcNameToDataGenerator
      * @return string representation
      */

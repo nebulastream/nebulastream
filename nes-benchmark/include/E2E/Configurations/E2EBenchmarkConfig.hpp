@@ -50,8 +50,8 @@ class E2EBenchmarkConfig {
          */
     std::string toString();
 
-    const std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() const { return allConfigPerRuns; }
-    const E2EBenchmarkConfigOverAllRuns& getConfigOverAllRuns() const { return configOverAllRuns; }
+    [[nodiscard]] std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() { return allConfigPerRuns; }
+    E2EBenchmarkConfigOverAllRuns& getConfigOverAllRuns() { return configOverAllRuns; }
 
   private:
     std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
