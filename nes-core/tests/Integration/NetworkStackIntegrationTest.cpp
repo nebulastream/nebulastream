@@ -689,6 +689,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
             schema,
             [&](OperatorId,
+                OriginId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr&,
                 size_t numSourceLocalBuffers,
@@ -725,6 +726,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
             schema,
             [&](OperatorId,
+                OriginId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr&,
                 size_t numSourceLocalBuffers,
@@ -973,6 +975,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -1085,6 +1088,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         schema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,

@@ -372,6 +372,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -480,6 +481,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -488,7 +490,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
-                                           0,
+                                           originId,
                                            numSourceLocalBuffers,
                                            std::move(successors));
         });
@@ -567,6 +569,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
         [&](OperatorId id,
+            OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -575,7 +578,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
-                                           0,// dummy origin id
+                                           originId,// dummy origin id
                                            numSourceLocalBuffers,
                                            std::move(successors));
         });
@@ -585,6 +588,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
         [&](OperatorId id,
+            OriginId originId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -593,7 +597,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
-                                           0,// dummy origin id
+                                           originId,// dummy origin id
                                            numSourceLocalBuffers,
                                            std::move(successors));
         });
@@ -757,6 +761,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -775,6 +780,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -888,6 +894,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -997,6 +1004,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1063,6 +1071,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1147,6 +1156,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1230,6 +1240,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1297,6 +1308,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1378,6 +1390,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -1615,6 +1628,7 @@ TEST_F(QueryExecutionTest, caseWhenExpressionQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
