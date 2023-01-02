@@ -350,6 +350,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -417,6 +418,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -484,6 +486,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -554,6 +557,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -601,6 +605,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -769,6 +774,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,

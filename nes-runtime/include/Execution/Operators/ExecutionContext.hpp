@@ -86,13 +86,13 @@ class ExecutionContext final {
      * @brief Returns the pipeline context
      * @return Value<MemRef> to the pipeline context
      */
-    Value<MemRef> getPipelineContext() const;
+    const Value<MemRef>& getPipelineContext() const;
 
     /**
      * @brief Returns the worker context
      * @return Value<MemRef> to the worker context
      */
-    Value<MemRef> getWorkerContext() const;
+    const Value<MemRef>& getWorkerContext() const;
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
