@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.18](https://github.com/nebulastream/nebulastream/tree/v0.4.18) (2023-01-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.17...v0.4.18)
+
+#### Operators 
+
+- Implement Non-Partitioned Lazy Join for Engine Paper [\#2501](https://github.com/nebulastream/nebulastream/issues/2501)
+
 ## [v0.4.17](https://github.com/nebulastream/nebulastream/tree/v0.4.17) (2022-12-30)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.16...v0.4.17)
