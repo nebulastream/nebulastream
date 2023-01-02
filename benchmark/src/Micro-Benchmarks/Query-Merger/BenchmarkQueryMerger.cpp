@@ -214,10 +214,10 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         loadConfigFromYAMLFile(configPath->second.c_str());
     } else {
-//        loadConfigFromYAMLFile(
-//            "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
-                loadConfigFromYAMLFile(
-                    "/data-ssd/ankit/remote-dev/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+        //        loadConfigFromYAMLFile(
+        //            "/home/ankit/dima/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
+        loadConfigFromYAMLFile(
+            "/data-ssd/ankit/remote-dev/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/QueryMergerBenchmarkConfig.yaml");
     }
 
     NES::setupLogging("BM.log", loglevel);
