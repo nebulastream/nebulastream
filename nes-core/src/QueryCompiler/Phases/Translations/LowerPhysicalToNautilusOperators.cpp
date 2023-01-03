@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -33,6 +34,12 @@
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -56,6 +63,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -65,8 +73,14 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <utility>
@@ -143,16 +157,76 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(thresholdWindow);
         return thresholdWindow;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator>()) {
-        //TODO impl
+        auto preAggregationOperator = lowerGlobalThreadLocalPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
+        parentOperator->setChild(preAggregationOperator);
+        return preAggregationOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalGlobalSliceMergingOperator>()) {
-        //TODO impl
+        return lowerGlobalSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalGlobalTumblingWindowSink>()) {
-        //TODO impl
+        // we can ignore this operator for now.
+        return parentOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
-        //TODO impl
+        auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
+        parentOperator->setChild(watermarkOperator);
+        return watermarkOperator;
+    }else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
+        // we can ignore this operator for now.
+        return parentOperator;
     }
     NES_NOT_IMPLEMENTED();
 }
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerGlobalSliceMergingOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    PhysicalOperators::PhysicalOperatorPtr physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalGlobalSliceMergingOperator>();
+    auto handler =
+        std::get<std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>(physicalGSMO->getWindowHandler());
+    operatorHandlers.emplace_back(handler);
+    auto aggregationFunctions = lowerAggregations(physicalGSMO->getWindowDefinition()->getWindowAggregation());
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(aggregationFunctions);
+    pipeline.setRootOperator(sliceMergingOperator);
+    return sliceMergingOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
+    Runtime::Execution::PhysicalOperatorPipeline&,
+    PhysicalOperators::PhysicalOperatorPtr physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator>();
+    auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::GlobalSlicePreAggregationHandler>>(
+        physicalGTLPAO->getWindowHandler());
+    operatorHandlers.emplace_back(handler);
+    auto windowDefinition = physicalGTLPAO->getWindowDefinition();
+    auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+
+    std::vector<Runtime::Execution::Expressions::ExpressionPtr> aggregationFields;
+    std::transform(aggregations.cbegin(), aggregations.cend(), std::back_inserter(aggregationFields), [&](auto& agg) {
+        return lowerExpression(agg->on());
+    });
+    auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+    auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
+    auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregation>(timeStampField,
+                                                                                                           aggregationFields,
+                                                                                                           aggregationFunctions);
+    return sliceMergingOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                                   PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
+    auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
+    auto eventTimeWatermarkStrategy = wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+    auto fieldExpression = lowerExpression(eventTimeWatermarkStrategy->getOnField());
+    auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
+    return watermarkAssignmentOperator;
+}
+
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperatorPipeline&,
                                             PhysicalOperators::PhysicalOperatorPtr operatorNode,
@@ -297,6 +371,26 @@ LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNo
         return std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldAccess->getFieldName());
     }
     NES_NOT_IMPLEMENTED();
+}
+
+std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
+LowerPhysicalToNautilusOperators::lowerAggregations(std::vector<Windowing::WindowAggregationPtr> aggs) {
+    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
+    std::transform(aggs.cbegin(), aggs.cend(), std::back_inserter(aggregationFunctions), [&](const auto& agg) {
+        switch (agg->getType()) {
+            case Windowing::WindowAggregationDescriptor::Avg: break;
+            case Windowing::WindowAggregationDescriptor::Count: break;
+            case Windowing::WindowAggregationDescriptor::Max: break;
+            case Windowing::WindowAggregationDescriptor::Min: break;
+            case Windowing::WindowAggregationDescriptor::Median: break;
+            case Windowing::WindowAggregationDescriptor::Sum: {
+                return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(agg->getInputStamp(),
+                                                                                                 agg->getFinalAggregateStamp());
+            }
+        };
+        NES_NOT_IMPLEMENTED();
+    });
+    return aggregationFunctions;
 }
 
 }// namespace NES::QueryCompilation

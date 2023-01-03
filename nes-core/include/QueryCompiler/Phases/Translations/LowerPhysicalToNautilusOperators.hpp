@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
+#include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -24,6 +25,10 @@
 #include <vector>
 
 namespace NES {
+namespace Windowing {
+class WindowAggregationDescriptor;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
+}// namespace Windowing
 namespace QueryCompilation {
 
 /**
@@ -74,11 +79,25 @@ class LowerPhysicalToNautilusOperators {
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, PhysicalOperators::PhysicalOperatorPtr sharedPtr);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                    PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                 PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+                                                 std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                     PhysicalOperators::PhysicalOperatorPtr sharedPtr,
+                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                          PhysicalOperators::PhysicalOperatorPtr sharedPtr,
                          uint64_t handlerIndex);
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(ExpressionNodePtr expressionNode);
+    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
+    lowerAggregations(std::vector<Windowing::WindowAggregationPtr> functions);
 };
 }// namespace QueryCompilation
 }// namespace NES

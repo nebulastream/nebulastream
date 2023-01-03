@@ -33,6 +33,11 @@ void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
     return globalState.release();
 }
 
+void* getGlobalSliceState(void* gs) {
+    auto globalSlice = static_cast<GlobalSlice*>(gs);
+    return globalSlice->getState()->ptr;
+}
+
 void* erasePartition(void* op, uint64_t ts) {
     auto handler = static_cast<GlobalSliceMergingHandler*>(op);
     auto partition = handler->getSliceStaging().erasePartition(ts);
@@ -47,7 +52,7 @@ uint64_t getSizeOfPartition(void* p) {
 
 void* getPartitionState(void* p, uint64_t index) {
     auto partition = static_cast<GlobalSliceStaging::Partition*>(p);
-    return partition->partialStates[index].get();
+    return partition->partialStates[index].get()->ptr;
 }
 
 void deletePartition(void* p) {
@@ -105,7 +110,8 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
 Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
                                                            Value<MemRef>& sliceMergeTask,
                                                            Value<>& endSliceTs) const {
-    auto globalSliceState = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
+    auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
     for (Value<UInt64> i = 0ul; i < sizeOfPartitions; i = i + 1ul) {
@@ -117,17 +123,18 @@ Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& global
         }
     }
     Nautilus::FunctionCall("deletePartition", deletePartition, partition);
-    return globalSliceState;
+    return globalSlice;
 }
 
 void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
                                     Value<>& windowStart,
                                     Value<>& windowEnd,
-                                    Value<MemRef>& globalSliceState) const {
+                                    Value<MemRef>& globalSlice) const {
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
 
     Record resultWindow;
     resultWindow.write("start_ts", windowStart);
-    resultWindow.write("start_ts", windowEnd);
+    resultWindow.write("end_ts", windowEnd);
     for (const auto& function : aggregationFunctions) {
         auto finalAggregationValue = function->lower(globalSliceState);
         resultWindow.write("test$sum", finalAggregationValue);
