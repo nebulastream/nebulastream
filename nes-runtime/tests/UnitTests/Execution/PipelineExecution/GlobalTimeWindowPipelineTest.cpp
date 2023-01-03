@@ -80,7 +80,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto aggregationResultFieldName = "test$sum";
     DataTypePtr integerType = DataTypeFactory::createInt64();
@@ -107,16 +107,18 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
     // Fill buffer
-    dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[0]["f1"].write((int64_t) 1);
     dynamicBuffer[0]["f2"].write((int64_t) 10);
-    dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
+    dynamicBuffer[0]["ts"].write((int64_t) 1);
+    dynamicBuffer[1]["f1"].write((int64_t) 2);
     dynamicBuffer[1]["f2"].write((int64_t) 20);
-    dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
+    dynamicBuffer[1]["ts"].write((int64_t) 1);
+    dynamicBuffer[2]["f1"].write((int64_t) 3);
     dynamicBuffer[2]["f2"].write((int64_t) 30);
-
-    // the last tuple closes the window
-    dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[2]["ts"].write((int64_t) 2);
+    dynamicBuffer[3]["f1"].write((int64_t) 1);
     dynamicBuffer[3]["f2"].write((int64_t) 40);
+    dynamicBuffer[3]["ts"].write((int64_t) 3);
     dynamicBuffer.setNumberOfTuples(4);
     buffer.setWatermark(20);
     buffer.setSequenceNumber(1);
@@ -145,7 +147,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
-    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 10);
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
 
 }// namespace NES::Runtime::Execution
 
