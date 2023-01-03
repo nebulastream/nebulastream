@@ -35,6 +35,7 @@ namespace NES::Benchmark {
     void runSingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverallRuns, int rpcPort, int restPort) {
         E2ESingleRun singleRun(configPerRun, configOverallRuns, rpcPort, restPort);
         singleRun.run();
+        NES_INFO("Done with single experiment!");
     }
 
     void writeHeaderToCsvFile(E2EBenchmarkConfig& e2EBenchmarkConfig) {
