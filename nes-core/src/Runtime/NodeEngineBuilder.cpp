@@ -276,6 +276,9 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     // sets the windowing strategy
     queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
+
+    // sets the query compiler
+    queryCompilationOptions->setQueryCompiler(queryCompilerConfiguration.queryCompilerType);
     return queryCompilationOptions;
 }
 

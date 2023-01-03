@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -81,6 +84,8 @@
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -433,28 +438,45 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
             throw QueryCompilationException("No support for this window type.");
         }
     } else {
-        // handle global window
-        auto sliceMergingOperatorHandler =
-            std::make_shared<Windowing::Experimental::GlobalSliceMergingOperatorHandler>(windowDefinition);
+        // Create operator handlers for global windows
+        PhysicalOperators::PhysicalGlobalSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
+        PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
+        if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+            auto smOperatorHandler =
+                std::make_shared<Windowing::Experimental::GlobalSliceMergingOperatorHandler>(windowDefinition);
+            preAggregationWindowHandler =
+                std::make_shared<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>(
+                    windowDefinition,
+                    windowOperator->getInputOriginIds(),
+                    smOperatorHandler->getSliceStagingPtr());
+            sliceMergingOperatorHandler = smOperatorHandler;
+        } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+            auto sliceStaging = std::make_shared<Runtime::Execution::Operators::GlobalSliceStaging>();
+            sliceMergingOperatorHandler =
+                std::make_shared<Runtime::Execution::Operators::GlobalSliceMergingHandler>(sliceStaging);
+            auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
 
-        auto preAggregationWindowHandler =
-            std::make_shared<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>(
-                windowDefinition,
+            preAggregationWindowHandler = std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregationHandler>(
+                timeBasedWindowType->getSize().getTime(),
+                timeBasedWindowType->getSlide().getTime(),
                 windowOperator->getInputOriginIds(),
-                sliceMergingOperatorHandler->getSliceStagingPtr());
+                sliceStaging);
+        }
 
         // Translate a central window operator in ->
         // PhysicalGlobalThreadLocalPreAggregationOperator ->
-        // PhysicalGloballiceMergingOperator
+        // PhysicalGlobalSliceMergingOperator
         auto preAggregationOperator =
             PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::create(windowInputSchema,
                                                                                        windowOutputSchema,
-                                                                                       preAggregationWindowHandler);
+                                                                                       preAggregationWindowHandler,
+                                                                                       windowDefinition);
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
         auto merging = PhysicalOperators::PhysicalGlobalSliceMergingOperator::create(windowInputSchema,
                                                                                      windowOutputSchema,
-                                                                                     sliceMergingOperatorHandler);
+                                                                                     sliceMergingOperatorHandler,
+                                                                                     windowDefinition);
         operatorNode->insertBetweenThisAndChildNodes(merging);
 
         if (windowDefinition->getWindowType()->isTumblingWindow()) {

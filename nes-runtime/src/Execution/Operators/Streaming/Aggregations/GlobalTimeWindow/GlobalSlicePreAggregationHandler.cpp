@@ -33,10 +33,8 @@ GlobalSlicePreAggregationHandler::GlobalSlicePreAggregationHandler(uint64_t wind
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
 
 GlobalThreadLocalSliceStore* GlobalSlicePreAggregationHandler::getThreadLocalSliceStore(uint64_t workerId) {
-    if (threadLocalSliceStores.size() <= workerId) {
-        //    throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
-    }
-    return threadLocalSliceStores[workerId].get();
+    auto index = workerId % threadLocalSliceStores.size();
+    return threadLocalSliceStores[index].get();
 }
 
 void GlobalSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize) {

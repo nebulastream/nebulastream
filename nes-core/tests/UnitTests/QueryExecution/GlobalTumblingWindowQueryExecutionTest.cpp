@@ -57,17 +57,17 @@ class GlobalTumblingWindowQueryExecutionTest
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
-        buf[recordIndex][0].write<int64_t>(recordIndex);
+        buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(recordIndex * 10);
     }
     // close the window
-    buf[9][0].write<int64_t>(0);
+    buf[9][0].write<uint64_t>(0);
     buf[9][1].write<int64_t>(0);
     buf.setNumberOfTuples(10);
 }
 
 TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
-    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
