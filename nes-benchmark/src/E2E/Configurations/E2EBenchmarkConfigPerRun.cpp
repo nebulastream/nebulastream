@@ -145,8 +145,8 @@ std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateM
 
             auto node = (*entry).second;
             auto value = 1UL;
-            if (!node["numberOfPhysicalSources"].IsNone()) {
-                auto tmpVec = NES::Util::splitWithStringDelimiter<uint64_t>(node["numberOfPhysicalSources"].As<std::string>(), ",");
+            auto tmpVec = NES::Util::splitWithStringDelimiter<uint64_t>(node["numberOfPhysicalSources"].As<std::string>(), ",");
+            if (!node["numberOfPhysicalSources"].IsNone() && curExp < tmpVec.size()) {
                 value = tmpVec[curExp];
             }
 

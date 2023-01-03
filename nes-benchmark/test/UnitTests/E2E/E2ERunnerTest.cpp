@@ -52,7 +52,7 @@ namespace NES::Benchmark {
     }
 
     TEST_F(E2ERunnerTest, multipleSources) {
-        std::string configPath = "/filter_one_source.yaml";
+        std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) +"/join_multiple_sources.yaml";
         std::string logPath = "E2ERunnerTest_multipleSources.log";
 
         auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);
@@ -64,7 +64,7 @@ namespace NES::Benchmark {
     }
 
     TEST_F(E2ERunnerTest, multiplePhysicalLogicalSources) {
-        std::string configPath = "/filter_one_source.yaml";
+        std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_phys_and_logical_sources.yaml";
         std::string logPath = "E2ERunnerTest_multiplePhysicalLogicalSources.log";
 
         auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);

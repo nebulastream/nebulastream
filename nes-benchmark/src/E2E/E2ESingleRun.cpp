@@ -83,6 +83,9 @@ void E2ESingleRun::createSources() {
                                                                       numberOfTotalBuffers);
         dataGenerator->setBufferManager(bufferManager);
 
+        allBufferManagers.emplace_back(bufferManager);
+        allDataGenerators.emplace_back(dataGenerator);
+
         NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source " << logicalSource->getLogicalSourceName());
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
@@ -117,7 +120,6 @@ void E2ESingleRun::createSources() {
                 auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
                 coordinatorConf->worker.physicalSources.add(physicalSource);
 
-                allBufferManagers.emplace_back(bufferManager);
     #else
                 NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
     #endif
@@ -127,8 +129,6 @@ void E2ESingleRun::createSources() {
 
                 // Adding necessary items to the corresponding vectors
                 allDataProviders.emplace_back(dataProvider);
-                allBufferManagers.emplace_back(bufferManager);
-                allDataGenerators.emplace_back(dataGenerator);
 
                 size_t generatorQueueIndex = 0;
                 auto dataProvidingFunc = [this, sourceCnt, generatorQueueIndex](Runtime::TupleBuffer& buffer, uint64_t) {
@@ -163,8 +163,7 @@ void E2ESingleRun::runQuery() {
 
     for (size_t i = 0; i < configPerRun.numberOfQueriesToDeploy->getValue(); i++) {
         QueryId queryId = 0;
-        std::cout << "E2EBase: Submit query, source sharing for external data gen" << i << " ="
-                  << configOverAllRuns.query->getValue() << std::endl;
+        NES_INFO("E2EBase: Submit query = " << configOverAllRuns.query->getValue());
         queryId = queryService->validateAndQueueAddQueryRequest(configOverAllRuns.query->getValue(), "BottomUp");
 
         submittedIds.push_back(queryId);
@@ -174,10 +173,10 @@ void E2ESingleRun::runQuery() {
             if (!res) {
                 NES_THROW_RUNTIME_ERROR("run does not succeed for id=" << id);
             }
-            std::cout << "E2EBase: query started with id=" << id << std::endl;
+            NES_INFO("E2EBase: query started with id=" << id);
         }
     }
-    NES_DEBUG("Starting the data provider...");
+    NES_DEBUG("Starting the data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->start();
     }
@@ -195,13 +194,13 @@ void E2ESingleRun::runQuery() {
         for (auto id : submittedIds) {
             auto stats = coordinator->getNodeEngine()->getQueryStatistics(id);
             for (auto iter : stats) {
-                while (iter->getProcessedBuffers() < 1) {
-                    NES_DEBUG("Query  with id " << id << " not ready with value= " << iter->getProcessedBuffers()
+                while (iter->getProcessedTuple() < 1) {
+                    NES_DEBUG("Query with id " << id << " not ready with no. tuples = " << iter->getProcessedTuple()
                                                 << ". Sleeping for a second now...");
                     sleep(1);
                 }
-                std::cout << "Query  with id " << id << " Ready with value= " << iter->getProcessedBuffers() << std::endl;
-                found++;
+                NES_INFO("Query with id " << id << " Ready with no. tuples = " << iter->getProcessedTuple());
+                ++found;
             }
         }
     }
@@ -245,9 +244,6 @@ void E2ESingleRun::runQuery() {
                                                availGlobalBufferSum,
                                                availFixedBufferSum,
                                                timeStamp);
-                std::cout << "Measurement queryId=" << id << " timestamp=" << timeStamp
-                          << " processedBuffers=" << processedBuffers << " processedTuples=" << processedTuples
-                          << " latencySum=" << latencySum << std::endl;
             }
         }
 
@@ -285,11 +281,11 @@ void E2ESingleRun::stopQuery() {
         NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
     }
 
-    NES_DEBUG("Stopping data provider...");
+    NES_DEBUG("Stopping data providers...");
     for (auto& dataProvider : allDataProviders) {
         dataProvider->stop();
     }
-    NES_DEBUG("Stopped data provider!");
+    NES_DEBUG("Stopped data providers!");
 
     // Starting a new thread that waits
     std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();

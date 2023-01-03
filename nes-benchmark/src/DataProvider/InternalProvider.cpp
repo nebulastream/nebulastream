@@ -27,8 +27,9 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
     ((void) sourceId);
     while (!started) {
         //wait with data production until the source is really started and also block if the source gets stopped
-        sleep(1);
+        usleep(150);
     }
+
     if (!preAllocatedBuffers.empty()) {
         auto buffer = preAllocatedBuffers[currentlyEmittedBuffer % preAllocatedBuffers.size()];
         ++currentlyEmittedBuffer;
@@ -53,6 +54,9 @@ void InternalProvider::stop() {
     started = false;
     preAllocatedBuffers.clear();
 }
-InternalProvider::~InternalProvider() { preAllocatedBuffers.clear(); }
+InternalProvider::~InternalProvider() {
+    started = false;
+    preAllocatedBuffers.clear();
+}
 
 }// namespace NES::Benchmark::DataProviding
