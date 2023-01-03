@@ -75,7 +75,7 @@ GlobalSliceMerging::GlobalSliceMerging(const std::vector<std::shared_ptr<Aggrega
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
-    Value<UInt64> entrySize = 0ul;
+    Value<UInt64> entrySize = 0UL;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
