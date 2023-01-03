@@ -1,19 +1,20 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-numberOfWorkerThreads: 1, 2, 4
-bufferSizeInBytes: 5120, 5120, 5120
-numberOfPreAllocatedBuffer: 10000000
+numberOfWorkerThreads: 1, 2
+bufferSizeInBytes: 5120, 5120
+numberOfPreAllocatedBuffer: 100
+numberOfBuffersToProduce: 100
 
 
 # ~~~ Benchmark parameter for the entire run ~~~
 logLevel: LOG_INFO
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
-numberOfMeasurementsToCollect: 3
+numberOfMeasurementsToCollect: 1
 
 logicalSources:
   input1:
     type: Default
-    numberOfPhysicalSources: 2, 3, 4
+    numberOfPhysicalSources: 2, 3
   input2:
     type: Uniform
     numberOfPhysicalSources: 2
@@ -26,7 +27,6 @@ logicalSources:
     maxValue: 1000
 
 
-inputType: MemoryMode
 dataProviderMode: MemCopy
 dataProvider: Internal
 outputFile: JoinMultipleSources.csv

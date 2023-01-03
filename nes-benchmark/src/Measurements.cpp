@@ -49,7 +49,6 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         vecCsvStrings.push_back(measurementsCsv.str());
     }
 
-    std::cout << "maxTuplesPerSecond=" << maxTuplesPerSecond << std::endl;
     return vecCsvStrings;
 }
 }// namespace NES::Benchmark::Measurements
