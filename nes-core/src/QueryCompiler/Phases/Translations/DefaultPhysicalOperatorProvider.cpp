@@ -533,6 +533,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                                                                                windowOutputSchema,
                                                                                windowOperatorHandler);
                 operatorNode->replace(thresholdWindowPhysicalOperator);
+                return;
             }
         }
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
