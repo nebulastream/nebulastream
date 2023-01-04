@@ -98,6 +98,20 @@ TEST_F(JavaUdfDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
                      .build(), UdfException);
 }
 
+TEST_F(JavaUdfDescriptorTest, TheInputClassNameMustNotBeEmpty) {
+    EXPECT_THROW(JavaUdfDescriptorBuilder{}
+                     .setInputClassName(""s)// empty string
+                     .build(),
+                 UdfException);
+}
+
+TEST_F(JavaUdfDescriptorTest, TheOutputClassNameMustNotBeEmpty) {
+    EXPECT_THROW(JavaUdfDescriptorBuilder{}
+                     .setOutputClassName(""s)// empty string
+                     .build(),
+                 UdfException);
+}
+
 // The following tests verify the equality logic of the Java UDF descriptor.
 
 TEST_F(JavaUdfDescriptorTest, Equality) {
@@ -139,6 +153,15 @@ TEST_F(JavaUdfDescriptorTest, InEquality) {
                                                                      {differentClassName, {1}}})
                                                    .build();
     EXPECT_FALSE(*descriptor == *descriptorWithDifferentByteCodeList);
+    // Check a different input type.
+    auto descriptorWithDifferentInputType = JavaUdfDescriptorBuilder{}
+                                                .setInputClassName("different_input_type")
+                                                .build();
+    // Check a different return type.
+    auto descriptorWithDifferentOutputType = JavaUdfDescriptorBuilder{}
+                                                .setOutputClassName("different_output_type")
+                                                .build();
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentOutputType);
     // The output schema is ignored because it can be derived from the method signature.
     // We trust the Java client to do this correctly; it would cause errors otherwise during query execution.
 }
