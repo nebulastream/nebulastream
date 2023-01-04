@@ -31,12 +31,10 @@ class LocationProviderCSVTest : public testing::Test {
         NES_INFO("Setup LocationProviderCSV test class.");
     }
 
-    void SetUp() override {}
-
     //wrapper function so allow the generic utility function to call the mamber function of LocationProvider
-    static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromProvider(std::shared_ptr<void> provider) {
+    static std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> getLocationFromProvider(std::shared_ptr<void> provider) {
         auto casted = std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(provider);
-        return casted->getCurrentLocation().first;
+        return casted->getCurrentWaypoint();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationProviderCSV test class."); }
@@ -47,13 +45,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
     auto startTime = locationProvider->getStartTime();
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
@@ -66,13 +58,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 
 TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
@@ -85,12 +71,6 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     auto startTime = locationProvider->getStartTime();
     EXPECT_EQ(startTime, simulatedStartTime);
     //start check with 10ms sleep interval and 1ms tolerated time error
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromProvider,
-                        std::static_pointer_cast<void>(locationProvider));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 }// namespace NES

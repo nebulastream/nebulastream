@@ -15,9 +15,8 @@
 #include <API/Query.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <NesBaseTest.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ProtobufMessageFactory.hpp>
 #include <Util/TestUtils.hpp>
@@ -73,15 +72,6 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         return udfResponse;
     }
 
-    [[nodiscard]] static Catalogs::UDF::JavaUdfDescriptorPtr createJavaUdfDescriptor() {
-        return Catalogs::UDF::JavaUdfDescriptor::create(
-            "some_package.my_udf",
-            "udf_method",
-            {1},
-            {{"some_package.my_udf", {1}}},
-            std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64()));
-    }
-
     void startCoordinator() {
         NES_INFO("UdfCatalogController: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
@@ -105,7 +95,7 @@ TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = createJavaUdfDescriptor();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
@@ -226,7 +216,7 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = createJavaUdfDescriptor();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
 
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
@@ -315,7 +305,7 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
 
     // create a Java Udf descriptor and specify an udf name
     std::string udfName = "my_udf";
-    auto javaUdfDescriptor = createJavaUdfDescriptor();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
     //register udf with coordinator
     udfCatalog->registerUdf(udfName, javaUdfDescriptor);
 

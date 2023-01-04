@@ -59,6 +59,12 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
     if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
     }
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE) != sourceConfigMap.end()) {
+        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE)->second));
+    }
+    if (sourceConfigMap.find(Configurations::BATCH_SIZE) != sourceConfigMap.end()) {
+        batchSize->setValue(std::stoi(sourceConfigMap.find(Configurations::BATCH_SIZE)->second));
+    }
 }
 
 KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
@@ -100,6 +106,10 @@ KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
         && yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<std::string>() != "\n") {
         numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFER_TO_PRODUCE].As<uint32_t>());
     }
+    if (!yamlConfig[Configurations::BATCH_SIZE].As<std::string>().empty()
+        && yamlConfig[Configurations::BATCH_SIZE].As<std::string>() != "\n") {
+        batchSize->setValue(yamlConfig[Configurations::BATCH_SIZE].As<uint32_t>());
+    }
 }
 
 KafkaSourceType::KafkaSourceType()
@@ -126,9 +136,14 @@ KafkaSourceType::KafkaSourceType()
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::CONNECTION_TIMEOUT_CONFIG,
                                                                 10,
                                                                 "connection time out for source, needed for: KafkaSource")),
-      numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
-                                                                                     1,
-                                                                                     "Numbers of events pulled from the queue"))
+      numberOfBuffersToProduce(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_BUFFER_TO_PRODUCE,
+                                                                1,
+                                                                "Numbers of events pulled from the queue overall")),
+
+      batchSize(Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
+                                                                      1,
+                                                                      "Numbers of events pulled from the queue per pull request"))
 
 {
     NES_INFO("KafkaSourceType: Init source config object with default values.");
@@ -144,6 +159,7 @@ std::string KafkaSourceType::toString() {
     ss << Configurations::OFFSET_MODE_CONFIG + ":" + offsetMode->toStringNameCurrentValue();
     ss << Configurations::CONNECTION_TIMEOUT_CONFIG + ":" + connectionTimeout->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_BUFFER_TO_PRODUCE + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
+    ss << Configurations::BATCH_SIZE + ":" + batchSize->toStringNameCurrentValue();
     ss << "\n}";
     return ss.str();
 }
@@ -159,7 +175,8 @@ bool KafkaSourceType::equal(const PhysicalSourceTypePtr& other) {
         && topic->getValue() == otherSourceConfig->topic->getValue()
         && offsetMode->getValue() == otherSourceConfig->offsetMode->getValue()
         && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue()
-        && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue();
+        && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
+        && batchSize->getValue() == otherSourceConfig->batchSize->getValue();
 }
 
 Configurations::StringConfigOption KafkaSourceType::getBrokers() const { return brokers; }
@@ -175,6 +192,8 @@ Configurations::StringConfigOption KafkaSourceType::getOffsetMode() const { retu
 Configurations::IntConfigOption KafkaSourceType::getConnectionTimeout() const { return connectionTimeout; }
 
 Configurations::IntConfigOption KafkaSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+
+Configurations::IntConfigOption KafkaSourceType::getBatchSize() const { return batchSize; }
 
 void KafkaSourceType::setBrokers(std::string brokersValue) { brokers->setValue(std::move(brokersValue)); }
 
@@ -194,6 +213,10 @@ void KafkaSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProd
     numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
 }
 
+void KafkaSourceType::setBatchSize(uint32_t batchSizeValue) { batchSize->setValue(batchSizeValue); }
+
+uint64_t getBatchSize();
+
 void KafkaSourceType::reset() {
     setBrokers(brokers->getDefaultValue());
     setAutoCommit(autoCommit->getDefaultValue());
@@ -202,5 +225,6 @@ void KafkaSourceType::reset() {
     setOffsetMode(offsetMode->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
+    setBatchSize(batchSize->getDefaultValue());
 }
 }// namespace NES

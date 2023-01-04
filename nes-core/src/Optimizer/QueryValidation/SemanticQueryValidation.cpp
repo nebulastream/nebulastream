@@ -14,9 +14,16 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -46,15 +53,7 @@ SemanticQueryValidationPtr SemanticQueryValidation::create(const Catalogs::Sourc
 
 void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
     // check if we have valid root operators, i.e., sinks
-    auto rootOperators = queryPlan->getRootOperators();
-    if (rootOperators.empty()) {
-        throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain any root operator");
-    }
-    for (auto& root : rootOperators) {
-        if (!root->instanceOf<SinkLogicalOperatorNode>()) {
-            throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
-        }
-    }
+    sinkOperatorValidityCheck(queryPlan);
     // Checking if the logical source can be found in the source catalog
     logicalSourceValidityCheck(queryPlan, sourceCatalog);
     // Checking if the physical source can be found in the source catalog
@@ -65,13 +64,15 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
         typeInferencePhase->execute(queryPlan);
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
-
         // Handling nonexistend field
         if (errorMessage.find("FieldAccessExpression:") != std::string::npos) {
             throw InvalidQueryException(errorMessage + "\n");
         }
         throw InvalidQueryException(errorMessage + "\n");
     }
+
+    // check if infer model is correctly defined
+    inferModelValidityCheck(queryPlan);
 
     if (performAdvanceChecks) {
         advanceSemanticQueryValidation(queryPlan);
@@ -119,17 +120,10 @@ void SemanticQueryValidation::createExceptionForPredicate(std::string& predicate
     eraseAllSubStr(predicateString, "FieldAccessNode");
     eraseAllSubStr(predicateString, "ConstantValue");
     eraseAllSubStr(predicateString, "BasicValue");
-    //    eraseAllSubStr(predicateString, "$");
 
     // Adding whitespace between bool operators for better readability
     findAndReplaceAll(predicateString, "&&", " && ");
     findAndReplaceAll(predicateString, "||", " || ");
-
-    // Removing logical source names for better readability
-    //    auto allLogicalSources = sourceCatalog->getAllLogicalSourceAsString();
-    //    for (const auto& logicalSource : allLogicalSources) {
-    //        eraseAllSubStr(predicateString, logicalSource.first);
-    //    }
 
     throw InvalidQueryException("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
 }
@@ -193,6 +187,54 @@ void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& qu
         invalidSources << "]";
         throw InvalidQueryException("Logical source(s) " + invalidSources.str()
                                     + " are found to have no physical source(s) defined.");
+    }
+}
+
+void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& queryPlan) {
+    auto rootOperators = queryPlan->getRootOperators();
+    //Check if root operator exists ina query plan
+    if (rootOperators.empty()) {
+        throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain any root operator");
+    }
+
+    //Check if all root operators of type sink
+    for (auto& root : rootOperators) {
+        if (!root->instanceOf<SinkLogicalOperatorNode>()) {
+            throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
+        }
+    }
+}
+
+void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryPlan) {
+
+    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::InferModelLogicalOperatorNode>();
+    if (!inferModelOperators.empty()) {
+#ifdef TFDEF
+        DataTypePtr commonStamp;
+        for (const auto& inferModelOperator : inferModelOperators) {
+            for (const auto& inputField : inferModelOperator->getInputFields()) {
+                auto field = inputField->getExpressionNode()->as<FieldAccessExpressionNode>();
+                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
+                    throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for "
+                                                "tensorflow model not supported: "
+                                                + field->getStamp()->toString());
+                }
+                if (!commonStamp) {
+                    commonStamp = field->getStamp();
+                } else {
+                    commonStamp = commonStamp->join(field->getStamp());
+                }
+            }
+        }
+        NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: " << commonStamp->toString());
+        if (commonStamp->isUndefined()) {
+            throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types "
+                                        "cannot be mixed as input to the tensorflow model.");
+        }
+#else
+        throw InvalidQueryException("SemanticQueryValidation: this binary does not support infer model operator. Use "
+                                    "-DNES_USE_TF=1 to compile the project.");
+#endif
     }
 }
 

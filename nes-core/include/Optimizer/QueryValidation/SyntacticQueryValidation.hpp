@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPTIMIZER_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
 
+#include <Plans/Query/QueryPlan.hpp>
 #include <memory>
 
 namespace NES {
@@ -47,7 +48,7 @@ class SyntacticQueryValidation {
     /**
      * @brief Checks the syntactic validity of a Query string and returns the created Query object
      */
-    QueryPtr validate(const std::string& inputQuery);
+    QueryPlanPtr validate(const std::string& inputQuery);
 
   private:
     QueryParsingServicePtr queryParsingService;

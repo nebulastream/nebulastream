@@ -91,7 +91,7 @@ class ExecutableSliceAggregationTriggerAction
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
-            if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+            if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                 // get buffer as string
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
@@ -164,7 +164,7 @@ class ExecutableSliceAggregationTriggerAction
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
                     && sliceId + 1 < slices.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
-                    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                    if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                         // get buffer as string
                         auto rowLayout =
                             Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());

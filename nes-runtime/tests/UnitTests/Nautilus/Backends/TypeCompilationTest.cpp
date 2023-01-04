@@ -18,6 +18,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,22 +29,16 @@
 
 namespace NES::Nautilus {
 
-class TypeCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TypeCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TypeCompilationTest test class." << std::endl;
+        NES_INFO("Setup TypeCompilationTest test class.");
     }
 
-    /* Will be called before a testValue is executed. */
-    void SetUp() override { std::cout << "Setup TypeCompilationTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TypeCompilationTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TypeCompilationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down TypeCompilationTest test class."); }
 };
 
 Value<> negativeIntegerTest() {
@@ -53,7 +49,7 @@ Value<> negativeIntegerTest() {
 }
 
 TEST_P(TypeCompilationTest, negativeIntegerTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return negativeIntegerTest();
     });
     auto engine = prepare(executionTrace);
@@ -72,7 +68,7 @@ Value<> unsignedIntegerTest() {
 
 // We should be able to create Values with unsigned ints, but currently we cannot.
 TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return unsignedIntegerTest();
     });
     auto engine = prepare(executionTrace);
@@ -92,7 +88,7 @@ Value<> boolCompareTest() {
 
 // Should return 1, but returns 41 (Value(true) in interpreted as 0).
 TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return boolCompareTest();
     });
     auto engine = prepare(executionTrace);
@@ -108,7 +104,7 @@ Value<> floatTest() {
 
 // Above approach, to return a float Value, does not work.
 TEST_P(TypeCompilationTest, DISABLED_floatTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return floatTest();
     });
     auto engine = prepare(executionTrace);
@@ -124,7 +120,7 @@ Value<> mixBoolAndIntTest() {
 
 // Should return 5, but returns 4. Could extend to check for bool-int edge cases
 TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return mixBoolAndIntTest();
     });
     auto engine = prepare(executionTrace);
@@ -187,7 +183,7 @@ Value<> customValueType() {
 }
 
 TEST_P(TypeCompilationTest, customValueTypeTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return customValueType();
     });
     auto engine = prepare(executionTrace);
@@ -207,7 +203,7 @@ TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
     Value<List> valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
     listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
         Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(valueList.value->rawReference.value->ref);
         return listLengthTest(valueList);
     });
@@ -241,8 +237,8 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
 
     listRef.value->ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&]() {
-        Nautilus::Tracing::getThreadLocalTraceContext()->addTraceArgument(listRef.value->ref);
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
+        Nautilus::Tracing::TraceContext::get()->addTraceArgument(listRef.value->ref);
         return textTestFunction(textA);
     });
 

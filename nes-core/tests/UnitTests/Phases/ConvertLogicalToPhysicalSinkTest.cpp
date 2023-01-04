@@ -18,6 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -30,19 +31,20 @@
 #include <Util/TestUtils.hpp>
 
 namespace NES {
-class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ConvertLogicalToPhysicalSinkTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
-
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
         auto workerConfiguration = WorkerConfiguration::create();
+        port = getAvailablePort();
+        workerConfiguration->dataPort = *port;
         workerConfiguration->physicalSources.add(physicalSource);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
@@ -55,8 +57,11 @@ class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<t
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         nodeEngine.reset();
+        port.reset();
+        Testing::NESBaseTest::TearDown();
     }
 
+    Testing::BorrowedPortPtr port{nullptr};
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     QueryCompilation::PipelineQueryPlanPtr testPlan;
 };
@@ -80,18 +85,16 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
         ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
 }
-#ifdef ENABLE_KAFKA_BUILD_SINK
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
-
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("test", "localhost:9092", 1000);
+    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create("TEXT_FORMAT", "test", "localhost:9092", 1000);
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
-    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(testSink);
-    EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
+    DataSinkPtr kafkaSink =
+        ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 1);
+    EXPECT_EQ(kafkaSink->toString(), "KAFKA_SINK(BROKER(localhost:9092), TOPIC(test).");
 }
-#endif
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();

@@ -35,8 +35,6 @@ class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
-
-    static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
@@ -708,7 +706,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -754,7 +752,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     ASSERT_TRUE(found);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunning) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(

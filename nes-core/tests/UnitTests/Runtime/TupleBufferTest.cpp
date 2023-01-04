@@ -39,13 +39,16 @@ class TupleBufferTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024); }
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1024);
+    }
 
     /* Will be called after a test is executed. */
-    void TearDown() override { bufferManager->destroy(); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase TupleBufferTest test case."); }
+    void TearDown() override {
+        bufferManager->destroy();
+        Testing::NESBaseTest::TearDown();
+    }
 };
 
 TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
@@ -64,8 +67,8 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto* my_array = buf.getBuffer<MyTuple>();
     for (unsigned int i = 0; i < 5; ++i) {
         my_array[i] = MyTuple{i, float(0.5F * i), double(i * 0.2), i * 2, "1234"};
-        std::cout << my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
-                  << std::string(my_array[i].s, 5) << std::endl;
+        NES_DEBUG(my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
+                                  << std::string(my_array[i].s, 5));
     }
     buf.setNumberOfTuples(5);
 
@@ -91,7 +94,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buf);
 
     std::string result = dynamicTupleBuffer.toString(s);
-    std::cout << "RES=" << result << std::endl;
+    NES_DEBUG("RES=" << result);
     NES_DEBUG("Reference size=" << reference.size() << " content=\n" << reference);
     NES_DEBUG("Result size=" << result.size() << " content=\n" << result);
     NES_DEBUG("----");

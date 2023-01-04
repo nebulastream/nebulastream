@@ -64,8 +64,6 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 
-using std::cout;
-using std::endl;
 namespace NES {
 using namespace QueryCompilation;
 

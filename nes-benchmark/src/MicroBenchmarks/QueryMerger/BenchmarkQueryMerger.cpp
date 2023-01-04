@@ -212,10 +212,10 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 void compileQuery(const std::string& stringQuery,
                   uint64_t id,
                   const std::shared_ptr<QueryParsingService>& queryParsingService,
-                  std::promise<QueryPtr> promise) {
-    auto query = queryParsingService->createQueryFromCodeString(stringQuery);
-    query->getQueryPlan()->setQueryId(id);
-    promise.set_value(query);
+                  std::promise<QueryPlanPtr> promise) {
+    auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
+    queryplan->setQueryId(id);
+    promise.set_value(queryplan);
 }
 
 /**
@@ -266,7 +266,7 @@ int main(int argc, const char* argv[]) {
 
         //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
         const uint32_t numOfQueries = queries.size();
-        std::vector<QueryPtr> queryObjects;
+        std::vector<QueryPlanPtr> queryObjects;
 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -283,7 +283,7 @@ int main(int argc, const char* argv[]) {
         uint64_t queryNum = 0;
         //Work till all queries are not parsed
         while (queryNum < numOfQueries) {
-            std::vector<std::future<QueryPtr>> futures;
+            std::vector<std::future<QueryPlanPtr>> futures;
             std::vector<std::thread> threadPool(numThreads);
             uint64_t threadNum;
             //Schedule queries to be parsed with #numThreads parallelism
@@ -293,7 +293,7 @@ int main(int argc, const char* argv[]) {
                     break;
                 }
                 //Schedule thread for execution and pass a promise
-                std::promise<QueryPtr> promise;
+                std::promise<QueryPlanPtr> promise;
                 //Store the future, schedule the thread, and increment the query count
                 futures.emplace_back(promise.get_future());
                 threadPool.emplace_back(
@@ -311,7 +311,7 @@ int main(int argc, const char* argv[]) {
             //Fetch the parsed query from all threads
             for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
                 auto query = futures[futureNum].get();
-                auto queryID = query->getQueryPlan()->getQueryId();
+                auto queryID = query->getQueryId();
                 queryObjects[queryID - 1] = query;//Add the parsed query to the (queryID - 1)th index
             }
         }
@@ -321,7 +321,7 @@ int main(int argc, const char* argv[]) {
         //Compute total number of operators in the query set
         uint64_t totalOperators = 0;
         for (auto queryObject : queryObjects) {
-            totalOperators = totalOperators + QueryPlanIterator(queryObject->getQueryPlan()).snapshot().size();
+            totalOperators = totalOperators + QueryPlanIterator(queryObject).snapshot().size();
         }
 
         // For the input query set run the experiments with different type of query merger rule
@@ -342,7 +342,7 @@ int main(int argc, const char* argv[]) {
                         .count();
                 //Send queries to nebula stream for processing
                 for (uint64_t i = 1; i <= numOfQueries; i++) {
-                    const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
+                    const QueryPlanPtr queryPlan = queryObjects[i - 1];
                     queryPlan->setQueryId(i);
                     queryService->addQueryRequest(queries[i - 1], queryPlan, "TopDown");
                 }

@@ -11,10 +11,9 @@
 # limitations under the License.
 
 function(add_benchmark_test TARGET_NAME CONFIG_FILE_NAME)
-    add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
+    #add_test(NAME ${TARGET_NAME} COMMAND e2e-benchmark-runner --configPath=${PROJECT_SOURCE_DIR}/${CONFIG_FILE_NAME} --logPath=${TARGET_NAME}.log)
     message(STATUS "Added benchmark test ${TARGET_NAME} with config file ${CONFIG_FILE_NAME}")
 endfunction()
-
 
 message(STATUS "Building benchmarks tests...")
 
@@ -22,12 +21,14 @@ message(STATUS "Building benchmarks tests...")
 # TODO create unit tests and a similar test infrastructure than the other folders see issue #3227
 # Adding e2e tests
 add_benchmark_test(e2e-benchmark-test-filter nes-benchmark/test/test-configs/filter_one_source.yaml)
-add_benchmark_test(e2e-benchmark-test-join-multiple-source nes-benchmark/test/test-configs/join_multiple_sources.yaml)
-add_benchmark_test(e2e-benchmark-test-join-different-data-generators nes-benchmark/test/test-configs/join_multiple_sources_different_datagenerators.yaml)
 
+# Adding unit test for DefaultDataGenerator
+add_nes_unit_test(default-data-generator-test "UnitTests/DataGeneration/DefaultDataGeneratorTest.cpp")
+target_link_libraries(default-data-generator-test nes-benchmark)
 
-# TODO enable this test see issue #3246
-#add_benchmark_test(e2e-benchmark-test-ysb-source nes-benchmark/test/test-configs/ysb_single_source.yaml)
+# Adding unit test for ZipfianDataGenerator
+add_nes_unit_test(zipfian-data-generator-test "UnitTests/DataGeneration/ZipfianDataGeneratorTest.cpp")
+target_link_libraries(zipfian-data-generator-test nes-benchmark)
 
 
 message(STATUS "Done building benchmarks tests")

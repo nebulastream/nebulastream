@@ -193,8 +193,8 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     //cout << "load=" << schemaFile << endl;
     ifstream testFileSchema(schemaFile.c_str());
     EXPECT_TRUE(testFileSchema.good());
-    auto* serializedSchema = new SerializableSchema();
-    serializedSchema->ParsePartialFromIstream(&testFileSchema);
+    auto serializedSchema = SerializableSchema();
+    serializedSchema.ParsePartialFromIstream(&testFileSchema);
     SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
     //test SCHEMA
     //cout << "deserialized schema=" << ptr->toString() << endl;
@@ -365,7 +365,6 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                       0,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
-    ////std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
     bool receiving_finished = false;
@@ -477,8 +476,8 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         zmq_source->open();
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
-        auto* serializedSchema = new SerializableSchema();
-        serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
+        auto serializedSchema = SerializableSchema();
+        serializedSchema.ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
         SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
         EXPECT_EQ(ptr->toString(), test_schema->toString());
 

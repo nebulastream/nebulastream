@@ -39,6 +39,7 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
             listener.lock()->onFatalException(exception, stacktrace);
         }
     }
+    Logger::getInstance().shutdown();
     std::exit(1);
 }
 
@@ -54,6 +55,7 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace) {
             listener.lock()->onFatalError(signal, stacktrace);
         }
     }
+    Logger::getInstance().shutdown();
     std::exit(1);
 }
 

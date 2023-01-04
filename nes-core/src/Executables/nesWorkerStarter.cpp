@@ -23,22 +23,20 @@
 
 using namespace NES;
 using namespace Configurations;
-using std::cout;
-using std::endl;
-using std::string;
 
-const string logo = "\n"
-                    "███╗░░██╗███████╗██████╗░██╗░░░██╗██╗░░░░░░█████╗░░██████╗████████╗██████╗░███████╗░█████╗░███╗░░░███╗\n"
-                    "████╗░██║██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗░████║\n"
-                    "██╔██╗██║█████╗░░██████╦╝██║░░░██║██║░░░░░███████║╚█████╗░░░░██║░░░██████╔╝█████╗░░███████║██╔████╔██║\n"
-                    "██║╚████║██╔══╝░░██╔══██╗██║░░░██║██║░░░░░██╔══██║░╚═══██╗░░░██║░░░██╔══██╗██╔══╝░░██╔══██║██║╚██╔╝██║\n"
-                    "██║░╚███║███████╗██████╦╝╚██████╔╝███████╗██║░░██║██████╔╝░░░██║░░░██║░░██║███████╗██║░░██║██║░╚═╝░██║\n"
-                    "╚═╝░░╚══╝╚══════╝╚═════╝░░╚═════╝░╚══════╝╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝";
-#include <log4cxx/helpers/exception.h>
-const string worker = "\n"
-                      "▒█░░▒█ █▀▀█ █▀▀█ █░█ █▀▀ █▀▀█ \n"
-                      "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
-                      "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
+const std::string logo =
+    "\n"
+    "███╗░░██╗███████╗██████╗░██╗░░░██╗██╗░░░░░░█████╗░░██████╗████████╗██████╗░███████╗░█████╗░███╗░░░███╗\n"
+    "████╗░██║██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗░████║\n"
+    "██╔██╗██║█████╗░░██████╦╝██║░░░██║██║░░░░░███████║╚█████╗░░░░██║░░░██████╔╝█████╗░░███████║██╔████╔██║\n"
+    "██║╚████║██╔══╝░░██╔══██╗██║░░░██║██║░░░░░██╔══██║░╚═══██╗░░░██║░░░██╔══██╗██╔══╝░░██╔══██║██║╚██╔╝██║\n"
+    "██║░╚███║███████╗██████╦╝╚██████╔╝███████╗██║░░██║██████╔╝░░░██║░░░██║░░██║███████╗██║░░██║██║░╚═╝░██║\n"
+    "╚═╝░░╚══╝╚══════╝╚═════╝░░╚═════╝░╚══════╝╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝";
+
+const std::string worker = "\n"
+                           "▒█░░▒█ █▀▀█ █▀▀█ █░█ █▀▀ █▀▀█ \n"
+                           "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
+                           "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
 extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
@@ -49,11 +47,11 @@ int main(int argc, char** argv) {
         NES::Logger::setupLogging("nesWorkerStarter.log", NES::LogLevel::LOG_DEBUG);
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
-        std::map<string, string> commandLineParams;
+        std::map<std::string, std::string> commandLineParams;
         for (int i = 1; i < argc; ++i) {
-            commandLineParams.insert(
-                std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                          string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+            commandLineParams.insert(std::pair<std::string, std::string>(
+                std::string(argv[i]).substr(0, std::string(argv[i]).find('=')),
+                std::string(argv[i]).substr(std::string(argv[i]).find('=') + 1, std::string(argv[i]).length() - 1)));
         }
 
         auto workerConfigPath = commandLineParams.find("--configPath");
@@ -68,7 +66,7 @@ int main(int argc, char** argv) {
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
 
-        NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
+        Logger::getInstance().changeLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));

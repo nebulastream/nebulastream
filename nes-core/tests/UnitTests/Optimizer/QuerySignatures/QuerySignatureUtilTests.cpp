@@ -59,6 +59,7 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -68,12 +69,6 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
             Optimizer::TypeInferencePhaseContext(sourceCatalog, udfCatalog));
         schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup QuerySignatureUtilTests test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QuerySignatureUtilTests test class."); }
 };
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {

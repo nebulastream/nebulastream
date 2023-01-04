@@ -29,22 +29,22 @@
 
 namespace NES::Nautilus {
 
-class FlounderTest : public testing::Test {
+class FlounderTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FlounderTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup FlounderTest test class." << std::endl;
+        NES_INFO("Setup FlounderTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup FlounderTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup FlounderTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down FlounderTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down FlounderTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down FlounderTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down FlounderTest test class."); }
 };
 
 TEST_F(FlounderTest, BFSimpleTest) {
@@ -102,13 +102,13 @@ TEST_F(FlounderTest, flounderGenTest) {
 
     /// Execute with arg0 = 11.
     constexpr std::int64_t argument = 11;
-    std::cout << " == Execute == " << std::endl;
-    std::cout << "return = " << executable.execute<std::uint64_t>(argument) << std::endl;
+    NES_INFO(" == Execute == ");
+    NES_INFO("return = " << executable.execute<std::uint64_t>(argument));
 
     /// Print flounder and assembly code.
-    std::cout << "\n == Flounder Code == \n" << flounder_code << std::endl;
+    NES_INFO("\n == Flounder Code == \n" << flounder_code);
     if (executable.code().has_value()) {
-        std::cout << "\n == Assembly Code == \n" << executable.code().value() << std::endl;
+        NES_INFO("\n == Assembly Code == \n" << executable.code().value());
     }
 }
 
@@ -165,13 +165,13 @@ TEST_F(FlounderTest, flounderGenTestBlocks) {
 
     /// Execute with arg0 = 11.
     constexpr std::int64_t argument = 11;
-    std::cout << " == Execute == " << std::endl;
-    std::cout << "return = " << executable.execute<std::uint64_t>(argument) << std::endl;
+    NES_INFO(" == Execute == ");
+    NES_INFO("return = " << executable.execute<std::uint64_t>(argument));
 
     /// Print flounder and assembly code.
-    std::cout << "\n == Flounder Code == \n" << flounder_code << std::endl;
+    NES_INFO("\n == Flounder Code == \n" << flounder_code);
     if (executable.code().has_value()) {
-        std::cout << "\n == Assembly Code == \n" << executable.code().value() << std::endl;
+        NES_INFO("\n == Assembly Code == \n" << executable.code().value());
     }
 }
 

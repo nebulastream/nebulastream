@@ -11,48 +11,62 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
+#include <cppkafka/cppkafka.h>
 #include <sstream>
 #include <string>
+
 using namespace std::chrono_literals;
 
 namespace NES {
 
-KafkaSink::KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic, const uint64_t kafkaProducerTimeout)
-    : DataSink(schema), SinkMedium(nullptr,
-                                   std::move(nodeEngine),
-                                   numOfProducers,
-                                   queryId,
-                                   querySubPlanId,
-                                   faultToleranceType,
-                                   numberOfOrigins,
-                                   std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {}
+KafkaSink::KafkaSink(SinkFormatPtr format,
+                     Runtime::NodeEnginePtr nodeEngine,
+                     uint32_t numOfProducers,
+                     const std::string& brokers,
+                     const std::string& topic,
+                     QueryId queryId,
+                     QuerySubPlanId querySubPlanId,
+                     const uint64_t kafkaProducerTimeout,
+                     FaultToleranceType::Value faultToleranceType,
+                     uint64_t numberOfOrigins)
+    : SinkMedium(format,
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+      brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 
-brokers(brokers), topic(topic), kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
+    config = std::make_unique<cppkafka::Configuration>();
+    config->set("metadata.broker.list", brokers.c_str());
 
-    config = {{"metadata.broker.list", brokers.c_str()}};
-
-    _connect();
-    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic << ", partition "
-                            << partition);
+    connect();
+    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic);
 }
 
 KafkaSink::~KafkaSink() {}
 
-bool KafkaSink::writeData(Runtime::TupleBuffer& input_buffer) {
-    NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
+bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    NES_TRACE("KAFKASINK " << this << ": writes buffer " << inputBuffer);
     try {
-        cppkafka::Buffer buffer(input_buffer.getBuffer(), input_buffer.getBufferSize());
-        msgBuilder->payload(buffer);
+        std::stringstream outputStream;
+        NES_TRACE("KafkaSink::getData: write data");
+        auto dataBuffers = sinkFormat->getData(inputBuffer);
+        for (auto buffer : dataBuffers) {
+            NES_TRACE("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
+            cppkafka::Buffer kafkaBuffer(buffer.getBuffer(), buffer.getBufferSize());
+            msgBuilder->payload(kafkaBuffer);
+            producer->produce(*msgBuilder);
+        }
+        producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
 
-        NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload());
-        producer->produce(*msgBuilder);
-        producer->flush(kafkaProducerTimeout);
         NES_DEBUG("KAFKASINK " << this << ": send successfully");
     } catch (const cppkafka::HandleException& ex) {
         throw;
@@ -68,8 +82,7 @@ std::string KafkaSink::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SINK(";
     ss << "BROKER(" << brokers << "), ";
-    ss << "TOPIC(" << topic << "), ";
-    ss << "PARTITION(" << partition << ").";
+    ss << "TOPIC(" << topic << ").";
     return ss.str();
 }
 
@@ -81,10 +94,9 @@ void KafkaSink::shutdown() {
     // currently not required
 }
 
-void KafkaSink::_connect() {
-
+void KafkaSink::connect() {
     NES_DEBUG("KAFKASINK connecting...");
-    producer = std::make_unique<cppkafka::Producer>(config);
+    producer = std::make_unique<cppkafka::Producer>(*config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
     // FIXME: should we provide user to access partition ?
     // if (partition != INVALID_PARTITION_NUMBER) {
@@ -94,7 +106,7 @@ void KafkaSink::_connect() {
 
 std::string KafkaSink::getBrokers() const { return brokers; }
 std::string KafkaSink::getTopic() const { return topic; }
-const uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
+uint64_t KafkaSink::getKafkaProducerTimeout() const { return kafkaProducerTimeout.count(); }
 SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 
 }// namespace NES

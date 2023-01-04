@@ -27,6 +27,7 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+
 namespace NES::Runtime {
 
 BufferManager::BufferManager(uint32_t bufferSize,
@@ -38,7 +39,8 @@ BufferManager::BufferManager(uint32_t bufferSize,
       availableBuffers(numOfBuffers), numOfAvailableBuffers(numOfBuffers),
 #endif
       bufferSize(bufferSize), numOfBuffers(numOfBuffers), memoryResource(memoryResource) {
-    initialize(withAlignment);
+    ((void) withAlignment);
+    initialize(DEFAULT_ALIGNMENT);
 }
 
 void BufferManager::destroy() {
@@ -94,14 +96,6 @@ void BufferManager::destroy() {
 
 BufferManager::~BufferManager() { destroy(); }
 
-uint32_t BufferManager::alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
-    if (bufferSize % withAlignment) {
-        // make sure that each buffer is a multiple of the alignment
-        return bufferSize + (withAlignment - bufferSize % withAlignment);
-    }
-    return bufferSize;
-}
-
 void BufferManager::initialize(uint32_t withAlignment) {
     std::unique_lock lock(availableBuffersMutex);
 
@@ -124,20 +118,38 @@ void BufferManager::initialize(uint32_t withAlignment) {
         NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is invalid");
     }
 
+    NES_ASSERT2_FMT(alignof(detail::BufferControlBlock) <= withAlignment,
+                    "Requested alignment is too small, must be at least " << alignof(detail::BufferControlBlock));
+
     allBuffers.reserve(numOfBuffers);
-    allocatedAreaSize = bufferSize + sizeof(detail::BufferControlBlock);
-    allocatedAreaSize = alignBufferSize(allocatedAreaSize, withAlignment);
+    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), withAlignment);
+    auto alignedBufferSize = alignBufferSize(bufferSize, withAlignment);
+    allocatedAreaSize = alignBufferSize(controlBlockSize + alignedBufferSize, withAlignment);
     size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
+    NES_TRACE2("Allocated {} bytes with alignment {} buffer size {} num buffer {} controlBlockSize {} {}",
+               allocatedAreaSize,
+               withAlignment,
+               alignedBufferSize,
+               numOfBuffers,
+               controlBlockSize,
+               alignof(detail::BufferControlBlock));
     if (basePointer == nullptr) {
         NES_THROW_RUNTIME_ERROR("memory allocation failed");
     }
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-            recycler->recyclePooledBuffer(segment);
-        });
+        uint8_t* controlBlock = ptr;
+        uint8_t* payload = ptr + controlBlockSize;
+        allBuffers.emplace_back(
+            payload,
+            bufferSize,
+            this,
+            [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+                recycler->recyclePooledBuffer(segment);
+            },
+            controlBlock);
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         availableBuffers.emplace_back(&allBuffers.back());
 #else
@@ -164,7 +176,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
     numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
@@ -185,7 +197,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
@@ -210,7 +222,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
@@ -227,7 +239,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
                     auto* memSegment = (*it).segment.get();
                     it->free = false;
                     if (memSegment->controlBlock->prepare()) {
-                        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+                        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
                     }
                     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
                 }
@@ -239,20 +251,29 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     // we could not find a buffer, allocate it
     // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize + sizeof(detail::BufferControlBlock)));
+    auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
+    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
+    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(ptr,
-                                                              alignedBufferSize,
-                                                              this,
-                                                              [](detail::MemorySegment* segment, BufferRecycler* recycler) {
-                                                                  recycler->recycleUnpooledBuffer(segment);
-                                                              });
+    NES_TRACE2("Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
+               reinterpret_cast<uintptr_t>(ptr),
+               alignedBufferSize,
+               alignedBufferSizePlusControlBlock,
+               controlBlockSize);
+    auto memSegment = std::make_unique<detail::MemorySegment>(
+        ptr + controlBlockSize,
+        alignedBufferSize,
+        this,
+        [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+            recycler->recycleUnpooledBuffer(segment);
+        },
+        ptr);
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
-        return TupleBuffer(leakedMemSegment->controlBlock, leakedMemSegment->ptr, leakedMemSegment->size);
+        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
@@ -343,7 +364,7 @@ void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_DEBUG("availableBuffers.size()=" << availableBuffers.size() << " requested buffers=" << numberOfReservedBuffers);
+    NES_DEBUG2("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
     NES_ASSERT2_FMT((size_t) availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER

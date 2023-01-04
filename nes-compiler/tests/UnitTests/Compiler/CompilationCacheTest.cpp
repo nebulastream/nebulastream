@@ -32,24 +32,18 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling<testing::Test
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CompilationCacheTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup CompilationCacheTest test class." << std::endl;
+        NES_DEBUG("Setup CompilationCacheTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        std::cout << "Setup CompilationCacheTest test case." << std::endl;
+        NES_DEBUG("Setup CompilationCacheTest test case.");
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();
         compilerBuilder.registerLanguageCompiler(cppCompiler);
         compiler = compilerBuilder.build();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down JITCompilerTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down JITCompilerTest test class." << std::endl; }
 
     std::shared_ptr<JITCompiler> compiler;
 };

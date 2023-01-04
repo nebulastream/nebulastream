@@ -75,8 +75,6 @@ class NetworkStackTest : public Testing::NESBaseTest {
         NES_INFO("SetUpTestCase NetworkStackTest");
     }
 
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackTest."); }
-
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
@@ -487,7 +485,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = totalNumBuffer * bufferSize;
             double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            std::cout << "Sent " << bytes << " bytes :: throughput " << throughput << std::endl;
+            NES_DEBUG("Sent " << bytes << " bytes :: throughput " << throughput);
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 

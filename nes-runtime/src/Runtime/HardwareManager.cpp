@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/HardwareManager.hpp>
+#include <algorithm>
 #include <map>
 #include <string>
 

@@ -33,26 +33,27 @@ class TensorflowAdapter {
 
     /**
      * @brief runs the tensorflow model of a single tuple
-     * @param n
-     * @param ...
+     * @param dataType enum of type BasicPhysicalType::NativeType; only available options currently are: INT_64, DOUBLE, and BOOLEAN
+     * @param n size of the first dimensional input tensor (vector)
+     * @param ... values for the first dimensional input tensor (vector)
      */
-    void infer(int n, ...);
+    void infer(uint8_t dataType, int n, ...);
 
     /**
      * @brief accesses the ith field of the output
      * @param i
      * @return
      */
-    float getResultAt(int i);
+    double getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
 
   private:
     TfLiteInterpreter* interpreter;
-    float* output{};
+    double* output{};
 #endif// TFDEF
 };
 
 }// namespace NES
 
-#endif// NES_CORE_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_TENSORFLOWADAPTER_HPP_
+#endif//NES_TENSORFLOWADAPTER_HPP

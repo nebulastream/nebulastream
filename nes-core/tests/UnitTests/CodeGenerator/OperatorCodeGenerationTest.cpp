@@ -108,7 +108,7 @@ class OperatorCodeGenerationTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test class."); }
 
   protected:
     Testing::BorrowedPortPtr dataPort;
@@ -795,14 +795,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     for (auto& [key, val] : stateVar->rangeAll()) {
         NES_DEBUG("Key: " << key << " Value: " << val);
         for (auto& slice : val->getSliceMetadata()) {
-            std::cout << "start=" << slice.getStartTs() << " end=" << slice.getEndTs() << std::endl;
+            NES_DEBUG("start=" << slice.getStartTs() << " end=" << slice.getEndTs());
             results.push_back(slice.getStartTs());
             results.push_back(slice.getEndTs());
         }
         for (auto& agg : val->getPartialAggregates()) {
-            std::cout << "key=" << key << std::endl;
+            NES_DEBUG("key=" << key);
             results.push_back(key);
-            std::cout << "value=" << agg << std::endl;
+            NES_DEBUG("value=" << agg);
             results.push_back(agg);
         }
     }
@@ -961,18 +961,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
                             ->addField("valueChar", DataTypeFactory::createChar())
                             ->addField("text", DataTypeFactory::createFixedChar(12));
 
-    auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat"));
-    auto input0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
-    auto input1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
-    auto input2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
+    auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat", NES::BasicType::FLOAT32));
+    auto prediction0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
+    auto prediction1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
+    auto predection2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
     auto op = LogicalOperatorFactory::createInferModelOperator(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                                                {valF, valF, valF, valF},
-                                                               {input0, input1, input2});
+                                                               {prediction0, prediction1, predection2});
     auto imop = op->as<InferModel::InferModelLogicalOperatorNode>();
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
     codeGenerator->generateInferModelSetup(context, inferModelOperatorHandler);
-    codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
+    codeGenerator->generateCodeForInferModel(context, imop->getInputFields(), imop->getOutputFields());
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, QueryCompilation::FIELD_COPY, context);

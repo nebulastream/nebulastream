@@ -2266,12 +2266,12 @@ NesCEPParser::BinaryComparasionPredicateContext::BinaryComparasionPredicateConte
 void NesCEPParser::BinaryComparasionPredicateContext::enterRule(tree::ParseTreeListener* listener) {
     auto parserListener = dynamic_cast<NesCEPListener*>(listener);
     if (parserListener != nullptr)
-        parserListener->enterBinaryComparasionPredicate(this);
+        parserListener->enterBinaryComparisonPredicate(this);
 }
 void NesCEPParser::BinaryComparasionPredicateContext::exitRule(tree::ParseTreeListener* listener) {
     auto parserListener = dynamic_cast<NesCEPListener*>(listener);
     if (parserListener != nullptr)
-        parserListener->exitBinaryComparasionPredicate(this);
+        parserListener->exitBinaryComparisonPredicate(this);
 }
 //----------------- IsNullPredicateContext ------------------------------------------------------------------
 

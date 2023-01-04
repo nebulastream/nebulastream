@@ -14,6 +14,7 @@
 
 #ifndef NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 #define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+
 #ifdef ENABLE_KAFKA_BUILD
 #include <cstdint>
 #include <memory>
@@ -21,6 +22,7 @@
 namespace cppkafka {
 class Configuration;
 class Consumer;
+class Message;
 }// namespace cppkafka
 
 namespace NES {
@@ -40,6 +42,7 @@ class KafkaSource : public DataSource {
                 OriginId originId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
+                uint64_t batchSize,
                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**
@@ -76,6 +79,11 @@ class KafkaSource : public DataSource {
     std::string getGroupId() const;
 
     /**
+     * @brief Get kafka batch size
+     */
+    uint64_t getBatchSize() const;
+
+    /**
      * @brief If kafka offset is to be committed automatically
      */
     bool isAutoCommit() const;
@@ -102,9 +110,16 @@ class KafkaSource : public DataSource {
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
+    uint64_t bufferProducedCnt = 0;
+    uint64_t batchSize = 1;
+    uint64_t numberOfTuplesPerBuffer = 1;
+    std::vector<cppkafka::Message> messages;
+    uint64_t successFullPollCnt = 0;
+    uint64_t failedFullPollCnt = 0;
+    uint64_t reuseCnt = 0;
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
 }// namespace NES
-#endif
 #endif// NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+#endif

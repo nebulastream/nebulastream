@@ -161,6 +161,7 @@ class TestExecutionEngine {
     }
 
     auto createDateSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
+
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
             inputSchema,
@@ -211,6 +212,8 @@ class TestExecutionEngine {
         return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     }
     bool stop() { return nodeEngine->stop(); }
+
+    Runtime::BufferManagerPtr getBufferManager() const { return nodeEngine->getBufferManager(); }
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

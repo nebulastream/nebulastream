@@ -26,16 +26,9 @@
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/LogExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
@@ -52,7 +45,6 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
@@ -61,17 +53,14 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -79,14 +68,13 @@
 #include <API/Windowing.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
@@ -101,19 +89,10 @@ class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Tes
 
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_INFO("Setup SerializationUtilTest test class."); }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SerializationUtilTest test case.");
+        NES_INFO("Setup SerializationUtilTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup SerializationUtilTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SerializationUtilTest test class."); }
 };
 
 TEST_F(SerializationUtilTest, dataTypeSerialization) {
@@ -188,7 +167,7 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     /*
    std::string json_string;
    google::protobuf::util::MessageToJsonString(type, &json_string);
-   std::cout << json_string << std::endl;
+   NES_DEBUG(json_string);
    */
 }
 
@@ -200,7 +179,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
-    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
+    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(*serializedSchema);
     EXPECT_TRUE(deserializedSchema->equals(schema));
 }
 
@@ -213,7 +192,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
     schema->setLayoutType(NES::Schema::COLUMNAR_LAYOUT);
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
-    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
+    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(*serializedSchema);
     EXPECT_TRUE(deserializedSchema->equals(schema));
     EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::COLUMNAR_LAYOUT);
 }
@@ -265,7 +244,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto options = google::protobuf::util::JsonOptions();
         options.add_whitespace = true;
         google::protobuf::util::MessageToJsonString(*serializedSourceDescriptor, &json_string, options);
-        std::cout << json_string << std::endl;
+        NES_DEBUG(json_string);
     }
 
     {
@@ -523,6 +502,14 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 }
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
+
+    {
+        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
+        auto javaUdfMap = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfMap);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
+    }
 
     {
         auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");

@@ -17,6 +17,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -24,22 +25,16 @@
 
 namespace NES::Nautilus {
 
-class CustomDataTypeTest : public testing::Test {
+class CustomDataTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CustomDataTypeTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup CustomDataTypeTest test class." << std::endl;
+        NES_INFO("Setup CustomDataTypeTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup CustomDataTypeTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down CustomDataTypeTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down CustomDataTypeTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down CustomDataTypeTest test class."); }
 };
 
 class CustomType : public Any {

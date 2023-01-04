@@ -15,7 +15,6 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <log4cxx/appender.h>
 
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
@@ -30,7 +29,7 @@ class StateTest : public Testing::TestWithErrorHandling<testing::Test> {
 
         NES_INFO("Setup StateTest test class.");
     }
-    static void TearDownTestCase() { std::cout << "Tear down StateTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down StateTest test class."); }
 };
 
 TEST_F(StateTest, testAddClear) {

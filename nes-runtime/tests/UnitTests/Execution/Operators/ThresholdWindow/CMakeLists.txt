@@ -11,6 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-threshold-window-operator-test "ThresholdWindowOperatorTest.cpp")
-target_link_libraries(runtime-threshold-window-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-threshold-window-operator-test COMMAND runtime-selection-operator-test)
+add_nes_runtime_test(runtime-threshold-window-operator-test "ThresholdWindowOperatorTest.cpp")

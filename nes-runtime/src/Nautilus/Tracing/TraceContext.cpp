@@ -11,65 +11,125 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Experimental/Interpreter/Util/Casting.hpp>
-#include <Nautilus/Interface/DataTypes/Boolean.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Util/magicenum/magic_enum.hpp>
-#include <execinfo.h>
-#include <iostream>
-#include <map>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Nautilus::Tracing {
 
-static TraceContext* threadLocalTraceContext;
-void initThreadLocalTraceContext() { threadLocalTraceContext = new TraceContext(); }
-void disableThreadLocalTraceContext() {}
-TraceContext* getThreadLocalTraceContext() { return threadLocalTraceContext; }
+/**
+ * Create thread_local variable to store the trace context.
+ * The trace context can always be thread local, as tracable code can never span multiple threads.
+ */
+static thread_local TraceContext* traceContext;
+TraceContext* TraceContext::get() { return traceContext; }
 
-TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
-    reset();
-    startAddress = Tag::createCurrentAddress();
-    std::cout << startAddress << std::endl;
+TraceContext* TraceContext::initialize(TagRecorder& tagRecorder) {
+    traceContext = new TraceContext(tagRecorder);
+    return traceContext;
 }
 
-void TraceContext::reset() {
+void TraceContext::terminate() {
+    delete traceContext;
+    traceContext = nullptr;
+}
 
+TraceContext::TraceContext(TagRecorder& tagRecorder)
+    : tagRecorder(tagRecorder), executionTrace(std::make_unique<ExecutionTrace>()), symbolicExecutionContext() {}
+
+void TraceContext::initializeTraceIteration() {
     executionTrace->setCurrentBlock(0);
     currentOperationCounter = 0;
-    executionTrace->tagMap.merge(executionTrace->localTagMap);
-    executionTrace->localTagMap.clear();
-};
-
-ValueRef TraceContext::createNextRef(NES::Nautilus::IR::Types::StampPtr type) {
-    return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type);
+    tagMap.merge(localTagMap);
+    localTagMap.clear();
+    symbolicExecutionContext.next();
 }
 
-std::shared_ptr<ExecutionTrace> TraceContext::getExecutionTrace() { return executionTrace; }
-
-TraceOperation& TraceContext::getLastOperation() {
-    auto& currentBlock = executionTrace->getCurrentBlock();
-    return currentBlock.operations[currentOperationCounter];
+void TraceContext::traceBinaryOperation(const OpCode& op,
+                                        const ValueRef& leftRef,
+                                        const ValueRef& rightRef,
+                                        const ValueRef& resultRef) {
+    trace(op, [&]() {
+        return Nautilus::Tracing::TraceOperation(op, resultRef, {leftRef, rightRef});
+    });
 }
 
-bool TraceContext::isExpectedOperation(OpCode opCode) {
-    auto& currentBlock = executionTrace->getCurrentBlock();
-    if (currentBlock.operations.size() <= currentOperationCounter) {
-        return false;
+void TraceContext::traceUnaryOperation(const OpCode& op, const ValueRef& input, const ValueRef& result) {
+    trace(op, [&]() {
+        return Nautilus::Tracing::TraceOperation(op, result, {input});
+    });
+}
+
+void TraceContext::traceReturnOperation(const ValueRef& resultRef) {
+    trace(RETURN, [&]() {
+        TraceOperation result = TraceOperation(RETURN);
+        if (!resultRef.type->isVoid()) {
+            result.input.emplace_back(resultRef);
+        }
+        result.result = resultRef;
+        return result;
+    });
+}
+
+void TraceContext::traceConstOperation(const ValueRef& constRef, const AnyPtr& constantValue) {
+    trace(CONST, [&]() {
+        return Nautilus::Tracing::TraceOperation(CONST, constRef, {constantValue});
+    });
+}
+
+void TraceContext::traceFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
+    trace(CALL, [&]() {
+        return Nautilus::Tracing::TraceOperation(CALL, arguments);
+    });
+}
+
+void TraceContext::traceFunctionCall(const ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
+    trace(CALL, [&]() {
+        return Nautilus::Tracing::TraceOperation(CALL, resultRef, arguments);
+    });
+}
+
+void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef) {
+    trace(STORE, [&]() {
+        return Nautilus::Tracing::TraceOperation(STORE, {memref, valueRef});
+    });
+}
+
+void TraceContext::traceAssignmentOperation(const ValueRef& targetRef, const ValueRef& sourceRef) {
+    // check if we repeat a known trace or if this is a new operation.
+    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+    if (!isExpectedOperation(ASSIGN)) {
+        auto tag = tagRecorder.createTag();
+        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::ASSIGN, targetRef, {sourceRef});
+        executionTrace->addOperation(operation);
+        localTagMap.emplace(tag, operation.operationRef);
     }
-    auto currentOperation = &currentBlock.operations[currentOperationCounter];
-    // the next operation is a jump we transfer to that block.
-    while (currentOperation->op == JMP) {
-        executionTrace->setCurrentBlock(std::get<BlockRef>(currentOperation->input[0]).block);
-        currentOperationCounter = 0;
-        currentOperation = &executionTrace->getCurrentBlock().operations[currentOperationCounter];
-    }
-    return currentOperation->op == opCode;
+    incrementOperationCounter();
 }
 
-void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
+void TraceContext::addTraceArgument(const ValueRef& value) { executionTrace->addArgument(value); }
+
+template<typename Functor>
+void TraceContext::trace(const OpCode& opCode, Functor createOperation) {
+    // check if we repeat a known trace or if this is a new operation.
+    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+    if (!isExpectedOperation(opCode)) {
+        auto tag = tagRecorder.createTag();
+        if (!isKnownOperation(tag)) {
+            auto operation = createOperation();
+            executionTrace->addOperation(operation);
+            localTagMap.emplace(tag, operation.operationRef);
+            incrementOperationCounter();
+        }
+    } else {
+        incrementOperationCounter();
+    }
+}
+
+bool TraceContext::traceCMP(const ValueRef& valueRef) {
     uint32_t trueBlock;
     uint32_t falseBlock;
     if (!isExpectedOperation(CMP)) {
@@ -86,6 +146,8 @@ void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
         falseBlock = std::get<BlockRef>(operation.input[1]).block;
     }
 
+    auto result = symbolicExecutionContext.executeCMP(this->tagRecorder);
+
     // set next block
     if (result) {
         executionTrace->setCurrentBlock(trueBlock);
@@ -93,31 +155,62 @@ void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
         executionTrace->setCurrentBlock(falseBlock);
     }
     currentOperationCounter = 0;
+    return result;
 }
 
-void TraceContext::trace(TraceOperation& operation) {
-    // check if we repeat a known trace or if this is a new operation.
-    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
-    if (!isExpectedOperation(operation.op)) {
-        auto tag = Tag::createTag(startAddress);
-        NES_TRACE(magic_enum::enum_name<OpCode>(operation.op) << " tag: " << tag);
-        if (operation.op != ASSIGN)
-            if (auto ref = executionTrace->findKnownOperation(tag)) {
-                if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
-                    auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
-                    auto mergeOperation = mergeBlock.operations.front();
-                    currentOperationCounter = 1;
-                    return;
-                }
-            }
-        executionTrace->addOperation(operation);
-        executionTrace->localTagMap.emplace(std::make_pair(tag, operation.operationRef));
-    }
-
-    incrementOperationCounter();
+ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr& type) {
+    return {executionTrace->getCurrentBlockIndex(), currentOperationCounter, type};
 }
 
-void TraceContext::addTraceArgument(const ValueRef& value) { executionTrace->addArgument(value); }
 void TraceContext::incrementOperationCounter() { currentOperationCounter++; }
+
+bool TraceContext::isExpectedOperation(const OpCode& opCode) {
+    auto& currentBlock = executionTrace->getCurrentBlock();
+    if (currentBlock.operations.size() <= currentOperationCounter) {
+        return false;
+    }
+    auto currentOperation = &currentBlock.operations[currentOperationCounter];
+    // the next operation is a jump we transfer to that block.
+    while (currentOperation->op == JMP) {
+        executionTrace->setCurrentBlock(std::get<BlockRef>(currentOperation->input[0]).block);
+        currentOperationCounter = 0;
+        currentOperation = &executionTrace->getCurrentBlock().operations[currentOperationCounter];
+    }
+    return currentOperation->op == opCode;
+}
+
+bool TraceContext::isKnownOperation(const Tag* tag) {
+    if (auto ref = checkTag(tag)) {
+        if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
+            auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
+            auto mergeOperation = mergeBlock.operations.front();
+            currentOperationCounter = 1;
+            return true;
+        }
+    }
+    return false;
+}
+
+std::shared_ptr<OperationRef> TraceContext::checkTag(const Tag* tag) {
+    if (tagMap.contains(tag)) {
+        return tagMap.find(tag)->second;
+    } else if (localTagMap.contains(tag)) {
+        return localTagMap.find(tag)->second;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nautilus::Tracing::ValueRef()>& function) {
+    while (symbolicExecutionContext.shouldContinue()) {
+        try {
+            initializeTraceIteration();
+            auto result = function();
+            traceReturnOperation(result);
+        } catch (const TraceTerminationException& ex) {
+        }
+    }
+    NES_DEBUG("Iterations:" << symbolicExecutionContext.getIterations());
+    return executionTrace;
+}
 
 }// namespace NES::Nautilus::Tracing

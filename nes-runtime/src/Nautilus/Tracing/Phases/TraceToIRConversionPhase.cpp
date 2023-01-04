@@ -45,7 +45,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversi
     auto& rootBlock = trace->getBlocks().front();
     auto rootIrBlock = processBlock(0, rootBlock);
 
-    auto& returnOperation = trace->getBlock(trace->returnRef->blockId).operations.back();
+    auto& returnOperation = trace->getBlock(trace->getReturn()->blockId).operations.back();
     auto returnType = std::get<ValueRef>(returnOperation.result).type;
     auto intV = cast<NES::Nautilus::IR::Types::IntegerStamp>(returnType);
     auto functionOperation = std::make_shared<NES::Nautilus::IR::Operations::FunctionOperation>(
@@ -174,7 +174,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
                                                                ValueFrame& frame,
                                                                NES::Nautilus::IR::BasicBlockPtr& block,
                                                                TraceOperation& operation) {
-    std::cout << "current block " << block->getIdentifier() << " " << operation << std::endl;
+    NES_DEBUG("current block " << block->getIdentifier() << " " << operation);
     auto blockRef = get<BlockRef>(operation.input[0]);
     NES::Nautilus::IR::Operations::BasicBlockInvocation blockInvocation;
     createBlockArguments(frame, blockInvocation, blockRef);

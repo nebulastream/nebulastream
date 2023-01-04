@@ -32,7 +32,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
                                       std::string offsetMode,
-                                      uint64_t numbersOfBufferToProduce);
+                                      uint64_t numbersOfBufferToProduce,
+                                      uint64_t batchSize);
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
                                       std::string logicalSourceName,
@@ -41,7 +42,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       bool autoCommit,
                                       uint64_t kafkaConnectTimeout,
                                       std::string offsetMode,
-                                      uint64_t numbersOfBufferToProduce);
+                                      uint64_t numbersOfBufferToProduce,
+                                      uint64_t batchSize);
 
     /**
      * @brief Get the list of kafka brokers
@@ -62,6 +64,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @brief Get the number of buffers to produce
      */
     std::uint64_t getNumberOfToProcessBuffers() const;
+
+    /**
+     * @brief Get the number of batches to pull from kafka in one call
+     */
+    std::uint64_t getBatchSize() const;
 
     /**
      * @brief Get the kafka consumer group id
@@ -92,7 +99,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
                                    std::string offsetMode,
-                                   uint64_t numbersOfBufferToProduce);
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t batchSize);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
                                    std::string logicalSourceName,
                                    std::string brokers,
@@ -101,7 +109,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout,
                                    std::string offsetMode,
-                                   uint64_t numbersOfBufferToProduce);
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t batchSize);
     std::string brokers;
     std::string topic;
     std::string groupId;
@@ -109,6 +118,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     uint64_t kafkaConnectTimeout;
     std::string offsetMode;
     uint64_t numbersOfBufferToProduce;
+    uint64_t batchSize;
 };
 
 using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;

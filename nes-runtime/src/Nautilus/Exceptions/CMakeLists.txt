@@ -12,5 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-       InterpreterException.cpp
+        InterpreterException.cpp
+        TagCreationException.cpp
         )

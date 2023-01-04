@@ -328,7 +328,6 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
             std::string ASSERTedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            //            std::cout << " line=" << line << " ASSERTed=" << ASSERTedString << std::endl;
             ASSERT_EQ(line, ASSERTedString);
         }
         lineCnt++;

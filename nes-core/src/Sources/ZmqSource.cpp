@@ -18,7 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <cstring>
-#include <log4cxx/helpers/exception.h>
+
 #include <sstream>
 #include <string>
 #include <utility>
@@ -152,7 +152,7 @@ bool ZmqSource::disconnect() {
         // that we commented out
         bool success = zmq_ctx_shutdown(static_cast<void*>(context)) == 0;
         if (!success) {
-            throw log4cxx::helpers::Exception("ZmqSource::disconnect() error");
+            throw Exceptions::RuntimeException("ZmqSource::disconnect() error");
         }
         //        context.shutdown();
         connected = false;

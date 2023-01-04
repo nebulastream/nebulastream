@@ -143,7 +143,7 @@ class TrajectoryPredictor {
      * @return a tuple containing the a Location and a time with the location being invalid if no reconnect has been recorded yet
      */
     //todo 2951: change return type to struct
-    std::pair<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
+    Index::Experimental::WaypointPtr getLastReconnectLocationAndTime();
 
   private:
     /**
@@ -177,7 +177,7 @@ class TrajectoryPredictor {
      * @param currentLocation : the device position
      * @return true if the received list of node positions was not empty
      */
-    bool downloadFieldNodes(Index::Experimental::Location currentLocation);
+    bool downloadFieldNodes(Index::Experimental::LocationPtr currentLocation);
 
     /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the
@@ -193,14 +193,14 @@ class TrajectoryPredictor {
      * @param newParentId: The id of the new parent to connect to
      * @param ownLocation: This workers current location
      */
-    void reconnect(uint64_t newParentId, std::pair<Index::Experimental::LocationPtr, Timestamp> ownLocation);
+    void reconnect(uint64_t newParentId, const Index::Experimental::WaypointPtr& ownLocation);
 
     /**
      * @brief: Perform a reconnect to change this workers parent in the topology to the closest node in the local node index and
      * update devicePositionTuplesAtLastReconnect, ParentId and currentParentLocation.
      * @param ownLocation: This workers current location
      */
-    bool reconnectToClosestNode(const std::pair<Index::Experimental::LocationPtr, Timestamp>& ownLocation);
+    bool reconnectToClosestNode(const Index::Experimental::WaypointPtr& ownLocation);
 
     LocationProviderPtr locationProvider;
     ReconnectConfiguratorPtr reconnectConfigurator;
@@ -235,11 +235,11 @@ class TrajectoryPredictor {
     S2PointIndex<uint64_t> fieldNodeIndex;
 #endif
     uint64_t parentId;
-    std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
+    std::deque<Index::Experimental::WaypointPtr> locationBuffer;
     std::shared_ptr<std::vector<std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint>>> reconnectVector;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
-    std::pair<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
+    Index::Experimental::WaypointPtr lastReconnectWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_

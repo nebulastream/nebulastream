@@ -21,7 +21,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 #include <vector>
 
@@ -87,7 +87,7 @@ FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr ass
         return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
     }
     NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
-    throw log4cxx::helpers::IllegalArgumentException("Expression API: we can only assign something to a field access expression");
+    throw Exceptions::RuntimeException("Expression API: we can only assign something to a field access expression");
 }
 
 ExpressionItem Attribute(std::string fieldName) {

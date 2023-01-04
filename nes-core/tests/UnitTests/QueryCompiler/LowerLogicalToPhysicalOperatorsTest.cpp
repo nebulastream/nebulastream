@@ -78,7 +78,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
-
+        Testing::NESBaseTest::SetUp();
         options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -143,8 +143,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
     }
-
-    void TearDown() override { NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test."); }
 
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;

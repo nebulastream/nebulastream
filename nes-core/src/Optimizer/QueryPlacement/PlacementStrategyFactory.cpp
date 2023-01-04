@@ -20,7 +20,6 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <log4cxx/helpers/exception.h>
 
 namespace NES::Optimizer {
 
@@ -49,7 +48,7 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
         //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
         //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default: throw log4cxx::helpers::Exception("Unknown placement strategy type " + std::to_string(placementStrategy));
+        default: throw Exceptions::RuntimeException("Unknown placement strategy type " + std::to_string(placementStrategy));
     }
 }
 }// namespace NES::Optimizer

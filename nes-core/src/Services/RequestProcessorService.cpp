@@ -43,7 +43,7 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <exception>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 #include <z3++.h>
 
@@ -273,7 +273,7 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService: QueryUndeploymentException: " << ex.what());
             } catch (InvalidQueryException& ex) {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
-            } catch (log4cxx::helpers::Exception& ex) {
+            } catch (std::exception& ex) {
                 NES_FATAL_ERROR(
                     "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: "
                     << ex.what());

@@ -143,6 +143,7 @@ message GetLocationRequest {
 
 message GetLocationReply {
   Coordinates coord = 1;
+  uint64 timestamp = 2;
 }
 
 message GetReconnectScheduleRequest {

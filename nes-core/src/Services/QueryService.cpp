@@ -31,7 +31,7 @@
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES {
@@ -61,10 +61,8 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
     try {
         // Checking the syntactic validity and compiling the query string to an object
         NES_INFO("QueryService: check validation of a query.");
-        QueryPtr query = syntacticQueryValidation->validate(queryString);
+        QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
-        //Assign additional configurations
-        QueryPlanPtr queryPlan = query->getQueryPlan();
         queryPlan->setQueryId(queryId);
         queryPlan->setFaultToleranceType(faultTolerance);
         queryPlan->setLineageType(lineage);
@@ -95,7 +93,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 QueryId QueryService::addQueryRequest(const std::string& queryString,
@@ -142,7 +140,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+    throw Exceptions::RuntimeException("QueryService: unable to create query catalog entry");
 }
 
 bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {

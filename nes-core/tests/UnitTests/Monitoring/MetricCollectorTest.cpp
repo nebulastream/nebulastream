@@ -51,20 +51,16 @@ class MetricCollectorTest : public Testing::NESBaseTest {
         NES_INFO("ResourcesReaderTest: Setup MetricCollectorTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "MetricCollectorTest: Tear down MetricCollectorTest class." << std::endl; }
-
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        std::cout << "MetricCollectorTest: Setup MetricCollectorTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
+        NES_DEBUG("MetricCollectorTest: Setup MetricCollectorTest test case.");
 
         auto bufferSize = 4096;
         nodeId = TopologyNodeId(4711);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
         reader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }
-
-    /* Will be called after a test is executed. */
-    void TearDown() override { std::cout << "MetricCollectorTest: Tear down MetricCollectorTest test case." << std::endl; }
 };
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {

@@ -104,10 +104,6 @@ class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling<testing::T
 };
 
 TEST_F(LogicalOperatorNodeTest, getSuccessors) {
-    // std::cout << "filterOp1's use counts: " << filterOp1.use_count() << std::endl;
-    // auto x = filterOp1->getptr();
-    // std::cout << filterOp1.use_count() << std::endl;
-    // std::cout << "x's use counts: " << x.use_count() << std::endl;
 
     sourceOp->addChild(filterOp1);
     sourceOp->addChild(filterOp2);
@@ -309,9 +305,9 @@ TEST_F(LogicalOperatorNodeTest, consistencyBetweenSuccessorPredecesorRelation1) 
     EXPECT_EQ(parents.size(), 1U);
 
     children = filterOp1->getChildren();
-    std::cout << "children of filterOp1" << std::endl;
+    NES_DEBUG("children of filterOp1");
     for (auto&& op : children) {
-        std::cout << op->toString() << std::endl;
+        NES_DEBUG(op->toString());
     }
     std::cout << "================================================================================\n";
     EXPECT_EQ(children.size(), 0U);
@@ -1068,7 +1064,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     // EXPECT_EQ(children.size(), expected.size());
 
     for (uint64_t i = 0; i < children.size(); i++) {
-        std::cout << i << std::endl;
+        NES_DEBUG(i);
         // both reference to the same pointer
         EXPECT_TRUE(children[i]->isIdentical(expected[i]));
         // EXPECT_TRUE(children[i] == (expected[i]));

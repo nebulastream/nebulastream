@@ -13,23 +13,22 @@
 */
 
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <regex>
 
 namespace NES::Nautilus {
 
-void traceFunctionCall(Nautilus::Tracing::ValueRef resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
-    if (ctx != nullptr) {
-        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultRef, arguments);
-        ctx->trace(operation);
+void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
+    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+        //auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultRef, arguments);
+        ctx->traceFunctionCall(resultRef, arguments);
     }
 }
 
 void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    auto ctx = Nautilus::Tracing::getThreadLocalTraceContext();
-    if (ctx != nullptr) {
-        auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
-        ctx->trace(operation);
+    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+        // auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
+        ctx->traceFunctionCall(arguments);
     }
 }
 

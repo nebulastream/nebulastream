@@ -39,7 +39,7 @@ BabelfishPipelineCompilerBackend::compile(std::shared_ptr<Runtime::Execution::Ru
     timer.start();
 
     auto serializedIr = IRSerialization().serialize(ir);
-    std::cout << serializedIr << std::endl;
+    NES_DEBUG(serializedIr);
     graal_isolatethread_t* isolate = NULL;
     NES_ASSERT(graal_create_isolate(NULL, NULL, &isolate) == 0, "Babelfish isolate could not be initialized");
 

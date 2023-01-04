@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Expressions/Functions/MinExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -20,19 +21,16 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class MinExpressionTest : public testing::Test {
+class MinExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MinExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MinExpressionTest test class." << std::endl;
+        NES_INFO("Setup MinExpressionTest test class.");
     }
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down MinExpressionTest test class."); }
 };
 TEST_F(MinExpressionTest, evaluateMinExpressionInteger) {
     auto expression = BinaryExpressionWrapper<MinExpression>();

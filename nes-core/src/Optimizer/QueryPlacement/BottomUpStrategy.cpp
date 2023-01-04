@@ -24,7 +24,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Optimizer {
@@ -62,7 +62,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (log4cxx::helpers::Exception& ex) {
+    } catch (std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
@@ -94,7 +94,7 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
                 NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             identifyPinningLocation(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
@@ -138,7 +138,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                 "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: "
                 << operatorNode->getId());
             topology->print();
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
 
@@ -152,14 +152,14 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
             } else {
                 NES_ERROR("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                           "placed.");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                     "placed.");
             }
 
             if (candidateTopologyNode->getAvailableResources() == 0) {
                 NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
-                throw log4cxx::helpers::Exception(
+                throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
             }
         }
@@ -181,7 +181,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
 
     if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
         NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-        throw log4cxx::helpers::Exception("BottomUpStrategy: No node available for further placement of operators");
+        throw Exceptions::RuntimeException("BottomUpStrategy: No node available for further placement of operators");
     }
 
     operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());

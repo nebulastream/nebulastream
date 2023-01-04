@@ -48,11 +48,11 @@ class SeqOperatorTest : public Testing::NESBaseTest {
     }
 
     string removeRandomKey(string contentString) {
-        std::regex r2("cep_rightkey([0-9]+)");
-        contentString = std::regex_replace(contentString, r2, "cep_rightkey");
+        std::regex r2("cep_rightKey([0-9]+)");
+        contentString = std::regex_replace(contentString, r2, "cep_rightKey");
 
         uint64_t start = contentString.find("|QnV1QnV2$start:UINT64");
-        uint64_t end = contentString.find("QnV2$cep_rightkey:INT32|\n");
+        uint64_t end = contentString.find("QnV2$cep_rightKey:INT32|\n");
         // Repeat till end is reached
         while (start != std::string::npos) {
             // Replace this occurrence of Sub String
@@ -87,9 +87,9 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
         R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("Win2", window2);
 
-    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -176,9 +176,9 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
-    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+    NES_DEBUG("SeqOperatorTest: Coordinator started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 1");
+    NES_DEBUG("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -190,9 +190,9 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleJoinsTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_DEBUG("MultipleJoinsTest: Start worker 2");
+    NES_DEBUG("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
@@ -204,7 +204,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("MultipleJoinsTest: Worker2 started successfully");
+    NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
     std::string outputFilePath = getTestResourceFolder() / "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
@@ -227,8 +227,6 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("SeqOperatorTest: Remove query");
-    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =

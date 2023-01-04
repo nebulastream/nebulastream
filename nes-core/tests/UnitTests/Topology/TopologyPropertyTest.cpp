@@ -24,10 +24,6 @@ class TopologyPropertiesTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down TopologyPropertiesTest Test."); }
-
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("TopologyPropertiesTest.log", NES::LogLevel::LOG_DEBUG);

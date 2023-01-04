@@ -118,8 +118,8 @@ class NesCEPBaseListener : public NesCEPListener {
     virtual void enterInPredicate(NesCEPParser::InPredicateContext* /*ctx*/) override {}
     virtual void exitInPredicate(NesCEPParser::InPredicateContext* /*ctx*/) override {}
 
-    virtual void enterBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
-    virtual void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
+    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
+    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
 
     virtual void enterIsNullPredicate(NesCEPParser::IsNullPredicateContext* /*ctx*/) override {}
     virtual void exitIsNullPredicate(NesCEPParser::IsNullPredicateContext* /*ctx*/) override {}

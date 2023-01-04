@@ -15,29 +15,26 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
 namespace NES::Nautilus {
 
-class MemoryAccessCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class MemoryAccessCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemoryAccessCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MemoryAccessCompilationTest test class." << std::endl;
+        NES_DEBUG("Setup MemoryAccessCompilationTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup MemoryAccessCompilationTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down MemoryAccessCompilationTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down MemoryAccessCompilationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down MemoryAccessCompilationTest test class."); }
 };
 
 Value<> loadFunction(Value<MemRef> ptr) { return ptr.load<Int64>(); }
@@ -47,7 +44,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*) &valI));
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return loadFunction(tempPara);
     });
 
@@ -69,7 +66,7 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
     tempPara.load<Int64>();
     // create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([&tempPara]() {
         storeFunction(tempPara);
     });
     auto engine = prepare(executionTrace);
@@ -93,7 +90,7 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
     memPtr.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto size = Value<Int64>((int64_t) 0);
     size.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&memPtr, &size]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&memPtr, &size]() {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);

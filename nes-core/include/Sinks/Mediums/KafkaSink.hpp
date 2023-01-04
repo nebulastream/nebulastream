@@ -11,29 +11,50 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#define NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
-#ifdef ENABLE_KAFKA_BUILD_SINK
+#ifdef ENABLE_KAFKA_BUILD
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <cppkafka/cppkafka.h>
 
+namespace cppkafka {
+class Configuration;
+class Producer;
+class MessageBuilder;
+}// namespace cppkafka
 namespace NES {
 
 class KafkaSink : public SinkMedium {
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
   public:
-    KafkaSink();
-    KafkaSink(SchemaPtr schema,
+    /**
+    * Constructor for a kafka Sink
+    * @param format format of the sink
+    * @param nodeEngine
+    * @param numOfProducers
+    * @param brokers list of brokers to connect to
+    * @param topic list of topics to push to
+    * @param queryId
+    * @param querySubPlanId
+    * @param kafkaProducerTimeout timeout how long to wait until the push fails
+    * @param faultToleranceType
+    * @param numberOfOrigins
+    */
+    KafkaSink(SinkFormatPtr format,
+              Runtime::NodeEnginePtr nodeEngine,
+              uint32_t numOfProducers,
               const std::string& brokers,
               const std::string& topic,
-              const uint64_t kafkaProducerTimeout = 10 * 1000);
+              QueryId queryId,
+              QuerySubPlanId querySubPlanId,
+              const uint64_t kafkaProducerTimeout = 10 * 1000,
+              FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+              uint64_t numberOfOrigins = 1);
 
     ~KafkaSink() override;
 
@@ -64,20 +85,19 @@ class KafkaSink : public SinkMedium {
     std::string toString() const override;
 
   private:
-    void _connect();
+    void connect();
 
     std::string brokers;
     std::string topic;
-    int partition;
 
-    cppkafka::Configuration config;
-
+    std::unique_ptr<cppkafka::Configuration> config;
     std::unique_ptr<cppkafka::Producer> producer;
     std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
 
     std::chrono::milliseconds kafkaProducerTimeout;
 };
-typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
+using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
+
 }// namespace NES
+#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 #endif
-#endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

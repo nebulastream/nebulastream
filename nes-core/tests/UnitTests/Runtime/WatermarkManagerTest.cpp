@@ -27,19 +27,10 @@ namespace NES {
 class WatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup WatermarkManagerTest test class." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("WatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup WatermarkManagerTest test case." << std::endl;
+        NES_DEBUG("Setup WatermarkManagerTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down WatermarkManagerTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down WatermarkManagerTest test class." << std::endl; }
 };
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterTest) {

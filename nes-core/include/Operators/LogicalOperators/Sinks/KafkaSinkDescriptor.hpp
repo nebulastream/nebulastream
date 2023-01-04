@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
-#define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
-#ifdef ENABLE_KAFKA_BUILD
+#ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <cppkafka/cppkafka.h>
 
 namespace NES {
 
@@ -33,7 +31,7 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      * @param timeout Kafka producer timeout
      * @return descriptor for kafka sink
      */
-    static SinkDescriptorPtr create(std::string topic, std::string brokers, uint64_t timeout);
+    static SinkDescriptorPtr create(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout);
 
     /**
      * @brief Get Kafka topic where data is to be written
@@ -50,8 +48,13 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      */
     uint64_t getTimeout() const;
 
+    std::string toString() override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
+    std::string getSinkFormatAsString();
+
   private:
-    explicit KafkaSinkDescriptor(std::string topic, std::string brokers, uint64_t timeout);
+    explicit KafkaSinkDescriptor(std::string sinkFormat, std::string topic, std::string brokers, uint64_t timeout);
+    std::string sinkFormat;
     std::string topic;
     std::string brokers;
     uint64_t timeout;
@@ -59,5 +62,4 @@ class KafkaSinkDescriptor : public SinkDescriptor {
 
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
 }// namespace NES
-#endif
-#endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_

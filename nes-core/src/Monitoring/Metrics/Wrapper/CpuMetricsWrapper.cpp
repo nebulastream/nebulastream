@@ -37,9 +37,13 @@ CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const { retur
 void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto schema = CpuMetrics::getSchema("");
     auto totalSize = schema->getSchemaSizeInBytes() * size();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    if (schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
+        NES_ERROR("CpuMetricsWrapper: At least one tuple of CpuMetrics has to fit into buffer");
+    } else if (totalSize > buf.getBufferSize()) {
+        NES_WARNING("CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" << totalSize << " > "
+                                                                                        << " getBufferSize:"
+                                                                                        << buf.getBufferSize());
+    }
 
     for (unsigned int i = 0; i < size(); i++) {
         CpuMetrics metrics = getValue(i);

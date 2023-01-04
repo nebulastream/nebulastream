@@ -66,13 +66,25 @@ class SemanticQueryValidation {
                                              bool advanceChecks,
                                              const Catalogs::UDF::UdfCatalogPtr& udfCatalog);
 
+  private:
+    /**
+     * Check if infer model operator is correctly defined or not
+     * @param queryPlan: query plan to check
+     */
+    void inferModelValidityCheck(const QueryPlanPtr& queryPlan);
+
+    /**
+     * Performs semantic validation if the query plan has sink as it root operator.
+     * @param queryPlan: query plan on which the semantic validation is to be applied
+     */
+    void sinkOperatorValidityCheck(const QueryPlanPtr& queryPlan);
+
     /**
      * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
     void advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan);
 
-  private:
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
      * @param queryPlan: query plan to check

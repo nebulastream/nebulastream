@@ -12,14 +12,9 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
-#include <map>
-#include <vector>
-
 #include <API/Windowing.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -42,16 +37,17 @@
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <gtest/gtest.h>
+#include <map>
+#include <vector>
 
 namespace NES {
 class JoinHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup JoinHandlerTest test class.");
     }
-
-    void TearDown() override { NES_INFO("Tear down JoinHandlerTest test class."); }
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 32 * 1024;

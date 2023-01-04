@@ -24,7 +24,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 
 namespace NES::Optimizer {
@@ -61,7 +61,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (log4cxx::helpers::Exception& ex) {
+    } catch (std::exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 };

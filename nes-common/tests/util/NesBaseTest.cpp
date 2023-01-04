@@ -118,6 +118,57 @@ class ShmFixedVector {
     bool created;
 };
 
+TestWaitingHelper::TestWaitingHelper() { testCompletion = std::make_shared<std::promise<bool>>(); }
+
+void TestWaitingHelper::failTest() {
+    auto expected = false;
+    if (testCompletionSet.compare_exchange_strong(expected, true)) {
+        testCompletion->set_value(false);
+        waitThread->join();
+        waitThread.reset();
+    }
+}
+
+void TestWaitingHelper::completeTest() {
+    auto expected = false;
+    if (testCompletionSet.compare_exchange_strong(expected, true)) {
+        testCompletion->set_value(true);
+        waitThread->join();
+        waitThread.reset();
+    }
+}
+
+void TestWaitingHelper::startWaitingThread(std::string testName) {
+    auto self = this;
+    waitThread = std::make_unique<std::thread>([this, testName = std::move(testName)]() mutable {
+        auto future = testCompletion->get_future();
+        switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP))) {
+            case std::future_status::ready: {
+                try {
+                    auto res = future.get();
+                    ASSERT_TRUE(res);
+                    if (!res) {
+                        NES_FATAL_ERROR2("Got error in test [{}]", testName);
+                        std::exit(-127);
+                    }
+                } catch (std::exception const& exception) {
+                    NES_FATAL_ERROR2("Got exception in test [{}]: {}", testName, exception.what());
+                    FAIL();
+                    std::exit(-1);
+                }
+                break;
+            }
+            case std::future_status::timeout:
+            case std::future_status::deferred: {
+                NES_ERROR2("Cannot terminate test [{}] within deadline", testName);
+                FAIL();
+                std::exit(-127);
+                break;
+            }
+        }
+    });
+}
+
 namespace uuid {
 static std::random_device rd;
 static std::mt19937 gen(rd());
@@ -220,28 +271,6 @@ void NESBaseTest::SetUp() {
     }
     restPort = portDispatcher.getNextPort();
     rpcCoordinatorPort = portDispatcher.getNextPort();
-    auto future = testCompletion.get_future();
-    auto self = this;
-    waitThread = std::make_unique<std::thread>([future = std::move(future), self = std::move(self)]() mutable {
-        switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP))) {
-            case std::future_status::ready: {
-                try {
-                    auto res = future.get();
-                    ASSERT_TRUE(res);
-                } catch (std::exception const& exception) {
-                    NES_FATAL_ERROR("Got exception in test [" << typeid(*self).name() << "]: " << exception.what();)
-                    FAIL();
-                }
-                break;
-            }
-            case std::future_status::timeout:
-            case std::future_status::deferred: {
-                NES_ERROR("Cannot terminate test [" << typeid(*self).name() << "] within deadline");
-                FAIL();
-                break;
-            }
-        }
-    });
 }
 
 BorrowedPortPtr NESBaseTest::getAvailablePort() { return portDispatcher.getNextPort(); }
@@ -253,28 +282,17 @@ void NESBaseTest::TearDown() {
     rpcCoordinatorPort.reset();
     std::filesystem::remove_all(testResourcePath);
     Base::TearDown();
-    auto expected = false;
-    if (testCompletionSet.compare_exchange_strong(expected, true)) {
-        testCompletion.set_value(true);
-    }
-    waitThread->join();
-    waitThread.reset();
+    completeTest();
 }
 
 void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
-    auto expected = false;
-    if (testCompletionSet.compare_exchange_strong(expected, true)) {
-        testCompletion.set_value(false);
-    }
+    NES_ERROR2("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
+    failTest();
 }
 
 void NESBaseTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
     NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
-    auto expected = false;
-    if (testCompletionSet.compare_exchange_strong(expected, true)) {
-        testCompletion.set_value(false);
-    }
+    failTest();
 }
 
 BorrowedPort::~BorrowedPort() noexcept { parent->recyclePort(portIndex); }

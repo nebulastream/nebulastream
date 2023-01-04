@@ -103,7 +103,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
             node["name"] = childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString();
-            std::cout << childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString() << std::endl;
+            NES_DEBUG(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
         } else {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)

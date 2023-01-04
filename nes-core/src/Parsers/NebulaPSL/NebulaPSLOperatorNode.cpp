@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.h>
+#include <Parsers/NebulaPSL/NebulaPSLOperatorNode.hpp>
 
 namespace NES::Parsers {
 // creates a instance of the Operator Node (for as AST Tree node) with a unique identifier
@@ -20,8 +20,8 @@ NebulaPSLOperatorNode::NebulaPSLOperatorNode(int32_t id) { this->id = id; }
 //Getter and Setter
 int32_t NebulaPSLOperatorNode::getId() const { return this->id; }
 void NebulaPSLOperatorNode::setId(int32_t id) { this->id = id; }
-const std::string& NebulaPSLOperatorNode::getEventName() const { return this->eventName; }
-void NebulaPSLOperatorNode::setEventName(const std::string& eventName) { this->eventName = eventName; }
+const std::string& NebulaPSLOperatorNode::getOperatorName() const { return this->operatorName; }
+void NebulaPSLOperatorNode::setOperatorName(const std::string& operatorName) { this->operatorName = operatorName; }
 int32_t NebulaPSLOperatorNode::getRightChildId() const { return this->rightChildId; }
 void NebulaPSLOperatorNode::setRightChildId(int32_t rightChildId) { this->rightChildId = rightChildId; }
 int32_t NebulaPSLOperatorNode::getLeftChildId() const { return this->leftChildId; }

@@ -404,7 +404,8 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getAutoCommit()->getValue(),
                                                  kafkaSourceType->getConnectionTimeout()->getValue(),
                                                  kafkaSourceType->getOffsetMode()->getValue(),
-                                                 kafkaSourceType->getNumberOfBuffersToProduce()->getValue());
+                                                 kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
+                                                 kafkaSourceType->getBatchSize()->getValue());
         }
         case LORAWAN_SOURCE: {
             auto lorawanSourceType = physicalSourceType->as<LoRaWANProxySourceType>();

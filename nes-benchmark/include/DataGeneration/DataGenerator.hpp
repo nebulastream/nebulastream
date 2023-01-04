@@ -36,59 +36,57 @@ class DataGenerator {
     virtual ~DataGenerator() = default;
 
     /**
-         * @brief creates the data that will be used by a DataProvider
-         * @param numberOfBuffers
-         * @param bufferSize
-         * @return
-         */
+     * @brief creates the data that will be used by a DataProvider
+     * @param numberOfBuffers
+     * @param bufferSize
+     * @return
+     */
     virtual std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) = 0;
 
     /**
-         * @brief returns the schema that belongs to this data generation
-         * @return schema
-         */
+     * @brief returns the schema that belongs to this data generation
+     * @return schema
+     */
     virtual SchemaPtr getSchema() = 0;
 
     /**
-         * @brief returns the name of the data generator
-         * @return name of the data generator
-         */
+     * @brief returns the name of the data generator
+     * @return name of the data generator
+     */
     virtual std::string getName() = 0;
 
     /**
-         * @brief creates a string representation of this data generator
-         * @return the string representation
-         */
+     * @brief creates a string representation of this data generator
+     * @return the string representation
+     */
     virtual std::string toString() = 0;
 
     /**
-         * @brief adds a bufferManager to this dataGenerator
-         * @param bufferManager
-         */
+     * @brief adds a bufferManager to this dataGenerator
+     * @param bufferManager
+     */
     void setBufferManager(Runtime::BufferManagerPtr bufferManager);
 
     /**
-         * @brief creates a data generator depending on the name
-         * @param name
-         * @return
-         */
+     * @brief creates a data generator depending on the name
+     * @param name
+     * @return
+     */
     static DataGeneratorPtr createGeneratorByName(std::string name, Yaml::Node generatorNode);
 
-    static DataGeneratorPtr createGeneratorByName(std::string name, Runtime::BufferManagerPtr bufferManager);
+    /**
+     * @brief creates either a RowLayout or a ColumnLayout based on the underlying schema
+     * @param bufferSize
+     * @return RowLayout pointer, ColumnLayout pointer or nullptr
+     */
+    Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
   protected:
     /**
-         * @brief allocates a buffer from the bufferManager
-         * @return TupleBuffer
-         */
+     * @brief allocates a buffer from the bufferManager
+     * @return TupleBuffer
+     */
     Runtime::TupleBuffer allocateBuffer();
-
-    /**
-         * @brief
-         * @param bufferSize
-         * @return
-         */
-    Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
   private:
     Runtime::BufferManagerPtr bufferManager;

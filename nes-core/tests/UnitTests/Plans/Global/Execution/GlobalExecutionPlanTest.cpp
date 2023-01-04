@@ -30,16 +30,10 @@ class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling<testing::T
 
   public:
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         Logger::setupLogging("GlobalExecutionPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalExecutionPlanTest test case.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup GlobalExecutionPlanTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down GlobalExecutionPlanTest test class."); }
 };
 
 /**

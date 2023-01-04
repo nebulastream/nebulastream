@@ -28,22 +28,22 @@
 
 namespace NES::Nautilus {
 
-class ExpressionTest : public testing::Test {
+class ExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ExpressionTest test class." << std::endl;
+        NES_INFO("Setup ExpressionTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ExpressionTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup ExpressionTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ExpressionTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down ExpressionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ExpressionTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ExpressionTest test class."); }
 };
 
 TEST_F(ExpressionTest, EqualsExpressionInteger) {

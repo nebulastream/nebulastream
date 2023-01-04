@@ -169,7 +169,8 @@ add_nes_unit_test(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTe
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
-    add_nes_unit_test(kafka-tests "UnitTests/Source/KafkaSourceTest.cpp")
+    add_nes_unit_test(kafka-source-tests "UnitTests/Source/KafkaSourceTest.cpp")
+    add_nes_unit_test(kafka-sink-tests "UnitTests/Sink/KafkaSinkTest.cpp")
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
@@ -312,6 +313,9 @@ add_nes_unit_test(maintenance-service-tests "UnitTests/Services/MaintenanceServi
 
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
+
+### Query Plan Builder Tests ###
+add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
 
 
 # Lambda Source Integration tests
@@ -561,6 +565,10 @@ add_dependencies(tcp-source-integration-test nesCoordinator nesWorker)
 ### ContiniousSourceTest ###
 add_nes_integration_test(continuous-source-test "Integration/Source/ContinuousSourceTest.cpp")
 
+if (NES_USE_TF)
+### MLModelDeploymentTest ###
+add_nes_integration_test(ml-model-deployment-test "Integration/Operators/MLModelDeploymentTest.cpp")
+endif()
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_nes_integration_test(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")

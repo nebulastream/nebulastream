@@ -16,6 +16,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,22 +25,16 @@
 
 namespace NES::Nautilus {
 
-class FunctionCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("FunctionCompilationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup FunctionCompilationTest test class." << std::endl;
+        NES_DEBUG("Setup FunctionCompilationTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
 int64_t addInt(int64_t x, int64_t y) { return x + y; };
@@ -52,7 +48,7 @@ Value<> addIntFunction() {
 
 TEST_P(FunctionCompilationTest, addIntFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
@@ -66,7 +62,7 @@ Value<> returnConstFunction() { return FunctionCall<>("returnConst", returnConst
 
 TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
@@ -80,7 +76,7 @@ void voidExceptionFunction() { FunctionCall<>("voidException", voidException); }
 
 TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
 
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolically([]() {
+    auto executionTrace = Nautilus::Tracing::traceFunction([]() {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
@@ -98,7 +94,7 @@ Value<> multiplyArgumentFunction(Value<Int64> x) {
 TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
     Value<Int64> tempPara = Value<Int64>((int64_t) 0);
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([&tempPara]() {
+    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);

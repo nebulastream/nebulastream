@@ -15,29 +15,10 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
+import "SerializableSchema.proto";
+import "JavaUdfDescriptorMessage.proto";
 package NES;
 
-
-/**
-The serializable wrapper for a schema object
- */
-message SerializableSchema{
-  repeated SerializableField fields = 1;
-  enum MemoryLayoutType {
-    ROW_LAYOUT = 0;
-    COL_LAYOUT = 1;
-  }
-  MemoryLayoutType layoutType = 2;
-}
-
-/**
-The serializable wrapper for a schema object and its name
- */
-message SerializableNamedSchema{
-
-  string sourceName = 1;
-  SerializableSchema schema = 2;
-}
 
 /**
 The serializable wrapper for the nes partition object
@@ -422,8 +403,13 @@ message SerializableOperator{
 
     message DistributionCharacteristic {
       enum Distribution{
-        Complete = 0;
-        Slicing = 1;
+        // `Unset' indicates that the logical operator has just been deserialized from a client.
+        // The deserialization logic in the coordinator will change it to `Complete' to be inline with the creation
+        // logic in `Query::window' and `Query::windowByKey'.
+        // TODO This logic should be revisited when #2884 is fixed.
+        Unset = 0;
+        Complete = 1;
+        Slicing = 2;
         Combining = 3;
         Merging = 4;
       }
@@ -451,7 +437,7 @@ message SerializableOperator{
 
     message ThresholdWindow {
       SerializableExpression predicate = 1;
-      uint32 miniumCount = 2;
+      uint32 minimumCount = 2;
     }
 
     message Aggregation {
@@ -582,6 +568,13 @@ message SerializableOperator{
     SerializableExpression probeSchema = 4;
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
+  }
+
+  /**
+    Information to serialize a Map operator with a Java UDF.
+   */
+  message MapJavaUdfDetails {
+      JavaUdfDescriptorMessage javaUdfDescriptor = 1;
   }
 
   google.protobuf.Any details = 1;

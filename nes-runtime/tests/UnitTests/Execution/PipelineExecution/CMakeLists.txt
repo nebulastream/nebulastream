@@ -11,18 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
-target_link_libraries(runtime-scan-emit-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-scan-emit-pipeline-test COMMAND runtime-scan-emit-pipeline-test)
-
-add_executable(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
-target_link_libraries(runtime-selection-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-selection-pipeline-test COMMAND runtime-selection-pipeline-test)
-
-add_executable(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
-target_link_libraries(runtime-threshold-window-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-threshold-window-pipeline-test COMMAND runtime-threshold-window-pipeline-test)
-
-add_executable(runtime-text-pipeline-test "TextPipelineTest.cpp")
-target_link_libraries(runtime-text-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-text-pipeline-test COMMAND runtime-text-pipeline-test)
+add_nes_runtime_test(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
+add_nes_runtime_test(runtime-selection-pipeline-test "SelectionPipelineTest.cpp")
+add_nes_runtime_test(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
+add_nes_runtime_test(runtime-text-pipeline-test "SelectionPipelineTest.cpp")
+add_nes_runtime_test(runtime-lazy-join-pipeline-test "StreamJoinPipelineTest.cpp")

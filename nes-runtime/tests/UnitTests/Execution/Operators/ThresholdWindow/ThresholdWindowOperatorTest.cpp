@@ -19,6 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -29,22 +30,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class ThresholdWindowOperatorTest : public testing::Test {
+class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ThresholdWindowOperatorTest test class." << std::endl;
+        NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup ThresholdWindowOperatorTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ThresholdWindowOperatorTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ThresholdWindowOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {

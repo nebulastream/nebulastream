@@ -17,13 +17,13 @@
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <variant>
 #include <vector>
 namespace NES::Nautilus::Tracing {
-class None {};
-using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
+
 class OperationRef;
 /**
  * @brief Represents an individual operation in a trace.

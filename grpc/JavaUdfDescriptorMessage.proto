@@ -13,7 +13,7 @@
 */
 
 syntax = "proto3";
-import "SerializableOperator.proto";
+import "SerializableSchema.proto";
 package NES;
 
 message JavaUdfDescriptorMessage {

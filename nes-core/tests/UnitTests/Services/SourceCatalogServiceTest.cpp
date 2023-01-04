@@ -40,27 +40,27 @@ class SourceCatalogServiceTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup NES SourceCatalogService test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("SourceCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup NES SourceCatalogService test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("Setup NES SourceCatalogService test case.");
-        NES::Logger::setupLogging("SourceCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+        borrowed_publish_port = getAvailablePort();
+        publish_port = *borrowed_publish_port;
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Setup NES Coordinator test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down NES Coordinator test class."); }
 
     std::string ip = "127.0.0.1";
     uint16_t receive_port = 0;
     std::string host = "localhost";
+    Testing::BorrowedPortPtr borrowed_publish_port;
     uint16_t publish_port = 4711;
     //std::string sensor_type = "default";
 };

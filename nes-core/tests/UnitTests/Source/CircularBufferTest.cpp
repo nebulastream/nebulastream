@@ -23,19 +23,10 @@ namespace NES {
 class CircularBufferTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup CircularBufferTest test class." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("CircularBufferTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup CircularBufferTest test case." << std::endl;
+        NES_DEBUG("Setup CircularBufferTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down CircularBufferTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down CircularBufferTest test class." << std::endl; }
 
     uint64_t testCapacity = 3;
     uint64_t zeroCapacity = 0;

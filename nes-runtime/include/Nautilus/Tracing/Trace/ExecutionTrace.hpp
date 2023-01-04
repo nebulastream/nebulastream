@@ -13,7 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
-#include <Nautilus/Tracing/Tag.hpp>
+
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <memory>
 #include <unordered_map>
@@ -26,39 +27,82 @@ class ExecutionTrace {
   public:
     ExecutionTrace();
     ~ExecutionTrace() = default;
+    /**
+     * @brief Adds an operation to the current block
+     * @param operation TraceOperation
+     */
     void addOperation(TraceOperation& operation);
+
+    /**
+     * @brief Adds arguments that are passed to the traced function
+     * @param argument
+     */
     void addArgument(const ValueRef& argument);
 
+    /**
+     * @brief Returns all arguments of this trace.
+     * @return std::vector<ValueRef>
+     */
+    const std::vector<ValueRef>& getArguments();
+
+    /**
+     * @brief Creates a new block in the trace.
+     * @return
+     */
     uint32_t createBlock();
 
+    /**
+     * @brief Returns the reference to a specific block
+     * @param blockIndex
+     * @return Block&
+     */
     Block& getBlock(uint32_t blockIndex) { return blocks[blockIndex]; }
+
+    /**
+     * @brief Returns a reference to all blocks
+     * @return std::vector<Block>&
+     */
     std::vector<Block>& getBlocks() { return blocks; }
+
+    /**
+     * @brief Returns the index to the current block.
+     * @return uint32_t
+     */
+    uint32_t getCurrentBlockIndex() const { return currentBlock; }
+
+    /**
+     * @brief Returns the current block
+     * @return Block&
+     */
     Block& getCurrentBlock() { return blocks[currentBlock]; }
-    uint32_t getCurrentBlockIndex() { return currentBlock; }
 
-    bool hasNextOperation() { return currentBlock; }
-
+    /**
+     * @brief Sets the current block
+     * @param index
+     */
     void setCurrentBlock(uint32_t index) { currentBlock = index; }
-    void traceCMP(TraceOperation& operation);
-    ValueRef findReference(ValueRef ref, const ValueRef value);
-    void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
-    ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
+
+    /**
+     * @brief Processes a control flow merge
+     * @param blockIndex
+     * @param operationIndex
+     * @return Block&
+     */
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
 
-    std::shared_ptr<OperationRef> findKnownOperation(Tag& tag);
+    /**
+     * @brief Returns the return reference
+     * @return  std::shared_ptr<OperationRef>
+     */
+    std::shared_ptr<OperationRef> getReturn();
 
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
-
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> tagMap;
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> localTagMap;
-
-    std::shared_ptr<OperationRef> returnRef;
-    std::vector<ValueRef> getArguments();
 
   private:
     uint32_t currentBlock;
     std::vector<Block> blocks;
     std::vector<ValueRef> arguments;
+    std::shared_ptr<OperationRef> returnRef;
 };
 
 }// namespace NES::Nautilus::Tracing

@@ -41,14 +41,14 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
     NES_INFO("Zipfian source mode");
 
     // Prints every five percent the current progress
-    uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
+    uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        std::random_device randDev;
-        std::mt19937 generator(randDev());
+        // using seed to generate a predictable sequence of values for deterministic behavior
+        std::mt19937 generator(GENERATOR_SEED_ZIPFIAN);
         ZipfianGenerator zipfianGenerator(minValue, maxValue, alpha);
 
         /* This branch is solely for performance reasons.

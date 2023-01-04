@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v23)
+set(VCPKG_BINARY_VERSION v27)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -46,6 +46,8 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+# TODO #3351 Do not enable Kafka by default
+option(NES_USE_KAFKA "Build with Kafka support" ON)
 option(NES_USE_LORAWAN OFF)
 
 # Enable exception interception (for debugging purpose)
@@ -278,6 +280,10 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 # folly and cpprestsdk relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
+# spdlog
+find_package(spdlog REQUIRED)
+set(LIBRARIES ${LIBRARIES} spdlog::spdlog)
+
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
 message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
@@ -357,15 +363,6 @@ endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
-# Log4cc
-find_package(log4cxx CONFIG REQUIRED)
-if (NOT ${log4cxx})
-    message(FATAL_ERROR "Unable to find log4cxx")
-endif ()
-include_directories(${Log4cxx_INCLUDE_DIR})
-set(LIBRARIES ${LIBRARIES} log4cxx)
-message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
-
 # Backward
 include(cmake/BackwardConfig.cmake)
 include_directories(${BACKWARD_INCLUDE_DIRS})
@@ -419,11 +416,21 @@ endif ()
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
-    include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-    set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so)
-    add_compile_definitions(ENABLE_KAFKA_BUILD)
-    message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
-endif (NES_USE_KAFKA)
+    # TODO #3351 The commands should be moved into a separate CMake config file.
+    if (NOT APPLE)
+        include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1)
+        add_compile_definitions(ENABLE_KAFKA_BUILD)
+        add_library(cppkafka::cppkafka SHARED IMPORTED)
+        set_target_properties(cppkafka::cppkafka
+                PROPERTIES
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1
+                INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
+                )
+        install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
+        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    endif ()
+endif ()
 
 # Library containing OPC client
 if (NES_USE_OPC)
@@ -631,7 +638,6 @@ add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
 
-
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
     add_subdirectory(nes-benchmark)
@@ -685,7 +691,7 @@ install(EXPORT NebulaStreamTargets
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${LIB_INSTALL_DIR}${ConfigPackageLocation})
+        DESTINATION ${LIB_INSTALL_DIR} ${ConfigPackageLocation})
 
 # Configure CPackage
 SET(CPACK_GENERATOR "DEB")

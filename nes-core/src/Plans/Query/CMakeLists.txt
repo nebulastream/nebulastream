@@ -13,4 +13,5 @@
 
 add_source_files(nes-core
         QueryPlan.cpp
+        QueryPlanBuilder.cpp
 )

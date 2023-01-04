@@ -54,10 +54,6 @@ class PipeliningPhaseTest : public Testing::NESBaseTest {
         NES_INFO("Setup PipeliningPhaseTest test class.");
     }
 
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down TranslateToGeneratableOperatorPhaseTest Test."); }
-
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorNodePtr sourceOp1, sourceOp2, sourceOp3, sourceOp4, unionOp1;

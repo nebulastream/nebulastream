@@ -28,9 +28,6 @@
 #include <Sources/TCPSource.hpp>
 #include <Sources/LoRaWANProxySource.hpp>
 #include <chrono>
-#ifdef ENABLE_KAFKA_BUILD
-#include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
@@ -358,9 +355,9 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,
+                                      size_t batchSize,
                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
-
 #ifdef ENABLE_OPC_BUILD
 
 /**

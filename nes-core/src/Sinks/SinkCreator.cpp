@@ -316,14 +316,31 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
 }
 
 }// namespace Experimental::MaterializedView
+#ifdef ENABLE_KAFKA_BUILD
+DataSinkPtr createTextKafkaSink(SchemaPtr schema,
+                                QueryId queryId,
+                                QuerySubPlanId querySubPlanId,
+                                const Runtime::NodeEnginePtr& nodeEngine,
+                                uint32_t activeProducers,
+                                const std::string& brokers,
+                                const std::string& topic,
+                                uint64_t kafkaProducerTimeout,
+                                FaultToleranceType::Value faultToleranceType,
+                                uint64_t numberOfOrigins) {
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
 
-#ifdef ENABLE_KAFKA_BUILD_SINK
-DataSinkPtr
-createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout) {
-    return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
+    return std::make_shared<KafkaSink>(format,
+                                       nodeEngine,
+                                       activeProducers,
+                                       brokers,
+                                       topic,
+                                       queryId,
+                                       querySubPlanId,
+                                       kafkaProducerTimeout,
+                                       faultToleranceType,
+                                       numberOfOrigins);
 }
 #endif
-
 #ifdef ENABLE_OPC_BUILD
 DataSinkPtr createOPCSink(SchemaPtr schema,
                           QueryId queryId,

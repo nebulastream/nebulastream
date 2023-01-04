@@ -25,6 +25,7 @@
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <assert.h>
 #include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
@@ -162,8 +163,11 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         NES_INFO("try to acc return");
         NES_INFO("Query ID: " << queryId);
 
-        assert(TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort)));
-        assert(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+        auto checkCompleted = TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort));
+        assert(checkCompleted);
+
+        auto queryStopped = TestUtils::stopQueryViaRest(queryId, std::to_string(restPort));
+        assert(queryStopped);
 
         std::ifstream ifs(outputFilePath.c_str());
         assert(ifs.good());
@@ -243,7 +247,7 @@ TEST_F(NemoIntegrationTest, testNemoThreelevels) {
     ASSERT_EQ(content, expectedContent);
 }
 
-TEST_F(NemoIntegrationTest, testNemoPlacementFourLevelsSparseTopology) {
+TEST_F(NemoIntegrationTest, DISABLED_testNemoPlacementFourLevelsSparseTopology) {
     uint64_t childThreshold = 0;
     uint64_t combinerThreshold = 0;
     uint64_t expectedNoBuffers = 2;

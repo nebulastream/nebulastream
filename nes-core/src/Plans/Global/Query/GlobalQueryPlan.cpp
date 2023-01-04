@@ -18,7 +18,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <log4cxx/helpers/exception.h>
+
 namespace NES {
 
 GlobalQueryPlan::GlobalQueryPlan() = default;
@@ -28,11 +28,11 @@ GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQue
 bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     if (inputQueryPlanId == INVALID_QUERY_ID) {
-        throw log4cxx::helpers::Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
+        throw Exceptions::RuntimeException("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
     if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
-        throw log4cxx::helpers::Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
-                                          + " already present.");
+        throw Exceptions::RuntimeException("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
+                                           + " already present.");
     }
     queryPlansToAdd.emplace_back(queryPlan);
     return true;
@@ -53,8 +53,8 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
             SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
             SharedQueryPlanPtr sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryId];
             if (!sharedQueryPlan->removeQuery(queryId)) {
-                throw log4cxx::helpers::Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
-                                                  + " from shared query plan with id " + std::to_string(sharedQueryId));
+                throw Exceptions::RuntimeException("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
+                                                   + " from shared query plan with id " + std::to_string(sharedQueryId));
             }
 
             if (sharedQueryPlan->isEmpty()) {

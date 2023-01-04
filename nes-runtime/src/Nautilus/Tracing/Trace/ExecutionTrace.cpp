@@ -15,10 +15,11 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <algorithm>
 
 namespace NES::Nautilus::Tracing {
 
-ExecutionTrace::ExecutionTrace() : tagMap(), blocks() { createBlock(); };
+ExecutionTrace::ExecutionTrace() : blocks() { createBlock(); };
 
 void ExecutionTrace::addOperation(TraceOperation& operation) {
     if (blocks.empty()) {
@@ -48,56 +49,6 @@ uint32_t ExecutionTrace::createBlock() {
     }
     blocks.emplace_back(blocks.size());
     return blocks.size() - 1;
-}
-
-ValueRef ExecutionTrace::findReference(ValueRef ref, ValueRef srcRef) {
-    if (getCurrentBlock().isLocalValueRef(ref) || getCurrentBlock().isLocalValueRef(srcRef)) {
-        // reference to local variable;
-        return ref;
-    }
-    return ExecutionTrace::createBlockArgument(currentBlock, ref, srcRef);
-}
-
-ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef srcRef) {
-    auto& block = getBlock(blockIndex);
-    for (auto predecessor : block.predecessors) {
-        auto& predecessorBlock = getBlock(predecessor);
-        if (predecessorBlock.isLocalValueRef(ref)) {
-            // last operation is a JMP or a CMP
-            auto& lastOperation = predecessorBlock.operations.back();
-            for (auto& opInputs : lastOperation.input) {
-                if (auto blockRef = get_if<BlockRef>(&opInputs)) {
-                    if (blockRef->block == blockIndex) {
-                        blockRef->arguments.emplace_back(ref);
-                        // reuse ref name for the argument as it is a unique combination of block and op id.
-                        block.addArgument(ref);
-                    }
-                }
-            }
-        } else {
-            // we have to check the parents and pass the variable as an argument
-            ValueRef parentRef = createBlockArgument(predecessor, ref, srcRef);
-            auto& lastOperation = predecessorBlock.operations.back();
-            for (auto& opInputs : lastOperation.input) {
-                if (auto blockRef = get_if<BlockRef>(&opInputs)) {
-                    if (blockRef->block == blockIndex) {
-                        blockRef->arguments.emplace_back(ref);
-                        block.addArgument(ref);
-                    }
-                }
-            }
-        }
-    }
-    return ref;
-}
-
-std::shared_ptr<OperationRef> ExecutionTrace::findKnownOperation(Tag& tag) {
-    if (tagMap.contains(tag)) {
-        return tagMap.find(tag)->second;
-    } else if (localTagMap.contains(tag)) {
-        return localTagMap.find(tag)->second;
-    }
-    return nullptr;
 }
 
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
@@ -147,58 +98,6 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     return mergeBlock;
 }
 
-void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef inputReference, ValueRef currentInput) {
-    auto& currentBlock = getBlock(currentBlockIndex);
-    if (currentBlock.isLocalValueRef(currentInput)) {
-        // the ref is defined locally
-        return;
-    }
-    for (auto predecessorIds : currentBlock.predecessors) {
-        auto& preBlock = getBlock(predecessorIds);
-        if (preBlock.isLocalValueRef(currentInput)) {
-            auto& arguments = currentBlock.arguments;
-            for (auto& input : preBlock.operations.back().input) {
-                if (auto* ref = get_if<BlockRef>(&input)) {
-                    if (ref->block == currentBlockIndex) {
-                        if (std::find(ref->arguments.begin(), ref->arguments.end(), currentInput) == ref->arguments.end()) {
-                            ref->arguments.emplace_back(currentInput);
-                        }
-                    }
-                }
-            }
-            if (std::find(arguments.begin(), arguments.end(), inputReference) == arguments.end()) {
-                // value ref is an input
-                arguments.push_back(inputReference);
-            }
-            // the ref is defined locally
-            continue;
-        } else if (preBlock.isLocalValueRef(inputReference)) {
-            // the ref is defined locally
-            auto& arguments = currentBlock.arguments;
-            if (std::find(arguments.begin(), arguments.end(), inputReference) == arguments.end()) {
-                // value ref is an input
-                auto& jump = preBlock.operations[preBlock.operations.size() - 1].input[0];
-                auto& blockRef = get<BlockRef>(jump);
-                if (std::find(blockRef.arguments.begin(), blockRef.arguments.end(), currentInput) == blockRef.arguments.end()) {
-                    blockRef.arguments.emplace_back(currentInput);
-                }
-            }
-            continue;
-        } else {
-            checkInputReference(predecessorIds, inputReference, currentInput);
-            if (preBlock.isLocalValueRef(inputReference)) {
-                for (auto& input : preBlock.operations.back().input) {
-                    if (auto* ref = get_if<BlockRef>(&input)) {
-                        if (ref->block == currentBlockIndex) {
-                            ref->arguments.emplace_back(inputReference);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace) {
     for (size_t i = 0; i < executionTrace.blocks.size(); i++) {
         os << "Block" << i;
@@ -208,6 +107,8 @@ std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace)
     return os;
 }
 
-std::vector<ValueRef> ExecutionTrace::getArguments() { return arguments; }
+const std::vector<ValueRef>& ExecutionTrace::getArguments() { return arguments; }
+
+std::shared_ptr<OperationRef> ExecutionTrace::getReturn() { return returnRef; }
 
 }// namespace NES::Nautilus::Tracing

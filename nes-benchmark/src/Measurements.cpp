@@ -13,30 +13,34 @@
 */
 
 #include <Measurements.hpp>
+#include <iostream>
 #include <sstream>
 
 namespace NES::Benchmark::Measurements {
 
-std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte) {
+std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInByte, size_t numberOfQueries) {
+    uint64_t maxTuplesPerSecond = 0;
     std::vector<std::string> vecCsvStrings;
-    for (size_t measurementIdx = 0; measurementIdx < allTimeStamps.size() - 1; ++measurementIdx) {
+    for (size_t measurementIdx = 0; measurementIdx < timestamps.size() - 1; ++measurementIdx) {
         std::stringstream measurementsCsv;
-        measurementsCsv << allTimeStamps[measurementIdx];
-        measurementsCsv << "," << allProcessedTasks[measurementIdx];
-        measurementsCsv << "," << allProcessedBuffers[measurementIdx];
-        measurementsCsv << "," << allProcessedTuples[measurementIdx];
-        measurementsCsv << "," << allLatencySum[measurementIdx];
-        measurementsCsv << "," << allQueueSizeSums[measurementIdx];
-        measurementsCsv << "," << allAvailGlobalBufferSum[measurementIdx];
-        measurementsCsv << "," << allAvailFixedBufferSum[measurementIdx];
+        auto currentTs = timestamps[measurementIdx];
+        measurementsCsv << currentTs;
+        measurementsCsv << "," << allProcessedTasks[currentTs];
+        measurementsCsv << "," << allProcessedBuffers[currentTs];
+        measurementsCsv << "," << allProcessedTuples[currentTs];
+        measurementsCsv << "," << allLatencySum[currentTs];
+        measurementsCsv << "," << allQueueSizeSums[currentTs] / numberOfQueries;
+        measurementsCsv << "," << allAvailGlobalBufferSum[currentTs] / numberOfQueries;
+        measurementsCsv << "," << allAvailFixedBufferSum[currentTs] / numberOfQueries;
 
-        double timeDeltaSeconds = (allTimeStamps[measurementIdx + 1] - allTimeStamps[measurementIdx]) / 1000;
+        double timeDeltaSeconds = (timestamps[measurementIdx + 1] - timestamps[measurementIdx]);
         uint64_t tuplesPerSecond =
-            (allProcessedTuples[measurementIdx + 1] - allProcessedTuples[measurementIdx]) / (timeDeltaSeconds);
+            (allProcessedTuples[timestamps[measurementIdx + 1]] - allProcessedTuples[currentTs]) / (timeDeltaSeconds);
         uint64_t tasksPerSecond =
-            (allProcessedTasks[measurementIdx + 1] - allProcessedTasks[measurementIdx]) / (timeDeltaSeconds);
+            (allProcessedTasks[timestamps[measurementIdx + 1]] - allProcessedTasks[currentTs]) / (timeDeltaSeconds);
+        maxTuplesPerSecond = std::max(maxTuplesPerSecond, tuplesPerSecond);
         uint64_t bufferPerSecond =
-            (allProcessedBuffers[measurementIdx + 1] - allProcessedBuffers[measurementIdx]) / (timeDeltaSeconds);
+            (allProcessedBuffers[timestamps[measurementIdx + 1]] - allProcessedBuffers[currentTs]) / (timeDeltaSeconds);
         uint64_t mebiBPerSecond = (tuplesPerSecond * schemaSizeInByte) / (1024 * 1024);
 
         measurementsCsv << "," << tuplesPerSecond << "," << tasksPerSecond;
@@ -45,6 +49,7 @@ std::vector<std::string> Measurements::getMeasurementsAsCSV(size_t schemaSizeInB
         vecCsvStrings.push_back(measurementsCsv.str());
     }
 
+    std::cout << "maxTuplesPerSecond=" << maxTuplesPerSecond << std::endl;
     return vecCsvStrings;
 }
 }// namespace NES::Benchmark::Measurements

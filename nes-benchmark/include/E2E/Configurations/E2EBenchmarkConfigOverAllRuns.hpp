@@ -43,27 +43,23 @@ class E2EBenchmarkConfigOverAllRuns {
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
-     * @brief returns the data generators for this e2e benchmark in a csv
-     * @return string representation of the data generators
-     */
-    std::string getDataGeneratorsAsString();
-
-    /**
      * @brief all configurations that are constant over all runs
      */
   public:
     Configurations::IntConfigOption startupSleepIntervalInSeconds;
     Configurations::IntConfigOption numMeasurementsToCollect;
     Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
-    Configurations::IntConfigOption numSources;
     Configurations::IntConfigOption numberOfPreAllocatedBuffer;
     Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption batchSize;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;
+    Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> dataGenerators;
+    Configurations::StringConfigOption dataGenerator;
+    Configurations::StringConfigOption logicalSourceName;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

@@ -14,7 +14,8 @@
 
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,22 +25,16 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus {
 
-class LoopCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class LoopCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TraceTest test class." << std::endl;
+        NES_DEBUG("Setup TraceTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down TraceTest test class."); }
 };
 
 Value<> sumLoop(int upperLimit) {
@@ -51,7 +46,7 @@ Value<> sumLoop(int upperLimit) {
 }
 
 TEST_P(LoopCompilationTest, sumLoopTestSCF) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return sumLoop(10);
     });
 
@@ -71,7 +66,7 @@ Value<> nestedSumLoop(int upperLimit) {
 }
 
 TEST_P(LoopCompilationTest, nestedLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedSumLoop(10);
     });
 
@@ -81,7 +76,7 @@ TEST_P(LoopCompilationTest, nestedLoopTest) {
 }
 
 TEST_P(LoopCompilationTest, sumLoopTestCF) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return sumLoop(10);
     });
 
@@ -101,7 +96,7 @@ Value<> ifSumLoop() {
 }
 
 TEST_P(LoopCompilationTest, ifSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifSumLoop();
     });
 
@@ -123,7 +118,7 @@ Value<> ifElseSumLoop() {
 }
 
 TEST_P(LoopCompilationTest, ifElseSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return ifElseSumLoop();
     });
 
@@ -144,7 +139,7 @@ Value<> elseOnlySumLoop() {
 }
 
 TEST_P(LoopCompilationTest, elseOnlySumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return elseOnlySumLoop();
     });
 
@@ -168,7 +163,7 @@ Value<> nestedIfSumLoop() {
 }
 
 TEST_P(LoopCompilationTest, nestedIfSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedIfSumLoop();
     });
     auto engine = prepare(execution);
@@ -193,7 +188,7 @@ Value<> nestedIfElseSumLoop() {
 }
 
 TEST_P(LoopCompilationTest, nestedIfElseSumLoopTest) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedIfElseSumLoop();
     });
     auto engine = prepare(execution);
@@ -217,7 +212,7 @@ Value<> nestedElseOnlySumLoop() {
 }
 
 TEST_P(LoopCompilationTest, nestedElseOnlySumLoop) {
-    auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([]() {
+    auto execution = Nautilus::Tracing::traceFunctionWithReturn([]() {
         return nestedElseOnlySumLoop();
     });
     auto engine = prepare(execution);

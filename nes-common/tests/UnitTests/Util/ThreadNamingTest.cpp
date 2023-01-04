@@ -32,7 +32,6 @@ class ThreadNamingTest : public Testing::TestWithErrorHandling<testing::Test> {
         NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");
     }
-    static void TearDownTestCase() { NES_INFO("ThreadNamingTest test class TearDownTestCase."); }
 };
 
 TEST_F(ThreadNamingTest, testThreadNaming) {

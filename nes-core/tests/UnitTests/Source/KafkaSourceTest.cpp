@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -89,8 +88,8 @@ class KafkaSourceTest : public Testing::NESBaseTest {
     KafkaSourceTypePtr kafkaSourceType;
 
     const std::string brokers = std::string(KAFKA_BROKER);
-    const std::string topic = std::string("nes");
-    const std::string groupId = std::string("nes");
+    const std::string topic = std::string("sourceTest");
+    const std::string groupId = std::string("0");
 };
 
 /**
@@ -110,6 +109,7 @@ TEST_F(KafkaSourceTest, KafkaSourceInit) {
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     SUCCEED();
@@ -132,9 +132,11 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
-    std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(nes). OFFSETMODE(earliest). ";
+    std::string expected =
+        "KAFKA_SOURCE(SCHEMA(var:INTEGER ), BROKER(localhost:9092), TOPIC(sourceTest). OFFSETMODE(earliest). BATCHSIZE(1). ";
 
     EXPECT_EQ(kafkaSource->toString(), expected);
 
@@ -143,12 +145,11 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
     SUCCEED();
 }
 
+#ifdef RUNNING_KAFKA_INSTANCE
 /**
  * Tests if obtained value is valid.
  */
 TEST_F(KafkaSourceTest, KafkaTestNative) {
-    std::string topic = "test";
-    std::string group = "g1";
     int partition_value = -1;
 
     //    #####################
@@ -224,8 +225,11 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
                 }
                 // Print the payload
                 NES_DEBUG(msg.get_payload());
+
                 // Now commit the message
                 consumer.commit(msg);
+                std::string_view payload_view(reinterpret_cast<const char*>(msg.get_payload().get_data()), message.size());
+                EXPECT_EQ(payload_view, message);
                 pollSuccessFull = true;
             }
         }
@@ -238,22 +242,20 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
  * Tests if obtained value is valid.
  */
 TEST_F(KafkaSourceTest, KafkaSourceValue) {
-    std::string topic = "test";
-    std::string group = "g1";
-
     auto kafkaSource = createKafkaSource(test_schema,
                                          nodeEngine->getBufferManager(),
                                          nodeEngine->getQueryManager(),
                                          2,
                                          brokers,
                                          topic,
-                                         group,
+                                         groupId,
                                          true,
                                          100,
                                          "earliest",
                                          OPERATORID,
                                          OPERATORID,
                                          NUMSOURCELOCALBUFFERS,
+                                         1,
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     auto test_schema = Schema::create()->addField("var", UINT32);
 
@@ -261,7 +263,7 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     auto tuple_bufferJ = kafkaSource->receiveData();
 
     cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()},
-                                      {"group.id", group},
+                                      {"group.id", groupId},
                                       {"enable.auto.commit", true}};
     cppkafka::Producer producer(config);
 
@@ -347,5 +349,6 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
+#endif
 }// namespace NES
 #endif

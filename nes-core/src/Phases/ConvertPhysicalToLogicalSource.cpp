@@ -89,7 +89,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                                               kafkaSourcePtr->isAutoCommit(),
                                               kafkaSourcePtr->getKafkaConsumerTimeout().count(),
                                               kafkaSourcePtr->getOffsetMode(),
-                                              kafkaSourcePtr->getNumBuffersToProcess());
+                                              kafkaSourcePtr->getNumBuffersToProcess(),
+                                              kafkaSourcePtr->getBatchSize());
             return kafkaSourceDescriptor;
         }
 #endif

@@ -15,9 +15,6 @@
 #ifndef NES_CORE_INCLUDE_API_QUERY_HPP_
 #define NES_CORE_INCLUDE_API_QUERY_HPP_
 
-#ifdef ENABLE_KAFKA_BUILD
-#include <cppkafka/configuration.h>
-#endif// KAFKASINK_HPP
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -301,18 +298,13 @@ class Times {
     uint64_t maxOccurrences;
     bool bounded;
 };
-//TODO the 2 methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+//TODO this method is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
      * @brief: this function creates a virtual key for the left side of the binary operator
+     * @param keyName the attribute name
      * @return the unique name of the key
      */
-std::string keyAssignmentLeft();
-
-/**
-     * @brief: this function creates a virtual key for the right side of the binary operator
-     * @return the unique name of the key
-     */
-std::string keyAssignmentRight();
+std::string keyAssignment(std::string keyName);
 
 }//namespace CEPOperatorBuilder
 
@@ -441,9 +433,8 @@ class Query {
     Query& filter(ExpressionNodePtr const& filterExpression);
 
     /**
-     * @brief: Create watermark assihner operator.
-     * @param onField filed to retrieve the timestamp for watermark.
-     * @param delay timestamp delay of tanuraghazrahe watermark.
+     * @brief: Create watermark assigner operator.
+     * @param watermarkStrategyDescriptor
      * @return query.
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
@@ -542,33 +533,6 @@ class Query {
                    ExpressionItem onLeftKey,
                    ExpressionItem onRightKey,
                    Windowing::WindowTypePtr const& windowType);
-
-    /**
-     * We call it only internal as a last step during the Join/AND operation
-     * @brief This methods add the join operator to a query
-     * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left source
-     * @param onLeftKey key attribute of the right source
-     * @param windowType Window definition.
-     * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
-     * @return the query
-     */
-    Query& join(const Query& subQueryRhs,
-                ExpressionItem onLeftKey,
-                ExpressionItem onRightKey,
-                Windowing::WindowTypePtr const& windowType,
-                Join::LogicalJoinDefinition::JoinType joinType);
-
-    /**
-     * We call it only internal as a last step during the batchJoin operation
-     * @brief This methods add the join operator to a query
-     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-     * @param subQueryRhs subQuery to be joined
-     * @param onProbeKey key attribute of the left stream
-     * @param onBuildKey key attribute of the right stream
-     * @return the query
-     */
-    Query& batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use

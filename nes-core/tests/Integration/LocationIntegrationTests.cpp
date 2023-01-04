@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-#include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -26,6 +25,7 @@
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
+#include <Services/QueryService.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
@@ -61,9 +61,49 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
     //wrapper function so allow the util function to call the member function of LocationProvider
-    static std::shared_ptr<NES::Spatial::Index::Experimental::Location> getLocationFromTopologyNode(std::shared_ptr<void> node) {
+    static std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> getLocationFromTopologyNode(std::shared_ptr<void> node) {
         auto casted = std::static_pointer_cast<TopologyNode>(node);
-        return std::make_shared<NES::Spatial::Index::Experimental::Location>(casted->getCoordinates());
+        return casted->getCoordinates();
+    }
+
+    /**
+     * @brief wait until the topology contains the expected number of nodes so we can rely on these nodes being present for
+     * the rest of the test
+     * @param timeoutSeconds time to wait before aborting
+     * @param nodes expected number of nodes
+     * @param topology  the topology object to query
+     * @return true if expected number of nodes was reached. false in case of timeout before number was reached
+     */
+    static bool waitForNodes(int timeoutSeconds, size_t nodes, TopologyPtr topology) {
+        size_t numberOfNodes = 0;
+        for (int i = 0; i < timeoutSeconds; ++i) {
+            auto topoString = topology->toString();
+            numberOfNodes = std::count(topoString.begin(), topoString.end(), '\n');
+            numberOfNodes -= 1;
+            if (numberOfNodes == nodes) {
+                break;
+            }
+        }
+        return numberOfNodes == nodes;
+    }
+
+    /**
+     * @brief check if two location objects latitudes and longitudes do not differ more than the specified error
+     * @param location1
+     * @param location2
+     * @param error the tolerated difference in latitute or longitude specified in degrees
+     * @return true if location1 and location2 do not differ more then the specified degrees in latitiude of logintude
+     */
+    static bool isClose(NES::Spatial::Index::Experimental::Location location1,
+                        NES::Spatial::Index::Experimental::Location location2,
+                        double error) {
+        if (std::abs(location1.getLatitude() - location2.getLatitude()) > error) {
+            return false;
+        }
+        if (std::abs(location1.getLongitude() - location2.getLongitude()) > error) {
+            return false;
+        }
+        return true;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationIntegrationTests class."); }
@@ -82,6 +122,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = (port);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -89,6 +131,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     NES_INFO("start worker 2");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = (port);
+    wrkConf2->dataPort.setValue(*getAvailablePort());
+    wrkConf2->rpcPort.setValue(*getAvailablePort());
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
@@ -98,6 +142,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->coordinatorPort = (port);
+    wrkConf3->dataPort.setValue(*getAvailablePort());
+    wrkConf3->rpcPort.setValue(*getAvailablePort());
     wrkConf3->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location3));
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
@@ -107,6 +153,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->coordinatorPort = (port);
+    wrkConf4->dataPort.setValue(*getAvailablePort());
+    wrkConf4->rpcPort.setValue(*getAvailablePort());
     wrkConf4->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location4));
     wrkConf4->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
@@ -146,13 +194,15 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ((node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
+    EXPECT_EQ(*(node2->getCoordinates()->getLocation()),
+              NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
-    EXPECT_EQ(geoTopology->getClosestNodeTo((node4->getCoordinates())).value(), node4);
+    EXPECT_EQ(geoTopology->getClosestNodeTo(*(node4->getCoordinates()->getLocation())).value(), node4);
     geoTopology->updateFieldNodeCoordinates(node2,
                                             NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ((node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(*(node2->getCoordinates()->getLocation()),
+              NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange =
@@ -171,7 +221,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker->size(), (size_t) 2);
     EXPECT_TRUE(inRangeAtWorker->count(wrk4->getWorkerId()));
-    EXPECT_EQ(inRangeAtWorker->find(wrk4->getWorkerId())->second, (*wrk4->getLocationProvider()->getLocation()));
+    EXPECT_EQ(inRangeAtWorker->find(wrk4->getWorkerId())->second, *wrk4->getLocationProvider()->getWaypoint()->getLocation());
 
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(500.0);
@@ -224,6 +274,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -233,6 +285,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf2->coordinatorPort = (port);
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    wrkConf2->dataPort.setValue(*getAvailablePort());
+    wrkConf2->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -255,7 +309,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->getLocationProvider()->getNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     EXPECT_EQ(wrk2->getLocationProvider()->getNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 
-    EXPECT_EQ(*(wrk2->getLocationProvider()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_EQ(*wrk2->getLocationProvider()->getWaypoint()->getLocation(),
+              NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
@@ -263,8 +318,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(node1->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     EXPECT_EQ(node2->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
 
-    EXPECT_TRUE(node1->getCoordinates().isValid());
-    EXPECT_EQ(node2->getCoordinates(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_TRUE(node1->getCoordinates()->getLocation()->isValid());
+    EXPECT_EQ(*node2->getCoordinates()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -333,6 +388,8 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -343,13 +400,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromTopologyNode,
-                        std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -379,6 +430,8 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(csvPath);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -389,13 +442,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromTopologyNode,
-                        std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -430,6 +477,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
     wrkConf1->mobilityConfiguration.locationProviderSimulatedStartTime.setValue(simulatedStartTime);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -440,13 +489,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromTopologyNode,
-                        std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath, startTime, 4, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -470,8 +513,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->coordinatorPort = (port);
-    //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
-    wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
@@ -481,23 +522,15 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     auto currTime = getTimestamp();
     Timestamp simulatedStartTime = currTime + offset;
     wrkConf1->mobilityConfiguration.locationProviderSimulatedStartTime.setValue(simulatedStartTime);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    auto locationProvider =
-        std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
-    auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
 #ifdef S2DEF
-    checkDeviceMovement(csvPath,
-                        startTime,
-                        4,
-                        10000000,
-                        1000000,
-                        getLocationFromTopologyNode,
-                        std::static_pointer_cast<void>(wrk1Node));
+    checkDeviceMovement(csvPath, simulatedStartTime, 4, getLocationFromTopologyNode, std::static_pointer_cast<void>(wrk1Node));
 #endif
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -509,9 +542,9 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
 TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 
     WorkerRPCClientPtr client = std::make_shared<WorkerRPCClient>();
-    uint64_t rpcPortWrk1 = 6000;
-    uint64_t rpcPortWrk2 = 6001;
-    uint64_t rpcPortWrk3 = 6002;
+    uint64_t rpcPortWrk1 = *getAvailablePort();
+    uint64_t rpcPortWrk2 = *getAvailablePort();
+    uint64_t rpcPortWrk3 = *getAvailablePort();
 
     //test getting location of mobile node
     NES_INFO("start worker 1");
@@ -519,6 +552,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->rpcPort = rpcPortWrk1;
+    wrkConf1->dataPort.setValue(*getAvailablePort());
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
@@ -527,9 +561,9 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
 
-    auto loc1 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk1));
-    EXPECT_TRUE(loc1.isValid());
-    EXPECT_EQ(loc1, NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+    auto loc1 = client->getWaypoint("127.0.0.1:" + std::to_string(rpcPortWrk1));
+    EXPECT_TRUE(loc1->getLocation()->isValid());
+    EXPECT_EQ(*loc1->getLocation(), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -538,15 +572,16 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     NES_INFO("start worker 2");
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->rpcPort = rpcPortWrk2;
+    wrkConf2->dataPort.setValue(*getAvailablePort());
     wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
 
-    auto loc2 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk2));
-    EXPECT_TRUE(loc2.isValid());
-    EXPECT_EQ(loc2, NES::Spatial::Index::Experimental::Location::fromString(location2));
+    auto loc2 = client->getWaypoint("127.0.0.1:" + std::to_string(rpcPortWrk2));
+    EXPECT_TRUE(loc2->getLocation()->isValid());
+    EXPECT_EQ(*loc2->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
@@ -555,23 +590,23 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
+    wrkConf3->dataPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
 
-    auto loc3 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk3));
-    EXPECT_FALSE(loc3.isValid());
+    auto loc3 = client->getWaypoint("127.0.0.1:" + std::to_string(rpcPortWrk3));
+    EXPECT_FALSE(loc3->getLocation()->isValid());
 
     bool retStopWrk3 = wrk3->stop(false);
     EXPECT_TRUE(retStopWrk3);
 
     //test getting location of non existent node
-    auto loc4 = client->getLocation("127.0.0.1:9999");
-    EXPECT_FALSE(loc4.isValid());
+    auto loc4 = client->getWaypoint("127.0.0.1:9999");
+    EXPECT_FALSE(loc4->getLocation()->isValid());
 }
 
 TEST_F(LocationIntegrationTests, testReconnecting) {
-    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     NES_INFO("start coordinator")
@@ -623,8 +658,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
         currNode->setFixedCoordinates(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getCoordinates()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getCoordinates()->getLocation()),
+                      currNode->getId());
         idCount++;
     }
 
@@ -643,14 +679,17 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY)
+                                                                    + "testLocationsSlow2interpolated.csv");
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    auto waypoints =
+    auto startTime =
         std::dynamic_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(wrk1->getLocationProvider())
-            ->getWaypoints();
+            ->getStartTime();
+    auto waypoints = getWaypointsFromCsv(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv", startTime);
     auto reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
     while (!reconnectSchedule->getLastIndexUpdatePosition()) {
         NES_DEBUG("reconnect schedule does not yet contain index update position")
@@ -664,7 +703,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     uint64_t parentId = 0;
     Timestamp allowedTimeDiff = 150000000;//0.15 seconds
     std::optional<Timestamp> firstPrediction;
-    auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
+    auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(100);
     std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> lastReconnectPositionAndTime =
         std::pair(std::make_shared<NES::Spatial::Index::Experimental::Location>(), 0);
     std::shared_ptr<NES::Spatial::Mobility::Experimental::ReconnectPoint> predictedReconnect;
@@ -677,9 +716,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     ReconnectSchedule lastSchedule;
 
     //keep looping until the final waypoint is reached
-    for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation();
-         *workerLocation.first != *(waypoints.back().first);
-         workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
+    for (auto workerLocation = wrk1->getLocationProvider()->getCurrentWaypoint();
+         !isClose(*workerLocation->getLocation(), *(waypoints.back().first), 0.0000001);
+         workerLocation = wrk1->getLocationProvider()->getCurrentWaypoint()) {
         //test local node index
         NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition =
             wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
@@ -718,7 +757,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         //testing path prediction
         //find out which one is the upcoming waypoint
         auto nextWaypoint = waypoints[waypointCounter];
-        while (workerLocation.second > nextWaypoint.second) {
+        while (workerLocation->getTimestamp().value() > nextWaypoint.second) {
             //expecting this to be true works with the current input data
             //for paths where waypoints lead to less sharp turns, we also need to consider the option, that the predicted path did not change after passing a waypoint
             EXPECT_TRUE(waypointCovered[waypointCounter]);
@@ -736,9 +775,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     auto startPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathStart);
                     auto endPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*pathEnd);
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
-                    auto pathCurrentPosToWayPoint =
-                        S2Polyline(std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation.first),
-                                                NES::Spatial::Util::S2Utilities::locationToS2Point(*nextWaypoint.first)}));
+                    auto pathCurrentPosToWayPoint = S2Polyline(
+                        std::vector({NES::Spatial::Util::S2Utilities::locationToS2Point(*workerLocation->getLocation()),
+                                     NES::Spatial::Util::S2Utilities::locationToS2Point(*nextWaypoint.first)}));
                     waypointCovered[waypointCounter] =
                         lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
                 }
@@ -759,7 +798,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_TRUE(lastPredictedPath.Equals(pathNew));
                 }
 
-                if (workerLocation.second > lastPredictedPathRetrievalTime
+                if (workerLocation->getTimestamp() > lastPredictedPathRetrievalTime
                         + mobilityConfiguration1->pathPredictionUpdateInterval.getValue() * 1000000) {
                     NES_TRACE("update interval passed, check stabilizing and node covering");
 
@@ -772,10 +811,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                         auto newSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
                         //the path covered the waypoint, but the new schedule is not necessarily computed yet, therefore we need to keep querying for the prediction
                         EXPECT_TRUE(lastReconnectPositionAndTime.first);
-                        EXPECT_TRUE(updatedLastReconnect.first);
                         if (newPredictedReconnect
                             && ((lastReconnectPositionAndTime.first->isValid()
-                                 && *updatedLastReconnect.first == *lastReconnectPositionAndTime.first)
+                                 && *updatedLastReconnect->getLocation() == *lastReconnectPositionAndTime.first)
                                 || !lastReconnectPositionAndTime.first->isValid())) {
                             NES_TRACE("path stabilized after reconnect")
                             NES_TRACE(
@@ -799,32 +837,33 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
         //testing scheduling of reconnects
         auto updatedLastReconnect = wrk1->getTrajectoryPredictor()->getLastReconnectLocationAndTime();
-        EXPECT_TRUE(updatedLastReconnect.first);
         //if there has been a reconnect, check the accuracy of the prediction against the actual reconnect place and time
-        if (get<0>(updatedLastReconnect)->isValid()) {
+        if (updatedLastReconnect->getLocation()->isValid()) {
             if (!get<0>(lastReconnectPositionAndTime)->isValid()
-                || get<0>(updatedLastReconnect) != get<0>(lastReconnectPositionAndTime)) {
+                || *updatedLastReconnect->getLocation() != *get<0>(lastReconnectPositionAndTime)) {
                 NES_DEBUG("worker reconnected")
                 if (predictedReconnect) {
                     auto predictedPoint =
                         NES::Spatial::Util::S2Utilities::locationToS2Point(predictedReconnect->predictedReconnectLocation);
-                    auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*(updatedLastReconnect.first));
+                    auto actualPoint = NES::Spatial::Util::S2Utilities::locationToS2Point(*updatedLastReconnect->getLocation());
                     EXPECT_TRUE(S2::ApproxEquals(predictedPoint, actualPoint, allowedReconnectPositionPredictionError));
                     EXPECT_NE(predictedReconnect->reconnectPrediction.expectedTime, 0);
-                    EXPECT_NE(get<1>(updatedLastReconnect), 0);
+                    EXPECT_NE(updatedLastReconnect->getTimestamp(), 0);
                     NES_DEBUG("timediff " << predictedReconnect->reconnectPrediction.expectedTime
-                                  - (long long) get<1>(updatedLastReconnect));
+                                  - (long long) updatedLastReconnect->getTimestamp().value());
                     NES_DEBUG("expected parent id " << predictedReconnect->reconnectPrediction.expectedNewParentId);
                     EXPECT_LT(abs((long long) predictedReconnect->reconnectPrediction.expectedTime
-                                  - (long long) get<1>(updatedLastReconnect)),
+                                  - (long long) updatedLastReconnect->getTimestamp().value()),
                               allowedTimeDiff);
-                    EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
+                    EXPECT_LT(abs((long long) firstPrediction.value() - (long long) updatedLastReconnect->getTimestamp().value()),
                               allowedTimeDiff);
                     firstPrediction = std::nullopt;
 
                     //increase reconnect count and mark this reconnect as the last one so we do not check again until after the next reconnect
                     reconnectCounter++;
-                    lastReconnectPositionAndTime = updatedLastReconnect;
+                    lastReconnectPositionAndTime = {
+                        std::make_shared<NES::Spatial::Index::Experimental::Location>(*updatedLastReconnect->getLocation()),
+                        updatedLastReconnect->getTimestamp().value()};
 
                     //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
                     bool predictedAtCoord = false;
@@ -871,7 +910,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 }
 
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
-    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     NES_INFO("start coordinator")
@@ -923,8 +961,9 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         currNode->setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
         currNode->setFixedCoordinates(elem);
         topology->addNewTopologyNodeAsChild(node, currNode);
-        locIndex->initializeFieldNodeCoordinates(currNode, (currNode->getCoordinates()));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(currNode->getCoordinates()), currNode->getId());
+        locIndex->initializeFieldNodeCoordinates(currNode, (*currNode->getCoordinates()->getLocation()));
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::locationToS2Point(*currNode->getCoordinates()->getLocation()),
+                      currNode->getId());
         idCount++;
     }
 
@@ -943,7 +982,10 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY)
+                                                                    + "testLocationsSlow2interpolated.csv");
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -977,6 +1019,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
 }
 
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
+    auto coordinatorDataPort = getAvailablePort();
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
 
@@ -997,6 +1040,9 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->dataPort.setValue(*coordinatorDataPort);
+
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1004,20 +1050,15 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    EXPECT_TRUE(waitForNodes(5, 1, topology));
 
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    wrkConf1->dataPort.setValue(0);
-    wrkConf1->rpcPort.setValue(0);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
 
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
@@ -1031,22 +1072,14 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    EXPECT_TRUE(waitForNodes(5, 2, topology));
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
-    ss << testFile;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","placement" : "BottomUp"})";
-    ss << endl;
-    NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        "BottomUp",
+        FaultToleranceType::NONE,
+        LineageType::NONE);
 
-    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-
-    NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1079,8 +1112,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
         NES_DEBUG("recv after buffering: " << recv_tuples)
         sleep(1);
     }
-
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
     string expectedContent = compareString;
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
@@ -1098,6 +1129,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 }
 
 TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
+    auto coordinatorDataPort = getAvailablePort();
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_buffering_out.csv";
 
@@ -1118,6 +1150,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->dataPort.setValue(*coordinatorDataPort);
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1125,20 +1158,16 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    EXPECT_TRUE(waitForNodes(5, 1, topology));
 
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
 
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(4);
@@ -1153,22 +1182,14 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    EXPECT_TRUE(waitForNodes(5, 2, topology));
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
-    ss << testFile;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","placement" : "BottomUp"})";
-    ss << endl;
-    NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        "BottomUp",
+        FaultToleranceType::NONE,
+        LineageType::NONE);
 
-    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-
-    NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1202,8 +1223,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
         sleep(1);
     }
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-
     string expectedContent = compareString;
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
@@ -1220,6 +1239,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
 }
 
 TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
+    auto coordinatorDataPort = getAvailablePort();
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "empty_buffer_out.csv";
 
@@ -1240,6 +1260,7 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->dataPort.setValue(*coordinatorDataPort);
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1247,18 +1268,15 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    EXPECT_TRUE(waitForNodes(5, 1, topology));
 
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
 
     auto stype = CSVSourceType::create();
     stype->setFilePath(std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv");
@@ -1271,22 +1289,14 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    EXPECT_TRUE(waitForNodes(5, 2, topology));
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
-    ss << testFile;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","placement" : "BottomUp"})";
-    ss << endl;
-    NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        "BottomUp",
+        FaultToleranceType::NONE,
+        LineageType::NONE);
 
-    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-
-    NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
@@ -1324,12 +1334,14 @@ TEST_F(LocationIntegrationTests, testFlushingEmptyBuffer) {
 }
 
 TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
+    auto coordinatorDataPort = getAvailablePort();
     NES_INFO(" start coordinator");
     NES_INFO("rest port = " << *restPort);
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->dataPort.setValue(*coordinatorDataPort);
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1337,27 +1349,22 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    EXPECT_TRUE(waitForNodes(5, 1, topology));
 
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->dataPort.setValue(0);
     wrkConf1->rpcPort.setValue(0);
-
-    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
+    wrkConf1->dataPort.setValue(*getAvailablePort());
+    wrkConf1->rpcPort.setValue(*getAvailablePort());
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+    EXPECT_TRUE(waitForNodes(5, 2, topology));
 
     wrk1->getNodeEngine()->bufferAllData();
 
@@ -1373,6 +1380,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
 }
 
 TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
+    auto coordinatorDataPort = getAvailablePort();
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_reconnecting_out.csv";
 
@@ -1393,6 +1401,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
+    coordinatorConfig->dataPort.setValue(*coordinatorDataPort);
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1400,7 +1409,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+    EXPECT_TRUE(waitForNodes(5, 1, topology));
     auto locIndex = topology->getLocationIndex();
 
     TopologyNodePtr node = topology->getRoot();
@@ -1436,27 +1445,24 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
         {52.45558349451082, 13.774558360650097},  {52.50660545385822, 13.171564805090318},
         {52.38586011054127, 13.772290920473052},  {52.4010561708298, 13.426889487526187}};
 
+    std::vector<NesWorkerPtr> fieldNodes;
     for (auto elem : locVec) {
         WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort.setValue(*rpcCoordinatorPort);
         wrkConf->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
         wrkConf->locationCoordinates.setValue(elem);
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
+        fieldNodes.push_back(wrk);
         bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
         EXPECT_TRUE(retStart);
     }
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 60));
+    EXPECT_TRUE(waitForNodes(5, 61, topology));
     string singleLocStart = "52.55227464714949, 13.351743136322877";
     auto startParentId = topology->getLocationIndex()
                              ->getClosestNodeTo(NES::Spatial::Index::Experimental::Location::fromString(singleLocStart))
                              .value()
                              ->getId();
-    std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"seq\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
+    crd->getSourceCatalog()->addLogicalSource("seq", "Schema::create()->addField(createField(\"value\",UINT64));");
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -1471,7 +1477,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->physicalSources.add(sequenceSource);
 
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
-    wrkConf1->parentId.setValue(10006);
     wrkConf1->parentId.setValue(startParentId);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
@@ -1482,30 +1487,22 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.sendLocationUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY)
+                                                                    + "testLocationsSlow2interpolated.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 61));
+    EXPECT_TRUE(waitForNodes(5, 62, topology));
 
-    std::stringstream ss;
-    ss << "{\"userQuery\" : ";
-    ss << R"("Query::from(\"seq\").sink(FileSinkDescriptor::create(\")";
-    ss << testFile;
-    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
-    ss << R"());","placement" : "BottomUp"})";
-    ss << endl;
-    NES_INFO("string submit=" << ss.str());
-    string body = ss.str();
+    QueryId queryId = crd->getQueryService()->validateAndQueueAddQueryRequest(
+        R"(Query::from("seq").sink(FileSinkDescriptor::create(")" + testFile + R"(", "CSV_FORMAT", "APPEND"));)",
+        "BottomUp",
+        FaultToleranceType::NONE,
+        LineageType::NONE);
 
-    nlohmann::json json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
-
-    NES_INFO("try to acc return");
-    QueryId queryId = json_return["queryId"].get<int>();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
-
     size_t recv_tuples = 0;
     while (recv_tuples < 10000) {
         std::ifstream inFile(testFile);
@@ -1514,10 +1511,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
         sleep(1);
     }
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
-
     string expectedContent = compareString;
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile, 1));
 
     int response = remove(testFile.c_str());
     EXPECT_TRUE(response == 0);
@@ -1525,6 +1520,11 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
+
+    for (const auto& w : fieldNodes) {
+        bool stop = w->stop(false);
+        EXPECT_TRUE(stop);
+    }
 
     cout << "stopping coordinator" << endl;
     bool retStopCord = crd->stopCoordinator(false);

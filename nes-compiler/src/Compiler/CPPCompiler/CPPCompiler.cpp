@@ -89,11 +89,12 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     for (auto includePath : runtimePathConfig.includePaths) {
         compilationFlags.addFlag("-I" + includePath);
     }
+
     compilationFlags.addFlag("-o" + libraryFileName);
 
     // the log level of the compiled code is the same as the currently selected log level of the runtime.
-    auto logLevel = getLogLevel(Logger::getInstance()->getCurrentLogLevel());
-    compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
+    auto logLevel = getLogLevel(Logger::getInstance().getCurrentLogLevel());
+    compilationFlags.addFlag("-DFMT_HEADER_ONLY -DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
 #ifdef TFDEF
     compilationFlags.addFlag("-DTFDEF=1");
@@ -126,7 +127,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
         compilerCall << arg << " ";
     }
     NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
-    std::cout << "Compiler: compile with: '" << compilerCall.str() << "'" << std::endl;
+    NES_DEBUG("Compiler: compile with: '" << compilerCall.str() << "'");
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp = nullptr;
     char buffer[8192];

@@ -18,6 +18,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
@@ -190,11 +191,15 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         //return an empty reply
         return Status::OK;
     }
-    auto loc = locationProvider->getLocation();
-    if (loc) {
+    auto waypoint = locationProvider->getWaypoint();
+    auto loc = waypoint->getLocation();
+    if (loc->isValid()) {
         Coordinates* coord = reply->mutable_coord();
         coord->set_lat(loc->getLatitude());
         coord->set_lng(loc->getLongitude());
+    }
+    if (waypoint->getTimestamp()) {
+        reply->set_timestamp(waypoint->getTimestamp().value());
     }
     return Status::OK;
 }

@@ -15,13 +15,14 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+#include <utility>
 
 namespace NES::Nautilus::Tracing {
 
 ValueRef::ValueRef() : blockId(), operationId(){};
 
-ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, const NES::Nautilus::IR::Types::StampPtr& type)
-    : blockId(blockId), operationId(operationId), type(type){};
+ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, NES::Nautilus::IR::Types::StampPtr type)
+    : blockId(blockId), operationId(operationId), type(std::move(type)){};
 
 ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
 ValueRef::ValueRef(const ValueRef&& other)
@@ -37,16 +38,16 @@ ValueRef& ValueRef::operator=(const ValueRef& other) {
 ValueRef& ValueRef::operator=(const ValueRef&& other) {
     this->operationId = other.operationId;
     this->blockId = other.blockId;
-    this->type = std::move(other.type);
+    this->type = other.type;
     return *this;
 }
 
-ValueRef createNextRef(NES::Nautilus::IR::Types::StampPtr type) {
-    auto ctx = getThreadLocalTraceContext();
-    if (ctx) {
-        return ctx->createNextRef(type);
+ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr& stamp) {
+    if (auto ctx = Nautilus::Tracing::TraceContext::get()) {
+        return ctx->createNextRef(stamp);
     }
-    return ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
+    // create default value.
+    return ValueRef(0 /* blockId */, 0 /*operationId */, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
 }
 
 std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {

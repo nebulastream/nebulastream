@@ -124,9 +124,19 @@ class KafkaSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
+     * @brief Get batchSize as the number of messages to pull in one chunk form kafka
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getBatchSize() const;
+
+    /**
      * @brief Set connection time out for source, needed for: KafkaSource
      */
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
+    /**
+     * @brief Set batch size as the number of messages pulled from kafka in one chunk
+     */
+    void setBatchSize(uint32_t batchSize);
 
   private:
     /**
@@ -151,6 +161,7 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption offsetMode;
     Configurations::IntConfigOption connectionTimeout;
     Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption batchSize;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

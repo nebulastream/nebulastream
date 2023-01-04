@@ -11,34 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
+#include <API/WindowedQuery.hpp>
+#include <API/Windowing.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <iostream>
-#include <numeric>
-
-#include <API/WindowedQuery.hpp>
-#include <API/Windowing.hpp>
 #include <utility>
 
 namespace NES {
@@ -110,8 +103,8 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+    std::string cepLeftKey = keyAssignment("cep_leftKey");
+    std::string cepRightKey = keyAssignment("cep_rightKey");
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -130,8 +123,8 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+    std::string cepLeftKey = keyAssignment("cep_leftKey");
+    std::string cepRightKey = keyAssignment("cep_rightKey");
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -175,20 +168,12 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-std::string keyAssignmentRight() {
+std::string keyAssignment(std::string keyName) {
     //first, get unique ids for the key attributes
-    auto cepRightId = Util::getNextOperatorId();
+    auto cepId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
-    return cepRightKey;
-}
-
-std::string keyAssignmentLeft() {
-    //first, get unique ids for the key attributes
-    auto cepLeftId = Util::getNextOperatorId();
-    //second, create a unique name for both key attributes
-    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
-    return cepLeftKey;
+    std::string cepKey = keyName + std::to_string(cepId);
+    return cepKey;
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
@@ -242,180 +227,26 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 Query::Query(const Query& query) = default;
 
 Query Query::from(const std::string& sourceName) {
-    NES_DEBUG("Query: create query for input source " << sourceName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
-    auto queryPlan = QueryPlan::create(sourceOperator);
-    queryPlan->setSourceConsumed(sourceName);
+    NES_DEBUG("Query: create new Query with source " << sourceName);
+    auto queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
     return Query(queryPlan);
 }
 
 Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
-    OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
-    queryPlan->appendOperatorAsNewRoot(op);
+    NES_DEBUG("Query: add projection to query");
+    this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
     return *this;
 }
 
 Query& Query::as(const std::string& newSourceName) {
-    auto renameOperator = LogicalOperatorFactory::createRenameSourceOperator(newSourceName);
-    queryPlan->appendOperatorAsNewRoot(renameOperator);
+    NES_DEBUG("Query: add rename operator to query");
+    this->queryPlan = QueryPlanBuilder::addRename(newSourceName, this->queryPlan);
     return *this;
 }
 
 Query& Query::unionWith(const Query& subQuery) {
     NES_DEBUG("Query: unionWith the subQuery to current query");
-    OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
-    const QueryPlanPtr& subQueryPlan = subQuery.queryPlan;
-    queryPlan->addRootOperator(subQueryPlan->getRootOperators()[0]);
-    queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(subQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
-    queryPlan->setSourceConsumed(updatedSourceName);
-    return *this;
-}
-
-Query& Query::join(const Query& subQueryRhs,
-                   ExpressionItem onLeftKey,
-                   ExpressionItem onRightKey,
-                   const Windowing::WindowTypePtr& windowType,
-                   Join::LogicalJoinDefinition::JoinType joinType) {
-    NES_DEBUG("Query: joinWith the subQuery to current query");
-
-    auto subQuery = const_cast<Query&>(subQueryRhs);
-
-    auto leftKeyExpression = onLeftKey.getExpressionNode();
-    if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto rightKeyExpression = onRightKey.getExpressionNode();
-    if (!rightKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
-    auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
-
-    //we use a on time trigger as default that triggers on each change of the watermark
-    auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
-    //    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
-
-    //we use a lazy NL join because this is currently the only one that is implemented
-    auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
-
-    // we use a complete window type as we currently do not have a distributed join
-    auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-
-    auto rightQueryPlan = subQuery.getQueryPlan();
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
-    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
-    auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
-    auto rightJoinType = rootOperatorRhs->getOutputSchema();
-
-    auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
-
-    // check if query contain watermark assigner, and add if missing (as default behaviour)
-    if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            queryPlan->appendOperatorAsNewRoot(LogicalOperatorFactory::createWatermarkAssignerOperator(
-                Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
-        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
-            queryPlan->appendOperatorAsNewRoot(
-                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                    API::Milliseconds(0),
-                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
-        }
-    }
-
-    if (rightQueryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-            auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(
-                Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-            rightQueryPlan->appendOperatorAsNewRoot(op);
-        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
-            auto op =
-                LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                    API::Milliseconds(0),
-                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
-            rightQueryPlan->appendOperatorAsNewRoot(op);
-        }
-    }
-
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
-                                                              rightKeyFieldAccess,
-                                                              windowType,
-                                                              distrType,
-                                                              triggerPolicy,
-                                                              triggerAction,
-                                                              1,
-                                                              1,
-                                                              joinType);
-
-    auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
-    queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-    queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    // accumulating sourceNames with delimiters _ between all sourceNames to enable backtracking of origin
-    auto updatedSourceName =
-        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
-            return a + "_" + b;
-        });
-    queryPlan->setSourceConsumed(updatedSourceName);
-
-    return *this;
-}
-
-Query& Query::batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
-    NES_DEBUG("Query: batchJoinWith the subQuery to current query");
-
-    auto subQuery = const_cast<Query&>(subQueryRhs);
-
-    auto probeKeyExpression = onProbeKey.getExpressionNode();
-    if (!probeKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + probeKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto buildKeyExpression = onBuildKey.getExpressionNode();
-    if (!buildKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + buildKeyExpression->toString());
-        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
-    }
-    auto probeKeyFieldAccess = probeKeyExpression->as<FieldAccessExpressionNode>();
-    auto buildKeyFieldAccess = buildKeyExpression->as<FieldAccessExpressionNode>();
-
-    auto rightQueryPlan = subQuery.getQueryPlan();
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
-    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
-    auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
-    auto rightJoinType = rootOperatorRhs->getOutputSchema();
-
-    // todo here again we wan't to extend to distributed joins:
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
-
-    auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
-    queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
-    queryPlan->appendOperatorAsNewRoot(op);
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
-    sourceNames.emplace_back(queryPlan->getSourceConsumed());
-    std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
-    queryPlan->setSourceConsumed(updatedSourceName);
-
+    this->queryPlan = QueryPlanBuilder::addUnionOperator(this->queryPlan, subQuery.getQueryPlan());
     return *this;
 }
 
@@ -424,15 +255,20 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
-    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+                                                        subQueryRhs.getQueryPlan(),
+                                                        onLeftKey,
+                                                        onRightKey,
+                                                        windowType,
+                                                        joinType);
+    return *this;
 }
 
 Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
-    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
-
-    return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey);
+    NES_DEBUG("Query: add Batch Join Operator to Query");
+    this->queryPlan = QueryPlanBuilder::addBatchJoinOperator(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
+    return *this;
 }
 
 Query& Query::andWith(const Query& subQueryRhs,
@@ -441,7 +277,13 @@ Query& Query::andWith(const Query& subQueryRhs,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
-    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+                                                        subQueryRhs.getQueryPlan(),
+                                                        onLeftKey,
+                                                        onRightKey,
+                                                        windowType,
+                                                        joinType);
+    return *this;
 }
 
 Query& Query::seqWith(const Query& subQueryRhs,
@@ -450,35 +292,33 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
-    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+                                                        subQueryRhs.getQueryPlan(),
+                                                        onLeftKey,
+                                                        onRightKey,
+                                                        windowType,
+                                                        joinType);
+    return *this;
 }
 
 Query& Query::orWith(const Query& subQueryRhs) {
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
-    return Query::unionWith(subQueryRhs);
+    this->queryPlan = QueryPlanBuilder::addUnionOperator(this->queryPlan, subQueryRhs.getQueryPlan());
+    return *this;
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
-    if (!filterExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
-        NES_THROW_RUNTIME_ERROR("Query: Filter predicate cannot have a FieldRenameExpression");
-    }
-    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);
-    queryPlan->appendOperatorAsNewRoot(op);
+    this->queryPlan = QueryPlanBuilder::addFilter(filterExpression, this->queryPlan);
     return *this;
 }
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
-    if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
-        NES_THROW_RUNTIME_ERROR("Query: Map expression cannot have a FieldRenameExpression");
-    }
-    OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(mapExpression);
-    queryPlan->appendOperatorAsNewRoot(op);
+    this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);
     return *this;
 }
 
-#ifdef TFDEF
 Query& Query::inferModel(const std::string model,
                          const std::initializer_list<ExpressionItem> inputFields,
                          const std::initializer_list<ExpressionItem> outputFields) {
@@ -497,23 +337,20 @@ Query& Query::inferModel(const std::string model,
     }
 
     OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
-    std::cout << op->toString() << std::endl;
+    NES_DEBUG2("Query::inferModel: Current Operator: {}", op->toString());
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
-#endif// TFDEF
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
-    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
-    queryPlan->appendOperatorAsNewRoot(op);
+    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor);
     return *this;
 }
 
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
-    OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
-    queryPlan->appendOperatorAsNewRoot(op);
+    this->queryPlan = QueryPlanBuilder::assignWatermark(this->queryPlan, watermarkStrategyDescriptor);
     return *this;
 }
 

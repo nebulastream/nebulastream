@@ -138,7 +138,7 @@ class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
         writeVariable(server);
         p.set_value(true);
         UA_StatusCode retval = UA_Server_run(server, &running);
-        std::cout << " retval is=" << retval << std::endl;
+        NES_DEBUG(" retval is=" << retval);
         UA_Server_delete(server);
     }
 
@@ -178,7 +178,7 @@ TEST_F(OPCSourceTest, OPCSourcePrint) {
 
     EXPECT_EQ(opcSource->toString(), expected);
 
-    std::cout << opcSource->toString() << std::endl;
+    NES_DEBUG(opcSource->toString());
 
     SUCCEED();
 }

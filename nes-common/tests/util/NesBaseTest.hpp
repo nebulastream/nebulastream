@@ -34,9 +34,23 @@ extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 }// namespace Exceptions
 namespace Testing {
+namespace detail {
+class TestWaitingHelper {
+  public:
+    TestWaitingHelper();
+    void startWaitingThread(std::string testName);
+    void completeTest();
+    void failTest();
 
+  private:
+    std::unique_ptr<std::thread> waitThread;
+    std::shared_ptr<std::promise<bool>> testCompletion;
+    std::atomic<bool> testCompletionSet{false};
+    static constexpr uint64_t WAIT_TIME_SETUP = 5;
+};
+}// namespace detail
 template<typename T>
-class TestWithErrorHandling : public T, public Exceptions::ErrorListener {
+class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public detail::TestWaitingHelper {
     struct Deleter {
         void operator()(void*) {}
     };
@@ -45,21 +59,25 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener {
     void SetUp() override {
         T::SetUp();
         Exceptions::installGlobalErrorListener(self = std::shared_ptr<Exceptions::ErrorListener>(this, Deleter()));
+        startWaitingThread(typeid(*this).name());
     }
 
     void TearDown() override {
         T::TearDown();
+        completeTest();
         Exceptions::removeGlobalErrorListener(self);
         self.reset();
     }
 
     virtual void onFatalError(int signalNumber, std::string callstack) override {
         NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+        failTest();
         FAIL();
     }
 
     virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
         NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+        failTest();
         FAIL();
     }
 
@@ -138,10 +156,6 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   private:
     std::filesystem::path testResourcePath;
-    std::unique_ptr<std::thread> waitThread;
-    std::promise<bool> testCompletion;
-    std::atomic<bool> testCompletionSet{false};
-    static constexpr uint64_t WAIT_TIME_SETUP = 5;
 };
 }// namespace Testing
 

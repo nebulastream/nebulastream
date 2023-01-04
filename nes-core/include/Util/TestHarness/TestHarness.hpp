@@ -29,7 +29,7 @@
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
-#include <log4cxx/helpers/exception.h>
+
 #include <type_traits>
 #include <utility>
 
@@ -309,21 +309,21 @@ class TestHarness {
     TestHarness& validate() {
         validationDone = true;
         if (this->logicalSources.empty()) {
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "No Logical source defined. Please make sure you add logical source while defining up test harness.");
         }
 
         if (testHarnessWorkerConfigurations.empty()) {
-            throw log4cxx::helpers::Exception("TestHarness: No worker added to the test harness.");
+            throw Exceptions::RuntimeException("TestHarness: No worker added to the test harness.");
         }
 
         uint64_t sourceCount = 0;
         for (const auto& workerConf : testHarnessWorkerConfigurations) {
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource && workerConf->getRecords().empty()) {
-                throw log4cxx::helpers::Exception("TestHarness: No Record defined for Memory Source with logical source Name: "
-                                                  + workerConf->getLogicalSourceName()
-                                                  + " and Physical source name : " + workerConf->getPhysicalSourceName()
-                                                  + ". Please add data to the test harness.");
+                throw Exceptions::RuntimeException("TestHarness: No Record defined for Memory Source with logical source Name: "
+                                                   + workerConf->getLogicalSourceName()
+                                                   + " and Physical source name : " + workerConf->getPhysicalSourceName()
+                                                   + ". Please add data to the test harness.");
             }
 
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::CSVSource
@@ -334,7 +334,7 @@ class TestHarness {
         }
 
         if (sourceCount == 0) {
-            throw log4cxx::helpers::Exception("TestHarness: No Physical source defined in the test harness.");
+            throw Exceptions::RuntimeException("TestHarness: No Physical source defined in the test harness.");
         }
         return *this;
     }
@@ -353,8 +353,9 @@ class TestHarness {
         }
 
         if (!schema) {
-            throw log4cxx::helpers::Exception("Unable to find logical source with name " + logicalSourceName
-                                              + ". Make sure you are adding a logical source with the name to the test harness.");
+            throw Exceptions::RuntimeException(
+                "Unable to find logical source with name " + logicalSourceName
+                + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
         return PhysicalSource::create(logicalSourceName,
@@ -376,8 +377,9 @@ class TestHarness {
         }
 
         if (!schema) {
-            throw log4cxx::helpers::Exception("Unable to find logical source with name " + logicalSourceName
-                                              + ". Make sure you are adding a logical source with the name to the test harness.");
+            throw Exceptions::RuntimeException(
+                "Unable to find logical source with name " + logicalSourceName
+                + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
         auto tupleSize = schema->getSchemaSizeInBytes();
@@ -569,7 +571,7 @@ class TestHarness {
     TopologyPtr getTopology() {
 
         if (!validationDone && !topologySetupDone) {
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
         }
         return nesCoordinator->getTopology();

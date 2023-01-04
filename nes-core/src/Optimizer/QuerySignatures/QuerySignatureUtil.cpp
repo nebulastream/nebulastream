@@ -230,8 +230,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForInferModel(
         updatedSchemaFieldToExprMaps.emplace_back(schemaFieldToExprMap);
         SchemaPtr outputSchema = inferModelOperator->getOutputSchema();
 
-        auto inputfields = inferModelOperator->getInputFieldsAsPtr();
-        auto outoutfields = inferModelOperator->getInputFieldsAsPtr();
+        auto inputfields = inferModelOperator->getInputFields();
+        auto outoutfields = inferModelOperator->getInputFields();
 
         for (auto in_field : inputfields) {
             auto fieldname = in_field->getExpressionNode()->as<FieldAccessExpressionNode>()->getFieldName();

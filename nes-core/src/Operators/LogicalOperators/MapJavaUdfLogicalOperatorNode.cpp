@@ -95,7 +95,7 @@ bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
     if (!other->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
         return false;
     }
-    return javaUdfDescriptor == other->as<MapJavaUdfLogicalOperatorNode>()->javaUdfDescriptor;
+    return *javaUdfDescriptor == *other->as<MapJavaUdfLogicalOperatorNode>()->javaUdfDescriptor;
 }
 
 bool MapJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {

@@ -20,12 +20,12 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
-#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 
@@ -57,7 +57,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     NES_DEBUG(" WorkerRPCClient::registerQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::registerQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
 bool WorkerRPCClient::registerQueryAsync(const std::string& address,
@@ -201,7 +201,7 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryI
     NES_DEBUG(" WorkerRPCClient::unregisterQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::unregisterQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
 }
 
 bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
@@ -225,7 +225,7 @@ bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
     NES_DEBUG(" WorkerRPCClient::startQuery "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::startQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
 bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
@@ -281,7 +281,7 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
     NES_ERROR(" WorkerRPCClient::markQueryForStop "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
 bool WorkerRPCClient::stopQueryAsync(const std::string& address,
@@ -396,7 +396,7 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
+        throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
     return false;
 }
@@ -426,7 +426,7 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
         NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
+        throw Exceptions::RuntimeException("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
 
@@ -449,7 +449,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& address) {
+Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
@@ -460,9 +460,19 @@ Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::s
     Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
-        return {coord.lat(), coord.lng()};
+        auto timestamp = reply.timestamp();
+        //if timestamp is valid, include it in waypoint
+        if (timestamp != 0) {
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(
+                Spatial::Index::Experimental::Location(coord.lat(), coord.lng()),
+                timestamp);
+        }
+        //no valid timestamp to include
+        return std::make_shared<Spatial::Index::Experimental::Waypoint>(
+            Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
     }
-    return {};
+    //location is invalid
+    return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& address) {

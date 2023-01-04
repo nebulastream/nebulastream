@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #ifdef TFDEF
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/common.h>
 #endif// TFDEF
@@ -27,7 +28,7 @@
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model) {
-    std::cout << "INITIALIZING MODEL: " << model << std::endl;
+    NES_DEBUG("INITIALIZING MODEL: " << model);
 
     std::ifstream input(model, std::ios::in | std::ios::binary);
 
@@ -42,34 +43,134 @@ void NES::TensorflowAdapter::initializeModel(std::string model) {
 
 NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
-float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
+double NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
-void NES::TensorflowAdapter::infer(int n, ...) {
+void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
+
     va_list vl;
     va_start(vl, n);
 
-    TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
-    int input_size = (int) (TfLiteTensorByteSize(input_tensor));
+    //create input for tensor
+    TfLiteTensor* inputTensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+    int inputSize = (int) (TfLiteTensorByteSize(inputTensor));
 
-    int* input = (int*) malloc(input_size);
+    //Prepare input parameters based on data type
+    if (dataType == BasicPhysicalType::NativeType::INT_64) {
 
-    for (int i = 0; i < n; ++i) {
-        input[i] = (int) va_arg(vl, int);
+        int* inputData = (int*) malloc(inputSize);
+        for (int i = 0; i < n; ++i) {
+            inputData[i] = (int) va_arg(vl, int);
+        }
+        va_end(vl);
+
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
+        TfLiteInterpreterInvoke(interpreter);
+
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
+        if (output != nullptr) {
+            free(output);
+        }
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (double*) malloc(output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
+    } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
+        //create input for tensor
+        float* inputData = (float*) malloc(inputSize);
+        for (int i = 0; i < n; ++i) {
+            inputData[i] = (float) va_arg(vl, double);
+        }
+        va_end(vl);
+
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
+        TfLiteInterpreterInvoke(interpreter);
+
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
+        if (output != nullptr) {
+            free(output);
+        }
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (double*) malloc(output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
+    } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
+        //create input for tensor
+        double* inputData = (double*) malloc(inputSize);
+        for (int i = 0; i < n; ++i) {
+            inputData[i] = (double) va_arg(vl, double);
+        }
+        va_end(vl);
+
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
+        TfLiteInterpreterInvoke(interpreter);
+
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
+        if (output != nullptr) {
+            free(output);
+        }
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (double*) malloc(output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+
+    } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
+        //create input for tensor
+        bool* inputData = (bool*) malloc(inputSize);
+        for (int i = 0; i < n; ++i) {
+            inputData[i] = (bool) va_arg(vl, int);
+        }
+        va_end(vl);
+
+        //Copy input tensor
+        TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
+        //Invoke tensor model and perform inference
+        TfLiteInterpreterInvoke(interpreter);
+
+        //Release allocated memory for input
+        free(inputData);
+
+        //Clear allocated memory to output
+        if (output != nullptr) {
+            free(output);
+        }
+
+        //Prepare output tensor
+        const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (double*) malloc(output_size);
+
+        //Copy value to the output
+        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
     }
-    va_end(vl);
-
-    TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
-    TfLiteInterpreterInvoke(interpreter);
-    const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-
-    free(input);
-    if (output != nullptr) {
-        free(output);
-    }
-
-    int output_size = (int) (TfLiteTensorByteSize(output_tensor));
-    output = (float*) malloc(output_size);
-    TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 }
 
 #endif// TFDEF

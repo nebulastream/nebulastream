@@ -178,13 +178,14 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-        //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_TRACE("QueryManager: added Task this pipelineID="
                   << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
-                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
+                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer
+                  << " queryId=" << (*nextPipeline)->getQueryId() << " getQuerySubPlanId=" << (*nextPipeline)->getQuerySubPlanId()
+                  << " queueId=" << queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
+
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
         NES_TRACE("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
                                                        << " queueId=" << queueId);
@@ -224,8 +225,6 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-        //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_TRACE("QueryManager: added Task this pipelineID="
                   << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
                   << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
@@ -289,7 +288,6 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
         auto diff = now - creation;
-        //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
         NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
         statistics->incLatencySum(diff);
 

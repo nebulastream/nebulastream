@@ -23,6 +23,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <algorithm>
 #include <utility>
 
 namespace NES::Optimizer {

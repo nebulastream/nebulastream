@@ -21,7 +21,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 namespace NES::Optimizer {
 
@@ -79,12 +79,12 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
             if (!sink->inferSchema(typeInferencePhaseContext)) {
-                throw log4cxx::helpers::Exception("TypeInferencePhase: Failed!");
+                throw Exceptions::RuntimeException("TypeInferencePhase: Failed!");
             }
         }
         NES_DEBUG("TypeInferencePhase: we inferred all schemas");
         return queryPlan;
-    } catch (log4cxx::helpers::Exception& e) {
+    } catch (std::exception& e) {
         NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase " << e.what());
         auto queryId = queryPlan->getQueryId();
         throw TypeInferenceException(queryId, e.what());

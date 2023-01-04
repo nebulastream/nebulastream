@@ -187,8 +187,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
             // decode protobuf message into c++ obj repr
-            SerializableSchema* schema = protobufMessage->mutable_schema();
-            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
@@ -279,8 +278,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
             // decode protobuf message into c++ obj repr
-            SerializableSchema* schema = protobufMessage->mutable_schema();
-            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source

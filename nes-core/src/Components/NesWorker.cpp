@@ -29,10 +29,10 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProvider.hpp>
 #include <Spatial/Mobility/ReconnectConfigurator.hpp>
 #include <Spatial/Mobility/TrajectoryPredictor.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -41,7 +41,7 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
-#include <log4cxx/helpers/exception.h>
+
 #include <utility>
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -146,7 +146,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
-        throw log4cxx::helpers::Exception("NesWorker error while starting node engine");
+        throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
     NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":"
@@ -241,6 +241,16 @@ bool NesWorker::stop(bool) {
             NES_WARNING("No health check service was created");
         }
 
+        if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
+            if (trajectoryPredictor) {
+                trajectoryPredictor->stopReconnectPlanning();
+                NES_TRACE("triggered stopping of reconnect planner thread");
+            }
+            if (reconnectConfigurator) {
+                reconnectConfigurator->stopPeriodicUpdating();
+                NES_TRACE("triggered stopping of location update push thread");
+            }
+        }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
@@ -259,16 +269,6 @@ bool NesWorker::stop(bool) {
             rpcThread->join();
         }
 
-        if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
-            if (trajectoryPredictor) {
-                trajectoryPredictor->stopReconnectPlanning();
-                NES_DEBUG("triggered stopping of reconnect planner thread");
-            }
-            if (reconnectConfigurator) {
-                reconnectConfigurator->stopPeriodicUpdating();
-                NES_DEBUG("triggered stopping of location update push thread");
-            }
-        }
         rpcServer.reset();
         rpcThread.reset();
         if (statisticOutputThread && statisticOutputThread->joinable()) {
@@ -290,7 +290,7 @@ bool NesWorker::connect() {
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
     NES::Spatial::Index::Experimental::Location fixedCoordinates = {};
     if (locationProvider && locationProvider->getNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-        fixedCoordinates = *(locationProvider->getLocation());
+        fixedCoordinates = *locationProvider->getWaypoint()->getLocation();
     }
 
     NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);

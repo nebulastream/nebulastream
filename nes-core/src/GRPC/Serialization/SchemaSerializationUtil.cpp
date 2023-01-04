@@ -44,11 +44,11 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
     return std::make_shared<SerializableSchema>(*serializedSchema);
 }
 
-SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* serializedSchema) {
+SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema) {
     // de-serialize field from serialized schema to the schema object.
     NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
     auto deserializedSchema = Schema::create();
-    for (auto serializedField : serializedSchema->fields()) {
+    for (auto serializedField : serializedSchema.fields()) {
         auto fieldName = serializedField.name();
         // de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.mutable_type());
@@ -56,7 +56,7 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* seriali
     }
 
     // Deserialize layoutType
-    switch (serializedSchema->layouttype()) {
+    switch (serializedSchema.layouttype()) {
         case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
             deserializedSchema->setLayoutType(Schema::ROW_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");

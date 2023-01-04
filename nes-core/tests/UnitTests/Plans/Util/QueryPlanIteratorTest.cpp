@@ -48,6 +48,7 @@ class QueryPlanIteratorTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
@@ -72,8 +73,6 @@ class QueryPlanIteratorTest : public Testing::NESBaseTest {
         children.clear();
         parents.clear();
     }
-
-    void TearDown() override { NES_DEBUG("Tear down QueryPlanIteratorTest Test."); }
 
   protected:
     DumpContextPtr dumpContext;

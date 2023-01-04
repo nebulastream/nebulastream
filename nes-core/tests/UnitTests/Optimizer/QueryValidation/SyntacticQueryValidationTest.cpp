@@ -27,16 +27,21 @@ namespace NES {
 class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
-    void SetUp() override {
+
+    /* Will be called before all tests in this class are started. */
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("SyntacticQueryValidationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SyntacticQueryValidationTest class.");
+    }
+
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
-    void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
-    static void PrintQString(const std::string& s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
+    static void PrintQString(const std::string& s) { NES_DEBUG(std::endl << "QUERY STRING:" << std::endl << s); }
 
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);

@@ -18,7 +18,6 @@
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
-using Waypoint = std::pair<Index::Experimental::LocationPtr, Timestamp>;
 
 /**
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
@@ -54,13 +53,13 @@ class LocationProviderCSV : public LocationProvider {
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
     //todo: #2951: change return type
-    [[nodiscard]] std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
+    [[nodiscard]] Index::Experimental::WaypointPtr getCurrentWaypoint() override;
 
     /**
      * @brief return a vector containing all the waypoints read from the csv file
      * @return a vector of pairs of Locations and Timestamps
      */
-    [[nodiscard]] const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& getWaypoints() const;
+    [[nodiscard]] const std::vector<Index::Experimental::WaypointPtr>& getWaypoints() const;
 
   private:
     /**
@@ -68,10 +67,10 @@ class LocationProviderCSV : public LocationProvider {
      * @param index: the iterator which marks the position in the vector of waypoints
      * @return the waypoint
      */
-    Waypoint getWaypointAt(size_t index);
+    Index::Experimental::WaypointPtr getWaypointAt(size_t index);
 
     Timestamp startTime;
-    std::vector<Waypoint> waypoints;
+    std::vector<Index::Experimental::WaypointPtr> waypoints;
     size_t nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental

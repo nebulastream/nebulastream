@@ -108,8 +108,8 @@ class E2ESingleRun {
     std::vector<DataProviding::DataProviderPtr> allDataProviders;
     std::vector<DataGeneration::DataGeneratorPtr> allDataGenerators;
     std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
-    QueryId queryId;
     Measurements::Measurements measurements;
+    std::vector<QueryId> submittedIds;
 };
 }// namespace NES::Benchmark
 

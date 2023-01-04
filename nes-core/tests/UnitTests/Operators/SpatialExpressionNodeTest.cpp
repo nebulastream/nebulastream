@@ -31,12 +31,7 @@ class SpatialExpressionNodeTest : public Testing::NESBaseTest {
         NES_INFO("Setup SpatialExpressionNodeTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {}
-
     static void TearDownTestCase() { NES_INFO("Tear down SpatialExpressionNodeTest test class."); }
-
-    void TearDown() override {}
 };
 
 // This tests the circle expression node

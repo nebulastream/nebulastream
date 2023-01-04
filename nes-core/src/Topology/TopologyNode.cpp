@@ -14,6 +14,7 @@
 
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/Index/Location.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/NodeType.hpp>
 #include <algorithm>
@@ -147,17 +148,19 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-Spatial::Index::Experimental::Location TopologyNode::getCoordinates() {
+Spatial::Index::Experimental::WaypointPtr TopologyNode::getCoordinates() {
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
     switch (spatialType) {
         case Spatial::Index::Experimental::NodeType::MOBILE_NODE:
             NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
-            return WorkerRPCClient::getLocation(destAddress);
-        case Spatial::Index::Experimental::NodeType::FIXED_LOCATION: return fixedCoordinates;
-        case Spatial::Index::Experimental::NodeType::NO_LOCATION: return {};
+            return WorkerRPCClient::getWaypoint(destAddress);
+        case Spatial::Index::Experimental::NodeType::FIXED_LOCATION:
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(fixedCoordinates);
+        case Spatial::Index::Experimental::NodeType::NO_LOCATION:
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
         case Spatial::Index::Experimental::NodeType::INVALID:
             NES_WARNING("trying to access location of a node with invalid spatial type")
-            return {};
+            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
     }
 }
 

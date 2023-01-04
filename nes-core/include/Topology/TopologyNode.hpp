@@ -18,6 +18,7 @@
 #include <Nodes/Node.hpp>
 #include <Spatial/Index/Location.hpp>
 #include <Topology/LinkProperty.hpp>
+#include <Util/TimeMeasurement.hpp>
 #include <any>
 #include <map>
 #include <optional>
@@ -28,6 +29,8 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
+class Waypoint;
+using WaypointPtr = std::shared_ptr<Waypoint>;
 enum class NodeType;
 }// namespace Spatial::Index::Experimental
 
@@ -168,7 +171,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    NES::Spatial::Index::Experimental::Location getCoordinates();
+    NES::Spatial::Index::Experimental::WaypointPtr getCoordinates();
 
     /**
      * Experimental

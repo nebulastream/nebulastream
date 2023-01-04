@@ -14,6 +14,7 @@
 
 #include <Services/LocationService.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
+#include <Spatial/Index/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedule.hpp>
 #include <Topology/Topology.hpp>
@@ -26,10 +27,10 @@ LocationService::LocationService(TopologyPtr topology) : locationIndex(topology-
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr) {
+    if (!nodePtr || !nodePtr->getCoordinates()) {
         return nullptr;
     }
-    return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
+    return convertNodeLocationInfoToJson(nodeId, *nodePtr->getCoordinates()->getLocation());
 }
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {

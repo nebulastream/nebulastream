@@ -11,24 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Runtime/TupleBuffer.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
 
 namespace NES::Windowing::Experimental {
 
-uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
-    if (bufferSize % withAlignment) {
-        // make sure that each buffer is a multiple of the alignment
-        return bufferSize + (withAlignment - bufferSize % withAlignment);
-    }
-    return bufferSize;
-}
-
 void State::reset() { isInitialized = false; }
 
 State::State(uint64_t stateSize)
-    : stateSize(stateSize), ptr(std::aligned_alloc(STATE_ALIGNMENT, alignBufferSize(stateSize, STATE_ALIGNMENT))){};
+    : stateSize(stateSize), ptr(std::aligned_alloc(STATE_ALIGNMENT, Runtime::alignBufferSize(stateSize, STATE_ALIGNMENT))){};
 
-State::~State() { free(ptr); }
+State::~State() { std::free(ptr); }
 
 GlobalSlice::GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end)
     : start(start), end(end), state(std::make_unique<State>(entrySize)) {}

@@ -25,7 +25,7 @@ namespace NES::InferModel {
  * @brief Infer model operator
  */
 class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
-#ifdef TFDEF
+
   public:
     InferModelLogicalOperatorNode(std::string model,
                                   std::vector<ExpressionItemPtr> inputFields,
@@ -86,13 +86,13 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getInputFieldsAsPtr();
+    const std::vector<ExpressionItemPtr>& getInputFields();
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getOutputFieldsAsPtr();
+    const std::vector<ExpressionItemPtr>& getOutputFields();
 
   private:
     /**
@@ -102,11 +102,9 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field);
 
   private:
-    std::vector<ExpressionItemPtr> inputFieldsPtr;
-    std::vector<ExpressionItemPtr> outputFieldsPtr;
     std::string model;
-
-#endif// TFDEF
+    std::vector<ExpressionItemPtr> inputFields;
+    std::vector<ExpressionItemPtr> outputFields;
 };
 
 }// namespace NES::InferModel

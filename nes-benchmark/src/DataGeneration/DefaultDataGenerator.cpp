@@ -30,14 +30,14 @@ std::vector<Runtime::TupleBuffer> DefaultDataGenerator::createData(size_t number
     NES_INFO("Default source mode");
 
     // Prints every five percent the current progress
-    uint64_t noTuplesInFivePercent = (numberOfBuffers * 5) / 100;
+    uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
     for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
 
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
 
-        std::random_device randDev;
-        std::mt19937 generator(randDev());
+        // using seed to generate a predictable sequence of values for deterministic behavior
+        std::mt19937 generator(GENERATOR_SEED_DEFAULT);
         std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
         /* This branch is solely for performance reasons.

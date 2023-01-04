@@ -14,7 +14,6 @@
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Tracing {
@@ -32,7 +31,7 @@ std::shared_ptr<ExecutionTrace> SSACreationPhase::SSACreationPhaseContext::proce
     trace->getBlock(0).arguments = trace->getArguments();
     // In the first step we get the return block, which contains the return call.
     // Starting with this block we trace all inputs
-    auto& returnBlock = trace->getBlock(trace->returnRef->blockId);
+    auto& returnBlock = trace->getBlock(trace->getReturn()->blockId);
     processBlock(returnBlock);
     // Eliminate all assign operations. We only needed them to create the SSA from.
     removeAssignOperations();

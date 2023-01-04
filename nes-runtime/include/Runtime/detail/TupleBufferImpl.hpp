@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Common/Identifiers.hpp>
+#include <Runtime/TaggedPointer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
@@ -39,12 +40,23 @@ class TupleBuffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
 
+/**
+ * @brief Computes aligned buffer size based on original buffer size and alignment
+ */
+constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
+    if (bufferSize % withAlignment) {
+        // make sure that each buffer is a multiple of the alignment
+        return bufferSize + (withAlignment - bufferSize % withAlignment);
+    }
+    return bufferSize;
+}
+
 namespace detail {
 
 class MemorySegment;
 
-#define PLACEHOLDER_LIKELY   /* XXX: replace with [[likely]] when using C++ 2a */
-#define PLACEHOLDER_UNLIKELY /* XXX: replace with [[unlikely]] when using C++ 2a */
+#define PLACEHOLDER_LIKELY(cond) (cond) [[likely]]
+#define PLACEHOLDER_UNLIKELY(cond) (cond) [[unlikely]]
 
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
@@ -217,6 +229,7 @@ class alignas(64) BufferControlBlock {
 #endif
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
+static_assert(alignof(BufferControlBlock) % 64 == 0);
 /**
  * @brief The MemorySegment is a wrapper around a pointer to allocated memory of size bytes and a control block
  * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.
@@ -234,6 +247,8 @@ class MemorySegment {
     friend class NES::Runtime::BufferManager;
     friend class NES::Runtime::detail::BufferControlBlock;
 
+    enum MemorySegmentType { Native = 0, Wrapped = 1 };
+
   public:
     MemorySegment(const MemorySegment& other);
 
@@ -244,7 +259,8 @@ class MemorySegment {
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,
                            BufferRecycler* recycler,
-                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+                           uint8_t* controlBlock);
 
     ~MemorySegment();
 
@@ -292,7 +308,7 @@ class MemorySegment {
 
     uint8_t* ptr{nullptr};
     uint32_t size{0};
-    detail::BufferControlBlock* controlBlock{nullptr};
+    TaggedPointer<detail::BufferControlBlock> controlBlock{nullptr};
 };
 
 /**

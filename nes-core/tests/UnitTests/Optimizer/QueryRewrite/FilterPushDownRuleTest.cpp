@@ -39,18 +39,16 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
   public:
     SchemaPtr schema;
 
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        NES::Logger::setupLogging("FilterPushDownTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup FilterPushDownTest test case.");
-        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("FilterPushDownRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup FilterPushDownRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup FilterPushDownTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+    }
 };
 
 void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {

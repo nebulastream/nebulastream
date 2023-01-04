@@ -53,6 +53,7 @@
 #endif
 
 #if !defined(MAGIC_ENUM_USING_ALIAS_OPTIONAL)
+#include <exception>
 #include <optional>
 #endif
 #if !defined(MAGIC_ENUM_USING_ALIAS_STRING)

@@ -11,61 +11,163 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
-#include <Nautilus/Tracing/Tag.hpp>
-#include <Nautilus/Tracing/Trace/OpCode.hpp>
-#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <memory>
-#include <ostream>
-#include <unordered_map>
-#include <variant>
-#include <vector>
-namespace NES::Nautilus::Tracing {
 
-class ExecutionTrace;
-class TraceOperation;
+#ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#define NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
+#include <Nautilus/Tracing/Tag/Tag.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <functional>
+#include <memory>
+
+namespace NES::Nautilus {
+class Any;
+typedef std::shared_ptr<Any> AnyPtr;
+}// namespace NES::Nautilus
+
+namespace NES::Nautilus::Tracing {
 class OperationRef;
-class Tag;
+class ExecutionTrace;
 
 /**
- * @brief Represents the thread local trace context.
+ * @brief The trace context manages a thread local instance to record a symbolic execution trace of a given Nautilus function.
+ * Tracing will be initialized with ether traceFunction or traceFunctionWithReturn.
  */
 class TraceContext {
   public:
-    TraceContext();
-    void reset();
-    void trace(TraceOperation& operation);
-    void traceCMP(const ValueRef& valueRef, bool result);
-    bool isExpectedOperation(OpCode operation);
-    std::shared_ptr<ExecutionTrace> getExecutionTrace();
-    ValueRef createNextRef(Nautilus::IR::Types::StampPtr type);
-    void addTraceArgument(const ValueRef& value);
-    void incrementOperationCounter();
+    template<typename Functor>
+    friend std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func);
+    template<typename Functor>
+    friend std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func);
+
+    /**
+     * @brief Get a thread local reference to the trace context.
+     * If the trace context is not initialized this function returns a nullptr.
+     * @return TraceContext*
+     */
+    static TraceContext* get();
+
+    /**
+     * @brief Add an argument for the traced functioned.
+     * @param argument
+     */
+    void addTraceArgument(const ValueRef& argument);
+
+    /**
+     * @brief Trace a constant operation.
+     * @param valueReference reference to the const value.
+     * @param constValue constant value.
+     */
+    void traceConstOperation(const ValueRef& valueReference, const AnyPtr& constValue);
+
+    /**
+     * @brief Trace a unary operation, e.g., negate.
+     * @param op operation code.
+     * @param inputRef reference to the input.
+     * @param resultRef reference to the result.
+     */
+    void traceUnaryOperation(const OpCode& op, const ValueRef& inputRef, const ValueRef& resultRef);
+
+    /**
+     * @brief Trace a binary operation, e.g., add, sub, div.
+     * @param op operation code-
+     * @param leftRef reference to the left input.
+     * @param rightRef reference to the right input.
+     * @param resultRef reference to the result.
+     */
+    void traceBinaryOperation(const OpCode& op, const ValueRef& leftRef, const ValueRef& rightRef, const ValueRef& resultRef);
+
+    /**
+     * @brief Trace the return function.
+     * @param resultRef referent to the return value.
+     */
+    void traceReturnOperation(const ValueRef& resultRef);
+
+    /**
+     * @brief Trace a value assignment.
+     * @param targetRef reference to the target value.
+     * @param sourceRef reference to the source value.
+     */
+    void traceAssignmentOperation(const ValueRef& targetRef, const ValueRef& sourceRef);
+
+    /**
+     * @brief Trace a function call with a result.
+     * @param resultRef reference to the function result.
+     * @param arguments function arguments.
+     */
+    void traceFunctionCall(const ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments);
+
+    /**
+     * @brief Trace a void function call.
+     * @param arguments function arguments.
+     */
+    void traceFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments);
+
+    /**
+     * @brief Trace a memory store.
+     * @param memRef reference to memory.
+     * @param valueRef reference to the value.
+     */
+    void traceStore(const ValueRef& memRef, const ValueRef& valueRef);
+
+    /**
+     * @brief Trace a cmp operation, for instance in an if or loops.
+     * The symbolic executor decides if the cmp will be evaluated to true or false.
+     * @param inputRef.
+     * @return indicates if the cmp should be taken or not.
+     */
+    bool traceCMP(const ValueRef& inputRef);
+    ValueRef createNextRef(const Nautilus::IR::Types::StampPtr& type);
+    virtual ~TraceContext() = default;
 
   private:
-    TraceOperation& getLastOperation();
+    TraceContext(TagRecorder& tagRecorder);
+    static TraceContext* initialize(TagRecorder& tagRecorder);
+    static void terminate();
+    std::shared_ptr<ExecutionTrace> apply(const std::function<ValueRef()>& function);
+    bool isExpectedOperation(const OpCode& op);
+    bool isKnownOperation(const Tag* tag);
+    std::shared_ptr<OperationRef> checkTag(const Tag* tag);
+    void incrementOperationCounter();
+    void initializeTraceIteration();
+    template<typename Functor>
+    void trace(const OpCode& opCode, Functor initFunction);
+
+    TagRecorder& tagRecorder;
     std::shared_ptr<ExecutionTrace> executionTrace;
-    uint64_t currentOperationCounter = 0;
-    TagAddress startAddress;
+    SymbolicExecutionContext symbolicExecutionContext;
+    uint32_t currentOperationCounter = 0;
+    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> tagMap;
+    std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> localTagMap;
 };
-TraceContext* getThreadLocalTraceContext();
-void initThreadLocalTraceContext();
-void disableThreadLocalTraceContext();
 
 template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
-    initThreadLocalTraceContext();
-    func();
-    TraceOperation result = TraceOperation(RETURN);
-    auto tracer = getThreadLocalTraceContext();
-    tracer->trace(result);
-    return tracer->getExecutionTrace();
+std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func) {
+    auto tr = TagRecorder::createTagRecorder();
+    auto ctx = TraceContext::initialize(tr);
+    auto result = ctx->apply([&func] {
+        func();
+        return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
+    });
+    TraceContext::terminate();
+    return result;
+}
+
+template<typename Functor>
+std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func) {
+    auto tr = TagRecorder::createTagRecorder();
+    auto ctx = TraceContext::initialize(tr);
+    auto result = ctx->apply([&func] {
+        auto res = func();
+        return res.ref;
+    });
+    TraceContext::terminate();
+    return result;
 }
 
 }// namespace NES::Nautilus::Tracing
 
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

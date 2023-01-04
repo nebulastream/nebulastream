@@ -31,6 +31,7 @@ class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   protected:
     virtual void SetUp() {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
         bufferStorage = std::make_shared<Runtime::BufferStorage>();
     }

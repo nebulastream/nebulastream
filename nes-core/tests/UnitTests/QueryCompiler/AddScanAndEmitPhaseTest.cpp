@@ -47,10 +47,6 @@ class AddScanAndEmitPhaseTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("AddScanAndEmitPhase.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AddScanAndEmitPhase test class.");
     }
-
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down AddScanAndEmitPhase Test."); }
 };
 
 /**

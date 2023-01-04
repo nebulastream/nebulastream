@@ -118,7 +118,6 @@ class Location {
     double latitude;
     double longitude;
 };
-
 }// namespace NES::Spatial::Index::Experimental
 
 #endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_

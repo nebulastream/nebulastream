@@ -11,23 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(nautilus-data-type-test "DataTypeTest.cpp")
-target_link_libraries(nautilus-data-type-test
-        nes-runtime ${GTEST_LIBRARIES})
-add_test(NAME nautilus-data-type-test COMMAND nautilus-data-type-test)
-
-add_executable(nautilus-custom-data-type-test "CustomDataTypeTest.cpp")
-target_link_libraries(nautilus-custom-data-type-test
-        nes-runtime ${GTEST_LIBRARIES})
-add_test(NAME nautilus-custom-data-type-test COMMAND nautilus-custom-data-type-test)
-
-add_executable(nautilus-list-type-test "ListTypeTest.cpp")
-target_link_libraries(nautilus-list-type-test
-        nes-runtime ${GTEST_LIBRARIES})
-add_test(NAME nautilus-list-type-test COMMAND nautilus-list-type-test)
-
-add_executable(nautilus-text-type-test "TextTypeTest.cpp")
-target_link_libraries(nautilus-text-type-test
-        nes-runtime ${GTEST_LIBRARIES})
-add_test(NAME nautilus-text-type-test COMMAND nautilus-text-type-test)
+add_nes_runtime_test(nautilus-data-type-test "DataTypeTest.cpp")
+add_nes_runtime_test(nautilus-custom-data-type-test "CustomDataTypeTest.cpp")
+add_nes_runtime_test(nautilus-list-type-test "ListTypeTest.cpp")
+add_nes_runtime_test(nautilus-text-type-test "TextTypeTest.cpp")
 

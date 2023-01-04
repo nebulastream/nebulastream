@@ -20,6 +20,7 @@
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/Serialization/UdfSerializationUtil.hpp>
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
 #include <UdfCatalogService.pb.h>
@@ -96,16 +97,7 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
                 // Return the UDF descriptor to the client.
                 NES_DEBUG("Returning UDF descriptor to REST client for Java UDF: " << udfName);
                 response.set_found(true);
-                auto* descriptorMessage = response.mutable_java_udf_descriptor();
-                descriptorMessage->set_udf_class_name(udfDescriptor->getClassName());
-                descriptorMessage->set_udf_method_name(udfDescriptor->getMethodName());
-                descriptorMessage->set_serialized_instance(udfDescriptor->getSerializedInstance().data(),
-                                                           udfDescriptor->getSerializedInstance().size());
-                for (const auto& [className, byteCode] : udfDescriptor->getByteCodeList()) {
-                    auto* javaClass = descriptorMessage->add_classes();
-                    javaClass->set_class_name(className);
-                    javaClass->set_byte_code(byteCode.data(), byteCode.size());
-                }
+                UdfSerializationUtil::serializeJavaUdfDescriptor(*udfDescriptor, *response.mutable_java_udf_descriptor());
                 return createResponse(Status::CODE_200, response.SerializeAsString());
             }
         } catch (...) {
@@ -140,7 +132,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * returns 500 for internal server errors
      */
     ENDPOINT("POST", "/registerJavaUdf", registerJavaUdf, BODY_STRING(String, request)) {
-        auto udfCatalog = this->udfCatalog;
         try {
             // Convert protobuf message contents to JavaUdfDescriptor.
             std::string body = request.getValue("");
@@ -151,25 +142,8 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             auto javaUdfRequest = RegisterJavaUdfRequest{};
             javaUdfRequest.ParseFromString(body);
             auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
-            // C++ represents the bytes type of serialized_instance and byte_code as std::strings
-            // which have to be converted to typed byte arrays.
-            auto serializedInstance = JavaSerializedInstance{descriptorMessage.serialized_instance().begin(),
-                                                             descriptorMessage.serialized_instance().end()};
-            auto javaUdfByteCodeList = JavaUdfByteCodeList{};
-            javaUdfByteCodeList.reserve(descriptorMessage.classes().size());
-            for (const auto& classDefinition : descriptorMessage.classes()) {
-                javaUdfByteCodeList.insert(
-                    {classDefinition.class_name(),
-                     JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
-            }
-            // Deserialize the output schema.
-            auto outputSchema = SchemaSerializationUtil::deserializeSchema(descriptorMessage.mutable_outputschema());
+            auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(descriptorMessage);
             // Register JavaUdfDescriptor in UDF catalog and return success.
-            auto javaUdfDescriptor = JavaUdfDescriptor::create(descriptorMessage.udf_class_name(),
-                                                               descriptorMessage.udf_method_name(),
-                                                               serializedInstance,
-                                                               javaUdfByteCodeList,
-                                                               outputSchema);
             NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
             udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             return createResponse(Status::CODE_200, "Registered Java UDF");

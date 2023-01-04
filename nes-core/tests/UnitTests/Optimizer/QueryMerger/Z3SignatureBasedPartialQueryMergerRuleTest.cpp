@@ -63,6 +63,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -106,12 +107,6 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureBasedPartialQueryMergerRuleTest test class."); }
 };
 
 /**

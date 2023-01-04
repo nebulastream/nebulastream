@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include "Util/Logger/Logger.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -29,6 +31,7 @@ BasicBlock::BasicBlock(std::string identifier,
       arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
+void BasicBlock::setIdentifier(std::string identifier) { this->identifier = identifier; }
 uint32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 void BasicBlock::setScopeLevel(uint32_t scopeLevel) { this->scopeLevel = scopeLevel; }
 uint32_t BasicBlock::getNumLoopBackEdges() { return numLoopBackEdges; }
@@ -89,6 +92,32 @@ void BasicBlock::removeOperation(Operations::OperationPtr operation) {
 void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation) {
     auto position = std::find(operations.begin(), operations.end(), before);
     operations.insert(position, operation);
+}
+
+[[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> BasicBlock::getNextBlocks() {
+    // Depending on the type of the last operation we return the reference to the next block.
+    NES_ASSERT(!operations.empty(), "A block can't be empty at this point");
+    auto& termination = operations.back();
+    if (termination->getOperationType() == IR::Operations::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(termination);
+        return std::make_pair(branchOp->getNextBlockInvocation().getBlock(), nullptr);
+    } else if (termination->getOperationType() == IR::Operations::Operation::IfOp) {
+        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(termination);
+        return std::make_pair(ifOp->getTrueBlockInvocation().getBlock(), ifOp->getFalseBlockInvocation().getBlock());
+    } else if (termination->getOperationType() == IR::Operations::Operation::LoopOp) {
+        // Todo change in #3169
+        auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(termination);
+        auto loopHeaderIfOp =
+            std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock().getBlock()->getTerminatorOp());
+        return std::make_pair(loopHeaderIfOp->getTrueBlockInvocation().getBlock(),
+                              loopHeaderIfOp->getFalseBlockInvocation().getBlock());
+    } else if (termination->getOperationType() == IR::Operations::Operation::ReturnOp) {
+        return {};
+    } else {
+        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: "
+                  << termination->getOperationType());
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 }// namespace NES::Nautilus::IR
