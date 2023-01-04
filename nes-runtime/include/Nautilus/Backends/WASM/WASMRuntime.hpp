@@ -30,11 +30,10 @@ wasmtime::Linker linker;
 wasmtime::Store store;
 wasmtime::WasiConfig wasiConfig;
 wasmtime::Config config;
-wasmtime::Memory pyMemory = wasmtime::Memory(wasmtime_memory());
-wasmtime::Func pyExecute = wasmtime::Func(wasmtime_func());
+std::vector<wasmtime::Module> pyModule;
 
 const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-const char udfFileName[7] = "udf.py";
+const char udfFileName[8] = "udf.py\0";
 std::string proxyFunctionModule = "ProxyFunction";
 
 void linkHostFunction(const std::string& proxyFunction);
