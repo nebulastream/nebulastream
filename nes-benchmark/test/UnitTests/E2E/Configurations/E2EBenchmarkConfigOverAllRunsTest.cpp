@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
-//#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <API/Schema.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include <Util/yaml/Yaml.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Benchmark {
-    class E2EBenchmarkConfigOverAllRunsTest : public testing::Test {
+    class E2EBenchmarkConfigOverAllRunsTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -26,10 +29,16 @@ namespace NES::Benchmark {
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test case."); }
+        void SetUp() override {
+            Testing::NESBaseTest::SetUp();
+            NES_INFO("Setup E2EBenchmarkConfigOverAllRunsTest test case.");
+        }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test case."); }
+        void TearDown() override {
+            NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test case.");
+            Testing::NESBaseTest::TearDown();
+        }
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test class."); }
@@ -37,34 +46,38 @@ namespace NES::Benchmark {
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, toStringTest) {
         std::stringstream oss;
+        E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        // set default E2EBenchmarkConfigOverAllRuns
-        // call function toString()
+        auto defaultString = defaultConfigOverAllRuns.toString();
 
-        oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
-            << "- numMeasurementsToCollect: " << numMeasurementsToCollect->getValueAsString() << std::endl
-            << "- experimentMeasureIntervalInSeconds: " << experimentMeasureIntervalInSeconds->getValueAsString() << std::endl
-            << "- outputFile: " << outputFile->getValue() << std::endl
-            << "- benchmarkName: " << benchmarkName->getValue() << std::endl
-            << "- inputType: " << inputType->getValue() << std::endl
-            << "- sourceSharing: " << sourceSharing->getValue() << std::endl
-            << "- query: " << query->getValue() << std::endl
-            << "- numberOfPreAllocatedBuffer: " << numberOfPreAllocatedBuffer->getValueAsString() << std::endl
-            << "- numberOfBuffersToProduce: " << numberOfBuffersToProduce->getValueAsString() << std::endl
-            << "- batchSize: " << batchSize->getValueAsString() << std::endl
-            << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
-            << "- connectionString: " << connectionString->getValue() << std::endl
-            << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl;
+        oss << "- startupSleepIntervalInSeconds: " << defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValueAsString() << std::endl
+            << "- numMeasurementsToCollect: " << defaultConfigOverAllRuns.numMeasurementsToCollect->getValueAsString() << std::endl
+            << "- experimentMeasureIntervalInSeconds: " << defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValueAsString() << std::endl
+            << "- outputFile: " << defaultConfigOverAllRuns.outputFile->getValue() << std::endl
+            << "- benchmarkName: " << defaultConfigOverAllRuns.benchmarkName->getValue() << std::endl
+            << "- inputType: " << defaultConfigOverAllRuns.inputType->getValue() << std::endl
+            << "- sourceSharing: " << defaultConfigOverAllRuns.sourceSharing->getValue() << std::endl
+            << "- query: " << defaultConfigOverAllRuns.query->getValue() << std::endl
+            << "- numberOfPreAllocatedBuffer: " << defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString() << std::endl
+            << "- numberOfBuffersToProduce: " << defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString() << std::endl
+            << "- batchSize: " << defaultConfigOverAllRuns.batchSize->getValueAsString() << std::endl
+            << "- dataProviderMode: " << defaultConfigOverAllRuns.dataProviderMode->getValue() << std::endl
+            << "- connectionString: " << defaultConfigOverAllRuns.connectionString->getValue() << std::endl
+            << "- logicalSources: " << defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators() << std::endl;
         auto expectedString = oss.str();
 
-        // ASSERT_EQ(stringDefault, expectedString);
+        ASSERT_EQ(defaultString, expectedString);
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsTest) {
         E2EBenchmarkConfigOverAllRuns expectedConfigOverAllRuns;
+        E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
+        Yaml::Node yamlConfig;
 
-        // set default E2EBenchmarkConfigOverAllRuns
-        // call function generateConfigOverAllRuns()
+        std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/filter_one_source.yaml";
+        Yaml::Parse(yamlConfig, configPath.c_str());
+
+        defaultConfigOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(yamlConfig);
 
         expectedConfigOverAllRuns.startupSleepIntervalInSeconds->setValue(yamlConfig["startupSleepIntervalInSeconds"].As<uint32_t>());
         expectedConfigOverAllRuns.numMeasurementsToCollect->setValue(yamlConfig["numberOfMeasurementsToCollect"].As<uint32_t>());
@@ -95,22 +108,48 @@ namespace NES::Benchmark {
             }
         }
 
-        // ASSERT_EQ(stringDefault, expectedConfigOverAllRuns);
+        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValue(), expectedConfigOverAllRuns.startupSleepIntervalInSeconds->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValue(), expectedConfigOverAllRuns.numMeasurementsToCollect->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), expectedConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), expectedConfigOverAllRuns.outputFile->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), expectedConfigOverAllRuns.benchmarkName->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), expectedConfigOverAllRuns.query->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), expectedConfigOverAllRuns.dataProviderMode->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), expectedConfigOverAllRuns.connectionString->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), expectedConfigOverAllRuns.inputType->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), expectedConfigOverAllRuns.sourceSharing->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue(), expectedConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), expectedConfigOverAllRuns.batchSize->getValue());
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), expectedConfigOverAllRuns.numberOfBuffersToProduce->getValue());
+        // ASSERT_EQ logicalSources
+    }
+
+    TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
+        size_t expectedSize = 0;
+        E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
+
+        auto defaultSize = defaultConfigOverAllRuns.getTotalSchemaSize();
+
+        for (auto [logicalSource, dataGenerator] : defaultConfigOverAllRuns.srcNameToDataGenerator) {
+            expectedSize += dataGenerator->getSchema()->getSchemaSizeInBytes();
+        }
+
+        ASSERT_EQ(defaultSize, expectedSize);
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest) {
         std::stringstream expectedString;
+        E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        // set default E2EBenchmarkConfigOverAllRuns
-        // call function getStrLogicalSrcDataGenerators()
+        auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 
-        for (auto it = srcNameToDataGenerator.begin(); it != srcNameToDataGenerator.end(); ++it) {
-            if (it != srcNameToDataGenerator.begin()) {
+        for (auto it = defaultConfigOverAllRuns.srcNameToDataGenerator.begin(); it != defaultConfigOverAllRuns.srcNameToDataGenerator.end(); ++it) {
+            if (it != defaultConfigOverAllRuns.srcNameToDataGenerator.begin()) {
                 expectedString << ", ";
             }
             expectedString << it->first << ": " << it->second;
         }
 
-        // ASSERT_EQ(stringDefault, expectedString);
+        ASSERT_EQ(defaultString, expectedString.str());
     }
 }//namespace NES::Benchmark
