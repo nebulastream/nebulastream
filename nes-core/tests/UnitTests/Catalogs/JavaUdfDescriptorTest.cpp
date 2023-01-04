@@ -117,28 +117,28 @@ TEST_F(JavaUdfDescriptorTest, InEquality) {
                                                 .setClassName(differentClassName)
                                                 .setByteCodeList({{differentClassName, {1}}})
                                                 .build();
-    EXPECT_FALSE(descriptor == descriptorWithDifferentClassName);
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentClassName);
     // Check a different method name.
     auto descriptorWithDifferentMethodName = JavaUdfDescriptorBuilder{}
                                                  .setMethodName("different_method_name")
                                                  .build();
-    EXPECT_FALSE(descriptor == descriptorWithDifferentMethodName);
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentMethodName);
     // Check a different serialized instance (internal state of the UDF).
     auto descriptorWithDifferentSerializedInstance = JavaUdfDescriptorBuilder{}
                                                          .setInstance({2})
                                                          .build();
-    EXPECT_FALSE(descriptor == descriptorWithDifferentSerializedInstance);
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentSerializedInstance);
     // Check a different byte code definition of the UDF class.
     auto descriptorWithDifferentByteCode = JavaUdfDescriptorBuilder{}
                                                .setByteCodeList({{descriptor->getClassName(), {2}}})
                                                .build();
-    EXPECT_FALSE(descriptor == descriptorWithDifferentByteCode);
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentByteCode);
     // Check a different byte code list, i.e., additional dependencies.
     auto descriptorWithDifferentByteCodeList = JavaUdfDescriptorBuilder{}
                                                    .setByteCodeList({{descriptor->getClassName(), {1}},
                                                                      {differentClassName, {1}}})
                                                    .build();
-    EXPECT_FALSE(descriptor == descriptorWithDifferentByteCodeList);
+    EXPECT_FALSE(*descriptor == *descriptorWithDifferentByteCodeList);
     // The output schema is ignored because it can be derived from the method signature.
     // We trust the Java client to do this correctly; it would cause errors otherwise during query execution.
 }
