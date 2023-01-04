@@ -19,6 +19,8 @@ import "SerializableSchema.proto";
 import "JavaUdfDescriptorMessage.proto";
 package NES;
 
+option java_package = "stream.nebula.protobuf";
+option java_multiple_files = true;
 
 /**
 The serializable wrapper for the nes partition object
