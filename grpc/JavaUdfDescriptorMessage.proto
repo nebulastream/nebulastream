@@ -27,5 +27,7 @@ message JavaUdfDescriptorMessage {
   bytes serialized_instance = 3;
   repeated JavaUdfClassDefinition classes = 4;
   SerializableSchema outputSchema = 5;
+  string input_class_name = 6;
+  string output_class_name = 7;
 }
 
