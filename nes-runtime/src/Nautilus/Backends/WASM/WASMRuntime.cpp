@@ -21,66 +21,51 @@ using namespace wasmtime;
 
 namespace NES::Nautilus::Backends::WASM {
 
-WASMRuntime::WASMRuntime() : linker(engine), store(engine) {}
-
-void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
+WASMRuntime::WASMRuntime() : linker(engine), store(engine) {
     config.wasm_memory64(true);
     engine = Engine(std::move(config));
     linker = Linker(engine);
     store = Store(engine);
-    /*
+    auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
+    pyModule.emplace_back(wasmtime::Module::compile(engine, pyWat).unwrap());
+
     auto isPreOpened = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
     if (!isPreOpened) {
         NES_ERROR("Could not pre-open directory for python");
     }
-     */
     wasiConfig.inherit_env();
     wasiConfig.inherit_stdin();
     wasiConfig.inherit_stdout();
     wasiConfig.inherit_stderr();
     store.context().set_wasi(std::move(wasiConfig)).unwrap();
     linker.define_wasi().unwrap();
+
+    prepareCPython();
+}
+
+void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
 
     for (const auto& proxy : proxyFunctions) {
         linkHostFunction(proxy);
     }
-    prepareCPython();
 }
 
 void WASMRuntime::run(size_t binaryLength, char* queryBinary) {
-
-    config.wasm_memory64(true);
-    engine = Engine(std::move(config));
-    linker = Linker(engine);
-    store = Store(engine);
-    /*
-    auto isPreOpened = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
-    if (!isPreOpened) {
-        NES_ERROR("Could not pre-open directory for python");
-    }
-     */
-    wasiConfig.inherit_env();
-    wasiConfig.inherit_stdin();
-    wasiConfig.inherit_stdout();
-    wasiConfig.inherit_stderr();
-    store.context().set_wasi(std::move(wasiConfig)).unwrap();
-    linker.define_wasi().unwrap();
-
     wasmtime::Span query{(uint8_t*) queryBinary, binaryLength};
     auto wat = parseWATFile("/home/victor/sketch.wat");
-    auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
+    //auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
 
     auto module = wasmtime::Module::compile(engine, wat).unwrap();
-    auto pyModule = wasmtime::Module::compile(engine, pyWat).unwrap();
+    //pyModule = wasmtime::Module::compile(engine, pyWat).unwrap();
 
     auto instance = linker.instantiate(store, module).unwrap();
-    auto pyInstance = linker.instantiate(store, pyModule).unwrap();
+    auto pyInstance = linker.instantiate(store, pyModule.back()).unwrap();
 
     auto execute = std::get<Func>(*instance.get(store, "execute"));
-    pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
+    //pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
 
     auto memory = std::get<Memory>(*instance.get(store, "memory"));
-    pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
+    auto pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
 
     auto results = execute.call(store, {}).unwrap();
     //std::cout << results[0].i32() << "\n";
@@ -102,6 +87,35 @@ void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
 
 void WASMRuntime::prepareCPython() {
     /**
+     * This host function overwrites the WASI function args_sizes_get which is called by the cpython wasm interpreter.
+     * With this, we "trick" cpython into thinking that we have at least 1 function argument.
+     */
+    auto argsSizesGet = linker.func_new("cpython",
+                                        "args_sizes_get",
+                                        FuncType({ValKind::I32, ValKind::I32}, {ValKind::I32}),
+                                        [](auto caller, auto params, auto results) {
+                                            (void) caller;
+                                            (void) params;
+                                            results[0] = 0;
+                                            return std::monostate();
+                                        });
+
+    /**
+     * Same as for args_sizes_get.
+     */
+    auto argsGet = linker.func_new("cpython",
+                                   "args_get",
+                                   FuncType({ValKind::I32, ValKind::I32}, {ValKind::I32}),
+                                   [](auto caller, auto params, auto results) {
+                                       (void) caller;
+                                       (void) params;
+                                       results[0] = 0;
+                                       return std::monostate();
+                                   });
+
+    /**
+     * This host function is called before python is invoked. It writes the arguments into a args file, which the python UDF
+     * then accesses.
      * For now allow UDFs with two arguments of type i32...
      */
     auto prepareArgs = linker.func_new("cpython",
@@ -121,26 +135,26 @@ void WASMRuntime::prepareCPython() {
                                            }
                                            return std::monostate();
                                        });
-
-    auto prepareCPython = linker.func_new("cpython",
-                                       "cpython",
-                                       FuncType({}, {}),
-                                       [&](auto caller, auto params, auto results) {
-                                           (void) caller;
-                                           (void) params;
-                                           (void) results;
-                                           auto data = pyMemory.data(caller);
-                                           for (size_t i = 0; i < 7; ++i) {
-                                               data[i] = udfFileName[i];
-                                           }
-                                           for (size_t i = 0; i < 10; i++)
-                                           {
-                                               std::cout << "MEM " << i << " - " << (char)pyMemory.data(store)[i] << "\n";
-                                           }
-                                           auto funcResult = pyExecute.call(store, {}).unwrap();
-                                           return std::monostate();
-                                       });
-
+    /**
+     * This function actually calls the cpython wasm interpreter and executes a python UDF
+     */
+    auto prepareCPython = linker.func_new("cpython", "cpython", FuncType({}, {}), [&](auto caller, auto params, auto results) {
+        (void) caller;
+        (void) params;
+        (void) results;
+        auto pyInstance = linker.instantiate(store, pyModule.back()).unwrap();
+        auto pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
+        auto data = pyMemory.data(caller);
+        for (size_t i = 0; i < 8; ++i) {
+            //data[i] = udfFileName[i];
+        }
+        for (size_t i = 0; i < 10; i++) {
+            std::cout << "MEM " << i << " - " << (char) pyMemory.data(store)[i] << "\n";
+        }
+        auto pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
+        auto funcResult = pyExecute.call(store, {}).unwrap();
+        return std::monostate();
+    });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName) {
