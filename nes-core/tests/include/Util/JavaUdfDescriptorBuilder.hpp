@@ -41,7 +41,8 @@ class JavaUdfDescriptorBuilder {
      * @return A Java UDF descriptor with the fields either set to default values or with explicitly specified values in setters.
      */
     JavaUdfDescriptorPtr build() {
-        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema);
+        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema, inputClassName,
+                                         outputClassName);
     }
 
     /**
@@ -95,6 +96,26 @@ class JavaUdfDescriptorBuilder {
     }
 
     /**
+     * Set the class name of the input type of the UDF method.
+     * @param newInputClassName The class name of the input type of the UDF method.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setInputClassName(const std::string newInputClassName) {
+        this->inputClassName = newInputClassName;
+        return *this;
+    }
+
+    /**
+     * Set the class name of the return type of the UDF method.
+     * @param newOutputClassName The class name of the return type of the UDF method.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setOutputClassName(const std::string newOutputClassName) {
+        this->outputClassName = newOutputClassName;
+        return *this;
+    }
+
+    /**
      * Create a default Java UDF descriptor that can be used in tests.
      * @return A Java UDF descriptor instance.
      */
@@ -108,6 +129,8 @@ class JavaUdfDescriptorBuilder {
     JavaSerializedInstance instance = JavaSerializedInstance{1}; // byte-array containing 1 byte
     JavaUdfByteCodeList byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
     SchemaPtr outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
+    std::string inputClassName = "some_package.my_input_type";
+    std::string outputClassName = "some_package.my_output_type";
 };
 
 }// namespace NES::Catalogs::UDF
