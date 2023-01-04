@@ -173,7 +173,7 @@ namespace NES::Benchmark::DataProviding {
 
         auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
 
-        ASSERT_EQ(preAllocatedBuffers->size(), 0);
+        ASSERT_EQ(preAllocatedBuffers.size(), 0);
     }
 
     TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
@@ -211,6 +211,6 @@ namespace NES::Benchmark::DataProviding {
 
         auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
 
-        ASSERT_EQ(preAllocatedBuffers->size(), 0);
+        ASSERT_EQ(preAllocatedBuffers.size(), 0);
     }
 }//namespace NES::Benchmark::DataProviding
