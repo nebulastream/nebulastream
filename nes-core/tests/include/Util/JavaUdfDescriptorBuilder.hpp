@@ -33,17 +33,81 @@ namespace NES::Catalogs::UDF {
 class JavaUdfDescriptorBuilder {
   public:
     /**
+     * Create a new builder for a JavaUdfDescriptor with valid default values for the fields required by the JavaUdfDescriptor.
+     */
+    JavaUdfDescriptorBuilder() = default;
+
+    /**
+     * @return A Java UDF descriptor with the fields either set to default values or with explicitly specified values in setters.
+     */
+    JavaUdfDescriptorPtr build() {
+        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema);
+    }
+
+    /**
+     * Set the class name of the Java UDF descriptor.
+     * @param newClassName The class name of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setClassName(const std::string& newClassName) {
+        this->className = newClassName;
+        return *this;
+    }
+
+    /**
+     * Set the method name of the Java UDF descriptor.
+     * @param newMethodName The method name of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setMethodName(const std::string& newMethodName) {
+        this->methodName = newMethodName;
+        return *this;
+    }
+
+    /**
+     * Set the serialized Java instance of the Java UDF descriptor.
+     * @param newInstance The serialized Java instance of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setInstance(const JavaSerializedInstance& newInstance) {
+        this->instance = newInstance;
+        return *this;
+    }
+
+    /**
+     * Set the bytecode list of the Java UDF descriptor.
+     * @param newByteCodeList The bytecode list of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setByteCodeList(const JavaUdfByteCodeList& newByteCodeList) {
+        this->byteCodeList = newByteCodeList;
+        return *this;
+    }
+
+    /**
+     * Set the output schema of the Java UDF descriptor.
+     * @param newOutputSchema The output schema of the Java UDF descriptor.
+     * @return The JavaUdfDescriptorBuilder instance.
+     */
+    JavaUdfDescriptorBuilder& setOutputSchema(const SchemaPtr& newOutputSchema) {
+        this->outputSchema = newOutputSchema;
+        return *this;
+    }
+
+    /**
      * Create a default Java UDF descriptor that can be used in tests.
      * @return A Java UDF descriptor instance.
      */
     static JavaUdfDescriptorPtr createDefaultJavaUdfDescriptor() {
-        auto className = "some_package.my_udf"s;
-        auto methodName = "udf_method"s;
-        auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
-        auto byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
-        auto outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
-        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema);
+        return JavaUdfDescriptorBuilder().build();
     }
+
+  private:
+    std::string className = "some_package.my_udf";
+    std::string methodName = "udf_method";
+    JavaSerializedInstance instance = JavaSerializedInstance{1}; // byte-array containing 1 byte
+    JavaUdfByteCodeList byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
+    SchemaPtr outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
 };
 
 }// namespace NES::Catalogs::UDF
