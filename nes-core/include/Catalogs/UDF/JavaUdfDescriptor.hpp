@@ -91,19 +91,19 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @brief Return the fully-qualified class name of the class implementing the UDF.
      * @return Fully-qualified class name of the class implementing the UDF.
      */
-    [[nodiscard]] const std::string& getClassName() const { return className; }
+    const std::string& getClassName() const { return className; }
 
     /**
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
-    [[nodiscard]] const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
+    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
      * @brief Return the list of classes and their bytecode required to execute the UDF.
      * @return A map containing class names as keys and their bytecode as values.
      */
-    [[nodiscard]] const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
+    const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
 
     /**
      * @brief Return the output schema of the map UDF operation.
@@ -112,19 +112,19 @@ class JavaUdfDescriptor : public UdfDescriptor {
      *
      * @return A SchemaPtr instance describing the output schema of the UDF method.
      */
-    [[nodiscard]] const SchemaPtr& getOutputSchema() const { return outputSchema; }
+    const SchemaPtr& getOutputSchema() const { return outputSchema; }
 
     /**
      * @brief Return the fully-qualified class name of the input type of the UDF method.
      * @return Fully-qualified class name of the input type of the UDF method.
      */
-    [[nodiscard]] const std::string& getInputClassName() const { return inputClassName; }
+    const std::string& getInputClassName() const { return inputClassName; }
 
     /**
      * @brief Return the fully-qualified class name of the return type of the UDF method.
      * @return Fully-qualified class name of the return type of the UDF method.
      */
-    [[nodiscard]] const std::string& getOutputClassName() const { return outputClassName; }
+    const std::string& getOutputClassName() const { return outputClassName; }
 
     /**
      * Compare to Java UDF descriptors.
