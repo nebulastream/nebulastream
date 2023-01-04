@@ -16,6 +16,9 @@ syntax = "proto3";
 import "SerializableSchema.proto";
 package NES;
 
+option java_package = "stream.nebula.protobuf";
+option java_multiple_files = true;
+
 message JavaUdfDescriptorMessage {
   message JavaUdfClassDefinition {
     string class_name = 1;
