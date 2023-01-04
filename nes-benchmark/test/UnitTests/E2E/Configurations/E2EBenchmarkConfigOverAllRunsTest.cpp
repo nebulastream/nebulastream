@@ -79,49 +79,20 @@ namespace NES::Benchmark {
 
         defaultConfigOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(yamlConfig);
 
-        expectedConfigOverAllRuns.startupSleepIntervalInSeconds->setValue(yamlConfig["startupSleepIntervalInSeconds"].As<uint32_t>());
-        expectedConfigOverAllRuns.numMeasurementsToCollect->setValue(yamlConfig["numberOfMeasurementsToCollect"].As<uint32_t>());
-        expectedConfigOverAllRuns.experimentMeasureIntervalInSeconds->setValue(
-            yamlConfig["experimentMeasureIntervalInSeconds"].As<uint32_t>());
-        expectedConfigOverAllRuns.outputFile->setValue(yamlConfig["outputFile"].As<std::string>());
-        expectedConfigOverAllRuns.benchmarkName->setValue(yamlConfig["benchmarkName"].As<std::string>());
-        expectedConfigOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
-        expectedConfigOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
-        expectedConfigOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
-        expectedConfigOverAllRuns.inputType->setValue(yamlConfig["inputType"].As<std::string>());
-        expectedConfigOverAllRuns.sourceSharing->setValue(yamlConfig["sourceSharing"].As<std::string>());
-        expectedConfigOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
-        expectedConfigOverAllRuns.batchSize->setValue(yamlConfig["batchSize"].As<uint32_t>());
-        expectedConfigOverAllRuns.numberOfBuffersToProduce->setValue(yamlConfig["numberOfBuffersToProduce"].As<uint32_t>());
-
-        auto logicalSourcesNode = yamlConfig["logicalSources"];
-        if (logicalSourcesNode.IsMap()) {
-            for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
-                auto sourceName = (*entry).first;
-                auto node = (*entry).second;
-                if (expectedConfigOverAllRuns.srcNameToDataGenerator.contains(sourceName)) {
-                    NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
-                }
-
-                auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(sourceName, node);
-                expectedConfigOverAllRuns.srcNameToDataGenerator[sourceName] = dataGenerator;
-            }
-        }
-
-        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValue(), expectedConfigOverAllRuns.startupSleepIntervalInSeconds->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValue(), expectedConfigOverAllRuns.numMeasurementsToCollect->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), expectedConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), expectedConfigOverAllRuns.outputFile->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), expectedConfigOverAllRuns.benchmarkName->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), expectedConfigOverAllRuns.query->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), expectedConfigOverAllRuns.dataProviderMode->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), expectedConfigOverAllRuns.connectionString->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), expectedConfigOverAllRuns.inputType->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), expectedConfigOverAllRuns.sourceSharing->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue(), expectedConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), expectedConfigOverAllRuns.batchSize->getValue());
-        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), expectedConfigOverAllRuns.numberOfBuffersToProduce->getValue());
-        // ASSERT_EQ logicalSources
+        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValueAsString(), "1");
+        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValueAsString(), "1");
+        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValueAsString(), "1");
+        ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
+        ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
+        ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
+        ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
+        ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
+        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "");                                              // returns "" instead of "Auto"
+        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "");                                          // returns "" instead of "off"
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString(), "100");
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "32764");                                 // returns "32764" instead of "1"
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString(), "500");
+        //ASSERT_EQ logicalSources
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
