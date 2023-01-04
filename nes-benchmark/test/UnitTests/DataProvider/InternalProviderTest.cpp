@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <DataProvider/InternalProvider.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <gtest/gtest.h>
 #include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 namespace NES::Benchmark::DataProviding {
-    class InternalProviderTest : public testing::Test {
+    class InternalProviderTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -29,12 +30,16 @@ namespace NES::Benchmark::DataProviding {
 
         /* Will be called before a test is executed. */
         void SetUp() override {
+            Testing::NESBaseTest::SetUp();
             bufferManager =  std::make_shared<Runtime::BufferManager>();
             NES_INFO("Setup InternalProviderTest test case.");
         }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { NES_INFO("Tear down InternalProviderTest test case."); }
+        void TearDown() override {
+            NES_INFO("Tear down InternalProviderTest test case.");
+            Testing::NESBaseTest::TearDown();
+        }
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down InternalProviderTest test class."); }
