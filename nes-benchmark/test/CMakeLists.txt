@@ -38,6 +38,14 @@ target_link_libraries(internal-provider-test nes-benchmark)
 add_nes_unit_test(e2e-single-run-test "UnitTests/E2E/E2ESingleRunTest.cpp")
 target_link_libraries(e2e-single-run-test nes-benchmark)
 
+# Adding unit test for E2EBenchmarkConfigPerRunTest
+add_nes_unit_test(e2e-benchmark-config-per-run-test "UnitTests/E2E/Configurations/E2EBenchmarkConfigPerRunTest.cpp")
+target_link_libraries(e2e-benchmark-config-per-run-test nes-benchmark)
+
+# Adding unit test for E2EBenchmarkConfigOverAllRunsTest
+add_nes_unit_test(e2e-benchmark-config-over-all-runs-test "UnitTests/E2E/Configurations/E2EBenchmarkConfigOverAllRunsTest.cpp")
+target_link_libraries(e2e-benchmark-config-over-all-runs-test nes-benchmark)
+
 # Adding unit test for different E2EBenchmark tests
 add_nes_unit_test(e2e-benchmark-runner-test "UnitTests/E2E/E2ERunnerTest.cpp")
 target_link_libraries(e2e-benchmark-runner-test nes-benchmark)
