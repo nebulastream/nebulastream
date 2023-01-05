@@ -103,6 +103,10 @@ class ConfigurationOption {
      */
     void setValue(T value) { this->value = value; }
 
+    /**
+     * @brief sets the value if it is defined
+     * @param yamlNode: the yaml field name to be used
+     */
     void setValueIfDefined(Yaml::Node yamlNode) {
         if (!yamlNode.IsNone()) {
             this->value = yamlNode.As<T>();
