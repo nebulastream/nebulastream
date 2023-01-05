@@ -18,8 +18,8 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <UdfCatalogService.pb.h>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 
 namespace NES {
 
