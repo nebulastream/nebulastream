@@ -14,6 +14,8 @@
 
 #include <API/Schema.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
+#include <DataGeneration/DefaultDataGenerator.hpp>
+#include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 #include <Util/yaml/Yaml.hpp>
@@ -50,27 +52,26 @@ namespace NES::Benchmark {
 
         auto defaultString = defaultConfigOverAllRuns.toString();
 
-        oss << "- startupSleepIntervalInSeconds: " << defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValueAsString() << std::endl
-            << "- numMeasurementsToCollect: " << defaultConfigOverAllRuns.numMeasurementsToCollect->getValueAsString() << std::endl
-            << "- experimentMeasureIntervalInSeconds: " << defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValueAsString() << std::endl
-            << "- outputFile: " << defaultConfigOverAllRuns.outputFile->getValue() << std::endl
-            << "- benchmarkName: " << defaultConfigOverAllRuns.benchmarkName->getValue() << std::endl
-            << "- inputType: " << defaultConfigOverAllRuns.inputType->getValue() << std::endl
-            << "- sourceSharing: " << defaultConfigOverAllRuns.sourceSharing->getValue() << std::endl
-            << "- query: " << defaultConfigOverAllRuns.query->getValue() << std::endl
-            << "- numberOfPreAllocatedBuffer: " << defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString() << std::endl
-            << "- numberOfBuffersToProduce: " << defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString() << std::endl
-            << "- batchSize: " << defaultConfigOverAllRuns.batchSize->getValueAsString() << std::endl
-            << "- dataProviderMode: " << defaultConfigOverAllRuns.dataProviderMode->getValue() << std::endl
-            << "- connectionString: " << defaultConfigOverAllRuns.connectionString->getValue() << std::endl
-            << "- logicalSources: " << defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators() << std::endl;
+        oss << "- startupSleepIntervalInSeconds: 5" << std::endl
+            << "- numMeasurementsToCollect: 10" << std::endl
+            << "- experimentMeasureIntervalInSeconds: 1" << std::endl
+            << "- outputFile: e2eBenchmarkRunner" << std::endl
+            << "- benchmarkName: E2ERunner" << std::endl
+            << "- inputType: Auto" << std::endl
+            << "- sourceSharing: off" << std::endl
+            << "- query: " << std::endl
+            << "- numberOfPreAllocatedBuffer: 1" << std::endl
+            << "- numberOfBuffersToProduce: 5000000" << std::endl
+            << "- batchSize: 1" << std::endl
+            << "- dataProviderMode: ZeroCopy" << std::endl
+            << "- connectionString: " << std::endl
+            << "- logicalSources: input1: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsTest) {
-        E2EBenchmarkConfigOverAllRuns expectedConfigOverAllRuns;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
         Yaml::Node yamlConfig;
 
@@ -87,10 +88,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
-        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "");                                              // returns "" instead of "Auto"
-        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "");                                          // returns "" instead of "off"
+        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");                                          // returns "" instead of "Auto"
+        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "off");                                       // returns "" instead of "off"
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString(), "100");
-        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "32764");                                 // returns "32764" instead of "1"
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "1");                                     // returns "32764" instead of "1"
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString(), "500");
         //ASSERT_EQ logicalSources
     }
@@ -99,11 +100,15 @@ namespace NES::Benchmark {
         size_t expectedSize = 0;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
+        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = defaultDataGenerator;
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = zipfianDataGenerator;
+
         auto defaultSize = defaultConfigOverAllRuns.getTotalSchemaSize();
 
-        for (auto [logicalSource, dataGenerator] : defaultConfigOverAllRuns.srcNameToDataGenerator) {
-            expectedSize += dataGenerator->getSchema()->getSchemaSizeInBytes();
-        }
+        expectedSize += defaultDataGenerator->getSchema()->getSchemaSizeInBytes();
+        expectedSize += zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
 
         ASSERT_EQ(defaultSize, expectedSize);
     }
@@ -112,14 +117,15 @@ namespace NES::Benchmark {
         std::stringstream expectedString;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
+        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = defaultDataGenerator;
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = zipfianDataGenerator;
+
         auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 
-        for (auto it = defaultConfigOverAllRuns.srcNameToDataGenerator.begin(); it != defaultConfigOverAllRuns.srcNameToDataGenerator.end(); ++it) {
-            if (it != defaultConfigOverAllRuns.srcNameToDataGenerator.begin()) {
-                expectedString << ", ";
-            }
-            expectedString << it->first << ": " << it->second;
-        }
+        expectedString << "input1: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input1"]
+                       << ", input2: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input2"];
 
         ASSERT_EQ(defaultString, expectedString.str());
     }
