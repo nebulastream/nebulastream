@@ -83,8 +83,13 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                        const SchemaPtr outputSchema,
                                        const std::string& inputClassName,
                                        const std::string& outputClassName) {
-        return std::make_shared<JavaUdfDescriptor>(className, methodName, serializedInstance, byteCodeList, outputSchema,
-                                                   inputClassName, outputClassName);
+        return std::make_shared<JavaUdfDescriptor>(className,
+                                                   methodName,
+                                                   serializedInstance,
+                                                   byteCodeList,
+                                                   outputSchema,
+                                                   inputClassName,
+                                                   outputClassName);
     }
 
     /**

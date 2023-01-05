@@ -41,7 +41,12 @@ class JavaUdfDescriptorBuilder {
      * @return A Java UDF descriptor with the fields either set to default values or with explicitly specified values in setters.
      */
     JavaUdfDescriptorPtr build() {
-        return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList, outputSchema, inputClassName,
+        return JavaUdfDescriptor::create(className,
+                                         methodName,
+                                         instance,
+                                         byteCodeList,
+                                         outputSchema,
+                                         inputClassName,
                                          outputClassName);
     }
 
@@ -119,14 +124,12 @@ class JavaUdfDescriptorBuilder {
      * Create a default Java UDF descriptor that can be used in tests.
      * @return A Java UDF descriptor instance.
      */
-    static JavaUdfDescriptorPtr createDefaultJavaUdfDescriptor() {
-        return JavaUdfDescriptorBuilder().build();
-    }
+    static JavaUdfDescriptorPtr createDefaultJavaUdfDescriptor() { return JavaUdfDescriptorBuilder().build(); }
 
   private:
     std::string className = "some_package.my_udf";
     std::string methodName = "udf_method";
-    JavaSerializedInstance instance = JavaSerializedInstance{1}; // byte-array containing 1 byte
+    JavaSerializedInstance instance = JavaSerializedInstance{1};// byte-array containing 1 byte
     JavaUdfByteCodeList byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
     SchemaPtr outputSchema = std::make_shared<Schema>()->addField("attribute", DataTypeFactory::createUInt64());
     std::string inputClassName = "some_package.my_input_type";

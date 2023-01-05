@@ -16,10 +16,10 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
-#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -37,9 +37,7 @@ class MapJavaUdfLogicalOperatorNodeTest : public Testing::NESBaseTest {
 TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferSchema) {
     // Create a JavaUdfDescriptor with a specific schema.
     auto outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean());
-    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder{}
-                                 .setOutputSchema(outputSchema)
-                                 .build();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder{}.setOutputSchema(outputSchema).build();
     // Create a MapUdfLogicalOperatorNode with the JavaUdfDescriptor.
     auto mapUdfLogicalOperatorNode = std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, 1);
     // Create a SourceLogicalOperatorNode with a source schema
