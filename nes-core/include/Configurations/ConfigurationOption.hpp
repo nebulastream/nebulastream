@@ -17,6 +17,7 @@
 
 #include <Util/GatheringMode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 #include <any>
 #include <memory>
@@ -101,6 +102,12 @@ class ConfigurationOption {
      * @param value: the value to be used
      */
     void setValue(T value) { this->value = value; }
+
+    void setValueIfDefined(Yaml::Node yamlNode) {
+        if (!yamlNode.IsNone()) {
+            this->value = yamlNode.As<T>();
+        }
+    }
 
     /**
      * @brief get the description of this parameter

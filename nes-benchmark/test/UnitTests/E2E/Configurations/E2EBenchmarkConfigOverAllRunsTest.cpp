@@ -88,10 +88,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProviderMode->getValue(), "ZeroCopy");
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
-        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");                                          // returns "" instead of "Auto"
-        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "off");                                       // returns "" instead of "off"
+        ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");
+        ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "off");
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString(), "100");
-        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "1");                                     // returns "32764" instead of "1"
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "1");
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString(), "500");
         //ASSERT_EQ logicalSources
     }
