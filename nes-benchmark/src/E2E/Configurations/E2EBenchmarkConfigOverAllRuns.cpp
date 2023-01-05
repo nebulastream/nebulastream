@@ -66,20 +66,20 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
 
 E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(Yaml::Node yamlConfig) {
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-    configOverAllRuns.startupSleepIntervalInSeconds->setValue(yamlConfig["startupSleepIntervalInSeconds"].As<uint32_t>());
-    configOverAllRuns.numMeasurementsToCollect->setValue(yamlConfig["numberOfMeasurementsToCollect"].As<uint32_t>());
-    configOverAllRuns.experimentMeasureIntervalInSeconds->setValue(
-        yamlConfig["experimentMeasureIntervalInSeconds"].As<uint32_t>());
-    configOverAllRuns.outputFile->setValue(yamlConfig["outputFile"].As<std::string>());
-    configOverAllRuns.benchmarkName->setValue(yamlConfig["benchmarkName"].As<std::string>());
-    configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
-    configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
-    configOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
-    configOverAllRuns.inputType->setValue(yamlConfig["inputType"].As<std::string>());
-    configOverAllRuns.sourceSharing->setValue(yamlConfig["sourceSharing"].As<std::string>());
-    configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
-    configOverAllRuns.batchSize->setValue(yamlConfig["batchSize"].As<uint32_t>());
-    configOverAllRuns.numberOfBuffersToProduce->setValue(yamlConfig["numberOfBuffersToProduce"].As<uint32_t>());
+
+    configOverAllRuns.startupSleepIntervalInSeconds->setValueIfDefined(yamlConfig["startupSleepIntervalInSeconds"]);
+    configOverAllRuns.numMeasurementsToCollect->setValueIfDefined(yamlConfig["numberOfMeasurementsToCollect"]);
+    configOverAllRuns.experimentMeasureIntervalInSeconds->setValueIfDefined(yamlConfig["experimentMeasureIntervalInSeconds"]);
+    configOverAllRuns.outputFile->setValueIfDefined(yamlConfig["outputFile"]);
+    configOverAllRuns.benchmarkName->setValueIfDefined(yamlConfig["benchmarkName"]);
+    configOverAllRuns.query->setValueIfDefined(yamlConfig["query"]);
+    configOverAllRuns.dataProviderMode->setValueIfDefined(yamlConfig["dataProviderMode"]);
+    configOverAllRuns.connectionString->setValueIfDefined(yamlConfig["connectionString"]);
+    configOverAllRuns.inputType->setValueIfDefined(yamlConfig["inputType"]);
+    configOverAllRuns.sourceSharing->setValueIfDefined(yamlConfig["sourceSharing"]);
+    configOverAllRuns.numberOfPreAllocatedBuffer->setValueIfDefined(yamlConfig["numberOfPreAllocatedBuffer"]);
+    configOverAllRuns.batchSize->setValueIfDefined(yamlConfig["batchSize"]);
+    configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsMap()) {
