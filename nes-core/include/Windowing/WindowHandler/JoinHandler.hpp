@@ -75,8 +75,9 @@ class JoinHandler : public AbstractJoinHandler {
             StateId leftStateId = {stateManager->getNodeId(), id, localStateVariableId};
             localStateVariableId++;
             StateId rightStateId = {stateManager->getNodeId(), id, localStateVariableId};
-            NES_DEBUG2("JoinHandler start id={} {}", id, this);
-
+            //TODO FIX THIS --> with "this" its not working atm
+            //NES_DEBUG2("JoinHandler start id={} {}", id, this);
+            NES_DEBUG2("JoinHandler start id={}", id);
             //Defines a callback to execute every time a new key-value pair is created
             auto leftDefaultCallback = [](const KeyType&) {
                 return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
@@ -333,14 +334,27 @@ class JoinHandler : public AbstractJoinHandler {
 };
 }// namespace NES::Join
 
+/*
 namespace fmt {
 template<>
-struct formatter<NES::Join::JoinHandler<KeyType, ValueTypeLeft, ValueTypeRight>> : formatter<std::string> {
-    auto format(const NES::Join::JoinHandler& jh, format_context& ctx) -> decltype(ctx.out()) {
+struct formatter<NES::Join::JoinHandler<class KeyType, class ValueTypeLeft, class ValueTypeRight>> : formatter<std::string> {
+    auto format(const NES::Join::JoinHandler<class KeyType, class ValueTypeLeft, class ValueTypeRight>& jh, format_context& ctx) -> decltype(ctx.out()) {
         return format_to(ctx.out(),
                          "leftJoinState:{} RightJoinState:{}", jh.getLeftJoinState().toString(), jh.getRightJoinState().toString());
     }
 };
 }// namespace fmt
+
+
+namespace fmt {
+template<>
+struct formatter<NES::Join::JoinHandler<long, long, long> *>: formatter<std::string> {
+    auto format(const NES::Join::JoinHandler<long,long,long>& j_h, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", j_h);
+    }
+};
+
+}// namespace fmt
+*/
 
 #endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
