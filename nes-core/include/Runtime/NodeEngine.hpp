@@ -25,6 +25,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>

@@ -331,4 +331,15 @@ class StateVariable : public detail::Destroyable {
 };
 }// namespace Runtime
 }// namespace NES
+/*
+namespace fmt {
+template<>
+struct formatter<NES::Runtime::StateVariable<typename Key, typename Value, std::enable_if_t<std::is_integral<Value>::value || std::is_pointer<Value>::value, int> = 0>>
+    : formatter<std::string> {
+    auto format(const NES::Runtime::StateVariable& state_variable, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", state_variable.first());
+    }
+};
+} //namespace fmt
+*/
 #endif// NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_

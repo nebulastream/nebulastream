@@ -68,8 +68,7 @@ class ExecutableCompleteAggregationTriggerAction
         PartialAggregateType partialAggregateTypeInitialValue)
         : executableWindowAggregation(std::move(executableWindowAggregation)), windowDefinition(std::move(windowDefinition)),
           id(id), partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
-
-        NES_DEBUG2("ExecutableCompleteAggregationTriggerAction intialized with schema:{} id=", outputSchema->toString(), id);
+        NES_DEBUG2("ExecutableCompleteAggregationTriggerAction intialized with schema:{} id={}", outputSchema->toString(), id);
         this->windowSchema = outputSchema;
     }
 
@@ -78,7 +77,7 @@ class ExecutableCompleteAggregationTriggerAction
                   uint64_t lastWatermark,
                   Runtime::WorkerContextRef workerContext) override {
         NES_TRACE2("ExecutableCompleteAggregationTriggerAction (id={} {}): doAction for currentWatermark={} lastWatermark={}",
-                  id, this->windowDefinition->getDistributionType()->toString(), currentWatermark, lastWatermark);
+                   id, this->windowDefinition->getDistributionType()->toString(), currentWatermark, lastWatermark);
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -101,8 +100,12 @@ class ExecutableCompleteAggregationTriggerAction
                              currentWatermark,
                              lastWatermark,
                              workerContext);//put key into this
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): {} check key={} nextEdge={} id={}",
-                          this->windowDefinition->getDistributionType()->toString(), toString(), it.first, it.second->nextEdge, id);
+            //TODO FIX ME it.first (key!)
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): {} check key= nextEdge={} id={}",
+                       this->windowDefinition->getDistributionType()->toString(), toString(), it.second->nextEdge, id);
+           /* NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): {} check key={} nextEdge={} id={}",
+                       this->windowDefinition->getDistributionType()->toString(), toString(), it.first, it.second->nextEdge, id);
+        */
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -113,7 +116,7 @@ class ExecutableCompleteAggregationTriggerAction
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                 NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): Dispatch last buffer output buffer with {} records, content={} originId={} windowAction={} currentWatermark={} lastWatermark={}",
-                          this->windowDefinition->getDistributionType()->toString(), tupleBuffer.getNumberOfTuples(), dynamicTupleBuffer, tupleBuffer.getOriginId(), toString(), currentWatermark, lastWatermark);
+                       this->windowDefinition->getDistributionType()->toString(), tupleBuffer.getNumberOfTuples(), dynamicTupleBuffer, tupleBuffer.getOriginId(), toString(), currentWatermark, lastWatermark);
             }
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
@@ -162,7 +165,7 @@ class ExecutableCompleteAggregationTriggerAction
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             NES_TRACE2("ExecutableCompleteAggregationTriggerAction{}: ({}): trigger sliceid={} start={} end={}",
-                      id, this->windowDefinition->getDistributionType()->toString(), sliceId, slices[sliceId].getStartTs(), slices[sliceId].getEndTs());
+                     id, this->windowDefinition->getDistributionType()->toString(), sliceId, slices[sliceId].getStartTs(), slices[sliceId].getEndTs());
         }
 
         if (currentWatermark > lastWatermark) {
@@ -191,14 +194,16 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): key={} window.getStartTs()={} slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={} recCnt={}",
-                          id, this->windowDefinition->getDistributionType()->toString(), key, window.getStartTs(), slices[sliceId].getStartTs(), window.getEndTs(), slices[sliceId].getEndTs(), slices[sliceId].getRecordsPerSlice());
+               // TODO FIXME key
+                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): key= window.getStartTs()={} slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={} recCnt={}",
+                        id, this->windowDefinition->getDistributionType()->toString(),/* key, */window.getStartTs(), slices[sliceId].getStartTs(), window.getEndTs(), slices[sliceId].getEndTs(), slices[sliceId].getRecordsPerSlice());
 
 
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
                     && slices[sliceId].getRecordsPerSlice() != 0) {
-                    NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): create partial agg windowId={} sliceId={} key={} partAgg={} recCnt={}",
-                        id, this->windowDefinition->getDistributionType()->toString(), windowId, sliceId, key, executableWindowAggregation->lower(partialAggregates[sliceId]), slices[sliceId].getRecordsPerSlice());
+                    // TODO FIXME key
+                    NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): create partial agg windowId={} sliceId={} key= partAgg={} recCnt={}",
+                               id, this->windowDefinition->getDistributionType()->toString(), windowId, sliceId/*, key*/, executableWindowAggregation->lower(partialAggregates[sliceId]), slices[sliceId].getRecordsPerSlice());
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
                     //we have to do this in order to prevent that we output a window that has no slice associated
@@ -217,8 +222,9 @@ class ExecutableCompleteAggregationTriggerAction
                 auto& window = windows[i];
                 largestClosedWindow = std::max((int64_t) window.getEndTs(), largestClosedWindow);
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}) write i={} key={} value={} window.start()={} window.getEndTs()={} recordsPerWindow[i]={}",
-                          id, this->windowDefinition->getDistributionType()->toString(), i, key, value, window.getStartTs(), window.getEndTs(), recordsPerWindow[i]);
+               //TODO FIX ME key
+                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}) write i={} key= value={} window.start()={} window.getEndTs()={} recordsPerWindow[i]={}",
+                           id, this->windowDefinition->getDistributionType()->toString(), i, /*key,*/ value, window.getStartTs(), window.getEndTs(), recordsPerWindow[i]);
 
                 //if we would write to a new buffer and we still have tuples to write
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
@@ -339,4 +345,16 @@ class ExecutableCompleteAggregationTriggerAction
     PartialAggregateType partialAggregateTypeInitialValue;
 };
 }// namespace NES::Windowing
+/*
+template<>
+struct fmt::formatter<NES::Windowing::ExecutableCompleteAggregationTriggerAction<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>> : fmt::formatter<std::string> {
+    auto format(const NES::Windowing::ExecutableCompleteAggregationTriggerAction<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>& ExComplAggTriggerAct, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", ExComplAggTriggerAct.first());
+    }
+};
+*/
+
+//std::pair<const KeyType, WindowSliceStore<PartialAggregateType> *> &ExecutableCompleteAggregationTriggerAction::it
+//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
+
 #endif// NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLECOMPLETEAGGREGATIONTRIGGERACTION_HPP_
