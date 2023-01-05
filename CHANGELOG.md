@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.4.19](https://github.com/nebulastream/nebulastream/tree/v0.4.19) (2023-01-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.18...v0.4.19)
+
+#### Runtime 
+
+- \[Feature\] Cleanup tests in nes-runtime [\#3360](https://github.com/nebulastream/nebulastream/issues/3360)
+
+#### User Defined Functions
+
+- \[Feature\] Add input and output type name of Java UDF to Java UDF descriptor [\#3308](https://github.com/nebulastream/nebulastream/issues/3308)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Reactivate e2e testrun in CI [\#3338](https://github.com/nebulastream/nebulastream/issues/3338)
+
 ## [v0.4.18](https://github.com/nebulastream/nebulastream/tree/v0.4.18) (2023-01-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.17...v0.4.18)
