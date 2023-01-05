@@ -37,7 +37,7 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
     // Double
     {
         auto resultValue = expression.eval(Value<Double>(0.5));
-        ASSERT_EQ(resultValue, (double) 0.4636476090008061);
+        ASSERT_EQ(resultValue, std::atan(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -47,7 +47,7 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, (float) 0.4636476090008061);
+        ASSERT_EQ(resultValue, std::atan((float) 0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
