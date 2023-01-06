@@ -37,7 +37,6 @@ class WASMRuntime {
 
     void linkHostFunction(const std::string& proxyFunction);
     std::string parseWATFile(const char* fileName);
-    wasmtime::Span<uint8_t> parseWASMFile(const char* fileName);
     void prepareCPython();
     void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName);
     void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
