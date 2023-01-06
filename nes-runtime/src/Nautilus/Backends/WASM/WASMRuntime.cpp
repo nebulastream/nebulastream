@@ -31,7 +31,7 @@ WASMRuntime::WASMRuntime() : linker(engine), store(engine) {
 
     auto isPreOpened = wasiConfig.preopen_dir("/home/victor/wanes-engine/python", ".");
     if (!isPreOpened) {
-        NES_ERROR("Could not pre-open directory for python");
+        NES_ERROR("Could not pre-open directory for python")
     }
     wasiConfig.inherit_env();
     wasiConfig.inherit_stdin();
@@ -126,7 +126,7 @@ void WASMRuntime::prepareCPython() {
                                                file << param0 << " " << param1;
                                                file.close();
                                            } else {
-                                               NES_ERROR("Python args file could not be opened");
+                                               NES_ERROR("Python args file could not be opened")
                                            }
                                            return std::monostate();
                                        });
@@ -159,7 +159,6 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& p
                                FuncType({ValKind::I32}, {ValKind::I32}),
                                [](auto caller, auto params, auto results) {
                                    auto ptr1 = params[0].i32();
-                                   auto ptr2 = params[1].i32();
                                    auto mem = std::get<Memory>(*caller.get_export("memory"));
 
                                    //auto res = NES::Nautilus::RecordBuffer::NES__Runtime__TupleBuffer // ::NES__Runtime__TupleBuffer__getBuffer(nullptr);
@@ -174,7 +173,6 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& p
                                FuncType({ValKind::I32}, {ValKind::I64}),
                                [](auto caller, auto params, auto results) {
                                    auto ptr1 = params[0].i32();
-                                   auto ptr2 = params[1].i32();
                                    auto mem = std::get<Memory>(*caller.get_export("memory"));
                                    //int32_t *ptr3 = ptr1;
                                    //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBufferSize(ptr3);
@@ -188,9 +186,7 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& p
                                FuncType({ValKind::I32}, {ValKind::I64}),
                                [](auto caller, auto params, auto results) {
                                    auto ptr1 = params[0].i32();
-                                   auto ptr2 = params[1].i32();
                                    auto mem = std::get<Memory>(*caller.get_export("memory"));
-                                   //int32_t *ptr3 = ptr1;
                                    //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples(ptr3);
                                    results[0] = 0;
                                    return std::monostate();
@@ -202,9 +198,7 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::s
                                FuncType({ValKind::I32, ValKind::I64}, {}),
                                [](auto caller, auto params, auto results) {
                                    auto ptr1 = params[0].i32();
-                                   auto ptr2 = params[1].i32();
                                    auto mem = std::get<Memory>(*caller.get_export("memory"));
-                                   //int32_t *ptr3 = ptr1;
                                    //Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples(ptr3);
                                    results[0] = 0;
                                    return std::monostate();
