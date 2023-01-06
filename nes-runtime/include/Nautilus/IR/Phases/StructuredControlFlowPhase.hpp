@@ -85,17 +85,16 @@ class StructuredControlFlowPhase {
          * @return true, if the currentBlock is a merge-block with open edges, and false if not.
          */
         bool inline mergeBlockCheck(IR::BasicBlockPtr& currentBlock,
-                                    std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
-                                    std::unordered_map<BasicBlock*, uint32_t>& candidateEdgeCounter,
-                                    bool newVisit,
-                                    const std::unordered_set<IR::BasicBlock*>& loopBlockWithVisitedBody);
+                                    std::unordered_map<BasicBlock*, uint32_t>& numMergeBlocksVisits,
+                                    const bool newVisit,
+                                    const std::unordered_set<IR::BasicBlock*>& visitedBlocks);
         /**
          * @brief Iterates over the block arguments of the next blocks of the current block and links the arguments
          *        to the base operations that the arguments reference (similar to constant folding).
          * 
          * @param currentBlock: The block from which we forward argument base operations to the next block.
          */
-        void forwardArgs(BasicBlockPtr& currentBlock);
+        void forwardArgs(const BasicBlockPtr& currentBlock, const bool loopBody);
 
       private:
         std::shared_ptr<IR::IRGraph> ir;

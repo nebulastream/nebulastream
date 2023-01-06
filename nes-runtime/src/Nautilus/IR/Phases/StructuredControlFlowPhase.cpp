@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp"
 #include "Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp"
 #include "Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp"
 #include "Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp"
@@ -33,6 +34,7 @@
 #include <memory>
 #include <stack>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR {
@@ -53,35 +55,119 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
     createIfOperations(rootOperation->getFunctionBasicBlock());
 }
 
-void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::forwardArgs(BasicBlockPtr& currentBlock) {
-    // Iterate over the next blocks of the current block (0:ReturnOp, 1:BranchOp, 2:IfOp or LoopOp)
-    // Todo: We process a merge-block before all branches have been taken!
-    for(auto& nextBlockInvocation : currentBlock->getNextBlockInvocations()) {
-        // Iterate over all args, of the terminator operation. If the arg is a non-BasicBlockArgument, add it.
-        // If it is a BasicBlockArgument, check if it is a merge-argument (references more than one unique 
-        // base operations). If it is a merge-argument, forward the argument, else, forward the base operation.
-        for(size_t i = 0; i < nextBlockInvocation->getNextBlock()->getArguments().size(); ++i) {
-            if(nextBlockInvocation->getBranchOps().at(i)->getOperationType() == Operation::BasicBlockArgument) {
-                auto blockArg = std::static_pointer_cast<BasicBlockArgument>(
-                        nextBlockInvocation->getBranchOps().at(i));
-                if(blockArg->getBaseOps().size() < 2 && !currentBlock->isLoopHeaderBlock()) { //We check if its a loop header to forward args
+void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::forwardArgs(const BasicBlockPtr& currentBlock, 
+                                                                                const bool toLoopBody) {
+    size_t nextBlockIndex = (!toLoopBody && currentBlock->isLoopHeaderBlock());
+    for(; nextBlockIndex < currentBlock->getNextBlockInvocations().size() - 
+            (toLoopBody && currentBlock->isLoopHeaderBlock()); ++nextBlockIndex) {
+        auto nextBlockInvocation = currentBlock->getNextBlockInvocations().at(nextBlockIndex);
+        // We check whether the nextBlockInvocation has already received baseOps
+        // if(!visitedBlocks.contains(nextBlockInvocation->getNextBlock().get())) {
+        if(nextBlockInvocation->getNextBlock()->getArguments().empty() || 
+            !(nextBlockInvocation->getNextBlock()->getArguments().back()->getBaseOperationWrapper())) {
+            // We have not forwarded args to the nextBlock yet.
+            for(size_t i = 0; i < nextBlockInvocation->getNextBlock()->getArguments().size(); ++i) {
+                if(nextBlockInvocation->getBranchOps().at(i)->getOperationType() != Operation::BasicBlockArgument) {
                     nextBlockInvocation->getNextBlock()->getArguments().at(i)
-                    ->addBaseOperation(blockArg->getBaseOps().at(0));
+                    ->setBaseOperationWrapper(
+                        std::make_shared<Operations::BasicBlockArgument::BaseOperationWrapper>(
+                            Operations::BasicBlockArgument::BaseOperationWrapper{nextBlockInvocation->getBranchOps().at(i)}));
                 } else {
-                    nextBlockInvocation->getNextBlock()->getArguments().at(i)->addBaseOperation(blockArg);
+                    auto basicBlockArg = std::static_pointer_cast<Operations::BasicBlockArgument>(
+                        nextBlockInvocation->getBranchOps().at(i));
+                    nextBlockInvocation->getNextBlock()->getArguments().at(i)
+                    ->setBaseOperationWrapper(basicBlockArg->getBaseOperationWrapper());
                 }
-            } else {
-                nextBlockInvocation->getNextBlock()->getArguments().at(i)
-                ->addBaseOperation(nextBlockInvocation->getBranchOps().at(i));
+            }
+        } else {
+            // The nextBlock merges control flow (merge- or/and loop-header-block)
+            for(size_t argIndex = 0; argIndex < nextBlockInvocation->getNextBlock()->getArguments().size(); ++argIndex) {
+                // If arg already has a baseOperation, and it is different, we found a merge-arg.
+                if(!nextBlockInvocation->getNextBlock()->getArguments().at(argIndex)->getIsMergeArg()) {
+                    // Check whether the current operation is a BasicBlockArg
+                    OperationPtr forwardedOp = (nextBlockInvocation->getBranchOps().at(argIndex)
+                                                ->getOperationType() == Operation::BasicBlockArgument) 
+                        ? std::static_pointer_cast<Operations::BasicBlockArgument>(
+                            nextBlockInvocation->getBranchOps().at(argIndex))->getBaseOperationPtr()
+                        : nextBlockInvocation->getBranchOps().at(argIndex);
+                    // Check whether operation or base operation of arg equals nextBlock's base operation.
+                    if(forwardedOp != nextBlockInvocation->getNextBlock()->getArguments().at(argIndex)->getBaseOperationPtr()) {
+                        // The argument has two different options for base operations and is thus a merge-argument.
+                        // Therefore, the argument becomes its own base operation, which it then forwards.
+                        nextBlockInvocation->getNextBlock()->getArguments().at(argIndex)
+                        ->setBaseOperationWrapper(
+                            std::make_shared<Operations::BasicBlockArgument::BaseOperationWrapper>(
+                                Operations::BasicBlockArgument::BaseOperationWrapper{
+                                    nextBlockInvocation->getNextBlock()->getArguments().at(argIndex)
+                                }));
+                    } // else, simply continue
+                } // else: The currentArg is a merge-arg. Thus, its baseOperation is itself(this), and we can just continue.
             }
         }
+        // // Iterate over all args, of the terminator operation. If the arg is a non-BasicBlockArgument, add it.
+        // // If it is a BasicBlockArgument, check if it is a merge-argument (references more than one unique 
+        // // base operations). If it is a merge-argument, forward the argument, else, forward the base operation.
+        // for(size_t i = 0; i < nextBlockInvocation->getNextBlock()->getArguments().size(); ++i) {
+        //     // Currently we check if:
+        //     // 1. We found a BasicBlockArgument (keep!)
+        //     // 2. The basicBlockArg is not loop-header-arg or the arg is not a merge-arg
+        //     // -> CHANGE! -> non-visited nextBlock
+        //     // 3. If (visited nextBlock) is loopHeader, and we are not in loopBody
+        //     // 4. If we transfer to loopBody
+        //     // -> KEEP and adapt
+        //     if(nextBlockInvocation->getBranchOps().at(i)->getOperationType() == Operation::BasicBlockArgument) {
+        //         auto blockArg = std::static_pointer_cast<BasicBlockArgument>(
+        //                 nextBlockInvocation->getBranchOps().at(i));
+        //         if(blockArg->getBaseOps().size() < 2 && !currentBlock->isLoopHeaderBlock()) {
+        //             nextBlockInvocation->getNextBlock()->getArguments().at(i)
+        //             ->addBaseOperation(blockArg->getBaseOps().at(0));
+        //             if(blockArg->getRealBaseOp() && (!nextBlockInvocation->getNextBlock()->getArguments().at(i)->getRealBaseOp() ||
+        //                nextBlockInvocation->getNextBlock()->getArguments().at(i)->getRealBaseOp() == blockArg->getRealBaseOp())) { //Todo check if matches, else delete
+        //                 nextBlockInvocation->getNextBlock()->getArguments().at(i)
+        //                 ->addRealBaseOperation(blockArg->getRealBaseOp());
+        //             }
+        //         } else {
+        //             if(currentBlock->isLoopHeaderBlock() && !toLoopBody) {
+        //                 bool hasOneUniqueBaseOp = true;
+        //                 OperationPtr uniqueBaseOperation;
+        //                 for(auto& baseOp : blockArg->getBaseOps()) {
+        //                     if(baseOp != blockArg) {
+        //                         if(uniqueBaseOperation && uniqueBaseOperation != baseOp) {
+        //                             hasOneUniqueBaseOp = false;
+        //                             break;
+        //                         }
+        //                         uniqueBaseOperation = baseOp;
+        //                     }
+        //                 }
+        //                 if(hasOneUniqueBaseOp) {
+        //                     if(!blockArg->getRealBaseOp()) {
+        //                         blockArg->addRealBaseOperation(std::move(uniqueBaseOperation));
+        //                     }
+        //                     nextBlockInvocation->getNextBlock()->getArguments().at(i)->addRealBaseOperation(blockArg->getRealBaseOp());
+        //                 } else {
+        //                     if(nextBlockInvocation->getNextBlock()->getArguments().at(i)->getRealBaseOp()) {
+        //                         nextBlockInvocation->getNextBlock()->getArguments().at(i)->addRealBaseOperation(blockArg);
+        //                     }
+        //                 }
+        //             }
+        //             if(blockArg->getRealBaseOp() && (!nextBlockInvocation->getNextBlock()->getArguments().at(i)->getRealBaseOp() ||
+        //                 blockArg->getRealBaseOp() == nextBlockInvocation->getNextBlock()->getArguments().at(i))) {
+        //                     nextBlockInvocation->getNextBlock()->getArguments().at(i)->addRealBaseOperation(blockArg->getRealBaseOp());
+        //             }
+        //             nextBlockInvocation->getNextBlock()->getArguments().at(i)->addBaseOperation(blockArg);
+        //         }
+        //     } else {
+        //         nextBlockInvocation->getNextBlock()->getArguments().at(i)
+        //         ->addBaseOperation(nextBlockInvocation->getBranchOps().at(i));
+        //     }
+        // }
     }
 }
 
-bool NES::Nautilus::IR::StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCheck(IR::BasicBlockPtr& currentBlock, 
-                                std::stack<std::unique_ptr<IfOpCandidate>>& ifOperations,
+bool NES::Nautilus::IR::StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCheck(
+                                IR::BasicBlockPtr& currentBlock, 
                                 std::unordered_map<BasicBlock*, uint32_t>& numMergeBlocksVisits,
-                                bool newVisit, const std::unordered_set<IR::BasicBlock*>& visitedBlocks) {
+                                const bool newVisit, const std::unordered_set<IR::BasicBlock*>& visitedBlocks) {
     uint32_t openEdges = 0;
     uint32_t numPriorVisits = 0;
     bool mergeBlockFound = false;
@@ -107,11 +193,17 @@ bool NES::Nautilus::IR::StructuredControlFlowPhase::StructuredControlFlowPhaseCo
     } else {
         openEdges = currentBlock->getNumLoopBackEdges() - numPriorVisits;
         if(openEdges < 2) {
+                //Todo does this actually guarantee that loop-header-blocks are visited after all loop-body-blocks?
+                forwardArgs(currentBlock, /* toLoopBody */ false);
+                // Todo is emplacing the loop-header block required? 
+                // -> in theory we should not visit it again -> can make visitedBlocks const again
+                // visitedBlocks.emplace(currentBlock.get());
                 // We exhausted the loop-operations true-branch (body block) and now switch to its false-branch.
-                currentBlock = std::static_pointer_cast<Operations::LoopOperation>(currentBlock->getTerminatorOp())->getLoopFalseBlock().getNextBlock();
+                currentBlock = std::static_pointer_cast<Operations::LoopOperation>(currentBlock->getTerminatorOp())
+                                ->getLoopFalseBlock().getNextBlock();
                 // Since we switched to a new currentBlock, we need to check whether it is a merge-block with openEdges.
                 // If the new currentBlock is a loop-header-block again, we have multiple recursive calls.
-                return mergeBlockCheck(currentBlock, ifOperations, numMergeBlocksVisits, true, visitedBlocks);
+                return mergeBlockCheck(currentBlock, numMergeBlocksVisits, true, visitedBlocks);
         }
     }
     // If the number of openEdges is 2 or greater, we found a merge-block.
@@ -143,10 +235,11 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
         // numLoopBackEdges is an closed merge-block that merges two control-flow-branches. In contrast, a block that has
         // 5 incoming edges, 2 numMergeBlockVisits, and 1 numLoopBackEdges is an open merge-block with still 2 open
         // control-flow-merge-edges. Also, it is a loop-header-block with 1 numLoopBackEdge. (5-2-1 => 2 still open)
-        while(!(mergeBlockFound = mergeBlockCheck(currentBlock, ifOperations, numMergeBlockVisits, newVisit, visitedBlocks)) 
+        while(!(mergeBlockFound = mergeBlockCheck(currentBlock, numMergeBlockVisits, newVisit, visitedBlocks)) 
                 && (currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp)) {
+            //Todo !
             if(!visitedBlocks.contains(currentBlock.get())) {
-                forwardArgs(currentBlock);
+                forwardArgs(currentBlock, /* toLoopBody */ true);
                 visitedBlocks.emplace(currentBlock.get());
             }
             auto terminatorOp = currentBlock->getTerminatorOp();
@@ -164,6 +257,9 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 newVisit = true;
             }
             else if (terminatorOp->getOperationType() == Operation::LoopOp) {
+                // if(!visitedBlocks.contains(currentBlock.get())) {
+                // forwardArgs(currentBlock, /* toLoopBody */ true);
+                // }
                 if(numMergeBlockVisits.contains(currentBlock.get())) {
                     numMergeBlockVisits.erase(currentBlock.get());
                 }
@@ -184,8 +280,9 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getNextBlock();
                 newVisit = true;
             } else {
+                //Todo 
                 if(!visitedBlocks.contains(currentBlock.get()) && !currentBlock->isLoopHeaderBlock()) {
-                    forwardArgs(currentBlock);
+                    forwardArgs(currentBlock, /* toLoopBody */ false);
                     visitedBlocks.emplace(currentBlock.get());
                 }
                 // Make sure that we found the current merge-block for the current if-operation.

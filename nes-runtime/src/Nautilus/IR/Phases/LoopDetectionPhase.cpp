@@ -258,13 +258,14 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findCountedLoops() {
            !(inductionVar->getStamp()->isFloat() || inductionVar->getStamp()->isInteger())) {
             NES_DEBUG(getDebugMessageString(loopOp) << "Detected limit or induction variable not of type int or float.");
             continue;
-        }   
+        }   //Todo: loopId should be the substring until '_' is met! if we have basic block 15717, the first two letters wont do
         auto loopId = loopOp->getLoopHeadBlock().getNextBlock()->getArguments().at(0)->getIdentifier().substr(0,2);
         // Find the first potential operation that increments the loop-induction-variable.
-        auto countOp = inductionVar->getBaseOps().back();
-        while(countOp->getOperationType() == Operations::Operation::BasicBlockArgument && countOp != inductionVar) {
-            countOp = inductionVar->getBaseOps().back();
-        }
+        // Todo we probably need to adapt this
+        auto countOp = inductionVar->getBaseOperationPtr();
+        // while(countOp->getOperationType() == Operations::Operation::BasicBlockArgument && countOp != inductionVar) {
+        //     countOp = inductionVar->getBaseOps().back();
+        // }
         // We only support positively increasing arithmetic operations as loop-count-ops.
         if(countOp != inductionVar && (countOp->getOperationType() == Operations::Operation::AddOp || 
                                            countOp->getOperationType() == Operations::Operation::MulOp) ) {
@@ -314,12 +315,13 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findCountedLoops() {
                             continue;
                         } else {
                             // Only add new base operations to the argStack.
-                            for(auto& input : currentArg->getBaseOps()) {
-                                if(!trackedArgs.contains(input.get())) {
-                                    argStack.emplace(input);
-                                    trackedArgs.emplace(input.get());
-                                }
-                            }
+                            // Todo replace
+                            // for(auto& input : currentArg->getBaseOps()) {
+                            //     if(!trackedArgs.contains(input.get())) {
+                            //         argStack.emplace(input);
+                            //         trackedArgs.emplace(input.get());
+                            //     }
+                            // }
                         }
                     }
                     if(isValidCountVariable) {
@@ -351,10 +353,23 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findCountedLoops() {
         // 'at(0)' is ok, because we assume one loopHeaderBlock with a branch operation.
         auto loopEndArgs = loopOp->getLoopEndBlocks().at(0)->getNextBlockInvocations().at(0)->getBranchOps();
         uint32_t argIndex = 0;
+        // Todo need to check whether there are multiple unique base values.
+        // -> why is it not sufficient to check whether the arg is different at the loopEndBlock
+        // -> OF COURSE: because of loop ops in-between...
+        // -> but then how to tell whether an arg was changed due to a loop, or it was actually changed?
+        // -> currently, no 'easy' way -> would need to follow up the baseOperation ladder
+        // -> if all prior 'versions' are BasicBlockArguments, then it is not an iterationArg
+        // -> IDEA: pass on 'real' base values through loopEndBlocks
+        //      -> if an arg was changed within the loop, or is a merge-arg, it does not get a 'real' base value
+        //      -> if an arg remained the same, it gets a 'real' base value, which is the value that was inserted into
+        //         the loop-header-block
+        //  -> Question: Can this help making the above 'valid induction var and stepSize detection' easier?
+        //      -> yes: we can simply check the 'real' base value and thereby skip the entire process completely
         for(auto& arg : loopOp->getLoopHeadBlock().getNextBlock()->getArguments()) {
             if(arg != inductionVar && arg != limitOp && arg != stepSize && 
                arg != loopEndArgs.at(argIndex)) {
                 iterationArgIndexes.emplace_back(arg);
+                auto testDebugArg = std::static_pointer_cast<Operations::BasicBlockArgument>(loopEndArgs.at(argIndex));
                 yieldOps.emplace_back(loopEndArgs.at(argIndex));
             }
             ++argIndex;
@@ -366,5 +381,4 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findCountedLoops() {
         loopOp->setLoopInfo(std::move(countedLoopInfo));
     }
 }
-
 }//namespace NES::Nautilus::IR

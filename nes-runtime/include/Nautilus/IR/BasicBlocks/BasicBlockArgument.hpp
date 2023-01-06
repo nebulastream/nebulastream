@@ -16,19 +16,28 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_
 
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <memory>
 #include <ostream>
 namespace NES::Nautilus::IR::Operations {
 
 class BasicBlockArgument : public Operation {
   public:
+    struct BaseOperationWrapper {
+      OperationPtr baseOperation;
+    };
+    using BaseOperationWrapperPtr = std::shared_ptr<BaseOperationWrapper>;
+
     explicit BasicBlockArgument(const std::string identifier, Types::StampPtr stamp);
     ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
-    std::vector<OperationPtr>& getBaseOps();
-    void addBaseOperation(OperationPtr baseOperation);
+    std::shared_ptr<BaseOperationWrapper> getBaseOperationWrapper() { return baseOperationWrapper; }
+    void setBaseOperationWrapper(std::shared_ptr<BaseOperationWrapper> baseOpWrapper) { this->baseOperationWrapper = baseOpWrapper; }
+    void setBaseOperationPtr(IR::Operations::OperationPtr baseOpPtr) { this->baseOperationWrapper->baseOperation = baseOpPtr; }
+    IR::Operations::OperationPtr getBaseOperationPtr() { return this->baseOperationWrapper->baseOperation; }
+    bool getIsMergeArg() const { return baseOperationWrapper->baseOperation.get() == this; }
   private:
-    std::vector<OperationPtr> baseOperations;
+    BaseOperationWrapperPtr baseOperationWrapper;
 };
 
 }// namespace NES::Nautilus::IR::Operations

@@ -21,12 +21,14 @@ std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument) {
     return os;
 }
 
-std::vector<OperationPtr>& BasicBlockArgument::getBaseOps() { return baseOperations; }
-void BasicBlockArgument::addBaseOperation(OperationPtr baseOperation) { 
-    if(this->baseOperations.empty() || this->baseOperations.at(0) != baseOperation) {
-        this->baseOperations.emplace_back(baseOperation); 
-    }
-}
+// std::vector<OperationPtr>& BasicBlockArgument::getBaseOps() { return baseOperations; }
+// OperationPtr BasicBlockArgument::getRealBaseOp() { return realBaseOperation; }
+// void BasicBlockArgument::addBaseOperation(OperationPtr baseOperation) { 
+//     if(this->baseOperations.empty() || this->baseOperations.at(0) != baseOperation) {
+//         this->baseOperations.emplace_back(baseOperation); 
+//     }
+// }
+// void BasicBlockArgument::addRealBaseOperation(OperationPtr realBaseOperation) { this->realBaseOperation = realBaseOperation; }
 
 std::string BasicBlockArgument::toString() { return identifier; }
 }// namespace NES::Nautilus::IR::Operations

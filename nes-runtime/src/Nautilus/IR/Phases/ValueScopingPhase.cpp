@@ -76,8 +76,9 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
                 for(auto inputOp : operation->getInputs(operation)) {
                     if(inputOp->getOperationType() == Operation::BasicBlockArgument) {
                         auto arg = std::static_pointer_cast<Operations::BasicBlockArgument>(inputOp);
-                        if(arg->getBaseOps().size() == 1) {
-                            operation->setInput(operation, arg->getBaseOps().at(0), inputIndex);
+                        if(!arg->getIsMergeArg()) {
+                            //Todo changed -> could break
+                            operation->setInput(operation, arg->getBaseOperationPtr(), inputIndex);
                         }
                     }
                     ++inputIndex;
@@ -93,11 +94,13 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
                     std::vector<OperationPtr> branchOps = nextBlockInvocation->getBranchOps();
                     nextBlockInvocation->clearBranchOps();
                     for(size_t i = 0; i < branchOps.size(); ++i) {
-                        if(nextBlockInvocation->getNextBlock()->getArguments().at(i)->getBaseOps().size() > 1) {
+                        if(nextBlockInvocation->getNextBlock()->getArguments().at(i)->getIsMergeArg()) {
                             if(branchOps.at(i)->getOperationType() == Operation::BasicBlockArgument) {
                                 auto arg = std::static_pointer_cast<Operations::BasicBlockArgument>(branchOps.at(i));
-                                if(arg->getBaseOps().size() == 1) {
-                                    branchOps.at(i) = arg->getBaseOps().at(0);
+                                if(!arg->getIsMergeArg()) {
+                                    //Todo changed -> could break
+                                    branchOps.at(i) = arg->getBaseOperationPtr();
+                                    // branchOps.at(i) = arg->getBaseOps().at(0);
                                 } else {
                                     branchOps.at(i) = arg;
                                 }
@@ -147,7 +150,7 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments() {
         auto previousArgs = currentBlock->getArguments();
         currentBlock->clearArguments();
         for(auto& arg : previousArgs) {
-            if(arg->getBaseOps().size() > 1) {
+            if(arg->getIsMergeArg()) {
                 //Todo try out if this breaks the loopInfoPhase
                 // if(!currentBlock->isLoopHeaderBlock()) {
                 //     arg->getBaseOps().clear();
