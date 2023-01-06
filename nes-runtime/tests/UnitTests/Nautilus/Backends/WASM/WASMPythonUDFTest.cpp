@@ -44,7 +44,7 @@ const char* wat = "(module\n"
                   " )\n"
                   ")";
 
-TEST_F(WASMPythonUDFTest, simplePythonUDF2) {
+TEST_F(WASMPythonUDFTest, addPythonUDF) {
     auto wasmRuntime = std::make_unique<Backends::WASM::WASMRuntime>();
     auto result = wasmRuntime->run(341, const_cast<char*>(wat));
     ASSERT_EQ(14, result);
