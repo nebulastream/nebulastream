@@ -213,16 +213,4 @@ std::string WASMRuntime::parseWATFile(const char* fileName) {
     return strStream.str();
 }
 
-wasmtime::Span<uint8_t> WASMRuntime::parseWASMFile(const char* fileName) {
-    std::ifstream watFile;
-    watFile.open(fileName);
-    std::stringstream strStream;
-    strStream << watFile.rdbuf();
-    auto str = strStream.str();
-    auto ss = str.size();
-    auto cc = str.c_str();
-    wasmtime::Span query{(uint8_t*) cc, ss};
-    return query;
-}
-
 }// namespace NES::Nautilus::Backends::WASM
