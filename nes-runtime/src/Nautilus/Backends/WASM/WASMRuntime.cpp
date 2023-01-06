@@ -44,31 +44,26 @@ WASMRuntime::WASMRuntime() : linker(engine), store(engine) {
 }
 
 void WASMRuntime::setup(const std::vector<std::string>& proxyFunctions) {
-
     for (const auto& proxy : proxyFunctions) {
         linkHostFunction(proxy);
     }
 }
 
-void WASMRuntime::run(size_t binaryLength, char* queryBinary) {
+int32_t WASMRuntime::run(size_t binaryLength, char* queryBinary) {
+    //TODO: Find out if wat or wasm format is passed
     wasmtime::Span query{(uint8_t*) queryBinary, binaryLength};
-    auto wat = parseWATFile("/home/victor/sketch.wat");
-    //auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
-
-    auto module = wasmtime::Module::compile(engine, wat).unwrap();
-    //pyModule = wasmtime::Module::compile(engine, pyWat).unwrap();
+    auto module = wasmtime::Module::compile(engine, queryBinary).unwrap();
 
     auto instance = linker.instantiate(store, module).unwrap();
-    auto pyInstance = linker.instantiate(store, pyModule.back()).unwrap();
 
     auto execute = std::get<Func>(*instance.get(store, "execute"));
-    //pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
-
-    auto memory = std::get<Memory>(*instance.get(store, "memory"));
-    auto pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
 
     auto results = execute.call(store, {}).unwrap();
-    //std::cout << results[0].i32() << "\n";
+    int32_t res = 0;
+    if (!results.empty()) {
+        res = results[0].i32();
+    }
+    return res;
 }
 
 void WASMRuntime::linkHostFunction(const std::string& proxyFunctionName) {
@@ -138,21 +133,22 @@ void WASMRuntime::prepareCPython() {
     /**
      * This function actually calls the cpython wasm interpreter and executes a python UDF
      */
-    auto prepareCPython = linker.func_new("cpython", "cpython", FuncType({}, {}), [&](auto caller, auto params, auto results) {
+    auto prepareCPython = linker.func_new("cpython", "cpython", FuncType({}, {ValKind::I32}), [&](auto caller, auto params, auto results) {
         (void) caller;
         (void) params;
         (void) results;
         auto pyInstance = linker.instantiate(store, pyModule.back()).unwrap();
-        auto pyMemory = std::get<Memory>(*pyInstance.get(store, "memory"));
-        auto data = pyMemory.data(caller);
-        for (size_t i = 0; i < 8; ++i) {
-            //data[i] = udfFileName[i];
-        }
-        for (size_t i = 0; i < 10; i++) {
-            std::cout << "MEM " << i << " - " << (char) pyMemory.data(store)[i] << "\n";
-        }
         auto pyExecute = std::get<Func>(*pyInstance.get(store, "_start"));
         auto funcResult = pyExecute.call(store, {}).unwrap();
+        std::ifstream file("/home/victor/wanes-engine/python/args.txt");
+        std::string res;
+        if (file.is_open()) {
+            getline(file, res);
+            results[0] = stoi(res);
+            file.close();
+        } else {
+            NES_ERROR("Python args file could not be opened");
+        }
         return std::monostate();
     });
 }

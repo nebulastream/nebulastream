@@ -11,6 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(nautilus-wasm-compiler-test "WASMCompilerTest.cpp")
-target_link_libraries(nautilus-wasm-compiler-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-wasm-compiler-test COMMAND nautilus-wasm-compiler-test)
+add_nes_runtime_test(nautilus-wasm-compiler-test "WASMCompilerTest.cpp")
+add_nes_runtime_test(nautilus-wasm-python-test "WASMPythonUDFTest.cpp")
