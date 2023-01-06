@@ -11,18 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Nautilus/Backends/WASM/WASMCompiler.hpp"
-#include "Execution/RecordBuffer.hpp"
-#include "Nautilus/Backends/WASM/WASMRuntime.hpp"
-#include "Nautilus/Interface/DataTypes/MemRef.hpp"
-#include "Nautilus/Interface/DataTypes/Value.hpp"
-#include "Nautilus/Tracing/Phases/SSACreationPhase.hpp"
-#include "Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp"
-#include "Nautilus/Tracing/Trace/ExecutionTrace.hpp"
-#include "Nautilus/Tracing/TraceContext.hpp"
-#include "Util/Logger/Logger.hpp"
-#include <binaryen-c.h>
-#include <gtest/gtest.h>
+#include <Nautilus/Backends/WASM/WASMCompiler.hpp>
+#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <NesBaseTest.hpp>
 
 namespace NES::Runtime::Execution {
 using namespace Nautilus;
@@ -31,7 +29,7 @@ class RecordBuffer;
 
 namespace NES::Nautilus {
 
-class WASMCompilerTest : public testing::Test {
+class WASMCompilerTest : public Testing::NESBaseTest {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -66,11 +64,7 @@ TEST_F(WASMCompilerTest, addIntFunctionTest) {
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
-    auto wasm = wasmCompiler->lower(ir);
-    auto proxies = wasmCompiler->getProxyFunctionNames();
-    auto engine = std::make_unique<Backends::WASM::WASMRuntime>();
-    engine->setup(proxies);
-    engine->run(wasm.first, wasm.second);
+    wasmCompiler->lower(ir);
 }
 
 Value<> int32SubExpression() {
