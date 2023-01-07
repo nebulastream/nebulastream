@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.20](https://github.com/nebulastream/nebulastream/tree/v0.4.20) (2023-01-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.19...v0.4.20)
+
+### Bug Fixes 🐛
+
+- \[BUG\] runtime-atan-expression-test  and runtime-cos-expression-test fail on macOS [\#3380](https://github.com/nebulastream/nebulastream/issues/3380)
+
 ## [v0.4.19](https://github.com/nebulastream/nebulastream/tree/v0.4.19) (2023-01-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.18...v0.4.19)
