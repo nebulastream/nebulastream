@@ -12,7 +12,6 @@
     limitations under the License.
 */
 // clang-format: off
-#include "gtest/gtest.h"
 // clang-format: on
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>

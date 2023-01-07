@@ -27,18 +27,19 @@ using OriginId = uint64_t;
  */
 class MultiOriginWatermarkProcessor {
   public:
-    explicit MultiOriginWatermarkProcessor(const std::vector<OriginId> origins);
+    explicit MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins);
 
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param origins
      */
-    static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId> origins);
+    static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
 
     /**
      * @brief Updates the watermark timestamp and origin and emits the current watermark.
      * @param ts watermark timestamp
-     * @param sequenceNumber
+     * @param sequenceNumber of the watermark ts
+     * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
     uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin);

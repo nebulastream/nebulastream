@@ -87,13 +87,15 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation =
-        std::make_shared<Operators::GlobalSlicePreAggregation>(readTsField, aggregationFields, aggregationFunctions);
+    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                                                      readTsField,
+                                                                                      aggregationFields,
+                                                                                      aggregationFunctions);
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
 
-    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(aggregationFunctions);
+    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());

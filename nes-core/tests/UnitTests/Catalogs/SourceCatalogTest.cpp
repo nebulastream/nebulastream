@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

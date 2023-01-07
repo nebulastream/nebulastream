@@ -63,17 +63,18 @@ class LocalSliceStoreState : public Operators::OperatorState {
 };
 
 GlobalSlicePreAggregation::GlobalSlicePreAggregation(
+    uint64_t operatorHandlerIndex,
     Expressions::ExpressionPtr timestampExpression,
     const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : timestampExpression(std::move(timestampExpression)), aggregationExpressions(aggregationExpressions),
-      aggregationFunctions(aggregationFunctions) {
+    : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
+      aggregationExpressions(aggregationExpressions), aggregationFunctions(aggregationFunctions) {
     NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
                "The number of aggregation expression and aggregation functions need to be equals");
 }
 
 void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<UInt64> entrySize = 0ul;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
@@ -84,7 +85,7 @@ void GlobalSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
                            executionCtx.getPipelineContext(),
                            entrySize);
     auto defaultState = Nautilus::FunctionCall("getDefaultState", getDefaultState, globalOperatorHandler);
-    for (auto& function : aggregationFunctions) {
+    for (const auto& function : aggregationFunctions) {
         function->reset(defaultState);
         defaultState = defaultState + function->getSize();
     }
@@ -94,7 +95,7 @@ void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     // 1. get the operator handler
-    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
     auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
     // 3. store the reference to the slice store in the local operator state.
@@ -112,7 +113,7 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     auto sliceState =
         Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
     // 3. manipulate the current aggregate values
-    for (size_t i = 0; i < aggregationFunctions.size(); i++) {
+    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
         auto value = aggregationExpressions[i]->execute(record);
         aggregationFunctions[i]->lift(sliceState, value);
         sliceState = sliceState + aggregationFunctions[i]->getSize();
