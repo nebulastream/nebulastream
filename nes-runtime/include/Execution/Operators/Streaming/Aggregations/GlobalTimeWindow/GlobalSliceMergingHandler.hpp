@@ -16,7 +16,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-class SliceMergeTask;
+struct SliceMergeTask;
 class State;
 class GlobalSlice;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
