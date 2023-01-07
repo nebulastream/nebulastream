@@ -56,7 +56,7 @@ class ThreadLocalSliceStore {
         // At the end of the iteration sliceIter can be in three states:
         // 1. sliceIter == slices.rend() -> their is no slice with a start <= ts.
         // In this case we have to pre-pend a new slice.
-        // 2. sliceIter is at a slide which slice.startTs <= ts and slice.endTs < ts.
+        // 2. sliceIter is at a slide which slice.startTs < ts and slice.endTs <= ts.
         // In this case we have to insert a new slice after the current sliceIter
         // 3. sliceIter is at a slide which slice.startTs <= ts and slice.endTs > ts.
         // In this case we found the correct slice.
@@ -105,7 +105,7 @@ class ThreadLocalSliceStore {
      * @brief Deletes the slice with the smalles slice index.
      */
     void removeSlicesUntilTs(
-        uint64_t ts) {// drop all slices as long as the list is not empty and the first slice ends before the current ts.
+        uint64_t ts) {// drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         while (!slices.empty() && slices.front()->getEnd() <= ts) {
             slices.pop_front();
         }

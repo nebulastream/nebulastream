@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>

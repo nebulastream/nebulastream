@@ -14,18 +14,18 @@
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId> origins) : origins(std::move(origins)) {
-    for (uint64_t i = 0; i < this->origins.size(); i++) {
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
+    for (const auto& _ : origins) {
         watermarkProcessors.emplace_back(std::make_shared<Util::NonBlockingMonotonicSeqQueue<OriginId>>());
     }
 };
 
-std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const std::vector<OriginId> origins) {
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const std::vector<OriginId>& origins) {
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
 uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
-    for (size_t originIndex = 0; originIndex < origins.size(); originIndex++) {
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
         if (origins[originIndex] == origin) {
             watermarkProcessors[originIndex]->emplace(sequenceNumber, ts);
         }
@@ -35,7 +35,7 @@ uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t se
 
 uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {
     auto minimalWatermark = UINT64_MAX;
-    for (auto& wt : watermarkProcessors) {
+    for (const auto& wt : watermarkProcessors) {
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
     return minimalWatermark;

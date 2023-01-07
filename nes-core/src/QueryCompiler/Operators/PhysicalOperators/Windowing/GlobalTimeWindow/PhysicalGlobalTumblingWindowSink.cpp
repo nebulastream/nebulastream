@@ -16,9 +16,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalGlobalTumblingWindowSink::PhysicalGlobalTumblingWindowSink(OperatorId id,
                                                                    SchemaPtr inputSchema,
@@ -42,6 +40,4 @@ std::string PhysicalGlobalTumblingWindowSink::toString() const { return "Physica
 
 OperatorNodePtr PhysicalGlobalTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

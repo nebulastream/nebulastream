@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>

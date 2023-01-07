@@ -12,7 +12,6 @@
     limitations under the License.
 */
 // clang-format: off
-#include "gtest/gtest.h"
 // clang-format: on
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -578,7 +577,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
-                                           originId,// dummy origin id
+                                           originId,
                                            numSourceLocalBuffers,
                                            std::move(successors));
         });
@@ -597,7 +596,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                            nodeEngine->getBufferManager(),
                                            nodeEngine->getQueryManager(),
                                            id,
-                                           originId,// dummy origin id
+                                           originId,
                                            numSourceLocalBuffers,
                                            std::move(successors));
         });

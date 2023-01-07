@@ -19,8 +19,7 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief This task models the merge task of an a specific slice, with a start and a end.
  */
-class SliceMergeTask {
-  public:
+struct SliceMergeTask {
     uint64_t sequenceNumber;
     uint64_t startSlice;
     uint64_t endSlice;
@@ -29,8 +28,7 @@ class SliceMergeTask {
 /**
  * @brief This task models the trigger of a window with a start and a end.
  */
-class WindowTriggerTask {
-  public:
+struct WindowTriggerTask {
     uint64_t sequenceNumber;
     uint64_t windowStart;
     uint64_t windowEnd;

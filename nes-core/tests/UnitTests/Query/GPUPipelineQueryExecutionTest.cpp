@@ -13,7 +13,6 @@
 */
 
 // clang-format: off
-#include "gtest/gtest.h"
 // clang-format: on
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>

@@ -15,9 +15,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalGlobalSliceMergingOperator::PhysicalGlobalSliceMergingOperator(OperatorId id,
                                                                        SchemaPtr inputSchema,
@@ -40,7 +38,9 @@ PhysicalGlobalSliceMergingOperator::create(SchemaPtr inputSchema,
                                                                 windowDefinition);
 }
 
-PhysicalGlobalSliceMergingOperator::WindowHandlerType PhysicalGlobalSliceMergingOperator::getWindowHandler() { return operatorHandler; }
+PhysicalGlobalSliceMergingOperator::WindowHandlerType PhysicalGlobalSliceMergingOperator::getWindowHandler() {
+    return operatorHandler;
+}
 
 OperatorNodePtr PhysicalGlobalSliceMergingOperator::copy() {
     return create(inputSchema, outputSchema, operatorHandler, windowDefinition);
@@ -49,6 +49,4 @@ const Windowing::LogicalWindowDefinitionPtr& PhysicalGlobalSliceMergingOperator:
     return windowDefinition;
 }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

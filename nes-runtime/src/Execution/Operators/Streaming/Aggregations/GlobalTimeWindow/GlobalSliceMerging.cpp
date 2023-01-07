@@ -70,11 +70,12 @@ void* getDefaultMergingState(void* ss) {
     return handler->getDefaultState()->ptr;
 }
 
-GlobalSliceMerging::GlobalSliceMerging(const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : aggregationFunctions(aggregationFunctions) {}
+GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
+                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<UInt64> entrySize = 0UL;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
@@ -97,7 +98,7 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     this->child->open(ctx, buffer);
     // 1. get the operator handler
-    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
     Value<> startSliceTs = (sliceMergeTask + offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
     Value<> endSliceTs = (sliceMergeTask + offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
@@ -142,6 +143,5 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
     }
     child->execute(ctx, resultWindow);
 }
-
 
 }// namespace NES::Runtime::Execution::Operators

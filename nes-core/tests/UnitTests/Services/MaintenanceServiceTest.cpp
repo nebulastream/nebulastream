@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <NesBaseTest.hpp>
 #include <Phases/MigrationType.hpp>
