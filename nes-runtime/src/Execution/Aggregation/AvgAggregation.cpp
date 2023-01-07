@@ -74,6 +74,9 @@ void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     memref.store(zero);
     countMemref.store(zero);
 }
-uint64_t AvgAggregationFunction::getSize() { return 16; }
+uint64_t AvgAggregationFunction::getSize() {
+    // physically an aggregation value for an avg is 16 byte.
+    return sizeof(AvgAggregationValue);
+}
 
 }// namespace NES::Runtime::Execution::Aggregation

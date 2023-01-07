@@ -27,6 +27,7 @@ class State;
  * of global non-keyed tumbling and sliding windows.
  * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
+ * This is decided by the current watermark timestamp.
  */
 class GlobalSlicePreAggregationHandler : public Runtime::Execution::OperatorHandler,
                                          public detail::virtual_enable_shared_from_this<GlobalSlicePreAggregationHandler, false> {

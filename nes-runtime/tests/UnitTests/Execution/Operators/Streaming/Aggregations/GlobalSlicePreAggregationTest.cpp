@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "Execution/RecordBuffer.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -26,6 +25,7 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -88,7 +88,10 @@ TEST_F(GlobalSlicePreAggregationTest, createNewFieldTest) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto integer = DataTypeFactory::createInt64();
     auto slicePreAggregation =
-        GlobalSlicePreAggregation(readTs, {readF2}, {std::make_shared<Aggregation::CountAggregationFunction>(integer, integer)});
+        GlobalSlicePreAggregation(0 /*handler index*/,
+                                  readTs,
+                                  {readF2},
+                                  {std::make_shared<Aggregation::CountAggregationFunction>(integer, integer)});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};

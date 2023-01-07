@@ -28,7 +28,7 @@ class State;
 
 /**
  * @brief The slice staging area is used as an area for the merging of the local slices.
- * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular slice to the stating area.
+ * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular watermark to the staging area.
  * As multiple threads can concurrently append slices, we synchronize accesses.
  */
 class GlobalSliceStaging {

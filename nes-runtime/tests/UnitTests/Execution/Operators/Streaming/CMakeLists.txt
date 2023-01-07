@@ -12,8 +12,3 @@
 
 add_nes_runtime_test(runtime-stream-join-operator-test "StreamJoinOperatorTest.cpp")
 add_subdirectory(Aggregations)
-
-
-
-
-

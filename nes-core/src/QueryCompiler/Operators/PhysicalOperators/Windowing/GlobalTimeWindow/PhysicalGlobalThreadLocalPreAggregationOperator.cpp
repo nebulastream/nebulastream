@@ -15,10 +15,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/GlobalTimeWindow/PhysicalGlobalThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
-
+namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalGlobalThreadLocalPreAggregationOperator::PhysicalGlobalThreadLocalPreAggregationOperator(
     OperatorId id,
     SchemaPtr inputSchema,
@@ -49,6 +46,4 @@ OperatorNodePtr PhysicalGlobalThreadLocalPreAggregationOperator::copy() {
 const Windowing::LogicalWindowDefinitionPtr& PhysicalGlobalThreadLocalPreAggregationOperator::getWindowDefinition() const {
     return windowDefinition;
 }
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

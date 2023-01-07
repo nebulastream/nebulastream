@@ -31,7 +31,10 @@ using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
  */
 class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
   public:
-    explicit GlobalThreadLocalSliceStore(uint64_t entrySize, uint64_t windowSize, uint64_t windowSlide, const std::unique_ptr<State>& defaultState);
+    explicit GlobalThreadLocalSliceStore(uint64_t entrySize,
+                                         uint64_t windowSize,
+                                         uint64_t windowSlide,
+                                         const std::unique_ptr<State>& defaultState);
     ~GlobalThreadLocalSliceStore() = default;
 
   private:
@@ -39,5 +42,5 @@ class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
     const uint64_t entrySize;
     const std::unique_ptr<State>& defaultState;
 };
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALTHREADLOCALSLICESTORE_HPP_

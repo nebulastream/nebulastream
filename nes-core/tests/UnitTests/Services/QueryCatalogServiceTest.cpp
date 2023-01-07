@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 #include <API/Query.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>

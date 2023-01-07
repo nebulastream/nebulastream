@@ -15,6 +15,10 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/MaxAggregation.hpp>
+#include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
@@ -94,7 +98,7 @@ std::shared_ptr<LowerPhysicalToNautilusOperators> LowerPhysicalToNautilusOperato
 LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators() {}
 
 PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan,
-                                                             Runtime::NodeEnginePtr nodeEngine) {
+                                                             const Runtime::NodeEnginePtr& nodeEngine) {
     auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
@@ -125,7 +129,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
-                                        PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
@@ -169,7 +173,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(watermarkOperator);
         return watermarkOperator;
-    }else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         // we can ignore this operator for now.
         return parentOperator;
     }
@@ -178,14 +182,15 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerGlobalSliceMergingOperator(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-    PhysicalOperators::PhysicalOperatorPtr physicalOperator,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalGlobalSliceMergingOperator>();
     auto handler =
         std::get<std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>(physicalGSMO->getWindowHandler());
     operatorHandlers.emplace_back(handler);
     auto aggregationFunctions = lowerAggregations(physicalGSMO->getWindowDefinition()->getWindowAggregation());
-    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(aggregationFunctions);
+    auto sliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1, aggregationFunctions);
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
@@ -193,7 +198,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     Runtime::Execution::PhysicalOperatorPipeline&,
-    PhysicalOperators::PhysicalOperatorPtr physicalOperator,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
     auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator>();
     auto handler = std::get<std::shared_ptr<Runtime::Execution::Operators::GlobalSlicePreAggregationHandler>>(
@@ -210,26 +215,30 @@ LowerPhysicalToNautilusOperators::lowerGlobalThreadLocalPreAggregationOperator(
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
     auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
-    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregation>(timeStampField,
-                                                                                                           aggregationFields,
-                                                                                                           aggregationFunctions);
+    auto sliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::GlobalSlicePreAggregation>(operatorHandlers.size() - 1,
+                                                                                   timeStampField,
+                                                                                   aggregationFields,
+                                                                                   aggregationFunctions);
     return sliceMergingOperator;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                                   PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+                                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                                    std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
     auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
-    auto eventTimeWatermarkStrategy = wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+    auto eventTimeWatermarkStrategy =
+        wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
     auto fieldExpression = lowerExpression(eventTimeWatermarkStrategy->getOnField());
-    auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
+    auto watermarkAssignmentOperator =
+        std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(fieldExpression);
     return watermarkAssignmentOperator;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperatorPipeline&,
-                                            PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                            const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                             size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
@@ -242,7 +251,7 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperatorPipeline&,
-                                            PhysicalOperators::PhysicalOperatorPtr operatorNode,
+                                            const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                             size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
@@ -255,7 +264,7 @@ LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperator
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperatorPipeline&,
-                                              PhysicalOperators::PhysicalOperatorPtr operatorPtr) {
+                                              const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
     auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
     auto expression = lowerExpression(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
@@ -263,7 +272,7 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
-                                           PhysicalOperators::PhysicalOperatorPtr operatorPtr) {
+                                           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
     auto assignmentField = mapOperator->getMapExpression()->getField();
     auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
@@ -275,7 +284,7 @@ LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorP
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                       PhysicalOperators::PhysicalOperatorPtr operatorPtr,
+                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                        uint64_t handlerIndex) {
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
@@ -285,21 +294,12 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
-    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
+
     // Currently only support a single aggregation and must be a Sum aggregation
     // TODO 3280: Support other aggregation functions
-    if (aggregations.size() != 1) {
-        NES_NOT_IMPLEMENTED();
-    } else {
-        auto aggregation = aggregations[0];
-        if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
-            aggregationFunction =
-                std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(aggregation->getInputStamp(),
-                                                                                          aggregation->getFinalAggregateStamp());
-        } else {
-            NES_NOT_IMPLEMENTED();
-        }
-    }
+    NES_ASSERT(aggregations.size() == 1, "currently we only support a single aggregation function");
+    auto aggregationFunction = lowerAggregations(aggregations)[0];
+
     // Obtain the field name used to store the aggregation result
     auto thresholdWindowResultSchema =
         operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
@@ -316,7 +316,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
-LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNode) {
+LowerPhysicalToNautilusOperators::lowerExpression(const ExpressionNodePtr& expressionNode) {
     if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {
         auto leftNautilusExpression = lowerExpression(andNode->getLeft());
         auto rightNautilusExpression = lowerExpression(andNode->getRight());
@@ -374,22 +374,40 @@ LowerPhysicalToNautilusOperators::lowerExpression(ExpressionNodePtr expressionNo
 }
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-LowerPhysicalToNautilusOperators::lowerAggregations(std::vector<Windowing::WindowAggregationPtr> aggs) {
+LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
-    std::transform(aggs.cbegin(), aggs.cend(), std::back_inserter(aggregationFunctions), [&](const auto& agg) {
-        switch (agg->getType()) {
-            case Windowing::WindowAggregationDescriptor::Avg: break;
-            case Windowing::WindowAggregationDescriptor::Count: break;
-            case Windowing::WindowAggregationDescriptor::Max: break;
-            case Windowing::WindowAggregationDescriptor::Min: break;
-            case Windowing::WindowAggregationDescriptor::Median: break;
-            case Windowing::WindowAggregationDescriptor::Sum: {
-                return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(agg->getInputStamp(),
-                                                                                                 agg->getFinalAggregateStamp());
-            }
-        };
-        NES_NOT_IMPLEMENTED();
-    });
+    std::transform(aggs.cbegin(),
+                   aggs.cend(),
+                   std::back_inserter(aggregationFunctions),
+                   [&](const auto& agg) -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
+                       switch (agg->getType()) {
+                           case Windowing::WindowAggregationDescriptor::Avg:
+                               return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+                                   agg->getInputStamp(),
+                                   agg->getFinalAggregateStamp());
+                           case Windowing::WindowAggregationDescriptor::Count:
+                               return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
+                                   agg->getInputStamp(),
+                                   agg->getFinalAggregateStamp());
+                           case Windowing::WindowAggregationDescriptor::Max:
+                               return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+                                   agg->getInputStamp(),
+                                   agg->getFinalAggregateStamp());
+                           case Windowing::WindowAggregationDescriptor::Min:
+                               return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
+                                   agg->getInputStamp(),
+                                   agg->getFinalAggregateStamp());
+                           case Windowing::WindowAggregationDescriptor::Median:
+                               // TODO add median aggregation function
+                               break;
+                           case Windowing::WindowAggregationDescriptor::Sum: {
+                               return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
+                                   agg->getInputStamp(),
+                                   agg->getFinalAggregateStamp());
+                           }
+                       };
+                       NES_NOT_IMPLEMENTED();
+                   });
     return aggregationFunctions;
 }
 
