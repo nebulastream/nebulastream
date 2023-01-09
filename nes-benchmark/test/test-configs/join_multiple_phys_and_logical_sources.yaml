@@ -1,6 +1,6 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 numberOfWorkerThreads: 1, 2
-bufferSizeInBytes: 5120, 5120
+bufferSizeInBytes: 512, 5120
 numberOfPreAllocatedBuffer: 100
 numberOfBuffersToProduce: 100
 
@@ -14,7 +14,7 @@ numberOfMeasurementsToCollect: 1
 logicalSources:
   input1:
     type: Default
-    numberOfPhysicalSources: 2, 3
+    numberOfPhysicalSources: 2, 3, 4
   input2:
     type: Uniform
     numberOfPhysicalSources: 2

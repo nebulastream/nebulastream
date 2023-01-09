@@ -14,11 +14,18 @@ numberOfMeasurementsToCollect: 1
 logicalSources:
   input1:
     type: Default
-    numberOfPhysicalSources: 3
-
+  input2:
+    type: Zipfian
+    numberOfPhysicalSources: 3, 2, 1
+    alpha: 0.99
+    minValue: 0
+    maxValue: 1000
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv
 benchmarkName: JoinTwoSources
-query: 'Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input1").joinWith(Query::from("input2"))
+                                  .where(Attribute("value")).equalsTo(Attribute("value"))
+                                  .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(500)))
+                             .sink(NullOutputSinkDescriptor::create());'

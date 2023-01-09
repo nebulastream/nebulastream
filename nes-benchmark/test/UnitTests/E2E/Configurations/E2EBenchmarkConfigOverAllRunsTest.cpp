@@ -80,9 +80,9 @@ namespace NES::Benchmark {
 
         defaultConfigOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(yamlConfig);
 
-        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValueAsString(), "1");
-        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValueAsString(), "1");
-        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValueAsString(), "1");
+        ASSERT_EQ(defaultConfigOverAllRuns.startupSleepIntervalInSeconds->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.numMeasurementsToCollect->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.experimentMeasureIntervalInSeconds->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.outputFile->getValue(), "FilterOneSource.csv");
         ASSERT_EQ(defaultConfigOverAllRuns.benchmarkName->getValue(), "FilterOneSource");
         ASSERT_EQ(defaultConfigOverAllRuns.query->getValue(), R"(Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());)");
@@ -90,9 +90,9 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.connectionString->getValue(), "");
         ASSERT_EQ(defaultConfigOverAllRuns.inputType->getValue(), "Auto");
         ASSERT_EQ(defaultConfigOverAllRuns.sourceSharing->getValue(), "off");
-        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString(), "100");
-        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "1");
-        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString(), "500");
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue(), 100);
+        ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), 500);
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
 
