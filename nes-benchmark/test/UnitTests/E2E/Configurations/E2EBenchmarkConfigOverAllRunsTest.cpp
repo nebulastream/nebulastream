@@ -65,7 +65,7 @@ namespace NES::Benchmark {
             << "- batchSize: 1" << std::endl
             << "- dataProviderMode: ZeroCopy" << std::endl
             << "- connectionString: " << std::endl
-            << "- logicalSources: input1: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] << std::endl;
+            << "- logicalSources: input1: Uniform" << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);
@@ -93,7 +93,7 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValueAsString(), "100");
         ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValueAsString(), "1");
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValueAsString(), "500");
-        //ASSERT_EQ logicalSources
+        ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
 
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
@@ -117,15 +117,12 @@ namespace NES::Benchmark {
         std::stringstream expectedString;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = defaultDataGenerator;
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = zipfianDataGenerator;
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
+        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
 
         auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 
-        expectedString << "input1: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input1"]
-                       << ", input2: " << defaultConfigOverAllRuns.srcNameToDataGenerator["input2"];
+        expectedString << "input1: Uniform, input2: Zipfian";
 
         ASSERT_EQ(defaultString, expectedString.str());
     }
