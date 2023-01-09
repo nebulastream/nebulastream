@@ -106,7 +106,7 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
         if (it != srcNameToDataGenerator.begin()) {
             stringStream << ", ";
         }
-        stringStream << it->first << ": " << it->second;
+        stringStream << it->first << ": " << it->second->getName();
     }
 
     return stringStream.str();
