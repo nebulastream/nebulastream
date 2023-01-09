@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.4.21](https://github.com/nebulastream/nebulastream/tree/v0.4.21) (2023-01-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.20...v0.4.21)
+
+### Miscellaneous Issues ✌️
+
+- One location for all hash functions [\#3387](https://github.com/nebulastream/nebulastream/issues/3387)
+- \[Feature\] Unit Test for Data Providers [\#3328](https://github.com/nebulastream/nebulastream/issues/3328)
+
 ## [v0.4.20](https://github.com/nebulastream/nebulastream/tree/v0.4.20) (2023-01-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.19...v0.4.20)
