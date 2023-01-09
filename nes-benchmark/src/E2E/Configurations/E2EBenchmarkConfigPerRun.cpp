@@ -148,6 +148,11 @@ std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateM
             auto tmpVec = NES::Util::splitWithStringDelimiter<uint64_t>(node["numberOfPhysicalSources"].As<std::string>(), ",");
             if (!node["numberOfPhysicalSources"].IsNone() && curExp < tmpVec.size()) {
                 value = tmpVec[curExp];
+            } else if (!retVectorOfMaps.empty()) {
+                auto& lastMap = retVectorOfMaps[curExp - 1];
+                if (lastMap.contains(logicalSourceName)) {
+                    value = lastMap[logicalSourceName];
+                }
             }
 
             map[logicalSourceName] = value;
