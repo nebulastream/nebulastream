@@ -58,75 +58,75 @@ namespace NES::Benchmark {
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);
-    }//TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest)
+    }
 
-//    TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
-//        std::vector<E2EBenchmarkConfigPerRun> expectedAllConfigPerRuns;
-//        E2EBenchmarkConfigPerRun configPerRun;
-//
-//        // set default E2EBenchmarkConfigPerRun
-//        // call function generateAllConfigsPerRun()
-//
-//        /* Getting all parameters per experiment run in vectors */
-//        auto numWorkerOfThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
-//                                                                      configPerRun.numberOfWorkerThreads->getDefaultValue());
-//
-//        auto bufferSizeInBytes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(),
-//                                                                     configPerRun.bufferSizeInBytes->getDefaultValue());
-//        auto numberOfQueriesToDeploy = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfQueriesToDeploy"].As<std::string>(),
-//                                                                           configPerRun.numberOfQueriesToDeploy->getDefaultValue());
-//
-//        auto numberOfBuffersInGlobalBufferManager =
-//            Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(),
-//                                                configPerRun.numberOfBuffersInGlobalBufferManager->getDefaultValue());
-//
-//        auto numberOfBuffersInSourceLocalBufferPool =
-//            Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
-//                                                configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
-//
-//
-//        std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
-//        if (!yamlConfig["logicalSources"].IsNone()) {
-//            allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
-//        }
-//
-//        /* Retrieving the maximum number of experiments to run */
-//        size_t totalBenchmarkRuns = numWorkerOfThreads.size();
-//        totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
-//        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfQueriesToDeploy.size());
-//        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.size());
-//        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInSourceLocalBufferPool.size());
-//        totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
-//
-//        /* Padding all vectors to the desired size */
-//        Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
-//        Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
-//        Util::padVectorToSize<uint32_t>(numberOfQueriesToDeploy, totalBenchmarkRuns, numberOfQueriesToDeploy.back());
-//        Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager,
-//                                        totalBenchmarkRuns,
-//                                        numberOfBuffersInGlobalBufferManager.back());
-//        Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool,
-//                                        totalBenchmarkRuns,
-//                                        numberOfBuffersInSourceLocalBufferPool.back());
-//        Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources, totalBenchmarkRuns, allLogicalSrcToPhysicalSources.back());
-//
-//        expectedAllConfigPerRuns.reserve(totalBenchmarkRuns);
-//        for (size_t i = 0; i < totalBenchmarkRuns; ++i) {
-//            E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
-//            e2EBenchmarkConfigPerRun.numberOfWorkerThreads->setValue(numWorkerOfThreads[i]);
-//            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
-//            e2EBenchmarkConfigPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy[i]);
-//            e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
-//            e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
-//            e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
-//
-//            expectedAllConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
-//        }
-//
-//        // ASSERT_EQ(defaultAllConfigPerRuns.size(), expectedAllConfigPerRuns.size());
-//        // ASSERT_TRUE(memcmp(defaultAllConfigPerRuns, expectedAllConfigPerRuns, defaultAllConfigPerRuns.size()) == 0);
-//    }//TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest)
-//
+    TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
+        std::vector<E2EBenchmarkConfigPerRun> expectedAllConfigPerRuns;
+        E2EBenchmarkConfigPerRun configPerRun;
+
+        // set default E2EBenchmarkConfigPerRun
+        // call function generateAllConfigsPerRun()
+
+        /* Getting all parameters per experiment run in vectors */
+        auto numWorkerOfThreads = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfWorkerThreads"].As<std::string>(),
+                                                                      configPerRun.numberOfWorkerThreads->getDefaultValue());
+
+        auto bufferSizeInBytes = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["bufferSizeInBytes"].As<std::string>(),
+                                                                     configPerRun.bufferSizeInBytes->getDefaultValue());
+        auto numberOfQueriesToDeploy = Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfQueriesToDeploy"].As<std::string>(),
+                                                                           configPerRun.numberOfQueriesToDeploy->getDefaultValue());
+
+        auto numberOfBuffersInGlobalBufferManager =
+            Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInGlobalBufferManager"].As<std::string>(),
+                                                configPerRun.numberOfBuffersInGlobalBufferManager->getDefaultValue());
+
+        auto numberOfBuffersInSourceLocalBufferPool =
+            Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
+                                                configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+
+
+        std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
+        if (!yamlConfig["logicalSources"].IsNone()) {
+            allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
+        }
+
+        /* Retrieving the maximum number of experiments to run */
+        size_t totalBenchmarkRuns = numWorkerOfThreads.size();
+        totalBenchmarkRuns = std::max(totalBenchmarkRuns, bufferSizeInBytes.size());
+        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfQueriesToDeploy.size());
+        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInGlobalBufferManager.size());
+        totalBenchmarkRuns = std::max(totalBenchmarkRuns, numberOfBuffersInSourceLocalBufferPool.size());
+        totalBenchmarkRuns = std::max(totalBenchmarkRuns, allLogicalSrcToPhysicalSources.size());
+
+        /* Padding all vectors to the desired size */
+        Util::padVectorToSize<uint32_t>(numWorkerOfThreads, totalBenchmarkRuns, numWorkerOfThreads.back());
+        Util::padVectorToSize<uint32_t>(bufferSizeInBytes, totalBenchmarkRuns, bufferSizeInBytes.back());
+        Util::padVectorToSize<uint32_t>(numberOfQueriesToDeploy, totalBenchmarkRuns, numberOfQueriesToDeploy.back());
+        Util::padVectorToSize<uint32_t>(numberOfBuffersInGlobalBufferManager,
+                                        totalBenchmarkRuns,
+                                        numberOfBuffersInGlobalBufferManager.back());
+        Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool,
+                                        totalBenchmarkRuns,
+                                        numberOfBuffersInSourceLocalBufferPool.back());
+        Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources, totalBenchmarkRuns, allLogicalSrcToPhysicalSources.back());
+
+        expectedAllConfigPerRuns.reserve(totalBenchmarkRuns);
+        for (size_t i = 0; i < totalBenchmarkRuns; ++i) {
+            E2EBenchmarkConfigPerRun e2EBenchmarkConfigPerRun;
+            e2EBenchmarkConfigPerRun.numberOfWorkerThreads->setValue(numWorkerOfThreads[i]);
+            e2EBenchmarkConfigPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes[i]);
+            e2EBenchmarkConfigPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy[i]);
+            e2EBenchmarkConfigPerRun.numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager[i]);
+            e2EBenchmarkConfigPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool[i]);
+            e2EBenchmarkConfigPerRun.logicalSrcToNoPhysicalSrc = allLogicalSrcToPhysicalSources[i];
+
+            expectedAllConfigPerRuns.push_back(e2EBenchmarkConfigPerRun);
+        }
+
+         ASSERT_EQ(defaultAllConfigPerRuns.size(), expectedAllConfigPerRuns.size());
+         ASSERT_TRUE(memcmp(defaultAllConfigPerRuns, expectedAllConfigPerRuns, defaultAllConfigPerRuns.size()) == 0);
+    }
+
     TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
         std::stringstream expectedString;
         E2EBenchmarkConfigPerRun defaultConfigPerRun;
