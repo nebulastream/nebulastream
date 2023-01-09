@@ -79,6 +79,7 @@ namespace NES::Benchmark::DataProviding {
         }
 
         auto internalProviderDefault = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        internalProviderDefault->start();
         auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
 
         ASSERT_FALSE(createdBuffers.empty());
@@ -127,6 +128,7 @@ namespace NES::Benchmark::DataProviding {
         }
 
         auto internalProviderDefault = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        internalProviderDefault->start();
         auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
 
         ASSERT_FALSE(createdBuffers.empty());
