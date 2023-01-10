@@ -43,35 +43,35 @@ OPCSink::OPCSink(SinkFormatPtr format,
                  QuerySubPlanId querySubPlanId)
     : SinkMedium(std::move(format), queryManager, queryId, querySubPlanId), connected(false), url(url), nodeId(nodeId),
       user(std::move(std::move(user))), password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
-    NES_DEBUG("OPCSINK  " << this << ": Init OPC Sink to " << url << " .");
+    NES_DEBUG2("OPCSINK   {} : Init OPC Sink to  {}  . {}",  this,  url);
 }
 
 OPCSink::~OPCSink() {
-    NES_DEBUG("OPCSink::~OPCSink: destructor called");
+    NES_DEBUG2("OPCSink::~OPCSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
+        NES_DEBUG2("OPCSink   {} : Destroy OPC Sink",  this);
     } else {
         NES_ASSERT2_FMT(false, "OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
     }
-    NES_DEBUG("OPCSink  " << this << ": Destroy OPC Sink");
+    NES_DEBUG2("OPCSink   {} : Destroy OPC Sink",  this);
 }
 
 bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG("OPCSINK::writeData()  " << this);
-    NES_DEBUG("OPCSINK::writeData url: " << url << ".");
+    NES_DEBUG2("OPCSINK::writeData()   {}",  this);
+    NES_DEBUG2("OPCSINK::writeData url:  {} .",  url);
     if (connect()) {
 
         /* Read current value of attribute, also necessary to get the type information of the node */
         auto* val = new UA_Variant;
         retval = UA_Client_readValueAttribute(client, nodeId, val);
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
+            NES_DEBUG2("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
             /* Write node attribute with scalar value*/
             retval = UA_Variant_setScalarCopy(val, inputBuffer.getBuffer(), val->type);
         } else if (retval == UA_STATUSCODE_GOOD && UA_Variant_hasArrayType(val, val->type)) {
-            NES_DEBUG("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
+            NES_DEBUG2("OPCSINK::writeData: Node exists, successfully obtained information about current node. ");
             /* Write node attribute with array value*/
             retval = UA_Variant_setArrayCopy(val, inputBuffer.getBuffer(), inputBuffer.getBufferSize(), val->type);
         } else {
@@ -87,7 +87,7 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         retval = UA_Client_writeValueAttribute(client, nodeId, val);
 
         if (retval == UA_STATUSCODE_GOOD) {
-            NES_DEBUG("OPCSINK::writeData: Value has been successfully updated ");
+            NES_DEBUG2("OPCSINK::writeData: Value has been successfully updated ");
         } else {
             NES_ERROR2("OPCSINK::writeData: Updating value was not possible.");
             return false;
@@ -98,15 +98,15 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         auto* var = new UA_Variant;
         UA_Client_readValueAttribute(client, nodeId, var);
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-            NES_DEBUG("OPCSINK::writeData: New value is: " << *(UA_Int32*) var->data);
+            NES_DEBUG2("OPCSINK::writeData: New value is:  {}",  *(UA_Int32*) var->data);
         } else {
             NES_ERROR2("OPCSINK::writeData: Node does not exist or is not a scalar.");
             return false;
         }
         UA_delete(var, var->type);
 
-        NES_DEBUG("OPCSOURCE::receiveData()  " << this << ": got buffer ");
-        NES_DEBUG("OPCSINK::writeData() UA_StatusCode is: " << std::hex << retval);
+        NES_DEBUG2("OPCSOURCE::receiveData()   {} : got buffer ",  this);
+        NES_DEBUG2("OPCSINK::writeData() UA_StatusCode is:  {}",  std::hex << retval);
 
     } else {
         NES_ERROR2("OPCSOURCE::receiveData(): Not connected!");
@@ -115,9 +115,9 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     return true;
 }
 
-void OPCSink::setup() { NES_DEBUG("OPCSINK::setup"); }
+void OPCSink::setup() { NES_DEBUG2("OPCSINK::setup"); }
 
-void OPCSink::shutdown() { NES_DEBUG("OPCSINK::shutdown"); }
+void OPCSink::shutdown() { NES_DEBUG2("OPCSINK::shutdown"); }
 
 std::string OPCSink::toString() const {
     char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);
@@ -138,10 +138,10 @@ bool OPCSink::connect() {
 
     if (!connected) {
 
-        NES_DEBUG("OPCSINK::connect(): was !conncect now connect " << this << ": connected");
+        NES_DEBUG2("OPCSINK::connect(): was !conncect now connect  {} : connected",  this);
         retval = UA_Client_connect(client, url.c_str());
-        NES_DEBUG("OPCSINK::connect(): connected without user or password");
-        NES_DEBUG("OPCSINK::connect(): use address " << url);
+        NES_DEBUG2("OPCSINK::connect(): connected without user or password");
+        NES_DEBUG2("OPCSINK::connect(): use address  {}",  url);
 
         if (retval != UA_STATUSCODE_GOOD) {
 
@@ -155,27 +155,27 @@ bool OPCSink::connect() {
     }
 
     if (connected) {
-        NES_DEBUG("OPCSINK::connect():  " << this << ": connected");
+        NES_DEBUG2("OPCSINK::connect():   {} : connected",  this);
     } else {
-        NES_DEBUG("Exception: OPCSINK::connect():  " << this << ": NOT connected");
+        NES_DEBUG2("Exception: OPCSINK::connect():   {} : NOT connected",  this);
     }
     return connected;
 }
 
 bool OPCSink::disconnect() {
-    NES_DEBUG("OPCSink::disconnect() connected=" << connected);
+    NES_DEBUG2("OPCSink::disconnect() connected= {}",  connected);
     if (connected) {
 
-        NES_DEBUG("OPCSINK::disconnect() disconnect client");
+        NES_DEBUG2("OPCSINK::disconnect() disconnect client");
         UA_Client_disconnect(client);
-        NES_DEBUG("OPCSINK::disconnect() delete client");
+        NES_DEBUG2("OPCSINK::disconnect() delete client");
         UA_Client_delete(client);
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG("OPCSINK::disconnect()  " << this << ": disconnected");
+        NES_DEBUG2("OPCSINK::disconnect()   {} : disconnected",  this);
     } else {
-        NES_DEBUG("OPCSINK::disconnect()  " << this << ": NOT disconnected");
+        NES_DEBUG2("OPCSINK::disconnect()   {} : NOT disconnected",  this);
     }
     return !connected;
 }

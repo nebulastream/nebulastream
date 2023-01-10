@@ -51,7 +51,7 @@ FileSink::FileSink(SinkFormatPtr format,
             NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
-    NES_DEBUG("FileSink: open file=" << filePath);
+    NES_DEBUG2("FileSink: open file= {}",  filePath);
     if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
@@ -60,7 +60,7 @@ FileSink::FileSink(SinkFormatPtr format,
 }
 
 FileSink::~FileSink() {
-    NES_DEBUG("~FileSink: close file=" << filePath);
+    NES_DEBUG2("~FileSink: close file={}", filePath);
     outputFile.close();
 }
 

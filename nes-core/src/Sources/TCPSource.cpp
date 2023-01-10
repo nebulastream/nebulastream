@@ -121,9 +121,9 @@ void TCPSource::open() {
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
-    NES_DEBUG("TCPSource  " << this << ": receiveData ");
+    NES_DEBUG2("TCPSource  {}: receiveData ",  this);
     auto tupleBuffer = allocateBuffer();
-    NES_DEBUG("TCPSource buffer allocated ");
+    NES_DEBUG2("TCPSource buffer allocated ");
     try {
         do {
             if (!running) {
@@ -143,7 +143,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    NES_DEBUG2("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}",  tuplesThisPass,  tupleSize);
 
     //init tuple count for buffer
     uint64_t tupleCount = 0;
@@ -279,7 +279,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= sourceConfig->getFlushIntervalMS()->getValue())) {
-            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG2("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }

@@ -94,8 +94,8 @@ void NemoWindowPinningRule::createCentralWindowOperator(const WindowOperatorNode
 }
 
 void NemoWindowPinningRule::pinWindowOperators(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan) {
-    NES_DEBUG2("NemoWindowPinningRule::apply: introduce new distributed window operator for window " << windowOp << " "
-                                                                                                    << windowOp->toString());
+    NES_DEBUG2("NemoWindowPinningRule::apply: introduce new distributed window operator for window {} {}", windowOp,
+                                                                                                    windowOp->toString());
     auto parents = windowOp->getParents();
     auto mergerNodes = getMergerNodes(windowOp, windowDistributionCombinerThreshold);
     windowOp->removeChildren();

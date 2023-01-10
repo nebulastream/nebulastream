@@ -32,9 +32,9 @@ CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServ
 }
 
 void CoordinatorHealthCheckService::startHealthCheck() {
-    NES_DEBUG("CoordinatorHealthCheckService::startHealthCheck");
+    NES_DEBUG2("CoordinatorHealthCheckService::startHealthCheck");
     isRunning = true;
-    NES_DEBUG("start health checking on coordinator");
+    NES_DEBUG2("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
         auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
@@ -75,7 +75,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
             }
         }
         shutdownRPC->set_value(true);
-        NES_DEBUG("NesCoordinator: stop health checking");
+        NES_DEBUG2("NesCoordinator: stop health checking");
     }));
 }
 

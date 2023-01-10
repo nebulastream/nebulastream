@@ -70,13 +70,13 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto stamp = fieldReadExpression->getStamp();
-        NES_DEBUG("TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate FieldAccessExpressionNode:  {}",  expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
     } else if (expression->instanceOf<WhenExpressionNode>()) {
         auto whenExpression = expression->as<WhenExpressionNode>();
         auto legacyLeft = transformExpression(whenExpression->getLeft());
         auto legacyRight = transformExpression(whenExpression->getRight());
-        NES_DEBUG("TranslateToLegacyPhase: Translate WhenExpressionNode: " << whenExpression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate WhenExpressionNode:  {}",  whenExpression->toString());
         return WhenPredicate(legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<CaseExpressionNode>()) {
         auto caseExpressionNode = expression->as<CaseExpressionNode>();
@@ -85,7 +85,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             whenExprs.push_back(transformExpression(elem));
         }
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
-        NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate CaseExpressionNode:  {}",  caseExpressionNode->toString());
         return CasePredicate(whenExprs, legacyDefault).copy();
     } else if (expression->instanceOf<FunctionExpression>()) {
         // Translate function expressions to legacy expressions in old query compiler.

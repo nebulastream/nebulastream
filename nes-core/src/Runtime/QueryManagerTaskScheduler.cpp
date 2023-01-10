@@ -320,8 +320,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
                                                        QuerySubPlanId queryExecutionPlanId,
                                                        const ReconfigurationMessage& message,
                                                        bool blocking) {
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan "
-              << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
+    NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}", queryExecutionPlanId, blocking, message.getType());
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
@@ -334,8 +333,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
                                                     QuerySubPlanId queryExecutionPlanId,
                                                     const ReconfigurationMessage& message,
                                                     bool blocking) {
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan "
-              << queryExecutionPlanId << " blocking=" << blocking << " type " << int(message.getType()));
+    NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}", queryExecutionPlanId, blocking, int(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
@@ -350,8 +348,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
                                                     bool blocking) {
     std::unique_lock reconfLock(reconfigurationMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan "
-              << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType());
+    NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}", queryExecutionPlanId, blocking, task->getType());
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
@@ -385,9 +382,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
                                                        bool blocking) {
     std::unique_lock reconfLock(reconfigurationMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
-    NES_DEBUG("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan "
-              << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType()
-              << " to queue=" << queryToTaskQueueIdMap[queryId]);
+    NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {} to queue={}", queryExecutionPlanId , blocking,  task->getType(), queryToTaskQueueIdMap[queryId]);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
@@ -448,7 +443,7 @@ void DynamicQueryManager::poisonWorkers() {
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
     for (auto u{0ul}; u < threadPool->getNumberOfThreads(); ++u) {
-        NES_DEBUG("Add poison for queue=" << u);
+        NES_DEBUG2("Add poison for queue= {}",  u);
         taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
 }
@@ -471,7 +466,7 @@ void MultiQueueQueryManager::poisonWorkers() {
 
     for (auto u{0ul}; u < taskQueues.size(); ++u) {
         for (auto i{0ul}; i < numberOfThreadsPerQueue; ++i) {
-            NES_DEBUG("Add poision for queue=" << u << " and thread=" << i);
+            NES_DEBUG2("Add poision for queue= {}  and thread= {}",  u,  i);
             taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }

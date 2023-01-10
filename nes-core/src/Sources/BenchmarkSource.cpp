@@ -174,7 +174,7 @@ void BenchmarkSource::runningRoutine() {
 
         close();
         completedPromise.set_value(true);
-        NES_DEBUG("DataSource " << operatorId << " end running");
+        NES_DEBUG2("DataSource {} end running",  operatorId);
     } catch (std::exception const& error) {
         queryManager->notifySourceFailure(shared_from_base<DataSource>(), error.what());
         completedPromise.set_exception(std::make_exception_ptr(error));

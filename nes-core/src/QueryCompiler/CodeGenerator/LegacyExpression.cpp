@@ -188,8 +188,7 @@ ExpressionStatementPtr CasePredicate::generateCode(GeneratedCodePtr& code, Recor
                     .copy();
             curBaseExpr = tmpExpr;
         }
-        NES_DEBUG("CasePredicate: Generating code for expression " << this->toString()
-                                                                   << "\nIt looks like: " << curBaseExpr->getCode()->code_)
+        NES_DEBUG2("CasePredicate: Generating code for expression. {} It looks like: {}", this->toString(), curBaseExpr->getCode()->code_);
         return curBaseExpr;
     } catch (const std::bad_cast& e) {
         NES_FATAL_ERROR2("CasePredicate: Could not cast when expressions to generate code for them.");
@@ -215,7 +214,7 @@ bool CasePredicate::equals(const LegacyExpression& _rhs) const {
     try {
         auto rhs = dynamic_cast<const CasePredicate&>(_rhs);
         if (whenExprs.size() == rhs.getWhenExprs().size() && defautlExpr->equals(*rhs.getDefaultExpr().get())) {
-            NES_DEBUG("CasePredicate: Equals in this legacy predicate only checks for same number of when cases and whether or "
+            NES_DEBUG2("CasePredicate: Equals in this legacy predicate only checks for same number of when cases and whether or "
                       "not the default expression is equal.")
             return true;
         }

@@ -38,7 +38,7 @@ MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
                                      QueryCatalogServicePtr catalogService,
                                      bool enable)
     : topology(topology), enableMonitoring(enable) {
-    NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
+    NES_DEBUG2("MonitoringService: Initializing with monitoring= {}",  enable);
     monitoringManager =
         std::make_shared<Monitoring::MonitoringManager>(workerClient, topology, queryService, catalogService, enableMonitoring);
 }
@@ -59,7 +59,7 @@ nlohmann::json MonitoringService::registerMonitoringPlanToAllNodes(Monitoring::M
 }
 
 nlohmann::json MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId) {
-    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id=" + std::to_string(nodeId));
+    NES_DEBUG2("MonitoringService: Requesting monitoring data from worker id= {}",  std::to_string(nodeId));
     return monitoringManager->requestRemoteMonitoringData(nodeId);
 }
 
@@ -84,7 +84,7 @@ nlohmann::json MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
             Monitoring::MetricUtils::toJson(tMetrics)["registration"][0]["value"];
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.dump());
-    NES_DEBUG("in MonitoringService Method sieht das json so aus: " << metricsJson.dump())
+    NES_DEBUG2("in MonitoringService Method sieht das json so aus: {}", metricsJson.dump());
     return metricsJson;
 }
 

@@ -38,7 +38,7 @@ PredicationOptimizationPhase::PredicationOptimizationPhase(
 
 PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
-        NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
+        NES_DEBUG2("PredicationOptimizationPhase: No optimization requested or applied.");
         return pipelinedQueryPlan;
     }
 
@@ -52,11 +52,11 @@ PipelineQueryPlanPtr PredicationOptimizationPhase::apply(PipelineQueryPlanPtr pi
 
 OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr operatorPipeline) {
     if (filterProcessingStrategy == QueryCompilerOptions::BRANCHED) {
-        NES_DEBUG("PredicationOptimizationPhase: No optimization requested or applied.");
+        NES_DEBUG2("PredicationOptimizationPhase: No optimization requested or applied.");
         return operatorPipeline;
     }
 
-    NES_DEBUG("PredicationOptimizationPhase: Scanning pipeline for optimization potential.");
+    NES_DEBUG2("PredicationOptimizationPhase: Scanning pipeline for optimization potential.");
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
 
@@ -69,8 +69,8 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
             && !node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
             && !node->instanceOf<GeneratableOperators::GeneratableMapOperator>()
             && !node->instanceOf<GeneratableOperators::GeneratableProjectionOperator>()) {
-            NES_DEBUG("PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: "
-                      + node->toString());
+            NES_DEBUG2("PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: {}",
+                      node->toString());
             return operatorPipeline;
         }
     }
@@ -82,7 +82,7 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
                 GeneratableOperators::GeneratableFilterOperatorPredicated::create(filterOperator->getInputSchema(),
                                                                                   filterOperator->getPredicate());
             queryPlan->replaceOperator(filterOperator, predicatedFilterOperator);
-            NES_DEBUG("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
+            NES_DEBUG2("PredicationOptimizationPhase: Replaced filter operator with equivalent predicated filter operator.");
         }
     }
 

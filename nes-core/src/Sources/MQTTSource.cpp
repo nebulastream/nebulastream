@@ -98,24 +98,23 @@ MQTTSource::MQTTSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG("MQTTSource::MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId
-                                         << ".");
+    NES_DEBUG2("MQTTSource::MQTTSource {}: Init MQTTSource to {} with client id: {}.", this, serverAddress, clientId);
 }
 
 MQTTSource::~MQTTSource() {
-    NES_DEBUG("MQTTSource::~MQTTSource()");
+    NES_DEBUG2("MQTTSource::~MQTTSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
+        NES_DEBUG2("MQTTSource::~MQTTSource {}: Destroy MQTT Source",  this);
     } else {
         NES_ERROR2("MQTTSource::~MQTTSource {}: Destroy MQTT Source failed cause it could not be disconnected", this);
         assert(0);
     }
-    NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
+    NES_DEBUG2("MQTTSource::~MQTTSource {}: Destroy MQTT Source",  this);
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
-    NES_DEBUG("MQTTSource  " << this << ": receiveData ");
+    NES_DEBUG2("MQTTSource  {}: receiveData ",  this);
     auto buffer = allocateBuffer();
     if (connect()) {
         if (!fillBuffer(buffer)) {
@@ -151,7 +150,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    NES_DEBUG2("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}",  tuplesThisPass,  tupleSize);
 
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -179,15 +178,15 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                         NES_ERROR2("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/'
-                                                                                              << tuplesThisPass);
+                    NES_DEBUG2("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}"
+                                                                                              , tupleCount, tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
                     NES_WARNING("MQTTSource::fillBuffer: Not connected anymore!");
                     connected = false;
                 }
             } else if (client->is_connected()) {// We lost connection (connection=false), check if we are connected again.
-                NES_DEBUG("MQTTSource::fillBuffer: Reconnected, subscribing again!");
+                NES_DEBUG2("MQTTSource::fillBuffer: Reconnected, subscribing again!");
                 client->subscribe(topic, qualityOfService)->wait_for(readTimeoutInMs);
                 connected = true;
             }
@@ -213,7 +212,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG2("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }//end of while
@@ -225,7 +224,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 
 bool MQTTSource::connect() {
     if (!connected) {
-        NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
+        NES_DEBUG2("MQTTSource was !connect now connect {}: connected",  this);
         // connect with user name and password
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
@@ -236,7 +235,7 @@ bool MQTTSource::connect() {
             client->start_consuming();
 
             // Connect to the server
-            NES_DEBUG("MQTTSource::connect Connecting to the MQTT server...");
+            NES_DEBUG2("MQTTSource::connect Connecting to the MQTT server...");
             auto tok = client->connect(connOpts);
 
             // Getting the connect response will block waiting for the
@@ -257,22 +256,22 @@ bool MQTTSource::connect() {
         }
 
         if (connected) {
-            NES_DEBUG("MQTTSource::connect: Connection established with topic: " << topic);
-            NES_DEBUG("MQTTSource::connect:  " << this << ": connected");
+            NES_DEBUG2("MQTTSource::connect: Connection established with topic: {}",  topic);
+            NES_DEBUG2("MQTTSource::connect:  {}: connected",  this);
         } else {
-            NES_DEBUG("MQTTSource::connect:  " << this << ": NOT connected");
+            NES_DEBUG2("MQTTSource::connect:  {}: NOT connected",  this);
         }
     }
     return connected;
 }
 
 bool MQTTSource::disconnect() {
-    NES_DEBUG("MQTTSource::disconnect connected=" << connected);
+    NES_DEBUG2("MQTTSource::disconnect connected={}",  connected);
     if (connected) {
         // If we're here, the client was almost certainly disconnected.
         // But we check, just to make sure.
         if (client->is_connected()) {
-            NES_DEBUG("MQTTSource: Shutting down and disconnecting from the MQTT server.");
+            NES_DEBUG2("MQTTSource: Shutting down and disconnecting from the MQTT server.");
             // In a non-clean(persistent) session expects, the broker expects the client to stay subscribed to the topic
             // -> even unsubscribing and resubscribing does not work, the (only?) way to stop a non-clean(persistent)
             // -> session is to establish a clean session using the SAME clientID (as was used for the non-clean session)
@@ -280,16 +279,16 @@ bool MQTTSource::disconnect() {
                 client->unsubscribe(topic)->wait();
             }
             client->disconnect()->wait();
-            NES_DEBUG("MQTTSource::disconnect: disconnected.");
+            NES_DEBUG2("MQTTSource::disconnect: disconnected.");
         } else {
-            NES_DEBUG("MQTTSource::disconnect: Client was already disconnected");
+            NES_DEBUG2("MQTTSource::disconnect: Client was already disconnected");
         }
         connected = client->is_connected();
     }
     if (!connected) {
-        NES_DEBUG("MQTTSource::disconnect:  " << this << ": disconnected");
+        NES_DEBUG2("MQTTSource::disconnect:  {}: disconnected",  this);
     } else {
-        NES_DEBUG("MQTTSource::disconnect:  " << this << ": NOT disconnected");
+        NES_DEBUG2("MQTTSource::disconnect:  {}: NOT disconnected",  this);
         return connected;
     }
     return !connected;

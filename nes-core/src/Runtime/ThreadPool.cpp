@@ -50,9 +50,9 @@ ThreadPool::ThreadPool(uint64_t nodeId,
       hardwareManager(hardwareManager) {}
 
 ThreadPool::~ThreadPool() {
-    NES_DEBUG("Threadpool: Destroying Thread Pool");
+    NES_DEBUG2("Threadpool: Destroying Thread Pool");
     stop();
-    NES_DEBUG("QueryManager: Destroy threads Queue");
+    NES_DEBUG2("QueryManager: Destroy threads Queue");
     threads.clear();
 }
 
@@ -65,7 +65,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                     break;
                 }
                 case ExecutionResult::AllFinished: {
-                    NES_DEBUG("Threadpool got poison pill - shutting down...");
+                    NES_DEBUG2("Threadpool got poison pill - shutting down...");
                     running = false;
                     break;
                 }
@@ -92,14 +92,14 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
         NES_ERROR2("Got fatal error on thread {}: {}",  workerContext.getId(),error.what());
         NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
     }
-    NES_DEBUG("Threadpool: end runningRoutine");
+    NES_DEBUG2("Threadpool: end runningRoutine");
 }
 
 bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
     auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
     std::unique_lock lock(reconfigLock);
     if (running) {
-        NES_DEBUG("Threadpool:start already running, return false");
+        NES_DEBUG2("Threadpool:start already running, return false");
         return false;
     }
     running = true;
@@ -144,26 +144,25 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
 #endif
             // TODO (2310) properly initialize the profiler with a file, thread, and core id
             auto workerId = NesThread::getId();
-            NES_DEBUG("worker " << i << " with workerId " << workerId << " pins to queue " << queueIdx);
+            NES_DEBUG2("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
             runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx));
         });
     }
     barrier->wait();
-    NES_DEBUG("Threadpool: start return from start");
+    NES_DEBUG2("Threadpool: start return from start");
     return true;
 }
 
 bool ThreadPool::stop() {
     std::unique_lock lock(reconfigLock);
-    NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
-                                                    << " threads");
+    NES_DEBUG2("ThreadPool: stop thread pool while {} with {} threads {}", (running.load() ? "running" : "not running"), numThreads, (running.load() ?, );
     auto expected = true;
     if (!running.compare_exchange_strong(expected, false)) {
         return false;
     }
     /* wake up all threads in the query manager,
  * so they notice the change in the run variable */
-    NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
+    NES_DEBUG2("Threadpool: Going to unblock {} threads", numThreads);
     queryManager->poisonWorkers();
     /* join all threads if possible */
     for (auto& thread : threads) {
@@ -172,7 +171,7 @@ bool ThreadPool::stop() {
         }
     }
     threads.clear();
-    NES_DEBUG("Threadpool: stop finished");
+    NES_DEBUG2("Threadpool: stop finished");
     return true;
 }
 

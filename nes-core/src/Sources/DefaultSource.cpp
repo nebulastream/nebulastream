@@ -93,10 +93,10 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
                 } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                     buffer[recordIndex][fieldIndex].write<double>(value);
                 } else {
-                    NES_DEBUG("This data source only generates data for numeric fields");
+                    NES_DEBUG2("This data source only generates data for numeric fields");
                 }
             } else {
-                NES_DEBUG("This data source only generates data for numeric fields");
+                NES_DEBUG2("This data source only generates data for numeric fields");
             }
         }
     }

@@ -163,7 +163,7 @@ void RestServer::run() {
 
     /* Run server */
     server.run([this]() -> bool {
-        NES_DEBUG("checking if stop request has arrived for rest server listening on port " << port);
+        NES_DEBUG2("checking if stop request has arrived for rest server listening on port {}.", port);
         std::unique_lock lock(mutex);
         return !stopRequested;
     });

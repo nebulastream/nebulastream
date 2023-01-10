@@ -152,7 +152,7 @@ bool MQTTSink::connect() {
                                 .automatic_reconnect(true)
                                 .finalize();
             // Connect to the MQTT broker
-            NES_DEBUG("MQTTSink::connect: connect to address=" << address);
+            NES_DEBUG2("MQTTSink::connect: connect to address= {}",  address);
             client->connect(connOpts);
             connected = true;
         } catch (const mqtt::exception& ex) {
@@ -160,9 +160,9 @@ bool MQTTSink::connect() {
         }
     }
     if (connected) {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": connected address=" << address);
+        NES_DEBUG2("MQTTSink::disconnect:  {} : connected address= {}",  this,  address);
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected=" << address);
+        NES_DEBUG2("MQTTSink::disconnect:  {} : NOT connected= {}",  this,  address);
     }
     return connected;
 }
@@ -173,7 +173,7 @@ bool MQTTSink::disconnect() {
         client->disconnect();
         connected = false;
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected");
+        NES_DEBUG2("MQTTSink::disconnect:  {} : NOT connected",  this);
     }
     NES_TRACE2("MQTTSink::disconnect: connected value is {}",  connected);
     return !connected;

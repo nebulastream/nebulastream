@@ -104,7 +104,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
 
             // handle variable-length field
             if (dataType->isText()) {
-                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                NES_DEBUG2("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
                           "from the tuple buffer");
 
                 // read the child buffer index from the tuple buffer

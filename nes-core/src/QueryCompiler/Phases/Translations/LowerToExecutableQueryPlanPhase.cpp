@@ -184,8 +184,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current source operator: " << source->getOperatorId() << " as a predecessor to its child pipeline: "
-                                                         << (*nextExecutablePipeline)->getPipelineId());
+            NES_DEBUG2("Adding current source operator: {} as a predecessor to its child pipeline: {}", source->getOperatorId(), (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
         // note: we do not register predecessors for DataSinks.
@@ -255,7 +254,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
-            NES_DEBUG("Emit buffer to query manager");
+            NES_DEBUG2("Emit buffer to query manager");
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
@@ -282,9 +281,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current pipeline: " << executablePipeline->getPipelineId()
-                                                  << " as a predecessor to its child pipeline: "
-                                                  << (*nextExecutablePipeline)->getPipelineId());
+            NES_DEBUG2("Adding current pipeline: {} as a predecessor to its child pipeline: {}", executablePipeline->getPipelineId(), (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
         // note: we do not register predecessors for DataSinks.
@@ -299,8 +296,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: " << physicalSource->toString() << " "
-                                                                                             << sourceType);
+    NES_DEBUG2("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ", physicalSource->toString(), sourceType);
 
     switch (sourceType) {
         case DEFAULT_SOURCE: {

@@ -71,7 +71,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         }
 
         timer.start();
-        NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
+        NES_DEBUG2("compile query with id: " << queryId << " subPlanId:  {}",  subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");

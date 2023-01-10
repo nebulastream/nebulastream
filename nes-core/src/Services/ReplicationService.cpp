@@ -69,7 +69,7 @@ std::vector<TopologyNodePtr> ReplicationService::getPhysicalSources(SourceLogica
 bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const {
     std::unique_lock lock(replicationServiceMutex);
     this->saveEpochBarrier(queryId, epochBarrier);
-    NES_DEBUG("ReplicationService: send timestamp " << epochBarrier << "to sources with queryId " << queryId);
+    NES_DEBUG2("ReplicationService: send timestamp  {} to sources with queryId  {}",  epochBarrier,  queryId);
     std::vector<SourceLogicalOperatorNodePtr> sources = getLogicalSources(queryId);
     if (!sources.empty()) {
         for (auto& sourceOperator : sources) {
@@ -83,7 +83,7 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
                     success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, rpcAddress);
                     NES_ASSERT(success, false);
-                    NES_DEBUG("ReplicationService: success=" << success);
+                    NES_DEBUG2("ReplicationService: success= {}",  success);
                 }
                 return success;
             } else {

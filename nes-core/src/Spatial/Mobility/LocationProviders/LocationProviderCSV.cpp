@@ -43,7 +43,7 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     std::string timeString;
     std::basic_string<char> delimiter = {','};
 
-    NES_DEBUG("Started csv location source at " << startTime)
+    NES_DEBUG2("Started csv location source at {}",  startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {

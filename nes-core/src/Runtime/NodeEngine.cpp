@@ -74,32 +74,32 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
         NES_ERROR2("Runtime: error while start thread pool");
         throw Exceptions::RuntimeException("Error while starting thread pool");
     }
-    NES_DEBUG("NodeEngine(): thread pool successfully started");
+    NES_DEBUG2("NodeEngine(): thread pool successfully started");
 
     isRunning.store(true);
 }
 
 NodeEngine::~NodeEngine() {
-    NES_DEBUG("Destroying Runtime()");
+    NES_DEBUG2("Destroying Runtime()");
     NES_ASSERT(stop(), "Cannot stop node engine");
 }
 
 bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
+    NES_DEBUG2("Runtime: deployQueryInNodeEngine query using qep  {}",  queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
     if (!successRegister) {
         NES_ERROR2("Runtime::deployQueryInNodeEngine: failed to register query");
         return false;
     }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully register query");
+    NES_DEBUG2("Runtime::deployQueryInNodeEngine: successfully register query");
 
     bool successStart = startQuery(queryExecutionPlan->getQueryId());
     if (!successStart) {
         NES_ERROR2("Runtime::deployQueryInNodeEngine: failed to start query");
         return false;
     }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully start query");
+    NES_DEBUG2("Runtime::deployQueryInNodeEngine: successfully start query");
 
     return true;
 }
@@ -127,35 +127,34 @@ bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanP
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
-    NES_DEBUG("Runtime: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
-                                                          << " querySubPlanId =" << querySubPlanId);
+    NES_DEBUG2("Runtime: registerQueryInNodeEngine query  {}  queryId= {}  querySubPlanId = {}",  queryExecutionPlan,  queryId,  querySubPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
         if (found == queryIdToQuerySubPlanIds.end()) {
             queryIdToQuerySubPlanIds[queryId] = {querySubPlanId};
-            NES_DEBUG("Runtime: register of QEP " << querySubPlanId << " as a singleton");
+            NES_DEBUG2("Runtime: register of QEP  {}  as a singleton",  querySubPlanId);
         } else {
             (*found).second.push_back(querySubPlanId);
-            NES_DEBUG("Runtime: register of QEP " << querySubPlanId << " added");
+            NES_DEBUG2("Runtime: register of QEP  {}  added",  querySubPlanId);
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;
-            NES_DEBUG("Runtime: register of subqep " << querySubPlanId << " succeeded");
+            NES_DEBUG2("Runtime: register of subqep  {}  succeeded",  querySubPlanId);
             return true;
         }
-        NES_DEBUG("Runtime: register of subqep " << querySubPlanId << " failed");
+        NES_DEBUG2("Runtime: register of subqep  {}  failed",  querySubPlanId);
         return false;
 
     } else {
-        NES_DEBUG("Runtime: qep already exists. register failed" << querySubPlanId);
+        NES_DEBUG2("Runtime: qep already exists. register failed {}",  querySubPlanId);
         return false;
     }
 }
 
 bool NodeEngine::startQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: startQuery=" << queryId);
+    NES_DEBUG2("Runtime: startQuery= {}",  queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
 
         std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
@@ -167,9 +166,9 @@ bool NodeEngine::startQuery(QueryId queryId) {
         for (auto querySubPlanId : querySubPlanIds) {
             try {
                 if (queryManager->startQuery(deployedQEPs[querySubPlanId])) {
-                    NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " succeeded");
+                    NES_DEBUG2("Runtime: start of QEP  {}  succeeded",  querySubPlanId);
                 } else {
-                    NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " failed");
+                    NES_DEBUG2("Runtime: start of QEP  {}  failed",  querySubPlanId);
                     return false;
                 }
             } catch (std::exception const& exception) {
@@ -184,26 +183,26 @@ bool NodeEngine::startQuery(QueryId queryId) {
 
 bool NodeEngine::undeployQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: undeployQuery query=" << queryId);
+    NES_DEBUG2("Runtime: undeployQuery query= {}",  queryId);
     bool successStop = stopQuery(queryId);
     if (!successStop) {
         NES_ERROR2("Runtime::undeployQuery: failed to stop query");
         return false;
     }
-    NES_DEBUG("Runtime::undeployQuery: successfully stop query");
+    NES_DEBUG2("Runtime::undeployQuery: successfully stop query");
 
     bool successUnregister = unregisterQuery(queryId);
     if (!successUnregister) {
         NES_ERROR2("Runtime::undeployQuery: failed to unregister query");
         return false;
     }
-    NES_DEBUG("Runtime::undeployQuery: successfully unregister query");
+    NES_DEBUG2("Runtime::undeployQuery: successfully unregister query");
     return true;
 }
 
 bool NodeEngine::unregisterQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: unregisterQuery query=" << queryId);
+    NES_DEBUG2("Runtime: unregisterQuery query= {}",  queryId);
     bool ret = true;
     if (auto it = queryIdToQuerySubPlanIds.find(queryId); it != queryIdToQuerySubPlanIds.end()) {
         auto& querySubPlanIds = it->second;
@@ -219,7 +218,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
                 case Execution::ExecutableQueryPlanStatus::Created:
                 case Execution::ExecutableQueryPlanStatus::Deployed:
                 case Execution::ExecutableQueryPlanStatus::Running: {
-                    NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " is not Stopped... stopping now");
+                    NES_DEBUG2("Runtime: unregister of query  {}  is not Stopped... stopping now",  querySubPlanId);
                     isStopped = queryManager->stopQuery(qep, Runtime::QueryTerminationType::HardStop);
                     break;
                 }
@@ -228,10 +227,10 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
                     break;
                 };
             }
-            NES_DEBUG("Runtime: unregister of query " << querySubPlanId << ": current status is stopped=" << isStopped);
+            NES_DEBUG2("Runtime: unregister of query  {} : current status is stopped= {}",  querySubPlanId,  isStopped);
             if (isStopped && queryManager->deregisterQuery(qep)) {
                 deployedQEPs.erase(querySubPlanId);
-                NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " succeeded");
+                NES_DEBUG2("Runtime: unregister of query  {}  succeeded",  querySubPlanId);
             } else {
                 NES_ERROR2("Runtime: unregister of QEP {} failed", querySubPlanId);
                 ret = false;
@@ -247,7 +246,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
 
 bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType terminationType) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime:stopQuery for qep=" << queryId << " termination=" << terminationType);
+    NES_DEBUG2("Runtime:stopQuery for qep= {}  termination= {}",  queryId,  terminationType);
     auto it = queryIdToQuerySubPlanIds.find(queryId);
     if (it != queryIdToQuerySubPlanIds.end()) {
         std::vector<QuerySubPlanId> querySubPlanIds = it->second;
@@ -261,7 +260,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                 for (auto querySubPlanId : querySubPlanIds) {
                     try {
                         if (queryManager->stopQuery(deployedQEPs[querySubPlanId], terminationType)) {
-                            NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
+                            NES_DEBUG2("Runtime: stop of QEP  {}  succeeded",  querySubPlanId);
                             return true;
                         } else {
                             NES_ERROR2("Runtime: stop of QEP {} failed", querySubPlanId);
@@ -277,7 +276,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                 for (auto querySubPlanId : querySubPlanIds) {
                     try {
                         if (queryManager->failQuery(deployedQEPs[querySubPlanId])) {
-                            NES_DEBUG("Runtime: failure of QEP " << querySubPlanId << " succeeded");
+                            NES_DEBUG2("Runtime: failure of QEP  {}  succeeded",  querySubPlanId);
                             return true;
                         } else {
                             NES_ERROR2("Runtime: failure of QEP {} failed", querySubPlanId);
@@ -311,7 +310,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         NES_WARNING("Runtime::stop: engine already stopped");
         return true;
     }
-    NES_DEBUG("Runtime::stop: going to stop the node engine");
+    NES_DEBUG2("Runtime::stop: going to stop the node engine");
     std::unique_lock lock(engineMutex);
     bool withError = false;
 
@@ -321,14 +320,14 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         try {
             if (markQueriesAsFailed) {
                 if (queryManager->failQuery(queryExecutionPlan)) {
-                    NES_DEBUG("Runtime: fail of QEP " << querySubPlanId << " succeeded");
+                    NES_DEBUG2("Runtime: fail of QEP  {}  succeeded",  querySubPlanId);
                 } else {
                     NES_ERROR2("Runtime: fail of QEP {} failed", querySubPlanId);
                     withError = true;
                 }
             } else {
                 if (queryManager->stopQuery(queryExecutionPlan)) {
-                    NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
+                    NES_DEBUG2("Runtime: stop of QEP  {}  succeeded",  querySubPlanId);
                 } else {
                     NES_ERROR2("Runtime: stop of QEP {} failed", querySubPlanId);
                     withError = true;
@@ -340,7 +339,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         }
         try {
             if (queryManager->deregisterQuery(queryExecutionPlan)) {
-                NES_DEBUG("Runtime: deregisterQuery of QEP " << querySubPlanId << " succeeded");
+                NES_DEBUG2("Runtime: deregisterQuery of QEP  {}  succeeded",  querySubPlanId);
                 it = deployedQEPs.erase(it);
             } else {
                 NES_ERROR2("Runtime: deregisterQuery of QEP {} failed", querySubPlanId);
@@ -377,11 +376,11 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
     std::unique_lock lock(engineMutex);
     std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
-        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId " << subQueryPlanId);
+        NES_DEBUG2("NodeEngine: Find sources for subQueryPlanId  {}",  subQueryPlanId);
         auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
         for (auto& source : sources) {
             if (source->injectEpochBarrier(timestamp, queryId)) {
-                NES_DEBUG("NodeEngine: Inject epoch barrier " << timestamp << "to the query " << queryId);
+                NES_DEBUG2("NodeEngine: Inject epoch barrier  {} to the query  {}",  timestamp,  queryId);
             } else {
                 NES_ERROR2("NodeEngine: Couldn't inject epoch barrier to the query {}", queryId);
             }
@@ -555,10 +554,10 @@ std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQ
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
-    NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
+    NES_DEBUG2("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
-        NES_DEBUG("Deployed QEP with ID: " << querySubPlanId << " not found");
+        NES_DEBUG2("Deployed QEP with ID:  {}  not found",  querySubPlanId);
         return false;
     } else {
         auto qep = deployedQEPs.at(querySubPlanId);
@@ -577,14 +576,14 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
             return true;
         }
         //query sub plan did not have network sink with specified id
-        NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with a Descriptor with ID "
-                                           << uniqueNetworkSinkDescriptorId);
+        NES_DEBUG2("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
+                                           querySubPlanId, uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
 
 bool NodeEngine::bufferAllData() {
-    NES_DEBUG("NodeEngine of Node " << nodeId << " received request to buffer all outgoing data");
+    NES_DEBUG2("NodeEngine of Node  {}  received request to buffer all outgoing data",  nodeId);
     std::unique_lock lock(engineMutex);
     //iterate over all sinks at this node by first iterating over qeps and then for every qep iterate over its sinks
     for (auto& [qepId, qepPtr] : deployedQEPs) {
@@ -594,13 +593,13 @@ bool NodeEngine::bufferAllData() {
             auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
             //whenever we encounter a network sink, send a reconfig message telling it to start buffering
             if (networkSink) {
-                NES_DEBUG("Starting to buffer on Network Sink" << networkSink->getUniqueNetworkSinkDescriptorId())
+                NES_DEBUG2("Starting to buffer on Network Sink{}", networkSink->getUniqueNetworkSinkDescriptorId());
                 ReconfigurationMessage message =
                     ReconfigurationMessage(qepPtr->getQueryId(), qepId, Runtime::StartBuffering, networkSink);
                 queryManager->addReconfigurationMessage(qepPtr->getQueryId(), qepId, message, true);
             } else {
                 //if the sink is not a network sink, do nothing
-                NES_DEBUG("Sink is not a network sink")
+                NES_DEBUG2("Sink is not a network sink");
             }
         }
     }
@@ -608,7 +607,7 @@ bool NodeEngine::bufferAllData() {
 }
 
 bool NodeEngine::stopBufferingAllData() {
-    NES_DEBUG("NodeEngine of Node " << nodeId << " received request to stop buffering data");
+    NES_DEBUG2("NodeEngine of Node  {}  received request to stop buffering data",  nodeId);
     std::unique_lock lock(engineMutex);
     //iterate over all sinks at this node by first iterating over qeps and then for every qep iterate over its sinks
     for (auto& [qepId, qepPtr] : deployedQEPs) {
@@ -637,7 +636,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
-        NES_DEBUG("Deployed QEP with ID: " << querySubPlanId << " not found");
+        NES_DEBUG2("Deployed QEP with ID:  {}  not found",  querySubPlanId);
         return false;
     } else {
         auto qep = deployedQEPs.at(querySubPlanId);
@@ -657,8 +656,8 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
             return true;
         }
         //query sub plan did not have network sink with specified id
-        NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with a Descriptor with ID "
-                                           << uniqueNetworkSinkDescriptorId);
+        NES_DEBUG2("Query Sub Plan with ID {} did not contain a Network Sink with a Descriptor with ID {}",
+                                           querySubPlanId, uniqueNetworkSinkDescriptorId);
         return false;
     }
 }
