@@ -23,11 +23,11 @@ InternalProvider::InternalProvider(uint64_t id,
 std::vector<Runtime::TupleBuffer>& InternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
 
 std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId) {
-    // For now we only have a single source
+    // For now, we only have a single source
     ((void) sourceId);
     while (!started) {
         //wait with data production until the source is really started and also block if the source gets stopped
-        usleep(150);
+        usleep(std::chrono::microseconds(150).count());
     }
 
     if (!preAllocatedBuffers.empty()) {
