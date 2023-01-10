@@ -47,23 +47,23 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
 
     std::string bufferContent = buffer.toString(schema);
     uint64_t contentSize = bufferContent.length();
-    NES_TRACE("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
+    NES_TRACE2("TextFormat::getData content size={} content={}", contentSize, bufferContent);
 
     if (inputBuffer.getBufferSize() < contentSize) {
-        NES_TRACE("TextFormat::getData: content is larger than one buffer");
+        NES_TRACE2("TextFormat::getData: content is larger than one buffer");
         uint64_t numberOfBuffers = contentSize / inputBuffer.getBufferSize();
         for (uint64_t i = 0; i < numberOfBuffers; i++) {
             std::string copyString = bufferContent.substr(0, contentSize);
             bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
-            NES_TRACE("TextFormat::getData: copy string=" << copyString << " new content=" << bufferContent);
+            NES_TRACE2("TextFormat::getData: copy string={} new content={}",  copyString, bufferContent);
             auto buf = this->bufferManager->getBufferBlocking();
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentSize);
             buffers.push_back(buf);
         }
-        NES_TRACE("TextFormat::getData: successfully copied buffer=" << numberOfBuffers);
+        NES_TRACE2("TextFormat::getData: successfully copied buffer= {}",  numberOfBuffers);
     } else {
-        NES_TRACE("TextFormat::getData: content fits in one buffer");
+        NES_TRACE2("TextFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBuffer(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);

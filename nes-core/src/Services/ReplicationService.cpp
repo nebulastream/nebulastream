@@ -56,7 +56,7 @@ std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(
     if (sharedQueryPlan) {
         return sharedQueryPlan->getQueryPlan()->getSourceOperators();
     }
-    NES_ERROR("ReplicationService: no shared query plan found for the queryId " << queryId);
+    NES_ERROR2("ReplicationService: no shared query plan found for the queryId  {}",  queryId);
     return {};
 }
 
@@ -87,11 +87,11 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                 }
                 return success;
             } else {
-                NES_ERROR("ReplicationService: no physical sources found for the queryId " << queryId);
+                NES_ERROR2("ReplicationService: no physical sources found for the queryId  {}",  queryId);
             }
         }
     } else {
-        NES_ERROR("ReplicationService: no sources found for the queryId " << queryId);
+        NES_ERROR2("ReplicationService: no sources found for the queryId  {}",  queryId);
     }
     return false;
 }

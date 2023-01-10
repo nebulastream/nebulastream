@@ -56,7 +56,7 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
                     pyValue = PyLong_FromLong(dynamicTupleBuffer[t][i].read<int64_t>());
                     if (!pyValue) {
                         Py_Finalize();// Frees all memory allocated
-                        NES_ERROR("Unable to convert value");
+                        NES_ERROR2("Unable to convert value");
                         return ExecutionResult::Error;
                     }
                     PyTuple_SetItem(pyArgs, 0, pyValue);
@@ -68,7 +68,7 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
                         Py_DECREF(pyValue);
                     } else {
                         Py_Finalize();
-                        NES_ERROR("Function call failed");
+                        NES_ERROR2("Function call failed");
                         return ExecutionResult::Error;
                     }
                 }
@@ -78,13 +78,13 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
                 PyErr_Print();
             }
             Py_Finalize();
-            NES_ERROR("Cannot find function " << this->pythonFunctionName);
+            NES_ERROR2("Cannot find function {}", this->pythonFunctionName);
             return ExecutionResult::Error;
         }
     } else {
         PyErr_Print();
         Py_Finalize();
-        NES_ERROR("Failed to load " << this->udfFilename);
+        NES_ERROR2("Failed to load {}", this->udfFilename);
         return ExecutionResult::Error;
     }
     if (Py_FinalizeEx() < 0) {

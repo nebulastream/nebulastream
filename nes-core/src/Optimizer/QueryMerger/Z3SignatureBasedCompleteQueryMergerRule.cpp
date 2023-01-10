@@ -45,7 +45,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
         return true;
     }
 
-    NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG2("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (const auto& targetQueryPlan : queryPlansToAdd) {
 
@@ -68,7 +68,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (foundMatch) {
-                NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE2("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
                 //Iterate over all matched pairs of sink operators and merge the query plan
@@ -100,7 +100,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
         }
 
         if (!matched) {
-            NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG2("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }

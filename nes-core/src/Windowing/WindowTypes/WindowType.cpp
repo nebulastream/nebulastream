@@ -33,7 +33,7 @@ TimeBasedWindowTypePtr WindowType::asTimeBasedWindowType(std::shared_ptr<WindowT
     if (auto timeBasedWindowType = std::dynamic_pointer_cast<TimeBasedWindowType>(windowType)) {
         return timeBasedWindowType;
     } else {
-        NES_ERROR("Can not cast the window type to a time based window type");
+        NES_ERROR2("Can not cast the window type to a time based window type");
         NES_THROW_RUNTIME_ERROR("Can not cast the window type to a time based window type");
     }
 }
@@ -42,7 +42,7 @@ ContentBasedWindowTypePtr WindowType::asContentBasedWindowType(std::shared_ptr<W
     if (auto contentBasedWindowType = std::dynamic_pointer_cast<ContentBasedWindowType>(windowType)) {
         return contentBasedWindowType;
     } else {
-        NES_ERROR("Can not cast the window type to a content based window type");
+        NES_ERROR2("Can not cast the window type to a content based window type");
         NES_THROW_RUNTIME_ERROR("Can not cast the window type to a content based window type");
     }
 }

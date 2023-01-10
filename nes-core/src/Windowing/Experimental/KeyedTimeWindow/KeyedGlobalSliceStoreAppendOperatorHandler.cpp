@@ -49,7 +49,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
                                                                      KeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
     if (!global) {
-        NES_FATAL_ERROR("GlobalSliceStore is invalid, this should only happen after a hard stop. Drop all in flight data.");
+        NES_FATAL_ERROR2("GlobalSliceStore is invalid, this should only happen after a hard stop. Drop all in flight data.");
         return;
     }
     // add pre-aggregated slice to slice store

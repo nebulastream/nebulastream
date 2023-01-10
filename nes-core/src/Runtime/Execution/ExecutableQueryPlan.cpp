@@ -80,7 +80,7 @@ bool ExecutableQueryPlan::fail() {
         NES_DEBUG("QueryExecutionPlan: fail query=" << queryId << " sublplan=" << querySubPlanId);
         for (auto& stage : pipelines) {
             if (!stage->fail()) {
-                NES_ERROR("QueryExecutionPlan: fail failed for stage " << stage);
+                NES_ERROR2("QueryExecutionPlan: fail failed for stage {}", stage);
                 ret = false;
             }
         }
@@ -101,7 +101,7 @@ bool ExecutableQueryPlan::setup() {
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Deployed)) {
         for (auto& stage : pipelines) {
             if (!stage->setup(queryManager, bufferManager)) {
-                NES_ERROR("QueryExecutionPlan: setup failed!" << queryId << " " << querySubPlanId);
+                NES_ERROR2("QueryExecutionPlan: setup failed! {} {}", queryId, querySubPlanId);
                 this->stop();
                 return false;
             }
@@ -119,7 +119,7 @@ bool ExecutableQueryPlan::start(const StateManagerPtr& stateManager) {
         for (auto& stage : pipelines) {
             NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQuerySubPlanId() << " pipe=" << stage->getPipelineId());
             if (!stage->start(stateManager)) {
-                NES_ERROR("QueryExecutionPlan: start failed! query=" << queryId << " subplan=" << querySubPlanId);
+                NES_ERROR2("QueryExecutionPlan: start failed! query={} subplan={}", queryId, querySubPlanId);
                 this->stop();
                 return false;
             }
@@ -146,7 +146,7 @@ bool ExecutableQueryPlan::stop() {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
             if (!stage->stop(QueryTerminationType::HardStop)) {
-                NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
+                NES_ERROR2("QueryExecutionPlan: stop failed for stage {}", stage);
                 allStagesStopped = false;
             }
         }
@@ -167,7 +167,7 @@ bool ExecutableQueryPlan::stop() {
     if (expected == Execution::ExecutableQueryPlanStatus::Stopped) {
         return true;// we have tried to stop the same QEP twice..
     }
-    NES_ERROR("Something is wrong with query " << querySubPlanId << " as it was not possible to stop");
+    NES_ERROR2("Something is wrong with query {} as it was not possible to stop", querySubPlanId);
     // if we get there it mean the CAS failed and expected is the current value
     while (!qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState)) {
         // try to install ErrorState

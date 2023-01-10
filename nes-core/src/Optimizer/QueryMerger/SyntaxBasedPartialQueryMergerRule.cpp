@@ -37,7 +37,7 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
         return true;
     }
 
-    NES_DEBUG("SyntaxBasedPartialQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+    NES_DEBUG2("SyntaxBasedPartialQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
@@ -51,7 +51,7 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
-                NES_TRACE("SyntaxBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE2("SyntaxBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
@@ -109,7 +109,7 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
             }
         }
         if (!merged) {
-            NES_DEBUG("SyntaxBasedPartialQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG2("SyntaxBasedPartialQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
@@ -122,7 +122,7 @@ std::map<OperatorNodePtr, OperatorNodePtr>
 SyntaxBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan) {
 
     std::map<OperatorNodePtr, OperatorNodePtr> targetHostOperatorMap;
-    NES_DEBUG("SyntaxBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
+    NES_DEBUG2("SyntaxBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
     std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
 
@@ -150,13 +150,13 @@ SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorNodePtr& targe
 
     std::map<OperatorNodePtr, OperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("SyntaxBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
+        NES_TRACE2("SyntaxBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
         return {};
     }
 
-    NES_TRACE("SyntaxBasedPartialQueryMergerRule: Compare target and host operators.");
+    NES_TRACE2("SyntaxBasedPartialQueryMergerRule: Compare target and host operators.");
     if (targetOperator->equal(hostOperator)) {
-        NES_TRACE("SyntaxBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
+        NES_TRACE2("SyntaxBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {

@@ -51,8 +51,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
 std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     metricCollector->fillBuffer(buf);
-    NES_TRACE("MonitoringSource: Generated buffer with " << buf.getNumberOfTuples() << " tuple and size "
-                                                         << schema->getSchemaSizeInBytes());
+    NES_TRACE2("MonitoringSource: Generated buffer with{} tuple and size {}", buf.getNumberOfTuples(), schema->getSchemaSizeInBytes());
 
     //update statistics
     generatedTuples += buf.getNumberOfTuples();
@@ -62,7 +61,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
         auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
         auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-        NES_TRACE("MonitoringSource::Buffer content: " << buffer.toString(schema));
+        NES_TRACE2("MonitoringSource::Buffer content:  {}",  buffer.toString(schema));
     }
 
     std::this_thread::sleep_for(waitTime);

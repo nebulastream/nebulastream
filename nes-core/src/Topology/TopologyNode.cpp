@@ -121,7 +121,7 @@ bool TopologyNode::hasNodeProperty(const std::string& key) {
 
 std::any TopologyNode::getNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
-        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_ERROR2("TopologyNode: Property '{}' does not exist", key);
         NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
     } else {
         return nodeProperties.at(key);
@@ -130,7 +130,7 @@ std::any TopologyNode::getNodeProperty(const std::string& key) {
 
 bool TopologyNode::removeNodeProperty(const std::string& key) {
     if (nodeProperties.find(key) == nodeProperties.end()) {
-        NES_ERROR("TopologyNode: Property '" << key << "' does not exist");
+        NES_ERROR2("TopologyNode:  Property '{}' does not exist", key);
         return false;
     }
     nodeProperties.erase(key);
@@ -143,7 +143,7 @@ void TopologyNode::addLinkProperty(const TopologyNodePtr& linkedNode, const Link
 
 LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
+        NES_ERROR2("TopologyNode: Link property with node '{}' does not exist", linkedNode->getId());
         NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
     } else {
         return linkProperties.at(linkedNode->getId());
@@ -152,7 +152,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode)
 
 bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
+        NES_ERROR2("TopologyNode: Link property to node with id='{}' does not exist", linkedNode);
         return false;
     }
     linkProperties.erase(linkedNode->getId());

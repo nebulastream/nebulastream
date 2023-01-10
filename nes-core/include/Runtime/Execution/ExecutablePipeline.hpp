@@ -202,4 +202,12 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
 }// namespace NES::Runtime::Execution
 
+namespace fmt {
+template<>
+struct formatter<NES::Runtime::Execution::ExecutablePipeline> : formatter<std::string> {
+    auto format(const NES::Runtime::Execution::ExecutablePipeline& ex_pipeline, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{} {} {}", ex_pipeline.getPipelineId(), ex_pipeline.getQueryId(), ex_pipeline.getQuerySubPlanId());
+    }
+};
+} //namespace fmt
 #endif// NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

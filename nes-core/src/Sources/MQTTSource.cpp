@@ -108,7 +108,7 @@ MQTTSource::~MQTTSource() {
     if (success) {
         NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
     } else {
-        NES_ERROR("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source failed cause it could not be disconnected");
+        NES_ERROR2("MQTTSource::~MQTTSource {}: Destroy MQTT Source failed cause it could not be disconnected", this);
         assert(0);
     }
     NES_DEBUG("MQTTSource::~MQTTSource  " << this << ": Destroy MQTT Source");
@@ -119,11 +119,11 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     auto buffer = allocateBuffer();
     if (connect()) {
         if (!fillBuffer(buffer)) {
-            NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
+            NES_ERROR2("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
             return std::nullopt;
         }
     } else {
-        NES_ERROR("MQTTSource::receiveData: Not connected!");
+        NES_ERROR2("MQTTSource::receiveData: Not connected!");
         return std::nullopt;
     }
     if (buffer.getNumberOfTuples() == 0) {
@@ -160,7 +160,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
         std::string receivedMessageString;
         try {
-            NES_TRACE("Waiting for messages on topic: '" << topic << "'");
+            NES_TRACE2("Waiting for messages on topic: '{}'", topic);
 
             // Try to consume a message if the connected flag is set.
             // If no message is received (nullptr) and if the client is not connected anymore, set connected to false.
@@ -169,14 +169,14 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                 // Using try_consume_message_for(), because it is non-blocking.
                 auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
                 if (message) {// Check if message was received correctly (not nullptr)
-                    NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
+                    NES_TRACE2("Client consume message: '{}'", message->get_payload_str() );
                     receivedMessageString = message->get_payload_str();
                     if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString,
                                                                    tupleCount,
                                                                    tupleBuffer,
                                                                    schema,
                                                                    localBufferManager)) {
-                        NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
+                        NES_ERROR2("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
                     NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/'
@@ -198,10 +198,10 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                     std::rethrow_exception(exceptionPtr);
                 }
             } catch (const mqtt::exception& error) {
-                NES_ERROR("MQTTSource::fillBuffer: " << error.what());
+                NES_ERROR2("MQTTSource::fillBuffer: {}", error.what());
                 return false;
             } catch (std::exception& error) {
-                NES_ERROR("MQTTSource::fillBuffer: General Error: " << error.what());
+                NES_ERROR2("MQTTSource::fillBuffer: General Error: {}", error.what());
                 return false;
             }
         }

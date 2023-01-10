@@ -51,7 +51,7 @@ CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
 uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != NotInitialized) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, is already initialized."
+        NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is already initialized."
                         "It is not allowed to call setup multiple times.");
         return -1;
     }
@@ -62,7 +62,7 @@ uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExec
 uint32_t CompiledExecutablePipelineStage::start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Initialized) {
-        NES_FATAL_ERROR("CompiledExecutablePipelineStage: The pipeline stage, is not initialized."
+        NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is not initialized."
                         "It is not allowed to call start if setup was not called.");
         return -1;
     }
@@ -75,7 +75,7 @@ uint32_t CompiledExecutablePipelineStage::open(Runtime::Execution::PipelineExecu
                                                Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR(
+        NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:open The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
         return -1;
@@ -106,7 +106,7 @@ uint32_t CompiledExecutablePipelineStage::close(Runtime::Execution::PipelineExec
                                                 Runtime::WorkerContext& workerContext) {
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR(
+        NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:close The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
         return -1;
@@ -115,7 +115,7 @@ uint32_t CompiledExecutablePipelineStage::close(Runtime::Execution::PipelineExec
 }
 uint32_t CompiledExecutablePipelineStage::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) {
     if (currentExecutionStage != Running) {
-        NES_FATAL_ERROR(
+        NES_FATAL_ERROR2(
             "CompiledExecutablePipelineStage:stop The pipeline stage, was not correctly initialized and started. You must first "
             "call setup and start.");
         return -1;

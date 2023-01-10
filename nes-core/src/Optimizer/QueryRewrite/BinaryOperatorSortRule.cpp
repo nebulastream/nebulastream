@@ -24,7 +24,7 @@ BinaryOperatorSortRulePtr BinaryOperatorSortRule::create() {
     return std::make_shared<BinaryOperatorSortRule>(BinaryOperatorSortRule());
 }
 
-BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG("BinaryOperatorSortRule()"); };
+BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG2("BinaryOperatorSortRule()"); };
 
 QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
     NES_INFO("Apply BinaryOperatorSortRule ");

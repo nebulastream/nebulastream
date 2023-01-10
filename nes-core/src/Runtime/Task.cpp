@@ -46,7 +46,7 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
                 return ExecutionResult::Error;
             }
         } else {
-            NES_ERROR("Executable pipeline was not of any suitable type");
+            NES_ERROR2("Executable pipeline was not of any suitable type");
             return ExecutionResult::Error;
         }
     } catch (std::exception const& error) {

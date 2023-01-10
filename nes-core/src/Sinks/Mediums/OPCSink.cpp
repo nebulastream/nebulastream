@@ -75,12 +75,12 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             /* Write node attribute with array value*/
             retval = UA_Variant_setArrayCopy(val, inputBuffer.getBuffer(), inputBuffer.getBufferSize(), val->type);
         } else {
-            NES_ERROR("OPCSINK::writeData: Node does not exist or is not a scalar.");
+            NES_ERROR2("OPCSINK::writeData: Node does not exist or is not a scalar.");
             return false;
         }
 
         if (retval != UA_STATUSCODE_GOOD) {
-            NES_ERROR("OPCSINK::writeData: Format of value in input buffer and format of nodeid do not match.");
+            NES_ERROR2("OPCSINK::writeData: Format of value in input buffer and format of nodeid do not match.");
             return false;
         }
 
@@ -89,7 +89,7 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         if (retval == UA_STATUSCODE_GOOD) {
             NES_DEBUG("OPCSINK::writeData: Value has been successfully updated ");
         } else {
-            NES_ERROR("OPCSINK::writeData: Updating value was not possible.");
+            NES_ERROR2("OPCSINK::writeData: Updating value was not possible.");
             return false;
         }
 
@@ -100,7 +100,7 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
             NES_DEBUG("OPCSINK::writeData: New value is: " << *(UA_Int32*) var->data);
         } else {
-            NES_ERROR("OPCSINK::writeData: Node does not exist or is not a scalar.");
+            NES_ERROR2("OPCSINK::writeData: Node does not exist or is not a scalar.");
             return false;
         }
         UA_delete(var, var->type);
@@ -109,7 +109,7 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         NES_DEBUG("OPCSINK::writeData() UA_StatusCode is: " << std::hex << retval);
 
     } else {
-        NES_ERROR("OPCSOURCE::receiveData(): Not connected!");
+        NES_ERROR2("OPCSOURCE::receiveData(): Not connected!");
         return false;
     }
     return true;
@@ -147,7 +147,7 @@ bool OPCSink::connect() {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR("OPCSINK::connect(): ERROR with Status Code: " << retval << "OPCSINK " << this << ": set connected false");
+            NES_ERROR2("OPCSINK::connect(): ERROR with Status Code: {} OPCSINK {}: set connected false", retval , this);
         } else {
 
             connected = true;

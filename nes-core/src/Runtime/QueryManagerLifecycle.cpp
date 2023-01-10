@@ -74,7 +74,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
     // 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start(std::move(stateManager))) {
-        NES_FATAL_ERROR("AbstractQueryManager: query execution plan could not started");
+        NES_FATAL_ERROR2("AbstractQueryManager: query execution plan could not started");
         return false;
     }
 
@@ -197,7 +197,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
                 .count();
         statistics->setTimestampQueryStart(now, true);
     } else {
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
+        NES_FATAL_ERROR2("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
 
@@ -231,7 +231,7 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
                                                               source->getOperatorId(),
                                                               terminationType);
         if (!ret) {
-            NES_ERROR("Query cannot trigger EOS for query manager for query =" << qep->getQueryId());
+            NES_ERROR2("Query cannot trigger EOS for query manager for query ={}", qep->getQueryId());
             NES_THROW_RUNTIME_ERROR("cannot trigger EOS in canTriggerEndOfStream()");
         }
         overallResult &= ret;
@@ -267,7 +267,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
     switch (terminationStatus) {
         case std::future_status::ready: {
             if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail) {
-                NES_FATAL_ERROR("AbstractQueryManager: QEP " << qep->getQuerySubPlanId() << " could not be failed");
+                NES_FATAL_ERROR2("AbstractQueryManager: QEP {} could not be failed", qep->getQuerySubPlanId());
                 ret = false;
             }
             break;
@@ -337,7 +337,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     switch (terminationStatus) {
         case std::future_status::ready: {
             if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok) {
-                NES_FATAL_ERROR("AbstractQueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
+                NES_FATAL_ERROR2("AbstractQueryManager: QEP {} could not be stopped", qep->getQuerySubPlanId());
                 ret = false;
             }
             break;

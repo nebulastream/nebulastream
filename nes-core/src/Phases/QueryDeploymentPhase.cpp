@@ -46,7 +46,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     if (executionNodes.empty()) {
-        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query " << sharedQueryId);
+        NES_ERROR2("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query "
                                            + std::to_string(sharedQueryId));
@@ -84,7 +84,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     if (successDeploy) {
         NES_DEBUG("QueryDeploymentPhase: deployment for shared query " + std::to_string(sharedQueryId) + " successful");
     } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to deploy shared query " << sharedQueryId);
+        NES_ERROR2("QueryDeploymentPhase: Failed to deploy shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Failed to deploy shared query " + std::to_string(sharedQueryId));
     }
@@ -99,7 +99,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     if (successStart) {
         NES_DEBUG("QueryDeploymentPhase: Successfully started deployed shared query " << sharedQueryId);
     } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to start the deployed shared query " << sharedQueryId);
+        NES_ERROR2("QueryDeploymentPhase: Failed to start the deployed shared query {}",sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
                                        "QueryDeploymentPhase: Failed to deploy query " + std::to_string(sharedQueryId));
     }
@@ -132,7 +132,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
             if (success) {
                 NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
             } else {
-                NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
+                NES_ERROR2("QueryDeploymentPhase:deployQuery: {} to {} failed", queryId, rpcAddress);
                 return false;
             }
         }
@@ -164,7 +164,7 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         if (success) {
             NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
         } else {
-            NES_ERROR("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << "  failed");
+            NES_ERROR2("QueryDeploymentPhase::startQuery {} to {} failed", queryId, rpcAddress);
             return false;
         }
         completionQueues[queueForExecutionNode] = 1;

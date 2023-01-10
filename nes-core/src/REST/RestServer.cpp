@@ -71,10 +71,10 @@ bool RestServer::start() {
         // Destroy Oatpp Environment
         oatpp::base::Environment::destroy();
     } catch (const std::exception& e) {
-        NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
+        NES_ERROR2("RestServer: Unable to start REST server [{}:{}] {}", host, std::to_string(port), e.what());
         return false;
     } catch (...) {
-        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+        NES_FATAL_ERROR2("RestServer: Unable to start REST server unknown exception.");
         return false;
     }
     return true;

@@ -88,7 +88,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
             std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSink>(dataSink);
         return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(materializedViewSink->getViewId());
     } else {
-        NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
+        NES_ERROR2("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
         throw std::invalid_argument("Unknown SinkMedium Type");
     }
 }

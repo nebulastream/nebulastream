@@ -219,7 +219,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
             break;
         }
         std::getline(input, line);
-        NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
+        NES_TRACE2("StaticDataSource line={}, val={}", tupleCount, line);
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         ++tupleCount;
         ++generatedTuples;
@@ -230,7 +230,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     generatedBuffers++;
     NES_DEBUG("StaticDataSource::fillBuffer: reading finished read " << tupleCount
                                                                      << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("StaticDataSource::fillBuffer: read filled buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_TRACE2("StaticDataSource::fillBuffer: read filled buffer={} ", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 std::string StaticDataSource::toString() const {

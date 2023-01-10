@@ -344,18 +344,17 @@ void DataSource::runningRoutineWithIngestionRate() {
 
             if (optBuf.has_value()) {
                 // here we got a valid buffer
-                NES_TRACE("DataSource: add task for buffer");
+                NES_TRACE2("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWorkFromSource(buf);
 
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
             } else {
-                NES_ERROR("DataSource: Buffer is invalid");
+                NES_ERROR2("DataSource: Buffer is invalid");
                 running = false;
             }
-            NES_TRACE("DataSource: buffersProcessedCnt=" << buffersProcessedCnt
-                                                         << " buffersPerSecond=" << gatheringIngestionRate);
+            NES_TRACE2("DataSource: buffersProcessedCnt={} buffersPerSecond={}", buffersProcessedCnt, gatheringIngestionRate);
         }
 
         uint64_t endPeriod =
@@ -363,13 +362,11 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (100));
-        NES_TRACE("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
-                                                      << " nextPeriodStartTime=" << nextPeriodStartTime);
+        NES_TRACE2("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}", startPeriod, endPeriod, nextPeriodStartTime);
 
         //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
         if (nextPeriodStartTime < endPeriod) {
-            NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
-                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
+            NES_ERROR2("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}", nextPeriodStartTime, endPeriod);
             //            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
             //                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
         }
@@ -418,10 +415,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_TRACE("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
-                                                       << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                                       << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                                       << " orgID=" << this->operatorId);
+                NES_TRACE2("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} operatorId={} orgID={}", operatorId, getType(), toString(), buf.getNumberOfTuples() , cnt, this->operatorId, this->operatorId);
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
@@ -441,7 +435,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                                     << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
             running = false;
         }
-        NES_TRACE("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
+        NES_TRACE2("DataSource {} : Data Source finished processing iteration {}", operatorId, cnt);
 
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
@@ -484,27 +478,24 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
-                    NES_TRACE("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_TRACE2("DataSource old sourceGatheringInterval = {}ms", this->gatheringInterval.count());
                     this->kFilter->updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter->getNewGatheringInterval();
-                    NES_TRACE("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_TRACE2("DataSource new sourceGatheringInterval = {}ms", this->gatheringInterval.count());
                 }
 
-                NES_TRACE("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
-                                                       << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                                       << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                                       << " orgID=" << this->operatorId);
+                NES_TRACE2("DataSource produced buffer{} type={} string={}: Received Data:{} tuples iteration={} operatorId={} orgID={}", operatorId, getType(), toString(), buf.getNumberOfTuples(), cnt, this->operatorId, this->operatorId);
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
                     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-                    NES_TRACE("DataSource produced buffer content=" << buffer.toString(schema));
+                    NES_TRACE2("DataSource produced buffer content= {}",  buffer.toString(schema));
                 }
 
                 emitWorkFromSource(buf);
                 ++cnt;
             } else {
-                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                NES_ERROR2("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
                 NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
             }

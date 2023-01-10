@@ -54,14 +54,14 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
         } catch (std::exception& e) {
             std::string errorString =
                 std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ") + strerror(errno);
-            NES_ERROR("LocationProviderCSV:  " << errorString);
+            NES_ERROR2("LocationProviderCSV:  {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
         if (values.size() != 3) {
             std::string errorString =
                 std::string("LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has ")
                 + std::to_string(values.size()) + std::string(" columns");
-            NES_ERROR("LocationProviderCSV:  " << errorString);
+            NES_ERROR2("LocationProviderCSV:  {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
         latitudeString = values[0];
@@ -77,10 +77,10 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             longitude = std::stod(longitudeString);
         } catch (std::exception& e) {
             std::string errorString = std::string("An error occurred while creating the waypoint. ERROR: ") + strerror(errno);
-            NES_ERROR("LocationProviderCSV:  " << errorString);
+            NES_ERROR2("LocationProviderCSV: {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
-        NES_TRACE("Read from csv: " << latitudeString << ", " << longitudeString << ", " << time);
+        NES_TRACE2("Read from csv: {}", latitudeString << ", " << longitudeString << ", " << time);
 
         //add startTime to the offset obtained from csv to get absolute timestamp
         time += startTime;
@@ -123,7 +123,7 @@ DataTypes::Experimental::Waypoint LocationProviderCSV::getCurrentWaypoint() {
     //find the last point behind us on the way
     auto currentWaypointIndex = nextWaypointIndex - 1;
     auto currentWayPoint = getWaypointAt(currentWaypointIndex);
-    NES_TRACE("Location: " << currentWayPoint.getLocation().toString() << "; Time: " << currentWayPoint.getTimestamp().value())
+    NES_TRACE2("Location: {}; Time:{}", currentWayPoint.getLocation().toString(), currentWayPoint.getTimestamp().value());
     return currentWayPoint;
 }
 

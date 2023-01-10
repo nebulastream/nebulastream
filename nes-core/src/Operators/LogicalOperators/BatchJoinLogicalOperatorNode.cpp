@@ -84,26 +84,26 @@ bool BatchJoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCont
 
     //Check if left input schema was identified
     if (!leftInputSchema) {
-        NES_ERROR("BatchJoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : "
-                  + buildJoinKeyName);
+        NES_ERROR2("BatchJoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
+                  buildJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 
     //Check if right input schema was identified
     if (!rightInputSchema) {
-        NES_ERROR(
-            "BatchJoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
-            + probeJoinKeyName);
+        NES_ERROR2(
+            "BatchJoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : {}",
+            probeJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
     //Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false)) {
-        NES_ERROR("BatchJoinLogicalOperatorNode: Found both left and right input schema to be same.");
+        NES_ERROR2("BatchJoinLogicalOperatorNode: Found both left and right input schema to be same.");
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Found both left and right input schema to be same.");
     }
 
-    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
+    NES_DEBUG2("Binary infer left schema={} right schema={}", leftInputSchema->toString(), rightInputSchema->toString());
     NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
     NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
 
@@ -119,7 +119,7 @@ bool BatchJoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCont
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    NES_DEBUG("Output schema for join=" << outputSchema->toString());
+    NES_DEBUG2("Output schema for join={}", outputSchema->toString());
     batchJoinDefinition->updateOutputDefinition(outputSchema);
     batchJoinDefinition->updateInputSchemas(leftInputSchema, rightInputSchema);
     return true;
@@ -144,7 +144,7 @@ bool BatchJoinLogicalOperatorNode::equal(NodePtr const& rhs) const {
 
 void BatchJoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("BatchJoinLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("BatchJoinLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "BatchJoinLogicalOperatorNode: Join should have 2 children.");
     //Infer query signatures for child operators
     for (auto& child : children) {

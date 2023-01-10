@@ -59,17 +59,17 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         auto func = compiled_code->getInvocableMember<CreateSchemaFunctionPtr>(
             "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
-            NES_ERROR("QueryParsingService : Error retrieving function! Symbol not found!");
+            NES_ERROR2("QueryParsingService : Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Schema query((*func)());
         return std::make_shared<Schema>(query);
 
     } catch (std::exception& exc) {
-        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {}",  queryCodeSnippet);
         throw;
     } catch (...) {
-        NES_ERROR("QueryParsingService : Failed to create the query from input code string: " << queryCodeSnippet);
+        NES_ERROR2("QueryParsingService : Failed to create the query from input code string:  {}",  queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
@@ -77,7 +77,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
 QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
 
     if (queryCodeSnippet.find("Source(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
-        NES_ERROR("QueryParsingService: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");
+        NES_ERROR2("QueryParsingService: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
 
@@ -106,20 +106,20 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
         auto result = jitCompiler->compile(std::move(request));
         auto compiled_code = result.get().getDynamicObject();
         if (!code) {
-            NES_ERROR("Compilation of query code failed! Code: " << code.str());
+            NES_ERROR2("Compilation of query code failed! Code:  {}",  code.str());
         }
 
         using CreateQueryFunctionPtr = Query (*)();
         auto func = compiled_code->getInvocableMember<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
         if (!func) {
-            NES_ERROR("QueryParsingService: Error retrieving function! Symbol not found!");
+            NES_ERROR2("QueryParsingService: Error retrieving function! Symbol not found!");
         }
         /* call loaded function to create query object */
         Query query((*func)());
 
         return query.getQueryPlan();
     } catch (std::exception& exc) {
-        NES_ERROR("QueryParsingService: Failed to create the query from input code string: " << queryCodeSnippet << exc.what());
+        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {} {}",  queryCodeSnippet, exc.what());
         throw;
     } catch (...) {
         NES_ERROR2("QueryParsingService: Failed to create the query from input code string: {}", queryCodeSnippet);

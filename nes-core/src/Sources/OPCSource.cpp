@@ -69,7 +69,7 @@ OPCSource::~OPCSource() {
     if (success) {
         NES_DEBUG("OPCSOURCE  " << this << ": Destroy OPC Source");
     } else {
-        NES_FATAL_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
+        NES_FATAL_ERROR2("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
     }
 }
 
@@ -91,12 +91,12 @@ std::optional<Runtime::TupleBuffer> OPCSource::receiveData() {
             return buffer;
         } else {
             UA_delete(val, val->type);
-            NES_ERROR("OPCSOURCE::receiveData() error: Could not retrieve data. Further inspection needed.");
+            NES_ERROR2("OPCSOURCE::receiveData() error: Could not retrieve data. Further inspection needed.");
             return std::nullopt;
         }
 
     } else {
-        NES_ERROR("OPCSOURCE::receiveData(): Not connected!");
+        NES_ERROR2("OPCSOURCE::receiveData(): Not connected!");
         return std::nullopt;
     }
 }
@@ -132,8 +132,7 @@ bool OPCSource::connect() {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR("OPCSOURCE::connect(): ERROR with Status Code: " << retval << "OPCSOURCE " << this
-                                                                       << ": set connected false");
+            NES_ERROR2("OPCSOURCE::connect(): ERROR with Status Code: {} OPCSOURCE {}: set connected false",  retval , this);
         } else {
 
             connected = true;

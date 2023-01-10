@@ -25,12 +25,12 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) 
     Schema::MemoryLayoutType layoutType;
     switch (policy) {
         case FORCE_ROW_LAYOUT: {
-            NES_DEBUG("Select Row Layout");
+            NES_DEBUG2("Select Row Layout");
             layoutType = Schema::ROW_LAYOUT;
             break;
         }
         case FORCE_COLUMN_LAYOUT: {
-            NES_DEBUG("Select Column Layout");
+            NES_DEBUG2("Select Column Layout");
             layoutType = Schema::COLUMNAR_LAYOUT;
             break;
         }

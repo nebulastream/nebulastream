@@ -60,8 +60,8 @@ void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr co
             std::dynamic_pointer_cast<Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto keyExpression = eventTimeWatermarkStrategyDescriptor->getOnField();
         if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-            NES_ERROR("GeneratableWatermarkAssignerOperator: watermark field has to be an FieldAccessExpression but it was a "
-                      + keyExpression->toString());
+            NES_ERROR2("GeneratableWatermarkAssignerOperator: watermark field has to be an FieldAccessExpression but it was a {}",
+                      keyExpression->toString());
         }
         auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
         auto watermarkStrategy =
@@ -73,7 +73,7 @@ void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr co
         auto watermarkStrategy = Windowing::IngestionTimeWatermarkStrategy::create();
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else {
-        NES_ERROR("GeneratableWatermarkAssignerOperator: cannot create watermark strategy from descriptor");
+        NES_ERROR2("GeneratableWatermarkAssignerOperator: cannot create watermark strategy from descriptor");
     }
 }
 

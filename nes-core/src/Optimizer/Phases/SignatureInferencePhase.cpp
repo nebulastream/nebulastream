@@ -23,7 +23,7 @@ namespace NES::Optimizer {
 
 SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule)
     : context(std::move(context)), queryMergerRule(queryMergerRule) {
-    NES_DEBUG("SignatureInferencePhase()");
+    NES_DEBUG2("SignatureInferencePhase()");
 }
 
 SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule) {

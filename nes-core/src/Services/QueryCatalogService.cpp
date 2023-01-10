@@ -65,7 +65,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
@@ -79,8 +79,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     if (currentStatus == QueryStatus::MarkedForSoftStop || currentStatus == QueryStatus::MarkedForHardStop
         || currentStatus == QueryStatus::MarkedForFailure || currentStatus == QueryStatus::Deployed
         || currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
-        NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
-                  + ". Ignoring stop query request.");
+        NES_ERROR2("QueryCatalog: Found query status already as {}. Ignoring stop query request.", queryCatalogEntry->getQueryStatusAsString());
         //        throw InvalidQueryStatusException(
         //            {QueryStatus::Optimizing, QueryStatus::Registered, QueryStatus::Deployed, QueryStatus::Running},
         //            currentStatus);
@@ -99,7 +98,7 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
     auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
 
     if (queryCatalogEntries.empty()) {
-        NES_FATAL_ERROR("Unable to find the shared query plan with id " << sharedQueryId);
+        NES_FATAL_ERROR2("Unable to find the shared query plan with id {}", sharedQueryId);
         throw QueryNotFoundException("Unable to find the shared query plan with id " + std::to_string(sharedQueryId));
     }
 
@@ -136,7 +135,7 @@ Catalogs::Query::QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(Quer
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
@@ -165,7 +164,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
@@ -204,7 +203,7 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
@@ -250,14 +249,12 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
             NES_WARNING("Skipping remaining operation");
             continue;
         } else if (currentStatus == QueryStatus::SoftStopCompleted && subQueryStatus == QueryStatus::SoftStopTriggered) {
-            NES_ERROR("Received soft stop triggered for sub query with id "
-                      << querySubPlanId << " for query " << sharedQueryId
-                      << " but sub query is already marked as soft stop completed.");
+            NES_ERROR2("Received soft stop triggered for sub query with id {} for query {} but sub query is already marked as soft stop completed.", querySubPlanId, sharedQueryId);
             NES_WARNING("Skipping remaining operation");
             continue;
         } else if (currentStatus == QueryStatus::SoftStopTriggered && subQueryStatus == QueryStatus::SoftStopTriggered) {
-            NES_ERROR("Received multiple soft stop triggered for sub query with id " << querySubPlanId << " for query "
-                                                                                     << sharedQueryId);
+            NES_ERROR2("Received multiple soft stop triggered for sub query with id {} for query {}", querySubPlanId,
+                          sharedQueryId);
             NES_WARNING("Skipping remaining operation");
             continue;
         }
@@ -305,7 +302,7 @@ void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step,
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
@@ -332,7 +329,7 @@ void QueryCatalogService::resetSubQueryMetaData(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR2("QueryCatalogService: Query Catalog does not contains the input queryId  {}",  std::to_string(queryId));
         throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 

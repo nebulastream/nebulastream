@@ -127,8 +127,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     std::unique_lock lock(queryMutex);
     //THIS is now shutting down all
     for (auto& entry : sourceToQEPMapping[source->getOperatorId()]) {
-        NES_TRACE("notifySourceCompletion operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
-                                                        << " subplan=" << entry->getQuerySubPlanId());
+        NES_TRACE2("notifySourceCompletion operator id={} plan id={} subplan={}", source->getOperatorId(), entry->getQueryId(), entry->getQuerySubPlanId());
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {
             queryStatusListener->notifySourceTermination(entry->getQueryId(),

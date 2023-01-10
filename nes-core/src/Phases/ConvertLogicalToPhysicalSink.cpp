@@ -187,7 +187,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       fileSinkDescriptor->getFaultToleranceType(),
                                       fileSinkDescriptor->getNumberOfOrigins());
         } else {
-            NES_ERROR("createDataSink: unsupported format");
+            NES_ERROR2("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");
         }
     } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
@@ -219,7 +219,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             materializedViewSinkDescriptor->getFaultToleranceType(),
             materializedViewSinkDescriptor->getNumberOfOrigins());
     } else {
-        NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
+        NES_ERROR2("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");
     }
 }

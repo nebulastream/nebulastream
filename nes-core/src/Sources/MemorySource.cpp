@@ -109,7 +109,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, bufferSize);
 
     if (memoryAreaSize > bufferSize) {
-        NES_TRACE("MemorySource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
+        NES_TRACE2("MemorySource::receiveData: add offset={} to currentpos={}", bufferSize, currentPositionInBytes);
         currentPositionInBytes += bufferSize;
     }
 
@@ -118,7 +118,7 @@ std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_TRACE2("MemorySource::receiveData filled buffer with tuples= {}",  buffer.getNumberOfTuples());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }

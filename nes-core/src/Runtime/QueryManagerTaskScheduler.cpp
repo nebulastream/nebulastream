@@ -61,26 +61,21 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     }
 
     ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
-        NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
-            << workerContext.getId());
+        NES_TRACE2(
+            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread {}", workerContext.getId());
         auto* task = buffer.getBuffer<ReconfigurationMessage>();
-        NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
-                  "on thread "
-                  << workerContext.getId());
+        NES_TRACE2("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
+                  "on thread {}", workerContext.getId());
         task->wait();
-        NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to reconfigure "
-            "on thread "
-            << workerContext.getId());
+        NES_TRACE2(
+            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to reconfigure on thread {}", workerContext.getId());
         task->getInstance()->reconfigure(*task, workerContext);
-        NES_TRACE("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback "
-                  "on thread "
-                  << workerContext.getId());
+        NES_TRACE2("QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback on thread {}",
+                  workerContext.getId());
         task->postReconfiguration();
-        NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on thread "
-            << workerContext.getId());
+        NES_TRACE2(
+            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on thread {}",
+            workerContext.getId());
         task->postWait();
         return ExecutionResult::Ok;
     }
@@ -88,7 +83,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 }// namespace detail
 
 ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext& workerContext) {
-    NES_TRACE("QueryManager: AbstractQueryManager::getWork wait get lock");
+    NES_TRACE2("QueryManager: AbstractQueryManager::getWork wait get lock");
     Task task;
     if (running) {
         taskQueue.blockingRead(task);
@@ -99,7 +94,7 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
         profiler->startSampling();
 #endif
 
-        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
+        NES_TRACE2("QueryManager: provide task {} to thread (getWork())", task.toString());
         ExecutionResult result = task(workerContext);
 #ifdef ENABLE_PAPI_PROFILER
         profiler->stopSampling(numOfInputTuples);
@@ -120,7 +115,7 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
 }
 
 ExecutionResult MultiQueueQueryManager::processNextTask(bool running, WorkerContext& workerContext) {
-    NES_TRACE("QueryManager: AbstractQueryManager::getWork wait get lock");
+    NES_TRACE2("QueryManager: AbstractQueryManager::getWork wait get lock");
     Task task;
     if (running) {
         taskQueues[workerContext.getQueueId()].blockingRead(task);
@@ -131,7 +126,7 @@ ExecutionResult MultiQueueQueryManager::processNextTask(bool running, WorkerCont
         profiler->startSampling();
 #endif
 
-        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
+        NES_TRACE2("QueryManager: provide task {} to thread (getWork())", task.toString() );
         auto result = task(workerContext);
 #ifdef ENABLE_PAPI_PROFILER
         profiler->stopSampling(numOfInputTuples);
@@ -171,24 +166,19 @@ ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
 void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                                  Execution::SuccessorExecutablePipeline executable,
                                                  uint32_t queueId) {
-    NES_TRACE("Add Work for executable for queue=" << queueId);
+    NES_TRACE2("Add Work for executable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        NES_TRACE("QueryManager: added Task this pipelineID="
-                  << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
-                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer
-                  << " queryId=" << (*nextPipeline)->getQueryId() << " getQuerySubPlanId=" << (*nextPipeline)->getQuerySubPlanId()
-                  << " queueId=" << queueId);
+        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} getQuerySubPlanId={} queueId={}", (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, (*nextPipeline)->getQueryId(), (*nextPipeline)->getQuerySubPlanId(), queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
-        NES_TRACE("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
-                                                       << " queueId=" << queueId);
+        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}",  sink->get()->toString(), buffer, queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     } else {
@@ -217,7 +207,7 @@ ExecutionResult MultiQueueQueryManager::terminateLoop(WorkerContext& workerConte
 void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                                     Execution::SuccessorExecutablePipeline executable,
                                                     uint32_t queueId) {
-    NES_TRACE("Add Work for executable for queue=" << queueId);
+    NES_TRACE2("Add Work for executable for queue={}",queueId);
     NES_ASSERT(queueId < taskQueues.size(), "Invalid queue id");
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if (!(*nextPipeline)->isRunning()) {
@@ -225,14 +215,11 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
-        NES_TRACE("QueryManager: added Task this pipelineID="
-                  << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines "
-                  << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
+        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",  (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
-        NES_TRACE("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
-                                                       << " queueId=" << queueId);
+        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}", sink->get()->toString(), buffer, queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else {
@@ -303,13 +290,13 @@ void AbstractQueryManager::updateStatistics(const Task& task,
     } else {
         using namespace std::string_literals;
 
-        NES_ERROR("queryToStatisticsMap not set for "s + std::to_string(queryId) + " this should only happen for testing");
+        NES_ERROR2("queryToStatisticsMap not set for {} this should only happen for testing", std::to_string(queryId));
     }
 #endif
 }
 
 void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_TRACE("AbstractQueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
+    NES_TRACE2("AbstractQueryManager::completedWork: Work for task={} worker ctx id={}", task.toString(), wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }
@@ -320,12 +307,11 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx) {
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
         querySubPlanId = (*sink)->getParentPlanId();
         queryId = (*sink)->getQueryId();
-        NES_TRACE("AbstractQueryManager::completedWork: task for sink querySubPlanId=" << querySubPlanId);
+        NES_TRACE2("AbstractQueryManager::completedWork: task for sink querySubPlanId={}", querySubPlanId);
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
-        NES_TRACE("AbstractQueryManager::completedWork: task for exec pipeline isreconfig="
-                  << (*executablePipeline)->isReconfiguration());
+        NES_TRACE2("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}", (*executablePipeline)->isReconfiguration());
     }
     updateStatistics(task, queryId, querySubPlanId, wtx);
 }

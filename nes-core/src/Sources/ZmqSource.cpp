@@ -69,8 +69,7 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
 
             // TODO: Clarify following comment: envelope - not needed at the moment
             if (auto const receivedSize = socket.recv(metadata).value_or(0); receivedSize != metadataSize) {
-                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << metadataSize
-                                                                                  << " Received: " << receivedSize);
+                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", metadataSize, receivedSize);
                 return std::nullopt;
             }
 
@@ -83,8 +82,7 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
             // XXX: I guess we don't actually know the size here, it would be nice to be able to check that here
             zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
-                NES_ERROR("ZMQSource: Error: Unexpected payload size. Expected: " << buffer.getBufferSize()
-                                                                                  << " Received: " << receivedSize.has_value());
+                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", buffer.getBufferSize(), receivedSize.has_value());
                 return std::nullopt;
             } else {
                 NES_DEBUG("ZMQSource  " << this << ": received buffer of size " << receivedSize.has_value());
@@ -92,14 +90,14 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
             }
 
         } catch (const zmq::error_t& ex) {
-            NES_ERROR("ZMQSOURCE error: " << ex.what());
+            NES_ERROR2("ZMQSOURCE error: {}", ex.what());
             return std::nullopt;
         } catch (...) {
-            NES_ERROR("ZMQSOURCE general error");
+            NES_ERROR2("ZMQSOURCE general error");
             return std::nullopt;
         }
     } else {
-        NES_ERROR("ZMQSOURCE: Not connected!");
+        NES_ERROR2("ZMQSOURCE: Not connected!");
         return std::nullopt;
     }
 }
@@ -130,7 +128,7 @@ bool ZmqSource::connect() {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR("ZMQSOURCE ERROR: " << ex.what());
+                NES_ERROR2("ZMQSOURCE ERROR: {}", ex.what());
                 NES_DEBUG("ZMQSOURCE  " << this << ": set connected false");
             }
             connected = false;

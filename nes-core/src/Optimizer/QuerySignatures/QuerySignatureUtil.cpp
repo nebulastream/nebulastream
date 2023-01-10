@@ -52,7 +52,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                                                       const OperatorNodePtr& operatorNode) {
 
     try {
-        NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
+        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator  {}",  operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->isUnaryOperator()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
@@ -71,45 +71,45 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         }
 
         if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Source operator");
             SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
             return createQuerySignatureForSource(context, sourceOperator);
         }
         if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Sink operator");
             NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
             return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
         } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for filter operator");
             auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
             return createQuerySignatureForFilter(context, filterOperator);
         } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Merge operator");
             auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
             return createQuerySignatureForUnion(context, unionOperator);
         } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Map operator");
             auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
             return createQuerySignatureForMap(context, mapOperator);
         } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for window operator");
             auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
             return createQuerySignatureForWindow(context, windowOperator);
         } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for Project operator");
             auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
             return createQuerySignatureForProject(projectOperator);
         } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for watermark operator");
             auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
             return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
         } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-            NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for join operator");
             auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
             return createQuerySignatureForJoin(context, joinOperator);
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
 #ifdef TFDEF
-            NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
+            NES_TRACE2("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModel::InferModelLogicalOperatorNode>();
             return createQuerySignatureForInferModel(context, imOperator);
 #else
@@ -343,7 +343,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto filterFieldMap = filterExprAndFieldMap->getFieldMap();
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
-    NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
+    NES_TRACE2("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
               "children signatures");
     //Fetch the signature of only children and get the column values
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
@@ -452,7 +452,7 @@ QuerySignatureUtil::createQuerySignatureForWatermark(const z3::ContextPtr& conte
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(const z3::ContextPtr& context,
                                                                    const UnionLogicalOperatorNodePtr& unionOperator) {
 
-    NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
+    NES_DEBUG2("QuerySignatureUtil: Computing Signature from children signatures");
     auto children = unionOperator->getChildren();
     auto leftSchema = unionOperator->getLeftInputSchema();
 
@@ -602,7 +602,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
         length = slidingWindow->getSize().getTime() * multiplier;
         slide = slidingWindow->getSlide().getTime() * multiplier;
     } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Type");
+        NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Type");
     }
     auto windowTimeSizeVar = context->int_const("window-time-size");
     z3::expr windowTimeSizeVal = context->int_val(length);
@@ -653,7 +653,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getZ3Signature();
 
-    NES_DEBUG("QuerySignatureUtil: compute signature for window operator");
+    NES_DEBUG2("QuerySignatureUtil: compute signature for window operator");
     z3::expr_vector windowConditions(*context);
 
     auto windowDefinition = windowOperator->getWindowDefinition();
@@ -682,7 +682,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
         windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
     } else {
-        NES_ERROR("QuerySignatureUtil: Cant serialize window Time Characteristic");
+        NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
     }
     auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
     auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
@@ -752,7 +752,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
             aggregate = z3::function("Avg", sort, sort);
             break;
         }
-        default: NES_FATAL_ERROR("QuerySignatureUtil: could not cast aggregation type");
+        default: NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
     }
 
     // Get the expression for on field and update the column values
