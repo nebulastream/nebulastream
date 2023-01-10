@@ -34,13 +34,12 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     }
 
     this->running = true;
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << windowHandler->toString()
-                                                              << " with ms=" << triggerTimeInMs);
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", this, windowHandler->toString(), triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, &workerContext, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
         while (this->running) {
-            NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
+            NES_DEBUG2("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             std::this_thread::sleep_for(std::chrono::milliseconds(triggerTimeInMs));
             if (windowHandler != nullptr) {
                 //                NES_ASSERT(false, "This function should not be called");
@@ -61,13 +60,12 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
     }
 
     this->running = true;
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy started thread " << this << " handler=" << joinHandler->toString()
-                                                              << " with ms=" << triggerTimeInMs);
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", this, joinHandler->toString(), triggerTimeInMs);
     std::string handlerName = joinHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, joinHandler, &workerContext, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
         while (this->running) {
-            NES_DEBUG("ExecutableOnTimeTriggerPolicy:: trigger policy now");
+            NES_DEBUG2("ExecutableOnTimeTriggerPolicy:: trigger policy now");
             if (joinHandler != nullptr) {
                 //                NES_ASSERT(false, "This function should not be called");
                 joinHandler->trigger(workerContext);
@@ -81,16 +79,16 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
 
 bool ExecutableOnTimeTriggerPolicy::stop() {
     std::unique_lock lock(runningTriggerMutex);
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called");
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called",  this);
     if (!this->running) {
-        NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Stop called but was already not running");
+        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called but was already not running",  this);
         return true;
     }
     this->running = false;
     lock.unlock();
     if (thread && thread->joinable()) {
         thread->join();
-        NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
+        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Thread joinded",  this);
     }
     thread.reset();
     // TODO what happens to the content of the window that it is still in the state?

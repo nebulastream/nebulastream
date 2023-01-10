@@ -47,30 +47,30 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
-    NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
+    NES_DEBUG2("ZmqSink {} : Init ZMQ Sink to {}:{}", this, host,port);
 }
 
 void ZmqSink::setup() { connect(); };
 void ZmqSink::shutdown(){};
 
 ZmqSink::~ZmqSink() {
-    NES_DEBUG("ZmqSink::~ZmqSink: destructor called");
+    NES_DEBUG2("ZmqSink::~ZmqSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
+        NES_DEBUG2("ZmqSink   {} : Destroy ZMQ Sink",  this);
     } else {
         /// XXX:
         NES_ERROR2("ZmqSink {}: Destroy ZMQ Sink failed cause it could not be disconnected", this);
         NES_ASSERT2_FMT(false, "ZMQ Sink destruction failed");
     }
-    NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
+    NES_DEBUG2("ZmqSink   {} : Destroy ZMQ Sink",  this);
 }
 
 bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);// TODO this is an anti-pattern in ZMQ
     connect();
     if (!connected) {
-        NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
+        NES_DEBUG2("ZmqSink {}: cannot write buffer {} because queue is not connected", this, inputBuffer);
         throw Exceptions::RuntimeException("Write to zmq sink failed");
     }
 
@@ -80,10 +80,10 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     }
 
     if (!schemaWritten && !internal) {//TODO:atomic
-        NES_DEBUG("FileSink::getData: write schema");
+        NES_DEBUG2("FileSink::getData: write schema");
         auto schemaBuffer = sinkFormat->getSchema();
         if (schemaBuffer) {
-            NES_DEBUG("ZmqSink writes schema buffer");
+            NES_DEBUG2("ZmqSink writes schema buffer");
             try {
 
                 // Send Header
@@ -93,7 +93,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                 zmq::message_t envelope{&(envelopeData[0]), envelopeSize};
                 if (auto const sentEnvelopeSize = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
                     sentEnvelopeSize != envelopeSize) {
-                    NES_DEBUG("ZmqSink  " << this << ": schema send NOT successful");
+                    NES_DEBUG2("ZmqSink   {} : schema send NOT successful",  this);
                     return false;
                 }
 
@@ -101,10 +101,10 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                 zmq::mutable_buffer payload{schemaBuffer->getBuffer(), schemaBuffer->getBufferSize()};
                 if (auto const sentPayloadSize = socket.send(payload, zmq::send_flags::none).value_or(0);
                     sentPayloadSize != payload.size()) {
-                    NES_DEBUG("ZmqSink  " << this << ": sending payload failed.");
+                    NES_DEBUG2("ZmqSink   {} : sending payload failed.",  this);
                     return false;
                 }
-                NES_DEBUG("ZmqSink  " << this << ": schema send successful");
+                NES_DEBUG2("ZmqSink   {} : schema send successful",  this);
 
             } catch (const zmq::error_t& ex) {
                 if (ex.num() != ETERM) {
@@ -112,15 +112,14 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                 }
             }
             schemaWritten = true;
-            NES_DEBUG("ZmqSink::writeData: schema written");
+            NES_DEBUG2("ZmqSink::writeData: schema written");
         }
-        { NES_DEBUG("ZmqSink::writeData: no schema written"); }
+        { NES_DEBUG2("ZmqSink::writeData: no schema written"); }
     } else {
-        NES_DEBUG("ZmqSink::getData: schema already written");
+        NES_DEBUG2("ZmqSink::getData: schema already written");
     }
 
-    NES_DEBUG("ZmqSink  " << this << ": writes buffer " << inputBuffer << " with tupleCnt =" << inputBuffer.getNumberOfTuples()
-                          << " watermark=" << inputBuffer.getWatermark());
+    NES_DEBUG2("ZmqSink {}: writes buffer {} with tupleCnt ={} watermark={}",  this, inputBuffer, inputBuffer.getNumberOfTuples(), inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {// XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
         try {
@@ -144,7 +143,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                 NES_WARNING("ZmqSink  " << this << ": data send NOT successful");
                 return false;
             }
-            NES_DEBUG("ZmqSink  " << this << ": data send successful");
+            NES_DEBUG2("ZmqSink   {} : data send successful",  this);
             return true;
 
         } catch (const zmq::error_t& ex) {
@@ -172,7 +171,7 @@ std::string ZmqSink::toString() const {
 bool ZmqSink::connect() {
     if (!connected) {
         try {
-            NES_DEBUG("ZmqSink: connect to address=" << host << " port=" << port);
+            NES_DEBUG2("ZmqSink: connect to address= {}  port= {}",  host,  port);
             auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
             socket.connect(address.c_str());
             connected = true;
@@ -185,9 +184,9 @@ bool ZmqSink::connect() {
         }
     }
     if (connected) {
-        NES_DEBUG("ZmqSink  " << this << ": connected address=" << host << " port= " << port);
+        NES_DEBUG2("ZmqSink   {} : connected address= {}  port=  {}", this, host, port);
     } else {
-        NES_DEBUG("ZmqSink  " << this << ": NOT connected=" << host << " port= " << port);
+        NES_DEBUG2("ZmqSink   {} : NOT connected= {}  port=  {}", this, host, port);
     }
     return connected;
 }
@@ -198,9 +197,9 @@ bool ZmqSink::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG("ZmqSink  " << this << ": disconnected");
+        NES_DEBUG2("ZmqSink   {} : disconnected",  this);
     } else {
-        NES_DEBUG("ZmqSink  " << this << ": NOT disconnected");
+        NES_DEBUG2("ZmqSink   {} : NOT disconnected",  this);
     }
     return !connected;
 }

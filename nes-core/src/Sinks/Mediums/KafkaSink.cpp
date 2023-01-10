@@ -48,13 +48,13 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
     config->set("metadata.broker.list", brokers.c_str());
 
     connect();
-    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers << ", topic " << topic);
+    NES_DEBUG2("KAFKASINK  " << this << ": Init KAFKA SINK to brokers  {} , topic  {}",  brokers,  topic);
 }
 
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_TRACE("KAFKASINK " << this << ": writes buffer " << inputBuffer);
+    NES_TRACE2("KAFKASINK  {} : writes buffer  {}",  this,  inputBuffer);
     try {
         std::stringstream outputStream;
         NES_TRACE2("KafkaSink::getData: write data");
@@ -67,7 +67,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         }
         producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
 
-        NES_DEBUG("KAFKASINK " << this << ": send successfully");
+        NES_DEBUG2("KAFKASINK  {} : send successfully",  this);
     } catch (const cppkafka::HandleException& ex) {
         throw;
     } catch (...) {
@@ -95,7 +95,7 @@ void KafkaSink::shutdown() {
 }
 
 void KafkaSink::connect() {
-    NES_DEBUG("KAFKASINK connecting...");
+    NES_DEBUG2("KAFKASINK connecting...");
     producer = std::make_unique<cppkafka::Producer>(*config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
     // FIXME: should we provide user to access partition ?

@@ -50,7 +50,7 @@ SharedQueryPlanPtr SharedQueryPlan::create(QueryPlanPtr queryPlan) {
 }
 
 bool SharedQueryPlan::removeQuery(QueryId queryId) {
-    NES_DEBUG("SharedQueryPlan: Remove the Query Id " << queryId << " and associated Global Query Nodes with sink operators.");
+    NES_DEBUG2("SharedQueryPlan: Remove the Query Id {} and associated Global Query Nodes with sink operators.", queryId);
     if (queryIdToSinkOperatorMap.find(queryId) == queryIdToSinkOperatorMap.end()) {
         NES_ERROR2("SharedQueryPlan: query id {} is not present in metadata information.", queryId);
         return false;
@@ -91,7 +91,7 @@ std::map<QueryId, std::vector<OperatorNodePtr>> SharedQueryPlan::getQueryIdToSin
 SharedQueryId SharedQueryPlan::getSharedQueryId() const { return sharedQueryId; }
 
 void SharedQueryPlan::clear() {
-    NES_DEBUG("SharedQueryPlan: clearing all metadata information.");
+    NES_DEBUG2("SharedQueryPlan: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
     queryIds.clear();

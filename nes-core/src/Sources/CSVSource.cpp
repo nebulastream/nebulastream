@@ -59,7 +59,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     };
 
     auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
-    NES_DEBUG("CSVSource: Opening path=[" << filePath << "] real path=[" << (path ? path.get() : "<INVALID>") << "]");
+    NES_DEBUG2("CSVSource: Opening path=[ {} ] real path=[{}]",  filePath,  (path ? path.get() : "<INVALID>"));
 
     if (path == nullptr) {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
@@ -69,7 +69,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
     }
-    NES_DEBUG("CSVSource: Opening path " << path.get());
+    NES_DEBUG2("CSVSource: Opening path {}",  path.get());
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");
@@ -79,9 +79,7 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     this->loopOnFile = csvSourceType->getNumberOfBuffersToProduce()->getValue() == 0;
 
-    NES_DEBUG("CSVSource: tupleSize=" << this->tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
-                                      << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
-                                      << this->numberOfTuplesToProducePerBuffer << "loopOnFile=" << this->loopOnFile);
+    NES_DEBUG2("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={} loopOnFile={}", this->tupleSize, this->gatheringInterval.count(), this->numBuffersToProcess , this->numberOfTuplesToProducePerBuffer, this->loopOnFile);
 
     this->fileEnded = false;
 

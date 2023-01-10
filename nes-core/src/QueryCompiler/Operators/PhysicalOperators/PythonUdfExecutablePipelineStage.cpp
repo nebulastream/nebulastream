@@ -94,7 +94,7 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
     return ExecutionResult::Ok;
 }
 
-PythonUdfExecutablePipelineStage::~PythonUdfExecutablePipelineStage() { NES_DEBUG("~PythonUdfExecutablePipelineStage()"); };
+PythonUdfExecutablePipelineStage::~PythonUdfExecutablePipelineStage() { NES_DEBUG2("~PythonUdfExecutablePipelineStage()"); };
 
 }// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif

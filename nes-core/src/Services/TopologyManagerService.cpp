@@ -48,8 +48,8 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
-    NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
-    NES_DEBUG(topology->toString());
+    NES_DEBUG2("TopologyManagerService::registerWorker: topology before insert");
+    NES_DEBUG2(topology->toString());
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
         NES_ERROR("TopologyManagerService::registerWorker: node with address " << address << " and grpc port " << grpcPort
@@ -57,7 +57,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         return INVALID_TOPOLOGY_NODE_ID;
     }
 
-    NES_DEBUG("TopologyManagerService::registerWorker: register node");
+    NES_DEBUG2("TopologyManagerService::registerWorker: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
@@ -70,10 +70,10 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     const TopologyNodePtr rootNode = topology->getRoot();
 
     if (!rootNode) {
-        NES_DEBUG("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
+        NES_DEBUG2("TopologyManagerService::registerWorker: tree is empty so this becomes new root");
         topology->setAsRoot(newTopologyNode);
     } else {
-        NES_DEBUG("TopologyManagerService::registerWorker: add link to the root node " << rootNode->toString());
+        NES_DEBUG2("TopologyManagerService::registerWorker: add link to the root node {}", rootNode->toString());
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
@@ -82,13 +82,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
         healthCheckService->addNodeToHealthCheck(newTopologyNode);
     }
 
-    NES_DEBUG("TopologyManagerService::registerWorker: topology after insert = ");
+    NES_DEBUG2("TopologyManagerService::registerWorker: topology after insert = ");
     topology->print();
     return id;
 }
 
 bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
-    NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id " << nodeId);
+    NES_DEBUG2("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}",  nodeId);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
@@ -109,16 +109,16 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         removeGeoLocation(nodeId);
     }
 
-    NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
+    NES_DEBUG2("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
     bool successTopology = topology->removePhysicalNode(physicalNode);
-    NES_DEBUG("TopologyManagerService::UnregisterNode: success in topology is " << successTopology);
+    NES_DEBUG2("TopologyManagerService::UnregisterNode: success in topology is  {}",  successTopology);
 
     return successTopology;
 }
 
 bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("TopologyManagerService::addParent: childId=" << childId << " parentId=" << parentId);
+    NES_DEBUG2("TopologyManagerService::addParent: childId= {}  parentId= {}",  childId,  parentId);
 
     if (childId == parentId) {
         NES_ERROR2("TopologyManagerService::AddParent: cannot add link to itself");
@@ -137,7 +137,7 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
         NES_ERROR2("TopologyManagerService::AddParent: sensorParent node {} does not exists",  parentId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::AddParent: sensorParent node " << parentId << " exists");
+    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists",  parentId);
 
     auto children = parentPhysicalNode->getChildren();
     for (const auto& child : children) {
@@ -148,7 +148,7 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
     }
     bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
     if (added) {
-        NES_DEBUG("TopologyManagerService::AddParent: created link successfully new topology is=");
+        NES_DEBUG2("TopologyManagerService::AddParent: created link successfully new topology is=");
         topology->print();
         return true;
     }
@@ -157,14 +157,14 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
 }
 
 bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG("TopologyManagerService::removeParent: childId=" << childId << " parentId=" << parentId);
+    NES_DEBUG2("TopologyManagerService::removeParent: childId= {}  parentId= {}",  childId,  parentId);
 
     TopologyNodePtr childNode = topology->findNodeWithId(childId);
     if (!childNode) {
         NES_ERROR2("TopologyManagerService::removeParent: source node {} does not exists", childId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::removeParent: source node " << childId << " exists");
+    NES_DEBUG2("TopologyManagerService::removeParent: source node  {}  exists", childId);
 
     TopologyNodePtr parentNode = topology->findNodeWithId(parentId);
     if (!parentNode) {
@@ -172,7 +172,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
         return false;
     }
 
-    NES_DEBUG("TopologyManagerService::AddParent: sensorParent node " << parentId << " exists");
+    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists",  parentId);
 
     std::vector<NodePtr> children = parentNode->getChildren();
     auto found = std::find_if(children.begin(), children.end(), [&childId](const NodePtr& node) {
@@ -189,14 +189,14 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
         }
     }
 
-    NES_DEBUG("TopologyManagerService::removeParent: nodes connected");
+    NES_DEBUG2("TopologyManagerService::removeParent: nodes connected");
 
     bool success = topology->removeNodeAsChild(parentNode, childNode);
     if (!success) {
         NES_ERROR2("TopologyManagerService::removeParent: edge between {} and {} could not be removed", childId, parentId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::removeParent: successful");
+    NES_DEBUG2("TopologyManagerService::removeParent: successful");
     return true;
 }
 

@@ -85,19 +85,19 @@ MemorySource::MemorySource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG2("MemorySource() numBuffersToProcess= {}  memoryAreaSize= {}",  numBuffersToProcess,  memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
-    NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
+    NES_DEBUG2("MemorySource::receiveData called on operatorId={}",  operatorId);
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
             if (numBuffersToProcess != 0) {
-                NES_DEBUG("MemorySource::receiveData: reset buffer to 0");
+                NES_DEBUG2("MemorySource::receiveData: reset buffer to 0");
                 currentPositionInBytes = 0;
             } else {
-                NES_DEBUG("MemorySource::receiveData: return as mem sry is empty");
+                NES_DEBUG2("MemorySource::receiveData: return as mem sry is empty");
                 return std::nullopt;
             }
         }

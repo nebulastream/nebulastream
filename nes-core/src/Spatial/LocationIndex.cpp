@@ -47,7 +47,7 @@ bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     }
     double newLat = geoLocation.getLatitude();
     double newLng = geoLocation.getLongitude();
-    NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
+    NES_DEBUG2("updating location of Node to: {}, {}", newLat, newLng);
     std::unique_lock lock(locationIndexMutex);
 #ifdef S2DEF
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));

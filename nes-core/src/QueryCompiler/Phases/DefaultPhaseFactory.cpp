@@ -39,12 +39,12 @@ PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultP
 PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
     switch (options->getPipeliningStrategy()) {
         case QueryCompilerOptions::OPERATOR_FUSION: {
-            NES_DEBUG("Create pipelining phase with fuse policy");
+            NES_DEBUG2("Create pipelining phase with fuse policy");
             auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
             return DefaultPipeliningPhase::create(operatorFusionPolicy);
         };
         case QueryCompilerOptions::OPERATOR_AT_A_TIME: {
-            NES_DEBUG("Create pipelining phase with always break policy");
+            NES_DEBUG2("Create pipelining phase with always break policy");
             auto operatorFusionPolicy = OperatorAtATimePolicy::create();
             return DefaultPipeliningPhase::create(operatorFusionPolicy);
         }
@@ -52,31 +52,31 @@ PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptio
 }
 
 LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) {
-    NES_DEBUG("Create default lower logical plan phase");
+    NES_DEBUG2("Create default lower logical plan phase");
     auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create(options);
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
 AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {
-    NES_DEBUG("Create add scan and emit phase");
+    NES_DEBUG2("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
 LowerPhysicalToGeneratableOperatorsPtr
 DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
-    NES_DEBUG("Create default lower pipeline plan phase");
+    NES_DEBUG2("Create default lower pipeline plan phase");
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
 CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr options,
                                                                       Compiler::JITCompilerPtr jitCompiler) {
-    NES_DEBUG("Create default code generation phase");
+    NES_DEBUG2("Create default code generation phase");
     // TODO create a option to choose between different code generators.
     auto codeGenerator = CCodeGenerator::create();
     return CodeGenerationPhase::create(codeGenerator, jitCompiler, options->getCompilationStrategy());
 }
 LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
                                                                                               bool sourceSharing) {
-    NES_DEBUG("Create lower to executable query plan phase");
+    NES_DEBUG2("Create lower to executable query plan phase");
     DataSourceProviderPtr sourceProvider;
     if (!sourceSharing) {
         sourceProvider = DefaultDataSourceProvider::create(options);
@@ -88,11 +88,11 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
 BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options) {
-    NES_DEBUG("Create buffer optimization phase");
+    NES_DEBUG2("Create buffer optimization phase");
     return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
 }
 PredicationOptimizationPhasePtr DefaultPhaseFactory::createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) {
-    NES_DEBUG("Create predication optimization phase");
+    NES_DEBUG2("Create predication optimization phase");
     return PredicationOptimizationPhase::create(options->getFilterProcessingStrategy());
 }
 }// namespace NES::QueryCompilation::Phases

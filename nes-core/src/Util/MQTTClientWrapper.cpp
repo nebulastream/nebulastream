@@ -77,7 +77,7 @@ void MQTTClientWrapper::setCallback(UserCallback& cb) { syncClient->set_callback
 void MQTTClientWrapper::UserCallback::connection_lost(const std::string& cause) {
     NES_TRACE2("MQTTClientWrapper::UserCallback::connection_lost: Connection lost");
     if (!cause.empty()) {
-        NES_DEBUG("MQTTClientWrapper::UserCallback:connection_lost: cause: " << cause);
+        NES_DEBUG2("MQTTClientWrapper::UserCallback:connection_lost: cause: {}", cause);
     }
 }
 void MQTTClientWrapper::UserCallback::delivery_complete(mqtt::delivery_token_ptr tok) {

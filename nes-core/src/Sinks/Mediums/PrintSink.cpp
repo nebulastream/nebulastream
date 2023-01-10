@@ -45,7 +45,7 @@ SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 
 bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
+    NES_DEBUG2("PrintSink: getSchema medium  {}  format  {}",  toString(),  sinkFormat->toString());
 
     if (!inputBuffer) {
         // TODO throw exception here?
@@ -63,12 +63,12 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
             }
             outputStream << ret << std::endl;
         } else {
-            NES_DEBUG("PrintSink::getData: no schema buffer to write");
+            NES_DEBUG2("PrintSink::getData: no schema buffer to write");
         }
         NES_TRACE2("PrintSink::writeData: schema is = {}",  sinkFormat->getSchemaPtr()->toString());
         schemaWritten = true;
     } else {
-        NES_DEBUG("PrintSink::getData: schema already written");
+        NES_DEBUG2("PrintSink::getData: schema already written");
     }
 
     NES_TRACE2("PrintSink::getData: write data");

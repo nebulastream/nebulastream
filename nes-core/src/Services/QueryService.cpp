@@ -44,7 +44,7 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                            Catalogs::UDF::UdfCatalogPtr udfCatalog)
     : queryCatalogService(std::move(queryCatalogService)), queryRequestQueue(std::move(queryRequestQueue)),
       optimizerConfiguration(optimizerConfiguration) {
-    NES_DEBUG("QueryService()");
+    NES_DEBUG2("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(std::move(sourceCatalog),
                                                                          optimizerConfiguration.performAdvanceSemanticValidation,

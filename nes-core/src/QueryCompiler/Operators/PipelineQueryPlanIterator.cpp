@@ -52,7 +52,7 @@ OperatorPipelinePtr PipelineQueryPlanIterator::iterator::operator*() { return wo
 
 PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operator++() {
     if (workStack.empty()) {
-        NES_DEBUG("Iterator: we reached the end of this iterator and will not do anything.");
+        NES_DEBUG2("Iterator: we reached the end of this iterator and will not do anything.");
     } else {
         auto current = workStack.top();
         workStack.pop();

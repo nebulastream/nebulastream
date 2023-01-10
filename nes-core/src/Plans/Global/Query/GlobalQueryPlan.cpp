@@ -40,7 +40,7 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestType) {
-    NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
+    NES_DEBUG2("GlobalQueryPlan: Removing query information from the meta data");
 
     if (RequestType::Fail == requestType) {
         //For failure request query id is nothing but id of the shared query plan
@@ -82,7 +82,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
 }
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
-    NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
+    NES_DEBUG2("GlobalQueryPlan: Get the Global MetaData to be deployed.");
     std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE2("GlobalQueryPlan: Iterate over the Map with global query metadata.");
     for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
@@ -92,7 +92,7 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
         }
         sharedQueryMetaDataToDeploy.push_back(sharedQueryPlan);
     }
-    NES_DEBUG("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData to be deployed.");
+    NES_DEBUG2("GlobalQueryPlan: Found {} Shared Query MetaData to be deployed.", sharedQueryMetaDataToDeploy.size());
     return sharedQueryMetaDataToDeploy;
 }
 

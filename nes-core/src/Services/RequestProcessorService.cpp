@@ -63,7 +63,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), globalExecutionPlan(globalExecutionPlan),
       udfCatalog(udfCatalog) {
 
-    NES_DEBUG("QueryRequestProcessorService()");
+    NES_DEBUG2("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     z3::config cfg;
     cfg.set("timeout", 1000);
@@ -90,7 +90,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
 void RequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {
-            NES_DEBUG("QueryRequestProcessorService: Waiting for new query request trigger");
+            NES_DEBUG2("QueryRequestProcessorService: Waiting for new query request trigger");
             auto requests = queryRequestQueue->getNextBatch();
             NES_TRACE2("QueryProcessingService: Found {} query requests to process", requests.size());
             if (requests.empty()) {
@@ -122,16 +122,16 @@ void RequestProcessorService::start() {
 
                             //3.1. Fetch the shared query plan id
                             SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
-                            NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
+                            NES_DEBUG2("QueryProcessingService: Updating Query Plan with global query id :  {}",  sharedQueryId);
 
                             //3.2. If the shared query plan is newly created
                             if (SharedQueryPlanStatus::Created == sharedQueryPlan->getStatus()) {
 
-                                NES_DEBUG("QueryProcessingService: Shared Query Plan is new.");
+                                NES_DEBUG2("QueryProcessingService: Shared Query Plan is new.");
 
                                 //3.2.1. Perform placement of new shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
+                                NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
                                 if (!placementSuccessful) {
                                     throw QueryPlacementException(sharedQueryId,
@@ -155,7 +155,7 @@ void RequestProcessorService::start() {
                                 // 3.3. Check if the shared query plan was updated after addition or removal of operators
                             } else if (SharedQueryPlanStatus::Updated == sharedQueryPlan->getStatus()) {
 
-                                NES_DEBUG(
+                                NES_DEBUG2(
                                     "QueryProcessingService: Shared Query Plan is non empty and an older version is already "
                                     "running.");
 
@@ -169,7 +169,7 @@ void RequestProcessorService::start() {
 
                                 //3.3.2. Perform placement of updated shared query plan
                                 auto queryPlan = sharedQueryPlan->getQueryPlan();
-                                NES_DEBUG("QueryProcessingService: Performing Operator placement for shared query plan");
+                                NES_DEBUG2("QueryProcessingService: Performing Operator placement for shared query plan");
                                 bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
                                 if (!placementSuccessful) {
                                     throw QueryPlacementException(sharedQueryId,
@@ -194,7 +194,7 @@ void RequestProcessorService::start() {
                             } else if (SharedQueryPlanStatus::Stopped == sharedQueryPlan->getStatus()
                                        || SharedQueryPlanStatus::Failed == sharedQueryPlan->getStatus()) {
 
-                                NES_DEBUG("QueryProcessingService: Shared Query Plan is empty and an older version is already "
+                                NES_DEBUG2("QueryProcessingService: Shared Query Plan is empty and an older version is already "
                                           "running.");
 
                                 //3.4.1. Undeploy the running shared query plan

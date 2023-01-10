@@ -40,7 +40,7 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
 }
 
 bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
-    NES_DEBUG("QueryDeploymentPhase: deploy the query");
+    NES_DEBUG2("QueryDeploymentPhase: deploy the query");
 
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
 
@@ -82,7 +82,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 
     bool successDeploy = deployQuery(sharedQueryId, executionNodes);
     if (successDeploy) {
-        NES_DEBUG("QueryDeploymentPhase: deployment for shared query " + std::to_string(sharedQueryId) + " successful");
+        NES_DEBUG2("QueryDeploymentPhase: deployment for shared query {} successful", std::to_string(sharedQueryId));
     } else {
         NES_ERROR2("QueryDeploymentPhase: Failed to deploy shared query {}", sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
@@ -94,10 +94,10 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
     }
 
-    NES_DEBUG("QueryService: start query");
+    NES_DEBUG2("QueryService: start query");
     bool successStart = startQuery(sharedQueryId, executionNodes);
     if (successStart) {
-        NES_DEBUG("QueryDeploymentPhase: Successfully started deployed shared query " << sharedQueryId);
+        NES_DEBUG2("QueryDeploymentPhase: Successfully started deployed shared query  {}",  sharedQueryId);
     } else {
         NES_ERROR2("QueryDeploymentPhase: Failed to start the deployed shared query {}",sharedQueryId);
         throw QueryDeploymentException(sharedQueryId,
@@ -107,10 +107,10 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
 }
 
 bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
+    NES_DEBUG2("QueryDeploymentPhase::deployQuery queryId= {}",  queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
-        NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        NES_DEBUG2("QueryDeploymentPhase::registerQueryInNodeEngine serialize id={}",  executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
             NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id " << queryId);
@@ -123,14 +123,14 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
+        NES_DEBUG2("QueryDeploymentPhase:deployQuery: {} to {}", queryId, rpcAddress);
 
         for (auto& querySubPlan : querySubPlans) {
             //enable this for sync calls
             //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
             bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
             if (success) {
-                NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
+                NES_DEBUG2("QueryDeploymentPhase:deployQuery: {} to {} successful",  queryId, rpcAddress);
             } else {
                 NES_ERROR2("QueryDeploymentPhase:deployQuery: {} to {} failed", queryId, rpcAddress);
                 return false;
@@ -139,12 +139,12 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
         completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
     bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
-    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId << " success=" << result);
+    NES_DEBUG2("QueryDeploymentPhase: Finished deploying execution plan for query with Id {} success={}", queryId , result);
     return result;
 }
 
 bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
+    NES_DEBUG2("QueryDeploymentPhase::startQuery queryId= {}",  queryId);
     //TODO: check if one queue can be used among multiple connections
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
@@ -155,14 +155,12 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId()
-
-                                                                                << " and IP=" << ipAddress);
+        NES_DEBUG2("QueryDeploymentPhase::startQuery at execution node with id={} and IP={}", executionNode->getId(), ipAddress);
         //enable this for sync calls
         //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
         bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
-            NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
+            NES_DEBUG2("QueryDeploymentPhase::startQuery {} to {} successful",  queryId, rpcAddress);
         } else {
             NES_ERROR2("QueryDeploymentPhase::startQuery {} to {} failed", queryId, rpcAddress);
             return false;
@@ -171,7 +169,7 @@ bool QueryDeploymentPhase::startQuery(QueryId queryId, const std::vector<Executi
     }
 
     bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
-    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
+    NES_DEBUG2("QueryDeploymentPhase: Finished starting execution plan for query with Id {} success={}", queryId , result);
     return result;
 }
 

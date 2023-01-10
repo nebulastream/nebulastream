@@ -72,7 +72,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
 
     QueryStatus::Value currentStatus = queryCatalogEntry->getQueryStatus();
     //    if (currentStatus == QueryStatus::Stopped) {
-    //        NES_DEBUG("Already stopped!");
+    //        NES_DEBUG2("Already stopped!");
     //        return true;
     //    }
 
@@ -85,7 +85,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         //            currentStatus);
         return false;
     }
-    NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
+    NES_DEBUG2("QueryCatalog: Changing query status to Mark query for stop.");
     queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForHardStop);
     return true;
 }
@@ -217,9 +217,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
                                          QuerySubPlanId querySubPlanId,
                                          QueryStatus::Value subQueryStatus) {
     std::unique_lock lock(serviceMutex);
-    NES_DEBUG("QueryCatalogService: Updating the status of sub query to (" << QueryStatus::toString(subQueryStatus)
-                                                                           << ") for sub query plan with id " << querySubPlanId
-                                                                           << " for shared query plan with id " << sharedQueryId);
+    NES_DEBUG2("QueryCatalogService: Updating the status of sub query to ({}) for sub query plan with id {} for shared query plan with id {}", QueryStatus::toString(subQueryStatus), querySubPlanId, sharedQueryId);
 
     //Fetch query catalog entries
     auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
@@ -265,9 +263,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
         bool stopQuery = true;
         if (subQueryStatus == QueryStatus::SoftStopCompleted) {
             for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
-                NES_DEBUG("Updating query subplan status for query id="
-                          << queryId << " subplan=" << querySubPlanMetaData->getQuerySubPlanId() << " is "
-                          << QueryStatus::toString(querySubPlanMetaData->getQuerySubPlanStatus()))
+                NES_DEBUG2("Updating query subplan status for query id= {} subplan= {} is  {}", queryId, querySubPlanMetaData->getQuerySubPlanId(), QueryStatus::toString(querySubPlanMetaData->getQuerySubPlanStatus()));
                 if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryStatus::SoftStopCompleted) {
                     stopQuery = false;
                     break;

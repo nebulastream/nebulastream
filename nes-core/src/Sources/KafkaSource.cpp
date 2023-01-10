@@ -198,12 +198,12 @@ bool KafkaSource::connect() {
 
         // Print the assigned partitions on assignment
         consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG("Got assigned: " << partitions);
+            NES_DEBUG2("Got assigned: {}",  partitions);
         });
 
         // Print the revoked partitions on revocation
         consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG("Got revoked: " << partitions);
+            NES_DEBUG2("Got revoked: {}",  partitions);
         });
 
         // Subscribe to the topic
@@ -211,10 +211,9 @@ bool KafkaSource::connect() {
         cppkafka::TopicPartition assignment(topic, std::atoi(groupId.c_str()));
         vec.push_back(assignment);
         consumer->assign(vec);
-        NES_DEBUG("kafka source=" << this->operatorId << " connect to topic=" << topic
-                                  << " partition=" << std::atoi(groupId.c_str()));
+        NES_DEBUG2("kafka source={} connect to topic={} partition={}", this->operatorId, topic, std::atoi(groupId.c_str()));
 
-        NES_DEBUG("kafka source starts producing");
+        NES_DEBUG2("kafka source starts producing");
 
         connected = true;
     }
