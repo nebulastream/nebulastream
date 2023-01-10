@@ -57,7 +57,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     NES_TRACE("KAFKASINK " << this << ": writes buffer " << inputBuffer);
     try {
         std::stringstream outputStream;
-        NES_TRACE("KafkaSink::getData: write data");
+        NES_TRACE2("KafkaSink::getData: write data");
         auto dataBuffers = sinkFormat->getData(inputBuffer);
         for (auto buffer : dataBuffers) {
             NES_TRACE("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
@@ -71,7 +71,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     } catch (const cppkafka::HandleException& ex) {
         throw;
     } catch (...) {
-        NES_ERROR("KAFKASINK Unknown error occurs");
+        NES_ERROR2("KAFKASINK Unknown error occurs");
         return false;
     }
 

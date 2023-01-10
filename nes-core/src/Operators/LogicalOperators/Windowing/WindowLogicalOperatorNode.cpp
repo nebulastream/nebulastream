@@ -64,8 +64,8 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
         return false;
     }
     // infer the default input and output schema
-    NES_DEBUG("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema "
-              << inputSchema->toString());
+    NES_DEBUG2("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema {}",
+              inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -104,7 +104,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
 
 void WindowLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {

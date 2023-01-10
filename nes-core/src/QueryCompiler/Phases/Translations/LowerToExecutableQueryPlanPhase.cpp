@@ -132,8 +132,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
-        NES_ERROR("This is not a source pipeline.");
-        NES_ERROR(pipeline->getQueryPlan()->toString());
+        NES_ERROR2("This is not a source pipeline.");
+        NES_ERROR2("{}", pipeline->getQueryPlan()->toString());
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
@@ -243,11 +243,11 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
-                NES_TRACE("Emit Buffer to data sink " << (*sink)->toString());
+                NES_TRACE2("Emit Buffer to data sink {}", (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
             } else if (const auto* nextExecutablePipeline =
                            std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-                NES_TRACE("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
+                NES_TRACE2("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
             }
         }

@@ -112,8 +112,7 @@ bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     for (const auto& executionNode : executionNodes) {
         uint64_t executionNodeId = executionNode->getId();
         if (!executionNode->removeQuerySubPlans(queryId)) {
-            NES_ERROR("GlobalExecutionPlan: Unable to remove query sub plan with id "
-                      << queryId << " from execution node with id " << executionNodeId);
+            NES_ERROR2("GlobalExecutionPlan: Unable to remove query sub plan with id {} from execution node with id {}", queryId, executionNodeId);
             return false;
         }
         if (executionNode->getAllQuerySubPlans().empty()) {

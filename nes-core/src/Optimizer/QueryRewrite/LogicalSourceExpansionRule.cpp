@@ -60,7 +60,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         for (auto rootOperator : queryPlan->getRootOperators()) {
             DepthFirstNodeIterator depthFirstNodeIterator(rootOperator);
             for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-                NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
+                NES_TRACE2("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
                 auto operatorToIterate = (*itr)->as<OperatorNode>();
                 if (isBlockingOperator(operatorToIterate)) {
                     blockingOperators[operatorToIterate->getId()] = operatorToIterate;
@@ -72,12 +72,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     //Iterate over all source operators
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-        NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
+        NES_TRACE2("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries =
             sourceCatalog->getPhysicalSources(logicalSourceName);
-        NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
-                                                       << " physical source locations in the topology.");
+        NES_TRACE2("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty()) {
             throw Exceptions::RuntimeException(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
@@ -99,11 +98,10 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 addBlockingDownStreamOperator(sourceOperator, downStreamOperator->as<OperatorNode>()->getId());
             }
         }
-        NES_TRACE("LogicalSourceExpansionRule: Create " << sourceCatalogEntries.size()
-                                                        << " duplicated logical sub-graph and add to original graph");
+        NES_TRACE2("LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph", sourceCatalogEntries.size());
         //Create one duplicate operator for each physical source
         for (auto& sourceCatalogEntry : sourceCatalogEntries) {
-            NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
+            NES_TRACE2("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
             //Add to the source operator the id of the physical node where we have to pin the operator
             //NOTE: This is required at the time of placement to know where the source operator is pinned
@@ -146,7 +144,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_DEBUG("LogicalSourceExpansionRule: Plan after \n" << queryPlan->toString());
+    NES_DEBUG2("LogicalSourceExpansionRule: Plan after \n {}",  queryPlan->toString());
     return queryPlan;
 }
 
@@ -155,7 +153,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
     //Check if downstream (parent) operator of this operator is blocking or not if not then recursively call this method for the
     // downstream operator
     auto downStreamOperators = operatorNode->getParents();
-    NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
+    NES_TRACE2("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     for (const auto& downStreamOperator : downStreamOperators) {
 
         //Check if the downStreamOperator operator is a blocking operator or not

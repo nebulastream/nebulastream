@@ -34,7 +34,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
         } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
             return true;
         } else {
-            NES_ERROR("TimeBasedWindow using a non existing time field " + fieldName);
+            NES_ERROR2("TimeBasedWindow using a non existing time field  {}",  fieldName);
             throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
         }
     }

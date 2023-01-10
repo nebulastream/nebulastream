@@ -81,7 +81,7 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
                 auto visitingOp = (*itr)->as<OperatorNode>();
                 if (visitedOpIds.find(visitingOp->getId()) != visitedOpIds.end()) {
-                    NES_TRACE("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
+                    NES_TRACE2("ExecutionNode : Found already visited operator skipping rest of the path traverse.");
                     break;
                 }
                 // If the visiting operator is not a system operator then count the resource and add it to the visited operator list.

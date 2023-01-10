@@ -106,7 +106,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
             auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
             structDeclarationTuple.addField(valuePointerDeclaration);
         } else {
-            NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+            NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
         NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->getName());
     }
@@ -205,7 +205,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         NES_DEBUG("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is " << varDeclInputTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
-        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
     /* ExecutionResult ret = Ok; */
     // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
@@ -268,7 +268,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         }
     } else {
-        NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
@@ -322,8 +322,7 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
             auto originalAttribute = fieldRenameExpression->getOriginalField();
             if (!recordHandler->hasAttribute(originalAttribute->getFieldName())) {
-                NES_FATAL_ERROR("CCodeGenerator: projection: the original attribute"
-                                << originalAttribute->getFieldName() << " is not registered so we can not access it.");
+                NES_FATAL_ERROR2("CCodeGenerator: projection: the original attribute {} is not registered so we can not access it.", originalAttribute->getFieldName());
             }
             // register the attribute with the new name in the record handler
             auto referenceToOriginalValue = recordHandler->getAttribute(originalAttribute->getFieldName());
@@ -332,8 +331,7 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             // it is a field access expression, so we just check if the record exists.
             auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
             if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
-                NES_FATAL_ERROR("CCodeGenerator: projection: the attribute" << fieldAccessExpression->getFieldName()
-                                                                            << " is not registered so we can not access it.");
+                NES_FATAL_ERROR2("CCodeGenerator: projection: the attribute {} is not registered so we can not access it.", fieldAccessExpression->getFieldName());
             }
         }
     }
@@ -424,8 +422,8 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
     for (auto f : inputFields) {
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
-            NES_ERROR("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: "
-                      << field->getStamp()->toString());
+            NES_ERROR2("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
+                      field->getStamp()->toString());
         }
         if (!firstIter) {
             commonStamp = field->getStamp();
@@ -475,7 +473,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
                 VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
                     VarRef(variableDeclaration)));
         } else {
-            NES_ERROR("CCodeGenerator: common data type for tensorflow model not supported: " << commonStamp->toString());
+            NES_ERROR2("CCodeGenerator: common data type for tensorflow model not supported: {}", commonStamp->toString());
         }
     }
 
@@ -587,9 +585,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     if (context->getInputSchema()->hasFieldName(field->getName())) {
                         // check if record handler has current field
                         if (!recordHandler->hasAttribute(field->getName())) {
-                            NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                            + " is part of the output schema, "
-                                              "but not registered in the record handler.");
+                            NES_FATAL_ERROR2("CCodeGenerator: field: {} is part of the output schema, but not registered in the record handler.", field->toString());
                         }
 
                         std::string tmpVarName = "tmp_" + field->getName();
@@ -618,16 +614,14 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     auto resultRecordFieldVariableDeclaration =
                         getVariableDeclarationForField(structDeclarationResultTuple, field);
                     if (!resultRecordFieldVariableDeclaration) {
-                        NES_FATAL_ERROR("CCodeGenerator: Could not extract field " << field->toString()
-                                                                                   << " from result record struct "
-                                                                                   << structDeclarationResultTuple.getTypeName());
+                        NES_FATAL_ERROR2("CCodeGenerator: Could not extract field {} from result record struct {}", field->toString(), structDeclarationResultTuple.getTypeName());
                     }
 
                     // check if record handler has current field
                     if (!recordHandler->hasAttribute(field->getName())) {
-                        NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                        + " is part of the output schema, "
-                                          "but not registered in the record handler.");
+                        NES_FATAL_ERROR2("CCodeGenerator: field: {}"
+                                        " is part of the output schema, "
+                                          "but not registered in the record handler.", field->toString());
                     }
 
                     // Get current field from record handler.
@@ -695,15 +689,15 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
             auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
             if (!resultRecordFieldVariableDeclaration) {
-                NES_FATAL_ERROR("CodeGenerator: Could not extract field " << field->toString() << " from result record struct "
-                                                                          << structDeclarationResultTuple.getTypeName());
+                NES_FATAL_ERROR2("CodeGenerator: Could not extract field {} from result record struct {}", field->toString(),
+                                                                          structDeclarationResultTuple.getTypeName());
             }
 
             // check if record handler has current field
             if (!recordHandler->hasAttribute(field->getName())) {
-                NES_FATAL_ERROR("CCodeGenerator: field: " + field->toString()
-                                + " is part of the output schema, "
-                                  "but not registered in the record handler.");
+                NES_FATAL_ERROR2("CCodeGenerator: field: {}"
+                                " is part of the output schema, "
+                                  "but not registered in the record handler.", field->toString());
             }
 
             // Get current field from record handler.
@@ -726,7 +720,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
         }
     } else {
-        NES_ERROR("CCodeGenerator: inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
+        NES_ERROR2("CCodeGenerator: inputSchema->getLayoutType() is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
 
     // Generate final logic to emit the last buffer to the Runtime
@@ -840,7 +834,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         context->code->currentCodeInsertionPoint->addStatement(setWatermarkStatement.createCopy());
     } else {
-        NES_ERROR("CCodeGenerator: cannot generate code for watermark strategy " << watermarkStrategy);
+        NES_ERROR2("CCodeGenerator: cannot generate code for watermark strategy {}", watermarkStrategy);
     }
 
     return true;
@@ -2411,7 +2405,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
             break;
         }
         default: {
-            NES_FATAL_ERROR("CCodeGenerator: Window Handler - could not cast aggregation type");
+            NES_FATAL_ERROR2("CCodeGenerator: Window Handler - could not cast aggregation type");
         }
     }
 
@@ -2661,7 +2655,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2675,7 +2669,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -2779,7 +2773,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented.", policy->getPolicyType());
     }
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2793,7 +2787,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -3813,7 +3807,7 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
             createAggregateCall =
                 call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else {
-            NES_FATAL_ERROR("Aggregation Handler: aggregation=" << aggregation->getType() << " not implemented");
+            NES_FATAL_ERROR2("Aggregation Handler: aggregation={} not implemented", aggregation->getType());
         }
         // add the partial aggregation initialization to the code
         setupScope->addStatement(partialAggregateInitStatement.copy());
@@ -4263,7 +4257,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", policy->getPolicyType());
     }
 
     auto action = window->getTriggerAction();
@@ -4290,7 +4284,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
-        NES_FATAL_ERROR("Aggregation Handler: mode=" << action->getActionType() << " not implemented");
+        NES_FATAL_ERROR2("Aggregation Handler: mode={} not implemented", action->getActionType());
     }
 
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
@@ -4460,7 +4454,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                 case PipelineContext::Unary: return Unary;
                 case PipelineContext::BinaryLeft: return BinaryLeft;
                 case PipelineContext::BinaryRight: return BinaryRight;
-                default: NES_FATAL_ERROR("Unknown PipelineContext. Terminate.");
+                default: NES_FATAL_ERROR2("Unknown PipelineContext. Terminate.");
             }
         }();
         return CompiledExecutablePipelineStage::create(compiledCode, arity, src);

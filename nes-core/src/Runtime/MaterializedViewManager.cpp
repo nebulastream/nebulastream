@@ -32,7 +32,7 @@ MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
     if (it != viewMap.end()) {
         view = it->second;
     } else {
-        NES_ERROR("MaterializedViewManager::getView: no view found with id " << viewId);
+        NES_ERROR2("MaterializedViewManager::getView: no view found with id {}", viewId);
         throw std::runtime_error("Materialized view with given id does not exist.");
     }
     return view;

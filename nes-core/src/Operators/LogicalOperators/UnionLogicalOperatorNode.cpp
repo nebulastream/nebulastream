@@ -49,14 +49,13 @@ bool UnionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&
     }
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema)) {
-        NES_ERROR("Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString()
-                  + " and Right schema " + rightInputSchema->toString());
+        NES_ERROR2("Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ", leftInputSchema->toString(), rightInputSchema->toString());
         throw TypeInferenceException("Found Schema mismatch for left and right schema types. Left schema "
                                      + leftInputSchema->toString() + " and Right schema " + rightInputSchema->toString());
     }
 
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType()) {
-        NES_ERROR("Left and right should have same memory layout");
+        NES_ERROR2("Left and right should have same memory layout");
         throw TypeInferenceException("Left and right should have same memory layout");
     }
 
@@ -85,7 +84,7 @@ bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->ins
 
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("UnionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_TRACE2("UnionLogicalOperatorNode: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "UnionLogicalOperatorNode: Union should have 2 children.");
     //Infer query signatures for child operators
     for (auto&& child : children) {

@@ -34,7 +34,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          bool queryReconfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       typeInferencePhase(std::move(typeInferencePhase)), queryReconfiguration(queryReconfiguration) {
-    NES_DEBUG("QueryPlacementPhase()");
+    NES_DEBUG2("QueryPlacementPhase()");
 }
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -59,7 +59,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
-    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
+    NES_DEBUG2("QueryPlacementPhase: Perform query placement for query plan \n  {}",  queryPlan->toString());
 
     //1. Fetch all upstream pinned operators
     auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
@@ -77,7 +77,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
-    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan : \n {}",  globalExecutionPlan->getAsString());
     return success;
 }
 

@@ -62,7 +62,7 @@ QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
     } else if (queryStatus == "MARKED-FOR-FAILURE") {
         return MarkedForFailure;
     } else {
-        NES_ERROR("No valid query status to parse");
+        NES_ERROR2("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);
     }
 }

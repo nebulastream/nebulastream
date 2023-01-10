@@ -39,7 +39,7 @@ WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodeP
 WindowAggregationPtr MinAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}",  keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
@@ -54,7 +54,7 @@ void MinAggregationDescriptor::inferStamp(const Optimizer::TypeInferencePhaseCon
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(typeInferencePhaseContext, schema);
     if (!onField->getStamp()->isNumeric()) {
-        NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR2("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
 
     //Set fully qualified name for the as Field

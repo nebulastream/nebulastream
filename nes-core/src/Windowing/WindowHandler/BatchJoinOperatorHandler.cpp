@@ -133,7 +133,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         return;
     }
 
-    NES_FATAL_ERROR("BatchJoinOperatorHandler::start() called with pipeline that didn't have one or two successors!");
+    NES_FATAL_ERROR2("BatchJoinOperatorHandler::start() called with pipeline that didn't have one or two successors!");
     return;
 }
 

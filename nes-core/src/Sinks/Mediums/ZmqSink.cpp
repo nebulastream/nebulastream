@@ -60,7 +60,7 @@ ZmqSink::~ZmqSink() {
         NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
     } else {
         /// XXX:
-        NES_ERROR("ZmqSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected");
+        NES_ERROR2("ZmqSink {}: Destroy ZMQ Sink failed cause it could not be disconnected", this);
         NES_ASSERT2_FMT(false, "ZMQ Sink destruction failed");
     }
     NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
@@ -75,7 +75,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     }
 
     if (!inputBuffer) {
-        NES_ERROR("ZmqSink::writeData input buffer invalid");
+        NES_ERROR2("ZmqSink::writeData input buffer invalid");
         return false;
     }
 
@@ -108,7 +108,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
 
             } catch (const zmq::error_t& ex) {
                 if (ex.num() != ETERM) {
-                    NES_ERROR("ZmqSink: schema write " << ex.what());
+                    NES_ERROR2("ZmqSink: schema write  {}",  ex.what());
                 }
             }
             schemaWritten = true;
@@ -151,7 +151,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR("ZmqSink: " << ex.what());
+                NES_ERROR2("ZmqSink:  {}",  ex.what());
             }
         }
     }
@@ -180,7 +180,7 @@ bool ZmqSink::connect() {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR("ZmqSink: " << ex.what());
+                NES_ERROR2("ZmqSink:  {}",  ex.what());
             }
         }
     }

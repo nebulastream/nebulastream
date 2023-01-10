@@ -35,12 +35,12 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
                                                   const std::string& physicalSourceName,
                                                   const std::string& logicalSourceName) {
     if (!topologyNode) {
-        NES_ERROR("SourceCatalogService::RegisterPhysicalSource node not found");
+        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource node not found");
         return false;
     }
 
     if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-        NES_ERROR("SourceCatalogService::RegisterPhysicalSource logical source does not exist " << logicalSourceName);
+        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource logical source does not exist  {}",  logicalSourceName);
         return false;
     }
 
@@ -53,7 +53,7 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
     bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {
-        NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
+        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
         return false;
     }
     return success;
@@ -74,7 +74,7 @@ bool SourceCatalogService::unregisterPhysicalSource(TopologyNodePtr topologyNode
 
     bool success = sourceCatalog->removePhysicalSource(logicalSourceName, physicalSourceName, topologyNode->getId());
     if (!success) {
-        NES_ERROR("SourceCatalogService::RegisterPhysicalSource: removing physical source was not successful.");
+        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource: removing physical source was not successful.");
         return false;
     }
     return success;

@@ -30,7 +30,7 @@ SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : co
 }
 
 bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2) {
-    NES_TRACE("QuerySignature: Equating signatures");
+    NES_TRACE2("QuerySignature: Equating signatures");
 
     try {
         auto otherConditions = signature2->getConditions();
@@ -138,9 +138,8 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            NES_ERROR(
-                "SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping "
-                << e.what());
+            NES_ERROR2(
+                "SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping {}", e.what());
         }
         return false;
     }

@@ -95,10 +95,10 @@ CSVSource::CSVSource(SchemaPtr schema,
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_TRACE("CSVSource::receiveData called on " << operatorId);
+    NES_TRACE2("CSVSource::receiveData called on  {}",  operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
-    NES_TRACE("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_TRACE2("CSVSource::receiveData filled buffer with tuples= {}",  buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
@@ -115,7 +115,7 @@ std::string CSVSource::toString() const {
 }
 
 void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    NES_TRACE("CSVSource::fillBuffer: start at pos=" << currentPositionInFile << " fileSize=" << fileSize);
+    NES_TRACE2("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
         buffer.setNumberOfTuples(0);
@@ -131,36 +131,36 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
-    NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
+    NES_TRACE2("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
     std::string line;
     uint64_t tupleCount = 0;
 
     if (skipHeader && currentPositionInFile == 0) {
-        NES_TRACE("CSVSource: Skipping header");
+        NES_TRACE2("CSVSource: Skipping header");
         std::getline(input, line);
         currentPositionInFile = input.tellg();
     }
 
     while (tupleCount < generatedTuplesThisPass) {
         if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
-            NES_TRACE("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " fileSize=" << fileSize);
+            NES_TRACE2("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
             input.clear();
             input.seekg(0, std::ifstream::beg);
             if (!this->loopOnFile) {
-                NES_TRACE("CSVSource::fillBuffer: break because file ended");
+                NES_TRACE2("CSVSource::fillBuffer: break because file ended");
                 this->fileEnded = true;
                 break;
             }
             if (this->skipHeader) {
-                NES_TRACE("CSVSource: Skipping header");
+                NES_TRACE2("CSVSource: Skipping header");
                 std::getline(input, line);
                 currentPositionInFile = input.tellg();
             }
         }
 
         std::getline(input, line);
-        NES_TRACE("CSVSource line=" << tupleCount << " val=" << line);
+        NES_TRACE2("CSVSource line={} val={}", tupleCount, line);
         // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
@@ -171,8 +171,8 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     buffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_TRACE2("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
+    NES_TRACE2("CSVSource::fillBuffer: read produced buffer=  {}",  Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

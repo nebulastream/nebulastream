@@ -37,7 +37,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
         return true;
     }
 
-    NES_DEBUG("HashSignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG2("HashSignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all query plans to identify the potential sharing opportunities
     for (auto& targetQueryPlan : queryPlansToAdd) {
         bool merged = false;
@@ -50,7 +50,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (!matchedTargetToHostOperatorMap.empty()) {
-                NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE2("HashSignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
                 // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
@@ -109,7 +109,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
         }
 
         if (!merged) {
-            NES_DEBUG("HashSignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG2("HashSignatureBasedPartialQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
@@ -122,7 +122,7 @@ std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr>
 HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
                                                              const QueryPlanPtr& hostQueryPlan) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
-    NES_DEBUG(
+    NES_DEBUG2(
         "HashSignatureBasedPartialQueryMergerRule: check if the target and address query plans are syntactically equal or not");
     auto targetSourceOperators = targetQueryPlan->getSourceOperators();
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
@@ -151,14 +151,14 @@ HashSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperator
                                                            const LogicalOperatorNodePtr& hostOperator) {
     std::map<LogicalOperatorNodePtr, LogicalOperatorNodePtr> targetHostOperatorMap;
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
+        NES_TRACE2("HashSignatureBasedPartialQueryMergerRule: Both target and host operators are of sink type.");
         return {};
     }
 
-    NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
+    NES_TRACE2("HashSignatureBasedPartialQueryMergerRule: Compare target and host operators.");
     const std::map<size_t, std::set<std::string>>& targetHashBased = targetOperator->getHashBasedSignature();
     if (targetHashBased == hostOperator->getHashBasedSignature()) {
-        NES_TRACE("HashSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
+        NES_TRACE2("HashSignatureBasedPartialQueryMergerRule: Check if parents of target and address operators are equal.");
         uint16_t matchCount = 0;
         for (const auto& targetParent : targetOperator->getParents()) {
             for (const auto& hostParent : hostOperator->getParents()) {

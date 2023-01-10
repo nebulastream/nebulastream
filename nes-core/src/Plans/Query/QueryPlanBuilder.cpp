@@ -204,9 +204,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::Operat
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(NES::ExpressionNodePtr expression,
                                                                              std::string side) {
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key"
-                  << "(" << side << ")"
-                  << "has to be an FieldAccessExpression but it was a " + expression->toString());
+        NES_ERROR2("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}",  side, expression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
     return expression->as<FieldAccessExpressionNode>();

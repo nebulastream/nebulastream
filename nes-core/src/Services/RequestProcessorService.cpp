@@ -92,7 +92,7 @@ void RequestProcessorService::start() {
         while (isQueryProcessorRunning()) {
             NES_DEBUG("QueryRequestProcessorService: Waiting for new query request trigger");
             auto requests = queryRequestQueue->getNextBatch();
-            NES_TRACE("QueryProcessingService: Found " << requests.size() << " query requests to process");
+            NES_TRACE2("QueryProcessingService: Found {} query requests to process", requests.size());
             if (requests.empty()) {
                 continue;
             }
@@ -244,7 +244,7 @@ void RequestProcessorService::start() {
                 }
                 //FIXME: Proper error handling #1585
             } catch (QueryPlacementException& ex) {
-                NES_ERROR("QueryRequestProcessingService: QueryPlacementException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: QueryPlacementException:  {}",  ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
@@ -252,7 +252,7 @@ void RequestProcessorService::start() {
                     queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
                 }
             } catch (QueryDeploymentException& ex) {
-                NES_ERROR("QueryRequestProcessingService: QueryDeploymentException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: QueryDeploymentException:  {}",  ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Failed);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
@@ -260,27 +260,27 @@ void RequestProcessorService::start() {
                     queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
-                NES_ERROR("QueryRequestProcessingService: TypeInferenceException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: TypeInferenceException:  {}",  ex.what());
                 auto queryId = ex.getQueryId();
                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, ex.what());
             } catch (InvalidQueryStatusException& ex) {
-                NES_ERROR("QueryRequestProcessingService: InvalidQueryStatusException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: InvalidQueryStatusException:  {}",  ex.what());
             } catch (QueryNotFoundException& ex) {
-                NES_ERROR("QueryRequestProcessingService: QueryNotFoundException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: QueryNotFoundException:  {}",  ex.what());
             } catch (QueryUndeploymentException& ex) {
-                NES_ERROR("QueryRequestProcessingService: QueryUndeploymentException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService: QueryUndeploymentException:  {}",  ex.what());
             } catch (InvalidQueryException& ex) {
-                NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
+                NES_ERROR2("QueryRequestProcessingService InvalidQueryException:  {}",  ex.what());
             } catch (std::exception& ex) {
-                NES_FATAL_ERROR(
-                    "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: "
-                    << ex.what());
+                NES_FATAL_ERROR2(
+                    "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: {}",
+                    ex.what());
                 shutDown();
             }
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (std::exception& ex) {
-        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queryId : " << ex.what());
+        NES_FATAL_ERROR2("QueryProcessingService: Received unexpected exception while scheduling the queryId : {}", ex.what());
         shutDown();
     }
     shutDown();

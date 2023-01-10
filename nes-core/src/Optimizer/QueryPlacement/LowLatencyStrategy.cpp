@@ -49,7 +49,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     const std::vector<NESTopologyEntryPtr> sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodes.empty()) {
-        NES_ERROR("LowLatency: Unable to find the target source: " << sourceName);
+        NES_ERROR2("LowLatency: Unable to find the target source:  {}",  sourceName);
         throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 
@@ -61,7 +61,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
 
-    NES_DEBUG("LowLatency: Find the path used for performing the placement based on the strategy type");
+    NES_DEBUG2("LowLatency: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("LowLatency: Adding forward operators.");
@@ -107,7 +107,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {
 
-                NES_DEBUG("TopDown: Transforming New Operator into legacy operator");
+                NES_DEBUG2("TopDown: Transforming New Operator into legacy operator");
                 OperatorPtr legacyOperator = translator->transform(targetOperator);
 
                 if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -115,7 +115,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("LowLatency: Create new execution node.");
+                    NES_DEBUG2("LowLatency: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
                     const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
@@ -131,12 +131,12 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
                     if (exists != residentOperatorIds.end()) {
                         //skip adding rest of the operator chains as they already exists.
-                        NES_DEBUG("LowLatency: skip adding rest of the operator chains as they already exists.");
+                        NES_DEBUG2("LowLatency: skip adding rest of the operator chains as they already exists.");
                         targetOperator = nullptr;
                         break;
                     } else {
 
-                        NES_DEBUG("LowLatency: adding target operator to already existing operator chain.");
+                        NES_DEBUG2("LowLatency: adding target operator to already existing operator chain.");
                         stringstream operatorName;
                         operatorName << existingExecutionNode->getOperatorName() << "=>" << targetOperator->toString() << "(OP-"
                                      << std::to_string(targetOperator->getId()) << ")";

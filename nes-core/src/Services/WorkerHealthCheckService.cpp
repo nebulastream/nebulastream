@@ -41,14 +41,14 @@ void WorkerHealthCheckService::startHealthCheck() {
     NES_DEBUG("start health checking on worker");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
-        NES_TRACE("NesWorker: start health checking");
+        NES_TRACE2("NesWorker: start health checking");
         auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
         while (isRunning) {
-            NES_TRACE("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
+            NES_TRACE2("NesWorker::healthCheck for worker id=  {}",  coordinatorRpcClient->getId());
 
             bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
             if (isAlive) {
-                NES_TRACE("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " is alive");
+                NES_TRACE2("NesWorker::healthCheck: for worker id={} is alive", coordinatorRpcClient->getId());
             } else {
                 NES_ERROR2("NesWorker::healthCheck: for worker id={} coordinator went down so shutting down the worker with ip",
                            coordinatorRpcClient->getId());

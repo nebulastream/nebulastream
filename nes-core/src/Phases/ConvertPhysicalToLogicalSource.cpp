@@ -150,7 +150,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             return tcpSourceDescriptor;
         }
         default: {
-            NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);
+            NES_ERROR2("ConvertPhysicalToLogicalSource: Unknown Data Source Type {}", srcType);
             throw std::invalid_argument("Unknown Source Descriptor Type ");
         }
     }

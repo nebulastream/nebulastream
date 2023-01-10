@@ -71,7 +71,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                 }
                 case ExecutionResult::Error: {
                     // TODO add here error handling (see issues 524 and 463)
-                    NES_ERROR("Threadpool: finished task with error");
+                    NES_ERROR2("Threadpool: finished task with error");
                     running = false;
                     break;
                 }
@@ -80,7 +80,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                 }
             }
         } catch (TaskExecutionException const& taskException) {
-            NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << taskException.what());
+            NES_ERROR2("Got fatal error on thread {}: {}",  workerContext.getId(), taskException.what());
             queryManager->notifyTaskFailure(taskException.getExecutable(), std::string(taskException.what()));
         }
     }
@@ -89,7 +89,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     try {
         queryManager->processNextTask(running, workerContext);
     } catch (std::exception const& error) {
-        NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+        NES_ERROR2("Got fatal error on thread {}: {}",  workerContext.getId(),error.what());
         NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
     }
     NES_DEBUG("Threadpool: end runningRoutine");
@@ -124,7 +124,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
                 CPU_SET(workerPinningPositionList[i], &cpuset);
                 int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
                 if (rc != 0) {
-                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
+                    NES_ERROR2("Error calling pthread_setaffinity_np: {}", rc);
                 } else {
                     NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
                 }

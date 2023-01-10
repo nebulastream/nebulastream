@@ -52,12 +52,12 @@ bool MapLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& t
     if (outputSchema->hasFieldName(fieldName)) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
-        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
+        NES_TRACE2("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
         outputSchema->replaceField(fieldName, assignedField->getStamp());
     } else {
         // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
-        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
+        NES_TRACE2("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
         outputSchema->addField(fieldName, assignedField->getStamp());
     }
     return true;
@@ -83,7 +83,7 @@ OperatorNodePtr MapLogicalOperatorNode::copy() {
 }
 
 void MapLogicalOperatorNode::inferStringSignature() {
-    NES_TRACE("MapLogicalOperatorNode: Inferring String signature for " << toString());
+    NES_TRACE2("MapLogicalOperatorNode: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "MapLogicalOperatorNode: Map should have 1 child.");
     //Infer query signatures for child operator
     auto child = children[0]->as<LogicalOperatorNode>();

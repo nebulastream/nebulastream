@@ -110,7 +110,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
+        NES_ERROR2("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();

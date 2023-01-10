@@ -207,9 +207,8 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
-        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
-                  "operators. The query plan is:\n"
-                  << queryPlan->toString());
+        NES_ERROR2("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                  "operators. The query plan is: {}", queryPlan->toString());
         return false;
     }
 

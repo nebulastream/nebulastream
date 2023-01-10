@@ -68,7 +68,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
 
     auto sliceStaging = this->weakSliceStaging.lock();
     if (!sliceStaging) {
-        NES_FATAL_ERROR("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
+        NES_FATAL_ERROR2("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
         return;
     }
 

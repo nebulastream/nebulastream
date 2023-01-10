@@ -47,7 +47,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query " << queryId << " is deployed");
+        NES_ERROR2("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query {} is deployed", queryId);
         return false;
     }
 
@@ -56,7 +56,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     if (successStop) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for " << queryId);
     } else {
-        NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for " << queryId);
+        NES_ERROR2("QueryUndeploymentPhase:removeQuery: stop query failed for {}", queryId);
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
         throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
@@ -66,7 +66,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     if (successUndeploy) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query successful");
     } else {
-        NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
+        NES_ERROR2("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
         throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
@@ -74,7 +74,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
 
     for (auto entry : resourceMap) {
-        NES_TRACE("QueryUndeploymentPhase: Releasing " << entry.second << " resources for the node " << entry.first);
+        NES_TRACE2("QueryUndeploymentPhase: Releasing {} resources for the node {}", entry.second, entry.first);
         topology->increaseResources(entry.first, entry.second);
     }
 
@@ -104,15 +104,15 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
         } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
-            NES_ERROR("Unhandled request type " << SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
+            NES_ERROR2("Unhandled request type {}", SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
             NES_NOT_IMPLEMENTED();
         }
 
         bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queryTerminationType, queueForExecutionNode);
         if (success) {
-            NES_DEBUG("QueryUndeploymentPhase::markQueryForStop " << queryId << " to " << rpcAddress << " successful");
+            NES_DEBUG2("QueryUndeploymentPhase::markQueryForStop {} to {} successful",  queryId,  rpcAddress);
         } else {
-            NES_ERROR("QueryUndeploymentPhase::markQueryForStop " << queryId << " to " << rpcAddress << "  failed");
+            NES_ERROR2("QueryUndeploymentPhase::markQueryForStop  {} to {} failed", queryId,  rpcAddress);
             return false;
         }
         completionQueues[queueForExecutionNode] = 1;
@@ -143,7 +143,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::undeployQuery query " << queryId << " to " << rpcAddress << " successful");
         } else {
-            NES_ERROR("QueryUndeploymentPhase::undeployQuery " << queryId << " to " << rpcAddress << "  failed");
+            NES_ERROR2("QueryUndeploymentPhase::undeployQuery {} to {} failed", queryId, rpcAddress);
             return false;
         }
 
