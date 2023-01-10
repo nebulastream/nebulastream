@@ -36,6 +36,11 @@ static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSiz
     }
 }
 
+std::string toUpperCase(std::string string) {
+    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
+    return string;
+}
+
 namespace detail {
 /**
 * @brief set of helper functions for splitting for different types

@@ -39,7 +39,6 @@ namespace NES::Benchmark {
     }
 
     void writeHeaderToCsvFile(E2EBenchmarkConfig& e2EBenchmarkConfig) {
-        // Writing the csv header to the output file
         std::ofstream ofs;
         ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::app);
         ofs << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"

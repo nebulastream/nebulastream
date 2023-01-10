@@ -18,7 +18,6 @@
 #include <E2E/E2ESingleRun.hpp>
 
 namespace NES::Benchmark {
-
     /**
      * @brief parses and returns an E2EBenchmarkConfig. Also
      * @param configPath
@@ -27,12 +26,20 @@ namespace NES::Benchmark {
      */
     E2EBenchmarkConfig parseYamlConfig(std::string configPath, std::string logPath);
 
+    /**
+     * @brief Runs a single experiment with the given rpcPort and restPort for the nesCoordinator
+     * @param configPerRun
+     * @param configOverallRuns
+     * @param rpcPort
+     * @param restPort
+     */
     void runSingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverallRuns, int rpcPort, int restPort);
 
+    /**
+     * @brief Writes the header to the output csv file
+     * @param e2EBenchmarkConfig
+     */
     void writeHeaderToCsvFile(E2EBenchmarkConfig& e2EBenchmarkConfig);
 
-
 } // namespace NES::Benchmark
-
-
 #endif //NES_E2ERUNNER_HPP

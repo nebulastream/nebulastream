@@ -40,10 +40,10 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
-
     srcNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
 
 }
+
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
     std::stringstream oss;
     oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
@@ -99,7 +99,6 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     return configOverAllRuns;
 }
 
-
 std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
     std::stringstream stringStream;
     for (auto it = srcNameToDataGenerator.begin(); it != srcNameToDataGenerator.end(); ++it) {
@@ -120,5 +119,4 @@ size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
 
     return size;
 }
-
 }// namespace NES::Benchmark

@@ -6,12 +6,9 @@ numberOfBuffersInGlobalBufferManager: 98304
 numberOfBuffersPerPipeline: 128
 numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
-#connectionString: "localhost:9092,nesKafka,0"
 connectionString: "10.156.0.30:9092,nesKafka,0"
 numberOfPreAllocatedBuffer: 10
 batchSize: 10
-#numberOfBuffersInGlobalBufferManager: 32768
-
 
 # ~~~ Benchmark parameter for the entire run ~~~
 numberOfBuffersToProduce: 200000
@@ -24,7 +21,6 @@ logicalSources:
   input1:
     type: YSBKafka
     numberOfPhysicalSources: 1
-
 
 dataProvider: Internal
 dataProviderMode: ZeroCopy

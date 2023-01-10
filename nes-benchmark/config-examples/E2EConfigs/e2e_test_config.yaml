@@ -6,7 +6,6 @@ numberOfBuffersInSourceLocalBufferPool: 128
 bufferSizeInBytes: 131072
 numberOfPreAllocatedBuffer: 1000
 
-
 # ~~~ Benchmark parameter for the entire run ~~~
 numberOfBuffersToProduce: 500
 logLevel: LOG_INFO
@@ -18,7 +17,6 @@ logicalSources:
   input1:
     type: YSB
     numberOfPhysicalSources: 1
-
 
 dataProvider: Internal
 dataProviderMode: ZeroCopy

@@ -20,6 +20,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/BenchmarkUtils.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
@@ -61,7 +62,7 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
 
-    } else if (name == "YSB" || name == "YSBKafka" || name == "ysb") {
+    } else if (Util::toUpperCase(name) == "YSB" || name == "YSBKafka") {
         return std::make_shared<YSBDataGenerator>();
 
     } else {

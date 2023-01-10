@@ -160,9 +160,6 @@ std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateM
         retVectorOfMaps.emplace_back(map);
     }
 
-
     return retVectorOfMaps;
 }
-
-
 }// namespace NES::Benchmark
