@@ -604,7 +604,6 @@ message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
 message(STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}")
 message(STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}")
-
 # Add definitions as compile flag.
 add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
 add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
