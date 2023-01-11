@@ -148,8 +148,10 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
                                                            "MethodName",
                                                            std::vector<char>(),
                                                            std::unordered_map<std::string, std::vector<char>>({{"class", {1}}}),
-                                                           Schema::create());
-        mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfOperator(javaUdfDescriptor);
+                                                           Schema::create(),
+                                                                          "",
+                                                                          "");
+        mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
     }
 
   protected:

@@ -41,6 +41,8 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         //Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
+    // set the derived input schema
+    javaUdfDescriptor->setInputSchema(inputSchema);
     return true;
 }
 
