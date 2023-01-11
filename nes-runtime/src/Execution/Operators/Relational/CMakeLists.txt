@@ -14,4 +14,5 @@ add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
         MapJavaUdf.cpp
+        JVMContext.cpp
         )
