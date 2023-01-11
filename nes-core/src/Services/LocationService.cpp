@@ -22,11 +22,12 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 namespace NES {
 
 LocationService::LocationService(TopologyPtr topology, Spatial::Index::Experimental::LocationIndexPtr locationIndex)
-    : locationIndex(locationIndex), topology(topology){};
+    : locationIndex(std::move(locationIndex)), topology(std::move(topology)){};
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     if (!topology->findNodeWithId(nodeId)) {

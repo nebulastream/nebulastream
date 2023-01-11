@@ -142,10 +142,10 @@ class LocationIndex {
 
     std::recursive_mutex locationIndexMutex;
     // Map containing locations of all registered worker nodes
-    std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerNodeLocation;
+    std::unordered_map<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation> workerGeoLocationMap;
 #ifdef S2DEF
     // Spatial index that stores ids of all worker nodes and index them based on their geo location
-    S2PointIndex<TopologyNodeId> nodePointIndex;
+    S2PointIndex<TopologyNodeId> workerPointIndex;
 #endif
 };
 }//namespace Spatial::Index::Experimental
