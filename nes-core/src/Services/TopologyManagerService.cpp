@@ -49,12 +49,12 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("TopologyManagerService::registerWorker: topology before insert");
-    topology->print();
+    NES_DEBUG(topology->toString());
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
         NES_ERROR("TopologyManagerService::registerWorker: node with address " << address << " and grpc port " << grpcPort
                                                                                << " already exists");
-        return false;
+        return INVALID_TOPOLOGY_NODE_ID;
     }
 
     NES_DEBUG("TopologyManagerService::registerWorker: register node");
@@ -64,7 +64,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
-        return 0;
+        return INVALID_TOPOLOGY_NODE_ID;
     }
 
     const TopologyNodePtr rootNode = topology->getRoot();
@@ -216,45 +216,6 @@ bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRem
     return topology->removePhysicalNode(nodeToRemove);
 }
 
-bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
-                                               NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
-
-    auto topologyNode = topology->findNodeWithId(topologyNodeId);
-    if (!topologyNode) {
-        NES_ERROR("Unable to find node with id " << topologyNodeId);
-        return false;
-    }
-
-    if (geoLocation.isValid()
-        && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
-        //locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
-        locationIndex->updateFieldNodeCoordinates(topologyNode, std::move(geoLocation));
-    } else {
-        NES_DEBUG("added node is a non field node");
-        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
-            NES_DEBUG("added node is a mobile node");
-        } else {
-            NES_DEBUG("added node is a non mobile node");
-        }
-    }
-    return true;
-}
-
-bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
-    auto topologyNode = topology->findNodeWithId(topologyNodeId);
-    if (!topologyNode) {
-        NES_ERROR("Unable to find node with id " << topologyNodeId);
-        return false;
-    }
-    return locationIndex->removeNodeFromSpatialIndex(topologyNode);
-}
-
-NES::Spatial::DataTypes::Experimental::GeoLocation TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {
-    return locationIndex->getGeoLocationForNode(nodeId);
-}
-
 nlohmann::json TopologyManagerService::getTopologyAsJson() {
     NES_INFO("TopologyController: getting topology as JSON");
 
@@ -310,5 +271,67 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
     topologyJson["nodes"] = nodes;
     topologyJson["edges"] = edges;
     return topologyJson;
+}
+
+//All of these methods can be moved to Location service
+bool TopologyManagerService::addGeoLocation(TopologyNodeId topologyNodeId,
+                                            NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+
+    auto topologyNode = topology->findNodeWithId(topologyNodeId);
+    if (!topologyNode) {
+        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        return false;
+    }
+
+    if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
+        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
+        locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+    } else {
+        NES_DEBUG("added node is a non field node");
+        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            locationIndex->addMobileNode(topologyNode->getId(), geoLocation);
+            NES_DEBUG("added node is a mobile node");
+        } else {
+            NES_DEBUG("added node is a non mobile node");
+        }
+    }
+    return true;
+}
+
+bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
+                                               NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
+
+    auto topologyNode = topology->findNodeWithId(topologyNodeId);
+    if (!topologyNode) {
+        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        return false;
+    }
+
+    if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
+        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
+        locationIndex->updateFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+    } else {
+        NES_DEBUG("added node is a non field node");
+        if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            locationIndex->addMobileNode(topologyNode->getId(), geoLocation);
+            NES_DEBUG("added node is a mobile node");
+        } else {
+            NES_DEBUG("added node is a non mobile node");
+        }
+    }
+    return true;
+}
+
+bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
+    auto topologyNode = topology->findNodeWithId(topologyNodeId);
+    if (!topologyNode) {
+        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        return false;
+    }
+    return locationIndex->removeNodeFromSpatialIndex(topologyNode);
+}
+
+NES::Spatial::DataTypes::Experimental::GeoLocation TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {
+    return locationIndex->getGeoLocationForNode(nodeId);
 }
 }// namespace NES

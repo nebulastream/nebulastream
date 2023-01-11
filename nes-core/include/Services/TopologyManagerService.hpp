@@ -65,6 +65,14 @@ class TopologyManagerService {
                             std::map<std::string, std::any> workerProperties);
 
     /**
+     * Add GeoLocation of a worker node
+     * @param topologyNodeId : worker node id
+     * @param geoLocation : location of the worker node
+     * @return true if successful
+     */
+    bool addGeoLocation(TopologyNodeId topologyNodeId, NES::Spatial::DataTypes::Experimental::GeoLocation&& geoLocation);
+
+    /**
      * Update GeoLocation of a worker node
      * @param topologyNodeId : worker node id
      * @param geoLocation : location of the worker node
