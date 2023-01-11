@@ -44,7 +44,7 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(successors)),
       host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
-    NES_DEBUG2("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to  {} : {} /",  host,  port);
+    NES_DEBUG2("ZMQSOURCE {}: Init ZMQ ZMQSOURCE to  {} : {} /", this, host, port);
 }
 
 ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {

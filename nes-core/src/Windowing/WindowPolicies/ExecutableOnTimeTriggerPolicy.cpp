@@ -34,7 +34,7 @@ bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler
     }
 
     this->running = true;
-    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", this, windowHandler->toString(), triggerTimeInMs);
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", fmt::ptr(this), windowHandler->toString(), triggerTimeInMs);
     std::string handlerName = windowHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, windowHandler, &workerContext, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
@@ -60,7 +60,7 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
     }
 
     this->running = true;
-    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", this, joinHandler->toString(), triggerTimeInMs);
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy started thread {} handler={} with ms={}", fmt::ptr(this), joinHandler->toString(), triggerTimeInMs);
     std::string handlerName = joinHandler->toString();
     thread = std::make_shared<std::thread>([handlerName, joinHandler, &workerContext, this]() {
         setThreadName("whdlr-%d", handlerName.c_str());
@@ -79,16 +79,16 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandl
 
 bool ExecutableOnTimeTriggerPolicy::stop() {
     std::unique_lock lock(runningTriggerMutex);
-    NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called",  this);
+    NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called",  fmt::ptr(this));
     if (!this->running) {
-        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called but was already not running",  this);
+        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Stop called but was already not running",  fmt::ptr(this));
         return true;
     }
     this->running = false;
     lock.unlock();
     if (thread && thread->joinable()) {
         thread->join();
-        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Thread joined",  this);
+        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Thread joined",  fmt::ptr(this));
     }
     thread.reset();
     // TODO what happens to the content of the window that it is still in the state?

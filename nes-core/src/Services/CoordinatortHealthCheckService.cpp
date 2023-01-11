@@ -50,7 +50,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 if (res) {
                     NES_TRACE2("NesCoordinator::healthCheck: node={} is alive", destAddress);
                 } else {
-                    NES_WARNING2("NesCoordinator::healthCheck: node={} went dead so we remove it", << destAddress << );
+                    NES_WARNING2("NesCoordinator::healthCheck: node={} went dead so we remove it", destAddress);
                     if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
                         NES_WARNING2("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
