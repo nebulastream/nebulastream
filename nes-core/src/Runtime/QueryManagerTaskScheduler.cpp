@@ -170,7 +170,7 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
-            NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
+            NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
         NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} getQuerySubPlanId={} queueId={}", (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, (*nextPipeline)->getQueryId(), (*nextPipeline)->getQuerySubPlanId(), queueId);
@@ -212,7 +212,7 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
-            NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
+            NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
         NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",  (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, queueId);

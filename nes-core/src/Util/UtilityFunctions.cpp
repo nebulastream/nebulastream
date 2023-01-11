@@ -124,7 +124,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
                 }
 
                 else {
-                    NES_WARNING("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
+                    NES_WARNING2("Util::printTupleBufferAsCSV(): Variable-length field could not be read. Invalid size in the "
                                 "variable-length TEXT field. Returning an empty string.")
                 }
             }

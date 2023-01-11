@@ -116,7 +116,7 @@ void BenchmarkSource::runningRoutine() {
     try {
         open();
 
-        NES_INFO("Going to produce " << numberOfTuplesToProduce);
+        NES_INFO2("Going to produce {}", numberOfTuplesToProduce);
 
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
             Runtime::TupleBuffer buffer;

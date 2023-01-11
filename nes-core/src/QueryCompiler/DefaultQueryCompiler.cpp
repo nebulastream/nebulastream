@@ -104,7 +104,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         dumpContext->dump("8. ExecutableOperatorPlan", pipelinedQueryPlan);
         timer.snapshot("ExecutableOperatorPlan");
         timer.pause();
-        NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
+        NES_INFO2("DefaultQueryCompiler Runtime:\n {}", timer);
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));

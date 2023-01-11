@@ -108,7 +108,7 @@ bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
 
-    NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
+    NES_INFO2("Creating ExecutableQueryPlan for {} {} ", queryId, querySubPlanId);
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
     request->enableDump();
@@ -307,7 +307,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
-        NES_WARNING("Runtime::stop: engine already stopped");
+        NES_WARNING2("Runtime::stop: engine already stopped");
         return true;
     }
     NES_DEBUG2("Runtime::stop: going to stop the node engine");
@@ -435,11 +435,11 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 
     switch (err.getErrorType()) {
         case Network::Messages::ErrorType::PartitionNotRegisteredError: {
-            NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
+            NES_WARNING2("Runtime: Unable to find the NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::DeletedPartitionError: {
-            NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
+            NES_WARNING2("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
             break;
         }
         default: {
@@ -452,11 +452,11 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     switch (err.getErrorType()) {
         case Network::Messages::ErrorType::PartitionNotRegisteredError: {
-            NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
+            NES_WARNING2("Runtime: Unable to find the NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::DeletedPartitionError: {
-            NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
+            NES_WARNING2("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
             break;
         }
         default: {
@@ -467,7 +467,7 @@ void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
 }
 
 std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) {
-    NES_INFO("QueryManager: Get query statistics for query " << queryId);
+    NES_INFO2("QueryManager: Get query statistics for query {}", queryId);
     std::unique_lock lock(engineMutex);
     std::vector<QueryStatisticsPtr> queryStatistics;
 

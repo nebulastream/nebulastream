@@ -131,7 +131,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
             if (auto const sentEnvelope = socket.send(envelope, zmq::send_flags::sndmore).value_or(0);
                 sentEnvelope != sizeof(envelopeData)) {
-                NES_WARNING("ZmqSink  " << this << ": data payload send NOT successful");
+                NES_WARNING2("ZmqSink {}: data payload send NOT successful", this);
                 return false;
             }
 
@@ -140,7 +140,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             zmq::message_t payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0);
                 sentPayload != buffer.getBufferSize()) {
-                NES_WARNING("ZmqSink  " << this << ": data send NOT successful");
+                NES_WARNING2("ZmqSink  {}: data send NOT successful" this);
                 return false;
             }
             NES_DEBUG2("ZmqSink   {} : data send successful",  this);

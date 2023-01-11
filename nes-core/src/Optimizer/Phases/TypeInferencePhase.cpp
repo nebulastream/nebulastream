@@ -44,7 +44,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sources = queryPlan->getSourceOperators();
 
         if (!sources.empty() && !sourceCatalog) {
-            NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
+            NES_WARNING2("TypeInferencePhase: No SourceCatalog specified!");
         }
 
         for (const auto& source : sources) {

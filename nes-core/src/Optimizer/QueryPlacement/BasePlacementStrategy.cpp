@@ -164,7 +164,7 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
                 }
                 //3.1.2 If not all upstream operators are placed then skip placement of this operator
                 if (!allUpstreamOperatorsPlaced) {
-                    NES_WARNING("BasePlacementStrategy: Upstream operators are not placed yet. Skipping the placement.");
+                    NES_WARNING2("BasePlacementStrategy: Upstream operators are not placed yet. Skipping the placement.");
                     continue;
                 }
             }
@@ -354,7 +354,7 @@ void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
                                                              const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO(globalExecutionPlan->getAsString());
+    NES_INFO2("{}",globalExecutionPlan->getAsString());
 
     NES_TRACE2("BasePlacementStrategy: Add system generated operators for the query with id {}", queryId);
     for (const auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
@@ -386,7 +386,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
 
         // 5. Skip the step if the downstream operator was not provided for placement
         if (found == operatorToExecutionNodeMap.end()) {
-            NES_WARNING("BasePlacementStrategy::placeNetworkOperator: Skipping ");
+            NES_WARNING2("BasePlacementStrategy::placeNetworkOperator: Skipping ");
             continue;
         }
 
@@ -473,7 +473,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                         }
                     }
                     if (!found) {
-                        NES_WARNING("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator for "
+                        NES_WARNING2("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator for "
                                     "the parent operator");
                         throw Exceptions::RuntimeException(
                             "BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
@@ -630,7 +630,7 @@ bool BasePlacementStrategy::isSourceAndDestinationConnected(const OperatorNodePt
             auto nextDownStreamSubPlan = operatorToSubPlan[networkSinkDescriptor->getNesPartition().getOperatorId()];
             //5.3. if no sub query plan found for the downstream operator then the operator is not participating in the placement
             if (!nextDownStreamSubPlan) {
-                NES_WARNING("BasePlacementStrategy: Skipping connectivity check as encountered a downstream operator not "
+                NES_WARNING2("BasePlacementStrategy: Skipping connectivity check as encountered a downstream operator not "
                             "participating in the placement.");
                 continue;// skip and continue
             }
@@ -668,7 +668,7 @@ std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenO
     std::vector<NodePtr> children = operatorNode->getChildren();
     for (auto& child : children) {
         if (!child->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-            NES_WARNING("BasePlacementStrategy: unable to find topology for child operator.");
+            NES_WARNING2("BasePlacementStrategy: unable to find topology for child operator.");
             return {};
         }
         TopologyNodePtr childTopologyNode =

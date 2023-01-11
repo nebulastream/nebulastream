@@ -23,13 +23,13 @@
 #include <memory>
 namespace NES::Windowing {
 
-ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy() { NES_WARNING("~ExecutableOnTimeTriggerPolicy()"); }
+ExecutableOnTimeTriggerPolicy::~ExecutableOnTimeTriggerPolicy() { NES_WARNING2("~ExecutableOnTimeTriggerPolicy()"); }
 
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr) { return true; }
 bool ExecutableOnTimeTriggerPolicy::start(AbstractWindowHandlerPtr windowHandler, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {
-        NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
+        NES_WARNING2("ExecutableOnTimeTriggerPolicy::start already started");
         return true;
     }
 
@@ -55,7 +55,7 @@ bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr) { return
 bool ExecutableOnTimeTriggerPolicy::start(Join::AbstractJoinHandlerPtr joinHandler, Runtime::WorkerContextRef workerContext) {
     std::unique_lock lock(runningTriggerMutex);
     if (this->running) {
-        NES_WARNING("ExecutableOnTimeTriggerPolicy::start already started");
+        NES_WARNING2("ExecutableOnTimeTriggerPolicy::start already started");
         return true;
     }
 

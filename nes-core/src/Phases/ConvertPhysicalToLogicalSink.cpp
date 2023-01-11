@@ -37,17 +37,17 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
     std::string sinkType = dataSink->toString();
 
     if (sinkType == "PRINT_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating print sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating print sink");
         return PrintSinkDescriptor::create();
     }
     if (sinkType == "ZMQ_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating ZMQ sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating ZMQ sink");
         ZmqSinkPtr zmqSink = std::dynamic_pointer_cast<ZmqSink>(dataSink);
         return ZmqSinkDescriptor::create(zmqSink->getHost(), zmqSink->getPort());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkType == "KAFKA_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating Kafka sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating Kafka sink");
         KafkaSinkPtr kafkaSink = std::dynamic_pointer_cast<KafkaSink>(dataSink);
         return KafkaSinkDescriptor::create(kafkaSink->getSinkFormat(),
                                            kafkaSink->getTopic(),
@@ -57,14 +57,14 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
 #endif
 #ifdef ENABLE_OPC_BUILD
     else if (sinkType == "OPC_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating OPC sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating OPC sink");
         OPCSinkPtr opcSink = std::dynamic_pointer_cast<OPCSink>(dataSink);
         return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
     }
 #endif
 #ifdef ENABLE_MQTT_BUILD
     else if (sinkType == "MQTT_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating MQTT sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating MQTT sink");
         MQTTSinkPtr mqttSink = std::dynamic_pointer_cast<MQTTSink>(dataSink);
         return MQTTSinkDescriptor::create(mqttSink->getAddress(),
                                           mqttSink->getAddress(),
@@ -79,11 +79,10 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
 #endif
     else if (sinkType == "FILE_SINK") {
         FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool() << " format "
-                                                                                     << fileSink->getSinkFormat());
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating File sink with outputMode {} format {}", fileSink->getAppendAsBool(), fileSink->getSinkFormat());
         return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
     } else if (sinkType == "MATERIALIZED_VIEW_SINK") {
-        NES_INFO("ConvertPhysicalToLogicalSink: Creating materialized view sink");
+        NES_INFO2("ConvertPhysicalToLogicalSink: Creating materialized view sink");
         Experimental::MaterializedView::MaterializedViewSinkPtr materializedViewSink =
             std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSink>(dataSink);
         return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(materializedViewSink->getViewId());

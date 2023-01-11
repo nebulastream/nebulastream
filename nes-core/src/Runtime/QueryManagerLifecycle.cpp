@@ -118,7 +118,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     // 3a. pre-start net sources
     for (const auto& source : netSources) {
         if (!source->bind()) {
-            NES_WARNING("AbstractQueryManager: network source " << source << " could not started as it is already running");
+            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  source);
         } else {
             NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  source);
         }
@@ -127,7 +127,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     // 3b. start net sources
     for (const auto& source : netSources) {
         if (!source->start()) {
-            NES_WARNING("AbstractQueryManager: network source " << source << " could not started as it is already running");
+            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  source);
         } else {
             NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  source);
         }
@@ -181,7 +181,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         }
         NES_DEBUG2("AbstractQueryManager: start source  {}  str= {}",  source,  source->toString());
         if (!source->start()) {
-            NES_WARNING("AbstractQueryManager: source " << source << " could not started as it is already running");
+            NES_WARNING2("AbstractQueryManager: source {} could not started as it is already running",  source);
         } else {
             NES_DEBUG2("AbstractQueryManager: source  {}  started successfully",  source);
         }

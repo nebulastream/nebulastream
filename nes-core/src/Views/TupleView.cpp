@@ -26,10 +26,10 @@ std::optional<Runtime::TupleBuffer> TupleView::receiveData() {
     // TODO: check performance of mutex since it could be a bottleneck. Replace with a workerContext
     std::unique_lock<std::mutex> lock(mutex);
     if (consumePosition < vector.size()) {
-        NES_INFO("TupleView::receiveData: success. current consumePosition: " << consumePosition);
+        NES_INFO2("TupleView::receiveData: success. current consumePosition: {}", consumePosition);
         return vector[consumePosition++];
     } else {
-        NES_INFO("TupleView::receiveData: failed. current consumePosition: " << consumePosition);
+        NES_INFO2("TupleView::receiveData: failed. current consumePosition: {}", consumePosition);
         return std::nullopt;
     }
 };
@@ -41,7 +41,7 @@ bool TupleView::writeData(Runtime::TupleBuffer buffer) {
         return false;
     }
     vector.push_back(buffer);
-    NES_INFO("TupleView::writeData: success. new vector size: " << vector.size());
+    NES_INFO2("TupleView::writeData: success. new vector size: {}", vector.size());
     return true;
 };
 

@@ -57,7 +57,7 @@ HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("HighThroughput: Placing operators on the nes topology.");
+    NES_INFO2("HighThroughput: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
@@ -65,10 +65,10 @@ HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
     NES_DEBUG2("HighThroughput: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("HighThroughput: Adding forward operators.");
+    NES_INFO2("HighThroughput: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("HighThroughput: Generating complete execution Graph.");
+    NES_INFO2("HighThroughput: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.

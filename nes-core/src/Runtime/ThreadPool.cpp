@@ -126,7 +126,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
                 if (rc != 0) {
                     NES_ERROR2("Error calling pthread_setaffinity_np: {}", rc);
                 } else {
-                    NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
+                    NES_WARNING2("worker {} pins to core={}", i, workerPinningPositionList[i]);
                 }
             }
 #endif

@@ -124,7 +124,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
             NES_TRACE2("TopDownStrategy: Get the topology nodes where parent operators are placed.");
             std::vector<TopologyNodePtr> parentTopologyNodes = getTopologyNodesForDownStreamOperators(operatorNode);
             if (parentTopologyNodes.empty()) {
-                NES_WARNING("TopDownStrategy: No topology node found where parent operators are placed.");
+                NES_WARNING2("TopDownStrategy: No topology node found where parent operators are placed.");
                 return;
             }
 
@@ -218,7 +218,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForDownStreamOpera
     //iterate over parent operators and get the physical location where operator is placed
     for (auto& downstreamOperator : downstreamOperators) {
         if (!downstreamOperator->as_if<OperatorNode>()->hasProperty(PINNED_NODE_ID)) {
-            NES_WARNING("TopDownStrategy: unable to find topology for downstreamOperator operator.");
+            NES_WARNING2("TopDownStrategy: unable to find topology for downstreamOperator operator.");
             return {};
         }
 

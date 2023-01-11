@@ -29,10 +29,10 @@ SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create
 
 bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO2("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
@@ -74,7 +74,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                         for (auto& hostSinkChild : hostSinkChildren) {
                             bool addedNewParent = hostSinkChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                             hostSharedQueryPlan->addAdditionToChangeLog(hostSinkChild->as<OperatorNode>(), targetSinkOperator);
                         }
@@ -108,7 +108,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& 
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as number of sources in target and address query plans are "
+        NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Not matched as number of sources in target and address query plans are "
                     "different.");
         return false;
     }
@@ -134,7 +134,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
             NES_TRACE2("SyntaxBasedCompleteQueryMergerRule: Already matched so skipping rest of the check.");
             return true;
         }
-        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
+        NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
                     "sources in target and address query plans are different.");
         return false;
     }
@@ -185,7 +185,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
         }
         return true;
     }
-    NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Target and address operators are not matched.");
+    NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Target and address operators are not matched.");
     return false;
 }
 }// namespace NES::Optimizer

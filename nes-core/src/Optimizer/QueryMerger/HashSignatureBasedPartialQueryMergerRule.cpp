@@ -32,7 +32,7 @@ HashSignatureBasedPartialQueryMergerRulePtr HashSignatureBasedPartialQueryMerger
 bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING2("HashSignatureBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
@@ -88,7 +88,7 @@ bool HashSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQu
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
-                            NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Failed to add new parent");
+                            NES_WARNING2("HashSignatureBasedPartialQueryMergerRule: Failed to add new parent");
                         }
                         hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                         targetOperator->removeParent(targetParent);
@@ -128,7 +128,7 @@ HashSignatureBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr&
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
+        NES_WARNING2("HashSignatureBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
                     "different.");
         return {};
     }
@@ -177,7 +177,7 @@ HashSignatureBasedPartialQueryMergerRule::areOperatorEqual(const LogicalOperator
         }
         return targetHostOperatorMap;
     }
-    NES_WARNING("HashSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
+    NES_WARNING2("HashSignatureBasedPartialQueryMergerRule: Target and host operators are not matched.");
     return {};
 }
 }// namespace NES::Optimizer

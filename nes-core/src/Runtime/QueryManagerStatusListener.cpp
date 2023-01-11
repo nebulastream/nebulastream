@@ -103,7 +103,7 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
         if (auto it = runningQEPs.find(planId); it != runningQEPs.end()) {
             qepToFail = it->second;
         } else {
-            NES_WARNING("Cannot fail non existing sub query plan: " << planId);
+            NES_WARNING2("Cannot fail non existing sub query plan: {}", planId);
             return;
         }
     }

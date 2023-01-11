@@ -92,12 +92,12 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     }
     if (waypoints.empty()) {
         std::string errorString = std::string("No data in CSV, cannot start location provider");
-        NES_ERROR("LocationProviderCSV:  " << errorString);
+        NES_ERROR2("LocationProviderCSV: {}", errorString);
         throw Spatial::Exception::LocationProviderException(errorString);
     }
-    NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
-    NES_DEBUG("first timestamp is " << waypoints.front().getTimestamp().value() << ", last timestamp is "
-                                    << waypoints.back().getTimestamp().value())
+    NES_DEBUG2("read {} waypoints from csv", waypoints.size());
+    NES_DEBUG2("first timestamp is {}, last timestamp is {}",
+                                    waypoints.front().getTimestamp().value(), waypoints.back().getTimestamp().value());
     //set first csv entry as the next waypoint
 }
 

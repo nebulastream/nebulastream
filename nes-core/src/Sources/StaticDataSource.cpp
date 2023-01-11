@@ -194,7 +194,7 @@ std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
 void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     NES_DEBUG2("StaticDataSource::fillBuffer: start at pos={}",  currentPositionInFile);
     if (this->fileEnded) {
-        NES_WARNING("StaticDataSource::fillBuffer: but file has already ended");
+        NES_WARNING2("StaticDataSource::fillBuffer: but file has already ended");
         buffer.setNumberOfTuples(0);
         return;
     }

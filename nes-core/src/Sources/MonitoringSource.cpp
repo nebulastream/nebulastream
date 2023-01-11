@@ -45,7 +45,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  successors),
       metricCollector(metricCollector), waitTime(waitTime) {
     schema = metricCollector->getSchema();
-    NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
+    NES_INFO2("MonitoringSources: Created with schema:{}\n", schema->toString());
 }
 
 std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
