@@ -115,7 +115,7 @@ Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& global
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
-    for (Value<UInt64> i = 0ul; i < sizeOfPartitions; i = i + 1ul) {
+    for (Value<UInt64> i = (uint64_t) 0; i < sizeOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
         for (const auto& function : aggregationFunctions) {
             function->combine(globalSliceState, partitionState);
