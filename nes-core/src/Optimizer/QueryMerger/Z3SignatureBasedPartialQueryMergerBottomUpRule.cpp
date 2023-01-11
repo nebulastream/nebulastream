@@ -35,11 +35,11 @@ Z3SignatureBasedPartialQueryMergerBottomUpRulePtr Z3SignatureBasedPartialQueryMe
 }
 
 bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO("Z3SignatureBasedPartialQueryMergerBottomUpRule: Applying Signature Based Equal Query Merger Rule to the Global "
+    NES_INFO2("Z3SignatureBasedPartialQueryMergerBottomUpRule: Applying Signature Based Equal Query Merger Rule to the Global "
              "Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Found only a single query metadata in the global query plan."
+        NES_WARNING2("Z3SignatureBasedPartialQueryMergerBottomUpRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
@@ -97,7 +97,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
-                            NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Failed to add new parent");
+                            NES_WARNING2("Z3SignatureBasedPartialQueryMergerBottomUpRule: Failed to add new parent");
                         }
                         hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                         targetOperator->removeParent(targetParent);
@@ -138,7 +138,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areQueryPlansEqual(const QueryPl
     auto hostSourceOperators = hostQueryPlan->getSourceOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING(
+        NES_WARNING2(
             "Z3SignatureBasedPartialQueryMergerBottomUpRule: Not matched as number of Sources in target and host query plans are "
             "different.");
         return {};
@@ -188,7 +188,7 @@ Z3SignatureBasedPartialQueryMergerBottomUpRule::areOperatorEqual(const LogicalOp
         }
         return targetHostOperatorMap;
     }
-    NES_WARNING("Z3SignatureBasedPartialQueryMergerBottomUpRule: Target and host operators are not matched.");
+    NES_WARNING2("Z3SignatureBasedPartialQueryMergerBottomUpRule: Target and host operators are not matched.");
     return {};
 }
 

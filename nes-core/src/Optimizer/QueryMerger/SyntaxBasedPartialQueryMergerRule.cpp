@@ -29,10 +29,10 @@ SyntaxBasedPartialQueryMergerRulePtr SyntaxBasedPartialQueryMergerRule::create()
 
 bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("SyntaxBasedPartialQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO2("SyntaxBasedPartialQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("SyntaxBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING2("SyntaxBasedPartialQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
@@ -89,7 +89,7 @@ bool SyntaxBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan
                     for (const auto& targetParent : targetOperator->getParents()) {
                         bool addedNewParent = hostOperator->addParent(targetParent);
                         if (!addedNewParent) {
-                            NES_WARNING("SyntaxBasedPartialQueryMergerRule: Failed to add new parent");
+                            NES_WARNING2("SyntaxBasedPartialQueryMergerRule: Failed to add new parent");
                         }
                         hostSharedQueryPlan->addAdditionToChangeLog(hostOperator, targetParent->as<OperatorNode>());
                         targetOperator->removeParent(targetParent);
@@ -127,7 +127,7 @@ SyntaxBasedPartialQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& target
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING("SyntaxBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
+        NES_WARNING2("SyntaxBasedPartialQueryMergerRule: Not matched as number of sink in target and host query plans are "
                     "different.");
         return {};
     }
@@ -174,7 +174,7 @@ SyntaxBasedPartialQueryMergerRule::areOperatorEqual(const OperatorNodePtr& targe
         }
         return targetHostOperatorMap;
     }
-    NES_WARNING("SyntaxBasedPartialQueryMergerRule: Target and host operators are not matched.");
+    NES_WARNING2("SyntaxBasedPartialQueryMergerRule: Target and host operators are not matched.");
     return {};
 }
 }// namespace NES::Optimizer

@@ -182,7 +182,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                                                                                               , tupleCount, tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
-                    NES_WARNING("MQTTSource::fillBuffer: Not connected anymore!");
+                    NES_WARNING2("MQTTSource::fillBuffer: Not connected anymore!");
                     connected = false;
                 }
             } else if (client->is_connected()) {// We lost connection (connection=false), check if we are connected again.
@@ -250,7 +250,7 @@ bool MQTTSource::connect() {
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& error) {
-            NES_WARNING("MQTTSource::connect: " << error);
+            NES_WARNING2("MQTTSource::connect: {}", error);
             connected = false;
             return connected;
         }

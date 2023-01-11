@@ -107,7 +107,7 @@ void RequestProcessorService::start() {
                 if (requests[0]->instanceOf<Experimental::MaintenanceRequest>()) {
                     queryMigrationPhase->execute(requests[0]->as<Experimental::MaintenanceRequest>());
                 } else {
-                    NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
+                    NES_INFO2("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                     //1. Update global query plan by applying all requests
                     globalQueryPlanUpdatePhase->execute(requests);
 
@@ -278,7 +278,7 @@ void RequestProcessorService::start() {
                 shutDown();
             }
         }
-        NES_WARNING("QueryProcessingService: Terminated");
+        NES_WARNING2("QueryProcessingService: Terminated");
     } catch (std::exception& ex) {
         NES_FATAL_ERROR2("QueryProcessingService: Received unexpected exception while scheduling the queryId : {}", ex.what());
         shutDown();
@@ -293,7 +293,7 @@ bool RequestProcessorService::isQueryProcessorRunning() {
 
 void RequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
-    NES_INFO("Request Processor Service is shutting down! No further requests can be processed!");
+    NES_INFO2("Request Processor Service is shutting down! No further requests can be processed!");
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;
         queryRequestQueue->insertPoisonPill();

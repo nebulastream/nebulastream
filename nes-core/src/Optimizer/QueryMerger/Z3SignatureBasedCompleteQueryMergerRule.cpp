@@ -36,11 +36,11 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
 
 bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO(
+    NES_INFO2(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+        NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
@@ -82,7 +82,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                         for (auto& hostChild : hostSinkChildren) {
                             bool addedNewParent = hostChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                             hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                         }

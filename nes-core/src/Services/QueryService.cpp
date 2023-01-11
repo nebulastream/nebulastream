@@ -56,11 +56,11 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
                                                       const FaultToleranceType::Value faultTolerance,
                                                       const LineageType::Value lineage) {
 
-    NES_INFO("QueryService: Validating and registering the user query.");
+    NES_INFO2("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     try {
         // Checking the syntactic validity and compiling the query string to an object
-        NES_INFO("QueryService: check validation of a query.");
+        NES_INFO2("QueryService: check validation of a query.");
         QueryPlanPtr queryPlan = syntacticQueryValidation->validate(queryString);
 
         queryPlan->setQueryId(queryId);

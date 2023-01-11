@@ -120,7 +120,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         NES_TRACE2("BottomUpStrategy: Get the topology nodes where child operators are placed.");
         std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
         if (childTopologyNodes.empty()) {
-            NES_WARNING(
+            NES_WARNING2(
                 "BottomUpStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are placed.");
             return;
         }

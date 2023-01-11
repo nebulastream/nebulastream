@@ -116,7 +116,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
                         for (auto& hostChild : hostRootChildren) {
                             bool addedNewParent = hostChild->addParent(targetRootOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING2("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                         }
                         querysubplansToRemove.push_back(j);
@@ -210,7 +210,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
             NES_TRACE2("MlHeuristicStrategy: Get the topology nodes where child operators are placed.");
             std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
             if (childTopologyNodes.empty()) {
-                NES_WARNING("MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
+                NES_WARNING2("MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
                             "placed.");
                 return;
             }

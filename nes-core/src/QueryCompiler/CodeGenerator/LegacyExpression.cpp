@@ -133,7 +133,7 @@ WhenPredicate::WhenPredicate(const LegacyExpressionPtr& left, const LegacyExpres
 LegacyExpressionPtr WhenPredicate::copy() const { return std::make_shared<WhenPredicate>(*this); }
 
 ExpressionStatementPtr WhenPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
-    NES_INFO("LegacyWhenPredicate: This predicate generates code, but it should never generate code on its own. The code will "
+    NES_INFO2("LegacyWhenPredicate: This predicate generates code, but it should never generate code on its own. The code will "
              "just return the right expression.")
     return TernaryOperatorStatement(*(left->generateCode(code, recordHandler)),
                                     *(right->generateCode(code, recordHandler)),

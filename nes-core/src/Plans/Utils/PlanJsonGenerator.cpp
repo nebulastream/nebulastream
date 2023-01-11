@@ -35,7 +35,7 @@
 namespace NES {
 
 std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNode) {
-    NES_INFO("Util: getting the type of the operator");
+    NES_INFO2("Util: getting the type of the operator");
 
     std::string operatorType;
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -137,7 +137,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 }
 
 nlohmann::json PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecutionPlanPtr& globalExecutionPlan, QueryId queryId) {
-    NES_INFO("UtilityFunctions: getting execution plan as JSON");
+    NES_INFO2("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
     std::vector<nlohmann::json> nodes = {};

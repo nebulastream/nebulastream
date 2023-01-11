@@ -41,7 +41,7 @@ void MaterializedViewSink::shutdown() { view->clear(); }
 void MaterializedViewSink::setup(){};
 
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_INFO("MaterializedViewSink::writeData");
+    NES_INFO2("MaterializedViewSink::writeData");
     bool ret = view->writeData(inputBuffer);
     ++sentBuffer;
     updateWatermarkCallback(inputBuffer);

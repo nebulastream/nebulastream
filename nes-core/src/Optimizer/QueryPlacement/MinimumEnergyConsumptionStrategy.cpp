@@ -53,7 +53,7 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(Qu
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("MinimumEnergyConsumption: Placing operators on the nes topology.");
+    NES_INFO2("MinimumEnergyConsumption: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
@@ -61,10 +61,10 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(Qu
     NES_DEBUG2("MinimumEnergyConsumption: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("MinimumEnergyConsumption: Adding forward operators.");
+    NES_INFO2("MinimumEnergyConsumption: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("MinimumEnergyConsumption: Generating complete execution Graph.");
+    NES_INFO2("MinimumEnergyConsumption: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
@@ -93,7 +93,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
 
-    NES_INFO("MinimumEnergyConsumption: preparing common path between sources");
+    NES_INFO2("MinimumEnergyConsumption: preparing common path between sources");
     vector<NESTopologyEntryPtr> commonPath;
     auto pathMap = pathFinder->findUniquePathBetween(sourceNodes, sinkNode);
 
@@ -132,7 +132,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         }
     }
 
-    NES_INFO("MinimumEnergyConsumption: Sort all paths in increasing order of compute resources");
+    NES_INFO2("MinimumEnergyConsumption: Sort all paths in increasing order of compute resources");
     //Sort all the paths with increased aggregated compute capacity
     vector<std::pair<uint64_t, int>> computeCostList;
 
@@ -154,7 +154,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     }
 
     uint64_t lastPlacedOperatorId;
-    NES_INFO("MinimumEnergyConsumption: place all non blocking operators starting from source first");
+    NES_INFO2("MinimumEnergyConsumption: place all non blocking operators starting from source first");
     for (auto path : sortedListOfPaths) {
         LogicalOperatorNodePtr targetOperator = sourceOperator;
         NES_DEBUG2("MinimumEnergyConsumption: Transforming New Operator into legacy operator");
@@ -162,7 +162,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         while (!operatorIsBlocking[legacyOperator->getOperatorType()] && targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
 
             if (targetOperator->instanceOf<SourceLogicalOperatorNode>()) {
-                NES_INFO("MinimumEnergyConsumption: find if the target non blocking operator already scheduled on common path");
+                NES_INFO2("MinimumEnergyConsumption: find if the target non blocking operator already scheduled on common path");
                 bool foundOperator = false;
                 for (auto commonNode : commonPath) {
                     const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(commonNode->getId());
@@ -180,8 +180,8 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 }
 
                 if (foundOperator) {
-                    NES_INFO("MinimumEnergyConsumption: found target operator already scheduled.");
-                    NES_INFO("MinimumEnergyConsumption: Skipping rest of the placement for current physical sensor.");
+                    NES_INFO2("MinimumEnergyConsumption: found target operator already scheduled.");
+                    NES_INFO2("MinimumEnergyConsumption: Skipping rest of the placement for current physical sensor.");
                     break;
                 }
             }

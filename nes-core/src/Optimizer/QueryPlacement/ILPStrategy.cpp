@@ -58,7 +58,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_INFO("ILPStrategy: Performing placement of the input query plan with id " << queryId);
+    NES_INFO2("ILPStrategy: Performing placement of the input query plan with id {}", queryId);
 
     // 1. Find the path where operators need to be placed
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -211,7 +211,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 7. Get the model to retrieve the optimization solution.
     auto z3Model = opt.get_model();
     NES_DEBUG2("ILPStrategy:model: {}",  z3Model);
-    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
+    NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
     std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
@@ -227,9 +227,9 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
     }
 
-    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
+    NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
     for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
-        NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
+        NES_INFO2("Operator {} is executed on Topology Node {}",  operatorNode->toString(), topologyNode->toString());
     }
 
     // 8. Pin the operators based on ILP solution.

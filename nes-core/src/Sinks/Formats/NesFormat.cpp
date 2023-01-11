@@ -42,7 +42,7 @@ std::vector<Runtime::TupleBuffer> NesFormat::getData(Runtime::TupleBuffer& input
     std::vector<Runtime::TupleBuffer> buffers;
 
     if (inputBuffer.getNumberOfTuples() == 0) {
-        NES_WARNING("NesFormat::getData: write watermark-only buffer");
+        NES_WARNING2("NesFormat::getData: write watermark-only buffer");
         buffers.push_back(inputBuffer);
         return buffers;
     }

@@ -53,10 +53,10 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanP
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("HighAvailabilityStrategy: Placing operators on the nes topology.");
+    NES_INFO2("HighAvailabilityStrategy: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodePtrs);
 
-    NES_INFO("HighAvailabilityStrategy: Generating complete execution Graph.");
+    NES_INFO2("HighAvailabilityStrategy: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
@@ -75,9 +75,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     uint64_t linkRedundency = 2;
 
-    NES_INFO("HighAvailabilityStrategy: Find paths between source nodes and sink node such that the nodes on the paths are"
-             "connected with "
-             << linkRedundency << " number of redundant links.");
+    NES_INFO2("HighAvailabilityStrategy: Find paths between source nodes and sink node such that the nodes on the paths are"
+             "connected with {} number of redundant links.", linkRedundency);
     vector<vector<NESTopologyEntryPtr>> placementPaths;
 
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
@@ -157,7 +156,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
         placementPaths.push_back(pathForPlacement);
     }
 
-    NES_INFO("HighAvailabilityStrategy: Sort the paths based on available compute resources.");
+    NES_INFO2("HighAvailabilityStrategy: Sort the paths based on available compute resources.");
 
     //Sort all the paths with increased aggregated compute capacity
     vector<std::pair<uint64_t, int>> computeCostList;
@@ -179,7 +178,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
         sortedListOfPaths.push_back(placementPaths[pair.second]);
     }
 
-    NES_INFO("HighAvailabilityStrategy: Perform placement of operators on each path.");
+    NES_INFO2("HighAvailabilityStrategy: Perform placement of operators on each path.");
 
     for (vector<NESTopologyEntryPtr> pathForPlacement : sortedListOfPaths) {
 
@@ -236,7 +235,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 break;
             }
 
-            NES_INFO("HighAvailabilityStrategy: Find if next target operator already placed on one of the nodes of current path");
+            NES_INFO2("HighAvailabilityStrategy: Find if next target operator already placed on one of the nodes of current path");
 
             //find if the next target operator already placed
             bool isAlreadyPlaced = false;
@@ -260,7 +259,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
             }
         }
 
-        NES_INFO("HighAvailabilityStrategy: Add forward operators to the remaining nodes on current path");
+        NES_INFO2("HighAvailabilityStrategy: Add forward operators to the remaining nodes on current path");
         addForwardOperators(pathForPlacement, nesExecutionPlanPtr);
     }
 }

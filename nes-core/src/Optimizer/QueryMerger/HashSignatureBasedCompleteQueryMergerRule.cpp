@@ -30,11 +30,11 @@ HashSignatureBasedCompleteQueryMergerRulePtr HashSignatureBasedCompleteQueryMerg
 }
 
 bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-    NES_INFO(
+    NES_INFO2(
         "HashSignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING2("HashSignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
@@ -83,7 +83,7 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
                         for (auto& hostChild : hostSinkChildren) {
                             bool addedNewParent = hostChild->addParent(targetSinkOperator);
                             if (!addedNewParent) {
-                                NES_WARNING("HashSignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                                NES_WARNING2("HashSignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                             hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
                         }

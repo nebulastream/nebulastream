@@ -57,7 +57,7 @@ MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPl
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("MinimumResourceConsumption: Placing operators on the nes topology.");
+    NES_INFO2("MinimumResourceConsumption: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
@@ -65,10 +65,10 @@ MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPl
     NES_DEBUG2("MinimumResourceConsumption: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("MinimumResourceConsumption: Adding forward operators.");
+    NES_INFO2("MinimumResourceConsumption: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("MinimumResourceConsumption: Generating complete execution Graph.");
+    NES_INFO2("MinimumResourceConsumption: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.

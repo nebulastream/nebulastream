@@ -27,7 +27,7 @@ BinaryOperatorSortRulePtr BinaryOperatorSortRule::create() {
 BinaryOperatorSortRule::BinaryOperatorSortRule() { NES_DEBUG2("BinaryOperatorSortRule()"); };
 
 QueryPlanPtr BinaryOperatorSortRule::apply(QueryPlanPtr queryPlanPtr) {
-    NES_INFO("Apply BinaryOperatorSortRule ");
+    NES_INFO2("Apply BinaryOperatorSortRule ");
     //Find all join operators in the query plan and sort children individually.
     auto joinOperators = queryPlanPtr->getOperatorByType<JoinLogicalOperatorNode>();
     for (const auto& joinOperator : joinOperators) {

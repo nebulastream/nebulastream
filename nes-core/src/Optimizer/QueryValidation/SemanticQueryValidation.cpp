@@ -94,7 +94,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             // Adding the conditions to the z3 SMT solver
             z3::ExprPtr conditions = qsp->getConditions();
             solver.add(*(qsp->getConditions()));
-            NES_INFO(solver);
+            NES_INFO2("{}", solver);
             // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
             if (solver.check() == z3::unsat) {
                 auto predicateStr = filterOp->getPredicate()->toString();
@@ -102,7 +102,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             }
         }
     } catch (SignatureComputationException& ex) {
-        NES_WARNING("Unable to compute signature due to " << ex.what());
+        NES_WARNING2("Unable to compute signature due to {}", ex.what());
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
         throw InvalidQueryException(errorMessage + "\n");

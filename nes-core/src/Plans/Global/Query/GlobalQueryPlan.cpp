@@ -106,7 +106,7 @@ SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
 }
 
 bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
+    NES_INFO2("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     //Mark the shared query plan as updated post merging new queries
     sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
@@ -119,7 +119,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
 }
 
 void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
-    NES_INFO("GlobalQueryPlan: remove empty metadata information.");
+    NES_INFO2("GlobalQueryPlan: remove empty metadata information.");
     //Following associative-container erase idiom
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
         auto sharedQueryPlan = itr->second;
@@ -135,7 +135,7 @@ void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
 }
 
 std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
-    NES_INFO("GlobalQueryPlan: Get all metadata information");
+    NES_INFO2("GlobalQueryPlan: Get all metadata information");
     std::vector<SharedQueryPlanPtr> sharedQueryPlans;
     NES_TRACE2("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
@@ -154,7 +154,7 @@ SharedQueryPlanPtr GlobalQueryPlan::getSharedQueryPlan(SharedQueryId sharedQuery
 }
 
 bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
-    NES_INFO("Create new shared query plan");
+    NES_INFO2("Create new shared query plan");
     QueryId inputQueryPlanId = queryPlan->getQueryId();
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();

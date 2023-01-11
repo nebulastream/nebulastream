@@ -56,7 +56,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("LowLatency: Placing operators on the nes topology.");
+    NES_INFO2("LowLatency: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
@@ -64,10 +64,10 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr que
     NES_DEBUG2("LowLatency: Find the path used for performing the placement based on the strategy type");
     vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
-    NES_INFO("LowLatency: Adding forward operators.");
+    NES_INFO2("LowLatency: Adding forward operators.");
     addSystemGeneratedOperators(candidateNodes, nesExecutionPlanPtr);
 
-    NES_INFO("LowLatency: Generating complete execution Graph.");
+    NES_INFO2("LowLatency: Generating complete execution Graph.");
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.

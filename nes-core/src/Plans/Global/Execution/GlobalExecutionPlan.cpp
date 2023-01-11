@@ -39,7 +39,7 @@ ExecutionNodePtr GlobalExecutionPlan::getExecutionNodeByNodeId(uint64_t id) {
         NES_DEBUG2("GlobalExecutionPlan: Returning execution node with id  {}",  id);
         return nodeIdIndex[id];
     }
-    NES_WARNING("GlobalExecutionPlan: Execution node doesn't exists with the id " << id);
+    NES_WARNING2("GlobalExecutionPlan: Execution node doesn't exists with the id {}",  id);
     return nullptr;
 }
 
@@ -57,10 +57,10 @@ bool GlobalExecutionPlan::addExecutionNodeAsParentTo(uint64_t childId, const Exe
             nodeIdIndex[parentExecutionNode->getId()] = parentExecutionNode;
             return true;
         }
-        NES_WARNING("GlobalExecutionPlan: Failed to add Execution node as parent to the execution node with id " << childId);
+        NES_WARNING2("GlobalExecutionPlan: Failed to add Execution node as parent to the execution node with id {}",  childId);
         return false;
     }
-    NES_WARNING("GlobalExecutionPlan: Child node doesn't exists with the id " << childId);
+    NES_WARNING2("GlobalExecutionPlan: Child node doesn't exists with the id {}",  childId);
     return false;
 }
 
@@ -72,7 +72,7 @@ bool GlobalExecutionPlan::addExecutionNodeAsRoot(const ExecutionNodePtr& executi
         NES_DEBUG2("GlobalExecutionPlan: Added Execution node with id  {}",  executionNode->getId());
         nodeIdIndex[executionNode->getId()] = executionNode;
     } else {
-        NES_WARNING("GlobalExecutionPlan: Execution node already present in the root node list");
+        NES_WARNING2("GlobalExecutionPlan: Execution node already present in the root node list");
     }
     return true;
 }
@@ -103,7 +103,7 @@ bool GlobalExecutionPlan::removeExecutionNode(uint64_t id) {
 bool GlobalExecutionPlan::removeQuerySubPlans(QueryId queryId) {
     auto itr = queryIdIndex.find(queryId);
     if (itr == queryIdIndex.end()) {
-        NES_WARNING("GlobalExecutionPlan: No query with id " << queryId << " exists in the system");
+        NES_DEBUG2("GlobalExecutionPlan: No query with id {} exists in the system",  queryId);
         return false;
     }
 
@@ -130,12 +130,12 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getExecutionNodesByQueryId(Qu
         NES_DEBUG2("GlobalExecutionPlan: Returning vector of Execution nodes for the query with id  {}",  queryId);
         return itr->second;
     }
-    NES_WARNING("GlobalExecutionPlan: unable to find the Execution nodes for the query with id " << queryId);
+    NES_WARNING2("GlobalExecutionPlan: unable to find the Execution nodes for the query with id {}",  queryId);
     return {};
 }
 
 std::vector<ExecutionNodePtr> GlobalExecutionPlan::getAllExecutionNodes() {
-    NES_INFO("GlobalExecutionPlan: get all execution nodes");
+    NES_INFO2("GlobalExecutionPlan: get all execution nodes");
     std::vector<ExecutionNodePtr> executionNodes;
     for (auto& [nodeId, executionNode] : nodeIdIndex) {
         executionNodes.push_back(executionNode);
@@ -199,7 +199,7 @@ void GlobalExecutionPlan::mapExecutionNodeToQueryId(const ExecutionNodePtr& exec
 
 std::map<uint64_t, uint32_t> GlobalExecutionPlan::getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId) {
 
-    NES_INFO("GlobalExecutionPlan: Get a map of occupied resources for the query " << queryId);
+    NES_INFO2("GlobalExecutionPlan: Get a map of occupied resources for the query {}", queryId);
     std::map<uint64_t, uint32_t> mapOfTopologyNodeIdToOccupiedResources;
     std::vector<ExecutionNodePtr> executionNodes = queryIdIndex[queryId];
     NES_DEBUG2("GlobalExecutionPlan: Found {} Execution node for query with id {}", executionNodes.size(), queryId);

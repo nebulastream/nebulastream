@@ -19,7 +19,7 @@
 #ifdef __linux__
 namespace NES::Sensors {
 
-I2CBus::I2CBus(const char* filename) : GenericBus(filename, BusType::I2C) { NES_INFO("I2CBus: Creating bus"); }
+I2CBus::I2CBus(const char* filename) : GenericBus(filename, BusType::I2C) { NES_INFO2("I2CBus: Creating bus"); }
 
 I2CBus::~I2CBus() { NES_DEBUG2("I2CBus: Destroying bus"); }
 

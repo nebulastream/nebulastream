@@ -129,7 +129,7 @@ bool DataSource::start() {
     bool expected = false;
     std::shared_ptr<std::thread> thread{nullptr};
     if (!running.compare_exchange_strong(expected, true)) {
-        NES_WARNING("DataSource " << operatorId << ": is already running " << this);
+        NES_WARNING2("DataSource {}: is already running {}", operatorId, this);
         return false;
     } else {
         type = getType();
@@ -151,7 +151,7 @@ bool DataSource::start() {
                         NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + std::to_string(operatorId));
                     }
                 } else {
-                    NES_WARNING("Use default affinity for source");
+                    NES_WARNING2("Use default affinity for source");
                 }
 #endif
                 prom.set_value(true);
@@ -236,7 +236,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
             NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
                                 && detail::waitForFuture(completedPromise.get_future(), 10min),
                             "Cannot complete future to stop source " << operatorId);
-            NES_WARNING("Stopped Source " << operatorId << " = " << wasGracefullyStopped);
+            NES_WARNING2("Stopped Source {} = {}", operatorId, wasGracefullyStopped);
             return true;
         }
     } catch (...) {
