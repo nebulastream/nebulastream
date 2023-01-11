@@ -30,6 +30,7 @@
 #include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 using namespace NES;
 
@@ -40,9 +41,10 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService,
                                            LocationServicePtr locationService)
-    : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
-      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService),
-      locationService(locationService){};
+    : queryService(std::move(queryService)), topologyManagerService(std::move(topologyManagerService)),
+      sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
+      monitoringManager(std::move(monitoringManager)), replicationService(std::move(replicationService)),
+      locationService(std::move(locationService)){};
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
@@ -447,7 +449,8 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
 
     for (const auto& toRemove : reconnectsToRemoveMessage) {
         NES::Spatial::DataTypes::Experimental::GeoLocation location(toRemove.geolocation());
-        removedReconnects.emplace_back(NES::Spatial::Mobility::Experimental::ReconnectPoint{location, toRemove.id(), toRemove.time()});
+        removedReconnects.emplace_back(
+            NES::Spatial::Mobility::Experimental::ReconnectPoint{location, toRemove.id(), toRemove.time()});
     }
     bool success = locationService->updatePredictedReconnect(addedReconnects, removedReconnects);
     reply->set_success(success);
@@ -465,7 +468,11 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
               << request->workerid() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
               << timestamp);
     //todo #2862: update coordinator trajectory prediction
-    topologyManagerService->updateGeoLocation(request->workerid(), NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates));
-    reply->set_success(true);
-    return Status::OK;
+    auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
+    if(!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))){
+        reply->set_success(true);
+        return Status::OK;
+    }
+    reply->set_success(false);
+    return Status::CANCELLED;
 }
