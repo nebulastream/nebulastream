@@ -37,6 +37,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
@@ -154,7 +155,25 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         parentOperator->setChild(map);
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
-        auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode);
+        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+        auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
+        auto className = mapJavaUdfDescriptor->getClassName();
+        auto methodName = mapJavaUdfDescriptor->getMethodName();
+        auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
+        auto inputClassName = mapJavaUdfDescriptor->getInputClassName();
+        auto outputClassName = mapJavaUdfDescriptor->getOutputClassName();
+        auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
+        auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+        auto serializedInstance = mapJavaUdfDescriptor->getSerializedInstance();
+        auto returnType = mapJavaUdfDescriptor->getReturnType();
+
+        auto handler =
+            std::make_shared<Runtime::Execution::Operators::MapJavaUdfOperatorHandler>(className, methodName, inputClassName, outputClassName,
+                                       byteCodeList, serializedInstance, inputSchema, outputSchema, std::nullopt);
+        operatorHandlers.push_back(handler);
+        auto indexForThisHandler = operatorHandlers.size() - 1;
+
+        auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
         parentOperator->setChild(mapJavaUdf);
         return mapJavaUdf;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
@@ -360,17 +379,15 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                  uint64_t handlerIndex) {
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
     auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
-    auto className = mapJavaUdfDescriptor->getClassName();
-    auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
+    auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
     auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
-    auto serializedInstance = mapJavaUdfDescriptor->getSerializedInstance();
-    auto methodName = mapJavaUdfDescriptor->getMethodName();
-    auto returnType = mapJavaUdfDescriptor->getReturnType();
+
     // TODO move types into the map java udf
-    return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(className, byteCodeList, outputSchema, serializedInstance, methodName, returnType);
+    return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(handlerIndex, inputSchema, outputSchema);
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
