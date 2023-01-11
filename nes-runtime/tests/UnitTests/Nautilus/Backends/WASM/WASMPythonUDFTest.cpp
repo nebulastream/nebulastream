@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Nautilus/Backends/WASM/WASMRuntime.hpp"
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 
