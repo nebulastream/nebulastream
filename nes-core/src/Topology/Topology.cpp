@@ -45,7 +45,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
     if (indexOnNodeIds.find(idOfNodeToRemove) == indexOnNodeIds.end()) {
-        NES_WARNING2("Topology: The physical node {} doesn't exists in the system.", nodeToRemove);
+        NES_WARNING2("Topology: The physical node {} doesn't exists in the system.", fmt::ptr(nodeToRemove));
         return true;
     }
 
@@ -75,7 +75,7 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
     NES_INFO2("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (const auto& sourceNode : sourceNodes) {
-        NES_TRACE2("Topology: Finding all paths between the source node {} and a set of destination nodes", sourceNode);
+        NES_TRACE2("Topology: Finding all paths between the source node {} and a set of destination nodes", fmt::ptr(sourceNode));
         std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
         TopologyNodePtr startNodeOfGraph = find(sourceNode, destinationNodes, mapOfUniqueNodes);
         NES_TRACE2("Topology: Validate if all destination nodes reachable");
