@@ -88,7 +88,7 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
     lock.unlock();
     if (thread && thread->joinable()) {
         thread->join();
-        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Thread joinded",  this);
+        NES_DEBUG2("ExecutableOnTimeTriggerPolicy {}: Thread joined",  this);
     }
     thread.reset();
     // TODO what happens to the content of the window that it is still in the state?

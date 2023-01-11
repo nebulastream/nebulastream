@@ -60,7 +60,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         NES_TRACE2("KafkaSink::getData: write data");
         auto dataBuffers = sinkFormat->getData(inputBuffer);
         for (auto buffer : dataBuffers) {
-            NES_TRACE("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
+            NES_TRACE2("KafkaSink::getData: write buffer of size {}", buffer.getNumberOfTuples());
             cppkafka::Buffer kafkaBuffer(buffer.getBuffer(), buffer.getBufferSize());
             msgBuilder->payload(kafkaBuffer);
             producer->produce(*msgBuilder);
