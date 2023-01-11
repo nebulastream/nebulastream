@@ -24,14 +24,6 @@ namespace NES {
 
 namespace detail {
 
-struct LoggerHolder {
-    ~LoggerHolder() {
-        NES::Logger::getInstance().shutdown();
-        spdlog::shutdown();
-    }
-};
-static LoggerHolder helper;
-
 static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
 static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
@@ -118,16 +110,17 @@ Logger::Logger() : impl(detail::createEmptyLogger()) {}
 Logger::~Logger() { shutdown(); }
 
 void Logger::forceFlush() {
-    for (auto& sink : impl->sinks()) {
-        sink->flush();
+    if (impl) {
+        for (auto& sink : impl->sinks()) {
+            sink->flush();
+        }
+        impl->flush();
     }
-    impl->flush();
 }
 
 void Logger::shutdown() {
     bool expected = false;
     if (isShutdown.compare_exchange_strong(expected, true)) {
-        forceFlush();
         flusher.reset();
         impl.reset();
         loggerThreadPool.reset();
@@ -140,6 +133,7 @@ void Logger::configure(const std::string& logFileName, LogLevel level) {
     std::swap(level, currentLogLevel);
     std::swap(tp, loggerThreadPool);
     std::swap(flusher, this->flusher);
+    isShutdown = false;
 }
 
 void Logger::changeLogLevel(LogLevel newLevel) {
@@ -160,6 +154,13 @@ detail::Logger& getInstance() {
     static detail::Logger singleton;
     return singleton;
 }
+namespace detail {
+struct LoggerHolder {
+    ~LoggerHolder() { spdlog::shutdown(); }
+};
+static LoggerHolder helper;
+}// namespace detail
+
 }// namespace Logger
 
 }// namespace NES
