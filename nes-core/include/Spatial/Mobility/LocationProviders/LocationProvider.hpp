@@ -31,6 +31,7 @@ namespace Configurations {
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 }
+
 namespace Spatial::DataTypes::Experimental {
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental

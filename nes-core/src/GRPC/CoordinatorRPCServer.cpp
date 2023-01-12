@@ -18,17 +18,13 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/ReplicationService.hpp>
-#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Experimental/NodeTypeUtilities.hpp>
-#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
