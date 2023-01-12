@@ -50,7 +50,7 @@ TEST_P(IfCompilationTest, ifConditionTest) {
         return ifThenCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int16_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 43);
 }
 
@@ -70,7 +70,7 @@ TEST_P(IfCompilationTest, ifThenElseConditionTest) {
         return ifThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 85);
 }
 
@@ -92,7 +92,7 @@ TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
         return nestedIfThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -115,7 +115,7 @@ TEST_P(IfCompilationTest, nestedIFThenNoElse) {
         return nestedIfNoElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -137,7 +137,7 @@ TEST_P(IfCompilationTest, doubleIfCondition) {
         return doubleIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -157,7 +157,7 @@ TEST_P(IfCompilationTest, ifElseIfCondition) {
         return ifElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -185,7 +185,7 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
         return deeplyNestedIfElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -209,7 +209,7 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 17);
 }
 

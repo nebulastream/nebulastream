@@ -53,7 +53,7 @@ TEST_P(TypeCompilationTest, negativeIntegerTest) {
         return negativeIntegerTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), -1);
 }
 
@@ -72,7 +72,7 @@ TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
         return unsignedIntegerTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<uint32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<uint32_t>("execute");
     ASSERT_EQ(function(), UINT32_MAX);
 }
 
@@ -92,7 +92,7 @@ TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
         return boolCompareTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 1);
 }
 
@@ -108,7 +108,7 @@ TEST_P(TypeCompilationTest, DISABLED_floatTest) {
         return floatTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 1);
 }
 
@@ -124,7 +124,7 @@ TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest) {
         return mixBoolAndIntTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -187,7 +187,7 @@ TEST_P(TypeCompilationTest, customValueTypeTest) {
         return customValueType();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 128);
 }
 
@@ -243,7 +243,7 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    auto function = engine->getInvocableMember<int64_t,void*>("execute");
     ASSERT_EQ(function(listRef.get()), 4);
 }
 

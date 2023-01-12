@@ -31,6 +31,7 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
@@ -39,7 +40,7 @@
 #include <memory>
 
 namespace NES::Runtime::Execution {
-class GlobalTimeWindowPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
+class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -48,22 +49,19 @@ class GlobalTimeWindowPipelineTest : public testing::Test, public AbstractPipeli
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup GlobalTimeWindowPipelineTest test class." << std::endl;
+        NES_INFO("Setup Setup GlobalTimeWindowPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down GlobalTimeWindowPipelineTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down GlobalTimeWindowPipelineTest test class." << std::endl; }
 };
 
 /**
@@ -155,7 +153,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         GlobalTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<GlobalTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

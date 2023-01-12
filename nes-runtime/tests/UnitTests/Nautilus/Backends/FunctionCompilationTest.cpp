@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -37,7 +38,9 @@ class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractComp
     static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
-int64_t addInt(int64_t x, int64_t y) { return x + y; };
+int64_t addInt(int64_t x, int64_t y) {
+    return x + y;
+};
 
 Value<> addIntFunction() {
     auto x = Value<Int64>((int64_t) 2);
@@ -52,7 +55,7 @@ TEST_P(FunctionCompilationTest, addIntFunctionTest) {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -66,7 +69,7 @@ TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 42);
 }
 
@@ -80,7 +83,7 @@ TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_ANY_THROW(function());
 }
 
@@ -98,7 +101,7 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)(int64_t)>("execute");
+    auto function = result->getInvocableMember<int64_t,int64_t>("execute");
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }
