@@ -65,7 +65,7 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public
     void TearDown() override {
         T::TearDown();
         completeTest();
-        Logger::getInstance().forceFlush();
+        Logger::getInstance()->forceFlush();
         Exceptions::removeGlobalErrorListener(self);
         self.reset();
     }

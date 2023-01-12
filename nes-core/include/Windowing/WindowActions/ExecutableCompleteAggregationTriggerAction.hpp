@@ -112,7 +112,7 @@ class ExecutableCompleteAggregationTriggerAction
             tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
-            if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+            if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                 NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
@@ -245,7 +245,7 @@ class ExecutableCompleteAggregationTriggerAction
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                         auto rowLayout =
                             Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);

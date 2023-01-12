@@ -59,7 +59,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     generatedTuples += buf.getNumberOfTuples();
     generatedBuffers++;
 
-    if (Logger::getInstance().getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
         auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
         auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 

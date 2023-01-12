@@ -78,14 +78,12 @@ class NetworkStackTest : public Testing::NESBaseTest {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup NetworkStackTest");
         freeDataPort = getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         freeDataPort.reset();
-        NES_INFO("TearDown NetworkStackTest");
         Testing::NESBaseTest::TearDown();
     }
 
