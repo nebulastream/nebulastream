@@ -48,13 +48,13 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
     config->set("metadata.broker.list", brokers.c_str());
 
     connect();
-    NES_DEBUG2("KAFKASINK  " << this << ": Init KAFKA SINK to brokers  {} , topic  {}",  brokers,  topic);
+    NES_DEBUG2("KAFKASINK: Init KAFKA SINK to brokers  {} , topic  {}",  brokers,  topic);
 }
 
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_TRACE2("KAFKASINK  {} : writes buffer  {}",  this,  inputBuffer);
+    NES_TRACE2("KAFKASINK: writes buffer");
     try {
         std::stringstream outputStream;
         NES_TRACE2("KafkaSink::getData: write data");
@@ -67,7 +67,7 @@ bool KafkaSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         }
         producer->flush(std::chrono::milliseconds(kafkaProducerTimeout));
 
-        NES_DEBUG2("KAFKASINK  {} : send successfully",  this);
+        NES_DEBUG2("KAFKASINK: send successfully");
     } catch (const cppkafka::HandleException& ex) {
         throw;
     } catch (...) {
