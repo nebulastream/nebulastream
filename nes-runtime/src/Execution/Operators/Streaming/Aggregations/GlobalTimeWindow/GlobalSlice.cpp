@@ -33,4 +33,4 @@ GlobalSlice::GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end, const
     std::memcpy(state->ptr, defaultState->ptr, entrySize);
 }
 
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators

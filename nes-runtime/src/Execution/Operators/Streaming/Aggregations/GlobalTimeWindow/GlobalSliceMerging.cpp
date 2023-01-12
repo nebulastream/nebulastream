@@ -76,7 +76,7 @@ GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = (uint64_t)0;
+    Value<UInt64> entrySize = (uint64_t) 0;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
@@ -100,8 +100,8 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    Value<> startSliceTs = (sliceMergeTask + (uint64_t)offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
-    Value<> endSliceTs = (sliceMergeTask + (uint64_t)offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
+    Value<> startSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
+    Value<> endSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
     // emit global slice when we have a tumbling window.

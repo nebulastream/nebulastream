@@ -14,7 +14,6 @@
 
 #ifndef NES_TESTS_UTIL_TEST_SINK_HPP_
 #define NES_TESTS_UTIL_TEST_SINK_HPP_
-#include <gtest/gtest.h>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -27,6 +26,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 

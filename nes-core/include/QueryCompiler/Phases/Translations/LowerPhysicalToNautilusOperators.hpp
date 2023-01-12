@@ -68,17 +68,20 @@ class LowerPhysicalToNautilusOperators {
           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
           size_t bufferSize,
           std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
-    std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                                                                       const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                                                                       size_t bufferSize);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerScan(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+              const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+              size_t bufferSize);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerEmit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
               size_t bufferSize);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+    lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+    lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+             const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
