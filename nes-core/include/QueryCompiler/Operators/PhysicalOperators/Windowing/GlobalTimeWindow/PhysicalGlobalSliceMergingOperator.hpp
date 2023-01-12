@@ -29,22 +29,19 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalGlobalSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
 
-
   public:
-    using WindowHandlerType =
-        std::variant<Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr,
-                     std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>;
+    using WindowHandlerType = std::variant<Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr,
+                                           std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>;
     PhysicalGlobalSliceMergingOperator(OperatorId id,
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,
                                        WindowHandlerType operatorHandler,
                                        Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalGlobalSliceMergingOperator>
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           WindowHandlerType operatorHandler,
-           Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static std::shared_ptr<PhysicalGlobalSliceMergingOperator> create(SchemaPtr inputSchema,
+                                                                      SchemaPtr outputSchema,
+                                                                      WindowHandlerType operatorHandler,
+                                                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     WindowHandlerType getWindowHandler();
 

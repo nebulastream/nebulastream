@@ -98,5 +98,4 @@ Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) 
 const Value<MemRef>& ExecutionContext::getWorkerContext() const { return workerContext; }
 const Value<MemRef>& ExecutionContext::getPipelineContext() const { return pipelineContext; }
 
-
 }// namespace NES::Runtime::Execution

@@ -14,9 +14,9 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICE_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICE_HPP_
 #include <cinttypes>
+#include <cstdlib>
 #include <memory>
 #include <ostream>
-#include <cstdlib>
 namespace NES::Runtime::Execution::Operators {
 
 /**

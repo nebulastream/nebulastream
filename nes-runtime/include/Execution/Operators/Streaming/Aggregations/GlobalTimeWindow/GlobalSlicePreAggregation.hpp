@@ -27,7 +27,8 @@ class GlobalSlicePreAggregation : public ExecutableOperator {
     /**
     * @brief Creates a GlobalSlicePreAggregation operator
     */
-    GlobalSlicePreAggregation(uint64_t operatorHandlerIndex, Expressions::ExpressionPtr timestampExpression,
+    GlobalSlicePreAggregation(uint64_t operatorHandlerIndex,
+                              Expressions::ExpressionPtr timestampExpression,
                               const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                               const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;

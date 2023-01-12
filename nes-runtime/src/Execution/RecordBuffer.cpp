@@ -72,5 +72,4 @@ Value<UInt64> RecordBuffer::getSequenceNr() {
                           tupleBufferRef);
 }
 
-
 }// namespace NES::Runtime::Execution

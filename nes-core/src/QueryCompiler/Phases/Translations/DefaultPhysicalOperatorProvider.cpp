@@ -78,14 +78,14 @@
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
