@@ -152,7 +152,7 @@ LinkPropertyPtr TopologyNode::getLinkProperty(const TopologyNodePtr& linkedNode)
 
 bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     if (linkProperties.find(linkedNode->getId()) == linkProperties.end()) {
-        NES_ERROR2("TopologyNode: Link property to node with id='{}' does not exist", fmt::ptr(linkedNode));
+        NES_ERROR2("TopologyNode: Link property to node with id='{}' does not exist", linkedNode);
         return false;
     }
     linkProperties.erase(linkedNode->getId());

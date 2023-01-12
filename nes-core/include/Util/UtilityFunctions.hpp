@@ -24,6 +24,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <Util/Logger/Logger.hpp>
 
 /**
  * @brief a collection of shared utility functions
