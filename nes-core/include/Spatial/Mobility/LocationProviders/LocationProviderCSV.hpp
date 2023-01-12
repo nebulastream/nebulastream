@@ -60,7 +60,7 @@ class LocationProviderCSV : public LocationProvider {
 
     Timestamp startTime;
     std::vector<DataTypes::Experimental::Waypoint> waypoints;
-    size_t nextWaypoint;
+    size_t nextWaypointIndex;
     std::string csvPath;
 };
 }// namespace NES::Spatial::Mobility::Experimental

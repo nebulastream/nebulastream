@@ -19,18 +19,12 @@
 #include <Health.grpc.pb.h>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Spatial/Index/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
-#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <fstream>
-#include <log4cxx/helpers/exception.h>
 #include <string>
 
 namespace NES {

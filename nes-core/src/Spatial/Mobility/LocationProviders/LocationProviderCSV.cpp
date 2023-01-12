@@ -28,7 +28,7 @@ namespace NES::Spatial::Mobility::Experimental {
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProviderCSV(csvPath, 0) {}
 
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime)
-    : LocationProvider(Spatial::Experimental::SpatialType::MOBILE_NODE, {}), csvPath(std::move(csvPath)) {
+    : LocationProvider(Spatial::Experimental::SpatialType::MOBILE_NODE, {}), nextWaypointIndex(0), csvPath(std::move(csvPath)) {
     if (simulatedStartTime == 0) {
         startTime = getTimestamp();
     } else {
@@ -42,7 +42,6 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     std::string latitudeString;
     std::string longitudeString;
     std::string timeString;
-    nextWaypoint = 0;
 
     NES_DEBUG("Started csv location source at " << startTime)
 
@@ -72,11 +71,11 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().getTimestamp().value() << ", last timestamp is "
                                     << waypoints.back().getTimestamp().value())
-    //set first csv entry as the next wypoint
+    //set first csv entry as the next waypoint
 }
 
 DataTypes::Experimental::Waypoint LocationProviderCSV::getCurrentWaypoint() {
-    if (waypoints.empty()){
+    if (waypoints.empty()) {
         loadMovementSimulationDataFromCsv();
     }
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
@@ -84,21 +83,21 @@ DataTypes::Experimental::Waypoint LocationProviderCSV::getCurrentWaypoint() {
 
     //find the waypoint with the smallest timestamp greater than requestTime
     //this point is the next waypoint on the way ahead of us
-    while (nextWaypoint < waypoints.size() && getWaypointAt(nextWaypoint).getTimestamp().value() < requestTime) {
-        nextWaypoint++;
+    while (nextWaypointIndex < waypoints.size() && getWaypointAt(nextWaypointIndex).getTimestamp().value() < requestTime) {
+        nextWaypointIndex++;
     }
 
-    //if the first waypoint is still in the future, simulate the device to be resting at that position until the specified timestamp
-    if (nextWaypoint == 0) {
-        return DataTypes::Experimental::Waypoint(getWaypointAt(nextWaypoint).getLocation(), requestTime);
+    //Check if next waypoint is still initialized as 0.
+    //Set the current waypoint as the first location in the csv file
+    if (nextWaypointIndex == 0) {
+        return {getWaypointAt(nextWaypointIndex).getLocation(), requestTime};
     }
 
     //find the last point behind us on the way
-    auto prevWaypoint = nextWaypoint - 1;
-
-    NES_TRACE("Location: " << getWaypointAt(prevWaypoint).getLocation().toString()
-                           << "; Time: " << getWaypointAt(prevWaypoint).getTimestamp().value())
-    return getWaypointAt(prevWaypoint);
+    auto currentWaypointIndex = nextWaypointIndex - 1;
+    auto currentWayPoint = getWaypointAt(currentWaypointIndex);
+    NES_TRACE("Location: " << currentWayPoint.getLocation().toString() << "; Time: " << currentWayPoint.getTimestamp().value())
+    return currentWayPoint;
 }
 
 Timestamp LocationProviderCSV::getStartTime() const { return startTime; }
