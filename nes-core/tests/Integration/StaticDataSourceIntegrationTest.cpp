@@ -68,8 +68,8 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
     const std::string table_path_integers_2 = "./test_data/static_data_2.tbl";
 
     static void SetUpTestCase() {
-        NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
         NES::Logger::setupLogging("StaticDataSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
     }
 
     SchemaPtr schema_customer;

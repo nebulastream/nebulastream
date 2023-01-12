@@ -66,15 +66,13 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-auto createLogger(std::string loggerPath, LogLevel level) -> std::tuple<std::shared_ptr<spdlog::logger>,
-                                                                        std::shared_ptr<spdlog::details::thread_pool>,
-                                                                        std::unique_ptr<spdlog::details::periodic_worker>> {
+Logger::Logger(const std::string& logFileName, LogLevel level) {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
-    auto tp = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
+    loggerThreadPool = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
 
     auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(loggerPath, true);
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
 
     auto spdlogLevel = toSpdlogLevel(level);
 
@@ -87,22 +85,20 @@ auto createLogger(std::string loggerPath, LogLevel level) -> std::tuple<std::sha
 
     std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
 
-    auto logger = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
-                                                         sinks.begin(),
-                                                         sinks.end(),
-                                                         tp,
-                                                         spdlog::async_overflow_policy::block);
+    impl = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
+                                                  sinks.begin(),
+                                                  sinks.end(),
+                                                  loggerThreadPool,
+                                                  spdlog::async_overflow_policy::block);
 
-    logger->set_level(spdlogLevel);
-    logger->flush_on(spdlog::level::debug);
+    impl->set_level(spdlogLevel);
+    impl->flush_on(spdlog::level::debug);
 
-    auto flusher = std::make_unique<spdlog::details::periodic_worker>(
-        [logger]() {
-            logger->flush();
+    flusher = std::make_unique<spdlog::details::periodic_worker>(
+        [this]() {
+            impl->flush();
         },
         std::chrono::seconds(1));
-
-    return std::make_tuple(logger, tp, std::move(flusher));
 }
 
 Logger::Logger() : impl(detail::createEmptyLogger()) {}
@@ -127,15 +123,6 @@ void Logger::shutdown() {
     }
 }
 
-void Logger::configure(const std::string& logFileName, LogLevel level) {
-    auto [configuredLogger, tp, flusher] = detail::createLogger(logFileName, level);
-    std::swap(configuredLogger, impl);
-    std::swap(level, currentLogLevel);
-    std::swap(tp, loggerThreadPool);
-    std::swap(flusher, this->flusher);
-    isShutdown = false;
-}
-
 void Logger::changeLogLevel(LogLevel newLevel) {
     auto spdNewLogLevel = detail::toSpdlogLevel(newLevel);
     for (auto& sink : impl->sinks()) {
@@ -144,22 +131,28 @@ void Logger::changeLogLevel(LogLevel newLevel) {
     impl->set_level(spdNewLogLevel);
     std::swap(newLevel, currentLogLevel);
 }
+
+struct LoggerHolder {
+    static std::shared_ptr<Logger> singleton;
+    ~LoggerHolder() {
+        singleton.reset();
+        spdlog::shutdown();
+    }
+};
+std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
+
 }// namespace detail
 
 namespace Logger {
 
-void setupLogging(const std::string& logFileName, LogLevel level) { Logger::getInstance().configure(logFileName, level); }
+static detail::LoggerHolder helper;
 
-detail::Logger& getInstance() {
-    static detail::Logger singleton;
-    return singleton;
+void setupLogging(const std::string& logFileName, LogLevel level) {
+    auto newLogger = std::make_shared<detail::Logger>(logFileName, level);
+    std::swap(detail::LoggerHolder::singleton, newLogger);
 }
-namespace detail {
-struct LoggerHolder {
-    ~LoggerHolder() { spdlog::shutdown(); }
-};
-static LoggerHolder helper;
-}// namespace detail
+
+std::shared_ptr<detail::Logger> getInstance() { return detail::LoggerHolder::singleton; }
 
 }// namespace Logger
 

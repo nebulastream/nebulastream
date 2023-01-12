@@ -15,18 +15,15 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-namespace NES::Compiler {
-class SharedLibraryTest : public Testing::TestWithErrorHandling<testing::Test> {
+using namespace NES;
+using namespace NES::Compiler;
+class SharedLibraryTest : public Testing::NESBaseTest {
   public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG);
-
-        NES_INFO("SharedLibraryTest test class SetUpTestCase.");
-    }
-    static void TearDownTestCase() { NES_INFO("SharedLibraryTest test class TearDownTestCase."); }
+    /* Will be called before a test is executed. */
+    static void SetUpTestCase() { NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST(SharedLibraryTest, loadSharedLib) {
+TEST_F(SharedLibraryTest, loadSharedLib) {
 #ifdef __linux__
     auto sharedLib = SharedLibrary::load("libnes-compiler.so");
 #elif defined(__APPLE__)
@@ -37,9 +34,17 @@ TEST(SharedLibraryTest, loadSharedLib) {
     sharedLib.reset();
 }
 
-TEST(SharedLibraryTest, loadSharedLibERROR) { EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so")); }
+TEST_F(SharedLibraryTest, loadSharedLibWithError) {
+#ifdef __linux__
+    EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.so"));
+#elif defined(__APPLE__)
+    EXPECT_ANY_THROW(SharedLibrary::load("NotExisting.dylib"));
+#else
+#error "Unknown error"
+#endif
+}
 
-TEST(SharedLibraryTest, loadSymbleERROR) {
+TEST_F(SharedLibraryTest, loadSymbleERROR) {
     using FunctionType = uint64_t (*)();
 #ifdef __linux__
     auto sharedLib = SharedLibrary::load("libnes-compiler.so");
@@ -50,5 +55,3 @@ TEST(SharedLibraryTest, loadSymbleERROR) {
 #endif
     EXPECT_ANY_THROW(sharedLib->getInvocableMember<FunctionType>("NotExisting"));
 }
-
-}// namespace NES::Compiler

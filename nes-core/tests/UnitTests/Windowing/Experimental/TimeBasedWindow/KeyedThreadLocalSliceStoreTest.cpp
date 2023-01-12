@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,14 +22,17 @@
 using namespace std;
 namespace NES::Windowing::Experimental {
 
-class KeyedThreadLocalSliceStoreTest : public testing::Test {
+class KeyedThreadLocalSliceStoreTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test class."); }
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("KeyedThreadLocalSliceStoreTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test class.");
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("KeyedThreadLocalSliceStoreTest.log", NES::LogLevel::LOG_DEBUG);
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("Setup KeyedThreadLocalSliceStoreTest test case.");
         auto bufferManager = std::make_shared<Runtime::BufferManager>();
         size_t keySize = 8;
@@ -36,9 +40,6 @@ class KeyedThreadLocalSliceStoreTest : public testing::Test {
         size_t nrEntries = 100;
         hashMapFactory = std::make_shared<NES::Experimental::HashMapFactory>(bufferManager, keySize, valueSize, nrEntries);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down KeyedSliceTest test case."); }
 
   public:
     std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory;
