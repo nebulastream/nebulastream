@@ -146,6 +146,13 @@ uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
 bool startsWith(const std::string& fullString, const std::string& ending);
 
 /**
+ * @brief transforms the string to an upper case version
+ * @param string
+ * @return string
+ */
+std::string toUpperCase(std::string string);
+
+/**
 * @brief splits a string given a delimiter into multiple substrings stored in a T vector
 * the delimiter is allowed to be a string rather than a char only.
 * @param data - the string that is to be split
