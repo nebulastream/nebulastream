@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/SlidingWindowAssigner.hpp>
 #include <algorithm>
@@ -20,21 +21,13 @@
 using namespace std;
 namespace NES::Windowing::Experimental {
 
-class WindowAssignerTest : public testing::Test {
+class WindowAssignerTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup WindowAssignerTest test class."); }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("WindowAssignerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup WindowAssignerTest test case.");
+        NES_DEBUG("Setup WindowAssignerTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down KeyedSliceTest test case."); }
-
-  public:
 };
 
 /**
