@@ -31,11 +31,6 @@ class LocationProviderCSV : public LocationProvider {
     explicit LocationProviderCSV(const std::string& csvPath, Timestamp simulatedStartTime);
 
     /**
-     * @brief default destructor
-     */
-    ~LocationProviderCSV() override = default;
-
-    /**
      *
      * @return the Timestamp recorded when this object was created
      */
