@@ -104,7 +104,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
-            NES_DEBUG2("push task for queueid= {}  successor= {}",  queueId,  &successor);
+            NES_DEBUG2("push task for queueid= {} successor= {}", queueId, &successor);
             queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }
@@ -123,13 +123,13 @@ DataSource::~DataSource() NES_NOEXCEPT(false) {
 }
 
 bool DataSource::start() {
-    NES_DEBUG2("DataSource  {} : start source  {}",  operatorId,  this);
+    NES_DEBUG2("DataSource  {} : start source",  operatorId);
     std::promise<bool> prom;
     std::unique_lock lock(startStopMutex);
     bool expected = false;
     std::shared_ptr<std::thread> thread{nullptr};
     if (!running.compare_exchange_strong(expected, true)) {
-        NES_WARNING2("DataSource {}: is already running {}", operatorId, this);
+        NES_WARNING2("DataSource {}: is already running", operatorId);
         return false;
     } else {
         type = getType();

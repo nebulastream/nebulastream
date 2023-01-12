@@ -198,12 +198,12 @@ bool KafkaSource::connect() {
 
         // Print the assigned partitions on assignment
         consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG2("Got assigned: {}",  partitions);
+            NES_DEBUG2("Got assigned: {}", partitions);
         });
 
         // Print the revoked partitions on revocation
         consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG2("Got revoked: {}",  partitions);
+            NES_DEBUG2("Got revoked: {}", partitions);
         });
 
         // Subscribe to the topic

@@ -51,7 +51,7 @@ ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
     NES_DEBUG2("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source";
+        NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source");
     } else {
         NES_ASSERT2_FMT(false, "ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
@@ -59,7 +59,7 @@ ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
 }
 
 std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
-    NES_DEBUG2("ZMQSource: receiveData ",  this);
+    NES_DEBUG2("ZMQSource: receiveData ",  this->toString());
     if (connect()) {
         try {
 
@@ -85,7 +85,7 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
                 NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", buffer.getBufferSize(), receivedSize.has_value());
                 return std::nullopt;
             } else {
-                NES_DEBUG2("ZMQSource   {} : received buffer of size  {}",  this,  receivedSize.has_value());
+                NES_DEBUG2("ZMQSource: received buffer of size  {}", receivedSize.has_value());
                 return buffer;
             }
 
@@ -113,7 +113,7 @@ std::string ZmqSource::toString() const {
 
 bool ZmqSource::connect() {
     if (!connected) {
-        NES_DEBUG2("ZMQSOURCE was !conncect now connect {}: connected",  this);
+        NES_DEBUG2("ZMQSOURCE was !conncect now connect: connected");
         if (host == "localhost") {
             host = "*";
         }
@@ -122,23 +122,23 @@ bool ZmqSource::connect() {
         try {
             socket.set(zmq::sockopt::linger, 0);
             socket.bind(address.c_str());
-            NES_DEBUG2("ZMQSOURCE  {}: set connected true",  this);
+            NES_DEBUG2("ZMQSOURCE: set connected true");
             connected = true;
         } catch (const zmq::error_t& ex) {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
                 NES_ERROR2("ZMQSOURCE ERROR: {}", ex.what());
-                NES_DEBUG2("ZMQSOURCE  {}: set connected false",  this);
+                NES_DEBUG2("ZMQSOURCE: set connected false");
             }
             connected = false;
         }
     }
 
     if (connected) {
-        NES_DEBUG2("ZMQSOURCE  {}: connected",  this);
+        NES_DEBUG2("ZMQSOURCE: connected");
     } else {
-        NES_DEBUG2("Exception: ZMQSOURCE  {}: NOT connected",  this);
+        NES_DEBUG2("Exception: ZMQSOURCE: NOT connected");
     }
     return connected;
 }
@@ -156,9 +156,9 @@ bool ZmqSource::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG2("ZMQSOURCE  {}: disconnected",  this);
+        NES_DEBUG2("ZMQSOURCE: disconnected");
     } else {
-        NES_DEBUG2("ZMQSOURCE  {}: NOT disconnected",  this);
+        NES_DEBUG2("ZMQSOURCE: NOT disconnected");
     }
     return !connected;
 }

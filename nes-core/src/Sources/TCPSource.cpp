@@ -78,7 +78,7 @@ TCPSource::TCPSource(SchemaPtr schema,
             break;
     }
 
-    NES_TRACE2("TCPSource::TCPSource {}: Init TCPSource.", this);
+    NES_TRACE2("TCPSource::TCPSource: Init TCPSource.");
 }
 
 std::string TCPSource::toString() const {
@@ -121,7 +121,7 @@ void TCPSource::open() {
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
-    NES_DEBUG2("TCPSource  {}: receiveData ",  this);
+    NES_DEBUG2("TCPSource  {}: receiveData ",  this->toString());
     auto tupleBuffer = allocateBuffer();
     NES_DEBUG2("TCPSource buffer allocated ");
     try {
