@@ -334,27 +334,4 @@ class JoinHandler : public AbstractJoinHandler {
 };
 }// namespace NES::Join
 
-/*
-namespace fmt {
-template<>
-struct formatter<NES::Join::JoinHandler<class KeyType, class ValueTypeLeft, class ValueTypeRight>> : formatter<std::string> {
-    auto format(const NES::Join::JoinHandler<class KeyType, class ValueTypeLeft, class ValueTypeRight>& jh, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(),
-                         "leftJoinState:{} RightJoinState:{}", jh.getLeftJoinState().toString(), jh.getRightJoinState().toString());
-    }
-};
-}// namespace fmt
-
-
-namespace fmt {
-template<>
-struct formatter<NES::Join::JoinHandler<long, long, long> *>: formatter<std::string> {
-    auto format(const NES::Join::JoinHandler<long,long,long>& j_h, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}", j_h);
-    }
-};
-
-}// namespace fmt
-*/
-
 #endif// NES_CORE_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
