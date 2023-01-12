@@ -285,7 +285,7 @@ bool TopologyManagerService::addGeoLocation(TopologyNodeId topologyNodeId,
 
     if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
-        locationIndex->initializeFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+        locationIndex->initializeFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
         if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
@@ -309,7 +309,7 @@ bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
 
     if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
         NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
-        locationIndex->updateFieldNodeCoordinates(topologyNode, std::move(geoLocation));
+        locationIndex->updateFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
     } else {
         NES_DEBUG("added node is a non field node");
         if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
@@ -328,7 +328,7 @@ bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
         NES_ERROR("Unable to find node with id " << topologyNodeId);
         return false;
     }
-    return locationIndex->removeNodeFromSpatialIndex(topologyNode);
+    return locationIndex->removeNodeFromSpatialIndex(topologyNodeId);
 }
 
 NES::Spatial::DataTypes::Experimental::GeoLocation TopologyManagerService::getGeoLocationForNode(TopologyNodeId nodeId) {

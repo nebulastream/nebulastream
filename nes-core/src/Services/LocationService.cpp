@@ -34,6 +34,7 @@ nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
         return nullptr;
     }
     auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
+
     /*
     if (!geoLocation.isValid()) {
         return convertNodeLocationInfoToJson(nodeId, std::move(geoLocation));
