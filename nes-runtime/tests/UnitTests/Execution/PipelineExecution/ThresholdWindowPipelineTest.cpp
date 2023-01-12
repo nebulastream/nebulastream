@@ -52,6 +52,9 @@ class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public Abstract
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup ThresholdWindowPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -130,7 +133,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

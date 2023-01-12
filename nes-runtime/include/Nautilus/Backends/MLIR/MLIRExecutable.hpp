@@ -28,6 +28,9 @@ class MLIRExecutable : public Executable {
   protected:
     void* getInvocableFunctionPtr(const std::string& member) override;
 
+  public:
+    bool hasInvocableFunctionPtr() override;
+
   private:
     std::unique_ptr<mlir::ExecutionEngine> engine;
 };

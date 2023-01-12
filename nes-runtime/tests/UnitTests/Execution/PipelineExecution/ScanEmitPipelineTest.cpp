@@ -46,6 +46,9 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup ScanEmitPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -130,7 +133,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) {
                             return info.param;
                         });

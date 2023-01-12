@@ -15,6 +15,7 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -23,8 +24,9 @@
 namespace NES::Runtime::Execution {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline)
-    : NautilusExecutablePipelineStage(physicalOperatorPipeline) {}
+    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+    std::string compilationBackend)
+    : NautilusExecutablePipelineStage(physicalOperatorPipeline), compilationBackend(compilationBackend) {}
 
 ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
@@ -32,8 +34,8 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     // wait till pipeline is ready
     executablePipeline.wait();
     auto& pipeline = executablePipeline.get();
-    auto function = pipeline->getInvocableMember<void (*)(void*, void*, void*)>("execute");
-    function((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    auto func = pipeline->getInvocableMember<void, void*, void*, void*>("execute");
+    func((void*) &pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
@@ -72,12 +74,13 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
+    NES_DEBUG(ir->toString());
+    Nautilus::IR::RemoveBrOnlyBlocksPhase().apply(ir);
     timer.snapshot("NESIR Generation");
     NES_DEBUG(ir->toString());
-
-    auto& compilationBackend = Nautilus::Backends::CompilationBackendRegistry::getPlugin("MLIR");
-    auto executable = compilationBackend->compile(ir);
-    timer.snapshot("MLIR Compilation");
+    auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
+    auto executable = compiler->compile(ir);
+    timer.snapshot("Compilation");
     NES_INFO(timer);
     return executable;
 }

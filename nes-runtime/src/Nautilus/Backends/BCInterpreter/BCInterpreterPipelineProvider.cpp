@@ -18,12 +18,13 @@
 
 namespace NES::Runtime::Execution {
 
-std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline) {
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR");
+class ByteCodeInterpreterPipelineProvider : public ExecutablePipelineProvider {
+  public:
+    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override {
+        return std::make_unique<CompiledExecutablePipelineStage>(physicalOperatorPipeline, "BCInterpreter");
+    }
+};
+
+[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<ByteCodeInterpreterPipelineProvider>
+    bcInterpreterPipelineProvider("BCInterpreter");
 }
-
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
-    compilationPipelineProvider("PipelineCompiler");
-
-
-}// namespace NES::Runtime::Execution

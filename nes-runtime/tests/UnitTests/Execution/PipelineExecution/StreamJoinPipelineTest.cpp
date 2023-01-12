@@ -75,6 +75,9 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     void SetUp() override {
         NESBaseTest::SetUp();
         NES_INFO("Setup StreamJoinPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
@@ -376,7 +379,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         StreamJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<StreamJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

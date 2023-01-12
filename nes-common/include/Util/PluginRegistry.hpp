@@ -74,6 +74,9 @@ class NamedPluginRegistry {
         return found->second;
     }
     static std::list<std::string>& getPluginNames() { return names; }
+    static bool hasPlugin(std::string name) {
+        return items.contains(name);
+    }
     /** A static registration template. Use like such:
     *
     * Registry<PluginInterfaceType>::Add<PluginType> X;

@@ -50,6 +50,9 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -112,7 +115,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SelectionPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) {
                             return info.param;
                         });

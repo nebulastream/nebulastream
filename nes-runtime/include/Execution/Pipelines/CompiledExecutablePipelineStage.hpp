@@ -30,7 +30,8 @@ class PhysicalOperatorPipeline;
  */
 class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
   public:
-    CompiledExecutablePipelineStage(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline);
+    CompiledExecutablePipelineStage(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+                                    std::string compilationBackend);
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     ExecutionResult execute(TupleBuffer& inputTupleBuffer,
                             PipelineExecutionContext& pipelineExecutionContext,
@@ -38,6 +39,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
 
   private:
     std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
+    std::string compilationBackend;
     std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
 };
 
