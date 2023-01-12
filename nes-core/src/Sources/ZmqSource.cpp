@@ -44,22 +44,22 @@ ZmqSource::ZmqSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(successors)),
       host(host), port(port), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
-    NES_DEBUG2("ZMQSOURCE {}: Init ZMQ ZMQSOURCE to  {} : {} /", this, host, port);
+    NES_DEBUG2("ZMQSOURCE: Init ZMQ ZMQSOURCE to  {} : {} /", host, port);
 }
 
 ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
     NES_DEBUG2("ZmqSource::~ZmqSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG2("ZMQSOURCE  {}: Destroy ZMQ Source",  this);
+        NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source";
     } else {
         NES_ASSERT2_FMT(false, "ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
-    NES_DEBUG2("ZMQSOURCE  {}: Destroy ZMQ Source",  this);
+    NES_DEBUG2("ZMQSOURCE: Destroy ZMQ Source");
 }
 
 std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
-    NES_DEBUG2("ZMQSource  {}: receiveData ",  this);
+    NES_DEBUG2("ZMQSource: receiveData ",  this);
     if (connect()) {
         try {
 
