@@ -151,7 +151,7 @@ class TopologyManagerService {
      * @param nodeId : node id of the worker
      * @return GeoLocation of the node
      */
-    NES::Spatial::DataTypes::Experimental::GeoLocation getGeoLocationForNode(TopologyNodeId nodeId);
+    std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getGeoLocationForNode(TopologyNodeId nodeId);
 
     /**
       * @brief function to obtain JSON representation of a NES Topology

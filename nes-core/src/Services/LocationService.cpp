@@ -30,17 +30,16 @@ LocationService::LocationService(TopologyPtr topology, Spatial::Index::Experimen
     : locationIndex(std::move(locationIndex)), topology(std::move(topology)){};
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
+
     if (!topology->findNodeWithId(nodeId)) {
         return nullptr;
     }
-    auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
 
-    /*
-    if (!geoLocation.isValid()) {
-        return convertNodeLocationInfoToJson(nodeId, std::move(geoLocation));
+    auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
+    if (geoLocation.has_value()) {
+        return convertNodeLocationInfoToJson(nodeId, geoLocation.value());
     }
-     */
-    return convertNodeLocationInfoToJson(nodeId, std::move(geoLocation));
+    return nullptr;
 }
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
@@ -84,32 +83,34 @@ nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
     auto locMapJson = nlohmann::json::array();
     size_t count = 0;
     for (auto& [nodeId, location] : nodeVector) {
-        nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, std::move(location));
+        nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
         locMapJson[count] = nodeInfo;
         ++count;
     }
     return locMapJson;
 }
 
-nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation&& location) {
+nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json locJson;
-    if (location.isValid()) {
-        locJson[0] = location.getLatitude();
-        locJson[1] = location.getLongitude();
+    if (geoLocation.isValid()) {
+        locJson[0] = geoLocation.getLatitude();
+        locJson[1] = geoLocation.getLongitude();
     }
     return locJson;
 }
 
 nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id,
-                                                              NES::Spatial::DataTypes::Experimental::GeoLocation&& loc) {
+                                                              NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json nodeInfo;
     nodeInfo["id"] = id;
-    nlohmann::json locJson = convertLocationToJson(std::move(loc));
+    nlohmann::json locJson = convertLocationToJson(std::move(geoLocation));
     nodeInfo["location"] = locJson;
     return nodeInfo;
 }
 
-bool LocationService::updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions ) {
+bool LocationService::updatePredictedReconnect(
+    const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+    const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {
     (void) addPredictions;
     (void) removePredictions;
     NES_NOT_IMPLEMENTED();//Will be implemented as part of #
