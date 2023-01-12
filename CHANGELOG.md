@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.22](https://github.com/nebulastream/nebulastream/tree/v0.4.22) (2023-01-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.21...v0.4.22)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add global nautilus tumbling window [\#3329](https://github.com/nebulastream/nebulastream/issues/3329)
+
 ## [v0.4.21](https://github.com/nebulastream/nebulastream/tree/v0.4.21) (2023-01-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.20...v0.4.21)
