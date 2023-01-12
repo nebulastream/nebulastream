@@ -115,19 +115,19 @@ class LocationService {
   private:
     /**
      * @brief convert a Location to a json representing the same coordinates
-     * @param location : The location object to convert
+     * @param geoLocation : The location object to convert
      * @return a json array in the format:
      * [
      *   <latitude>,
      *   <longitude>,
      * ]
      */
-    static nlohmann::json convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation&& location);
+    static nlohmann::json convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * Use a node id and a Location to construct a Json representation containing these values.
      * @param id : the nodes id
-     * @param loc : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
+     * @param geoLocation : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
      * @return a json in the format:
         {
             "id": <node id>,
@@ -137,7 +137,7 @@ class LocationService {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation&& loc);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     TopologyPtr topology;
