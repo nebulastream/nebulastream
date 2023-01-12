@@ -183,6 +183,11 @@ bool Util::endsWith(const std::string& fullString, const std::string& ending) {
 
 bool Util::startsWith(const std::string& fullString, const std::string& ending) { return (fullString.rfind(ending, 0) == 0); }
 
+std::string Util::toUpperCase(std::string string) {
+    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
+    return string;
+}
+
 OperatorId Util::getNextOperatorId() {
     static std::atomic_uint64_t id = 0;
     return ++id;

@@ -37,16 +37,6 @@ static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSiz
 }
 
 /**
- * @brief transforms the string to an upper case version
- * @param string
- * @return string
- */
-static std::string toUpperCase(std::string string) {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-    return string;
-}
-
-/**
  * @brief appends newValue until the vector contains a minimum of newSize elements
  * @tparam T
  * @param vector the vector
