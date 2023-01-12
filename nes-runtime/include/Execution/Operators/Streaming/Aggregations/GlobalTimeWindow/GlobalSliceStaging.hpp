@@ -70,6 +70,6 @@ class GlobalSliceStaging {
     uint64_t sliceIndex;
     std::map<uint64_t, std::unique_ptr<Partition>> slicePartitionMap;
 };
-}// namespace NES::Windowing::Experimental
+}// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEWINDOW_GLOBALSLICESTAGING_HPP_

@@ -72,7 +72,6 @@ class RecordBuffer {
     void setWatermarkTs(Value<UInt64> watermarkTs);
     ~RecordBuffer() = default;
 
-
   private:
     Value<MemRef> tupleBufferRef;
 };

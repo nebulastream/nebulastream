@@ -35,7 +35,7 @@ class EventTimeWatermarkAssignment : public ExecutableOperator {
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
-     Runtime::Execution::Expressions::ExpressionPtr watermarkExtractionExpression;
+    Runtime::Execution::Expressions::ExpressionPtr watermarkExtractionExpression;
 };
 
 }// namespace NES::Runtime::Execution::Operators
