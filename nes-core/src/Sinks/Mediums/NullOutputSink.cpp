@@ -37,23 +37,13 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
     else {
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {};
     }
-//    trimmingThread = std::make_shared<std::thread>(([this]() {
-//        while(this->nodeEngine->getQueryStatus(this->queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
-//            std::this_thread::sleep_for(5ms);
-//            auto timestamp = this->watermarkProcessor->getCurrentWatermark();
-//            if(timestamp) {
-//                notifyEpochTermination(timestamp);
-//            }
-//        }
-//    }));
 }
 
 NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
-    workerContext.printStatistics(inputBuffer);
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     updateWatermarkCallback(inputBuffer);
     return true;
 }

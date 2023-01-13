@@ -525,9 +525,9 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
+bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const {
     NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << epochBarrier << "with queryId " << queryId);
-    return queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
+    return queryManager->injectEpochBarrier(epochBarrier, queryId, this->operatorId);
 }
 
 // debugging

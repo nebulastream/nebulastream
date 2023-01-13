@@ -293,6 +293,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                 }
             }
             case QueryTerminationType::Graceful:
+            case QueryTerminationType::Redirect:
             case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
         }
         return true;

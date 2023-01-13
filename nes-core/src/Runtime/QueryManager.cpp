@@ -22,7 +22,6 @@
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
@@ -44,14 +43,14 @@ AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusLi
                                            std::vector<BufferManagerPtr> bufferManagers,
                                            uint64_t nodeEngineId,
                                            uint16_t numThreads,
-                                           uint64_t  numberOfBuffersPerEpoch,
+                                           uint64_t numberOfBuffersPerEpoch,
+                                           uint64_t  replicationLevel,
                                            HardwareManagerPtr hardwareManager,
                                            const StateManagerPtr& stateManager,
                                            std::vector<uint64_t> workerToCoreMapping)
-    : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
+    : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads), numberOfBuffersPerEpoch(numberOfBuffersPerEpoch), replicationLevel(replicationLevel),
       hardwareManager(std::move(hardwareManager)), workerToCoreMapping(std::move(workerToCoreMapping)),
-      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)),
-      numberOfBuffersPerEpoch(numberOfBuffersPerEpoch) {
+      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)) {
 
     tempCounterTasksCompleted.resize(numThreads);
 
@@ -63,6 +62,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                                          uint64_t nodeEngineId,
                                          uint16_t numThreads,
                                          uint64_t  numberOfBuffersPerEpoch,
+                                         uint64_t  replicationLevel,
                                          HardwareManagerPtr hardwareManager,
                                          const StateManagerPtr& stateManager,
                                          std::vector<uint64_t> workerToCoreMapping)
@@ -71,6 +71,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            nodeEngineId,
                            numThreads,
                            numberOfBuffersPerEpoch,
+                           replicationLevel,
                            std::move(hardwareManager),
                            stateManager,
                            std::move(workerToCoreMapping)),
@@ -83,6 +84,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                                                uint64_t nodeEngineId,
                                                uint16_t numThreads,
                                                uint64_t  numberOfBuffersPerEpoch,
+                                               uint64_t  replicationLevel,
                                                HardwareManagerPtr hardwareManager,
                                                const StateManagerPtr& stateManager,
                                                std::vector<uint64_t> workerToCoreMapping,
@@ -93,6 +95,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            nodeEngineId,
                            numThreads,
                            numberOfBuffersPerEpoch,
+                           replicationLevel,
                            std::move(hardwareManager),
                            stateManager,
                            std::move(workerToCoreMapping)),
@@ -131,6 +134,8 @@ uint64_t AbstractQueryManager::getCurrentTaskSum() {
 }
 
 uint64_t AbstractQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
+
+uint64_t AbstractQueryManager::getReplicationLevel() const { return replicationLevel; }
 
 AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 
@@ -329,16 +334,19 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t qu
     auto qep = sourceToQEPMapping.find(sourceOperatorId);
     if (qep != sourceToQEPMapping.end()) {
         //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
-        auto sinks = qep->second->getSinks();
-        for (auto sink : sinks) {
-            if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
-                NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId= " << queryId << "punctuation= " << epochBarrier);
-                auto newReconf = ReconfigurationMessage(queryId,
-                                                        qep->second->getQuerySubPlanId(),
-                                                        Runtime::ReconfigurationType::PropagateEpoch,
-                                                        sink,
-                                                        std::make_any<uint64_t>(epochBarrier));
-                addReconfigurationMessage(queryId, qep->second->getQuerySubPlanId(), newReconf);
+        auto executionPlans = qep->second;
+        for (auto executionPlan : executionPlans) {
+            auto sinks = executionPlan->getSinks();
+            for (auto sink : sinks) {
+                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                    NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId= " << queryId << "punctuation= " << epochBarrier);
+                    auto newReconf = ReconfigurationMessage(queryId,
+                                                            executionPlan->getQuerySubPlanId(),
+                                                            Runtime::ReconfigurationType::PropagateEpoch,
+                                                            sink,
+                                                            std::make_any<uint64_t>(epochBarrier));
+                    addReconfigurationMessage(queryId, executionPlan->getQuerySubPlanId(), newReconf);
+                }
             }
         }
         return true;

@@ -18,8 +18,6 @@
 #include <Common/Identifiers.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>

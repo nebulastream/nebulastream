@@ -434,6 +434,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::vector<BufferManagerPtr> bufferManagers;
 
     uint16_t numThreads;
+    uint64_t numberOfBuffersPerEpoch;
+    uint64_t replicationLevel;
 
     HardwareManagerPtr hardwareManager;
 
@@ -464,9 +466,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     StateManagerPtr stateManager;
 
-    uint64_t numberOfBuffersPerEpoch;
 
-    uint64_t replicationLevel;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif

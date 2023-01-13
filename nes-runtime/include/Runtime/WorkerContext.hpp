@@ -62,7 +62,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     ///queue of tuple buffers that were processed by the thread
-    std::unordered_map<PartitionId, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
+    std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
 
     std::ofstream statisticsFile;
     std::ofstream storageFile;
@@ -158,34 +158,29 @@ class WorkerContext {
      * @brief This method creates a network storage for a thread
      * @param nesPartitionId partition id
      */
-    void createStorage(Network::PartitionId nesPartitionId);
+    void createStorage(Network::NesPartition nesPartitionId);
 
-    /**
-     * @brief This method reutrn buffer storage size
-     * @return size
-     */
-    size_t getStorageSize();
 
     /**
      * @brief This method inserts a tuple buffer into the storage
      * @param nesPartitionId partition id
      * @param TupleBuffer tuple buffer
      */
-    void insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer);
+    void insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer);
 
     /**
      * @brief This method deletes a tuple buffer from the storage
      * @param nesPartitionId partition id
      * @param timestamp timestamp
      */
-    void trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp);
+    void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp);
 
     /**
      * @brief This method returns all buffers that belong to the same destination
      * @param nesPartitionId partition id
      * @return queue of buffers
      */
-    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> resendBuffers(Network::NesPartition nesPartitionId);
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> resendBuffers(Network::NesPartition nesPartition);
 
     /**
      * @brief removes a registered network channel with a termination type
@@ -220,7 +215,7 @@ class WorkerContext {
      * @param ownerId id of the operator that we want to store the output channel
      * @param channel pointer to a new channel
      */
-    void updateNetworkChannel(Network::OperatorId ownerId, Network::NetworkChannelPtr&& channel);
+    void updateNetworkChannel(NES::OperatorId ownerId, Network::NetworkChannelPtr&& channel);
 
     /**
      * @brief retrieve a registered output channel

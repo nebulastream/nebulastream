@@ -189,13 +189,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::PropagateEpoch: {
-//            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-//            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto epochMessage = task.getUserData<EpochMessage>();
-//            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
-                                                                 << "punctuation= " << timestamp);
-//            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.printPropagationDelay(epochMessage.getAdditionalInfo());
             workerContext.trimStorage(nesPartition, epochMessage.getTimestamp());
             break;
         }
@@ -300,6 +294,9 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
             NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << this->queryId);
         }
     }
+    else if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
+        // todo jm continue here. how to obtain local worker context?
+    }
     else {
         auto epochEvent = dynamic_cast<Runtime::KEpochEventWrapper&>(event).data<Runtime::PropagateKEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
@@ -325,9 +322,6 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
                 NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
             }
         }
-    }
-    else if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        // todo jm continue here. how to obtain local worker context?
     }
 }
 

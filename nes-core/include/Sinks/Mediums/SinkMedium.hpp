@@ -198,14 +198,11 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::function<void(uint64_t)> notifyEpochCallback;
 
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
-    uint64_t buffersPerEpoch;
     uint64_t replicationLevel;
     bool isWaiting;
-//    std::ofstream statisticsFile;
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety
     std::mutex writeMutex; // TODO remove the mutex
-    uint64_t currentTimestamp;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

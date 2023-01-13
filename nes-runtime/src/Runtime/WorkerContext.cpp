@@ -100,6 +100,21 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
     }
 }
 
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        return this->storage[nesPartition].top();
+    }
+    return {};
+}
+
+void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
+    auto iteratorPartitionId = this->storage.find(nesPartition);
+    if (iteratorPartitionId != this->storage.end()) {
+        this->storage[nesPartition].pop();
+    }
+}
+
 std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> WorkerContext::resendBuffers(Network::NesPartition nesPartitionId) {
     auto it = this->storage.find(nesPartitionId);
     if (it != this->storage.end()) {
@@ -108,7 +123,7 @@ std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering> Worke
     return std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
 }
 
-bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
@@ -143,7 +158,7 @@ Network::NetworkChannel* WorkerContext::getNetworkChannel(NES::OperatorId ownerI
     return (*it).second.get();
 }
 
-void WorkerContext::updateNetworkChannel(Network::OperatorId ownerId, NES::NetworkChannelPtr&& channel) {
+void WorkerContext::updateNetworkChannel(NES::OperatorId ownerId, Network::NetworkChannelPtr&& channel) {
     releaseNetworkChannel(ownerId, QueryTerminationType::Graceful);
     auto it = dataChannels.find(ownerId);
     if (it != dataChannels.end()) {

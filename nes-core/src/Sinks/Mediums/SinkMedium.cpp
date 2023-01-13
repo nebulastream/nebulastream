@@ -41,7 +41,6 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     replicationLevel = this->nodeEngine->getQueryManager()->getReplicationLevel();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-    currentTimestamp = 0;
     isWaiting = false;
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
         notifyEpochCallback = [this](uint64_t timestamp) {
