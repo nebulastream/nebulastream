@@ -475,7 +475,7 @@ class CodeGenerator {
     virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
                                           PipelineContextPtr context,
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler,
-                                          QueryCompilation::JoinBuildSide buildSide) = 0;
+                                          QueryCompilation::JoinBuildSideType buildSide) = 0;
     /**
     * @brief Code generation for a batch join build operator, which depends on a particular join definition
     * @param batchJoinDef The join batch definition, which contains all properties of the join.

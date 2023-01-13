@@ -15,8 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
@@ -147,7 +146,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
 };
 
-}// namespace QueryCompilation
-}// namespace NES
+} // namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

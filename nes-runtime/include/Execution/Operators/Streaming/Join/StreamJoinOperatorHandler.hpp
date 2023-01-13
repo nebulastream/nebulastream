@@ -39,6 +39,8 @@ namespace NES::Runtime::Execution::Operators {
  * thus, the StreamJoin only has to allocate memory once.
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
+class StreamJoinOperatorHandler;
+using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
 class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
   public:

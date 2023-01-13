@@ -154,7 +154,7 @@ using PipelineContextPtr = std::shared_ptr<PipelineContext>;
 class CodeGenerator;
 using CodeGeneratorPtr = std::shared_ptr<CodeGenerator>;
 
-enum JoinBuildSide { Left, Right };
+enum JoinBuildSideType { Left, Right };
 
 class QueryCompilationError;
 using QueryCompilationErrorPtr = std::shared_ptr<QueryCompilationError>;

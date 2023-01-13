@@ -15,9 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
@@ -33,7 +31,5 @@ class PhysicalJoinOperator {
 
     Join::JoinOperatorHandlerPtr operatorHandler;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+} // namespace NES::QueryCompilation::PhysicalOperators
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
