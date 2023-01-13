@@ -90,7 +90,7 @@ int main(int argc, const char* argv[]) {
 
 
     auto e2EBenchmarkConfig = NES::Benchmark::parseYamlConfig(configPath, logPath);
-    NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig);
+    NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
     int rpcPort = 8000, restPort = 10000;
     for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {

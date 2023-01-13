@@ -39,7 +39,7 @@ namespace NES::Benchmark {
      * @brief Writes the header to the output csv file
      * @param e2EBenchmarkConfig
      */
-    void writeHeaderToCsvFile(E2EBenchmarkConfig& e2EBenchmarkConfig);
+    void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
 } // namespace NES::Benchmark
 #endif //NES_E2ERUNNER_HPP

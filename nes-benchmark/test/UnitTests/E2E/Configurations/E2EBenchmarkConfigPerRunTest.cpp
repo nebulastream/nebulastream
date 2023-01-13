@@ -99,9 +99,9 @@ namespace NES::Benchmark {
         ASSERT_EQ(allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getValue(),
                   allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getDefaultValue());
 
-        ASSERT_EQ(allE2EBenchmarkPerRun[0].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 2, input2: 2, input3: 1");
-        ASSERT_EQ(allE2EBenchmarkPerRun[1].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 3, input2: 2, input3: 1");
-        ASSERT_EQ(allE2EBenchmarkPerRun[2].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 4, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[0].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 1, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[1].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 2, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[2].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 3, input2: 2, input3: 1");
     }
 
     TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
