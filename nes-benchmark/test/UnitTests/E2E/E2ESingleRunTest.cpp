@@ -22,6 +22,7 @@
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <fstream>
 #include <string>
+#include <E2E/E2ERunner.hpp>
 
 
 namespace NES::Benchmark {
@@ -222,6 +223,7 @@ namespace NES::Benchmark {
             }
         }
 
+        Benchmark::writeHeaderToCsvFile(configOverAllRuns);
         singleRun.writeMeasurementsToCsv();
 
 
