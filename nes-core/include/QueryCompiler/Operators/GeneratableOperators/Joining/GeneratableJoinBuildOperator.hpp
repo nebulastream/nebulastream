@@ -32,7 +32,8 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler,
+                                         JoinBuildSideType buildSide);
 
     /**
      * @brief Creates a new generatable join build operator.
@@ -47,7 +48,7 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          Join::JoinOperatorHandlerPtr operatorHandler,
-                                         JoinBuildSide buildSide);
+                                         JoinBuildSideType buildSide);
 
     /**
     * @brief Code generation function for the execute call of an operator.
@@ -73,8 +74,8 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
                                  SchemaPtr inputSchema,
                                  SchemaPtr outputSchema,
                                  Join::JoinOperatorHandlerPtr operatorHandler,
-                                 JoinBuildSide buildSide);
-    JoinBuildSide buildSide;
+                                 JoinBuildSideType buildSide);
+    JoinBuildSideType buildSide;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_JOINING_GENERATABLEJOINBUILDOPERATOR_HPP_

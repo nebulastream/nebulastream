@@ -35,7 +35,7 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
       totalSizeForDataStructures(totalSizeForDataStructures), lastTupleTimeStampLeft(windowSize - 1),
       lastTupleTimeStampRight(windowSize - 1), windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
 
-    NES_ASSERT2_FMT(0 != numPartitions, "NumPartitions is 0: " << numPartitions);
+    NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures,
                     "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
@@ -60,7 +60,7 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerP
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG("stop StreamJoinOperatorHandler");
-    // TODO ask Philipp, if I should delete here all windows
+    // TODO ask Philipp if I should delete here all windows
 }
 
 void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
@@ -87,7 +86,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
 }
 
 // TODO: Enable this test in issue #3339
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("f1_left", BasicType::UINT64)
                                 ->addField("f2_left", BasicType::UINT64)

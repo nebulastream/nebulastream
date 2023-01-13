@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -40,6 +41,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
@@ -273,31 +276,78 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    // create join operator handler, to establish a common Runtime object for build and prob.
-    auto joinOperatorHandler =
-        Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto leftInputOperator =// the child or child group on the left input side of the join
-        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-    auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
-                                                                                      joinOperator->getOutputSchema(),
-                                                                                      joinOperatorHandler,
-                                                                                      JoinBuildSide::Left);
-    leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+        // create join operator handler, to establish a common Runtime object for build and prob.
+        auto joinOperatorHandler =
+            Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto rightInputOperator =// the child or child group on the right input side of the join
-        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                                       joinOperator->getOutputSchema(),
-                                                                                       joinOperatorHandler,
-                                                                                       JoinBuildSide::Right);
-    rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+        auto leftInputOperator =// the child or child group on the left input side of the join
+            getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+        auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                          joinOperator->getOutputSchema(),
+                                                                                          joinOperatorHandler,
+                                                                                          JoinBuildSideType::Left);
+        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
-    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                        joinOperator->getRightInputSchema(),
-                                                                        joinOperator->getOutputSchema(),
-                                                                        joinOperatorHandler);
-    operatorNode->replace(joinSink);
+        auto rightInputOperator =// the child or child group on the right input side of the join
+            getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
+        auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                                           joinOperator->getOutputSchema(),
+                                                                                           joinOperatorHandler,
+                                                                                           JoinBuildSideType::Right);
+        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+
+        auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                            joinOperator->getRightInputSchema(),
+                                                                            joinOperator->getOutputSchema(),
+                                                                            joinOperatorHandler);
+        operatorNode->replace(joinSink);
+    } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+        using namespace Runtime::Execution::Operators;
+
+        // TODO Ask Philip how I can retrieve these
+        auto joinFieldNameLeft = "TBD", joinFieldNameRight = "TBD";
+        auto maxNoWorkerThreads = 1UL; // This is needed for creating the local hash tables, but it can be set later on
+        auto numSourcesLeft = 1UL, numSourcesRight = 1UL; // This is needed for detecting when the sink is finished
+        auto joinSizeInByte = 500 * 1024UL; // This can be set later on
+        auto windowSize = 10UL; // This can be set later on
+
+        auto joinOperatorHandler = std::make_shared<StreamJoinOperatorHandler>(joinOperator->getLeftInputSchema(),
+                                                                               joinOperator->getRightInputSchema(),
+                                                                               joinFieldNameLeft, joinFieldNameRight,
+                                                                               maxNoWorkerThreads * 2,
+                                                                               numSourcesLeft + numSourcesRight,
+                                                                               joinSizeInByte,
+                                                                               windowSize);
+
+        auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
+                                                           joinOperator->getLeftOperators());
+        auto rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(),
+                                                            joinOperator->getRightOperators());
+
+        auto leftJoinBuildOperator = PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                                                joinOperator->getOutputSchema(),
+                                                                                                joinOperatorHandler,
+                                                                                                JoinBuildSideType::Left);
+        auto rightJoinBuildOperator = PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                                                 joinOperator->getOutputSchema(),
+                                                                                                 joinOperatorHandler,
+                                                                                                 JoinBuildSideType::Right);
+
+        auto joinSinkOperator = PhysicalOperators::PhysicalStreamJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                          joinOperator->getRightInputSchema(),
+                                                                                          joinOperator->getOutputSchema(),
+                                                                                          joinOperatorHandler);
+
+        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+        operatorNode->replace(joinSinkOperator);
+
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
