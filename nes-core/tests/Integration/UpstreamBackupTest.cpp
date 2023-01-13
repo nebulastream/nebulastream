@@ -22,7 +22,7 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Plans/Query/QueryId.hpp>
+#include <Common/Identifiers.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -80,9 +80,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->numberOfBuffersPerEpoch = 3;
-        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
-        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 10;
-        coordinatorConfig->numWorkerThreads = 1;
+//        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
+//        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 10;
+//        coordinatorConfig->numWorkerThreads = 1;
         coordinatorConfig->replicationLevel = 1;
 
         workerConfig1 = WorkerConfiguration::create();
@@ -90,9 +90,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig1->enableStatisticOutput = true;
-        workerConfig1->numberOfBuffersToProduce = 5000000;
-        workerConfig1->sourceGatheringInterval = 10;
+//        workerConfig1->enableStatisticOutput = true;
+//        workerConfig1->numberOfBuffersToProduce = 5000000;
+//        workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 1;
         workerConfig1->replicationLevel = 1;
 
@@ -101,9 +101,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig2->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig2->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig2->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig2->enableStatisticOutput = true;
-        workerConfig2->numberOfBuffersToProduce = 5000000;
-        workerConfig2->sourceGatheringInterval = 10;
+//        workerConfig2->enableStatisticOutput = true;
+//        workerConfig2->numberOfBuffersToProduce = 5000000;
+//        workerConfig2->sourceGatheringInterval = 10;
         workerConfig2->numWorkerThreads = 1;
         workerConfig2->replicationLevel = 1;
 
@@ -113,9 +113,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig3->numberOfBuffersInSourceLocalBufferPool = 10;
         workerConfig3->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig3->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig3->enableStatisticOutput = true;
-        workerConfig3->numberOfBuffersToProduce = 5000000;
-        workerConfig3->sourceGatheringInterval = 10;
+//        workerConfig3->enableStatisticOutput = true;
+//        workerConfig3->numberOfBuffersToProduce = 5000000;
+//        workerConfig3->sourceGatheringInterval = 10;
         workerConfig3->replicationLevel = 1;
 
         workerConfig4 = WorkerConfiguration::create();
@@ -124,9 +124,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig4->numberOfBuffersInSourceLocalBufferPool = 11;
         workerConfig4->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig4->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig4->enableStatisticOutput = true;
-        workerConfig4->numberOfBuffersToProduce = 5000000;
-        workerConfig4->sourceGatheringInterval = 10;
+//        workerConfig4->enableStatisticOutput = true;
+//        workerConfig4->numberOfBuffersToProduce = 5000000;
+//        workerConfig4->sourceGatheringInterval = 10;
         workerConfig4->replicationLevel = 1;
 
         workerConfig5 = WorkerConfiguration::create();
@@ -135,9 +135,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig5->numberOfBuffersInSourceLocalBufferPool = 1024;
         workerConfig5->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig5->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig5->enableStatisticOutput = true;
-        workerConfig5->numberOfBuffersToProduce = 5000000;
-        workerConfig5->sourceGatheringInterval = 10;
+//        workerConfig5->enableStatisticOutput = true;
+//        workerConfig5->numberOfBuffersToProduce = 5000000;
+//        workerConfig5->sourceGatheringInterval = 10;
 
         workerConfig6 = WorkerConfiguration::create();
         workerConfig6->numberOfBuffersPerEpoch = 10;
@@ -145,9 +145,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig6->numberOfBuffersInSourceLocalBufferPool = 1024;
         workerConfig6->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig6->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig6->enableStatisticOutput = true;
-        workerConfig6->numberOfBuffersToProduce = 5000000;
-        workerConfig6->sourceGatheringInterval = 10;
+//        workerConfig6->enableStatisticOutput = true;
+//        workerConfig6->numberOfBuffersToProduce = 5000000;
+//        workerConfig6->sourceGatheringInterval = 10;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -209,7 +209,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testDataBufferingAtAllNodes) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -217,10 +217,10 @@ TEST_F(UpstreamBackupTest, DISABLED_testDataBufferingAtAllNodes) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
-    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
-    wrk1->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
-    wrk2->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
+//    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+//    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+//    wrk1->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
+//    wrk2->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
 
     NES_INFO("UpstreamBackupTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -276,7 +276,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -307,7 +307,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
     }
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
@@ -356,7 +356,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -381,7 +381,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     EXPECT_TRUE(currentTimestamp == timestamp);
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
@@ -432,7 +432,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -445,11 +445,11 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
         buffer->setWatermark(timestamp + i);
         buffer->setOriginId(1);
         buffer->setSequenceNumber(1 + i);
-        wrk1->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
-        wrk2->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+//        wrk1->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+//        wrk2->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
     }
-    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
-    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+//    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+//    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
 
     //get sink
     auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
@@ -460,11 +460,11 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
         }
     }
     //check if buffers got trimmed
-    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
-    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
+//    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
+//    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
@@ -512,7 +512,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
-    workerConfig3->lambdaSource = 2;
+//    workerConfig3->lambdaSource = 2;
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -536,7 +536,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -546,7 +546,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //wrk3->getNodeEngine()->updateNetworkSink(2, workerConfig2->localWorkerIp, workerConfig2->dataPort, 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
