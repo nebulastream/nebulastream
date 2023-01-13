@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
 #include <string>
+#include <functional>
 namespace NES::Nautilus::Backends {
 
 /**
@@ -26,6 +27,12 @@ class Executable {
     Function getInvocableMember(const std::string& member) {
         return reinterpret_cast<Function>(getInvocableFunctionPtr(member));
     }
+
+    template<class Function>
+    std::function<Function> getFunction(const std::string& member){
+        return reinterpret_cast<std::function<Function>>(getInvocableFunctionPtr(member));
+    }
+
     virtual ~Executable() = default;
 
   protected:
