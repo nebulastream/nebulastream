@@ -44,7 +44,7 @@ namespace NES::Benchmark {
         std::string logPath = "E2ERunnerTest_filterOneSource.log";
 
         auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);
-        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig);
+        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
             NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
@@ -56,7 +56,7 @@ namespace NES::Benchmark {
         std::string logPath = "E2ERunnerTest_multipleSources.log";
 
         auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);
-        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig);
+        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
             NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
@@ -68,7 +68,7 @@ namespace NES::Benchmark {
         std::string logPath = "E2ERunnerTest_multiplePhysicalLogicalSources.log";
 
         auto e2EBenchmarkConfig = parseYamlConfig(configPath, logPath);
-        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig);
+        NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
             NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
