@@ -14,7 +14,7 @@ numberOfMeasurementsToCollect: 1
 logicalSources:
   input1:
     type: Default
-    numberOfPhysicalSources: 2, 3, 4
+    numberOfPhysicalSources: 1, 2, 3
   input2:
     type: Uniform
     numberOfPhysicalSources: 2

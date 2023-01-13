@@ -38,9 +38,9 @@ namespace NES::Benchmark {
         NES_INFO("Done with single experiment!");
     }
 
-    void writeHeaderToCsvFile(E2EBenchmarkConfig& e2EBenchmarkConfig) {
+    void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
         std::ofstream ofs;
-        ofs.open(e2EBenchmarkConfig.getConfigOverAllRuns().outputFile->getValue(), std::ofstream::out | std::ofstream::app);
+        ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
         ofs << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
                "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
                "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
