@@ -177,7 +177,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             break;
         }
         case 2: {
-            auto physicalSource1 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("B", "B1", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
             break;
         }
