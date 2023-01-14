@@ -58,7 +58,7 @@ std::vector<Runtime::TupleBuffer> NexmarkBid::createData(size_t numberOfBuffers,
                 dynamicBuffer[curRecord]["auction"].write<uint64_t>(curRecord);
                 dynamicBuffer[curRecord]["bidder"].write<uint64_t>(value);
                 dynamicBuffer[curRecord]["price"].write<uint64_t>(curRecord);
-                dynamicBuffer[curRecord]["datetime"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
             }//Bid(auction, bidder, price, datetime)
 
         }
@@ -80,7 +80,7 @@ NES::SchemaPtr NexmarkBid::getSchema() {
         ->addField(createField("auction", NES::UINT64))
         ->addField(createField("bidder", NES::UINT64))
         ->addField(createField("price", NES::UINT64))
-        ->addField(createField("datetime", NES::UINT64));
+        ->addField(createField("timestamp", NES::UINT64));
 }
 
 std::string NexmarkBid::getName() { return "NexmarkBid"; }
