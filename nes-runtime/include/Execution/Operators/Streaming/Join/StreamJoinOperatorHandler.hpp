@@ -69,6 +69,31 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                        size_t numPartitions = NUM_PARTITIONS);
 
     /**
+     * @brief Creates a StreamJoinOperatorHandlerPtr object
+     * @param joinSchemaLeft
+     * @param joinSchemaRight
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
+     * @param maxNoWorkerThreads
+     * @param counterFinishedBuildingStart
+     * @param totalSizeForDataStructures
+     * @param windowSize
+     * @param pageSize
+     * @param numPartitions
+     * @return StreamJoinOperatorHandlerPtr
+     */
+    static StreamJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
+                                               const SchemaPtr& joinSchemaRight,
+                                               const std::string& joinFieldNameLeft,
+                                               const std::string& joinFieldNameRight,
+                                               size_t maxNoWorkerThreads,
+                                               uint64_t counterFinishedBuildingStart,
+                                               size_t totalSizeForDataStructures,
+                                               size_t windowSize,
+                                               size_t pageSize = CHUNK_SIZE,
+                                               size_t numPartitions = NUM_PARTITIONS);
+
+    /**
      * @brief Getter for the left join schema
      * @return left join schema
      */

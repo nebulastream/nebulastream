@@ -94,16 +94,16 @@ struct StreamJoinBuildHelper {
 bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
     auto workerContext =
         std::make_shared<WorkerContext>(/*workerId*/ 0, buildHelper.bufferManager, buildHelper.numberOfBuffersPerWorker);
-    auto streamJoinOpHandler = std::make_shared<Operators::StreamJoinOperatorHandler>(buildHelper.schema,
-                                                                                      buildHelper.schema,
-                                                                                      buildHelper.joinFieldName,
-                                                                                      buildHelper.joinFieldName,
-                                                                                      buildHelper.noWorkerThreads * 2,
-                                                                                      buildHelper.totalNumSources,
-                                                                                      buildHelper.joinSizeInByte,
-                                                                                      buildHelper.windowSize,
-                                                                                      buildHelper.pageSize,
-                                                                                      buildHelper.numPartitions);
+    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(buildHelper.schema,
+                                                                            buildHelper.schema,
+                                                                            buildHelper.joinFieldName,
+                                                                            buildHelper.joinFieldName,
+                                                                            buildHelper.noWorkerThreads * 2,
+                                                                            buildHelper.totalNumSources,
+                                                                            buildHelper.joinSizeInByte,
+                                                                            buildHelper.windowSize,
+                                                                            buildHelper.pageSize,
+                                                                            buildHelper.numPartitions);
 
     auto streamJoinOperatorTest = buildHelper.streamJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -224,17 +224,17 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          streamJoinSinkHelper.bufferManager,
                                                          streamJoinSinkHelper.numberOfBuffersPerWorker);
-    auto streamJoinOpHandler = std::make_shared<Operators::StreamJoinOperatorHandler>(streamJoinSinkHelper.leftSchema,
-                                                                                      streamJoinSinkHelper.rightSchema,
-                                                                                      streamJoinSinkHelper.joinFieldNameLeft,
-                                                                                      streamJoinSinkHelper.joinFieldNameRight,
-                                                                                      streamJoinSinkHelper.noWorkerThreads * 2,
-                                                                                      streamJoinSinkHelper.numSourcesLeft
-                                                                                          + streamJoinSinkHelper.numSourcesRight,
-                                                                                      streamJoinSinkHelper.joinSizeInByte,
-                                                                                      streamJoinSinkHelper.windowSize,
-                                                                                      streamJoinSinkHelper.pageSize,
-                                                                                      streamJoinSinkHelper.numPartitions);
+    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(streamJoinSinkHelper.leftSchema,
+                                                                            streamJoinSinkHelper.rightSchema,
+                                                                            streamJoinSinkHelper.joinFieldNameLeft,
+                                                                            streamJoinSinkHelper.joinFieldNameRight,
+                                                                            streamJoinSinkHelper.noWorkerThreads * 2,
+                                                                            streamJoinSinkHelper.numSourcesLeft
+                                                                                + streamJoinSinkHelper.numSourcesRight,
+                                                                            streamJoinSinkHelper.joinSizeInByte,
+                                                                            streamJoinSinkHelper.windowSize,
+                                                                            streamJoinSinkHelper.pageSize,
+                                                                            streamJoinSinkHelper.numPartitions);
 
     auto streamJoinOperatorTest = streamJoinSinkHelper.streamJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
