@@ -158,4 +158,8 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                        numPartitions);
 }
 
+const std::vector<OperatorId>& StreamJoinOperatorHandler::getJoinOperatorsId() const { return joinOperatorsId; }
+
+void StreamJoinOperatorHandler::addOperatorId(OperatorId id) { joinOperatorsId.emplace_back(id); }
+
 }// namespace NES::Runtime::Execution::Operators

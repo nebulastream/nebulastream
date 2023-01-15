@@ -21,8 +21,9 @@ PhysicalStreamJoinSinkOperator::PhysicalStreamJoinSinkOperator(OperatorId id,
                                                                SchemaPtr rightSchema,
                                                                SchemaPtr outputSchema,
                                                                Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), PhysicalStreamJoinOperator(std::move(operatorHandler)),
-      PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)) {}
+    : OperatorNode(id), PhysicalStreamJoinOperator(std::move(operatorHandler), id),
+      PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)) {
+}
 
 
 std::string PhysicalStreamJoinSinkOperator::toString() const { return "PhysicalStreamJoinSinkOperator"; }

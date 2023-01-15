@@ -62,6 +62,18 @@ class LowerPhysicalToNautilusOperators {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
   private:
+
+    /**
+     * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist
+     * @param operatorHandlers
+     * @param operatorId
+     * @param streamJoinOperatorHandler
+     * @return handlerIndex of the streamJoinOperatorHandler
+     */
+    uint64_t insertStreamJoinOperatorHandlerIfNeeded(std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+                                                     OperatorId operatorId,
+                                                     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,

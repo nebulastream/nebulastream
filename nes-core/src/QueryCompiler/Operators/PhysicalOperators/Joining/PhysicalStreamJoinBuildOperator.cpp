@@ -13,33 +13,41 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                                                  Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
-                                                                 JoinBuildSideType buildSide)
-    : OperatorNode(id), PhysicalStreamJoinOperator(std::move(operatorHandler)),
-      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), buildSide(buildSide) {}
+                                                                 JoinBuildSideType buildSide, std::string  timeStampFieldName)
+    : OperatorNode(id), PhysicalStreamJoinOperator(std::move(operatorHandler), id),
+      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), timeStampFieldName(std::move(timeStampFieldName)),
+      buildSide(buildSide) {}
 
 PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(OperatorId id, const SchemaPtr& inputSchema,
                                                             const SchemaPtr& outputSchema,
                                                             const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                                            JoinBuildSideType buildSide) {
+                                                            JoinBuildSideType buildSide,
+                                                            const std::string& timeStampFieldName) {
 
-    return std::make_shared<PhysicalStreamJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
+    return std::make_shared<PhysicalStreamJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
 }
 
 PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inputSchema,
                                                             const SchemaPtr& outputSchema,
                                                             const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                                            JoinBuildSideType buildSide) {
-    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
+                                                            JoinBuildSideType buildSide,
+                                                            const std::string& timeStampFieldName) {
+    return create(Util::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
 }
 
 std::string PhysicalStreamJoinBuildOperator::toString() const { return "PhysicalStreamJoinBuildOperator"; }
+
 OperatorNodePtr PhysicalStreamJoinBuildOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, buildSide);
 }
+
 JoinBuildSideType PhysicalStreamJoinBuildOperator::getBuildSide() const { return buildSide; }
+
+const std::string& PhysicalStreamJoinBuildOperator::getTimeStampFieldName() const { return timeStampFieldName; }
 } // namespace NES::QueryCompilation::PhysicalOperators
