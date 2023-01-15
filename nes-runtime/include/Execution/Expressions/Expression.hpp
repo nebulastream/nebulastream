@@ -39,7 +39,6 @@ class Expression {
      * @return Value<>
      */
     virtual Value<> execute(Record& record) const = 0;
-    virtual Value<Text> executeT(Record& record) const = 0;
     virtual ~Expression() = default;
 };
 

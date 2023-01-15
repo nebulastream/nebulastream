@@ -28,10 +28,10 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
 /**
  * @brief This Method replaces the first occurrence of regex with the replacement
  * This function is basically a wrapper for std::regex_replace and enables us to use it in our execution engine framework.
- * @param text std::string
- * @param regex std::regex
- * @param replacement std::string
- * @return std::string
+ * @param text TextValue*
+ * @param regex TextValue*
+ * @param replacement TextValue*
+ * @return TextValue*
  */
 TextValue* regex_replace(TextValue* text, TextValue* reg, TextValue* replacement) {
 
@@ -49,32 +49,20 @@ TextValue* regex_replace(TextValue* text, TextValue* reg, TextValue* replacement
 
     return TextValue::create(strReplaced);
 
-} // Ask: Alle 5 Parameter gewünscht?
+}
 
-Value<Text> ReplacingRegex::executeT(NES::Nautilus::Record& record) const {
+Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
+
     // Evaluate the left sub expression and retrieve the value.
-    Value<Text> leftValue = leftSubExpression->executeT(record);
-    //Value<Text> leftValue = Value(templeftValue);
-    // Evaluate the left sub expression and retrieve the value.
-    Value<Text> midValue = midSubExpression->executeT(record);
-    //Value<Text> midValue = Value(tempmidValue);
+    Value<> leftValue = leftSubExpression->execute(record);
+
+    // Evaluate the mid sub expression and retrieve the value.
+    Value<> midValue = midSubExpression->execute(record);
+
     // Evaluate the right sub expression and retrieve the value.
-    Value<Text> rightValue = rightSubExpression->executeT(record);
-    //Value<Text> rightValue = Value(temprightValue);
+    Value<> rightValue = rightSubExpression->execute(record);
 
-
-    return FunctionCall<>("regex_replace", regex_replace, leftValue->getReference(), midValue->getReference(), rightValue->getReference());
-    //return FunctionCall<>("regex_replace", regex_replace, leftValue, midValue, rightValue);
-
-    // Ask: Fallunterscheidung notwendig? std::string oder TextValue
-//    if (leftValue.value->isText() && midValue.value->isText() && rightValue.value->isText()) {
-//        return FunctionCall<>("regex_replace", regex_replace, leftValue.ref , midValue.ref, rightValue.ref);
-//    }
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    return FunctionCall<>("regex_replace", regex_replace, leftValue.as<Text>()->getReference(), midValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
 
 }
 
