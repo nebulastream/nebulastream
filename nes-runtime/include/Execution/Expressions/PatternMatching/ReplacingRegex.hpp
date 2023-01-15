@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Expressions {
 class ReplacingRegex : public Expression {
   public:
     ReplacingRegex(const ExpressionPtr& leftSubExpression, const ExpressionPtr& midSubExpression, const ExpressionPtr& rightSubExpression);
-    Value<Text> executeT(Record& record) const override;
+    Value<> execute(Record& record) const override;
   private:
     const  ExpressionPtr leftSubExpression;
     const  ExpressionPtr midSubExpression;
