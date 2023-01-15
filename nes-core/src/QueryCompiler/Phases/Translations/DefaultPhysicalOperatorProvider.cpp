@@ -313,13 +313,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto joinSizeInByte = 500 * 1024UL; // This can be set later on
         auto windowSize = 10UL; // This can be set later on
 
-        auto joinOperatorHandler = std::make_shared<StreamJoinOperatorHandler>(joinOperator->getLeftInputSchema(),
-                                                                               joinOperator->getRightInputSchema(),
-                                                                               joinFieldNameLeft, joinFieldNameRight,
-                                                                               maxNoWorkerThreads * 2,
-                                                                               numSourcesLeft + numSourcesRight,
-                                                                               joinSizeInByte,
-                                                                               windowSize);
+        auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                                     joinOperator->getRightInputSchema(),
+                                                                     joinFieldNameLeft, joinFieldNameRight,
+                                                                     maxNoWorkerThreads * 2,
+                                                                     numSourcesLeft + numSourcesRight,
+                                                                     joinSizeInByte, windowSize);
 
         auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
                                                            joinOperator->getLeftOperators());

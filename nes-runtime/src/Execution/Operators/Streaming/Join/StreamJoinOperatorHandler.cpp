@@ -136,8 +136,26 @@ void StreamJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool i
 }
 
 size_t StreamJoinOperatorHandler::getWindowSize() const { return windowSize; }
+
 size_t StreamJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 size_t StreamJoinOperatorHandler::getNumActiveWindows() { return streamJoinWindows.size(); }
+
+StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
+                                                               const SchemaPtr& joinSchemaRight,
+                                                               const std::string& joinFieldNameLeft,
+                                                               const std::string& joinFieldNameRight,
+                                                               size_t maxNoWorkerThreads,
+                                                               uint64_t counterFinishedBuildingStart,
+                                                               size_t totalSizeForDataStructures,
+                                                               size_t windowSize,
+                                                               size_t pageSize,
+                                                               size_t numPartitions) {
+
+    return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft, joinSchemaRight, joinFieldNameLeft, joinFieldNameRight,
+                                                       maxNoWorkerThreads, counterFinishedBuildingStart,
+                                                       totalSizeForDataStructures, windowSize, pageSize,
+                                                       numPartitions);
+}
 
 }// namespace NES::Runtime::Execution::Operators
