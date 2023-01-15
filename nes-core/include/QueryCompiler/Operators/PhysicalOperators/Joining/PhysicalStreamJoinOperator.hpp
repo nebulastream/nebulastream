@@ -27,7 +27,8 @@ class PhysicalStreamJoinOperator : public AbstractEmitOperator {
     virtual ~PhysicalStreamJoinOperator() noexcept = default;
 
   protected:
-    explicit PhysicalStreamJoinOperator(Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler);
+    explicit PhysicalStreamJoinOperator(Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
+                                        OperatorId id);
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler;
 };
 

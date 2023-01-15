@@ -208,6 +208,18 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      */
     bool checkWindowExists(uint64_t timeStamp);
 
+    /**
+     * @brief Adds an operatorId
+     * @param id
+     */
+    void addOperatorId(OperatorId id);
+
+    /**
+     * @brief Getter for the operatorIds belonging to this operator handler
+     * @return Vector of operatorIds
+     */
+    const std::vector<OperatorId>& getJoinOperatorsId() const;
+
   private:
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
@@ -222,6 +234,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;
+    std::vector<OperatorId> joinOperatorsId;
 };
 
 }// namespace NES::Runtime::Execution::Operators

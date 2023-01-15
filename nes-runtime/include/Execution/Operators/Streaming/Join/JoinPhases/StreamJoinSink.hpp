@@ -30,7 +30,7 @@ class StreamJoinSink : public Operator {
      * @brief Constructor for a StreamJoinSink
      * @param handlerIndex
      */
-    StreamJoinSink(uint64_t handlerIndex);
+    explicit StreamJoinSink(uint64_t handlerIndex);
 
     /**
      * @brief receives a record buffer and then performs the join for the corresponding bucket. Currently, this method emits a buffer

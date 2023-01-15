@@ -25,17 +25,18 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
 
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide);
+                                      JoinBuildSideType buildSide, const std::string& timeStampFieldName);
 
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide);
+                                      JoinBuildSideType buildSide, const std::string& timeStampFieldName);
 
     explicit PhysicalStreamJoinBuildOperator(OperatorId id,
                                              SchemaPtr inputSchema,
                                              SchemaPtr outputSchema,
                                              Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
-                                             JoinBuildSideType buildSide);
+                                             JoinBuildSideType buildSide,
+                                             std::string  timeStampFieldName);
 
     ~PhysicalStreamJoinBuildOperator() noexcept override = default;
 
@@ -44,8 +45,11 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
     OperatorNodePtr copy() override;
 
     JoinBuildSideType getBuildSide() const;
-  private:
 
+    const std::string& getTimeStampFieldName() const;
+
+  private:
+    std::string timeStampFieldName;
     JoinBuildSideType buildSide;
 
 };
