@@ -42,7 +42,7 @@ class ReplacingRegexTest : public testing::Test {
 
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex) {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // Int8
+    // TextValue
     {
         transformReturnValues(TextValue::create("abc"));
 
