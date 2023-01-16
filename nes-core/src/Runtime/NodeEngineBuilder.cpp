@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
@@ -28,6 +29,7 @@
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/DecoratedLoRaWANNodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -226,34 +228,67 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourcePtr> physicalSources;
-        for (auto entry : workerConfiguration->physicalSources.getValues()) {
+        bool usesLoRaWAN = false;
+        for (const auto& entry : workerConfiguration->physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
+            if (entry.getValue()->getPhysicalSourceType()->instanceOf<LoRaWANProxySourceType>() )
+                usesLoRaWAN = true;
         }
-        std::shared_ptr<NodeEngine> engine = std::make_shared<NodeEngine>(
-            physicalSources,
-            std::move(hardwareManager),
-            std::move(bufferManagers),
-            std::move(queryManager),
-            [this](const std::shared_ptr<NodeEngine>& engine) {
-                return Network::NetworkManager::create(engine->getNodeEngineId(),
-                                                       this->workerConfiguration->localWorkerIp.getValue(),
-                                                       this->workerConfiguration->dataPort.getValue(),
-                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                                                       engine->getBufferManager(),
-                                                       this->workerConfiguration->senderHighwatermark.getValue(),
-                                                       this->workerConfiguration->numWorkerThreads.getValue());
-            },
-            std::move(partitionManager),
-            std::move(compiler),
-            std::move(stateManager),
-            std::move(nesWorker),
-            std::move(materializedViewManager),
-            nodeEngineId,
-            workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-            workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
-            workerConfiguration->numberOfBuffersPerWorker.getValue(),
-            workerConfiguration->enableSourceSharing.getValue());
-        //        Exceptions::installGlobalErrorListener(engine);
+
+        if (usesLoRaWAN) {
+            std::shared_ptr<NodeEngine> engine = std::make_shared<DecoratedLoRaWANNodeEngine>(
+                physicalSources,
+                std::move(hardwareManager),
+                std::move(bufferManagers),
+                std::move(queryManager),
+                [this](const std::shared_ptr<NodeEngine>& engine) {
+                    return Network::NetworkManager::create(engine->getNodeEngineId(),
+                                                           this->workerConfiguration->localWorkerIp.getValue(),
+                                                           this->workerConfiguration->dataPort.getValue(),
+                                                           Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                                                           engine->getBufferManager(),
+                                                           this->workerConfiguration->senderHighwatermark.getValue(),
+                                                           this->workerConfiguration->numWorkerThreads.getValue());
+                },
+                std::move(partitionManager),
+                std::move(compiler),
+                std::move(stateManager),
+                std::move(nesWorker),
+                std::move(materializedViewManager),
+                nodeEngineId,
+                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+                workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
+                workerConfiguration->numberOfBuffersPerWorker.getValue(),
+                workerConfiguration->enableSourceSharing.getValue());
+        } else {
+                std::shared_ptr<NodeEngine> engine = std::make_shared<NodeEngine>(
+                    physicalSources,
+                    std::move(hardwareManager),
+                    std::move(bufferManagers),
+                    std::move(queryManager),
+                    [this](const std::shared_ptr<NodeEngine>& engine) {
+                        return Network::NetworkManager::create(engine->getNodeEngineId(),
+                                                               this->workerConfiguration->localWorkerIp.getValue(),
+                                                               this->workerConfiguration->dataPort.getValue(),
+                                                               Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                                                               engine->getBufferManager(),
+                                                               this->workerConfiguration->senderHighwatermark.getValue(),
+                                                               this->workerConfiguration->numWorkerThreads.getValue());
+                    },
+                    std::move(partitionManager),
+                    std::move(compiler),
+                    std::move(stateManager),
+                    std::move(nesWorker),
+                    std::move(materializedViewManager),
+                    nodeEngineId,
+                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+                    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
+                    workerConfiguration->numberOfBuffersPerWorker.getValue(),
+                    workerConfiguration->enableSourceSharing.getValue());
+                //        Exceptions::installGlobalErrorListener(engine);
+        }
+
+
         return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());

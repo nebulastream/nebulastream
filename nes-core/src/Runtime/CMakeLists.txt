@@ -25,6 +25,7 @@ add_source_files(nes-core
         QueryStatistics.cpp
         NodeEngineBuilder.cpp
         MaterializedViewManager.cpp
+        DecoratedLoRaWANNodeEngine.cpp
         )
 
 add_subdirectory(Profiler)
