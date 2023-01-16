@@ -334,8 +334,6 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                     aggregation->getFinalAggregateStamp());
                 break;
             case Windowing::WindowAggregationDescriptor::Count:
-                // TODO 3280: Fix threhsold window with count, i.e., no aggregated field
-//                NES_NOT_IMPLEMENTED();
                 aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
                     aggregation->getInputStamp(),
                     aggregation->getFinalAggregateStamp());
@@ -365,7 +363,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 
         if (aggregation->getType()!=Windowing::WindowAggregationDescriptor::Count) {
             aggregatedFieldAccess = lowerExpression(aggregation->on());
-            // Comment 3280: Anyway, the onField for count should not be set to anything
+            // The onField for count should not be set to anything
         }
 
         return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
