@@ -130,7 +130,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ThresholdWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

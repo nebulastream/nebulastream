@@ -45,6 +45,7 @@ std::tuple<Code, RegisterFile> BCLoweringProvider::LoweringContext::process() {
         program.arguments.emplace_back(argumentRegister);
     }
     this->process(functionBasicBlock, rootFrame);
+    NES_INFO("Allocated Registers: " << this->registerProvider.allocRegister());
     return std::make_tuple(program, defaultRegisterFile);
 }
 
@@ -63,6 +64,30 @@ short BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Bas
     } else {
         return entry->second;
     }
+}
+
+void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::AndOperation>& addOpt,
+                                                  short block,
+                                                  RegisterFrame& frame) {
+    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
+    auto resultReg = registerProvider.allocRegister();
+    frame.setValue(addOpt->getIdentifier(), resultReg);
+    ByteCode bc = ByteCode::AND_b;
+    OpCode oc = {bc, leftInput, rightInput, resultReg};
+    program.blocks[block].code.emplace_back(oc);
+}
+
+void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::OrOperation>& addOpt,
+                                                  short block,
+                                                  RegisterFrame& frame) {
+    auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
+    auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
+    auto resultReg = registerProvider.allocRegister();
+    frame.setValue(addOpt->getIdentifier(), resultReg);
+    ByteCode bc = ByteCode::OR_b;
+    OpCode oc = {bc, leftInput, rightInput, resultReg};
+    program.blocks[block].code.emplace_back(oc);
 }
 
 void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::AddOperation>& addOpt,
@@ -543,25 +568,12 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             process(call, block, frame);
             return;
         }
-            /*
-        case IR::Operations::Operation::LoopOp: {
-            auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(opt);
-            process(loopOp, frame);
-            return;
-        }
-
 
         case IR::Operations::Operation::OrOp: {
             auto call = std::static_pointer_cast<IR::Operations::OrOperation>(opt);
-            process(call, frame);
+            process(call, block, frame);
             return;
         }
-        case IR::Operations::Operation::AndOp: {
-            auto call = std::static_pointer_cast<IR::Operations::AndOperation>(opt);
-            process(call, frame);
-            return;
-        }
-             */
         default: {
             NES_THROW_RUNTIME_ERROR("Operation " << opt->toString() << " not handled");
             return;
@@ -581,10 +593,10 @@ Type getType(IR::Types::StampPtr stamp) {
             }
         } else {
             switch (value->getBitWidth()) {
-                case IR::Types::IntegerStamp::I8: return Type::i8;
-                case IR::Types::IntegerStamp::I16: return Type::i16;
-                case IR::Types::IntegerStamp::I32: return Type::i32;
-                case IR::Types::IntegerStamp::I64: return Type::i64;
+                case IR::Types::IntegerStamp::I8: return Type::ui8;
+                case IR::Types::IntegerStamp::I16: return Type::ui16;
+                case IR::Types::IntegerStamp::I32: return Type::ui32;
+                case IR::Types::IntegerStamp::I64: return Type::ui64;
             }
         }
     } else if (stamp->isFloat()) {
@@ -607,11 +619,42 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   short block,
                                                   RegisterFrame& frame) {
 
+    NES_DEBUG("CREATE " << opt->toString() << " : " << opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
     ByteCode bc;
     if (opt->getStamp()->isVoid()) {
         if (arguments.empty()) {
             bc = ByteCode::CALL_v;
+        } else if (arguments.size() == 1) {
+            if (getType(arguments[0]->getStamp()) == Type::ptr) {
+                bc = ByteCode::CALL_v_ptr;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else if (arguments.size() == 2) {
+            if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ui64) {
+                bc = ByteCode::CALL_v_ptr_ui64;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else if (arguments.size() == 3) {
+            if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr
+                && getType(arguments[2]->getStamp()) == Type::ptr) {
+                bc = ByteCode::CALL_v_ptr_ptr_ptr;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        }else if (arguments.size() == 7) {
+            if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr
+                && getType(arguments[2]->getStamp()) == Type::ptr
+                && getType(arguments[3]->getStamp()) == Type::ui64
+                && getType(arguments[4]->getStamp()) == Type::ui64
+                && getType(arguments[5]->getStamp()) == Type::ui64
+                && getType(arguments[6]->getStamp()) == Type::ui64) {
+                bc = ByteCode::CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
         } else {
             // TODO support void function
             NES_NOT_IMPLEMENTED();
@@ -622,6 +665,8 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         } else if (arguments.size() == 1) {
             if (getType(arguments[0]->getStamp()) == Type::i64) {
                 bc = ByteCode::CALL_i64_i64;
+            } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
+                NES_NOT_IMPLEMENTED();
             } else {
                 NES_NOT_IMPLEMENTED();
             }
@@ -634,6 +679,54 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         } else {
             NES_NOT_IMPLEMENTED();
         }
+    } else if (getType(opt->getStamp()) == Type::ui64) {
+        if (arguments.empty()) {
+            NES_NOT_IMPLEMENTED();
+        } else if (arguments.size() == 1) {
+            if (getType(arguments[0]->getStamp()) == Type::i64) {
+                NES_NOT_IMPLEMENTED();
+            } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
+                bc = ByteCode::CALL_ui64_ptr;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else if (arguments.size() == 2) {
+            if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
+                NES_NOT_IMPLEMENTED();
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+    } else if (getType(opt->getStamp()) == Type::ptr) {
+        if (arguments.empty()) {
+            NES_NOT_IMPLEMENTED();
+        } else if (arguments.size() == 1) {
+            if (getType(arguments[0]->getStamp()) == Type::i64) {
+                NES_NOT_IMPLEMENTED();
+            } else if (getType(arguments[0]->getStamp()) == Type::ptr) {
+                bc = ByteCode::CALL_ptr_ptr;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else if (arguments.size() == 2) {
+            if (getType(arguments[0]->getStamp()) == Type::i64 && getType(arguments[1]->getStamp()) == Type::i64) {
+                NES_NOT_IMPLEMENTED();
+            } else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ui64) {
+                bc = ByteCode::CALL_ptr_ptr_ui64;
+            } else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::i64) {
+                bc = ByteCode::CALL_ptr_ptr_i64;
+            }else if (getType(arguments[0]->getStamp()) == Type::ptr && getType(arguments[1]->getStamp()) == Type::ptr) {
+                bc = ByteCode::CALL_ptr_ptr_ptr;
+            } else {
+                NES_NOT_IMPLEMENTED();
+            }
+        } else {
+            NES_NOT_IMPLEMENTED();
+        }
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
 
     std::vector<std::pair<short, Backends::BC::Type>> argRegisters;

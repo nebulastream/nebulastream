@@ -115,16 +115,31 @@ enum struct ByteCode : short {
     STORE_f,
     STORE_d,
     STORE_b,
+    // AND
+    AND_b,
+    // OR
+    OR_b,
     // Function calls TODO come up with a better approach to call dynamically into runtime functions
     // functions with void return
     CALL_v,
+    CALL_v_ptr,
+    CALL_v_ptr_ui64,
+    CALL_v_ptr_ptr_ptr,
+    CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64,
+    // functions with ui64 return
+    CALL_ui64_ptr,
     // functions with i64 return
     CALL_i64,
     CALL_i64_i64,
-    CALL_i64_i64_i64
+    CALL_i64_i64_i64,
+    // functions with ptr return
+    CALL_ptr_ptr,
+    CALL_ptr_ptr_ptr,
+    CALL_ptr_ptr_i64,
+    CALL_ptr_ptr_ui64,
 };
 
-enum Type : uint8_t { v, i8, i16, i32, i64, d, f, b, ptr };
+enum Type : uint8_t { v, i8, i16, i32, i64, ui8, ui16, ui32, ui64, d, f, b, ptr };
 
 struct OpCode;
 typedef void Operation(const OpCode&, RegisterFile& regs);
@@ -171,6 +186,20 @@ void call(const OpCode& c, RegisterFile& regs) {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             x(value0, value1);
+        } else if constexpr (sizeof...(Args) == 3) {
+            auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
+            auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
+            auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
+            x(value0, value1, value2);
+        } else if constexpr (sizeof...(Args) == 7) {
+            auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
+            auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
+            auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
+            auto value3 = readReg<__type_pack_element<3, Args...>>(regs, fcall->arguments[3].first);
+            auto value4 = readReg<__type_pack_element<4, Args...>>(regs, fcall->arguments[4].first);
+            auto value5 = readReg<__type_pack_element<5, Args...>>(regs, fcall->arguments[5].first);
+            auto value6 = readReg<__type_pack_element<6, Args...>>(regs, fcall->arguments[6].first);
+            x(value0, value1, value2, value3, value4, value5, value6);
         }
     } else {
         X rValue;
@@ -183,9 +212,28 @@ void call(const OpCode& c, RegisterFile& regs) {
             auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
             auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
             rValue = x(value0, value1);
+        } else if constexpr (sizeof...(Args) == 3) {
+            auto value0 = readReg<__type_pack_element<0, Args...>>(regs, fcall->arguments[0].first);
+            auto value1 = readReg<__type_pack_element<1, Args...>>(regs, fcall->arguments[1].first);
+            auto value2 = readReg<__type_pack_element<2, Args...>>(regs, fcall->arguments[2].first);
+            rValue = x(value0, value1, value2);
         }
         writeReg(regs, c.output, rValue);
     }
+}
+
+template<class x>
+void andOp(const OpCode& c, RegisterFile& regs) {
+    auto l = readReg<x>(regs, c.reg1);
+    auto r = readReg<x>(regs, c.reg2);
+    writeReg(regs, c.output, l && r);
+}
+
+template<class x>
+void orOp(const OpCode& c, RegisterFile& regs) {
+    auto l = readReg<x>(regs, c.reg1);
+    auto r = readReg<x>(regs, c.reg2);
+    writeReg(regs, c.output, l || r);
 }
 
 template<class x>

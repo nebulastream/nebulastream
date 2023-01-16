@@ -368,7 +368,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         StreamJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<StreamJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

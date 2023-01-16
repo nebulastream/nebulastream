@@ -114,13 +114,29 @@ static Operation* OpTable[] = {
     (Operation*) store<float>,
     (Operation*) store<double>,
     (Operation*) store<bool>,
+    (Operation*) andOp<bool>,
+    (Operation*) orOp<bool>,
     // FUNCTION CALLS
     // return void
     (Operation*) call<void>,
+    (Operation*) call<void, void*>,
+    /*CALL_v_ptr_ui64*/ (Operation*) call<void, void*, uint64_t>,
+    /*CALL_v_ptr_ptr_ptr*/ (Operation*) call<void, void*, void*, void*>,
+    /*CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64*/
+    (Operation*) call<void, void*, void*, void*, uint64_t, uint64_t, uint64_t, uint64_t>,
+    // Return uint64_t
+    (Operation*) call<uint64_t, void*>,
     // Return int64_t
     (Operation*) call<int64_t>,
     (Operation*) call<int64_t, int64_t>,
-    (Operation*) call<int64_t, int64_t, int64_t>
+    (Operation*) call<int64_t, int64_t, int64_t>,
+    // Return ptr
+    (Operation*) call<void*, void*>,
+    (Operation*) call<void*, void*, void*>,
+    /*CALL_ptr_ptr_i64*/
+    (Operation*) call<void*, void*, int64_t>,
+    /*CALL_ptr_ptr_ui64*/
+    (Operation*) call<void*, void*, uint64_t>,
 };
 
 FunctionCallTarget::FunctionCallTarget(std::vector<std::pair<short, Type>> arguments, void* functionPtr)
@@ -162,6 +178,10 @@ std::any BCInterpreter::invokeGeneric(const std::string&, const std::vector<std:
         case Type::i16: return (int16_t) result;
         case Type::i32: return (int32_t) result; ;
         case Type::i64: return (int64_t) result; ;
+        case Type::ui8: return (uint8_t) result;
+        case Type::ui16: return (uint16_t) result;
+        case Type::ui32: return (uint32_t) result; ;
+        case Type::ui64: return (uint64_t) result; ;
         case Type::d: return *reinterpret_cast<double*>(&result); ;
         case Type::f: return *reinterpret_cast<float*>(&result); ;
         case Type::b: return (bool) result; ;

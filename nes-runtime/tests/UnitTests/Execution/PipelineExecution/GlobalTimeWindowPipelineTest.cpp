@@ -155,7 +155,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         GlobalTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<GlobalTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });
