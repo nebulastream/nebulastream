@@ -59,7 +59,9 @@ RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
 #if defined(__APPLE__)
     runtimePathConfig.libs.push_back("-lnes");
+    runtimePathConfig.libs.push_back("-lnes-runtime");
     runtimePathConfig.libs.push_back("-lnes-common");
+    runtimePathConfig.libs.push_back("-lnes-data-types");
     runtimePathConfig.libs.push_back("-lc++");
 #endif
 
@@ -77,10 +79,14 @@ RuntimePathConfig loadRuntimePathConfig() {
     } else if (isInBuildDir() || isInBuildDirIsAvailable()) {
         NES_DEBUG("Detected a build dir as a execution location");
         const std::string coreBinaryDir = PATH_TO_BINARY_DIR "/nes-common/";
+        const std::string runtimeBinaryDir = PATH_TO_BINARY_DIR "/nes-runtime/";
         const std::string commonBinaryDir = PATH_TO_BINARY_DIR "/nes-core/";
+        const std::string dataTypesBinaryDir = PATH_TO_BINARY_DIR "/nes-data-types/";
         runtimePathConfig.clangBinaryPath = CLANG_EXECUTABLE;
         runtimePathConfig.libPaths.push_back(coreBinaryDir);
+        runtimePathConfig.libPaths.push_back(runtimeBinaryDir);
         runtimePathConfig.libPaths.push_back(commonBinaryDir);
+        runtimePathConfig.libPaths.push_back(dataTypesBinaryDir);
         runtimePathConfig.includePaths.push_back(PATH_TO_BINARY_DIR "/include/nebulastream");
     } else {
         throw CompilerException("Runtime environment can't be detected.");
