@@ -60,15 +60,12 @@ concept IsSame = std::is_same<T, U>::value;
 
 class Typed;
 template<typename T>
-concept IsTyped = requires(T&) {
-    IsBase<Typed, T> == true;
-};
+concept IsTyped = requires(T&) { IsBase<Typed, T> == true; };
 
 template<typename T>
 concept HasTypeIdentifier = requires(T&) {
-    { std::remove_pointer<T>::type::type }
-    ->IsSame<const TypeIdentifier&>;
-};
+                                { std::remove_pointer<T>::type::type } -> IsSame<const TypeIdentifier&>;
+                            };
 
 /**
  * @brief If a class inherits from Typed it enables the custom casting system and allows the isa and cast methods.

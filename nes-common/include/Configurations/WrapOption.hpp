@@ -20,9 +20,9 @@ namespace NES::Configurations {
 
 template<class Type, class Factory>
 concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, Yaml::Node node) {
-    {Factory::createFromString(identifier, inputParams)};
-    {Factory::createFromYaml(node)};
-};
+                        { Factory::createFromString(identifier, inputParams) };
+                        { Factory::createFromYaml(node) };
+                    };
 
 /**
  * @brief This class provides a general option, that can wrap an object of arbitrary Type as an option.
@@ -35,7 +35,8 @@ concept IsFactory = requires(std::string identifier, std::map<std::string, std::
  * @tparam Factory type which implements the static create function to initialize a value of this option.
  */
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> class WrapOption : public TypedBaseOption<Type> {
+    requires IsFactory<Type, Factory>
+class WrapOption : public TypedBaseOption<Type> {
   public:
     /**
      * @brief Constructor to create a new option that sets a name, and description.
@@ -51,27 +52,31 @@ requires IsFactory<Type, Factory> class WrapOption : public TypedBaseOption<Type
 
   private:
     template<class X>
-    requires std::is_base_of_v<BaseOption, X> friend class SequenceOption;
+        requires std::is_base_of_v<BaseOption, X>
+    friend class SequenceOption;
     WrapOption() : TypedBaseOption<Type>() {}
 };
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description)
+    requires IsFactory<Type, Factory>
+WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description)
     : TypedBaseOption<Type>(name, description) {}
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> void
-WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+    requires IsFactory<Type, Factory>
+void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     this->value = Factory::createFromString(identifier, inputParams);
 }
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
+    requires IsFactory<Type, Factory>
+void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
     this->value = Factory::createFromYaml(node);
 }
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory> std::string Configurations::WrapOption<Type, Factory>::toString() {
+    requires IsFactory<Type, Factory>
+std::string Configurations::WrapOption<Type, Factory>::toString() {
     return "";
 }
 
