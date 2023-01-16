@@ -175,7 +175,7 @@ TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineBooleanMap) {
 /**
  * @brief Test a pipeline containing a scan, a java map with strings, and a emit operator
  */
-TEST_P(MapJavaUDFPipelineTest, DISABLE_scanMapEmitPipelineStringMap) {
+TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("stringVariable", BasicType::TEXT);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -208,6 +208,7 @@ TEST_P(MapJavaUDFPipelineTest, DISABLE_scanMapEmitPipelineStringMap) {
         auto varLengthBuffer = bm->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
+        NES_DEBUG("test string: " << (varLengthBuffer.getBuffer<char>() + sizeof(uint32_t)));
         auto index = buffer.storeChildBuffer(varLengthBuffer);
         dynamicBuffer[i]["stringVariable"].write(index);
         dynamicBuffer.setNumberOfTuples(i + 1);
@@ -229,7 +230,8 @@ TEST_P(MapJavaUDFPipelineTest, DISABLE_scanMapEmitPipelineStringMap) {
     for (uint64_t i = 0; i < 10; i++) {
         auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
-        auto size = (*varLengthBuffer.getBuffer<uint32_t>());
+        auto textValue = varLengthBuffer.getBuffer<TextValue>();
+        auto size = textValue->length();
         char* value = (char *) malloc(size * sizeof(char));
         memcpy(value, varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), size * sizeof(char));
         ASSERT_EQ(std::string(value), "testValue_appended");

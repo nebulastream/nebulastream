@@ -191,6 +191,8 @@ extern "C" void *createDoubleObject(void* state, double value) {
 
 extern "C" void *createStringObject(void* state, TextValue *value) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
+    NES_DEBUG("test string: " << (value->getBuffer().getBuffer<char>() + sizeof(uint32_t)));
+    NES_DEBUG("test string: " << (value->c_str()));
     return handler->getEnvironment()->NewString(reinterpret_cast<const jchar*>(value->c_str()), value->length());
 }
 
@@ -251,7 +253,7 @@ extern "C" TextValue *getStringObjectValue(void* state, void *object) {
     auto size = handler->getEnvironment()->GetStringLength((jstring) object);
     auto resultText = TextValue::create(size);
     auto sourceText = handler->getEnvironment()->GetStringChars((jstring) object, nullptr);
-    std::memcpy(resultText, sourceText, size);
+    std::memcpy(resultText->str(), sourceText, size);
     return resultText;
 }
 
