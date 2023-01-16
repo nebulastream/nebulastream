@@ -17,7 +17,9 @@ public class StringMapFunction implements MapFunction<String, String> {
 
     @Override
     public String map(String value) {
-        return value + instanceVariable;
+        String result = value + instanceVariable;
+        System.out.println("Result: " + result);
+        return result;
     }
    
 }
