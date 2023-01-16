@@ -1,0 +1,105 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+syntax = "proto3";
+
+package messages;
+
+enum DataTypes {
+  INT8 = 0;
+  UINT8 = 1;
+  INT16 = 2;
+  UINT16 = 3;
+  INT32 = 4;
+  UINT32 = 5;
+  INT64 = 6;
+  UINT64 = 7;
+  FLOAT = 8;
+  DOUBLE = 9;
+}
+
+enum ExpressionInstructions {
+  CONST = 0;
+  VAR = 1;
+  AND = 2;
+  OR = 3;
+  NOT = 4;
+  LT = 5;
+  GT = 6;
+  EQ = 7;
+  ADD = 8;
+  SUB = 9;
+  MUL = 10;
+  DIV = 11;
+  MOD = 12;
+}
+
+message Output {
+  message QueryResponse {
+    int32 id = 1;
+    repeated bytes response = 2;
+  }
+  repeated QueryResponse responses = 1;
+}
+
+message Expression {
+  bytes instructions = 1;
+}
+
+message MapOperation {
+  Expression function = 1;
+  int32 attribute = 2;
+}
+
+message FilterOperation {
+  Expression predicate = 1;
+}
+
+enum WindowAggregationType {
+  MIN = 0;
+  MAX = 1;
+  SUM = 2;
+  AVG = 3;
+  COUNT = 4;
+}
+
+enum WindowSizeType {
+  TIMEBASED = 0;
+  COUNTBASED = 1;
+}
+
+message WindowOperation {
+  int32 size = 1;
+  WindowSizeType sizeType = 2;
+  WindowAggregationType aggregationType = 3;
+  int32 startAttribute = 4;
+  int32 endAttribute = 5;
+  int32 resultAttribute = 6;
+  int32 readAttribute = 7;
+}
+
+message Query {
+  message Operation {
+    MapOperation map = 1;
+    FilterOperation filter = 2;
+    WindowOperation window = 3;
+  }
+  bytes resultType = 1; //For some reason minipb breaks if I make this a repeated enum or int32
+  repeated Operation operations = 2;
+
+}
+
+message Message {
+  repeated Query queries = 1;
+}

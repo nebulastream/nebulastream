@@ -19,4 +19,5 @@ add_source_files(nes-core
         QueryPlanSerializationUtil.cpp
         ShapeTypeSerializationUtil.cpp
         UdfSerializationUtil.cpp
+        EndDeviceProtocolSerializationUtil.cpp
 )

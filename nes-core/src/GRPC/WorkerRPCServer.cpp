@@ -37,13 +37,17 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
       locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
-
+//TODO: entry
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
                                                                           << " plan=" << queryPlan->toString());
     bool success = 0;
     try {
+        // catch queryplan here to capture QP and modify before sending further
+
+        //TODO: move this code somewhere it actually fits
+        //auto gg = QueryPlanIterator()
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);
     } catch (std::exception& error) {
         NES_ERROR("Register query crashed: " << error.what());
