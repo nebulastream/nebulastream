@@ -355,6 +355,25 @@ TextValue* lrTrim(const TextValue* text) {
 
 const Value<Text> Text::trim() const { return FunctionCall<>("lrTrim", lrTrim, rawReference); }
 
+const TextValue* textFormat(const TextValue* text, const TextValue* target) {
+    auto source = TextValue::create("{}");
+    uint32_t n;
+    for(uint32_t i=0; i<text->length()-1;i++){
+        if(text->c_str()[i]== source->str()[0]){
+            if(text->c_str()[i+1]== source->str()[1]);
+            n++;
+        }
+    }
+    uint32_t len =text->length() -2*n + n*target->length();
+    auto result = TextValue::create(len);
+    result = textReplace(text, source, target);
+    return result;
+}
+
+const Value<Text> Text::format(Value<Text>& other) const {
+    return FunctionCall<>("textFormat", textFormat, rawReference, other.value->rawReference);
+}
+
 IR::Types::StampPtr Text::getType() const { return rawReference.getType(); }
 const TypedRef<TextValue>& Text::getReference() const { return rawReference; }
 

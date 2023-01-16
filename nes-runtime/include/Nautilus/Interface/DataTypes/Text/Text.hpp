@@ -181,6 +181,13 @@ class Text final : public Nautilus::Any {
     const Value<Text> trim() const;
 
     /**
+     * @brief Formats a string using fmt syntax
+     * @param other as Value<Text>
+     * @return Value<Text>
+     */
+    const Value<Text> format(Value<Text>& other) const;
+
+    /**
      * @brief Returns the stamp of this type
      * @return IR::Types::StampPtr
      */
