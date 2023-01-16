@@ -51,8 +51,8 @@ TEST_P(LoopCompilationTest, sumLoopTestSCF) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 101);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 101);
 }
 
 Value<> nestedSumLoop(int upperLimit) {
@@ -71,8 +71,8 @@ TEST_P(LoopCompilationTest, nestedLoopTest) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1001);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 1001);
 }
 
 TEST_P(LoopCompilationTest, sumLoopTestCF) {
@@ -81,8 +81,8 @@ TEST_P(LoopCompilationTest, sumLoopTestCF) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 101);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 101);
 }
 
 Value<> ifSumLoop() {
@@ -101,8 +101,8 @@ TEST_P(LoopCompilationTest, ifSumLoopTest) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 51);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 51);
 }
 
 Value<> ifElseSumLoop() {
@@ -123,8 +123,8 @@ TEST_P(LoopCompilationTest, ifElseSumLoopTest) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 56);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 56);
 }
 
 Value<> elseOnlySumLoop() {
@@ -144,8 +144,8 @@ TEST_P(LoopCompilationTest, elseOnlySumLoopTest) {
     });
 
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 1);
 }
 
 Value<> nestedIfSumLoop() {
@@ -167,8 +167,8 @@ TEST_P(LoopCompilationTest, nestedIfSumLoopTest) {
         return nestedIfSumLoop();
     });
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 41);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 41);
 }
 
 Value<> nestedIfElseSumLoop() {
@@ -192,8 +192,8 @@ TEST_P(LoopCompilationTest, nestedIfElseSumLoopTest) {
         return nestedIfElseSumLoop();
     });
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 146);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 146);
 }
 
 Value<> nestedElseOnlySumLoop() {
@@ -216,8 +216,8 @@ TEST_P(LoopCompilationTest, nestedElseOnlySumLoop) {
         return nestedElseOnlySumLoop();
     });
     auto engine = prepare(execution);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 1);
 }
 
 // Tests all registered compilation backends.

@@ -53,8 +53,8 @@ TEST_P(TypeCompilationTest, negativeIntegerTest) {
         return negativeIntegerTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), -1);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, -1);
 }
 
 Value<> unsignedIntegerTest() {
@@ -72,8 +72,9 @@ TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest) {
         return unsignedIntegerTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<uint32_t (*)()>("execute");
-    ASSERT_EQ(function(), UINT32_MAX);
+    auto res = engine->invoke<uint32_t>("execute");
+    ASSERT_EQ(res, UINT32_MAX);
+
 }
 
 Value<> boolCompareTest() {
@@ -92,24 +93,8 @@ TEST_P(TypeCompilationTest, DISABLED_boolCompareTest) {
         return boolCompareTest();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 1);
-}
-
-Value<> floatTest() {
-    // Value iw = Value(1.3);
-    // return iw;
-    return Value(1);
-}
-
-// Above approach, to return a float Value, does not work.
-TEST_P(TypeCompilationTest, DISABLED_floatTest) {
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() {
-        return floatTest();
-    });
-    auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
-    ASSERT_EQ(function(), 1);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 1);
 }
 
 Value<> mixBoolAndIntTest() {
@@ -187,8 +172,9 @@ TEST_P(TypeCompilationTest, customValueTypeTest) {
         return customValueType();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)()>("execute");
-    ASSERT_EQ(function(), 128);
+
+    auto res = engine->invoke<int64_t>("execute");
+    ASSERT_EQ(res, 128);
 }
 
 Value<> listLengthTest(Value<List>& list) { return list->length() + 4; }
@@ -229,6 +215,9 @@ Value<> textTestFunction(Value<Text>& text) {
 }
 
 TEST_P(TypeCompilationTest, compileTextFunctionTest) {
+
+
+
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
 
@@ -243,8 +232,8 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
-    ASSERT_EQ(function(listRef.get()), 4);
+    auto res = engine->invoke<int64_t, void*>("execute",listRef.get());
+    ASSERT_EQ(res, 4);
 }
 
 // Tests all registered compilation backends.

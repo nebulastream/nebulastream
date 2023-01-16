@@ -20,6 +20,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <functional>
 #include <memory>
 
 namespace NES::Nautilus {
@@ -51,8 +52,8 @@ TEST_P(ExpressionExecutionTest, addI8Test) {
         return int8AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int8_t (*)(int8_t)>("execute");
-    ASSERT_EQ(function(1), 3.0);
+    auto function = engine->invoke<int8_t, int8_t>("execute", 1);
+    ASSERT_EQ(function, 3.0);
 }
 
 Value<> int16AddExpression(Value<Int16> x) {
@@ -67,9 +68,8 @@ TEST_P(ExpressionExecutionTest, addI16Test) {
         return int16AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int16_t (*)(int16_t)>("execute");
-
-    ASSERT_EQ(function(8), 13);
+    auto res = engine->invoke<int16_t, int16_t>("execute", 8);
+    ASSERT_EQ(res, 13);
 }
 
 Value<> int32AddExpression(Value<Int32> x) {
@@ -84,8 +84,8 @@ TEST_P(ExpressionExecutionTest, addI32Test) {
         return int32AddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)(int32_t)>("execute");
-    ASSERT_EQ(function(8), 13);
+    auto res = engine->invoke<int32_t, int32_t>("execute", 8);
+    ASSERT_EQ(res, 13);
 }
 
 Value<> int64AddExpression(Value<Int64> x) {
@@ -101,13 +101,16 @@ TEST_P(ExpressionExecutionTest, addI64Test) {
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t (*)(int64_t)>("execute");
-    ASSERT_EQ(function(7), 14);
-    ASSERT_EQ(function(-7), 0);
-    ASSERT_EQ(function(-14), -7);
+    auto res = engine->invoke<int64_t, int64_t>("execute", 7);
+    ASSERT_EQ(res, 14);
+    res = engine->invoke<int64_t, int64_t>("execute", -7);
+    ASSERT_EQ(res, 0);
+    res = engine->invoke<int64_t, int64_t>("execute", -14);
+    ASSERT_EQ(res, -7);
 }
 
 Value<> floatAddExpression(Value<Float> x) {
-    Value<Float> y = 7.0f;
+    Value<Float> y = 7.1f;
     return x + y;
 }
 
@@ -118,10 +121,13 @@ TEST_P(ExpressionExecutionTest, addFloatTest) {
         return floatAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<float (*)(float)>("execute");
-    ASSERT_EQ(function(7.0), 14.0);
-    ASSERT_EQ(function(-7.0), 0.0);
-    ASSERT_EQ(function(-14.0), -7.0);
+
+    auto res = engine->invoke<float, float>("execute", 7.1f);
+    ASSERT_EQ(res, 14.2f);
+    res = engine->invoke<float, float>("execute", -7.1f);
+    ASSERT_EQ(res, 0.0f);
+    res = engine->invoke<float, float>("execute", -14.1f);
+    ASSERT_NEAR(res, -7.0f, 0.1f);
 }
 
 Value<> doubleAddExpression(Value<Double> x) {
@@ -136,10 +142,12 @@ TEST_P(ExpressionExecutionTest, addDoubleTest) {
         return doubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<double (*)(double)>("execute");
-    ASSERT_EQ(function(7.0), 14.0);
-    ASSERT_EQ(function(-7.0), 0.0);
-    ASSERT_EQ(function(-14.0), -7.0);
+    auto res = engine->invoke<double, double>("execute", 7.0);
+    ASSERT_EQ(res, 14.0);
+    res = engine->invoke<double, double>("execute", -7.0);
+    ASSERT_EQ(res, 0.0);
+    res = engine->invoke<double, double>("execute", -14.0);
+    ASSERT_EQ(res, -7.0);
 }
 
 Value<> castFloatToDoubleAddExpression(Value<Float> x) {
@@ -154,10 +162,12 @@ TEST_P(ExpressionExecutionTest, castFloatToDoubleTest) {
         return castFloatToDoubleAddExpression(tempx);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<double (*)(float)>("execute");
-    ASSERT_EQ(function(7.0), 14.0);
-    ASSERT_EQ(function(-7.0), 0.0);
-    ASSERT_EQ(function(-14.0), -7.0);
+    auto res = engine->invoke<double, float>("execute", 14);
+    ASSERT_EQ(res, 14.0);
+    res = engine->invoke<double, float>("execute", -7.0);
+    ASSERT_EQ(res, 0.0);
+    res = engine->invoke<double, float>("execute", -14.0);
+    ASSERT_EQ(res, -7.0);
 }
 
 Value<> castInt8ToInt64AddExpression(Value<Int8> x) {
@@ -173,9 +183,12 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test) {
     });
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int8_t (*)(int8_t)>("execute");
-    ASSERT_EQ(function(7), 14);
-    ASSERT_EQ(function(-7), 0);
-    ASSERT_EQ(function(-14), -7);
+    auto res = engine->invoke<int8_t, int8_t>("execute", 14);
+    ASSERT_EQ(res, 14.0);
+    res = engine->invoke<int8_t, int8_t>("execute", -7.0);
+    ASSERT_EQ(res, 0.0);
+    res = engine->invoke<int8_t, int8_t>("execute", -14.0);
+    ASSERT_EQ(res, -7.0);
 }
 
 Value<> castInt8ToInt64AddExpression2(Value<> x) {

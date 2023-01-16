@@ -14,8 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
-#include <string>
+#include <any>
 #include <functional>
+#include <string>
 namespace NES::Nautilus::Backends {
 
 /**
@@ -28,20 +29,41 @@ class Executable {
         return reinterpret_cast<Function>(getInvocableFunctionPtr(member));
     }
 
-    template<class Function>
-    std::function<Function> getFunction(const std::string& member){
-        return reinterpret_cast<std::function<Function>>(getInvocableFunctionPtr(member));
+    template<typename R, typename... Args>
+    requires std::is_void_v<R>
+    void invoke(const std::string& member, Args... arguments) {
+        if (hasInvocableFunctionPtr()) {
+            auto function = getInvocableFunctionPtr(member);
+            reinterpret_cast<void (*)(Args...)>(function)(std::forward<Args>(arguments)...);
+        } else {
+            std::vector<std::any> inputs_ = {arguments...};
+            invokeGeneric(member, inputs_);
+        }
+    }
+
+    template<typename R, typename... Args>
+    requires (std::is_void_v<R> == false)
+    R invoke(const std::string& member, Args... arguments) {
+        if (hasInvocableFunctionPtr()) {
+            auto function = getInvocableFunctionPtr(member);
+            return reinterpret_cast<R (*)(Args...)>(function)(std::forward<Args>(arguments)...);
+        } else {
+            std::vector<std::any> inputs_ = {arguments...};
+            auto res = invokeGeneric(member, inputs_);
+            return std::any_cast<R>(res);
+        }
     }
 
     virtual ~Executable() = default;
 
-  protected:
     /**
      * @brief Returns a untyped function pointer to a specific symbol.
      * @param member on the dynamic object, currently provided as a MangledName.
      * @return function ptr
      */
     [[nodiscard]] virtual void* getInvocableFunctionPtr(const std::string& member) = 0;
+    virtual bool hasInvocableFunctionPtr() = 0;
+    virtual std::any invokeGeneric(const std::string&, const std::vector<std::any>&) { return nullptr; };
 };
 
 }// namespace NES::Nautilus::Backends

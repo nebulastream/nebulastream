@@ -50,8 +50,8 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
 
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
-
-    ASSERT_EQ(function(&valI), 42);
+    auto res = engine->invoke<int64_t, void*>("execute", &valI);
+    ASSERT_EQ(res, 42);
 }
 
 void storeFunction(Value<MemRef> ptr) {
@@ -70,8 +70,8 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
         storeFunction(tempPara);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
-    function(&valI);
+ //   auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    engine->invoke<void, void*>("execute", &valI);
     ASSERT_EQ(valI, 43);
 }
 
@@ -94,9 +94,9 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(int, void*)>("execute");
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
-    ASSERT_EQ(function(7, array), 28);
+    auto res = engine->invoke<int64_t, int64_t, void*>("execute", 7, array);
+    ASSERT_EQ(res, 28);
 }
 
 // Tests all registered compilation backends.

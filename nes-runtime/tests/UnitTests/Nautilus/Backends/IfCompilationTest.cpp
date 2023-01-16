@@ -50,8 +50,9 @@ TEST_P(IfCompilationTest, ifConditionTest) {
         return ifThenCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int16_t (*)()>("execute");
-    ASSERT_EQ(function(), 43);
+    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 43);
 }
 
 Value<> ifThenElseCondition() {
@@ -70,8 +71,8 @@ TEST_P(IfCompilationTest, ifThenElseConditionTest) {
         return ifThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 85);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 85);
 }
 
 Value<> nestedIfThenElseCondition() {
@@ -92,8 +93,8 @@ TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
         return nestedIfThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 5);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 5);
 }
 
 Value<> nestedIfNoElseCondition() {
@@ -115,8 +116,8 @@ TEST_P(IfCompilationTest, nestedIFThenNoElse) {
         return nestedIfNoElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 12);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 12);
 }
 
 // Todo leads to redundant if that can be replaced with br
@@ -137,8 +138,8 @@ TEST_P(IfCompilationTest, doubleIfCondition) {
         return doubleIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 23);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 23);
 }
 
 Value<> ifElseIfCondition() {
@@ -157,8 +158,8 @@ TEST_P(IfCompilationTest, ifElseIfCondition) {
         return ifElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 23);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 23);
 }
 
 Value<> deeplyNestedIfElseCondition() {
@@ -185,8 +186,8 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
         return deeplyNestedIfElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 12);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 12);
 }
 
 Value<> deeplyNestedIfElseIfCondition() {
@@ -209,8 +210,8 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
-    ASSERT_EQ(function(), 17);
+    auto res = engine->invoke<int32_t>("execute");
+    ASSERT_EQ(res, 17);
 }
 
 // Tests all registered compilation backends.

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -37,7 +38,9 @@ class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractComp
     static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
-int64_t addInt(int64_t x, int64_t y) { return x + y; };
+int64_t addInt(int64_t x, int64_t y) {
+    return x + y;
+};
 
 Value<> addIntFunction() {
     auto x = Value<Int64>((int64_t) 2);
@@ -52,8 +55,8 @@ TEST_P(FunctionCompilationTest, addIntFunctionTest) {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
-    ASSERT_EQ(function(), 5);
+    auto res = result->invoke<int64_t>("execute");
+    ASSERT_EQ(res, 5);
 }
 
 int64_t returnConst() { return 42; };
@@ -66,8 +69,8 @@ TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
-    ASSERT_EQ(function(), 42);
+    auto res = result->invoke<int64_t>("execute");
+    ASSERT_EQ(res, 42);
 }
 
 void voidException() { NES_THROW_RUNTIME_ERROR("An expected exception"); };
@@ -80,8 +83,7 @@ TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
-    ASSERT_ANY_THROW(function());
+    ASSERT_ANY_THROW(result->invoke<int64_t>("execute"));
 }
 
 int64_t multiplyArgument(int64_t x) { return x * 10; };
@@ -99,8 +101,10 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
     });
     auto result = prepare(executionTrace);
     auto function = result->getInvocableMember<int64_t (*)(int64_t)>("execute");
-    ASSERT_EQ(function(10), 100);
-    ASSERT_EQ(function(42), 420);
+    auto r1 = result->invoke<int64_t,int64_t>("execute",10);
+    ASSERT_EQ(r1, 100);
+    auto r2 = result->invoke<int64_t,int64_t>("execute",42);
+    ASSERT_EQ(r2, 420);
 }
 
 // Tests all registered compilation backends.
