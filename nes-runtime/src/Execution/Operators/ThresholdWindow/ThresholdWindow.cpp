@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Execution/Aggregation/CountAggregation.hpp"
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
@@ -70,7 +71,12 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
 
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        auto aggregatedValue = aggregatedFieldAccessExpression->execute(record);
+        auto aggregatedValue = Value<Int64>(1L); // default value to aggregate (i.e., for countAgg)
+        auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunction);
+        if (!isCountAggregation) {
+            // if the agg function is not a count, then get the aggregated value from the "onField" field
+            aggregatedValue = aggregatedFieldAccessExpression->execute(record);
+        }
         FunctionCall("incrementCount", incrementCount, handler);
         aggregationFunction->lift(aggregationValueMemref, aggregatedValue);
         FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
