@@ -33,7 +33,7 @@ namespace NES::Benchmark {
      * @param rpcPort
      * @param restPort
      */
-    void runSingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverallRuns, int rpcPort, int restPort);
+    void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverallRuns, int rpcPort, int restPort);
 
     /**
      * @brief Writes the header to the output csv file

@@ -10,13 +10,15 @@ startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
 logicalSources:
-  input1:
+  - name: input1
     type: Default
-  input2:
+
+  - name: input2
     type: Uniform
     minValue: 0
     maxValue: 250
-  input3:
+
+  - name: input3
     type: Zipfian
     alpha: 0.99
     minValue: 0

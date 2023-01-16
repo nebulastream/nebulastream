@@ -36,7 +36,7 @@ std::string E2EBenchmarkConfigPerRun::toString() {
     oss << "- numWorkerOfThreads: " << numberOfWorkerThreads->getValueAsString() << std::endl
         << "- bufferSizeInBytes: " << bufferSizeInBytes->getValueAsString() << std::endl
         << "- numberOfQueriesToDeploy: " << numberOfQueriesToDeploy->getValueAsString() << std::endl
-        << "- numberOfSources: " << getStrLogicalSrcToNumberOfPhysicalSrc() << std::endl
+        << "- numberOfSources: " << getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
         << "- numberOfBuffersInGlobalBufferManager: " << numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
         << "- numberOfBuffersInSourceLocalBufferPool: " << numberOfBuffersInSourceLocalBufferPool->getValueAsString()
         << std::endl;
@@ -70,7 +70,8 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
     }
-    allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
+    allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(
+            yamlConfig);
 
     /* Retrieving the maximum number of experiments to run */
     size_t totalBenchmarkRuns = numWorkerOfThreads.size();
@@ -108,7 +109,7 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     return allConfigPerRuns;
 }
 
-std::string E2EBenchmarkConfigPerRun::getStrLogicalSrcToNumberOfPhysicalSrc() const {
+std::string E2EBenchmarkConfigPerRun::getStringLogicalSourceToNumberOfPhysicalSources() const {
     std::stringstream stringStream;
     for (auto it = logicalSrcToNoPhysicalSrc.begin(); it != logicalSrcToNoPhysicalSrc.end(); ++it) {
         if (it != logicalSrcToNoPhysicalSrc.begin()) {
@@ -121,29 +122,34 @@ std::string E2EBenchmarkConfigPerRun::getStrLogicalSrcToNumberOfPhysicalSrc() co
     return stringStream.str();
 }
 
-std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(Yaml::Node yamlConfig) {
+std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig) {
     std::vector<std::map<std::string, uint64_t>> retVectorOfMaps;
 
     auto logicalSourceNode = yamlConfig["logicalSources"];
-    auto maxNoExperiments = 0UL;
+    auto maxNumberOfExperiments = 0UL;
+
+    // Iterating through all numberOfPhysicalSources and getting the maximum number of experiments (most comma separated values)
     for (auto entry = logicalSourceNode.Begin(); entry != logicalSourceNode.End(); entry++) {
         auto node = (*entry).second;
         if (!node["numberOfPhysicalSources"].IsNone()) {
             auto tmpVec = NES::Util::splitWithStringDelimiter<uint64_t>(node["numberOfPhysicalSources"].As<std::string>(), ",");
-            maxNoExperiments = std::max(maxNoExperiments, tmpVec.size());
+            maxNumberOfExperiments = std::max(maxNumberOfExperiments, tmpVec.size());
         }
     }
 
-    for (auto curExp = 0UL; curExp < maxNoExperiments; ++curExp) {
+    /* Iterating through each source and retrieving the number of physical sources.
+     * First, we check if the logical source name already exists and throw an error if so.
+     * Afterwards, we take either the old numberOfPhysicalSources, or the new value if it exists. If none exist, we have a default of 1.
+     */
+    for (auto curExp = 0UL; curExp < maxNumberOfExperiments; ++curExp) {
         std::map<std::string, uint64_t> map;
         for (auto entry = logicalSourceNode.Begin(); entry != logicalSourceNode.End(); entry++) {
-            auto logicalSourceName = (*entry).first;
+            auto node = (*entry).second;
+            auto logicalSourceName = node["name"].As<std::string>();
             if (map.contains(logicalSourceName)) {
-                NES_THROW_RUNTIME_ERROR("Logical source name has to be unique! "
-                                        << logicalSourceName << " is duplicated!");
+                NES_THROW_RUNTIME_ERROR("Logical source name has to be unique! " << logicalSourceName << " is duplicated!");
             }
 
-            auto node = (*entry).second;
             auto value = 1UL;
             auto tmpVec = NES::Util::splitWithStringDelimiter<uint64_t>(node["numberOfPhysicalSources"].As<std::string>(), ",");
             if (!node["numberOfPhysicalSources"].IsNone() && curExp < tmpVec.size()) {

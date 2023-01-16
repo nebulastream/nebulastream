@@ -9,6 +9,11 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
+logicalSources:
+  - name: input1
+  - name: input2
+  - name: input3
+
 inputType: MemoryMode
 dataProviderMode: MemCopy
 outputFile: JoinTwoSources.csv
