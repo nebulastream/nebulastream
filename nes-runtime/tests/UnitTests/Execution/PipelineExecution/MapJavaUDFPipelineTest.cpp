@@ -13,20 +13,20 @@
 */
 
 #include <API/Schema.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -61,7 +61,6 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
 
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
-
 
 /**
  * @brief Test a pipeline containing a scan, a java map with integers, and a emit operator
@@ -100,7 +99,15 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className, methodName, inputProxyName, outputProxyName, byteCodeList, serializedInstance, input, output, testDataPath);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -116,7 +123,6 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
         ASSERT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
     }
 }
-
 
 /**
  * @brief Test a pipeline containing a scan, a java map with booleans, and a emit operator
@@ -155,7 +161,15 @@ TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineBooleanMap) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className, methodName, inputProxyName, outputProxyName, byteCodeList, serializedInstance, input, output, testDataPath);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -215,7 +229,15 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className, methodName, inputProxyName, outputProxyName, byteCodeList, serializedInstance, input, output, testDataPath);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -232,9 +254,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        char* value = (char *) malloc(size * sizeof(char));
-        memcpy(value, varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), size * sizeof(char));
-        ASSERT_EQ(std::string(value), "testValue_appended");
+        ASSERT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
     }
 }
 
@@ -257,8 +277,14 @@ TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineComplexMap) {
     std::string outputProxyName = "ComplexPojo";
     std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
     std::vector<char> serializedInstance = {};
-    SchemaPtr input = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
-    SchemaPtr output = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
+    SchemaPtr input = Schema::create()
+                          ->addField("intVariable", NES::INT32)
+                          ->addField("floatVariable", NES::FLOAT32)
+                          ->addField("booleanVariable", NES::BOOLEAN);
+    SchemaPtr output = Schema::create()
+                           ->addField("intVariable", NES::INT32)
+                           ->addField("floatVariable", NES::FLOAT32)
+                           ->addField("booleanVariable", NES::BOOLEAN);
     auto mapOperator = std::make_shared<Operators::MapJavaUdf>(0, input, output);
     scanOperator->setChild(mapOperator);
 
@@ -279,7 +305,15 @@ TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineComplexMap) {
     }
 
     auto executablePipeline = provider->create(pipeline);
-    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className, methodName, inputProxyName, outputProxyName, byteCodeList, serializedInstance, input, output, testDataPath);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
