@@ -44,7 +44,7 @@ PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(const SchemaPtr& inp
 std::string PhysicalStreamJoinBuildOperator::toString() const { return "PhysicalStreamJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalStreamJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide);
+    return create(id, inputSchema, outputSchema, operatorHandler, buildSide, timeStampFieldName);
 }
 
 JoinBuildSideType PhysicalStreamJoinBuildOperator::getBuildSide() const { return buildSide; }
