@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
@@ -84,10 +85,13 @@
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
@@ -306,20 +310,29 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
         using namespace Runtime::Execution::Operators;
 
-        // TODO Ask Philip how I can retrieve these
-        auto joinFieldNameLeft = "TBD", joinFieldNameRight = "TBD";
+        auto joinDefinition = joinOperator->getJoinDefinition();
+        auto joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
+        auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
+
+        auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+        NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
+
+        auto windowSize = windowType->getSize().getTime();
+        // Once #3407 is done, we can continue with this here
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+
+
+        // TODO Ask Philip how I can retrieve these / should set these
         auto maxNoWorkerThreads = 1UL; // This is needed for creating the local hash tables, but it can be set later on
-        auto numSourcesLeft = 1UL, numSourcesRight = 1UL; // This is needed for detecting when the sink is finished
-        auto joinSizeInByte = 500 * 1024UL; // This can be set later on
-        auto windowSize = 20UL; // This can be set later on
-        auto timeStampFieldName = "timestamp";
+        auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
+        auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
+
 
         auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
                                                                      joinOperator->getRightInputSchema(),
                                                                      joinFieldNameLeft, joinFieldNameRight,
-                                                                     maxNoWorkerThreads * 2,
-                                                                     numSourcesLeft + numSourcesRight,
-                                                                     joinSizeInByte, windowSize);
+                                                                     maxNoWorkerThreads,
+                                                                     numSourcesLeft + numSourcesRight, windowSize);
 
         auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
                                                            joinOperator->getLeftOperators());

@@ -88,6 +88,16 @@ uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
     return opHandler->getLastTupleTimeStamp(isLeftSide);
 }
 
+void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "worker context should not be null");
+
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
+}
+
 void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
     // Get the global state
@@ -123,6 +133,12 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef = entryMemRef + fieldType->size();
     }
 }
+
+void StreamJoinBuild::setup(ExecutionContext& ctx) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getWorkerContext());
+}
+
 
 StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex,
                                  bool isLeftSide,

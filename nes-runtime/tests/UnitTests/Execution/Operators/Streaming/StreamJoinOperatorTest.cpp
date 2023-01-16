@@ -98,10 +98,10 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
                                                                             buildHelper.schema,
                                                                             buildHelper.joinFieldName,
                                                                             buildHelper.joinFieldName,
-                                                                            buildHelper.noWorkerThreads * 2,
+                                                                            buildHelper.noWorkerThreads,
                                                                             buildHelper.totalNumSources,
-                                                                            buildHelper.joinSizeInByte,
                                                                             buildHelper.windowSize,
+                                                                            buildHelper.joinSizeInByte,
                                                                             buildHelper.pageSize,
                                                                             buildHelper.numPartitions);
 
@@ -228,11 +228,11 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                                                                             streamJoinSinkHelper.rightSchema,
                                                                             streamJoinSinkHelper.joinFieldNameLeft,
                                                                             streamJoinSinkHelper.joinFieldNameRight,
-                                                                            streamJoinSinkHelper.noWorkerThreads * 2,
+                                                                            streamJoinSinkHelper.noWorkerThreads,
                                                                             streamJoinSinkHelper.numSourcesLeft
                                                                                 + streamJoinSinkHelper.numSourcesRight,
-                                                                            streamJoinSinkHelper.joinSizeInByte,
                                                                             streamJoinSinkHelper.windowSize,
+                                                                            streamJoinSinkHelper.joinSizeInByte,
                                                                             streamJoinSinkHelper.pageSize,
                                                                             streamJoinSinkHelper.numPartitions);
 

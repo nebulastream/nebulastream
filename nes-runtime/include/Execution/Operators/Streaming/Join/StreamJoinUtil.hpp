@@ -29,6 +29,7 @@ static constexpr auto BLOOM_FALSE_POSITIVE_RATE = 1e-2;
 static constexpr auto CHUNK_SIZE = 128;
 static constexpr auto PREALLOCATED_SIZE = 1 * 1024;
 static constexpr auto NUM_PARTITIONS = 16;
+static constexpr auto DEFAULT_MEM_SIZE_JOIN = 1 * 1024 * 1024UL;
 
 namespace Operators {
 struct __attribute__((packed)) JoinPartitionIdTumpleStamp {

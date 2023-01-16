@@ -50,7 +50,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
             auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
             pipeline->prependOperator(newScan);
         } else {
-            throw QueryCompilationException("Pipeline root shot be a unary operator but was:" + rootOperator->toString());
+            throw QueryCompilationException("Pipeline root should be a unary operator but was:" + rootOperator->toString());
         }
     }
 

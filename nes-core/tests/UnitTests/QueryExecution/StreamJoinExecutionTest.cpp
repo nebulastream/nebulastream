@@ -85,7 +85,6 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     return buffer;
 }
 
-// TODO: Enable this test in issue #3339
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$f1_left", BasicType::UINT64)
@@ -97,8 +96,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
                                  ->addField("test2$f2_right", BasicType::UINT64)
                                  ->addField("test2$timestamp", BasicType::UINT64);
 
-    const auto joinFieldNameLeft = "f2_left";
-    const auto joinFieldNameRight = "f2_right";
+    const auto joinFieldNameLeft = "test1$f2_left";
+    const auto joinFieldNameRight = "test2$f2_right";
     const auto timeStampField = "timestamp";
 
     ASSERT_TRUE(leftSchema->hasFieldName(joinFieldNameLeft));
@@ -132,11 +131,12 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
+    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    EXPECT_TRUE(!!sourceLeft);
-    EXPECT_TRUE(!!sourceRight);
+    ASSERT_TRUE(!!sourceLeft);
+    ASSERT_TRUE(!!sourceRight);
 
     sourceLeft->emitBuffer(leftBuffer);
     sourceRight->emitBuffer(rightBuffer);

@@ -16,4 +16,4 @@ add_nes_runtime_test(runtime-selection-pipeline-test "SelectionPipelineTest.cpp"
 add_nes_runtime_test(runtime-threshold-window-pipeline-test "ThresholdWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-global-window-pipeline-test "GlobalTimeWindowPipelineTest.cpp")
 add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
-add_nes_runtime_test(runtime-lazy-join-pipeline-test "StreamJoinPipelineTest.cpp")
+add_nes_runtime_test(runtime-stream-join-pipeline-test "StreamJoinPipelineTest.cpp")
