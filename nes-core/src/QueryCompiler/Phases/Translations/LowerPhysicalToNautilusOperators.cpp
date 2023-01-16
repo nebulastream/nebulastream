@@ -117,6 +117,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
+        NES_INFO("Node: " << node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
@@ -182,7 +183,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto handlerIndex = insertStreamJoinOperatorHandlerIfNeeded(operatorHandlers, sinkOperator->getId(), sinkOperator->getOperatorHandler());
 
         auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamJoinSink>(handlerIndex);
-        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinSinkNautilus));
+        pipeline.setRootOperator(joinSinkNautilus);
         return joinSinkNautilus;
 
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()) {

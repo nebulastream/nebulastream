@@ -23,25 +23,21 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                      SchemaPtr joinSchemaRight,
                                                      std::string joinFieldNameLeft,
                                                      std::string joinFieldNameRight,
-                                                     size_t maxNoWorkerThreads,
                                                      uint64_t counterFinishedBuildingStart,
                                                      size_t totalSizeForDataStructures,
                                                      size_t windowSize,
                                                      size_t pageSize,
                                                      size_t numPartitions)
     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
-      joinFieldNameRight(joinFieldNameRight), maxNoWorkerThreads(maxNoWorkerThreads),
-      counterFinishedBuildingStart(counterFinishedBuildingStart), counterFinishedSinkStart(numPartitions),
-      totalSizeForDataStructures(totalSizeForDataStructures), lastTupleTimeStampLeft(windowSize - 1),
-      lastTupleTimeStampRight(windowSize - 1), windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
+      joinFieldNameRight(joinFieldNameRight), counterFinishedBuildingStart(counterFinishedBuildingStart),
+      counterFinishedSinkStart(numPartitions), totalSizeForDataStructures(totalSizeForDataStructures),
+      lastTupleTimeStampLeft(windowSize - 1), lastTupleTimeStampRight(windowSize - 1),
+      windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
 
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures,
                     "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
-
-    // It does not matter here if we put true or false as a parameter
-    createNewWindow(/* isLeftSide*/ true);
 }
 
 void StreamJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
@@ -60,7 +56,17 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerP
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG("stop StreamJoinOperatorHandler");
-    // TODO ask Philipp if I should delete here all windows
+}
+
+void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
+    if (alreadySetup) {
+        return;
+    }
+    alreadySetup = true;
+
+    // It does not matter here if we put true or false as a parameter
+    this->numberOfWorkerThreads = newNumberOfWorkerThreads;
+    createNewWindow(/* isLeftSide*/ true);
 }
 
 void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
@@ -70,8 +76,8 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
         return;
     }
 
-    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the lazyjoin");
-    streamJoinWindows.emplace_back(maxNoWorkerThreads,
+    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the stream join");
+    streamJoinWindows.emplace_back(numberOfWorkerThreads,
                                    counterFinishedBuildingStart,
                                    counterFinishedSinkStart,
                                    totalSizeForDataStructures,
@@ -147,8 +153,8 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                                const std::string& joinFieldNameRight,
                                                                size_t maxNoWorkerThreads,
                                                                uint64_t counterFinishedBuildingStart,
-                                                               size_t totalSizeForDataStructures,
                                                                size_t windowSize,
+                                                               size_t totalSizeForDataStructures,
                                                                size_t pageSize,
                                                                size_t numPartitions) {
 

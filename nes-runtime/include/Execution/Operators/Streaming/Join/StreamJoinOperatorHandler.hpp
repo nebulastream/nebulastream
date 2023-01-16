@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <cstddef>
@@ -63,8 +64,8 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                        std::string joinFieldNameRight,
                                        size_t maxNoWorkerThreads,
                                        uint64_t counterFinishedBuildingStart,
-                                       size_t totalSizeForDataStructures,
                                        size_t windowSize,
+                                       size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
                                        size_t pageSize = CHUNK_SIZE,
                                        size_t numPartitions = NUM_PARTITIONS);
 
@@ -88,8 +89,8 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                                const std::string& joinFieldNameRight,
                                                size_t maxNoWorkerThreads,
                                                uint64_t counterFinishedBuildingStart,
-                                               size_t totalSizeForDataStructures,
                                                size_t windowSize,
+                                               size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
                                                size_t pageSize = CHUNK_SIZE,
                                                size_t numPartitions = NUM_PARTITIONS);
 
@@ -126,6 +127,12 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     void start(PipelineExecutionContextPtr pipelineExecutionContext,
                StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
+
+    /**
+     * @brief sets the operator handler up
+     * @param newNumberOfWorkerThreads
+     */
+    void setup(uint64_t newNumberOfWorkerThreads);
 
     /**
      * @brief Stops the operator handler.
@@ -226,7 +233,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
     std::list<StreamJoinWindow> streamJoinWindows;
-    size_t maxNoWorkerThreads;
+    size_t numberOfWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
     size_t totalSizeForDataStructures;
@@ -234,6 +241,7 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;
+    std::atomic<bool> alreadySetup{false};
     std::vector<OperatorId> joinOperatorsId;
 };
 
