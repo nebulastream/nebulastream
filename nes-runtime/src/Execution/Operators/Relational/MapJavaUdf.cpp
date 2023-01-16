@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <jni.h>
 #include <utility>
+#include <cstring>
 #if not(defined(__APPLE__))
 #include <experimental/source_location>
 #endif
@@ -84,7 +85,7 @@ extern "C" void startVMWithJarFile(void *state) {
     vmArgs.version = JNI_VERSION_1_2;
     vmArgs.ignoreUnrecognized = true; // invalid options make the JVM init fail
 
-    JVMContext &context = JVMContext::getJVMContext();
+    JVMContext &context = JVMContext::instance();
     auto env = handler->getEnvironment();
     context.createOrAttachToJVM(&env, vmArgs);
     handler->setEnvironment(env);
@@ -97,7 +98,7 @@ extern "C" void startVMWithByteList(void *state){
     vmArgs.version = JNI_VERSION_1_2;
     vmArgs.ignoreUnrecognized = true; // invalid options make the JVM init fail
 
-    JVMContext &context = JVMContext::getJVMContext();
+    JVMContext &context = JVMContext::instance();
     auto env = handler->getEnvironment();
     context.createOrAttachToJVM(&env, vmArgs);
     handler->setEnvironment(env);
@@ -117,12 +118,12 @@ extern "C" void startVM(void *state) {
 }
 
 extern "C" void detachVM(){
-    JVMContext &context = JVMContext::getJVMContext();
+    JVMContext &context = JVMContext::instance();
     context.detachFromJVM();
 }
 
 extern "C" void destroyVM(){
-    JVMContext &context = JVMContext::getJVMContext();
+    JVMContext &context = JVMContext::instance();
     context.destroyJVM();
 }
 
@@ -188,9 +189,9 @@ extern "C" void *createDoubleObject(void* state, double value) {
     return createObjectType(state, value, "java/lang/Double", "(D)V");
 }
 
-extern "C" void *createStringObject(void* state, char *value, int32_t size) {
+extern "C" void *createStringObject(void* state, TextValue *value) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
-    return handler->getEnvironment()->NewString(reinterpret_cast<const jchar*>(value), size);
+    return handler->getEnvironment()->NewString(reinterpret_cast<const jchar*>(value->c_str()), value->length());
 }
 
 template <typename T>
@@ -202,18 +203,20 @@ T getObjectTypeValue(void *state, void *object, std::string className, std::stri
     auto mid = handler->getEnvironment()->GetMethodID(clazz, getterName.c_str(), getterSignature.c_str());
     jniErrorCheck(handler);
     T value;
-     if (std::is_same<T, bool>::value){
+     if constexpr(std::is_same<T, bool>::value){
         value = handler->getEnvironment()->CallBooleanMethod((jobject) object, mid);
-    } else if (std::is_same<T, float>::value){
+    } else if constexpr(std::is_same<T, float>::value){
         value = handler->getEnvironment()->CallFloatMethod((jobject) object, mid);
-    } else if (std::is_same<T, int32_t>::value) {
+    } else if constexpr(std::is_same<T, int32_t>::value) {
         value = handler->getEnvironment()->CallIntMethod((jobject) object, mid);
-    } else if (std::is_same<T, int64_t>::value) {
+    } else if constexpr(std::is_same<T, int64_t>::value) {
          value = handler->getEnvironment()->CallLongMethod((jobject) object, mid);
-    } else if (std::is_same<T, int16_t>::value) {
+    } else if constexpr(std::is_same<T, int16_t>::value) {
          value = handler->getEnvironment()->CallShortMethod((jobject) object, mid);
-    } else if (std::is_same<T, double>::value) {
+    } else if constexpr(std::is_same<T, double>::value) {
          value = handler->getEnvironment()->CallDoubleMethod((jobject) object, mid);
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
     jniErrorCheck(handler);
     return value;
@@ -243,10 +246,13 @@ extern "C" double getDoubleObjectValue(void* state, void *object) {
     return getObjectTypeValue<double>(state, object, "java/lang/Double", "doubleValue", "()D");
 }
 
-extern "C" char *getStringObjectValue(void* state, void *object) {
+extern "C" TextValue *getStringObjectValue(void* state, void *object) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
     auto size = handler->getEnvironment()->GetStringLength((jstring) object);
-    return (char*) handler->getEnvironment()->GetStringChars((jstring) object, nullptr);
+    auto resultText = TextValue::create(size);
+    auto sourceText = handler->getEnvironment()->GetStringChars((jstring) object, nullptr);
+    std::memcpy(resultText, sourceText, size);
+    return resultText;
 }
 
 template <typename T>
@@ -259,18 +265,22 @@ T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::st
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler);
     T value;
-    if (std::is_same<T, bool>::value){
+    if constexpr(std::is_same<T, bool>::value){
         value = (T) handler->getEnvironment()->GetBooleanField(pojo, id);
-    } else if (std::is_same<T, float>::value){
+    } else if constexpr(std::is_same<T, float>::value){
         value = (T) handler->getEnvironment()->GetFloatField(pojo, id);
-    } else if (std::is_same<T, int32_t>::value) {
+    } else if constexpr(std::is_same<T, int32_t>::value) {
         value = (T) handler->getEnvironment()->GetIntField(pojo, id);
-    } else if (std::is_same<T, int64_t>::value) {
+    } else if constexpr(std::is_same<T, int64_t>::value) {
         value = (T) handler->getEnvironment()->GetLongField(pojo, id);
-    } else if (std::is_same<T, int16_t>::value) {
+    } else if constexpr(std::is_same<T, int16_t>::value) {
         value = (T) handler->getEnvironment()->GetShortField(pojo, id);
-    } else if (std::is_same<T, double>::value) {
+    } else if constexpr(std::is_same<T, double>::value) {
         value = (T) handler->getEnvironment()->GetDoubleField(pojo, id);
+    } else if constexpr(std::is_same<T, TextValue*>::value) {
+        value = (T) handler->getEnvironment()->GetObjectField(pojo, id);
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
     jniErrorCheck(handler);
     return value;
@@ -300,6 +310,10 @@ extern "C" double getDoubleField(void* state, void* classPtr, void* objectPtr, i
     return getField<double>(state, classPtr, objectPtr, fieldIndex, "D");
 }
 
+extern "C" TextValue *getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+    return getField<TextValue*>(state, classPtr, objectPtr, fieldIndex, "Ljava/lang/String;");
+}
+
 template <typename T>
 void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
@@ -309,18 +323,24 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler);
-    if (std::is_same<T, bool>::value){
+    if constexpr(std::is_same<T, bool>::value){
         handler->getEnvironment()->SetBooleanField(pojo, id, (jboolean) value);
-    } else if (std::is_same<T, float>::value){
+    } else if constexpr(std::is_same<T, float>::value){
         handler->getEnvironment()->SetFloatField(pojo, id, (jfloat) value);
-    } else if (std::is_same<T, int32_t>::value) {
+    } else if constexpr(std::is_same<T, int32_t>::value) {
         handler->getEnvironment()->SetIntField(pojo, id, (jint) value);
-    } else if (std::is_same<T, int64_t>::value) {
+    } else if constexpr(std::is_same<T, int64_t>::value) {
         handler->getEnvironment()->SetLongField(pojo, id, (jlong) value);
-    } else if (std::is_same<T, int16_t>::value) {
+    } else if constexpr(std::is_same<T, int16_t>::value) {
         handler->getEnvironment()->SetShortField(pojo, id, (jshort) value);
-    } else if (std::is_same<T, double>::value) {
+    } else if constexpr(std::is_same<T, double>::value) {
         handler->getEnvironment()->SetDoubleField(pojo, id, (jdouble) value);
+    } else if constexpr(std::is_same<T, const TextValue*>::value) {
+        const TextValue *sourceString = value;
+        jstring string = handler->getEnvironment()->NewString((jchar *)sourceString->c_str(), sourceString->length());
+        handler->getEnvironment()->SetObjectField(pojo, id, (jstring) string);
+    } else {
+        NES_NOT_IMPLEMENTED();
     }
     jniErrorCheck(handler);
 }
@@ -347,6 +367,10 @@ extern "C" void setBooleanField(void* state, void* classPtr, void* objectPtr, in
 
 extern "C" void setDoubleField(void* state, void* classPtr, void* objectPtr, int fieldIndex, double value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "D");
+}
+
+extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue *value) {
+    return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
 extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
@@ -407,13 +431,21 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         auto field = inputSchema->fields[0];
         auto fieldName = field->getName();
 
-        if (field->getDataType()->isInteger()) {
+        if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
             inputPojoPtr = FunctionCall<>("createIntegerObject", createIntegerObject, handler, record.read(fieldName).as<Int32>());
-        } else if (field->getDataType()->isFloat()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+            inputPojoPtr = FunctionCall<>("createShortObject", createShortObject, handler, record.read(fieldName).as<Int16>());
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+            inputPojoPtr = FunctionCall<>("createLongObject", createLongObject, handler, record.read(fieldName).as<Int64>());
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
             inputPojoPtr = FunctionCall<>("createFloatObject", createFloatObject, handler, record.read(fieldName).as<Float>());
-        } else if (field->getDataType()->isBoolean()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+            inputPojoPtr = FunctionCall<>("createDoubleObject", createDoubleObject, handler, record.read(fieldName).as<Double>());
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             inputPojoPtr = FunctionCall<>("createBooleanObject", createBooleanObject, handler, record.read(fieldName).as<Boolean>());
-        } else if (field->getDataType()->isText()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+            inputPojoPtr = FunctionCall<>("createStringObject", createStringObject, handler, record.read(fieldName).as<Text>()->getReference());
+        } else {
             NES_NOT_IMPLEMENTED();
         }
     } else {
@@ -422,7 +454,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             auto field = inputSchema->fields[i];
             auto fieldName = field->getName();
 
-            if (field->getDataType()->isInteger()) {
+            if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
                 FunctionCall<>("setIntegerField",
                                setIntegerField,
                                handler,
@@ -430,7 +462,23 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Int32>());
-            } else if (field->getDataType()->isFloat()) {
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+                FunctionCall<>("setShortField",
+                               setShortField,
+                               handler,
+                               inputClassPtr,
+                               inputPojoPtr,
+                               Value<Int32>(i),
+                               record.read(fieldName).as<Int16>());
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+                FunctionCall<>("setLongField",
+                               setLongField,
+                               handler,
+                               inputClassPtr,
+                               inputPojoPtr,
+                               Value<Int32>(i),
+                               record.read(fieldName).as<Int64>());
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
                 FunctionCall<>("setFloatField",
                                setFloatField,
                                handler,
@@ -438,6 +486,14 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                                inputPojoPtr,
                                Value<Int32>(i),
                                record.read(fieldName).as<Float>());
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+                FunctionCall<>("setDoubleField",
+                               setDoubleField,
+                               handler,
+                               inputClassPtr,
+                               inputPojoPtr,
+                               Value<Int32>(i),
+                               record.read(fieldName).as<Double>());
             } else if (field->getDataType()->isBoolean()) {
                 FunctionCall<>("setBooleanField",
                                setBooleanField,
@@ -447,6 +503,14 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                                Value<Int32>(i),
                                record.read(fieldName).as<Boolean>());
             } else if (field->getDataType()->isText()) {
+                FunctionCall<>("setStringField",
+                               setStringField,
+                               handler,
+                               inputClassPtr,
+                               inputPojoPtr,
+                               Value<Int32>(i),
+                               record.read(fieldName).as<Text>()->getReference());
+            } else {
                 NES_NOT_IMPLEMENTED();
             }
         }
@@ -466,16 +530,28 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         auto field = outputSchema->fields[0];
         auto fieldName = field->getName();
 
-        if (field->getDataType()->isInteger()) {
+        if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
             Value<> val = FunctionCall<>("getIntegerObjectValue", getIntegerObjectValue, handler, outputPojoPtr);
             record.write(fieldName, val);
-        } else if (field->getDataType()->isFloat()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+            Value<> val = FunctionCall<>("getShortObjectValue", getShortObjectValue, handler, outputPojoPtr);
+            record.write(fieldName, val);
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+            Value<> val = FunctionCall<>("getLongObjectValue", getLongObjectValue, handler, outputPojoPtr);
+            record.write(fieldName, val);
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
             Value<> val = FunctionCall<>("getFloatObjectValue", getFloatObjectValue, handler, outputPojoPtr);
             record.write(fieldName, val);
-        } else if (field->getDataType()->isBoolean()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+            Value<> val = FunctionCall<>("getDoubleObjectValue", getDoubleObjectValue, handler, outputPojoPtr);
+            record.write(fieldName, val);
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
             Value<> val = FunctionCall<>("getBooleanObjectValue", getBooleanObjectValue, handler, outputPojoPtr);
             record.write(fieldName, val);
-        } else if (field->getDataType()->isText()) {
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+            Value<> val = FunctionCall<>("getStringObjectValue", getStringObjectValue, handler, outputPojoPtr);
+            record.write(fieldName, val);
+        } else {
             NES_NOT_IMPLEMENTED();
         }
     } else {
@@ -484,19 +560,35 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             auto field = outputSchema->fields[i];
             auto fieldName = field->getName();
 
-            if (field->getDataType()->isInteger()) {
+            if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
                 Value<> val =
                     FunctionCall<>("getIntegerField", getIntegerField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
-            } else if (field->getDataType()->isFloat()) {
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
+                Value<> val =
+                    FunctionCall<>("getShortField", getShortField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                record.write(fieldName, val);
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
+                Value<> val =
+                    FunctionCall<>("getLongField", getLongField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                record.write(fieldName, val);
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
                 Value<> val =
                     FunctionCall<>("getFloatField", getFloatField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
-            } else if (field->getDataType()->isBoolean()) {
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
+                Value<> val =
+                    FunctionCall<>("getDoubleField", getDoubleField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                record.write(fieldName, val);
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
                 Value<> val =
                     FunctionCall<>("getBooleanField", getBooleanField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
-            } else if (field->getDataType()->isText()) {
+            } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
+                Value<> val =
+                    FunctionCall<>("getStringField", getStringField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
+                record.write(fieldName, val);
+            } else {
                 NES_NOT_IMPLEMENTED();
             }
         }
