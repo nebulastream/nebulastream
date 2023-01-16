@@ -27,11 +27,7 @@ namespace NES::Runtime::Execution::Operators {
  */
 class JVMContext {
   public:
-    JVMContext() {};
-    JVMContext(JVMContext const&)      = delete;
-    void operator=(JVMContext const&)  = delete;
-
-    static JVMContext& getJVMContext();
+    static JVMContext& instance();
 
     /**
      * @brief The pointer to the JNI environment is only valid in the current thread. This call registers a thread.
@@ -55,6 +51,12 @@ class JVMContext {
     bool destroyJVM();
 
   private:
+    JVMContext() {};
+    JVMContext(JVMContext const&)      = delete;
+    void operator=(JVMContext const&)  = delete;
+    JVMContext(JVMContext const&&)      = delete;
+    void operator=(JVMContext const&&)  = delete;
+
     bool attached = false;
     bool created = false;
 

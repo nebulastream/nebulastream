@@ -157,7 +157,7 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
  * @brief Test simple UDF with string objects as input and output (StringMapFunction<String, String>)
  * The UDF appends incoming tuples the postfix 'appended'.
 */
-TEST_F(MapJavaUdfOperatorTest, DISABLED_StringUDFTest) {
+TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
     std::string path = testDataPath;
     SchemaPtr input = Schema::create()->addField("id", NES::TEXT);
     SchemaPtr output = Schema::create()->addField("id", NES::TEXT);

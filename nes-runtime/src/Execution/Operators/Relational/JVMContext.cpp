@@ -19,7 +19,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-JVMContext& JVMContext::getJVMContext() {
+JVMContext& JVMContext::instance() {
     static JVMContext jvmContext;
     return jvmContext;
 }
