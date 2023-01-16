@@ -72,7 +72,7 @@ void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
 
-    for (const auto& [logicalSourceName, dataGenerator] : configOverAllRuns.srcNameToDataGenerator) {
+    for (const auto& [logicalSourceName, dataGenerator] : configOverAllRuns.sourceNameToDataGenerator) {
         auto schema = dataGenerator->getSchema();
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
@@ -338,7 +338,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
-        outputCsvStream << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\"";
+        outputCsvStream << "," << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\"";
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();

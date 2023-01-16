@@ -14,7 +14,7 @@ startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 1
 
 logicalSources:
-  input1:
+  - name: input1
     type: YSB
     numberOfPhysicalSources: 1
 

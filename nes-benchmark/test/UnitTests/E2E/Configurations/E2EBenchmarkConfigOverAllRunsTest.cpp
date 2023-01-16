@@ -102,8 +102,8 @@ namespace NES::Benchmark {
 
         auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = defaultDataGenerator;
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = zipfianDataGenerator;
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = defaultDataGenerator;
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = zipfianDataGenerator;
 
         auto defaultSize = defaultConfigOverAllRuns.getTotalSchemaSize();
 
@@ -117,8 +117,8 @@ namespace NES::Benchmark {
         std::stringstream expectedString;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input1"] = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        defaultConfigOverAllRuns.srcNameToDataGenerator["input2"] = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
 
         auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 

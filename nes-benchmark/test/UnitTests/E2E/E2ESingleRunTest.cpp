@@ -92,8 +92,8 @@ namespace NES::Benchmark {
 
         auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
-                                                    {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        configOverAllRuns.sourceNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
+                                                       {zipfianDataGenerator->getName(), zipfianDataGenerator}};
         configOverAllRuns.numberOfPreAllocatedBuffer->setValue(10);
 
         for (auto i = 0; i < 3; ++i) {
@@ -142,7 +142,7 @@ namespace NES::Benchmark {
         expected << defaultDataGenerator->getName() << ": " << 123 << ", "
                  << zipfianDataGenerator->getName() << ": " << 456;
 
-        EXPECT_EQ(expected.str(), configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc());
+        EXPECT_EQ(expected.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
     }
 
 
@@ -165,8 +165,8 @@ namespace NES::Benchmark {
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
-        configOverAllRuns.srcNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
-                                                    {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        configOverAllRuns.sourceNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
+                                                       {zipfianDataGenerator->getName(), zipfianDataGenerator}};
         configOverAllRuns.inputType->setValue(inputType);
         configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
         configOverAllRuns.query->setValue(queryString);
@@ -217,7 +217,7 @@ namespace NES::Benchmark {
                                 // tuplesPerSecond, tasksPerSecond, bufferPerSecond, mebiPerSecond
                                 << "," << 1 << "," << 1 << "," << 1 << "," << (1.0 * schemaSizeInB) / (1024.0 * 1024.0)
                                 << "," << numberOfWorkerThreads << "," << numberOfQueriesToDeploy
-                                << "," << "\"" << configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << "\""
+                                << "," << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\""
                                 << "," << bufferSizeInBytes << "," << inputType
                                 << "," << dataProviderMode << "," << "\"" << queryString << "\"" << std::endl;
             }

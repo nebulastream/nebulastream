@@ -51,7 +51,7 @@ namespace NES::Benchmark {
         oss << "- numWorkerOfThreads: " << defaultConfigPerRun.numberOfWorkerThreads->getValueAsString() << std::endl
             << "- bufferSizeInBytes: " << defaultConfigPerRun.bufferSizeInBytes->getValueAsString() << std::endl
             << "- numberOfQueriesToDeploy: " << defaultConfigPerRun.numberOfQueriesToDeploy->getValueAsString() << std::endl
-            << "- numberOfSources: " << defaultConfigPerRun.getStrLogicalSrcToNumberOfPhysicalSrc() << std::endl
+            << "- numberOfSources: " << defaultConfigPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
             << "- numberOfBuffersInGlobalBufferManager: " << defaultConfigPerRun.numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
             << "- numberOfBuffersInSourceLocalBufferPool: " << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString()
             << std::endl;
@@ -99,9 +99,9 @@ namespace NES::Benchmark {
         ASSERT_EQ(allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getValue(),
                   allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getDefaultValue());
 
-        ASSERT_EQ(allE2EBenchmarkPerRun[0].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 1, input2: 2, input3: 1");
-        ASSERT_EQ(allE2EBenchmarkPerRun[1].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 2, input2: 2, input3: 1");
-        ASSERT_EQ(allE2EBenchmarkPerRun[2].getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 3, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[0].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 1, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[1].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 2, input2: 2, input3: 1");
+        ASSERT_EQ(allE2EBenchmarkPerRun[2].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 3, input2: 2, input3: 1");
     }
 
     TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
@@ -109,7 +109,7 @@ namespace NES::Benchmark {
         E2EBenchmarkConfigPerRun configPerRun;
         configPerRun.logicalSrcToNoPhysicalSrc = {{"input1", 2}, {"input2", 1}, {"some other source", 23456}};
 
-        ASSERT_EQ(configPerRun.getStrLogicalSrcToNumberOfPhysicalSrc(), "input1: 2, input2: 1, some other source: 23456");
+        ASSERT_EQ(configPerRun.getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 2, input2: 1, some other source: 23456");
     }
 
     TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest) {
@@ -118,7 +118,8 @@ namespace NES::Benchmark {
         std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_sources.yaml";
         Yaml::Parse(yamlConfig, configPath.c_str());
 
-        auto allLogicalSrcPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSources(yamlConfig);
+        auto allLogicalSrcPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(
+                yamlConfig);
 
         ASSERT_EQ(allLogicalSrcPhysicalSources.size(), 3);
 
