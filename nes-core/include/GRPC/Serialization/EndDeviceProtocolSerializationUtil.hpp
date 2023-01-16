@@ -5,12 +5,19 @@
 #ifndef NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 #define NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 
-#include <Plans/Query/QueryPlan.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <EndDeviceProtocol.pb.h>
+#include <Plans/Query/QueryPlan.hpp>
 namespace NES {
     class EndDeviceProtocolSerializationUtil {
       public:
-        static std::shared_ptr<Message> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
+        static std::shared_ptr<messages::Message> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
+
+      private:
+        static DefaultPhysicalTypeFactory physicalFactory;
+
+        static std::tuple<int,int,int> serializeConstantValue(ConstantValueExpressionNode& cnode);
     };
 }
 

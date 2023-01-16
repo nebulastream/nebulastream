@@ -2,31 +2,21 @@
 // Created by Kasper Hjort Berthelsen on 10/11/2022.
 //
 
-#include <Sources/Parsers/JSONParser.hpp>
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/LoRaWANProxySource.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <Sources/Parsers/JSONParser.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <nlohmann/json.hpp>
 #include <utility>
 
 namespace NES {
 
-enum class ChirpStackEvent {
-    UP,
-    STATUS,
-    JOIN,
-    ACK,
-    TXACK,
-    LOG,
-    LOCATION,
-    INTEGRATION
-};
+enum class ChirpStackEvent { UP, STATUS, JOIN, ACK, TXACK, LOG, LOCATION, INTEGRATION };
 
-ChirpStackEvent strToEvent(const std::string& s) {
-    return magic_enum::enum_cast<ChirpStackEvent>(s).value();
-};
+ChirpStackEvent strToEvent(const std::string& s) { return magic_enum::enum_cast<ChirpStackEvent>(s).value(); };
 
 LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                                        const Runtime::BufferManagerPtr& bufferManager,
@@ -36,8 +26,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                                        OriginId originId,
                                        size_t numSourceLocalBuffers,
                                        GatheringMode::Value gatheringMode,
-                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
-                                       )
+                                       const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors)
     : DataSource(schema,
                  bufferManager,
                  queryManager,
@@ -46,8 +35,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  executableSuccessors),
-      sourceConfig(sourceConfig)
-{
+      sourceConfig(sourceConfig) {
     client = std::make_shared<mqtt::async_client>(sourceConfig->getUrl()->getValue(), "LoRaWANProxySource");
     user = sourceConfig->getUserName()->getValue();
     topic = "application/" + sourceConfig->getAppId()->getValue() + "/#";
@@ -63,16 +51,13 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
         auto fieldName = field->getName();
         if (fieldName.find('$') == std::string::npos) {
             schemaKeys.push_back(fieldName);
-        }
-        else { // if fieldname contains a $ the name is logicalstream$fieldname
+        } else {// if fieldname contains a $ the name is logicalstream$fieldname
             schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
         }
-
     }
     jsonParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
     //endregion
     NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()")
-
 }
 LoRaWANProxySource::~LoRaWANProxySource() {
     NES_DEBUG("LoRaWANProxySource::~LoRaWANProxySource()");
@@ -174,11 +159,24 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
             auto devEUI = rcvTopic.substr(36, 64 / 4);
             auto event = rcvTopic.substr(59, rcvTopic.length());
 
-            jsonParser->writeInputTupleToTupleBuffer(rcvStr,0,buffer,schema,localBufferManager);
-            //TODO: this is a blocking call, which should get and return data to
-            //      the caller. But where should we handle control msg or other msgs
-            //      should prob. impl. async handling of msgs
-            ++count;
+            //rcvStr should be formatted as shown here: https://www.chirpstack.io/docs/chirpstack/integrations/events.html#up---uplink-event
+            //most important is data which is placed on the "data" field
+            try {
+                auto js = nlohmann::json::parse(rcvStr);
+
+                if (!js.contains("data")) {
+                    NES_WARNING("LoRaWANProxySource: parsed json does not contain data field");
+                } else {
+
+                    jsonParser->writeInputTupleToTupleBuffer(js["data"], 0, buffer, schema, localBufferManager);
+                    //TODO: this is a blocking call, which should get and return data to
+                    //      the caller. But where should we handle control msg or other msgs
+                    //      should prob. impl. async handling of msgs
+                    ++count;
+                }
+            } catch (nlohmann::json::parse_error& ex) {
+                NES_WARNING("LoRaWANProxySource: JSON parse error " << ex.what());
+            }
         }
         buffer.setNumberOfTuples(count);
     }

@@ -5,12 +5,31 @@
 #ifndef NES_DECORATEDLORAWANNODEENGINE_HPP
 #define NES_DECORATEDLORAWANNODEENGINE_HPP
 
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 namespace NES::Runtime {
 
 class DecoratedLoRaWANNodeEngine: public NodeEngine
 {
+  public:
+    explicit DecoratedLoRaWANNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+                               HardwareManagerPtr&& hardwareManager,
+                               std::vector<BufferManagerPtr>&& bufferManagers,
+                               QueryManagerPtr&& queryManager,
+                               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
+                               Network::PartitionManagerPtr&& partitionManager,
+                               QueryCompilation::QueryCompilerPtr&& queryCompiler,
+                               StateManagerPtr&& stateManager,
+                               std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
+                               NES::Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
+                               uint64_t nodeEngineId,
+                               uint64_t numberOfBuffersInGlobalBufferManager,
+                               uint64_t numberOfBuffersInSourceLocalBufferPool,
+                               uint64_t numberOfBuffersPerWorker,
+                               bool sourceSharing,
+                               LoRaWANProxySource& source);
+
     /**
      * @brief registers a query
      * TODO: since this doesn't override it only hides the function from the parent class.
@@ -22,6 +41,9 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
      * @return true if succeeded, else false
      */
     [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+
+  private:
+    LoRaWANProxySource& source;
 };
 
 }
