@@ -40,7 +40,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
-    srcNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
+    sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
 
 }
 
@@ -82,17 +82,17 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
-    if (logicalSourcesNode.IsMap()) {
-        configOverAllRuns.srcNameToDataGenerator.clear();
+    if (logicalSourcesNode.IsSequence()) {
+        configOverAllRuns.sourceNameToDataGenerator.clear();
         for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
-            auto sourceName = (*entry).first;
             auto node = (*entry).second;
-            if (configOverAllRuns.srcNameToDataGenerator.contains(sourceName)) {
+            auto sourceName = node["name"].As<std::string>();
+            if (configOverAllRuns.sourceNameToDataGenerator.contains(sourceName)) {
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
             auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
-            configOverAllRuns.srcNameToDataGenerator[sourceName] = dataGenerator;
+            configOverAllRuns.sourceNameToDataGenerator[sourceName] = dataGenerator;
         }
     }
 
@@ -101,8 +101,8 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
 
 std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
     std::stringstream stringStream;
-    for (auto it = srcNameToDataGenerator.begin(); it != srcNameToDataGenerator.end(); ++it) {
-        if (it != srcNameToDataGenerator.begin()) {
+    for (auto it = sourceNameToDataGenerator.begin(); it != sourceNameToDataGenerator.end(); ++it) {
+        if (it != sourceNameToDataGenerator.begin()) {
             stringStream << ", ";
         }
         stringStream << it->first << ": " << it->second->getName();
@@ -113,7 +113,7 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
 
 size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
     size_t size = 0;
-    for (auto [logicalSource, dataGenerator] : srcNameToDataGenerator) {
+    for (auto [logicalSource, dataGenerator] : sourceNameToDataGenerator) {
         size += dataGenerator->getSchema()->getSchemaSizeInBytes();
     }
 

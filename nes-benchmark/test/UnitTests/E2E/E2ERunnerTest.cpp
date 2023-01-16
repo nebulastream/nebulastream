@@ -47,7 +47,8 @@ namespace NES::Benchmark {
         NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-            NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
+            NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+                                             *rpcCoordinatorPort, *restPort);
         }
     }
 
@@ -59,7 +60,8 @@ namespace NES::Benchmark {
         NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-            NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
+            NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+                                             *rpcCoordinatorPort, *restPort);
         }
     }
 
@@ -71,7 +73,8 @@ namespace NES::Benchmark {
         NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());
 
         for (auto& configPerRun : e2EBenchmarkConfig.getAllConfigPerRuns()) {
-            NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), *rpcCoordinatorPort, *restPort);
+            NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(),
+                                             *rpcCoordinatorPort, *restPort);
         }
     }
 

@@ -97,7 +97,7 @@ int main(int argc, const char* argv[]) {
         rpcPort += 23;
         restPort += 23;
 
-        NES::Benchmark::runSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), rpcPort, restPort);
+        NES::Benchmark::executeSingleRun(configPerRun, e2EBenchmarkConfig.getConfigOverAllRuns(), rpcPort, restPort);
 
         NES_INFO("Done with single experiment run!");
     }

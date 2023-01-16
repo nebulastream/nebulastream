@@ -47,14 +47,14 @@ class E2EBenchmarkConfigPerRun {
      * @brief Creates string representation of the number of physical sources
      * @return string representation
      */
-    std::string getStrLogicalSrcToNumberOfPhysicalSrc() const;
+    std::string getStringLogicalSourceToNumberOfPhysicalSources() const;
 
     /**
      * @brief Creates a vector of maps for the number of physical sources for each logical source
      * @param yamlConfig
      * @return vector of created experiments
      */
-    static std::vector<std::map<std::string, uint64_t>> generateMapsLogicalSrcPhysicalSources(Yaml::Node yamlConfig);
+    static std::vector<std::map<std::string, uint64_t>> generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig);
 
     Configurations::IntConfigOption numberOfWorkerThreads;
     std::map<std::string, uint64_t> logicalSrcToNoPhysicalSrc;
