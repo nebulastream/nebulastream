@@ -21,7 +21,9 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <jni.h>
 #include <utility>
+#if not(defined(__APPLE__))
 #include <experimental/source_location>
+#endif
 #include "boost/filesystem.hpp"
 
 namespace NES::Runtime::Execution::Operators {
