@@ -45,6 +45,8 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
      * @param outputSchema The schema after the application of the UDF to an input stream. The output schema must
      *                     correspond to the structure of the POJO returned by the UDF.
+     * @param inputClassName The fully-qualified class name of the input type of the UDF method.
+     * @param outputClassName The fully-qualified class name of the return type of the UDF method.
      * @throws UdfException If className is empty or methodName is empty.
      * @throws UdfException If byteCodeList does not contain an entry for getClassName.
      * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
@@ -54,7 +56,9 @@ class JavaUdfDescriptor : public UdfDescriptor {
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
                       const JavaUdfByteCodeList& byteCodeList,
-                      const SchemaPtr outputSchema);
+                      const SchemaPtr outputSchema,
+                      const std::string& inputClassName,
+                      const std::string& outputClassName);
 
     /**
      * @brief Factory method to create a JavaUdfDescriptorPtr instance.
@@ -64,6 +68,8 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
      * @param outputSchema The schema after the application of the UDF to an input stream. The output schema must
      *                     correspond to the structure of the POJO returned by the UDF.
+     * @param inputClassName The fully-qualified class name of the input type of the UDF method.
+     * @param outputClassName The fully-qualified class name of the return type of the UDF method.
      * @throws UdfException If className is empty or methodName is empty.
      * @throws UdfException If byteCodeList does not contain an entry for getClassName.
      * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
@@ -74,30 +80,56 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                        const std::string& methodName,
                                        const JavaSerializedInstance& serializedInstance,
                                        const JavaUdfByteCodeList& byteCodeList,
-                                       const SchemaPtr outputSchema) {
-        return std::make_shared<JavaUdfDescriptor>(className, methodName, serializedInstance, byteCodeList, outputSchema);
+                                       const SchemaPtr outputSchema,
+                                       const std::string& inputClassName,
+                                       const std::string& outputClassName) {
+        return std::make_shared<JavaUdfDescriptor>(className,
+                                                   methodName,
+                                                   serializedInstance,
+                                                   byteCodeList,
+                                                   outputSchema,
+                                                   inputClassName,
+                                                   outputClassName);
     }
 
     /**
      * @brief Return the fully-qualified class name of the class implementing the UDF.
      * @return Fully-qualified class name of the class implementing the UDF.
      */
-    [[nodiscard]] const std::string& getClassName() const { return className; }
+    const std::string& getClassName() const { return className; }
 
     /**
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
-    [[nodiscard]] const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
+    const JavaSerializedInstance& getSerializedInstance() const { return serializedInstance; }
 
     /**
      * @brief Return the list of classes and their bytecode required to execute the UDF.
      * @return A map containing class names as keys and their bytecode as values.
      */
-    [[nodiscard]] const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
+    const JavaUdfByteCodeList& getByteCodeList() const { return byteCodeList; }
 
-    // TODO
-    [[nodiscard]] const SchemaPtr& getOutputSchema() const { return outputSchema; }
+    /**
+     * @brief Return the output schema of the map UDF operation.
+     *
+     * The output schema must correspond to the return type of the UDF method.
+     *
+     * @return A SchemaPtr instance describing the output schema of the UDF method.
+     */
+    const SchemaPtr& getOutputSchema() const { return outputSchema; }
+
+    /**
+     * @brief Return the fully-qualified class name of the input type of the UDF method.
+     * @return Fully-qualified class name of the input type of the UDF method.
+     */
+    const std::string& getInputClassName() const { return inputClassName; }
+
+    /**
+     * @brief Return the fully-qualified class name of the return type of the UDF method.
+     * @return Fully-qualified class name of the return type of the UDF method.
+     */
+    const std::string& getOutputClassName() const { return outputClassName; }
 
     /**
      * Compare to Java UDF descriptors.
@@ -115,6 +147,8 @@ class JavaUdfDescriptor : public UdfDescriptor {
     const JavaSerializedInstance serializedInstance;
     const JavaUdfByteCodeList byteCodeList;
     const SchemaPtr outputSchema;
+    const std::string inputClassName;
+    const std::string outputClassName;
 };
 
 }// namespace NES::Catalogs::UDF

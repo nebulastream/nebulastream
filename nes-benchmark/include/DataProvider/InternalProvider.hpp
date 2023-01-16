@@ -24,44 +24,50 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
 
   public:
     /**
-         * @brief creates an InternalProvider
-         * @param id
-         * @param providerMode
-         * @param preAllocatedBuffers
-         */
+     * @brief creates an InternalProvider
+     * @param id
+     * @param providerMode
+     * @param preAllocatedBuffers
+     */
     InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode, std::vector<Runtime::TupleBuffer> buffers);
     /**
-         * @brief
-         */
+     * @brief
+     */
     ~InternalProvider();
 
     /**
-         * @brief overrides readNextBuffer by poviding the next buffer to be added to NES
-         * @param sourceId
-         * @return
-         */
+     * @brief returns a reference to preAllocatedBuffers
+     * @return preAllocatedBuffers
+     */
+    std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
+
+    /**
+     * @brief overrides readNextBuffer by poviding the next buffer to be added to NES
+     * @param sourceId
+     * @return
+     */
     std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
 
     /**
-         * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
-         * @param buffer
-         */
+     * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
+     * @param buffer
+     */
     void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
     /**
-         * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
-         * @param buffer
-         */
+     * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
+     * @param buffer
+     */
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
     /**
-         * @brief overrides the start function. We have nothing to add in this class
-         */
+     * @brief overrides the start function. We have nothing to add in this class
+     */
     void start() override;
 
     /**
-         * @brief overrides the stop function, we clear all the preAllocatedBuffers
-         */
+     * @brief overrides the stop function, we clear all the preAllocatedBuffers
+     */
     void stop() override;
 
   private:

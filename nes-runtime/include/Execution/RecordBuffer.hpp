@@ -60,13 +60,17 @@ class RecordBuffer {
      */
     const Value<MemRef>& getReference() const;
 
-    ~RecordBuffer() = default;
-
     /**
      * @brief Set the number of records.
      * @param: Number-of-records-value to set.
      */
     void setNumRecords(Value<UInt64> numRecordsValue);
+
+    Value<UInt64> getOriginId();
+    Value<UInt64> getSequenceNr();
+    Value<UInt64> getWatermarkTs();
+    void setWatermarkTs(Value<UInt64> watermarkTs);
+    ~RecordBuffer() = default;
 
   private:
     Value<MemRef> tupleBufferRef;

@@ -1,5 +1,46 @@
 # Changelog
 
+## [v0.4.22](https://github.com/nebulastream/nebulastream/tree/v0.4.22) (2023-01-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.21...v0.4.22)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add global nautilus tumbling window [\#3329](https://github.com/nebulastream/nebulastream/issues/3329)
+
+## [v0.4.21](https://github.com/nebulastream/nebulastream/tree/v0.4.21) (2023-01-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.20...v0.4.21)
+
+### Miscellaneous Issues ✌️
+
+- One location for all hash functions [\#3387](https://github.com/nebulastream/nebulastream/issues/3387)
+- \[Feature\] Unit Test for Data Providers [\#3328](https://github.com/nebulastream/nebulastream/issues/3328)
+
+## [v0.4.20](https://github.com/nebulastream/nebulastream/tree/v0.4.20) (2023-01-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.19...v0.4.20)
+
+### Bug Fixes 🐛
+
+- \[BUG\] runtime-atan-expression-test  and runtime-cos-expression-test fail on macOS [\#3380](https://github.com/nebulastream/nebulastream/issues/3380)
+
+## [v0.4.19](https://github.com/nebulastream/nebulastream/tree/v0.4.19) (2023-01-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.18...v0.4.19)
+
+#### Runtime 
+
+- \[Feature\] Cleanup tests in nes-runtime [\#3360](https://github.com/nebulastream/nebulastream/issues/3360)
+
+#### User Defined Functions
+
+- \[Feature\] Add input and output type name of Java UDF to Java UDF descriptor [\#3308](https://github.com/nebulastream/nebulastream/issues/3308)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Reactivate e2e testrun in CI [\#3338](https://github.com/nebulastream/nebulastream/issues/3338)
+
 ## [v0.4.18](https://github.com/nebulastream/nebulastream/tree/v0.4.18) (2023-01-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.17...v0.4.18)

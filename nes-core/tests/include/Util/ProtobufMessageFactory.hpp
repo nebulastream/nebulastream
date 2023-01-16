@@ -19,6 +19,7 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <UdfCatalogService.pb.h>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 
 namespace NES {
 
@@ -36,7 +37,9 @@ class ProtobufMessageFactory {
                                                                const std::string& methodName,
                                                                const Catalogs::UDF::JavaSerializedInstance& serializedInstance,
                                                                const Catalogs::UDF::JavaUdfByteCodeList& byteCodeList,
-                                                               const SchemaPtr& outputSchema) {
+                                                               const SchemaPtr& outputSchema,
+                                                               const std::string& inputClassName,
+                                                               const std::string& outputClassName) {
         auto request = RegisterJavaUdfRequest{};
         // Set udfName
         request.set_udf_name(udfName);
@@ -53,16 +56,22 @@ class ProtobufMessageFactory {
         }
         // Set outputSchema
         SchemaSerializationUtil::serializeSchema(outputSchema, udfDescriptor->mutable_outputschema());
+        // Set input and output types
+        udfDescriptor->set_input_class_name(inputClassName);
+        udfDescriptor->set_output_class_name(outputClassName);
         return request;
     }
 
     static RegisterJavaUdfRequest createDefaultRegisterJavaUdfRequest() {
+        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
         return createRegisterJavaUdfRequest("my_udf",
-                                            "some_package.my_udf",
-                                            "udf_method",
-                                            {1},
-                                            {{"some_package.my_udf", {1}}},
-                                            std::make_shared<Schema>()->addField("field", DataTypeFactory::createUInt64()));
+                                            javaUdfDescriptor->getClassName(),
+                                            javaUdfDescriptor->getMethodName(),
+                                            javaUdfDescriptor->getSerializedInstance(),
+                                            javaUdfDescriptor->getByteCodeList(),
+                                            javaUdfDescriptor->getOutputSchema(),
+                                            javaUdfDescriptor->getInputClassName(),
+                                            javaUdfDescriptor->getOutputClassName());
     }
 };
 

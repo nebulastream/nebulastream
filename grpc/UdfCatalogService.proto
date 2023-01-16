@@ -18,6 +18,9 @@ import "JavaUdfDescriptorMessage.proto";
 
 package NES;
 
+option java_package = "stream.nebula.protobuf";
+option java_multiple_files = true;
+
 message RegisterJavaUdfRequest {
   string udf_name = 1;
   JavaUdfDescriptorMessage java_udf_descriptor = 2;

@@ -16,9 +16,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalGlobalWindowSliceStoreAppendOperator::PhysicalGlobalWindowSliceStoreAppendOperator(
     OperatorId id,
@@ -44,6 +42,4 @@ std::string PhysicalGlobalWindowSliceStoreAppendOperator::toString() const {
 
 OperatorNodePtr PhysicalGlobalWindowSliceStoreAppendOperator::copy() { return create(inputSchema, outputSchema, windowHandler); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

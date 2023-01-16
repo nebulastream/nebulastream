@@ -20,6 +20,8 @@ InternalProvider::InternalProvider(uint64_t id,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers) {}
 
+std::vector<Runtime::TupleBuffer>& InternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
+
 std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t sourceId) {
     // For now we only have a single source
     ((void) sourceId);
