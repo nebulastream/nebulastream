@@ -376,9 +376,9 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
-    auto query = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath ));
+    std::string queryString = R"(Query::from("tcpStream").sink(FileSinkDescriptor::create(")" + filePath + "\"));";
     QueryId queryId =
-        queryService->addQueryRequest("", query.getQueryPlan(), "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
