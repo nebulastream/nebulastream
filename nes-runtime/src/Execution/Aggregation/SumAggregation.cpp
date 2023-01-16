@@ -36,7 +36,7 @@ void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
 }
 
 Nautilus::Value<> SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3250 check the type
+    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
 
     return finalVal;
 }

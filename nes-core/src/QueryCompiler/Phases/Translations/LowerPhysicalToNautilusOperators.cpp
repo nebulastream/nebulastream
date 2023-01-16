@@ -396,6 +396,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         NES_NOT_IMPLEMENTED();
     } else {
         auto aggregation = aggregations[0];
+        std::shared_ptr<Runtime::Execution::Expressions::Expression> aggregatedFieldAccess = nullptr;
         switch (aggregation->getType()) {
 
             case Windowing::WindowAggregationDescriptor::Avg:
@@ -433,7 +434,10 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         auto aggregationResultFieldName =
             thresholdWindowResultSchema->getSourceNameQualifier() + "$" + aggregation->getTypeAsString();
 
-        auto aggregatedFieldAccess = lowerExpression(aggregation->on());
+        if (aggregation->getType()!=Windowing::WindowAggregationDescriptor::Count) {
+            aggregatedFieldAccess = lowerExpression(aggregation->on());
+            // Comment 3280: Anyway, the onField for count should not be set to anything
+        }
 
         return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
                                                                                 minCount,

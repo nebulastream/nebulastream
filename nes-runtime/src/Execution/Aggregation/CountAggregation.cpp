@@ -21,7 +21,7 @@ CountAggregationFunction::CountAggregationFunction(const DataTypePtr& inputType,
 
 void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) {
     // load memref
-    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3250 check the type
+    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3280 check the type
     // add the value
     auto newValue = oldValue + 1;
     // put back to the memref
@@ -37,7 +37,7 @@ void CountAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1
 }
 
 Nautilus::Value<> CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3250 check the type
+    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
 
     return finalVal;
 }
