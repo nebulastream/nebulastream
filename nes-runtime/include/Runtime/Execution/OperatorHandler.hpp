@@ -73,7 +73,7 @@ class OperatorHandler : public Reconfigurable {
         if (instanceOf<OperatorHandlerType>()) {
             return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
         }
-        throw std::logic_error("OperatorHandler:: we performed an invalid cast of operator to type " + typeid(OperatorHandlerType).name());
+        throw std::logic_error("OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
         return nullptr;
     }
 };

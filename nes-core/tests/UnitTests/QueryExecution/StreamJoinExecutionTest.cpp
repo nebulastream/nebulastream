@@ -88,19 +88,23 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
 // TODO: Enable this test in issue #3339
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("test1$f1_left", BasicType::UINT64)
+                                ->addField("test1$f2_left", BasicType::UINT64)
+                                ->addField("test1$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("test2$f1_right", BasicType::UINT64)
+                                 ->addField("test2$f2_right", BasicType::UINT64)
+                                 ->addField("test2$timestamp", BasicType::UINT64);
 
-    const auto joinFieldNameLeft = leftSchema->get(1)->getName();
-    const auto joinFieldNameRight = rightSchema->get(1)->getName();
-    const auto timeStampField = leftSchema->get(2)->getName();
-    EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
+    const auto joinFieldNameLeft = "f2_left";
+    const auto joinFieldNameRight = "f2_right";
+    const auto timeStampField = "timestamp";
+
+    ASSERT_TRUE(leftSchema->hasFieldName(joinFieldNameLeft));
+    ASSERT_TRUE(rightSchema->hasFieldName(joinFieldNameRight));
+    ASSERT_TRUE(leftSchema->hasFieldName(timeStampField));
+    ASSERT_TRUE(rightSchema->hasFieldName(timeStampField));
 
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
@@ -115,7 +119,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
     auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
-    auto testSink = executionEngine->createDateSink(joinSchema);
+    auto testSink = executionEngine->createDataSink(joinSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
@@ -142,6 +146,12 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
+
+    NES_INFO("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+    NES_INFO("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
+
+
+
     EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(),
                        expectedSinkBuffer.getBuffer().getBuffer(),
                        expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes())

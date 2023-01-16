@@ -311,7 +311,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto maxNoWorkerThreads = 1UL; // This is needed for creating the local hash tables, but it can be set later on
         auto numSourcesLeft = 1UL, numSourcesRight = 1UL; // This is needed for detecting when the sink is finished
         auto joinSizeInByte = 500 * 1024UL; // This can be set later on
-        auto windowSize = 10UL; // This can be set later on
+        auto windowSize = 20UL; // This can be set later on
+        auto timeStampFieldName = "timestamp";
 
         auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
                                                                      joinOperator->getRightInputSchema(),
@@ -328,11 +329,13 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto leftJoinBuildOperator = PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                                 joinOperator->getOutputSchema(),
                                                                                                 joinOperatorHandler,
-                                                                                                JoinBuildSideType::Left);
+                                                                                                JoinBuildSideType::Left,
+                                                                                                timeStampFieldName);
         auto rightJoinBuildOperator = PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                                  joinOperator->getOutputSchema(),
                                                                                                  joinOperatorHandler,
-                                                                                                 JoinBuildSideType::Right);
+                                                                                                 JoinBuildSideType::Right,
+                                                                                                 timeStampFieldName);
 
         auto joinSinkOperator = PhysicalOperators::PhysicalStreamJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
                                                                                           joinOperator->getRightInputSchema(),

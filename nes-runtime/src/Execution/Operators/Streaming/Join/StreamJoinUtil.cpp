@@ -36,11 +36,11 @@ uint64_t murmurHash(uint64_t key) {
 SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const std::string& keyFieldName) {
     NES_ASSERT(leftSchema->getLayoutType() == rightSchema->getLayoutType(),
                "Left and right schema do not have the same layout type");
-    NES_ASSERT(leftSchema->contains(keyFieldName) || rightSchema->contains(keyFieldName),
+    NES_ASSERT(leftSchema->hasFieldName(keyFieldName) || rightSchema->hasFieldName(keyFieldName),
                "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
 
     auto retSchema = Schema::create(leftSchema->getLayoutType());
-    if (leftSchema->contains(keyFieldName)) {
+    if (leftSchema->hasFieldName(keyFieldName)) {
         retSchema->addField(leftSchema->get(keyFieldName));
     } else {
         retSchema->addField(rightSchema->get(keyFieldName));
