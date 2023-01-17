@@ -212,9 +212,22 @@ class NesPortDispatcher {
         std::atomic<uint32_t> checksum;
     };
 
+    auto getMutexPath() {
+        using namespace std::string_literals;
+        auto tmpPath = std::filesystem::temp_directory_path();
+        auto fileName = getenv("USER") + ".nes.lock"s;
+        return tmpPath / fileName;
+    }
+
+    auto getPortPoolName() {
+        using namespace std::string_literals;
+        auto username = getenv("USER");
+        return "/"s + username + ".nes.port.pool"s;
+    }
+
   public:
     explicit NesPortDispatcher(uint16_t startPort, uint32_t numberOfPorts)
-        : mutex(std::filesystem::temp_directory_path() / "nes.lock"), data("/nes.port.pool", numberOfPorts) {
+        : mutex(getMutexPath()), data(getPortPoolName(), numberOfPorts) {
         std::unique_lock<Util::FileMutex> lock(mutex, std::defer_lock);
         if (lock.try_lock()) {
             data.open();
