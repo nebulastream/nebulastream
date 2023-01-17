@@ -25,7 +25,19 @@ class BasicBlockInvocation : public Operation {
     BasicBlockPtr getBlock();
     void addArgument(OperationPtr argument);
     void removeArgument(uint64_t argumentIndex);
+
+    /**
+     * @brief Iterate over args, find arg that matches OperationPtr and return index.
+     * 
+     * @return int: arg index for provided OperationPtr. Is -1 if no arg that matches OperationPtr was found.
+     */
     int getOperationArgIndex(Operations::OperationPtr);
+    
+    /**
+     * @brief Get all arguments of next block invocation, meaning all args of the branching operation (br, if, loop,..)
+     * 
+     * @return std::vector<OperationPtr> : vector with all arguments of the next block invocation.
+     */
     std::vector<OperationPtr> getArguments();
     std::string toString() override;
 
