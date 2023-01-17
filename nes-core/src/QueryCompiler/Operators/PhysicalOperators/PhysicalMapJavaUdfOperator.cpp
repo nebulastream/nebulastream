@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 
@@ -47,3 +49,4 @@ Catalogs::UDF::JavaUdfDescriptorPtr PhysicalMapJavaUdfOperator::getjavaUdfDescri
     return javaUdfDescriptor;
 }
 }// namespace NES::QueryCompilation::PhysicalOperators
+#endif // ENABLE_JNI

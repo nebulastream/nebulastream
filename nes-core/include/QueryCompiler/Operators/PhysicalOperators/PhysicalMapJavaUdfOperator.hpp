@@ -16,9 +16,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 
+#ifdef ENABLE_JNI
+
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
-
 
 namespace NES {
 namespace Catalogs::UDF {
@@ -59,5 +59,5 @@ class PhysicalMapJavaUdfOperator : public PhysicalUnaryOperator {
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES
-
+#endif // ENABLE_JIN
 #endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_

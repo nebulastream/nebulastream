@@ -15,6 +15,8 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_
 
+#ifdef ENABLE_JNI
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -51,4 +53,5 @@ class MapJavaUdf : public ExecutableOperator {
 
 }// namespace NES::Runtime::Execution::Operators
 
+#endif//ENABLE_JNI
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDF_HPP_

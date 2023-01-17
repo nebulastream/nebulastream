@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
@@ -105,3 +107,4 @@ bool MapJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
 }
 
 }// namespace NES
+#endif // ENABLE_JNI

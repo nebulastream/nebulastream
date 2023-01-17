@@ -154,6 +154,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
+#ifdef ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
         auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
         auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
@@ -176,6 +177,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
         parentOperator->setChild(mapJavaUdf);
         return mapJavaUdf;
+#endif // ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         // TODO 3280 change with a factory for different aggregation values
         auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
@@ -376,7 +378,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                                             handlerIndex);
 }
 
-
+#ifdef ENABLE_JNI
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
@@ -386,9 +388,9 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOp
     auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
     auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
 
-    // TODO move types into the map java udf
     return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(handlerIndex, inputSchema, outputSchema);
 }
+#endif // ENABLE_JNI
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
 LowerPhysicalToNautilusOperators::lowerExpression(const ExpressionNodePtr& expressionNode) {

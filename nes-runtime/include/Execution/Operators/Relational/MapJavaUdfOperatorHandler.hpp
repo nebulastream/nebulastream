@@ -15,6 +15,8 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
 
+#ifdef ENABLE_JNI
+
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
@@ -98,4 +100,5 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
 };
 
 }// namespace NES::Runtime::Execution::Operators
+#endif//ENABLE_JNI
 #endif //NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_

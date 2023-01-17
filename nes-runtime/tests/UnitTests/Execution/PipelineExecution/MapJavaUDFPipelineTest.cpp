@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -121,6 +123,192 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap) {
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
         ASSERT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
+    }
+}
+
+/**
+ * @brief Test a pipeline containing a scan, a java map with shorts, and a emit operator
+ */
+TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("shortVariable", BasicType::INT16);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    std::string className = "ShortMapFunction";
+    std::string methodName = "map";
+    std::string inputProxyName = "java/lang/Short";
+    std::string outputProxyName = "java/lang/Short";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
+    std::vector<char> serializedInstance = {};
+    SchemaPtr input = Schema::create()->addField("shortVariable", NES::INT16);
+    SchemaPtr output = Schema::create()->addField("shortVariable", NES::INT16);
+    auto mapOperator = std::make_shared<Operators::MapJavaUdf>(0, input, output);
+    scanOperator->setChild(mapOperator);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    mapOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        dynamicBuffer[i]["shortVariable"].write((int16_t) i);
+        dynamicBuffer.setNumberOfTuples(i + 1);
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
+
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    executablePipeline->setup(pipelineContext);
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    executablePipeline->stop(pipelineContext);
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        ASSERT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
+    }
+}
+
+/**
+ * @brief Test a pipeline containing a scan, a java map with long, and a emit operator
+ */
+TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("longVariable", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    std::string className = "LongMapFunction";
+    std::string methodName = "map";
+    std::string inputProxyName = "java/lang/Long";
+    std::string outputProxyName = "java/lang/Long";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
+    std::vector<char> serializedInstance = {};
+    SchemaPtr input = Schema::create()->addField("longVariable", NES::INT64);
+    SchemaPtr output = Schema::create()->addField("longVariable", NES::INT64);
+    auto mapOperator = std::make_shared<Operators::MapJavaUdf>(0, input, output);
+    scanOperator->setChild(mapOperator);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    mapOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        dynamicBuffer[i]["longVariable"].write((int64_t) i);
+        dynamicBuffer.setNumberOfTuples(i + 1);
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
+
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    executablePipeline->setup(pipelineContext);
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    executablePipeline->stop(pipelineContext);
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        ASSERT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), i + 10);
+    }
+}
+
+/**
+ * @brief Test a pipeline containing a scan, a java map with shorts, and a emit operator
+ */
+TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineDoubleMap) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("doubleVariable", BasicType::FLOAT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    std::string className = "DoubleMapFunction";
+    std::string methodName = "map";
+    std::string inputProxyName = "java/lang/Double";
+    std::string outputProxyName = "java/lang/Double";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList = {};
+    std::vector<char> serializedInstance = {};
+    SchemaPtr input = Schema::create()->addField("doubleVariable", NES::FLOAT64);
+    SchemaPtr output = Schema::create()->addField("doubleVariable", NES::FLOAT64);
+    auto mapOperator = std::make_shared<Operators::MapJavaUdf>(0, input, output);
+    scanOperator->setChild(mapOperator);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    mapOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        dynamicBuffer[i]["doubleVariable"].write((double) i);
+        dynamicBuffer.setNumberOfTuples(i + 1);
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+    auto handler = std::make_shared<Operators::MapJavaUdfOperatorHandler>(className,
+                                                                          methodName,
+                                                                          inputProxyName,
+                                                                          outputProxyName,
+                                                                          byteCodeList,
+                                                                          serializedInstance,
+                                                                          input,
+                                                                          output,
+                                                                          testDataPath);
+
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    executablePipeline->setup(pipelineContext);
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    executablePipeline->stop(pipelineContext);
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        ASSERT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
     }
 }
 
@@ -340,3 +528,4 @@ INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         });
 
 }// namespace NES::Runtime::Execution
+#endif // ENABLE_JNI

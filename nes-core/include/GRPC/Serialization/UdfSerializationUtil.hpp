@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #ifndef NES_UDFSERIALIZATIONUTIL_HPP
 #define NES_UDFSERIALIZATIONUTIL_HPP
 
@@ -45,3 +47,5 @@ class UdfSerializationUtil {
 }// namespace NES
 
 #endif//NES_UDFSERIALIZATIONUTIL_HPP
+
+#endif // ENABLE_JNI

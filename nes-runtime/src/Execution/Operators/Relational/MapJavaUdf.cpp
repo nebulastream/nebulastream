@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_JNI
 
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
@@ -191,8 +192,6 @@ extern "C" void *createDoubleObject(void* state, double value) {
 
 extern "C" void *createStringObject(void* state, TextValue *value) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
-    NES_DEBUG("test string: " << (value->getBuffer().getBuffer<char>() + sizeof(uint32_t)));
-    NES_DEBUG("test string: " << (value->c_str()));
     return handler->getEnvironment()->NewStringUTF(value->c_str());
 }
 
@@ -375,6 +374,12 @@ extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
+extern "C" void freeObject(void* state, void* object){
+    auto handler = (MapJavaUdfOperatorHandler*) state;
+
+    handler->getEnvironment()->DeleteLocalRef((jobject) object);
+}
+
 extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
@@ -522,6 +527,8 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto outputClassPtr = FunctionCall<>("findOutputProxyClass", findOutputProxyClass, handler);
     auto outputPojoPtr = FunctionCall<>("executeUdf", executeUdf, handler, inputPojoPtr);
 
+    FunctionCall<>("freeObject", freeObject, handler, inputPojoPtr);
+
     // Create new record for result
     record = Record();
 
@@ -596,6 +603,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         }
     }
 
+    FunctionCall<>("freeObject", freeObject, handler, outputPojoPtr);
     FunctionCall<>("detachJVM", detachVM);
 
     // Trigger execution of next operator
@@ -607,3 +615,4 @@ void MapJavaUdf::terminate(ExecutionContext&) const {
 }
 
 }// namespace NES::Runtime::Execution::Operators
+#endif // ENABLE_JIN
