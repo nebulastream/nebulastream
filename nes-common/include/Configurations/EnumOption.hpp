@@ -26,8 +26,7 @@ namespace NES::Configurations {
  * @tparam EnumType
  */
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
-class EnumOption : public TypedBaseOption<EnumType> {
+requires std::is_enum<EnumType>::value class EnumOption : public TypedBaseOption<EnumType> {
   public:
     /**
      * @brief Constructor to define a EnumOption with a specific default value.
@@ -51,20 +50,18 @@ class EnumOption : public TypedBaseOption<EnumType> {
 };
 
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
+requires std::is_enum<EnumType>::value
 EnumOption<EnumType>::EnumOption(const std::string& name, EnumType defaultValue, const std::string& description)
     : TypedBaseOption<EnumType>(name, defaultValue, description){};
 
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
-EnumOption<EnumType>& EnumOption<EnumType>::operator=(const EnumType& value) {
+requires std::is_enum<EnumType>::value EnumOption<EnumType>& EnumOption<EnumType>::operator=(const EnumType& value) {
     this->value = value;
     return *this;
 }
 
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
-void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
+requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
 
     if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
         auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
@@ -74,8 +71,8 @@ void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
 }
 
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
-void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+requires std::is_enum<EnumType>::value void
+EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     auto value = inputParams[identifier];
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
@@ -86,8 +83,7 @@ void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std:
 }
 
 template<class EnumType>
-    requires std::is_enum<EnumType>::value
-std::string EnumOption<EnumType>::toString() {
+requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toString() {
     return "";
 }
 
