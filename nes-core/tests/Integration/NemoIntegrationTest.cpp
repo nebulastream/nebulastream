@@ -14,23 +14,13 @@
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
-
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
-
-#include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <assert.h>
-#include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
-
-#include <REST/ServerTypes.hpp>
 
 using std::cout;
 using std::endl;
