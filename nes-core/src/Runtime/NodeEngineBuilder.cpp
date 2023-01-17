@@ -228,14 +228,14 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourcePtr> physicalSources;
-        bool usesLoRaWAN = false;
+        LoRaWANProxySourceTypePtr loRaWANProxySourceTypePtr;
         for (const auto& entry : workerConfiguration->physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
             if (entry.getValue()->getPhysicalSourceType()->instanceOf<LoRaWANProxySourceType>() )
-                usesLoRaWAN = true;
+                loRaWANProxySourceTypePtr = entry.getValue()->getPhysicalSourceType()->as<LoRaWANProxySourceType>();
         }
         std::shared_ptr<NodeEngine> engine;
-        if (usesLoRaWAN) {
+        if (loRaWANProxySourceTypePtr) {
             engine = std::make_shared<DecoratedLoRaWANNodeEngine>(
                 physicalSources,
                 std::move(hardwareManager),
@@ -259,7 +259,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                 workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
                 workerConfiguration->numberOfBuffersPerWorker.getValue(),
-                workerConfiguration->enableSourceSharing.getValue());
+                workerConfiguration->enableSourceSharing.getValue(),
+                std::move(loRaWANProxySourceTypePtr));
         } else {
                 engine = std::make_shared<NodeEngine>(
                     physicalSources,

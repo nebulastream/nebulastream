@@ -11,6 +11,7 @@
 // *
 
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -184,6 +185,9 @@ bool LoRaWANProxySourceType::equal(const PhysicalSourceTypePtr& other) {
         && password->getValue()     == otherConfig->password->getValue()
         && appId->getValue()        == otherConfig->appId->getValue();
 }
-
+void LoRaWANProxySourceType::setSerializedQueries(EndDeviceProtocol::Message message) {
+    queries = std::move(message);
+}
+EndDeviceProtocol::Message& LoRaWANProxySourceType::getSerializedQueries() { return queries; }
 
 }// namespace NES

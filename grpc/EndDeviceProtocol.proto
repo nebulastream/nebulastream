@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package messages;
+package EndDeviceProtocol;
 
 enum DataTypes {
   INT8 = 0;

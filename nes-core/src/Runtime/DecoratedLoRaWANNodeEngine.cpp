@@ -26,7 +26,7 @@ DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
     uint64_t numberOfBuffersInSourceLocalBufferPool,
     uint64_t numberOfBuffersPerWorker,
     bool sourceSharing,
-    LoRaWANProxySource& proxysource)
+    LoRaWANProxySourceTypePtr proxysource)
     : NodeEngine(std::move(physicalSources),
                  std::move(hardwareManager),
                  std::move(bufferManagers),
@@ -41,7 +41,7 @@ DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
                  numberOfBuffersInGlobalBufferManager,
                  numberOfBuffersInSourceLocalBufferPool,
                  numberOfBuffersPerWorker,
-                 sourceSharing), source(proxysource){
+                 sourceSharing), sourceType(proxysource){
     NES_DEBUG("DECORATEDLORAWANCLASS CREATED")
 }
 }// namespace NES::Runtime

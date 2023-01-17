@@ -28,7 +28,7 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
                                uint64_t numberOfBuffersInSourceLocalBufferPool,
                                uint64_t numberOfBuffersPerWorker,
                                bool sourceSharing,
-                               LoRaWANProxySource& source);
+                               LoRaWANProxySourceTypePtr source);
 
     /**
      * @brief registers a query
@@ -43,7 +43,7 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
     [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
 
   private:
-    LoRaWANProxySource& source;
+    LoRaWANProxySourceTypePtr sourceType;
 };
 
 }

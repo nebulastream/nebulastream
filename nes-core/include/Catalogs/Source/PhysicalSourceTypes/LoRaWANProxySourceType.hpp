@@ -15,6 +15,7 @@
 
 #include <Util/yaml/Yaml.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <EndDeviceProtocol.pb.h>
 namespace NES {
 class LoRaWANProxySourceType;
 using LoRaWANProxySourceTypePtr = std::shared_ptr<LoRaWANProxySourceType>;
@@ -58,6 +59,9 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getAppId();
     void setAppId( std::string appId);
 
+    [[nodiscard]] EndDeviceProtocol::Message& getSerializedQueries();
+    void setSerializedQueries(EndDeviceProtocol::Message);
+
   private:
 
     /**
@@ -82,6 +86,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     Configurations::StringConfigOption userName;
     Configurations::StringConfigOption password;
     Configurations::StringConfigOption appId;
+    EndDeviceProtocol::Message queries;
 
 
 };

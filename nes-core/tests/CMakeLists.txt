@@ -188,7 +188,7 @@ endif (NES_USE_MQTT)
 ### LoRaWANProxySource Tests ###
 add_nes_unit_test(LoRaWANProxySource-tests "UnitTests/Source/LoRaWANProxySourceTest.cpp")
 add_nes_unit_test(LoRaWANProxySourceMQTT-tests "UnitTests/Source/LoRaWANProxySourceMQTTTest.cpp")
-
+add_nes_unit_test(EndDeviceProtocolSerializationUtil-tests "UnitTests/gRPC/Serialization/EndDeviceProtocolSerializationUtilTests.cpp")
 
 ### Row Layout Tests ###
 add_nes_unit_test(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
