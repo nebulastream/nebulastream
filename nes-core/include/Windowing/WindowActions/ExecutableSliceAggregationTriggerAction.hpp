@@ -81,7 +81,7 @@ class ExecutableSliceAggregationTriggerAction
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: {}  check key={} nextEdge={}", id, toString() ,it.first, it.second->nextEdge);
+            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: {} check key={} nextEdge={}", id, toString(), it.first, it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark, workerContext);
