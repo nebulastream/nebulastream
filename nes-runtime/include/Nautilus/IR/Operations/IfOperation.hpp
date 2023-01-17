@@ -35,8 +35,6 @@ class IfOperation : public Operation {
     BasicBlockInvocation& getFalseBlockInvocation();
     void setTrueBlockInvocation(BasicBlockPtr trueBlockInvocation);
     void setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation);
-    void setCountedLoopInfo(std::unique_ptr<CountedLoopInfo> countedLoopInfo);
-    std::unique_ptr<CountedLoopInfo> getCountedLoopInfo();
     bool hasFalseCase();
 
     std::string toString() override;

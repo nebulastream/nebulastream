@@ -35,8 +35,6 @@ void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
 BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
 OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
 void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
-void IfOperation::setCountedLoopInfo(std::unique_ptr<CountedLoopInfo> countedLoopInfo) { this->countedLoopInfo = std::move(countedLoopInfo);}
-std::unique_ptr<CountedLoopInfo> IfOperation::getCountedLoopInfo() { return std::move(countedLoopInfo);}
 
 std::string IfOperation::toString() {
     std::string baseString = "if " + getValue()->getIdentifier() + " ? b" + trueBlockInvocation.getBlock()->getIdentifier() + '(';
