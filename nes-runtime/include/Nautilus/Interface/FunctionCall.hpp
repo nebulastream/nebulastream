@@ -107,17 +107,14 @@ auto transformReturnValues(Arg argument) {
 
 class TextValue;
 template<typename T>
-    requires std::is_same_v<TextValue*, T>
-auto createDefault();
+requires std::is_same_v<TextValue*, T> auto createDefault();
 
 class BaseListValue;
 template<typename T>
-    requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
-auto createDefault();
+requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value auto createDefault();
 
 template<typename R>
-    requires std::is_fundamental_v<R> || std::is_same_v<void*, R>
-auto createDefault() {
+    requires std::is_fundamental_v<R> || std::is_same_v<void*, R> auto createDefault() {
     if constexpr (std::is_same<R, int8_t>::value) {
         return Value<Int8>(std::make_unique<Int8>((int8_t) 0));
     } else if constexpr (std::is_same<R, int16_t>::value) {
