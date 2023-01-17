@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutableTypes {
 /**
@@ -399,5 +400,14 @@ struct std::hash<NES::ExecutableTypes::Array<T, N>> {
         return result;
     }
 };
+
+namespace fmt {
+template<std::size_t size>
+struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::string> {
+    auto format(const NES::ExecutableTypes::Array<char, size> executable_type_array, format_context& ctx) -> decltype(ctx.out()) {
+        return format_to(ctx.out(), "{}", executable_type_array);
+    }
+};
+} //namespace fmt
 
 #endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
