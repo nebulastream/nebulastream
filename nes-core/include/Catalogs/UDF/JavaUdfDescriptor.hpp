@@ -15,6 +15,8 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 
+#ifdef ENABLE_JNI
+
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <memory>
@@ -173,4 +175,5 @@ class JavaUdfDescriptor : public UdfDescriptor {
 };
 
 }// namespace NES::Catalogs::UDF
+#endif // ENABLE_JIN
 #endif// NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_

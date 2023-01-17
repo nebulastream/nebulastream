@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
 
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -48,8 +49,7 @@ class MapJavaUdfOperatorTest : public testing::Test {
             std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
 
-auto bm = std::make_shared<Runtime::BufferManager>();
-auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
+
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
@@ -97,6 +97,87 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     auto record = Record({{"id", Value<>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
+}
+
+/**
+ * @brief Test simple UDF with short objects as input and output (IntegerMapFunction<Short, Short>)
+ * The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::INT16);
+    SchemaPtr output = Schema::create()->addField("id", NES::INT16);
+    std::string method = "map";
+    std::string clazz = "ShortMapFunction";
+    std::string inputClass = "java/lang/Short";
+    std::string outputClass = "java/lang/Short";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+    std::vector<char> serializedInstance;
+
+    auto initialValue = 42;
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto map = MapJavaUdf(0, input, output);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<>(initialValue)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), initialValue + 10);
+}
+
+/**
+ * @brief Test simple UDF with long objects as input and output (IntegerMapFunction<Long, Long>)
+ * The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::INT64);
+    SchemaPtr output = Schema::create()->addField("id", NES::INT64);
+    std::string method = "map";
+    std::string clazz = "LongMapFunction";
+    std::string inputClass = "java/lang/Long";
+    std::string outputClass = "java/lang/Long";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+    std::vector<char> serializedInstance;
+
+    auto initialValue = 42;
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto map = MapJavaUdf(0, input, output);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<>(initialValue)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), initialValue + 10);
+}
+
+/**
+ * @brief Test simple UDF with double objects as input and output (IntegerMapFunction<Double, Double>)
+ * The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::FLOAT64);
+    SchemaPtr output = Schema::create()->addField("id", NES::FLOAT64);
+    std::string method = "map";
+    std::string clazz = "DoubleMapFunction";
+    std::string inputClass = "java/lang/Double";
+    std::string outputClass = "java/lang/Double";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+    std::vector<char> serializedInstance;
+
+    double initialValue = 42;
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto map = MapJavaUdf(0, input, output);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<>(initialValue)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), initialValue + 10.0);
 }
 
 /**
@@ -158,6 +239,8 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
  * The UDF appends incoming tuples the postfix 'appended'.
 */
 TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     std::string path = testDataPath;
     SchemaPtr input = Schema::create()->addField("id", NES::TEXT);
     SchemaPtr output = Schema::create()->addField("id", NES::TEXT);
@@ -238,3 +321,4 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
 }
 
 }// namespace NES::Runtime::Execution::Operators
+#endif // ENABLE_JNI

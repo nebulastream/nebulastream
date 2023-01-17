@@ -15,6 +15,8 @@
 #ifndef NES_EXECUTION_OPERATORS_RELATIONAL_JVMCONTEXT_HPP
 #define NES_EXECUTION_OPERATORS_RELATIONAL_JVMCONTEXT_HPP
 
+#ifdef ENABLE_JNI
+
 #include <mutex>
 #include <jni.h>
 
@@ -65,5 +67,5 @@ class JVMContext {
 };
 
 };// NES::Runtime::Execution::Operators
-
+#endif//ENABLE_JNI
 #endif// NES_EXECUTION_OPERATORS_RELATIONAL_JVMCONTEXT_HPP

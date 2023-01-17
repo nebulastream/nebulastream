@@ -249,6 +249,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     operatorNode->replace(physicalMapOperator);
 }
 
+#ifdef ENABLE_JNI
 void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapJavaUdfOperator = operatorNode->as<MapJavaUdfLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUdfOperator::create(mapJavaUdfOperator->getInputSchema(),
@@ -256,6 +257,7 @@ void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr
                                                                                      mapJavaUdfOperator->getJavaUdfDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
+#endif // ENABLE_JNI
 
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_JNI
 
 #include <Execution/Operators/Relational/JVMContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -97,3 +98,4 @@ bool JVMContext::destroyJVM() {
 }
 
 }; //NES::Runtime::Execution::Operators
+#endif //ENABLE_JNI

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef ENABLE_JNI
 
 #ifndef NES_JAVAUDFDESCRIPTORBUILDER_H
 #define NES_JAVAUDFDESCRIPTORBUILDER_H
@@ -139,3 +140,5 @@ class JavaUdfDescriptorBuilder {
 }// namespace NES::Catalogs::UDF
 
 #endif//NES_JAVAUDFDESCRIPTORBUILDER_H
+
+#endif // ENABLE_JNI
