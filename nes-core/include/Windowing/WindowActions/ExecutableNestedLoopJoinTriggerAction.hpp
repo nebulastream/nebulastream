@@ -54,7 +54,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         NES_DEBUG2("ExecutableNestedLoopJoinTriggerAction {} join output schema= {}", id, windowSchema->toString());
     }
 
-    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG2("~ExecutableNestedLoopJoinTriggerAction {}}:()", id); }
+    virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG2("~ExecutableNestedLoopJoinTriggerAction {}:()", id); }
 
     bool doAction(Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   Runtime::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
@@ -191,7 +191,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         NES_TRACE2("ExecutableNestedLoopJoinTriggerAction {}:: content right side for key={}", id, key);
         id = 0;
         for (auto& right : slicesRight) {
-            NES_TRACE2("right start={} right end={} id={}" , << right.getStartTs(), right.getEndTs(), id++);
+            NES_TRACE2("right start={} right end={} id={}", right.getStartTs(), right.getEndTs(), id++);
         }
 
         if (currentWatermark > lastWatermark) {
@@ -250,7 +250,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                 uint64_t slideSize =
                     Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType())->getSize().getTime();
-                NES_TRACE2("ExecutableNestedLoopJoinTriggerAction {}:: largestClosedWindow={}  slideSize={}" << id, largestClosedWindow, slideSize);
+                NES_TRACE2("ExecutableNestedLoopJoinTriggerAction {}:: largestClosedWindow={}  slideSize={}", id, largestClosedWindow, slideSize);
 
                 //TODO: we have to re-activate the deletion once we are sure that it is working again
                 largestClosedWindow = largestClosedWindow > slideSize ? largestClosedWindow - slideSize : 0;
