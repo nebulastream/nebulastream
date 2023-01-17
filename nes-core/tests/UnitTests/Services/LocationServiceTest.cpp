@@ -64,10 +64,10 @@ class LocationServiceTest : public Testing::NESBaseTest {
     NES::TopologyManagerServicePtr topologyManagerService;
 };
 
-TEST_F(LocationServiceTest, DISABLED_testRequestSingleNodeLocation) {
-    uint64_t rpcPortWrk1 = 6000;
-    uint64_t rpcPortWrk2 = 6001;
-    uint64_t rpcPortWrk3 = 6002;
+TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
+    auto rpcPortWrk1 = getAvailablePort();
+    auto rpcPortWrk2 = getAvailablePort();
+    auto rpcPortWrk3 = getAvailablePort();
 
     nlohmann::json cmpJson;
     nlohmann::json cmpLoc;
@@ -79,40 +79,26 @@ TEST_F(LocationServiceTest, DISABLED_testRequestSingleNodeLocation) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
+    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk1, 0, 0, properties);
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
+    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk2, 0, 0, properties);
+    topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
-
-    topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
-
-    NES_INFO("start worker 3");
-    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
-    wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-    wrkConf3->mobilityConfiguration.locationProviderType.setValue(
-        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart3);
-
-    //todo #3390: should this have an effect for a mobile node?
-    topologyManagerService->updateGeoLocation(node3Id, {13.4, -23});
+    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk3, 0, 0, properties);
+    topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
     EXPECT_EQ(locationService->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
-    cmpJson = locationService->requestNodeLocationDataAsJson(1);
+    cmpJson = locationService->requestNodeLocationDataAsJson(node1Id);
     EXPECT_EQ(cmpJson["id"], node1Id);
     EXPECT_TRUE(cmpJson["location"].empty());
 
     //test getting location of field node
-    cmpJson = locationService->requestNodeLocationDataAsJson(2);
+    cmpJson = locationService->requestNodeLocationDataAsJson(node2Id);
     auto entry = cmpJson.get<std::map<std::string, nlohmann::json>>();
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
     cmpLoc[0] = 13.4;
@@ -121,105 +107,79 @@ TEST_F(LocationServiceTest, DISABLED_testRequestSingleNodeLocation) {
 
     //test getting location of a mobile node
     cmpJson = nullptr;
-    cmpJson = locationService->requestNodeLocationDataAsJson(3);
+    cmpJson = locationService->requestNodeLocationDataAsJson(node3Id);
     EXPECT_EQ(cmpJson["id"], node3Id);
     cmpLoc[0] = 52.55227464714949;
     cmpLoc[1] = 13.351743136322877;
-    //todo #3390: this currently returns the fixed location that was set, although this is a mobile node
-    //EXPECT_EQ(cmpJson["location"], cmpLoc);
-
-    bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
 }
 
 //todo #3390: set mobile node locations via rpc calls so locations can acutally be returned
-TEST_F(LocationServiceTest, DISABLED_testRequestAllMobileNodeLocations) {
-    uint64_t rpcPortWrk1 = 6000;
-    uint64_t rpcPortWrk2 = 6001;
-    uint64_t rpcPortWrk3 = 6002;
-    uint64_t rpcPortWrk4 = 6003;
+TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
+    auto rpcPortWrk1 = getAvailablePort();
+    auto rpcPortWrk2 = getAvailablePort();
+    auto rpcPortWrk3 = getAvailablePort();
+    auto rpcPortWrk4 = getAvailablePort();
 
     TopologyPtr topology = Topology::create();
     auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
     locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
     topologyManagerService = std::make_shared<NES::TopologyManagerService>(topology, locationIndex);
 
+    auto responseNoNodes = locationService->requestLocationDataFromAllMobileNodesAsJson();
+
+    ASSERT_EQ(responseNoNodes.get<std::vector<nlohmann::json>>().size(), 0);
+
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
-    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk1, 0, 0, properties);
+    auto node1Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk1, 0, 0, properties);
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
-    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk2, 0, 0, properties);
+    auto node2Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk2, 0, 0, properties);
+    topologyManagerService->addGeoLocation(node2Id, {13.4, -23});
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk3, 0, 0, properties);
+    auto node3Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk3, 0, 0, properties);
 
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::MOBILE_NODE;
-    auto node4Id = topologyManagerService->registerWorker("127.0.0.1", rpcPortWrk4, 0, 0, properties);
-
-    topologyManagerService->updateGeoLocation(node2Id, {13.4, -23});
+    auto node4Id = topologyManagerService->registerWorker("127.0.0.1", *rpcPortWrk4, 0, 0, properties);
 
     auto response0 = locationService->requestLocationDataFromAllMobileNodesAsJson();
 
-    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 1);
+    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
 
-    NES_INFO("start worker 3");
-    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
-    wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-    wrkConf3->mobilityConfiguration.locationProviderType.setValue(
-        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart3);
+
+    topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     auto response1 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp1 = response1.get<std::vector<nlohmann::json>>();
     EXPECT_TRUE(getLocResp1.size() == 1);
 
     nlohmann::json cmpLoc;
-    cmpLoc[0] = 13.4;
-    cmpLoc[1] = -23;
+    cmpLoc[0] = 52.55227464714949;
+    cmpLoc[1] = 13.351743136322877;
     auto entry = getLocResp1[0].get<std::map<std::string, nlohmann::json>>();
-    EXPECT_TRUE(entry.size() == 2);
+    EXPECT_EQ(entry.size(), 2);
     EXPECT_TRUE(entry.find("id") != entry.end());
-    EXPECT_EQ(entry.at("id"), node2Id);
+    EXPECT_EQ(entry.at("id"), node3Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
     EXPECT_EQ(entry.at("location"), cmpLoc);
 
-    cmpLoc[0] = 52.55227464714949;
-    cmpLoc[1] = 13.351743136322877;
-
-    NES_INFO("start worker 4");
-    WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
-    wrkConf4->rpcPort = rpcPortWrk4;
-    wrkConf4->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-    wrkConf4->mobilityConfiguration.locationProviderType.setValue(
-        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf4->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
-    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart4);
+    topologyManagerService->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
 
     auto response2 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp2 = response2.get<std::vector<nlohmann::json>>();
-    EXPECT_EQ(getLocResp2.size(), 3);
+    EXPECT_EQ(getLocResp2.size(), 2);
 
     for (auto e : getLocResp2) {
         entry = e.get<std::map<std::string, nlohmann::json>>();
-        EXPECT_TRUE(entry.size() == 3);
+        EXPECT_EQ(entry.size(), 2);
         EXPECT_TRUE(entry.find("id") != entry.end());
         NES_DEBUG("checking element with id " << entry.at("id"));
         EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
         if (entry.at("id") == node3Id) {
-            //todo #3390: this currently returns the fixed location
-            /*
             cmpLoc[0] = 52.55227464714949;
             cmpLoc[1] = 13.351743136322877;
-             */
-            continue;
         }
         if (entry.at("id") == node4Id) {
             cmpLoc[0] = 53.55227464714949;
@@ -228,12 +188,6 @@ TEST_F(LocationServiceTest, DISABLED_testRequestAllMobileNodeLocations) {
         EXPECT_TRUE(entry.find("location") != entry.end());
         EXPECT_EQ(entry.at("location"), cmpLoc);
     }
-
-    bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
-
-    bool retStopWrk4 = wrk4->stop(false);
-    EXPECT_TRUE(retStopWrk4);
 }
 
 //TODO #3391: currently retrieving scheduled reconnects is not implemented

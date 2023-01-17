@@ -38,8 +38,11 @@ nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
     auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
     if (geoLocation.has_value()) {
         return convertNodeLocationInfoToJson(nodeId, geoLocation.value());
+    } else {
+        nlohmann::json nodeInfo;
+        nodeInfo["id"] = nodeId;
+        return nodeInfo;
     }
-    return nullptr;
 }
 
 nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
@@ -79,13 +82,16 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
 }
 
 nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
-    auto nodeVector = locationIndex->getAllMobileNodeLocations();
+    auto nodeVector = locationIndex->getAllNodeLocations();
     auto locMapJson = nlohmann::json::array();
     size_t count = 0;
     for (auto& [nodeId, location] : nodeVector) {
-        nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
-        locMapJson[count] = nodeInfo;
-        ++count;
+        auto topologyNode = topology->findNodeWithId(nodeId);
+        if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
+            locMapJson[count] = nodeInfo;
+            ++count;
+        }
     }
     return locMapJson;
 }
