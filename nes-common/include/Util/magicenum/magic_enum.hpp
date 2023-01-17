@@ -337,7 +337,7 @@ constexpr I log2(I value) noexcept {
 }
 
 template<typename T>
-inline constexpr bool is_enum_v = std::is_enum_v<T> && std::is_same_v<T, std::decay_t<T>>;
+inline constexpr bool is_enum_v = std::is_enum_v<T>&& std::is_same_v<T, std::decay_t<T>>;
 
 template<typename E>
 constexpr auto n() noexcept {

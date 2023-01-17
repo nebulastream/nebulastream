@@ -125,7 +125,7 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
         auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
+                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 1)},
                                         {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
         buildHelper.streamJoinBuild->execute(executionContext, record);
 
@@ -275,12 +275,12 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     for (auto i = 0UL, curWindow = 0UL; i < streamJoinSinkHelper.numberOfTuplesToProduce + 1; ++i) {
         auto recordLeft =
             Nautilus::Record({{streamJoinSinkHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                              {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                              {streamJoinSinkHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 10)},
                               {streamJoinSinkHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
 
         auto recordRight =
             Nautilus::Record({{streamJoinSinkHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
-                              {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
+                              {streamJoinSinkHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t)(i % 10) + 10)},
                               {streamJoinSinkHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
 
         if (recordRight.read(streamJoinSinkHelper.timeStampField) > lastTupleTimeStampWindow) {

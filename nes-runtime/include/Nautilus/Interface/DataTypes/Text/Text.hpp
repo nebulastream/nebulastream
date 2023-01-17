@@ -199,8 +199,7 @@ class Text final : public Nautilus::Any {
 };
 
 template<typename T>
-    requires std::is_same_v<TextValue*, T>
-auto createDefault() {
+requires std::is_same_v<TextValue*, T> auto createDefault() {
     auto textRef = TypedRef<TextValue>();
     auto text = Value<Text>(std::make_unique<Text>(textRef));
     return text;
