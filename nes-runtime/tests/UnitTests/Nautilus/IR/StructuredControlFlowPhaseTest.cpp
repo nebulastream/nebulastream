@@ -61,7 +61,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
 
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::vector<IR::BasicBlockPtr> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
-        auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() {
+        auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() {
             return nautilusFunction();
         });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
