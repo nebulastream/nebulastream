@@ -14,6 +14,4 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     add_subdirectory(MLIR)
 endif()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
-    add_subdirectory(WASM)
-endif ()
+add_subdirectory(WASM)

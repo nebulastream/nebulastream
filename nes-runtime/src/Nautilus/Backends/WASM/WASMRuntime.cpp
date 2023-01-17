@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <filesystem>
@@ -41,6 +42,7 @@ WASMRuntime::WASMRuntime() : linker(engine), store(engine) {
     wasiConfig.inherit_stderr();
     store.context().set_wasi(std::move(wasiConfig)).unwrap();
     linker.define_wasi().unwrap();
+
 
     prepareCPython();
 }
@@ -216,3 +218,4 @@ std::string WASMRuntime::parseWATFile(const char* fileName) {
 }
 
 }// namespace NES::Nautilus::Backends::WASM
+#endif

@@ -165,14 +165,46 @@ if (NES_RUNTIME_BENCHMARKS)
     message(STATUS "Runtime benchmarks are enabled")
 endif ()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASM)
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME)
     # Wasmtime
     add_library(wasmtime SHARED IMPORTED)
     set_target_properties(wasmtime PROPERTIES IMPORTED_LOCATION /home/victor/wasmtime-c-api/lib/libwasmtime.so)
     set_target_properties(wasmtime PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /home/victor/wasmtime-c-api/lib)
     target_include_directories(nes-runtime PUBLIC /home/victor/wasmtime-c-api/include)
     target_link_libraries(nes-runtime PUBLIC wasmtime)
+endif()
 
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WAMR)
+    set(WAMR_BUILD_PLATFORM "linux")
+    set(WAMR_BUILD_TARGET "X86_64")
+    set(WAMR_BUILD_INTERP 1)
+    set(WAMR_BUILD_FAST_INTERP 1)
+    set(WAMR_BUILD_AOT 1)
+    set(WAMR_BUILD_LIBC_BUILTIN 1)
+    set(WAMR_BUILD_LIBC_WASI 1)
+    set(WAMR_ROOT_DIR /home/victor/wasm-micro-runtime)
+    set(SDK_DIR /home/victor/wasm-micro-runtime/wamr-sdk/out/nes/runtime-sdk)
+
+    #include(${WAMR_ROOT_DIR}/build-scripts/runtime_lib.cmake)
+
+    #add_library (vmlib ${WAMR_RUNTIME_LIB_SOURCE})
+    #target_include_directories(vmlib PUBLIC ${WAMR_RUNTIME_LIB_SOURCE})
+    #target_link_libraries (nes-runtime PUBLIC vmlib)
+
+    link_directories(${SDK_DIR}/runtime-sdk/lib)
+    add_library(vmlib STATIC IMPORTED)
+    SET_TARGET_PROPERTIES(vmlib PROPERTIES IMPORTED_LOCATION ${SDK_DIR}/lib/libvmlib.a)
+    #target_include_directories(nes-runtime PUBLIC ${SDK_DIR}/include)
+    include_directories(nes-runtime PUBLIC
+            ${WAMR_ROOT_DIR}/wamr-sdk/out/nes/runtime-sdk/include
+            ${WAMR_ROOT_DIR}/core/shared/utils
+            ${WAMR_ROOT_DIR}/core/shared/platform/linux
+    )
+    include (${WAMR_ROOT_DIR}/core/shared/utils/uncommon/shared_uncommon.cmake)
+    target_link_libraries(nes-runtime PUBLIC vmlib)
+endif ()
+
+if (NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM)
     # Binaryen
     add_library(binaryen SHARED IMPORTED)
     set_target_properties(binaryen PROPERTIES IMPORTED_LOCATION /home/victor/binaryen/lib/libbinaryen.so)

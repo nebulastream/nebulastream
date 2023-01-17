@@ -11,27 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMRUNTIME_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMRUNTIME_HPP_
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WAMRRUNTIME_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WAMRRUNTIME_HPP_
 
-#include <wasm.h>
-#include <wasmtime.hh>
+#include <cstdint>
+#include <string>
 
 namespace NES::Nautilus::Backends::WASM {
 
-class WASMRuntime {
+class WAMRRuntime {
   public:
-    WASMRuntime();
-    void setup(const std::vector<std::string>& proxyFunctions);
+    WAMRRuntime();
+    void setup();
     int32_t run(size_t binaryLength, char* queryBinary);
 
   private:
-    wasmtime::Engine engine;
-    wasmtime::Linker linker;
-    wasmtime::Store store;
-    wasmtime::WasiConfig wasiConfig;
-    wasmtime::Config config;
-    std::vector<wasmtime::Module> pyModule;
+
+    const char* wat = "(module\n"
+                      " (memory $memory 1)\n"
+                      " (export \"memory\" (memory $memory))\n"
+                      " (export \"execute\" (func $execute))\n"
+                      " (func $execute (result i32)\n"
+                      "  i32.const 8\n"
+                      "  i32.const 6\n"
+                      "  i32.add\n"
+                      "  return\n"
+                      " )\n"
+                      ")";
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
     std::string proxyFunctionModule = "ProxyFunction";
@@ -41,10 +47,9 @@ class WASMRuntime {
     void prepareCPython();
     void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName);
     void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
+    //void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
+    //void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
 };
 
 }// namespace NES::Nautilus::Backends::WASM
-
-#endif//NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMRUNTIME_HPP_
+#endif//NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WAMRRUNTIME_HPP_
