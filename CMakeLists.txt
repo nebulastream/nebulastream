@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v28)
+set(VCPKG_BINARY_VERSION vcleanup)
 set(LLVM_BINARY_VERSION v1)
 set(LLVM_VERSION 15)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -277,7 +277,7 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-# folly and cpprestsdk relies on boost so we set the right configuration flag
+# folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
 # spdlog
