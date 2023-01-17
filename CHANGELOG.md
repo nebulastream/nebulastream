@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.4.23](https://github.com/nebulastream/nebulastream/tree/v0.4.23) (2023-01-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.22...v0.4.23)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Logger fails on flush while termination [\#3384](https://github.com/nebulastream/nebulastream/issues/3384)
+- \[BUG\] Release and BUILD\_NATIVE lead to half of the tests failing [\#3165](https://github.com/nebulastream/nebulastream/issues/3165)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Explore WAMR/iwasm [\#3385](https://github.com/nebulastream/nebulastream/issues/3385)
+
 ## [v0.4.22](https://github.com/nebulastream/nebulastream/tree/v0.4.22) (2023-01-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.21...v0.4.22)
