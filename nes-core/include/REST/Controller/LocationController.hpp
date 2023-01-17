@@ -60,7 +60,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
             NES_ERROR("node with id " << nodeId << " does not exist");
-            return errorHandler->handleError(Status::CODE_400, "No node with Id: " + std::to_string(nodeId));
+            return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, nodeLocationJson.dump());
     }

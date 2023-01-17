@@ -187,7 +187,7 @@ void LocationIndex::addMobileNode(TopologyNodeId topologyNodeId,
     workerGeoLocationMap.insert({topologyNodeId, geoLocation});
 }
 
-std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllMobileNodeLocations() const {
+std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> LocationIndex::getAllNodeLocations() const {
     std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> locationVector;
     std::unique_lock lock(locationIndexMutex);
     locationVector.reserve(workerGeoLocationMap.size());

@@ -84,7 +84,7 @@ TEST_F(LocationControllerTest, DISABLED_testGetLocationNoSuchNodeId) {
                                 cpr::Parameters{{"nodeId", std::to_string(nodeId)}});
     future.wait();
     auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
+    EXPECT_EQ(response.status_code, 404l);
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
@@ -137,8 +137,7 @@ TEST_F(LocationControllerTest, DISABLED_testGetSingleLocation) {
     EXPECT_EQ(locationData[1].dump(), longitude);
 }
 
-//TODO #3390: do not return 400?
-TEST_F(LocationControllerTest, DISABLED_testGetSingleLocationWhenNoLocationDataIsProvided) {
+TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -154,13 +153,12 @@ TEST_F(LocationControllerTest, DISABLED_testGetSingleLocationWhenNoLocationDataI
                                 cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
     future.wait();
     auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
+    EXPECT_EQ(response.status_code, 200l);
     auto res = nlohmann::json::parse(response.text);
     EXPECT_TRUE(res["location"].is_null());
 }
 
-TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) {
-    uint64_t rpcPortWrk1 = 6000;
+TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -169,14 +167,11 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) 
     std::string coordinateString = latitude + "," + longitude;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf1->rpcPort.setValue(rpcPortWrk1);
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(coordinateString));
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-
-    //no mobile nodes added yet, response should be null
 
     //test request of node location
     nlohmann::json request;
@@ -185,14 +180,12 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) 
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
     auto res = nlohmann::json::parse(response.text);
+    //no mobile nodes added yet, response should be empty
     EXPECT_TRUE(res.empty());
 }
 
 #ifdef S2DEF
-TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist) {
-    uint64_t rpcPortWrk1 = 6000;
-    uint64_t rpcPortWrk2 = 6001;
-    uint64_t rpcPortWrk3 = 6002;
+TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -203,7 +196,6 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
     std::string coordinateString = latitude + "," + longitude;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf1->rpcPort.setValue(rpcPortWrk1);
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(coordinateString));
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
@@ -213,7 +205,6 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
     //create mobile worker nodes
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf2->rpcPort.setValue(rpcPortWrk2);
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf2->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
@@ -225,7 +216,6 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
 
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf3->rpcPort.setValue(rpcPortWrk3);
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
