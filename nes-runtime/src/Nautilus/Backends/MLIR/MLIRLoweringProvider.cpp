@@ -23,10 +23,9 @@
 #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
 #include <mlir/Dialect/ControlFlow/IR/ControlFlowOps.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/Func/Transforms/FuncConversions.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/LLVMIR/LLVMTypes.h>
-#include <mlir/Dialect/Func/Transforms/FuncConversions.h>
-#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/Builders.h>
@@ -278,9 +277,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::Function
     llvm::SmallVector<mlir::Type, 4> outputTypes(1, getMLIRType(functionOp->getOutputArg()));
     auto functionInOutTypes = builder->getFunctionType(inputTypes, outputTypes);
 
-    auto mlirFunction = builder->create<mlir::func::FuncOp>(
-        getNameLoc("EntryPoint"),
-        functionOp->getName(), functionInOutTypes);
+    auto mlirFunction = builder->create<mlir::func::FuncOp>(getNameLoc("EntryPoint"), functionOp->getName(), functionInOutTypes);
 
     // Avoid function name mangling.
     mlirFunction->setAttr("llvm.emit_c_interface", mlir::UnitAttr::get(context));
