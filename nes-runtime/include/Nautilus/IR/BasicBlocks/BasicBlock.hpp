@@ -73,7 +73,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     // void popOperation();
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
     [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
-  
+
   private:
     std::string identifier;
     uint32_t scopeLevel;

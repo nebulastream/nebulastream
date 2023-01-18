@@ -32,7 +32,7 @@ class BasicBlockInvocation : public Operation {
      * @return int: arg index for provided OperationPtr. Is -1 if no arg that matches OperationPtr was found.
      */
     int getOperationArgIndex(Operations::OperationPtr);
-    
+
     /**
      * @brief Get all arguments of next block invocation, meaning all args of the branching operation (br, if, loop,..)
      * 
