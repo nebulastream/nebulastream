@@ -202,6 +202,32 @@ std::string generateUUID() {
     return ss.str();
 }
 }// namespace uuid
+
+// trim from start (in place)
+static inline void ltrim(std::string& s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+                return !std::isspace(ch);
+            }));
+}
+
+// trim from end (in place)
+static inline void rtrim(std::string& s) {
+    s.erase(std::find_if(s.rbegin(),
+                         s.rend(),
+                         [](unsigned char ch) {
+                             return !std::isspace(ch);
+                         })
+                .base(),
+            s.end());
+}
+
+static inline std::string trim(const char* s) {
+    std::string str(s);
+    rtrim(str);
+    ltrim(str);
+    return str;
+}
+
 }// namespace detail
 class NesPortDispatcher {
   private:
@@ -215,13 +241,13 @@ class NesPortDispatcher {
     auto getMutexPath() {
         using namespace std::string_literals;
         auto tmpPath = std::filesystem::temp_directory_path();
-        auto fileName = getenv("USER") + ".nes.lock"s;
+        auto fileName = detail::trim(getenv("USER")) + ".nes.lock"s;
         return tmpPath / fileName;
     }
 
     auto getPortPoolName() {
         using namespace std::string_literals;
-        auto username = getenv("USER");
+        auto username = detail::trim(getenv("USER"));
         return "/"s + username + ".nes.port.pool"s;
     }
 
