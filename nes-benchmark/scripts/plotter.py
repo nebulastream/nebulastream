@@ -43,7 +43,7 @@ def plotInfo(info: str):
 
     return
 
-numOfQueries = 22
+#numOfQueries = 22
 queryName = "q1"
 n = 3
 fileString = "../../build/nes-benchmark/"
