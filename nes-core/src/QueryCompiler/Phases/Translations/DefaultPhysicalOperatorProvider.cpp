@@ -315,10 +315,11 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
 
         auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+        //FIXME Once #3353 is merged, sliding window can be added
         NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
 
         auto windowSize = windowType->getSize().getTime();
-        // Once #3407 is done, we can continue with this here
+        // FIXME Once #3407 is done, we can continue with this here
         auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
 
 
