@@ -14,10 +14,10 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
 
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <stack>
@@ -39,13 +39,12 @@ class LoopDetectionPhase {
      */
     void apply(std::shared_ptr<IR::IRGraph> ir);
 
-    private:
+  private:
     /**
      * @brief Internal context object contains phase logic and state.
      */
     class LoopDetectionPhaseContext {
       public:
-
         /**
          * @brief Constructor for the context of the LoopDetectionPhaseContext.
          * 
@@ -77,9 +76,11 @@ class LoopDetectionPhase {
          * @param priorBlock: We keep track of the previous block to assign the loop-end-block, when the currentBlock
          *                    is a loop-header block and we are creating its loop-operation.
          */
-        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock, 
-                        std::stack<IR::BasicBlockPtr>& ifBlocks, std::unordered_set<std::string>& visitedBlocks, 
-                        std::unordered_set<std::string>& loopHeaderCandidates, IR::BasicBlockPtr& priorBlock);
+        void inline checkBranchForLoopHeadBlocks(IR::BasicBlockPtr& currentBlock,
+                                                 std::stack<IR::BasicBlockPtr>& ifBlocks,
+                                                 std::unordered_set<std::string>& visitedBlocks,
+                                                 std::unordered_set<std::string>& loopHeaderCandidates,
+                                                 IR::BasicBlockPtr& priorBlock);
 
         /**
          * @brief Checks the loop-header-block and block that appears in front of the loop-header-block in the control 
@@ -93,8 +94,9 @@ class LoopDetectionPhase {
          *         However, the pair might also contain nullptrs, which we must handle.
          */
         std::pair<std::shared_ptr<IR::Operations::ConstIntOperation>, std::shared_ptr<IR::Operations::ConstIntOperation>>
-        getCompareOpConstants(const BasicBlockPtr& loopHeaderBlock, const BasicBlockPtr& loopBeforeBlock, 
-                      const std::shared_ptr<Operations::CompareOperation>& compareOp);
+        getCompareOpConstants(const BasicBlockPtr& loopHeaderBlock,
+                              const BasicBlockPtr& loopBeforeBlock,
+                              const std::shared_ptr<Operations::CompareOperation>& compareOp);
 
         /**
          * @brief Check the loopEndBlock for a constant operation that matches the step size used in countOp.
@@ -103,13 +105,14 @@ class LoopDetectionPhase {
          * @param countOp: The stepSize is used to increment the loop-induction-variable in the countOp.
          * @return std::shared_ptr<IR::Operations::ConstIntOperation>: stepSize
          */
-        std::shared_ptr<IR::Operations::ConstIntOperation> 
-        inline getStepSize(const BasicBlockPtr& loopEndBlock, const Operations::OperationPtr& countOp);
+        std::shared_ptr<IR::Operations::ConstIntOperation> inline getStepSize(const BasicBlockPtr& loopEndBlock,
+                                                                              const Operations::OperationPtr& countOp);
+
       private:
         std::shared_ptr<IR::IRGraph> ir;
         std::unordered_set<std::string> visitedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::IR::LoopDetectionPhase
+}// namespace NES::Nautilus::IR
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_LOOPDETECTIONPHASE_HPP_
