@@ -15,28 +15,28 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 namespace NES::Runtime::Execution::Aggregation {
 
-SumAggregationFunction::SumAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
+SumAggregationFunction::SumAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
 void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load memref
-    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3280 check the type
+    auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // add the value
     auto newValue = oldValue + value;
     // put back to the memref
     memref.store(newValue);
 }
 
-void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) {
-    auto left = memref1.load<Nautilus::Int64>();
-    auto right = memre2.load<Nautilus::Int64>();
+void SumAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+    auto left = AggregationFunction::loadFromMemref(memref1, inputType);
+    auto right = AggregationFunction::loadFromMemref(memref2, inputType);
 
     auto tmp = left + right;
     memref1.store(tmp);
 }
 
 Nautilus::Value<> SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
+    auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
 
     return finalVal;
 }

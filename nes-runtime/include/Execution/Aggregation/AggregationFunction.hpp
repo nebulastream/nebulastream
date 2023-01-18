@@ -14,7 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
 #define NES_RUNTIME_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP
-#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Aggregation {
  */
 class AggregationFunction {
   public:
-    AggregationFunction(DataTypePtr inputType, DataTypePtr finalType);
+    AggregationFunction(PhysicalTypePtr inputType, PhysicalTypePtr finalType);
 
     /**
      * @brief lift adds the incoming value to the existing aggregation value
@@ -57,9 +57,11 @@ class AggregationFunction {
 
     virtual ~AggregationFunction();
 
-  private:
-    DataTypePtr inputType;
-    DataTypePtr finalType;
+  protected:
+    PhysicalTypePtr inputType;
+    PhysicalTypePtr finalType;
+
+    static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, PhysicalTypePtr physicalType);
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
