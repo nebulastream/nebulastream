@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace NES::Benchmark::DataGeneration {
-    class DefaultDataGeneratorTest : public testing::Test {
+    class DefaultDataGeneratorTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
         static void SetUpTestCase() {
@@ -32,10 +32,16 @@ namespace NES::Benchmark::DataGeneration {
         }
 
         /* Will be called before a test is executed. */
-        void SetUp() override { NES_INFO("Setup DefaultDataGeneratorTest test case."); }
+        void SetUp() override {
+            Testing::NESBaseTest::SetUp();
+            NES_INFO("Setup DefaultDataGeneratorTest test case.");
+        }
 
         /* Will be called before a test is executed. */
-        void TearDown() override { NES_INFO("Tear down DefaultDataGeneratorTest test case."); }
+        void TearDown() override {
+            NES_INFO("Tear down DefaultDataGeneratorTest test case.");
+            Testing::NESBaseTest::TearDown();
+        }
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
