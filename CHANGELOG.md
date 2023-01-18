@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.4.25](https://github.com/nebulastream/nebulastream/tree/v0.4.25) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.24...v0.4.25)
+
+#### Build Management
+
+- \[Feature\] Update to LLVM 15 [\#3375](https://github.com/nebulastream/nebulastream/issues/3375)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Add Loop Operations [\#3169](https://github.com/nebulastream/nebulastream/issues/3169)
+
+## [v0.4.24](https://github.com/nebulastream/nebulastream/tree/v0.4.24) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.23...v0.4.24)
+
 ## [v0.4.23](https://github.com/nebulastream/nebulastream/tree/v0.4.23) (2023-01-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.22...v0.4.23)
