@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -115,8 +115,8 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     } else if (operations.back()->getOperationType() == IR::Operations::Operation::ReturnOp) {
         return {};
     } else {
-        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: " 
-                    << operations.back()->getOperationType());
+        NES_ERROR("BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: "
+                  << operations.back()->getOperationType());
         NES_NOT_IMPLEMENTED();
     }
 }
