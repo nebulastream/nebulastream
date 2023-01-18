@@ -338,16 +338,5 @@ class ExecutableCompleteAggregationTriggerAction
     PartialAggregateType partialAggregateTypeInitialValue;
 };
 }// namespace NES::Windowing
-/*
-template<>
-struct fmt::formatter<NES::Windowing::ExecutableCompleteAggregationTriggerAction<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>> : fmt::formatter<std::string> {
-    auto format(const NES::Windowing::ExecutableCompleteAggregationTriggerAction<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>& ExComplAggTriggerAct, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}", ExComplAggTriggerAct.first());
-    }
-};
-*/
-
-//std::pair<const KeyType, WindowSliceStore<PartialAggregateType> *> &ExecutableCompleteAggregationTriggerAction::it
-//template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 
 #endif// NES_CORE_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLECOMPLETEAGGREGATIONTRIGGERACTION_HPP_
