@@ -130,7 +130,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer.");
+        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();
