@@ -42,12 +42,13 @@ class EndDeviceProtocolSerializationUtil {
   public:
     static std::shared_ptr<EndDeviceProtocol::Message> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
 
-    [[nodiscard]] static std::string serializeConstantValue(const std::shared_ptr<ConstantValueExpressionNode>& cnode);
+    [[nodiscard]] static std::string serializeConstantValue(ExpressionNodePtr cnode);
 
-    [[nodiscard]] static std::string serializeArithmeticalExpression(const ExpressionNodePtr&);
-    [[nodiscard]] static std::string serializeLogicalExpression(const ExpressionNodePtr&);
-
-    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr);
+    [[nodiscard]] static std::string serializeArithmeticalExpression(ExpressionNodePtr);
+    [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr);
+    [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap);
+    [[nodiscard]] static std::string serializeMapOperator( NodePtr node, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap);
+    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr,const std::shared_ptr<std::map<std::string, int8_t>>&);
 
     [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
   private:

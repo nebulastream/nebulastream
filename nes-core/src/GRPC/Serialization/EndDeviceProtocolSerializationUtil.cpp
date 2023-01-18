@@ -2,6 +2,7 @@
 // Created by kasper on 1/10/23.
 //
 
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -30,6 +31,7 @@
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -62,9 +64,11 @@ std::string EndDeviceProtocolSerializationUtil::asString(ExpressionInstructions 
     return res;
 }
 
-std::string
-EndDeviceProtocolSerializationUtil::serializeConstantValue(const std::shared_ptr<ConstantValueExpressionNode>& cnode) {
-
+std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePtr node) {
+    if (!node->instanceOf<ConstantValueExpressionNode>()) {
+        NES_THROW_RUNTIME_ERROR("Incompatible node type");
+    }
+    auto cnode = node->as<ConstantValueExpressionNode>();
     auto basicValue = std::dynamic_pointer_cast<BasicValue>(cnode->getConstantValue());
     auto physType = physicalFactory.getPhysicalType(basicValue->dataType);
     auto basicPhysType = dynamic_pointer_cast<BasicPhysicalType>(physType);
@@ -89,20 +93,7 @@ EndDeviceProtocolSerializationUtil::serializeConstantValue(const std::shared_ptr
     res += value;
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node) {
-    //TODO: implement
-    if (node->instanceOf<ConstantValueExpressionNode>()) {
-        return serializeConstantValue(node->as<ConstantValueExpressionNode>());
-    } else if (node->instanceOf<ArithmeticalExpressionNode>()) {
-        return serializeArithmeticalExpression(node);
-    } else if (node->instanceOf<LogicalExpressionNode>()) {
-        return serializeLogicalExpression(node);
-    } else {
-        NES_THROW_RUNTIME_ERROR("Unsupported operator");
-    }
-}
-
-std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(const ExpressionNodePtr& anode) {
+std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression( ExpressionNodePtr anode) {
     auto bin = anode->as<ArithmeticalBinaryExpressionNode>();
     std::string res = serializeExpression(bin->getLeft()) + serializeExpression(bin->getRight());
 
@@ -122,7 +113,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(
 
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression(const ExpressionNodePtr& lnode) {
+std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( ExpressionNodePtr lnode) {
     std::string res;
     if (lnode->instanceOf<LogicalBinaryExpressionNode>()) {
         auto bin = lnode->as<LogicalBinaryExpressionNode>();
@@ -148,5 +139,43 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression(const
         }
     }
     return res;
+}
+std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(
+    ExpressionNodePtr node,
+    const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+
+    auto fanode = node->as<FieldAccessExpressionNode>();
+    auto name = fanode->getFieldName();
+    if (!registerMap->contains(name)) {
+        NES_THROW_RUNTIME_ERROR("No register defined for field: " + name);
+    }
+    auto id = registerMap->at(name);
+    std::string res;
+    res += asString(ExpressionInstructions::VAR);
+    res.push_back(id);
+    return res;
+}
+
+std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+    //TODO: implement
+    if (node->instanceOf<ConstantValueExpressionNode>()) {
+        return serializeConstantValue(node->as<ConstantValueExpressionNode>());
+    } else if (node->instanceOf<FieldAccessExpressionNode>()){
+      return serializeFieldAccessExpression(node, registerMap);
+    } else if (node->instanceOf<ArithmeticalExpressionNode>()) {
+        return serializeArithmeticalExpression(node);
+    } else if (node->instanceOf<LogicalExpressionNode>()) {
+        return serializeLogicalExpression(node);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unsupported operator");
+    }
+}
+std::string
+EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node,
+                                                         const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+    auto mapnode = node->as<MapLogicalOperatorNode>();
+    auto expre = mapnode->getMapExpression();
+    auto expression = serializeExpression(expre->,registerMap);
+
 }
 }// namespace NES
