@@ -23,6 +23,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if defined(__linux__)
+#include <pwd.h>
+#endif
 
 namespace NES::Testing {
 
@@ -221,11 +224,35 @@ static inline void rtrim(std::string& s) {
             s.end());
 }
 
-static inline std::string trim(const char* s) {
+static inline std::string trim(std::string s) {
     std::string str(s);
     rtrim(str);
     ltrim(str);
     return str;
+}
+
+static inline std::string getUsername() {
+#if defined(__linux__)
+    uid_t uid = geteuid();
+    struct passwd* pw = getpwuid(uid);
+    if (pw) {
+        return std::string(pw->pw_name);
+    }
+#endif
+    return getenv("USER");
+}
+
+static inline auto getMutexPath() {
+    using namespace std::string_literals;
+    auto tmpPath = std::filesystem::temp_directory_path();
+    auto fileName = detail::trim(getUsername()) + ".nes.lock"s;
+    return tmpPath / fileName;
+}
+
+static inline auto getPortPoolName() {
+    using namespace std::string_literals;
+    auto username = detail::trim(getUsername());
+    return "/"s + username + ".nes.port.pool"s;
 }
 
 }// namespace detail
@@ -238,22 +265,9 @@ class NesPortDispatcher {
         std::atomic<uint32_t> checksum;
     };
 
-    auto getMutexPath() {
-        using namespace std::string_literals;
-        auto tmpPath = std::filesystem::temp_directory_path();
-        auto fileName = detail::trim(getenv("USER")) + ".nes.lock"s;
-        return tmpPath / fileName;
-    }
-
-    auto getPortPoolName() {
-        using namespace std::string_literals;
-        auto username = detail::trim(getenv("USER"));
-        return "/"s + username + ".nes.port.pool"s;
-    }
-
   public:
     explicit NesPortDispatcher(uint16_t startPort, uint32_t numberOfPorts)
-        : mutex(getMutexPath()), data(getPortPoolName(), numberOfPorts) {
+        : mutex(detail::getMutexPath()), data(detail::getPortPoolName(), numberOfPorts) {
         std::unique_lock<Util::FileMutex> lock(mutex, std::defer_lock);
         if (lock.try_lock()) {
             data.open();
