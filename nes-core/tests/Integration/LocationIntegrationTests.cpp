@@ -143,8 +143,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     wrkConf2->coordinatorPort = (port);
     //wrkConf2->dataPort.setValue(*getAvailablePort());
     //wrkConf2->rpcPort.setValue(*getAvailablePort());
-    wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+    wrkConf2->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
@@ -154,8 +154,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     wrkConf3->coordinatorPort = (port);
     //wrkConf3->dataPort.setValue(*getAvailablePort());
     //wrkConf3->rpcPort.setValue(*getAvailablePort());
-    wrkConf3->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location3));
-    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+    wrkConf3->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location3));
+    wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart3);
@@ -262,7 +262,7 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = (port);
     wrkConf2->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 //    wrkConf2->dataPort.setValue(*getAvailablePort());
 //    wrkConf2->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
@@ -290,8 +290,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
 
-    ASSERT_EQ(node1->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE);
-    ASSERT_EQ(node2->getSpatialNodeType(), NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION);
+    ASSERT_EQ(node1->getSpatialNodeType(), NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    ASSERT_EQ(node2->getSpatialNodeType(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 
     auto node1Location = topologyManagerService->getGeoLocationForNode(node1->getId());
     EXPECT_TRUE(node1Location.has_value() && node1Location.value().isValid());
@@ -323,7 +323,7 @@ TEST_F(LocationIntegrationTests, testLocationFromCmd) {
     }
 
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    ASSERT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::Index::Experimental::Location(23.88, -3.4));
+    ASSERT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::DataTypes::Experimental::GeoLocation(23.88, -3.4));
 }
 
 TEST_F(LocationIntegrationTests, testInvalidLocationFromCmd) {
@@ -340,7 +340,7 @@ TEST_F(LocationIntegrationTests, testInvalidLocationFromCmd) {
     }
 
     ASSERT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams),
-                 NES::Spatial::Index::Experimental::CoordinatesOutOfRangeException);
+                 NES::Spatial::Exception::CoordinatesOutOfRangeException);
 }
 
 #ifdef S2DEF
@@ -537,7 +537,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->rpcPort = *rpcPortWrk1;
     //wrkConf1->dataPort.setValue(*getAvailablePort());
-    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
@@ -546,8 +546,8 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     ASSERT_TRUE(retStart1);
 
     auto loc1 = client->getWaypoint("127.0.0.1:" + std::to_string(*rpcPortWrk1));
-    ASSERT_TRUE(loc1->getLocation()->isValid());
-    ASSERT_EQ(*loc1->getLocation(), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+    ASSERT_TRUE(loc1.getLocation().isValid());
+    ASSERT_EQ(loc1.getLocation(), NES::Spatial::DataTypes::Experimental::GeoLocation(52.55227464714949, 13.351743136322877));
 
     bool retStopWrk1 = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk1);
@@ -557,15 +557,15 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->rpcPort = *rpcPortWrk2;
     //wrkConf2->dataPort.setValue(*getAvailablePort());
-    wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
-    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Index::Experimental::SpatialType::FIXED_LOCATION);
+    wrkConf2->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
+    wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
 
     auto loc2 = client->getWaypoint("127.0.0.1:" + std::to_string(*rpcPortWrk2));
-    ASSERT_TRUE(loc2->getLocation()->isValid());
-    ASSERT_EQ(*loc2->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    ASSERT_TRUE(loc2.getLocation().isValid());
+    ASSERT_EQ(loc2.getLocation(), NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
 
     bool retStopWrk2 = wrk2->stop(false);
     ASSERT_TRUE(retStopWrk2);
@@ -580,14 +580,14 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     ASSERT_TRUE(retStart3);
 
     auto loc3 = client->getWaypoint("127.0.0.1:" + std::to_string(*rpcPortWrk3));
-    ASSERT_FALSE(loc3->getLocation()->isValid());
+    ASSERT_FALSE(loc3.getLocation().isValid());
 
     bool retStopWrk3 = wrk3->stop(false);
     ASSERT_TRUE(retStopWrk3);
 
     //test getting location of non existent node
     auto loc4 = client->getWaypoint("127.0.0.1:9999");
-    ASSERT_FALSE(loc4->getLocation()->isValid());
+    ASSERT_FALSE(loc4.getLocation().isValid());
 }
 
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
