@@ -2,7 +2,7 @@
 // Created by kasper on 1/10/23.
 //
 
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -41,6 +41,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <utility>
@@ -93,9 +94,9 @@ std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(Expressio
     res += value;
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression( ExpressionNodePtr anode) {
+std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression( ExpressionNodePtr anode, std::shared_ptr<std::vector<std::string>> registers) {
     auto bin = anode->as<ArithmeticalBinaryExpressionNode>();
-    std::string res = serializeExpression(bin->getLeft()) + serializeExpression(bin->getRight());
+    std::string res = serializeExpression(bin->getLeft(), registers) + serializeExpression(bin->getRight(), registers);
 
     if (bin->instanceOf<AddExpressionNode>()) {
         res.push_back(ExpressionInstructions::ADD);
@@ -113,11 +114,11 @@ std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(
 
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( ExpressionNodePtr lnode) {
+std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( ExpressionNodePtr lnode, std::shared_ptr<std::vector<std::string>> registers) {
     std::string res;
     if (lnode->instanceOf<LogicalBinaryExpressionNode>()) {
         auto bin = lnode->as<LogicalBinaryExpressionNode>();
-        res += serializeExpression(bin->getLeft()) + serializeExpression(bin->getRight());
+        res += serializeExpression(bin->getLeft(),registers) + serializeExpression(bin->getRight(),registers);
         if (bin->instanceOf<AndExpressionNode>()) {
             res.push_back(ExpressionInstructions::AND);
         } else if (bin->instanceOf<OrExpressionNode>()) {
@@ -133,7 +134,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( Expr
         }
     } else if (lnode->instanceOf<LogicalUnaryExpressionNode>()) {
         auto una = lnode->as<LogicalUnaryExpressionNode>();
-        res += serializeExpression(una->child());
+        res += serializeExpression(una->child(), registers);
         if (una->instanceOf<NegateExpressionNode>()) {
             res.push_back(ExpressionInstructions::NOT);
         }
@@ -142,40 +143,56 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( Expr
 }
 std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(
     ExpressionNodePtr node,
-    const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+    std::shared_ptr<std::vector<std::string>> registers) {
 
     auto fanode = node->as<FieldAccessExpressionNode>();
     auto name = fanode->getFieldName();
-    if (!registerMap->contains(name)) {
+    if (std::find(registers->begin(), registers->end(), name) == registers->end()) {
         NES_THROW_RUNTIME_ERROR("No register defined for field: " + name);
     }
-    auto id = registerMap->at(name);
+    //TODO: somehow fix this. This is real ugly.
+    auto id = std::distance(registers->begin(),std::find(registers->begin(), registers->end(), name));
     std::string res;
     res += asString(ExpressionInstructions::VAR);
     res.push_back(id);
     return res;
 }
 
-std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, std::shared_ptr<std::vector<std::string>> registers) {
     //TODO: implement
     if (node->instanceOf<ConstantValueExpressionNode>()) {
         return serializeConstantValue(node->as<ConstantValueExpressionNode>());
     } else if (node->instanceOf<FieldAccessExpressionNode>()){
-      return serializeFieldAccessExpression(node, registerMap);
+      return serializeFieldAccessExpression(node, registers);
     } else if (node->instanceOf<ArithmeticalExpressionNode>()) {
-        return serializeArithmeticalExpression(node);
+        return serializeArithmeticalExpression(node, registers);
     } else if (node->instanceOf<LogicalExpressionNode>()) {
-        return serializeLogicalExpression(node);
+        return serializeLogicalExpression(node, registers);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported operator");
     }
 }
-std::string
+MapOperation
 EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node,
-                                                         const std::shared_ptr<std::map<std::string, int8_t>>& registerMap) {
+                                                         std::shared_ptr<std::vector<std::string>> registers) {
     auto mapnode = node->as<MapLogicalOperatorNode>();
     auto expre = mapnode->getMapExpression();
-    auto expression = serializeExpression(expre->,registerMap);
+    auto fieldexprname = expre->getField()->getFieldName();
+    auto mapexpr = expre->getAssignment();
+    auto expression = serializeExpression(mapexpr, registers);
+    int attribute;
 
+    //if field doesnt already exists, then add it
+    if (std::find(registers->begin(),registers->end(),fieldexprname) == registers->end()){
+        attribute = registers->size();
+        registers->push_back(fieldexprname);
+    } else {
+        attribute = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), fieldexprname));
+
+    }
+    auto result = MapOperation();
+    result.set_attribute(attribute);
+    result.mutable_function()->set_instructions(expression);
+    return result;
 }
 }// namespace NES

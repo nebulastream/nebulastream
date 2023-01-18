@@ -28,6 +28,4 @@ logicalSources:
     fields:
       - name: "var"
         type: "UINT8"
-    field_mapping:
-      - name: "var"
-        register: 0
+    field_order: ["var"]

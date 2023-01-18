@@ -19,12 +19,19 @@ limitations under the License.
 
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 
-#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 #include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
 
@@ -33,16 +40,73 @@ using namespace EndDeviceProtocol;
 class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
     friend class EndDeviceProtocolSerializationUtil;
 
-  public:
-    static void SetUpTestCase() { setupLogging(); }
-    void SetUp() override { Testing::NESBaseTest::SetUp(); }
-
   protected:
-    static void setupLogging() {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("EndDeviceProtocolSerializationUtilTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup EndDeviceProtocolSerializationUtilTests test class.");
     }
 };
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, constantValue) {
+
+    auto int8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 0)));
+
+    std::string ser_int8 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int8);
+
+    EXPECT_TRUE(ser_int8 == "\0\0\0"s);
+};
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, arithmetic) {
+    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 2)));
+    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 10)));
+    auto add = AddExpressionNode::create(left, right);
+
+    auto registers = std::make_shared<std::vector<std::string>>();
+
+    auto res = EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(add, registers);
+
+    std::string expected;
+    char expected_chars[] = {ExpressionInstructions::CONST,
+                             DataTypes::INT8,
+                             2,
+                             ExpressionInstructions::CONST,
+                             DataTypes::INT8,
+                             10,
+                             ExpressionInstructions::ADD};
+    for (char c : expected_chars) {
+        expected.push_back(c);
+    }
+
+    EXPECT_EQ(res, expected);
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, MapOperation) {
+    auto left = FieldAccessExpressionNode::create("var");
+    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 10)));
+    auto add = AddExpressionNode::create(left, right);
+
+    auto mapexpr =
+        FieldAssignmentExpressionNode::create(FieldAccessExpressionNode::create("x")->as<FieldAccessExpressionNode>(), add);
+
+    auto map = LogicalOperatorFactory::createMapOperator(mapexpr);
+
+    auto registers = std::make_shared<std::vector<std::string>>();
+    registers->push_back("var");
+
+    auto ser_map = EndDeviceProtocolSerializationUtil::serializeMapOperator(map, registers);
+
+    auto expected_instructions = std::string();
+    char expected_chars[] =
+        {ExpressionInstructions::VAR, 0, ExpressionInstructions::CONST, DataTypes::INT8, 10, ExpressionInstructions::ADD};
+    for (char c : expected_chars) {
+        expected_instructions.push_back(c);
+    }
+    auto expected_map = MapOperation();
+    expected_map.set_attribute(1);
+    expected_map.mutable_function()->set_instructions(expected_instructions);
+
+    EXPECT_EQ(ser_map.attribute(), expected_map.attribute());
+    EXPECT_EQ(ser_map.function().instructions(), expected_map.function().instructions());
+}
 
 //std::string serializeNumeric(std::variant<int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,float_t,double_t> in){
 //    size_t size;
@@ -106,70 +170,4 @@ class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
 //    return res;
 //
 //}
-
-TEST_F(EndDeviceProtocolSerializationUtilTests, constantValue) {
-//    auto pF = DefaultPhysicalTypeFactory();
-//    int8_t hej = 2;
-    auto int8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 0)));
-//    auto int8 = ConstantValueExpressionNode::create(
-//        DataTypeFactory::createBasicValue(
-//            BasicType::INT8,
-//            pF.getPhysicalType(
-//                  DataTypeFactory::createInt8())->convertRawToString(&hej)
-//            )
-//        );
-    auto uint8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::string(1, 1)));
-//    auto int16 = ConstantValueExpressionNode::create(
-//        DataTypeFactory::createBasicValue(BasicType::INT16, std::string((int16_t) 2)));
-//    auto uint16 = ConstantValueExpressionNode::create(
-//        DataTypeFactory::createBasicValue(BasicType::UINT16, std::string(reinterpret_cast<const char*>((uint16_t) 3))));
-//    auto int32 =
-//        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT32, std::string(1, (int32_t) 4)));
-//    auto uint32 =
-//        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT32, std::string(1, (uint32_t) 5)));
-//    auto int64 =
-//        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, std::string(1, (int64_t) 6)));
-//    auto uint64 =
-//        ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT64, std::string(1, (uint64_t) 7)));
-//    auto f = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::FLOAT32, std::string(1, 0)));
-
-    auto ser_int8 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int8);
-    auto ser_uint8 = EndDeviceProtocolSerializationUtil::serializeConstantValue(uint8);
-//    auto ser_int16 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int16);
-//    auto ser_uint16 = EndDeviceProtocolSerializationUtil::serializeConstantValue(uint16);
-//    auto ser_int32 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int32);
-//    auto ser_uint32 = EndDeviceProtocolSerializationUtil::serializeConstantValue(uint32);
-//    auto ser_int64 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int64);
-//    auto ser_uint64 = EndDeviceProtocolSerializationUtil::serializeConstantValue(uint64);
-
-    EXPECT_EQ(ser_int8, "\0\0\0"s);
-    EXPECT_EQ(ser_uint8,"\0\1\1"s);
-//    EXPECT_EQ(ser_int16, "");
-//    EXPECT_EQ(ser_uint16, "");
-//    EXPECT_EQ(ser_int32, "");
-//    EXPECT_EQ(ser_uint32, "");
-//    EXPECT_EQ(ser_int64, "");
-//    EXPECT_EQ(ser_uint64, "");
-}
-
-TEST_F(EndDeviceProtocolSerializationUtilTests, arithmetic) {
-    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 2)));
-    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 10)));
-    auto add = AddExpressionNode::create(left, right);
-    auto res = EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(add);
-
-    std::string expected;
-    char expected_chars[] = {ExpressionInstructions::CONST,
-                             DataTypes::INT8,
-                             2,
-                             ExpressionInstructions::CONST,
-                             DataTypes::INT8,
-                             10,
-                             ExpressionInstructions::ADD};
-    for (char c : expected_chars) {
-        expected.push_back(c);
-    }
-
-    EXPECT_EQ(EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(add), expected);
-}
 }// namespace NES

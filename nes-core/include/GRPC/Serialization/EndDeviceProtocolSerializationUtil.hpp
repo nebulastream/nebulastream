@@ -5,6 +5,7 @@
 #ifndef NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 #define NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 
+#include <EndDeviceProtocol.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -44,11 +45,11 @@ class EndDeviceProtocolSerializationUtil {
 
     [[nodiscard]] static std::string serializeConstantValue(ExpressionNodePtr cnode);
 
-    [[nodiscard]] static std::string serializeArithmeticalExpression(ExpressionNodePtr);
-    [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr);
-    [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap);
-    [[nodiscard]] static std::string serializeMapOperator( NodePtr node, const std::shared_ptr<std::map<std::string, int8_t>>& registerMap);
-    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr,const std::shared_ptr<std::map<std::string, int8_t>>&);
+    [[nodiscard]] static std::string serializeArithmeticalExpression(ExpressionNodePtr,std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static EndDeviceProtocol::MapOperation serializeMapOperator( NodePtr node,std::shared_ptr<std::vector<std::string>>);
 
     [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
   private:
