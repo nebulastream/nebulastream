@@ -188,6 +188,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
+#ifdef ENABLE_JNI
+    } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
+        lowerJavaUdfMapOperator(queryPlan, operatorNode);
+#endif // ENABLE_JNI
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }

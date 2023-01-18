@@ -120,7 +120,6 @@ TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
     verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptor.serialized_instance());
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptor.classes());
 }
-#endif // ENABLE_JNI
 
 // Test behavior of GET for a UDF that doesn't exist
 TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
@@ -142,6 +141,8 @@ TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
     ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
 }
+#endif // ENABLE_JNI
+
 
 //Test if Oatpp framework correctly returns 404 when endpoint isn't defined
 TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
@@ -291,6 +292,7 @@ TEST_F(UdfCatalogControllerTest, testIfRemoveUdfEndpointHandlesExtraQueryParamet
     verifyResponseResult(response, json);
 }
 
+#ifdef ENABLE_JNI
 //Test if listUdfs endpoint handles missing query parameters correctly
 TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParameters) {
     startCoordinator();
@@ -303,7 +305,7 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParame
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
 }
 
-#ifdef ENABLE_JNI
+
 //Test if listUdfs endpoint behaves as expected when all else is correct
 TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
     startCoordinator();
