@@ -127,6 +127,9 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource buffer allocated ");
     try {
         do {
+            if (!running) {
+                return std::nullopt;
+            }
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
