@@ -126,13 +126,12 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     auto tupleBuffer = allocateBuffer();
     NES_DEBUG("TCPSource buffer allocated ");
     try {
-        fillBuffer(tupleBuffer);
-    } catch (std::exception e) {
+        do {
+            fillBuffer(tupleBuffer);
+        } while (tupleBuffer.getNumberOfTuples() == 0);
+    } catch (const std::exception& e) {
         NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer.");
-        return std::nullopt;
-    }
-    if (tupleBuffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
+        throw e;
     }
     return tupleBuffer.getBuffer();
 }
