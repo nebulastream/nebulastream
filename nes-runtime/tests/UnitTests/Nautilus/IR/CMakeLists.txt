@@ -11,10 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(nautilus-remove-br-only-blocks-phase-test "RemoveBranchOnlyBlocksPhaseTest.cpp")
-target_link_libraries(nautilus-remove-br-only-blocks-phase-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-remove-br-only-blocks-phase-test COMMAND nautilus-remove-br-only-blocks-phase-test)
 
-add_executable(nautilus-structured-control-flow-phase-test "StructuredControlFlowPhaseTest.cpp")
-target_link_libraries(nautilus-structured-control-flow-phase-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME nautilus-structured-control-flow-phase-test COMMAND nautilus-structured-control-flow-phase-test)
+add_nes_runtime_test(nautilus-remove-br-only-blocks-phase-test "RemoveBranchOnlyBlocksPhaseTest.cpp")
+add_nes_runtime_test(nautilus-structured-control-flow-phase-test "StructuredControlFlowPhaseTest.cpp")

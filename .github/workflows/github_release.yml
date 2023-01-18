@@ -67,7 +67,7 @@ jobs:
           - arch: arm64
             osversion: ubuntu-18_04
           - arch: arm64
-            osversion: ubuntu-22_04
+            osversion: ubuntu-20_04
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
