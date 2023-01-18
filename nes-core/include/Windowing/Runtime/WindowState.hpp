@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWSTATE_HPP_
 
 #include <cstdint>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing {
 
