@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_ENABLE_EXPERIMENTAL_EXECUTION_WAMR
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Nautilus/Backends/WASM/WAMRRuntime.hpp>
 #include <filesystem>
@@ -28,7 +29,18 @@ WAMRRuntime::WAMRRuntime() {
 void WAMRRuntime::setup() {
 }
 
+int foo(wasm_exec_env_t exec_env , int a, int b)
+{
+    auto tmp = exec_env;
+    return a+b;
+}
+
 int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
+
+    static NativeSymbol native_symbols[] = {
+        EXPORT_WASM_API_WITH_SIG(foo, "(ii)i")
+    };
+
     auto x = binaryLength;
     auto y = queryBinary;
     std::cout << "Starting WAMR\n";
@@ -44,6 +56,13 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     if(!wasm_runtime_init()) {
         printf("WAMR init failed\n");
     }
+    int n_native_symbols = sizeof(native_symbols) / sizeof(NativeSymbol);
+    if (!wasm_runtime_register_natives("env",
+                                       native_symbols,
+                                       n_native_symbols)) {
+        printf("Host function registering failed\n");
+    }
+
     wasm_module_inst_t module_inst;
     wasm_module_t module;
 
@@ -99,3 +118,4 @@ std::string WAMRRuntime::parseWATFile(const char* fileName) {
 }
 
 }// namespace NES::Nautilus::Backends::WASM
+#endif
