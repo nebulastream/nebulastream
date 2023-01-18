@@ -307,19 +307,11 @@ class DynamicTupleBuffer {
 
 namespace fmt{
 template<>
-struct formatter<NES::Runtime::MemoryLayouts::MemoryLayout> : formatter<std::string> {
-    auto format(const NES::Runtime::MemoryLayouts::MemoryLayout& memory_layout, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "Buffersize:{} Schema:{}", memory_layout.getBufferSize(), memory_layout.getSchema()->toString());
-    }
-};
-
-template<>
 struct formatter<NES::Runtime::MemoryLayouts::DynamicTupleBuffer> : formatter<std::string> {
     auto format(const NES::Runtime::MemoryLayouts::DynamicTupleBuffer& dynamic_tuple_buffer, format_context& ctx) -> decltype(ctx.out()) {
         return format_to(ctx.out(), "MemoryLayout Schema: {}", dynamic_tuple_buffer.getMemoryLayout()->getSchema()->toString());
     }
 };
-
 
 }// namespace fmt
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_
