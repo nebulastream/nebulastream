@@ -47,18 +47,18 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //Check the number of columns extracted by both queries
         auto otherColumns = signature2->getColumns();
         auto columns = signature1->getColumns();
-        if (columns.size() != otherColumns.size()) {
+        /*if (columns.size() != otherColumns.size()) {
             NES_WARNING("QuerySignature: Both signatures have different column entries");
             return false;
-        }
+        }*/
 
         //Check the number of window expressions extracted from both queries
         auto otherWindowExpressions = signature2->getWindowsExpressions();
         auto windowsExpressions = signature1->getWindowsExpressions();
-        if (windowsExpressions.size() != otherWindowExpressions.size()) {
+        /*if (windowsExpressions.size() != otherWindowExpressions.size()) {
             NES_WARNING("QuerySignature: Both signatures have different window expressions");
             return false;
-        }
+        }*/
 
         //Check if two columns are identical
         auto otherSchemaFieldToExprMaps = signature2->getSchemaFieldToExprMaps();
@@ -78,6 +78,9 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                  otherSchemaMapItr++) {
                 z3::expr_vector colChecks(*context);
                 for (uint64_t index = 0; index < columns.size(); index++) {
+                    if(index >= otherColumns.size()){
+                        return false;
+                    }
                     auto colExpr = schemaFieldToExprMap[columns[index]];
                     auto otherColExpr = (*otherSchemaMapItr)[otherColumns[index]];
                     auto equivalenceCheck = to_expr(*context, Z3_mk_eq(*context, *colExpr, *otherColExpr));
