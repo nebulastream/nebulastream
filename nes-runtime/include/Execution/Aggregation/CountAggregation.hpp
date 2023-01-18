@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Aggregation {
 class CountAggregationFunction : public AggregationFunction {
 
   public:
-    CountAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
+    CountAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) override;

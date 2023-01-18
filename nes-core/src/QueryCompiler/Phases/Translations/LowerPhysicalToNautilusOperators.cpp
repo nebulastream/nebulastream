@@ -196,21 +196,22 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         auto aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AggregationValue>();
 
+        // TODO 3280: Enable these aggregation functions
         switch (aggregationType) {
             case Windowing::WindowAggregationDescriptor::Avg:
-                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue>();
+                //                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue>();
                 break;
             case Windowing::WindowAggregationDescriptor::Count:
-                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue>();
+                //                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue>();
                 break;
             case Windowing::WindowAggregationDescriptor::Max:
-                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue>();
+                //                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue>();
                 break;
             case Windowing::WindowAggregationDescriptor::Min:
-                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue>();
+                //                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue>();
                 break;
             case Windowing::WindowAggregationDescriptor::Sum:
-                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
+                aggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<Nautilus::Int64>>();
                 break;
             default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
         }
@@ -397,42 +398,20 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     } else {
         auto aggregation = aggregations[0];
         std::shared_ptr<Runtime::Execution::Expressions::Expression> aggregatedFieldAccess = nullptr;
-        switch (aggregation->getType()) {
 
-            case Windowing::WindowAggregationDescriptor::Avg:
-                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
-                    aggregation->getInputStamp(),
-                    aggregation->getFinalAggregateStamp());
-                break;
-            case Windowing::WindowAggregationDescriptor::Count:
-                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
-                    aggregation->getInputStamp(),
-                    aggregation->getFinalAggregateStamp());
-                break;
-            case Windowing::WindowAggregationDescriptor::Max:
-                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
-                    aggregation->getInputStamp(),
-                    aggregation->getFinalAggregateStamp());
-                break;
-            case Windowing::WindowAggregationDescriptor::Min:
-                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
-                    aggregation->getInputStamp(),
-                    aggregation->getFinalAggregateStamp());
-                break;
-            case Windowing::WindowAggregationDescriptor::Sum:
-                aggregationFunction = std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
-                    aggregation->getInputStamp(),
-                    aggregation->getFinalAggregateStamp());
-                break;
-            default: NES_NOT_IMPLEMENTED();
-        }
+
+        auto aggregationFunction = lowerAggregations(aggregations)[0];
+
+
+
+
         // Obtain the field name used to store the aggregation result
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         auto aggregationResultFieldName =
             thresholdWindowResultSchema->getSourceNameQualifier() + "$" + aggregation->getTypeAsString();
 
-        if (aggregation->getType()!=Windowing::WindowAggregationDescriptor::Count) {
+        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
             aggregatedFieldAccess = lowerExpression(aggregation->on());
             // The onField for count should not be set to anything
         }
@@ -525,30 +504,38 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                    aggs.cend(),
                    std::back_inserter(aggregationFunctions),
                    [&](const auto& agg) -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
+
+                       DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+
+
+                       // lower the data types
+                       auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
+                       auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
+
                        switch (agg->getType()) {
                            case Windowing::WindowAggregationDescriptor::Avg:
                                return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
-                                   agg->getInputStamp(),
-                                   agg->getFinalAggregateStamp());
+                                   physicalInputType,
+                                   physicalFinalType);
                            case Windowing::WindowAggregationDescriptor::Count:
                                return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
-                                   agg->getInputStamp(),
-                                   agg->getFinalAggregateStamp());
+                                   physicalInputType,
+                                   physicalFinalType);
                            case Windowing::WindowAggregationDescriptor::Max:
                                return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
-                                   agg->getInputStamp(),
-                                   agg->getFinalAggregateStamp());
+                                   physicalInputType,
+                                   physicalFinalType);
                            case Windowing::WindowAggregationDescriptor::Min:
                                return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
-                                   agg->getInputStamp(),
-                                   agg->getFinalAggregateStamp());
+                                   physicalInputType,
+                                   physicalFinalType);
                            case Windowing::WindowAggregationDescriptor::Median:
                                // TODO add median aggregation function
                                break;
                            case Windowing::WindowAggregationDescriptor::Sum: {
                                return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
-                                   agg->getInputStamp(),
-                                   agg->getFinalAggregateStamp());
+                                   physicalInputType,
+                                   physicalFinalType);
                            }
                        };
                        NES_NOT_IMPLEMENTED();

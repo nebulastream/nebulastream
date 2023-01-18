@@ -21,13 +21,16 @@ namespace NES::Runtime::Execution::Aggregation {
 class AvgAggregationFunction : public AggregationFunction {
 
   public:
-    AvgAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
+    AvgAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) override;
     Nautilus::Value<> lower(Nautilus::Value<Nautilus::MemRef> memref) override;
     void reset(Nautilus::Value<Nautilus::MemRef> memref) override;
     uint64_t getSize() override;
+
+  private:
+    PhysicalTypePtr countType;
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

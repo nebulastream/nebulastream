@@ -16,12 +16,12 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 
-MinAggregationFunction::MinAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
+MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
 void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load
-    auto oldValue = memref.load<Nautilus::Int64>();
+    auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // compare
     auto isLessThan = Nautilus::LessThanOp(value, oldValue);
 
@@ -32,8 +32,8 @@ void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
 }
 
 void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left = memref1.load<Nautilus::Int64>();
-    auto right = memref2.load<Nautilus::Int64>();
+    auto left = AggregationFunction::loadFromMemref(memref1, inputType);
+    auto right = AggregationFunction::loadFromMemref(memref2, inputType);
 
     auto isLeftLessThanRight = Nautilus::LessThanOp(left, right);
 
@@ -45,7 +45,7 @@ void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
 }
 
 Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
+    auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
     return finalVal;
 }
 
