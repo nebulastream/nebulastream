@@ -46,13 +46,4 @@ class WindowState {
 
 }// namespace NES::Windowing
 
-namespace fmt {
-template<>
-struct formatter<NES::Windowing::WindowState> : formatter<std::string> {
-    auto format(const NES::Windowing::WindowState& window_state, format_context& ctx) -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{} {}", window_state.getStartTs(), window_state.getEndTs());
-    }
-};
-} //namespace fmt
-
 #endif// NES_CORE_INCLUDE_WINDOWING_RUNTIME_WINDOWSTATE_HPP_
