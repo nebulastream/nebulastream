@@ -17,8 +17,8 @@
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <mlir/Parser/Parser.h>
 #include <mlir/AsmParser/AsmParser.h>
+#include <mlir/Parser/Parser.h>
 
 namespace NES::Nautilus::Backends::MLIR {
 
