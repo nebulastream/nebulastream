@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_nes_runtime_test(runtime-aggregation-test "AggregationFunctionTest.cpp")
+add_nes_runtime_test(runtime-aggregation-data-type-test "AggregationFunctionDataTypeTest.cpp")

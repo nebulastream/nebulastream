@@ -16,29 +16,30 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 namespace NES::Runtime::Execution::Aggregation {
 
-CountAggregationFunction::CountAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType)
+CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
 void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) {
     // load memref
-    auto oldValue = memref.load<Nautilus::Int64>();// TODO 3280 check the type
+    // TODO 3280: or should we explicitly say Int64 here? as the count should always be an int
+    // TODO 3280: however, having it in finalType makes it possible to have a count in int_8 for instance
+    auto oldValue = AggregationFunction::loadFromMemref(memref, finalType);
     // add the value
     auto newValue = oldValue + 1;
     // put back to the memref
     memref.store(newValue);
 }
 
-void CountAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memre2) {
-    auto left = memref1.load<Nautilus::Int64>();
-    auto right = memre2.load<Nautilus::Int64>();
+void CountAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+    auto left =AggregationFunction::loadFromMemref(memref1, finalType);
+    auto right = AggregationFunction::loadFromMemref(memref2, finalType);
 
     auto tmp = left + right;
     memref1.store(tmp);
 }
 
 Nautilus::Value<> CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto finalVal = memref.load<Nautilus::Int64>();// TODO 3280 check the type
-
+    auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
     return finalVal;
 }
 

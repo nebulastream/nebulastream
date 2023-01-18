@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -40,9 +41,11 @@ class AggregationFunctionTest : public Testing::NESBaseTest {
  * Tests the lift, combine, lower and reset functions of the Sum Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
-    auto sumValue = Aggregation::SumAggregationValue();
+    auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
@@ -67,8 +70,11 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
  * Tests the lift, combine, lower and reset functions of the Count Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
+
     auto countValue = Aggregation::CountAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
@@ -94,8 +100,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
  * Tests the lift, combine, lower and reset functions of the Average Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    DataTypePtr doubleType = DataTypeFactory::createDouble();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr doubleType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
     auto avgValue = Aggregation::AvgAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
@@ -125,7 +132,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
  * Tests the lift, combine, lower and reset functions of the Min Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
     auto minValue = Aggregation::MinAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
@@ -164,7 +173,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
  * Tests the lift, combine, lower and reset functions of the Max Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
     auto maxValue = Aggregation::MaxAggregationValue();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);

@@ -29,6 +29,7 @@ struct AggregationValue {
 /**
  * Class for average aggregation Value, maintains sum and count to calc avg in the lower function
  */
+// TODO 3280: should be templated
 struct AvgAggregationValue : AggregationValue {
     int64_t sum = 0;
     int64_t count = 0;
@@ -37,13 +38,15 @@ struct AvgAggregationValue : AggregationValue {
 /**
  * Class for sum aggregation Value, maintains the sum of all occurred tuples
  */
+template <typename T>
 struct SumAggregationValue : AggregationValue {
-    int64_t sum = 0;
+    T sum = 0;
 };
 
 /**
  * Class for count aggregation Value, maintains the number of occurred tuples
  */
+ // TODO 3280: should be templated
 struct CountAggregationValue : AggregationValue {
     int64_t count = 0;
 };
@@ -51,6 +54,7 @@ struct CountAggregationValue : AggregationValue {
 /**
  * Class for min aggregation Value, maintains the min value of all occurred tuples
  */
+// TODO 3280: should be templated
 struct MinAggregationValue : AggregationValue {
     // TODO 3280: Take the max from the logical type
     int64_t min = std::numeric_limits<int64_t>::max();
@@ -59,6 +63,7 @@ struct MinAggregationValue : AggregationValue {
 /**
  * Class for max aggregation Value, maintains the max value of all occurred tuples
  */
+// TODO 3280: should be templated
 struct MaxAggregationValue : AggregationValue {
     // TODO 3280: Take the min from the logical type
     int64_t max = std::numeric_limits<int64_t>::min();
