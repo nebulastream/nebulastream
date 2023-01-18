@@ -145,13 +145,13 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
 #ifdef ENABLE_JNI
-        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("className",
-                                                           "MethodName",
-                                                           std::vector<char>(),
-                                                           std::unordered_map<std::string, std::vector<char>>({{"class", {1}}}),
-                                                           Schema::create(),
-                                                                          "",
-                                                                          "");
+        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("nonEmpty",
+                                                           "nonEmpty",
+                                                           std::vector<char>({'a'}),
+                                                           std::unordered_map<std::string, std::vector<char>>({{"nonEmpty", {'a'}}}),
+                                                           Schema::create()->addField("nonEmpty",INT32),
+                                                                          "nonEmpty",
+                                                                          "nonEmpty");
         mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
 #endif
     }
