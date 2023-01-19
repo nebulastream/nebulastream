@@ -25,6 +25,7 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -58,10 +59,10 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
                            QueryCatalogServicePtr queryCatalogService,
                            NesCoordinatorWeakPtr coordinator,
                            GlobalQueryPlanPtr globalQueryPlan,
-                           oatpp::String completeRouterPrefix,
+                           const oatpp::String& completeRouterPrefix,
                            ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalogService(queryCatalogService),
-          coordinator(coordinator), globalQueryPlan(globalQueryPlan), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryCatalogService(std::move(queryCatalogService)),
+          coordinator(std::move(coordinator)), globalQueryPlan(std::move(globalQueryPlan)), errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller

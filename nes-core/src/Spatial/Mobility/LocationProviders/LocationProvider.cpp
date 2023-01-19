@@ -24,18 +24,15 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 LocationProvider::LocationProvider(Spatial::Experimental::SpatialType spatialType,
-                                   DataTypes::Experimental::GeoLocation geoLocation) {
-    this->spatialType = spatialType;
-    this->workerGeoLocation = geoLocation;
-}
+                                   DataTypes::Experimental::GeoLocation geoLocation)
+    : workerGeoLocation(geoLocation), spatialType(spatialType) {}
 
 Spatial::Experimental::SpatialType LocationProvider::getSpatialType() const { return spatialType; };
 
 DataTypes::Experimental::Waypoint LocationProvider::getCurrentWaypoint() {
     switch (spatialType) {
         case Spatial::Experimental::SpatialType::MOBILE_NODE: return getCurrentWaypoint();
-        case Spatial::Experimental::SpatialType::FIXED_LOCATION:
-            return DataTypes::Experimental::Waypoint(workerGeoLocation);
+        case Spatial::Experimental::SpatialType::FIXED_LOCATION: return DataTypes::Experimental::Waypoint(workerGeoLocation);
         case Spatial::Experimental::SpatialType::NO_LOCATION:
         case Spatial::Experimental::SpatialType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")

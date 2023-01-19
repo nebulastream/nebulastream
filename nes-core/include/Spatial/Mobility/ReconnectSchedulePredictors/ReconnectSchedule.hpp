@@ -51,7 +51,7 @@ class ReconnectSchedule {
     static ReconnectSchedule Empty();
 
   private:
-    std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectVector;
+    std::vector<ReconnectPoint> reconnectVector;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 

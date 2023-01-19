@@ -23,11 +23,10 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
-namespace NES {
-namespace REST {
-namespace Controller {
+namespace NES::REST::Controller {
 class LocationController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -37,11 +36,11 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      */
     LocationController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                       oatpp::String completeRouterPrefix,
+                       const oatpp::String& completeRouterPrefix,
                        LocationServicePtr locationService,
                        ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(locationService),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), locationService(std::move(locationService)),
+          errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller
@@ -49,11 +48,10 @@ class LocationController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
-    static std::shared_ptr<LocationController>
-    create(const std::shared_ptr<ObjectMapper>& objectMapper,
-           LocationServicePtr locationService,
-           std::string routerPrefixAddition,
-           ErrorHandlerPtr errorHandler) {
+    static std::shared_ptr<LocationController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
+                                                      LocationServicePtr locationService,
+                                                      std::string routerPrefixAddition,
+                                                      ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<LocationController>(objectMapper, completeRouterPrefix, locationService, errorHandler);
     }
@@ -85,8 +83,6 @@ class LocationController : public oatpp::web::server::api::ApiController {
     LocationServicePtr locationService;
     ErrorHandlerPtr errorHandler;
 };
-}//namespace Controller
-}// namespace REST
-}// namespace NES
+}// namespace NES::REST::Controller
 #include OATPP_CODEGEN_END(ApiController)
 #endif// NES_CORE_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP_
