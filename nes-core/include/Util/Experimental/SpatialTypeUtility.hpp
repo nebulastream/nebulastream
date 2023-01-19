@@ -23,15 +23,15 @@ namespace NES::Spatial::Util {
  * @brief this class contains functions to convert a spatial type enum to its equivalent protobuf type and vice versa
  * as well as functions to convert the node type enum to/from string
  */
-class NodeTypeUtilities {
+class SpatialTypeUtility {
   public:
-    static Experimental::SpatialType stringToNodeType(const std::string nodeTypeString);
+    static Experimental::SpatialType stringToNodeType(const std::string spatialTypeString);
 
-    static Experimental::SpatialType protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType nodeType);
+    static Experimental::SpatialType protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType spatialType);
 
-    static std::string toString(Experimental::SpatialType nodeType);
+    static std::string toString(Experimental::SpatialType spatialType);
 
-    static NES::Spatial::Protobuf::SpatialType toProtobufEnum(Experimental::SpatialType nodeType);
+    static NES::Spatial::Protobuf::SpatialType toProtobufEnum(Experimental::SpatialType spatialType);
 };
 
 }// namespace NES::Spatial::Util

@@ -28,6 +28,7 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -55,10 +56,10 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      */
     UdfCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
                          UdfCatalogPtr udfCatalog,
-                         oatpp::String completeRouterPrefix,
+                         const oatpp::String& completeRouterPrefix,
                          ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(udfCatalog),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), udfCatalog(std::move(udfCatalog)),
+          errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller
@@ -68,9 +69,9 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<UdfCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                        UdfCatalogPtr udfCatalog,
-                                                        std::string routerPrefixAddition,
-                                                        ErrorHandlerPtr errorHandler) {
+                                                        const UdfCatalogPtr& udfCatalog,
+                                                        const std::string& routerPrefixAddition,
+                                                        const ErrorHandlerPtr& errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
     }

@@ -16,15 +16,13 @@
 
 #include <string>
 
-namespace NES {
-namespace Spatial {
+namespace NES::Spatial {
 
 namespace Protobuf {
 class GeoLocation;
 }
 
-namespace DataTypes {
-namespace Experimental {
+namespace DataTypes::Experimental {
 
 /**
 * @brief a representation of geographical location used to specify the fixed location of field nodes
@@ -105,9 +103,7 @@ class GeoLocation {
     double latitude;
     double longitude;
 };
-}// namespace Experimental
-}// namespace DataTypes
-}// namespace Spatial
-}// namespace NES
+}// namespace DataTypes::Experimental
+}// namespace NES::Spatial
 
 #endif// NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATION_HPP_

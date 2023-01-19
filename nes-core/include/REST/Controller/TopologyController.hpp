@@ -18,12 +18,13 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
+#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -48,10 +49,10 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      */
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
                        TopologyManagerServicePtr topologyManagerService,
-                       oatpp::String completeRouterPrefix,
+                       const oatpp::String& completeRouterPrefix,
                        ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
-          topologyManagerService(std::move(topologyManagerService)), errorHandler(errorHandler) {}
+          topologyManagerService(std::move(topologyManagerService)), errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller

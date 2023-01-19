@@ -39,8 +39,8 @@
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
+#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -324,7 +324,7 @@ bool NesWorker::connect() {
     //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
-        NES::Spatial::Util::NodeTypeUtilities::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
+        NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
 
     if (locationProvider) {
         auto waypoint = registrationRequest.mutable_waypoint();
