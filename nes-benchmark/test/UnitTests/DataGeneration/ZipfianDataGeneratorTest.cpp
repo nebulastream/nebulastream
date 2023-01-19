@@ -15,7 +15,7 @@
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Util/ZipfianGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
