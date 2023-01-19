@@ -260,18 +260,13 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
     elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
         message(STATUS "CMAKE detects APPLE ARM64 support")
-        # Clang has the exact same macros for A14 as M1.
-        # Current Clang master has -mcpu=apple-m1 but
-        # not yet on latest release. Overall, arm64/aarch64
-        # offer so many different configuration parameters
-        # that compilers prefer -mcpu=XXX instead.
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
     elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
         message(STATUS "CMAKE detects generic ARM64 support")
         # Arm themselves suggest using -mcpu=native, or in general,
         # to use -mcpu=CPU_TYPE. For more info, here:
         # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     else ()
         message(FATAL_ERROR "CMAKE_SYSTEM_PROCESSOR was ${CMAKE_SYSTEM_PROCESSOR} this is a unsupported architecture.")
     endif ()
