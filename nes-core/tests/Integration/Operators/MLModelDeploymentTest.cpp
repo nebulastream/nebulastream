@@ -38,155 +38,23 @@ namespace NES {
 
 using namespace Configurations;
 
-class MLModelDeploymentTest : public Testing::NESBaseTest {
+struct Output {
+    float iris0;
+    float iris1;
+    float iris2;
+
+    // overload the == operator to check if two instances are the same
+    bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
+};
+
+class MLModelDeploymentTest : public Testing::NESBaseTest,
+                              public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MLModelDeploymentTest test class.");
     }
 };
-
-/**
- * tests integer input to ML inference model
- */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
-    struct IrisData {
-        uint64_t id;
-        uint64_t f1;
-        uint64_t f2;
-        uint64_t f3;
-        uint64_t f4;
-        uint64_t target;
-    };
-
-    auto irisSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("f1", DataTypeFactory::createUInt64())
-                          ->addField("f2", DataTypeFactory::createUInt64())
-                          ->addField("f3", DataTypeFactory::createUInt64())
-                          ->addField("f4", DataTypeFactory::createUInt64())
-                          ->addField("target", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(IrisData), irisSchema->getSchemaSizeInBytes());
-
-    auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_short.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
-    csvSourceType->setNumberOfBuffersToProduce(10);
-    csvSourceType->setSkipHeader(false);
-
-    //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
-    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("irisData", irisSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
-                                  .validate()
-                                  .setupTopology();
-
-    struct Output {
-        float iris0;
-        float iris1;
-        float iris2;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
-    };
-
-    std::vector<Output> expectedOutput =
-        {{0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894}};
-
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    for (size_t i = 0; i < actualOutput.size(); ++i ) {
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
-    }
-}
-
-/**
- *  tests double input to ML inference model
- */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentFloats) {
-    struct IrisData {
-        uint64_t id;
-        float f1;
-        float f2;
-        float f3;
-        float f4;
-        uint64_t target;
-    };
-
-    auto irisSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("f1", DataTypeFactory::createFloat())
-                          ->addField("f2", DataTypeFactory::createFloat())
-                          ->addField("f3", DataTypeFactory::createFloat())
-                          ->addField("f4", DataTypeFactory::createFloat())
-                          ->addField("target", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(IrisData), irisSchema->getSchemaSizeInBytes());
-
-    auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_short.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
-    csvSourceType->setNumberOfBuffersToProduce(10);
-    csvSourceType->setSkipHeader(false);
-
-    //We set the predictions data type to FLOAT32 since the trained iris_95acc.tflite model defines tensors of data type float32 as output tensors.
-    string query = R"(Query::from("irisData").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)}).project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2")))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("irisData", irisSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("irisData", csvSourceType)
-                                  .validate()
-                                  .setupTopology();
-
-    struct Output {
-        float iris0;
-        float iris1;
-        float iris2;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
-    };
-
-    std::vector<Output> expectedOutput =
-        {
-            {0.86352879, 0.12861125, 0.0078599472},
-            {0.82480621, 0.16215269, 0.013041073},
-            {0.84584343, 0.14335836, 0.010798273},
-            {0.81788188, 0.16869366, 0.013424426},
-            {0.86857224, 0.12411855, 0.0073091877},
-            {0.8524667, 0.13982011, 0.007713221},
-            {0.84102476, 0.14806809, 0.010907203},
-            {0.84742284, 0.14333251, 0.0092447177},
-            {0.80810225, 0.17601806, 0.01587967},
-            {0.82949907, 0.15858534, 0.011915659}
-        };
-
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    for (size_t i = 0; i < actualOutput.size(); ++i ) {
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
-    }
-}
 
 /**
  * tests mixed input to ml inference operator
@@ -237,16 +105,18 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     };
 
     std::vector<Output> expectedOutput =
-        {{0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894},
-         {0.43428239, 0.31287873, 0.25283894}};
+        {
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+            {0.4731167, 0.31782052, 0.2090628},
+        };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -258,21 +128,12 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     }
 }
 
-/**
- * tests boolean input to ml inference operator
- */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
+TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 
-    auto irisSchema = Schema::create()
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("f1", DataTypeFactory::createBoolean())
-                          ->addField("f2", DataTypeFactory::createBoolean())
-                          ->addField("f3", DataTypeFactory::createBoolean())
-                          ->addField("f4", DataTypeFactory::createBoolean())
-                          ->addField("target", DataTypeFactory::createUInt64());
+    auto irisSchema = std::get<1>(GetParam());
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "iris_short_bool.csv");
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + std::get<2>(GetParam()));
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setSkipHeader(false);
@@ -287,28 +148,7 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
                                   .validate()
                                   .setupTopology();
 
-    struct Output {
-        float iris0;
-        float iris1;
-        float iris2;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
-    };
-
-    std::vector<Output> expectedOutput =
-        {
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894},
-            {0.43428239, 0.31287873, 0.25283894}
-        };
+    std::vector<Output> expectedOutput = std::get<3>(GetParam());
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
@@ -319,5 +159,76 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
         EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
     }
 }
+
+INSTANTIATE_TEST_CASE_P(TestInputs,
+                        MLModelDeploymentTest,
+                        ::testing::Values(
+                            // Test booleans in input schema.
+                            // Output is same as ints but different input file.
+                            std::make_tuple("Boolean",
+                                            Schema::create()
+                                                ->addField("id", DataTypeFactory::createUInt64())
+                                                ->addField("f1", DataTypeFactory::createBoolean())
+                                                ->addField("f2", DataTypeFactory::createBoolean())
+                                                ->addField("f3", DataTypeFactory::createBoolean())
+                                                ->addField("f4", DataTypeFactory::createBoolean())
+                                                ->addField("target", DataTypeFactory::createUInt64()),
+                                            "iris_short_bool.csv",
+                                            std::vector<Output>{{0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894},
+                                                                {0.43428239, 0.31287873, 0.25283894}}),
+                            // Test floats in input schema.
+                            std::make_tuple("Float",
+                                            Schema::create()
+                                                ->addField("id", DataTypeFactory::createUInt64())
+                                                ->addField("f1", DataTypeFactory::createFloat())
+                                                ->addField("f2", DataTypeFactory::createFloat())
+                                                ->addField("f3", DataTypeFactory::createFloat())
+                                                ->addField("f4", DataTypeFactory::createFloat())
+                                                ->addField("target", DataTypeFactory::createUInt64()),
+                                            "iris_short.csv",
+                                            std::vector<Output>{{{0.86352879, 0.12861125, 0.0078599472},
+                                                                 {0.82480621, 0.16215269, 0.013041073},
+                                                                 {0.84584343, 0.14335836, 0.010798273},
+                                                                 {0.81788188, 0.16869366, 0.013424426},
+                                                                 {0.86857224, 0.12411855, 0.0073091877},
+                                                                 {0.8524667, 0.13982011, 0.007713221},
+                                                                 {0.84102476, 0.14806809, 0.010907203},
+                                                                 {0.84742284, 0.14333251, 0.0092447177},
+                                                                 {0.80810225, 0.17601806, 0.01587967},
+                                                                 {0.82949907, 0.15858534, 0.011915659}}}),
+                            // Test ints in output schema.
+                            std::make_tuple("Int",
+                                            Schema::create()
+                                                ->addField("id", DataTypeFactory::createUInt64())
+                                                ->addField("f1", DataTypeFactory::createUInt64())
+                                                ->addField("f2", DataTypeFactory::createUInt64())
+                                                ->addField("f3", DataTypeFactory::createUInt64())
+                                                ->addField("f4", DataTypeFactory::createUInt64())
+                                                ->addField("target", DataTypeFactory::createUInt64()),
+                                            "iris_short.csv",
+                                            std::vector<Output>{
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894},
+                                                {0.43428239, 0.31287873, 0.25283894}
+                                            })),
+                        [](const testing::TestParamInfo<MLModelDeploymentTest::ParamType>& info) {
+                            std::string name = std::get<0>(info.param);
+                            return name;
+                        });
 
 }// namespace NES
