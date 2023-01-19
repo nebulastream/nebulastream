@@ -15,10 +15,62 @@
 #ifndef NES_EXTERNALPROVIDER_HPP
 #define NES_EXTERNALPROVIDER_HPP
 
-#include <DataProvider/ExternalProvider.cpp>
+#include <DataProvider/DataProvider.hpp>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark::DataProviding {
 
-}// namespace NES::Benchmark
+enum IngestionFrequencyDistribution {
+    UNIFORM,
+    SINUS,
+    COSINUS,
+    M1,
+    M2,
+    D1,
+    D2
+};
+
+class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
+  public:
+    /**
+     * @brief creates an ExternalProvider
+     * @param id
+     * @param preAllocatedBuffers
+     * @param ingestionRateInBuffers only necessary if ingestionFrequencyDistribution is set to "UNIFORM" or "SINUS" or "COSINUS"
+     * @param experimentRuntime
+     * @param providerMode
+     * @param ingestionFrequencyDistribution
+     */
+    ExternalProvider(uint64_t id,
+                     std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                     uint64_t ingestionRateInBuffers,
+                     uint64_t experimentRuntime,
+                     DataProviderMode providerMode,
+                     std::string ingestionFrequencyDistribution);
+
+    /**
+     * @brief overrides the start function and generates the data
+     */
+    void start() override;
+
+    /**
+     * @brief overrides the stop function
+     */
+    void stop() override;
+
+  private:
+    IngestionFrequencyDistribution getModeFromString(std::string providerMode);
+    void generateFrequencies(uint64_t experimentRuntime);
+    void generateData();
+
+    folly::MPMCQueue<TupleBufferHolder> bufferQueue;
+    std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
+    uint64_t ingestionRateInBuffers;
+    //uint64_t experimentRuntime;
+    IngestionFrequencyDistribution ingestionFrequencyDistribution;
+    std::vector<uint64_t> predefinedIngestionRates;
+    bool started = false;
+    std::thread generatorThread;
+};
+}// namespace NES::Benchmark::DataProviding
 
 #endif//NES_EXTERNALPROVIDER_HPP
