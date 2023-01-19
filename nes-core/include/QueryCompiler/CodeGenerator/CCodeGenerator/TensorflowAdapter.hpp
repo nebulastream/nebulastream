@@ -44,13 +44,13 @@ class TensorflowAdapter {
      * @param i
      * @return
      */
-    double getResultAt(int i);
+    float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
 
   private:
     TfLiteInterpreter* interpreter;
-    double* output{};
+    float* output{};
 #endif// TFDEF
 };
 

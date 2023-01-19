@@ -43,7 +43,7 @@ void NES::TensorflowAdapter::initializeModel(std::string model) {
 
 NES::TensorflowAdapterPtr NES::TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
 
-double NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
+float NES::TensorflowAdapter::getResultAt(int i) { return output[i]; }
 
 void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
@@ -79,7 +79,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
         int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (double*) malloc(output_size);
+        output = (float*) malloc(output_size);
 
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
@@ -108,7 +108,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
         int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (double*) malloc(output_size);
+        output = (float*) malloc(output_size);
 
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
@@ -137,7 +137,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
         int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (double*) malloc(output_size);
+        output = (float*) malloc(output_size);
 
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
@@ -166,7 +166,7 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
         int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (double*) malloc(output_size);
+        output = (float*) malloc(output_size);
 
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
