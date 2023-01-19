@@ -17,15 +17,11 @@
 
 #include <string>
 
-namespace NES {
-namespace Worker {
-namespace Configuration {
+namespace NES::Worker::Configuration {
 const std::string TENSORFLOW_SUPPORT = "TENSOR_FLOW";
 const std::string JAVA_UDF_SUPPORT = "JAVA_UDF";
 const std::string MOBILITY_SUPPORT = "MOBILITY";
 const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
-}// namespace Configuration
-}// namespace Worker
-}// namespace NES
+}// namespace NES::Worker::Configuration
 
 #endif//NES_WORKERCONFIGURATIONKEYS_HPP

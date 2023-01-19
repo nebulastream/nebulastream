@@ -47,7 +47,7 @@ class GeoLocation {
     GeoLocation(double latitude, double longitude);
 
     /**
-     * @brief constructs a Geographicala location object from a Coordinates object used as members of protobuf messages
+     * @brief constructs a Geographical location object from a Coordinates object used as members of protobuf messages
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param geoLocation: the coordinate object
      */

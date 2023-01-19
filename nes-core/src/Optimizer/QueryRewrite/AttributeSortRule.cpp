@@ -526,7 +526,8 @@ bool AttributeSortRule::replaceCommutativeExpressions(const ExpressionNodePtr& p
         binaryExpression->setChildren(leftChild, updatedExpression);
         return true;
     } else {
-        for (const auto& child : parentExpression->getChildren()) {
+        auto children = parentExpression->getChildren();
+        for (const auto& child : children) {
             if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>())) {
                 bool replaced = replaceCommutativeExpressions(child->as<ExpressionNode>(), originalExpression, updatedExpression);
                 if (replaced) {
