@@ -11,25 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Experimental/NodeTypeUtilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
+#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Spatial::Util {
 
-Experimental::SpatialType NodeTypeUtilities::stringToNodeType(const std::string nodeTypeString) {
-    if (nodeTypeString == "NO_LOCATION") {
+Experimental::SpatialType SpatialTypeUtility::stringToNodeType(const std::string spatialTypeString) {
+    if (spatialTypeString == "NO_LOCATION") {
         return Experimental::SpatialType::NO_LOCATION;
-    } else if (nodeTypeString == "FIXED_LOCATION") {
+    } else if (spatialTypeString == "FIXED_LOCATION") {
         return Experimental::SpatialType::FIXED_LOCATION;
-    } else if (nodeTypeString == "MOBILE_NODE") {
+    } else if (spatialTypeString == "MOBILE_NODE") {
         return Experimental::SpatialType::MOBILE_NODE;
     }
     return Experimental::SpatialType::INVALID;
 }
 
-Experimental::SpatialType NodeTypeUtilities::protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType nodeType) {
-    switch (nodeType) {
+Experimental::SpatialType SpatialTypeUtility::protobufEnumToNodeType(NES::Spatial::Protobuf::SpatialType spatialType) {
+    switch (spatialType) {
         case NES::Spatial::Protobuf::SpatialType::NO_LOCATION: return Experimental::SpatialType::NO_LOCATION;
         case NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION: return Experimental::SpatialType::FIXED_LOCATION;
         case NES::Spatial::Protobuf::SpatialType::MOBILE_NODE: return Experimental::SpatialType::MOBILE_NODE;
@@ -39,8 +39,8 @@ Experimental::SpatialType NodeTypeUtilities::protobufEnumToNodeType(NES::Spatial
     return Experimental::SpatialType::INVALID;
 }
 
-std::string NodeTypeUtilities::toString(const Experimental::SpatialType nodeType) {
-    switch (nodeType) {
+std::string SpatialTypeUtility::toString(const Experimental::SpatialType spatialType) {
+    switch (spatialType) {
         case Experimental::SpatialType::NO_LOCATION: return "NO_LOCATION";
         case Experimental::SpatialType::FIXED_LOCATION: return "FIXED_LOCATION";
         case Experimental::SpatialType::MOBILE_NODE: return "MOBILE_NODE";
@@ -48,8 +48,8 @@ std::string NodeTypeUtilities::toString(const Experimental::SpatialType nodeType
     }
 }
 
-NES::Spatial::Protobuf::SpatialType NodeTypeUtilities::toProtobufEnum(Experimental::SpatialType nodeType) {
-    switch (nodeType) {
+NES::Spatial::Protobuf::SpatialType SpatialTypeUtility::toProtobufEnum(Experimental::SpatialType spatialType) {
+    switch (spatialType) {
         case Experimental::SpatialType::NO_LOCATION: return NES::Spatial::Protobuf::SpatialType::NO_LOCATION;
         case Experimental::SpatialType::FIXED_LOCATION: return NES::Spatial::Protobuf::SpatialType::FIXED_LOCATION;
         case Experimental::SpatialType::MOBILE_NODE: return NES::Spatial::Protobuf::SpatialType::MOBILE_NODE;

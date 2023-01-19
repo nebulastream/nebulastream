@@ -22,7 +22,7 @@
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/SpatialUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -247,7 +247,7 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
             }
             currentNodeJsonValue["location"] = locationInfo;
         }
-        currentNodeJsonValue["nodeType"] = Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
+        currentNodeJsonValue["nodeType"] = Spatial::Util::SpatialTypeUtility::toString(currentNode->getSpatialNodeType());
 
         auto children = currentNode->getChildren();
         for (const auto& child : children) {

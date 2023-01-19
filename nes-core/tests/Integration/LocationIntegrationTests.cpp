@@ -50,8 +50,7 @@
 using std::map;
 using std::string;
 uint16_t timeout = 5;
-namespace NES {
-using namespace Configurations;
+namespace NES::Spatial {
 
 class LocationIntegrationTests : public Testing::NESBaseTest {
   public:
@@ -71,7 +70,8 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     };
 
     //wrapper function so allow the util function to call the member function of LocationProvider
-    static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> getLocationFromTopologyNode(const std::shared_ptr<void>& structParams) {
+    static std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>
+    getLocationFromTopologyNode(const std::shared_ptr<void>& structParams) {
         auto casted = std::static_pointer_cast<getGeolocationParameters>(structParams);
         return casted->service->getGeoLocationForNode(casted->node->getId());
     }
@@ -197,7 +197,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()), //node2->getWaypoint()->getLocation()),
+    EXPECT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),//node2->getWaypoint()->getLocation()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092));
     topologyManagerService->updateGeoLocation(
         node2->getId(),
@@ -205,9 +205,9 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     EXPECT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
     NES_INFO("NEIGHBORS");
-    auto inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
-                                       50.0);
+    auto inRange = topologyManagerService->getNodesIdsInRange(
+        NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
+        50.0);
     EXPECT_EQ(inRange.size(), (size_t) 3);
     topologyManagerService->updateGeoLocation(
         node3->getId(),
@@ -263,8 +263,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf2->coordinatorPort = (port);
     wrkConf2->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
-//    wrkConf2->dataPort.setValue(*getAvailablePort());
-//    wrkConf2->rpcPort.setValue(*getAvailablePort());
+    //    wrkConf2->dataPort.setValue(*getAvailablePort());
+    //    wrkConf2->rpcPort.setValue(*getAvailablePort());
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     ASSERT_TRUE(retStart2);
@@ -380,7 +380,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
     auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
 
-//    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -423,7 +423,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
     auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-//    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -471,7 +471,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
     auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-//    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -513,7 +513,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
     auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-//    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -646,8 +646,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         topology->addNewTopologyNodeAsChild(node, currNode);
         topologyManagerService->updateGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(elem));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem),
-                      currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem), currNode->getId());
         idCount++;
     }
 
@@ -1211,4 +1210,4 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
-}// namespace NES
+}// namespace NES::Spatial
