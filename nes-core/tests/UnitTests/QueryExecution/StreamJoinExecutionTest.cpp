@@ -89,12 +89,12 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$f1_left", BasicType::UINT64)
                                 ->addField("test1$f2_left", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("test1$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                  ->addField("test2$f1_right", BasicType::UINT64)
                                  ->addField("test2$f2_right", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("test2$timestamp", BasicType::UINT64);
 
     const auto joinFieldNameLeft = "test1$f2_left";
     const auto joinFieldNameRight = "test2$f2_right";

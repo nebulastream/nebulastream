@@ -40,6 +40,9 @@ SchemaPtr createJoinSchema(SchemaPtr leftSchema, SchemaPtr rightSchema, const st
                "KeyFieldName = " << keyFieldName << " is not in either left or right schema");
 
     auto retSchema = Schema::create(leftSchema->getLayoutType());
+    retSchema->addField(leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier() + "$start", BasicType::INT64);
+    retSchema->addField(leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier() + "end", BasicType::INT64);
+
     if (leftSchema->hasFieldName(keyFieldName)) {
         retSchema->addField(leftSchema->get(keyFieldName));
     } else {
