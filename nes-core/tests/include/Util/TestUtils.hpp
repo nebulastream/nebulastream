@@ -919,7 +919,7 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
         time += startTime;
 
         //construct a pair containing a location and the time at which the device is at exactly that point
-        // and sve it to a vector containing all waypoints
+        // and save it to a vector containing all waypoints
         waypoints.push_back(NES::Spatial::DataTypes::Experimental::Waypoint(
             NES::Spatial::DataTypes::Experimental::GeoLocation(std::stod(latitudeString), std::stod(longitudeString)),
             time));

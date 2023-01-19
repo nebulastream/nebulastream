@@ -215,7 +215,6 @@ class CoordinatorRPCClient {
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
-     * @param workerId the id of the calling worker
      * @param locationUpdate a tuple containing the mobile devices location and a timestamp indicating when the device was located
      * at the transmitted position
      * @return true if the information has benn succesfully processed
