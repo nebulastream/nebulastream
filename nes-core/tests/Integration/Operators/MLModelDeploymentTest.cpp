@@ -95,17 +95,31 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentIntegers) {
     };
 
     std::vector<Output> expectedOutput =
-        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
+        {{0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+    }
 }
 
 /**
  *  tests double input to ML inference model
  */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
+TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentFloats) {
     struct IrisData {
         uint64_t id;
         float f1;
@@ -151,11 +165,27 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentDoubles) {
     };
 
     std::vector<Output> expectedOutput =
-        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
+        {
+            {0.86352879, 0.12861125, 0.0078599472},
+            {0.82480621, 0.16215269, 0.013041073},
+            {0.84584343, 0.14335836, 0.010798273},
+            {0.81788188, 0.16869366, 0.013424426},
+            {0.86857224, 0.12411855, 0.0073091877},
+            {0.8524667, 0.13982011, 0.007713221},
+            {0.84102476, 0.14806809, 0.010907203},
+            {0.84742284, 0.14333251, 0.0092447177},
+            {0.80810225, 0.17601806, 0.01587967},
+            {0.82949907, 0.15858534, 0.011915659}
+        };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+    }
 }
 
 /**
@@ -206,11 +236,25 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentMixedTypes) {
     };
 
     std::vector<Output> expectedOutput =
-        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
+        {{0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894},
+         {0.43428239, 0.31287873, 0.25283894}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+    }
 }
 
 /**
@@ -252,11 +296,27 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentBoolean) {
     };
 
     std::vector<Output> expectedOutput =
-        {{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}};
+        {
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894},
+            {0.43428239, 0.31287873, 0.25283894}
+        };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
+        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+    }
 }
 
 }// namespace NES
