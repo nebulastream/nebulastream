@@ -58,6 +58,8 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     void setPassword( std::string password);
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getAppId();
     void setAppId( std::string appId);
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getSensorFields();
+    void setSensorFields (std::vector<std::string>);
 
     [[nodiscard]] EndDeviceProtocol::Message& getSerializedQueries();
     void setSerializedQueries(EndDeviceProtocol::Message);
@@ -86,6 +88,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     Configurations::StringConfigOption userName;
     Configurations::StringConfigOption password;
     Configurations::StringConfigOption appId;
+    std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> sensorFields;
     EndDeviceProtocol::Message queries;
 
 

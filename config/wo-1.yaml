@@ -38,3 +38,7 @@ physicalSources:
       password: hej
       ## Set appId for the configured application for the LoRaWANProxySource
       appId: 0102030405060708
+      ## configure which fields the sensors on the ED corresponds to in the schema
+      ## for example if config on sensor has 'sensors: ["ESP32Temperature"]
+      ## then the value from that sensor will be mapped to the "temperature" field in the logical schema
+      sensorFields: ["temperature"]

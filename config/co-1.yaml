@@ -26,6 +26,5 @@ logLevel: LOG_TRACE
 logicalSources:
   - logicalSourceName: ls
     fields:
-      - name: "var"
+      - name: "temperature"
         type: "UINT8"
-    field_order: ["var"]

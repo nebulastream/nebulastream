@@ -41,7 +41,7 @@
 namespace NES {
 class EndDeviceProtocolSerializationUtil {
   public:
-    static std::shared_ptr<EndDeviceProtocol::Message> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
+    static std::shared_ptr<EndDeviceProtocol::Query> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
 
     [[nodiscard]] static std::string serializeConstantValue(ExpressionNodePtr cnode);
 
@@ -49,8 +49,9 @@ class EndDeviceProtocolSerializationUtil {
     [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
     [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
     [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static EndDeviceProtocol::MapOperation serializeMapOperator( NodePtr node,std::shared_ptr<std::vector<std::string>>);
-
+    [[nodiscard]] static EndDeviceProtocol::MapOperation serializeMapOperator( NodePtr,std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static EndDeviceProtocol::FilterOperation serializeFilterOperator(NodePtr, std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static EndDeviceProtocol::WindowOperation serializeWindowOperator(NodePtr, std::shared_ptr<std::vector<std::string>>);
     [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
   private:
     static DefaultPhysicalTypeFactory physicalFactory;

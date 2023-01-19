@@ -28,7 +28,7 @@ namespace NES {
  *
  * -- Sink 1 ---                            --- Source 1 ---
  *              \                         /
- *                --- Filter --- Join ---
+ *                --- Filter --- Map ---
  *              /                         \
  * -- Sink 2 ---                            --- Source 2 ---
  *
