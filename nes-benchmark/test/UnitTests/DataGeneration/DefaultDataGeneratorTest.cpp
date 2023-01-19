@@ -18,7 +18,7 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <random>
 #include <vector>
 
