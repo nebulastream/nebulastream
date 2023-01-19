@@ -50,6 +50,8 @@ class TensorflowAdapter {
 
   private:
     TfLiteInterpreter* interpreter;
+    // TODO https://github.com/nebulastream/nebulastream/issues/3424
+    // Right now we only support 32-bit floats as output.
     float* output{};
 #endif// TFDEF
 };
