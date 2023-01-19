@@ -51,7 +51,6 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param joinSchemaRight
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
-     * @param maxNoWorkerThreads
      * @param counterFinishedBuildingStart
      * @param totalSizeForDataStructures
      * @param windowSize
@@ -62,12 +61,11 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                        SchemaPtr joinSchemaRight,
                                        std::string joinFieldNameLeft,
                                        std::string joinFieldNameRight,
-                                       size_t maxNoWorkerThreads,
                                        uint64_t counterFinishedBuildingStart,
                                        size_t windowSize,
-                                       size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
-                                       size_t pageSize = CHUNK_SIZE,
-                                       size_t numPartitions = NUM_PARTITIONS);
+                                       size_t totalSizeForDataStructures,
+                                       size_t pageSize,
+                                       size_t numPartitions);
 
     /**
      * @brief Creates a StreamJoinOperatorHandlerPtr object
@@ -75,7 +73,6 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param joinSchemaRight
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
-     * @param maxNoWorkerThreads
      * @param counterFinishedBuildingStart
      * @param totalSizeForDataStructures
      * @param windowSize
@@ -87,7 +84,6 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                                const SchemaPtr& joinSchemaRight,
                                                const std::string& joinFieldNameLeft,
                                                const std::string& joinFieldNameRight,
-                                               size_t maxNoWorkerThreads,
                                                uint64_t counterFinishedBuildingStart,
                                                size_t windowSize,
                                                size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,

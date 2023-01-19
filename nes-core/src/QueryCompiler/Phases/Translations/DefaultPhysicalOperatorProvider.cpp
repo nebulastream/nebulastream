@@ -320,7 +320,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
         auto windowSize = windowType->getSize().getTime();
         // FIXME Once #3407 is done, we can continue with this here
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameLeft = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameRight = windowType->getTimeCharacteristic()->getField()->getName();
 
 
         // TODO Ask Philip how I can retrieve these / should set these
@@ -344,12 +345,12 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                                                                 joinOperator->getOutputSchema(),
                                                                                                 joinOperatorHandler,
                                                                                                 JoinBuildSideType::Left,
-                                                                                                timeStampFieldName);
+                                                                                                timeStampFieldNameLeft);
         auto rightJoinBuildOperator = PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                                  joinOperator->getOutputSchema(),
                                                                                                  joinOperatorHandler,
                                                                                                  JoinBuildSideType::Right,
-                                                                                                 timeStampFieldName);
+                                                                                                 timeStampFieldNameRight);
 
         auto joinSinkOperator = PhysicalOperators::PhysicalStreamJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
                                                                                           joinOperator->getRightInputSchema(),

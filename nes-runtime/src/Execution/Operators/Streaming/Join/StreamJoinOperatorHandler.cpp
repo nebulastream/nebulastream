@@ -24,8 +24,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                      std::string joinFieldNameLeft,
                                                      std::string joinFieldNameRight,
                                                      uint64_t counterFinishedBuildingStart,
-                                                     size_t totalSizeForDataStructures,
                                                      size_t windowSize,
+                                                     size_t totalSizeForDataStructures,
                                                      size_t pageSize,
                                                      size_t numPartitions)
     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
@@ -151,7 +151,6 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                                const SchemaPtr& joinSchemaRight,
                                                                const std::string& joinFieldNameLeft,
                                                                const std::string& joinFieldNameRight,
-                                                               size_t maxNoWorkerThreads,
                                                                uint64_t counterFinishedBuildingStart,
                                                                size_t windowSize,
                                                                size_t totalSizeForDataStructures,
@@ -159,9 +158,8 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                                size_t numPartitions) {
 
     return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft, joinSchemaRight, joinFieldNameLeft, joinFieldNameRight,
-                                                       maxNoWorkerThreads, counterFinishedBuildingStart,
-                                                       totalSizeForDataStructures, windowSize, pageSize,
-                                                       numPartitions);
+                                                       counterFinishedBuildingStart, totalSizeForDataStructures,
+                                                       windowSize, pageSize, numPartitions);
 }
 
 const std::vector<OperatorId>& StreamJoinOperatorHandler::getJoinOperatorsId() const { return joinOperatorsId; }
