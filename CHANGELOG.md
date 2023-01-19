@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.26](https://github.com/nebulastream/nebulastream/tree/v0.4.26) (2023-01-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.25...v0.4.26)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Continuous sources randomly failing [\#3410](https://github.com/nebulastream/nebulastream/issues/3410)
+
 ## [v0.4.25](https://github.com/nebulastream/nebulastream/tree/v0.4.25) (2023-01-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.24...v0.4.25)
