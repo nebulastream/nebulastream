@@ -27,6 +27,7 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -65,10 +66,10 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     QueryServicePtr queryService,
                     QueryCatalogServicePtr queryCatalogService,
                     GlobalExecutionPlanPtr globalExecutionPlan,
-                    oatpp::String completeRouterPrefix,
+                    const oatpp::String& completeRouterPrefix,
                     ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(queryService),
-          queryCatalogService(queryCatalogService), globalExecutionPlan(globalExecutionPlan), errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(std::move(queryService)),
+          queryCatalogService(std::move(queryCatalogService)), globalExecutionPlan(std::move(globalExecutionPlan)), errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller

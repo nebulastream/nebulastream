@@ -18,10 +18,7 @@
 #include <memory>
 #include <optional>
 
-namespace NES {
-namespace Spatial {
-namespace DataTypes {
-namespace Experimental {
+namespace NES::Spatial::DataTypes::Experimental {
 
 /**
 * @brief This class contains a location combined with an optional timestamp to represent where a device has been at a certain time or
@@ -65,9 +62,6 @@ class Waypoint {
     GeoLocation location;
     std::optional<Timestamp> timestamp;
 };
-}// namespace Experimental
-}// namespace DataTypes
-}// namespace Spatial
-}// namespace NES
+}// namespace NES::Spatial::DataTypes::Experimental
 
 #endif//NES_CORE_INCLUDE_SPATIAL_INDEX_WAYPOINT_HPP_
