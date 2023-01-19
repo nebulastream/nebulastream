@@ -43,7 +43,7 @@ class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedulePredictor;
-using TrajectoryPredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
+using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
 class WorkerMobilityHandler;
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
@@ -248,7 +248,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * get the class taking care of the trajectory prediction of mobile devices. Will return nullptr if the node is not mobile
      * @return
      */
-    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr getTrajectoryPredictor();
+    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr getTrajectoryPredictor();
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
@@ -277,7 +277,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<uint16_t> localWorkerRpcPort;
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
-    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
+    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr workerMobilityHandler;
     std::atomic<bool> isRunning{false};
     TopologyNodeId workerId;

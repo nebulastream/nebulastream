@@ -139,7 +139,8 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
     }
     NES_DEBUG("TopologyManagerService::AddParent: sensorParent node " << parentId << " exists");
 
-    for (const auto& child : parentPhysicalNode->getChildren()) {
+    auto children = parentPhysicalNode->getChildren();
+    for (const auto& child : children) {
         if (child->as<TopologyNode>()->getId() == childId) {
             NES_ERROR("TopologyManagerService::AddParent: nodes " << childId << " and " << parentId << " already exists");
             return false;
@@ -248,7 +249,8 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
         }
         currentNodeJsonValue["nodeType"] = Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
 
-        for (const auto& child : currentNode->getChildren()) {
+        auto children = currentNode->getChildren();
+        for (const auto& child : children) {
             // Add edge information for current topology node
             nlohmann::json currentEdgeJsonValue{};
             currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
