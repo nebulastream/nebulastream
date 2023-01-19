@@ -31,7 +31,7 @@ namespace NES {
 WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                                 NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor)
+                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
       locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");

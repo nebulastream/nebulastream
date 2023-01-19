@@ -87,7 +87,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     for (const auto& hostRootOperator : hostQueryPlan->getRootOperators()) {
                         //Initialize the host operators to traverse
                         std::deque<NodePtr> hostOperators;
-                        for (const auto& hostChildren : hostRootOperator->getChildren()) {
+                        auto children = hostRootOperator->getChildren();
+                        for (const auto& hostChildren : children) {
                             //Only add the host operators which were not traversed earlier
                             if (std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChildren)
                                 == visitedHostOperators.end()) {
@@ -121,7 +122,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                             }
 
                             //Check for the children operators if a host operator with matching is found on the host
-                            for (const auto& hostChild : hostOperator->getChildren()) {
+                            auto hostOperatorChildren = hostOperator->getChildren();
+                            for (const auto& hostChild : hostOperatorChildren) {
                                 //Only add the host operators in the back of the queue which were not traversed earlier
                                 if (std::find(visitedHostOperators.begin(), visitedHostOperators.end(), hostChild)
                                     == visitedHostOperators.end()) {

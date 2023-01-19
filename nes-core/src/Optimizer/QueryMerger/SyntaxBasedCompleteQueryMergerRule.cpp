@@ -168,9 +168,11 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
         }
 
         NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if children of target and address operators are equal.");
-        for (const auto& targetChild : targetOperator->getChildren()) {
+        auto targetChildren = targetOperator->getChildren();
+        for (const auto& targetChild : targetChildren) {
             areChildrenEqual = false;
-            for (const auto& hostChild : hostOperator->getChildren()) {
+            auto children = hostOperator->getChildren();
+            for (const auto& hostChild : children) {
                 if (areOperatorEqual(targetChild->as<OperatorNode>(), hostChild->as<OperatorNode>(), targetHostOperatorMap)) {
                     areChildrenEqual = true;
                     break;
