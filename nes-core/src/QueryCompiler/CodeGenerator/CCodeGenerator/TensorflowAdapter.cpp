@@ -61,7 +61,6 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         for (int i = 0; i < n; ++i) {
             inputData[i] = (int) va_arg(vl, int);
         }
-        va_end(vl);
 
         //Copy input tensor
         TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
@@ -90,7 +89,6 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         for (int i = 0; i < n; ++i) {
             inputData[i] = (float) va_arg(vl, double);
         }
-        va_end(vl);
 
         //Copy input tensor
         TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
@@ -119,7 +117,6 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         for (int i = 0; i < n; ++i) {
             inputData[i] = (double) va_arg(vl, double);
         }
-        va_end(vl);
 
         //Copy input tensor
         TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
@@ -148,7 +145,6 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         for (int i = 0; i < n; ++i) {
             inputData[i] = (bool) va_arg(vl, int);
         }
-        va_end(vl);
 
         //Copy input tensor
         TfLiteTensorCopyFromBuffer(inputTensor, inputData, inputSize);
@@ -171,6 +167,8 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
         //Copy value to the output
         TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
     }
+
+    va_end(vl);
 }
 
 #endif// TFDEF
