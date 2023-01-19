@@ -190,9 +190,10 @@ TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentFloats) {
 
 /**
  * tests mixed input to ml inference operator
+ *
+ * Disabled because it is not clear what this test tests. There is no code path that supports different data types in the input values. The results are also non-deterministic.
  */
-TEST_F(MLModelDeploymentTest, testSimpleMLModelDeploymentMixedTypes) {
-
+TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
     struct IrisData {
         uint64_t id;
         float f1;
