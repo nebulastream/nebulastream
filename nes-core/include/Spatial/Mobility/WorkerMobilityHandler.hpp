@@ -20,8 +20,8 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <thread>
+#include <optional>
 
 #ifdef S2DEF
 #include <s2/s1angle.h>
@@ -108,8 +108,9 @@ class WorkerMobilityHandler {
      * removed on the coordinator side or nullopt if there are not old predcitions that need to be removed
      * @return true if the the data was succesfully sent
      */
-    bool sendNextPredictedReconnect(const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
-    const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
+    bool
+    sendNextPredictedReconnect(const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
+                               const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
 
     /**
      * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
@@ -121,8 +122,7 @@ class WorkerMobilityHandler {
      *  which contains each workers location.
      * @return true if the reconnect was successful
      */
-    bool triggerReconnectionRoutine(uint64_t& currentParentId,
-                                    uint64_t newParentId);
+    bool triggerReconnectionRoutine(uint64_t& currentParentId, uint64_t newParentId);
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point
@@ -133,6 +133,7 @@ class WorkerMobilityHandler {
     DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
                                                                       double radius);
 
+#ifdef S2DEF
     /**
      * @brief download the the field node locations within the configured distance around the devices position. If the list of the
      * downloaded positions is non empty, delete the old spatial index and replace it with the new data.
@@ -142,8 +143,8 @@ class WorkerMobilityHandler {
      * @return true if the received list of node positions was not empty
      */
     bool updateNeighbourWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation,
-                                            std::unordered_map<uint64_t, S2Point>& neighbourWorkerIdToLocationMap,
-                                            S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex );
+                                          std::unordered_map<uint64_t, S2Point>& neighbourWorkerIdToLocationMap,
+                                          S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
 
     /**
      * @brief checks if the supplied position is less then the defined threshold away from the fringe of the area covered by the
@@ -153,9 +154,8 @@ class WorkerMobilityHandler {
      * @param currentWaypoint: current location of this worker
      * @return true if the device is close to the fringe and the index should be updated
      */
-    bool shouldUpdateNeighbouringWorkerInformation(
-        const std::optional<S2Point>& centroidOfNeighbouringWorkerSpatialIndex,
-        const DataTypes::Experimental::Waypoint& currentWaypoint);
+    bool shouldUpdateNeighbouringWorkerInformation(const std::optional<S2Point>& centroidOfNeighbouringWorkerSpatialIndex,
+                                                   const DataTypes::Experimental::Waypoint& currentWaypoint);
 
     /**
      * @brief Fetch the next reconnect point where this worker needs to connect
@@ -190,8 +190,10 @@ class WorkerMobilityHandler {
      * @param neighbourWorkerSpatialIndex a spatial index containing other workers in the vicinity
      * @return An optional containing the node id of the closest node or nullopt if no node could be found with the radius
      */
-    std::optional<uint64_t> getClosestNodeId(const DataTypes::Experimental::GeoLocation& currentOwnLocation, S1Angle radius,
+    std::optional<uint64_t> getClosestNodeId(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+                                             S1Angle radius,
                                              const S2PointIndex<uint64_t>& neighbourWorkerSpatialIndex);
+#endif
 
     /**
      * @brief this function runs in its own thread and will periodically perform the following tasks:
@@ -213,9 +215,12 @@ class WorkerMobilityHandler {
     //configuration
     uint64_t updateInterval;
     double nodeInfoDownloadRadius;
+
+#ifdef S2DEF
     S1Angle locationUpdateThreshold;
     S1Angle coveredRadiusWithoutThreshold;
     S1Angle defaultCoverageRadiusAngle;
+#endif
 
     std::atomic<bool> isRunning{};
     std::shared_ptr<std::thread> workerMobilityHandlerThread;

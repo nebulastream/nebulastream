@@ -29,7 +29,6 @@
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSchedulePredictor(
     const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
 #ifdef S2DEF
-
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()) {
         NES_FATAL_ERROR("Default Coverage Radius: "
@@ -56,7 +55,6 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
     speedDifferenceThresholdFactor = configuration->speedDifferenceThresholdFactor.getValue();
     bufferAverageMovementSpeed = 0;
     stepsSinceLastLocationSave = 0;
-
 #else
     (void) configuration;
     NES_FATAL_ERROR("cannot construct trajectory predictor without s2 library");
@@ -64,6 +62,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
 #endif
 }
 
+#ifdef S2DEF
 std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule> NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSchedule(const DataTypes::Experimental::Waypoint &currentOwnLocation,
                                                                                               const DataTypes::Experimental::GeoLocation &parentLocation,
                                                                                               const S2PointIndex<uint64_t> &fieldNodeIndex,
@@ -111,6 +110,7 @@ std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule> NES::Spat
     }
     return std::nullopt;
 }
+#endif
 
 bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updateAverageMovementSpeed() {
 #ifdef S2DEF
@@ -211,9 +211,9 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
 }
 #endif
 
+#ifdef S2DEF
 bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleReconnects(const S2Point &currentParentLocation,
                                                                                           const S2PointIndex<uint64_t> &fieldNodeIndex ) {
-#ifdef S2DEF
     double remainingTime;
     reconnectPoints.clear();
     if (!trajectoryLine) {
@@ -293,7 +293,5 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
         }
     }
     return true;
-#else
-    NES_WARNING("s2 library is required to schedule reconnects")
-#endif
 }
+#endif
