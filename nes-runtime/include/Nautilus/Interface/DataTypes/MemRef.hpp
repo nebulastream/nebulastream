@@ -46,10 +46,21 @@ class MemRef : public TraceableType {
         return std::make_unique<ResultType>(*typedAddress);
     }
 
+    /**
+     * @brief Stores a value to a memory location.
+     * @tparam T
+     * @param valueType
+     */
     template<typename T>
     void store(Any& valueType) {
         *reinterpret_cast<typename T::RawType*>(value) = valueType.staticCast<T>().getValue();
     }
+
+    /**
+     * @brief Stores a value to the pointer in the memref.
+     * Depending on the value type we determine the correct method to store it.
+     * @param valueType
+     */
     void store(Any& valueType) {
         if (valueType.isType<Int8>()) {
             store<Int8>(valueType);
