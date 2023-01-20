@@ -175,7 +175,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStopRandomPort) {
         ZmqServer server("127.0.0.1", *freeDataPort, 4, exchangeProtocol, buffMgr);
         server.start();
         ASSERT_EQ(server.isServerRunning(), true);
-        ASSERT_GT(server.getServerPort(), *freeDataPort);
+        ASSERT_EQ(server.getServerPort(), *freeDataPort);
     } catch (...) {
         // shutdown failed
         FAIL();
