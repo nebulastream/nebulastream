@@ -80,6 +80,12 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
     }
 
+    /* Will be called after a test is executed. */
+    void TearDown() override {
+        NES_INFO("Tear down StreamJoinPipelineTest test case.");
+        NESBaseTest::TearDown();
+    }
+
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StreamJoinPipelineTest test class."); }
 };
