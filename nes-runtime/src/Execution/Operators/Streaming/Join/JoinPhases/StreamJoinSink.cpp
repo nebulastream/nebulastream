@@ -87,12 +87,17 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              WorkerContext* workerCtx,
                              StreamJoinOperatorHandler* operatorHandler,
                              std::vector<FixedPage>&& probeSide,
-                             std::vector<FixedPage>&& buildSide) {
+                             std::vector<FixedPage>&& buildSide,
+                             uint64_t windowStart,
+                             uint64_t windowEnd) {
 
     auto joinSchema = Util::createJoinSchema(operatorHandler->getJoinSchemaLeft(),
                                              operatorHandler->getJoinSchemaRight(),
                                              operatorHandler->getJoinFieldNameLeft());
     const size_t sizeOfKey = getSizeOfKey(operatorHandler->getJoinSchemaLeft(), operatorHandler->getJoinFieldNameLeft());
+
+    const uint64_t sizeOfWindowStart = sizeof(uint64_t);
+    const uint64_t sizeOfWindowEnd = sizeof(uint64_t);
 
     auto sizeOfJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
@@ -129,10 +134,13 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                         auto numberOfTuplesInBuffer = currentTupleBuffer.getNumberOfTuples();
                         auto bufferPtr = currentTupleBuffer.getBuffer() + sizeOfJoinedTuple * numberOfTuplesInBuffer;
 
-                        // Building the join tuple ( key | left tuple | right tuple)
-                        memcpy(bufferPtr, lhsKeyPtr, sizeOfKey);
-                        memcpy(bufferPtr + sizeOfKey, lhsRecordPtr, leftSchemaSize);
-                        memcpy(bufferPtr + sizeOfKey + leftSchemaSize, rhsRecordPtr, rightSchemaSize);
+                        // Building the join tuple (winStart | winStop| key | left tuple | right tuple)
+                        memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
+                        memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);
+                        memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd, lhsKeyPtr, sizeOfKey);
+                        memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + sizeOfKey, lhsRecordPtr, leftSchemaSize);
+                        memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + sizeOfKey + leftSchemaSize,
+                               rhsRecordPtr, rightSchemaSize);
 
                         numberOfTuplesInBuffer += 1;
                         currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
@@ -181,15 +189,19 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
     auto leftBucketSize = leftHashTable.getNumItems(partitionId);
     auto rightBucketSize = rightHashTable.getNumItems(partitionId);
+    const auto windowStart = opHandler->getWindow(lastTupleTimeStamp).getWindowStart();
+    const auto windowEnd = opHandler->getWindow(lastTupleTimeStamp).getWindowEnd();
 
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
         if (leftBucketSize > rightBucketSize) {
             joinedTuples =
-                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket));
+                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket),
+                                      windowStart, windowEnd);
         } else {
             joinedTuples =
-                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket));
+                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket),
+                                      windowStart, windowEnd);
         }
     }
 

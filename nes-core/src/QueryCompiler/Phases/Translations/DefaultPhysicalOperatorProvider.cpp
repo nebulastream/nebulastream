@@ -318,22 +318,17 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         //FIXME Once #3353 is merged, sliding window can be added
         NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
 
-        auto windowSize = windowType->getSize().getTime();
         // FIXME Once #3407 is done, we can continue with this here
-        auto timeStampFieldNameLeft = windowType->getTimeCharacteristic()->getField()->getName();
-        auto timeStampFieldNameRight = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameLeft = "test1$timestamp"; // windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameRight = "test2$timestamp"; // windowType->getTimeCharacteristic()->getField()->getName();
 
-
-        // TODO Ask Philip how I can retrieve these / should set these
-        auto maxNoWorkerThreads = 1UL; // This is needed for creating the local hash tables, but it can be set later on
+        auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
         auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
-
 
         auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
                                                                      joinOperator->getRightInputSchema(),
                                                                      joinFieldNameLeft, joinFieldNameRight,
-                                                                     maxNoWorkerThreads,
                                                                      numSourcesLeft + numSourcesRight, windowSize);
 
         auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(),
