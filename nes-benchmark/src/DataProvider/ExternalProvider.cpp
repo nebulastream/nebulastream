@@ -13,74 +13,62 @@
 */
 
 #include <DataProvider/ExternalProvider.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Benchmark::DataProviding {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   uint64_t ingestionRateInBuffers, // TODO evtl. anderer Name?
-                                   uint64_t experimentRuntime, // TODO anderen Namen überlegen
+                                   uint64_t ingestionRateInBuffers,
+                                   uint64_t experimentRuntime, // TODO maybe change variable name
                                    DataProviderMode providerMode,
                                    std::string ingestionFrequencyDistribution)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateInBuffers(ingestionRateInBuffers),
-      ingestionFrequencyDistribution(getModeFromString(ingestionFrequencyDistribution)) {
+      experimentRuntime(experimentRuntime), ingestionFrequencyDistribution(getDistributionFromString(ingestionFrequencyDistribution)) {
 
-    // TODO set predefinedIngestionRates for SINUS and COSINUS
-    uint64_t ingestionRateValue = 0;
-    if (this->ingestionFrequencyDistribution != UNIFORM && this->ingestionFrequencyDistribution != SINUS && this->ingestionFrequencyDistribution != COSINUS) {
-        generateFrequencies(experimentRuntime);
-        auto maxFrequency = std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end());
-        ingestionRateValue = *maxFrequency;
-    } else {
-        ingestionRateValue = ingestionRateInBuffers;
-    }
-
-    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(ingestionRateValue == 0 ? 1 : ingestionRateValue * 1000);
+    generateIngestionRates();
+    uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
+    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
 }
 
-IngestionFrequencyDistribution ExternalProvider::getModeFromString(std::string providerMode) {
-    if (providerMode == "UNIFORM") return UNIFORM;
-    else if (providerMode == "SINUS") return SINUS;
-    else if (providerMode == "COSINUS") return COSINUS;
-    else if (providerMode == "M1") return M1;
-    else if (providerMode == "M2") return M2;
-    else if (providerMode == "D1") return D1;
-    else if (providerMode == "D2") return D2;
+IngestionFrequencyDistribution ExternalProvider::getDistributionFromString(std::string ingestionDistribution) {
+    if (ingestionDistribution == "UNIFORM") return UNIFORM;
+    else if (ingestionDistribution == "SINUS") return SINUS;
+    else if (ingestionDistribution == "COSINUS") return COSINUS;
+    else if (ingestionDistribution == "M1") return M1;
+    else if (ingestionDistribution == "M2") return M2;
+    else if (ingestionDistribution == "D1") return D1;
+    else if (ingestionDistribution == "D2") return D2;
     else NES_THROW_RUNTIME_ERROR("Provider mode not supported");
 }
 
-void ExternalProvider::generateFrequencies(uint64_t experimentRuntime) {
-    //const std::string delim = ",";
-
-    std::string m1ValueString = "35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,"
-                                "35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000";
-    std::string m2ValueString = "10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000,"
-                                "10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000,10000";
-
-    std::string d1ValueString = "10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,"
-                                "40000,30000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000";
-    std::string d2ValueString = "100000,90000,80000,70000,60000,50000,40000,30000,20000,10000,20000,30000,40000,50000,60000,"
-                                "70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000,30000,40000,50000";
-
-    std::vector<uint64_t> m1Values = Util::splitWithStringDelimiter<uint64_t>(m1ValueString, ",");
-    std::vector<uint64_t> m2Values = Util::splitWithStringDelimiter<uint64_t>(m2ValueString, ",");
-    std::vector<uint64_t> d1Values = Util::splitWithStringDelimiter<uint64_t>(d1ValueString, ",");
-    std::vector<uint64_t> d2Values = Util::splitWithStringDelimiter<uint64_t>(d2ValueString, ",");
-
-    for (size_t i = 0; i < experimentRuntime; i++) {
-        if (ingestionFrequencyDistribution == M1) {
-            if (i >= m1Values.size()) break;
-            predefinedIngestionRates.push_back(m1Values[i]);
-        } else if (ingestionFrequencyDistribution == M2) {
-            if (i >= m2Values.size()) break;
-            predefinedIngestionRates.push_back(m2Values[i]);
-        } else if (ingestionFrequencyDistribution == D1) {
-            if (i >= d1Values.size()) break;
-            predefinedIngestionRates.push_back(d1Values[i]);
-        } else if (ingestionFrequencyDistribution == D2) {
-            if (i >= d2Values.size()) break;
-            predefinedIngestionRates.push_back(d2Values[i]);
+void ExternalProvider::generateIngestionRates() {
+    for (uint64_t i = 0; i < experimentRuntime; i++) {
+        if (ingestionFrequencyDistribution == UNIFORM) {
+            predefinedIngestionRates.push_back(ingestionRateInBuffers);
+        } else if (ingestionFrequencyDistribution == SINUS || ingestionFrequencyDistribution == COSINUS) {
+            generateTrigonometricValues(i);
         }
+        // TODO replace %18 and %30 with %(vector.size) when M1 through D2 are implemented as a vector
+        else if (ingestionFrequencyDistribution == M1) {
+            predefinedIngestionRates.push_back(m1Values[i % 18]);
+        } else if (ingestionFrequencyDistribution == M2) {
+            predefinedIngestionRates.push_back(m2Values[i % 18]);
+        } else if (ingestionFrequencyDistribution == D1) {
+            predefinedIngestionRates.push_back(d1Values[i % 30]);
+        } else if (ingestionFrequencyDistribution == D2) {
+            predefinedIngestionRates.push_back(d2Values[i % 30]);
+        }
+    }
+}
+
+void ExternalProvider::generateTrigonometricValues(uint64_t xValue) {
+    if (ingestionFrequencyDistribution == SINUS) {
+        // this is a sinus function with period length of experimentRuntime
+        auto value = (long double)(0.5 * (1 + sin(2 * (long double)std::numbers::pi * xValue / experimentRuntime))) * ingestionRateInBuffers;
+        predefinedIngestionRates.push_back(value);
+    } else {
+        // this is a cosinus function with period length of experimentRuntime
+        auto value = (long double)(0.5 * (1 + cos(2 * (long double)std::numbers::pi * xValue / experimentRuntime))) * ingestionRateInBuffers;
+        predefinedIngestionRates.push_back(value);
     }
 }
 
@@ -101,40 +89,39 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
-    sleep(5);   // TODO necessary?
+    sleep(5);   // TODO why is this sleep necessary?
 
-    // TODO set predefinedIngestionRates for SINUS and COSINUS
-    uint64_t buffersToProducePer10ms = 0;
-    if (ingestionFrequencyDistribution != UNIFORM && ingestionFrequencyDistribution != SINUS && ingestionFrequencyDistribution != COSINUS) {
-        buffersToProducePer10ms = predefinedIngestionRates[0];
-    } else {
-        buffersToProducePer10ms = ingestionRateInBuffers / 100;
-    }
+    uint64_t nextPeriodStartTime;
+    uint64_t periodStartTime;
+    uint64_t periodEndTime;
+    uint64_t currentTime;
+    uint64_t currentSecond;
+    uint64_t lastSecond = 0;
 
+    uint64_t buffersProcessedCount;
+    // TODO why is workingTimeDelta not being used here?
+    uint64_t buffersToProducePer10ms = predefinedIngestionRates[0];
     NES_ASSERT(buffersToProducePer10ms != 0, "Ingestion ratio is too small");
 
-    uint64_t nextPeriodStartTime = 0;
     uint64_t runningOverAllCount = 0;
-    uint64_t productionCountPerInterval = 0;
-    long lastSecond = 0;
-    auto secondCount = 0;
+    uint64_t ingestionRateIndex = 0;
 
     while (started) {
-        auto periodStartTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        uint64_t buffersProcessedCount = 0;
+        periodStartTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        buffersProcessedCount = 0;
 
         while (buffersProcessedCount < buffersToProducePer10ms) {
+            currentSecond =
+                std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
             auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
             auto buffer = preAllocatedBuffers[bufferIndex];
-
-            auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
-            auto currentSecond = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
             auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
             wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
             wrapBuffer.setCreationTimestamp(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
             TupleBufferHolder bufferHolder;
             bufferHolder.bufferToHold = wrapBuffer;
@@ -143,30 +130,35 @@ void ExternalProvider::generateData() {
                 NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
             }
 
-            productionCountPerInterval++;
             if (lastSecond != currentSecond) {
-                lastSecond = currentSecond;
-
-                if (ingestionFrequencyDistribution == SINUS) {
-                    if (buffersToProducePer10ms == 0) buffersToProducePer10ms = 1;
-
-                    //buffersToProducePer10ms = ;
-                } else if (ingestionFrequencyDistribution == COSINUS) {
-                    if (buffersToProducePer10ms == 0) buffersToProducePer10ms = 1;
-
-                    //buffersToProducePer10ms = ;
-                } else if (ingestionFrequencyDistribution == M1 || ingestionFrequencyDistribution == M2 ||
-                           ingestionFrequencyDistribution == D1 || ingestionFrequencyDistribution == D2) {
-                    buffersToProducePer10ms = predefinedIngestionRates[secondCount] / 100;
-                } else {
-                    NES_THROW_RUNTIME_ERROR("Mode of ingestionFrequencyDistribution not supported");
+                // TODO change /100 according to workingTimeDelta (see ExternalProvider.hpp)
+                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % experimentRuntime] / 100) == 0) {
+                    buffersToProducePer10ms = 1;
                 }
 
-                secondCount++;
-            }// if (lastSecond != currentSecond)
+                lastSecond = currentSecond;
+                ingestionRateIndex++;
+            }
 
             buffersProcessedCount++;
         }// while (buffersProcessedCount < buffersToProducePer10ms)
+
+        periodEndTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        nextPeriodStartTime = periodStartTime + 10; // TODO change +10 according to workingTimeDelta (see ExternalProvider.hpp)
+
+        if (nextPeriodStartTime < periodEndTime) {
+            NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
+        }
+
+        // TODO maybe just use periodEndTime
+        currentTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+
+        while (currentTime < nextPeriodStartTime) {
+            currentTime =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        }
     }// while (started)
 }
 }// namespace NES::Benchmark::DateProviding
