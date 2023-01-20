@@ -88,6 +88,7 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                              StreamJoinOperatorHandler* operatorHandler,
                              std::vector<FixedPage>&& probeSide,
                              std::vector<FixedPage>&& buildSide,
+                             StreamJoinWindow& currentWindow,
                              uint64_t windowStart,
                              uint64_t windowEnd) {
 
@@ -102,8 +103,13 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
     auto sizeOfJoinedTuple = joinSchema->getSchemaSizeInBytes();
     auto tuplePerBuffer = pipelineCtx->getBufferManager()->getBufferSize() / sizeOfJoinedTuple;
 
-    auto currentTupleBuffer = workerCtx->allocateTupleBuffer();
-    currentTupleBuffer.setNumberOfTuples(0);
+    auto& workerIdToBuffers = currentWindow.getMapEmittableBuffers();
+    auto workerId = workerCtx->getId();
+    if (!workerIdToBuffers.contains(workerId)) {
+        workerIdToBuffers[workerId] = workerCtx->allocateTupleBuffer();
+        workerIdToBuffers[workerId].setNumberOfTuples(0);
+    }
+    auto currentTupleBuffer = workerIdToBuffers[workerId];
     size_t joinedTuples = 0;
     const auto leftSchemaSize = operatorHandler->getJoinSchemaLeft()->getSchemaSizeInBytes();
     const auto rightSchemaSize = operatorHandler->getJoinSchemaRight()->getSchemaSizeInBytes();
@@ -149,18 +155,14 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                         if (numberOfTuplesInBuffer >= tuplePerBuffer) {
                             pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
 
-                            currentTupleBuffer = workerCtx->allocateTupleBuffer();
+                            workerIdToBuffers[workerId] = workerCtx->allocateTupleBuffer();
+                            currentTupleBuffer = workerIdToBuffers[workerId];
                             currentTupleBuffer.setNumberOfTuples(0);
                         }
                     }
                 }
             }
         }
-    }
-
-    // If in the current buffer are any tuples, we have to emit then before returning
-    if (currentTupleBuffer.getNumberOfTuples() > 0) {
-        pipelineCtx->emitBuffer(currentTupleBuffer, reinterpret_cast<WorkerContext&>(workerCtx));
     }
 
     return joinedTuples;
@@ -182,26 +184,27 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
 
     NES_TRACE("Joining for partition " << partitionId << " and lastTupleTimeStamp " << lastTupleTimeStamp);
 
-    auto& leftHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(true /* isLeftSide */);
-    auto& rightHashTable = opHandler->getWindow(lastTupleTimeStamp).getSharedJoinHashTable(false /* isLeftSide */);
+    auto& currentWindow = opHandler->getWindow(lastTupleTimeStamp);
+    auto& leftHashTable = currentWindow.getSharedJoinHashTable(true /* isLeftSide */);
+    auto& rightHashTable = currentWindow.getSharedJoinHashTable(false /* isLeftSide */);
 
     auto leftBucket = leftHashTable.getPagesForBucket(partitionId);
     auto rightBucket = rightHashTable.getPagesForBucket(partitionId);
     auto leftBucketSize = leftHashTable.getNumItems(partitionId);
     auto rightBucketSize = rightHashTable.getNumItems(partitionId);
-    const auto windowStart = opHandler->getWindow(lastTupleTimeStamp).getWindowStart();
-    const auto windowEnd = opHandler->getWindow(lastTupleTimeStamp).getWindowEnd();
+    const auto windowStart = currentWindow.getWindowStart();
+    const auto windowEnd = currentWindow.getWindowEnd() + 1;
 
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
         if (leftBucketSize > rightBucketSize) {
             joinedTuples =
                 executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket),
-                                      windowStart, windowEnd);
+                                      currentWindow, windowStart, windowEnd);
         } else {
             joinedTuples =
                 executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket),
-                                      windowStart, windowEnd);
+                                      currentWindow, windowStart, windowEnd);
         }
     }
 
@@ -213,6 +216,12 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     }
 
     if (opHandler->getWindow(lastTupleTimeStamp).fetchSubSink(1) == 1) {
+        // If in the current buffer are any tuples, we have to emit then before returning
+        auto currentTupleBuffer = currentWindow.getMapEmittableBuffers()[workerCtx->getId()];
+        if (currentTupleBuffer.getNumberOfTuples() > 0) {
+            pipelineCtx->emitBuffer(currentTupleBuffer, *workerCtx);
+        }
+
         // delete the current hash table
         opHandler->deleteWindow(lastTupleTimeStamp);
     }

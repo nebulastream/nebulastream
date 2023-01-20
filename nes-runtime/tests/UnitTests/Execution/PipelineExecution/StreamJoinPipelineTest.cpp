@@ -190,7 +190,7 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
                         auto dynamicBufJoined = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutJoined, bufferJoined);
                         auto posNewTuple = dynamicBufJoined.getNumberOfTuples();
                         dynamicBufJoined[posNewTuple][0].write<uint64_t>(firstTupleTimeStampWindow);
-                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(lastTupleTimeStampWindow);
+                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(lastTupleTimeStampWindow + 1);
 
                         dynamicBufJoined[posNewTuple][2].write<uint64_t>(leftKey);
 
