@@ -40,6 +40,8 @@ bool LocationIndex::updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     return false;
 #else
     NES_WARNING("Files were compiled without s2. Nothing was updated into spatial index");
+    (void) topologyNodeId;
+    (void) geoLocation;
     return false;
 #endif
 }
@@ -61,6 +63,8 @@ bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     return true;
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    (void) topologyNodeId;
+    (void) geoLocation;
     return false;
 #endif
 }
@@ -79,6 +83,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
     return false;
 #else
     NES_WARNING("Files were compiled without s2. Nothing can be removed from the spatial index because it does not exist");
+    (void) topologyNodeId;
     return false;
 #endif
 }
@@ -98,6 +103,8 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::Dat
     return queryResult.data();
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    (void) geoLocation;
+    (void) radius;
     return {};
 #endif
 }
@@ -139,6 +146,8 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
     return closestPoints[1].data();
 #else
     NES_WARNING("Files were compiled without s2, cannot find closest nodes");
+    (void) topologyNodeId;
+    (void) radius;
     return {};
 #endif
 }
@@ -163,6 +172,8 @@ LocationIndex::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLoca
     return closestNodeList;
 #else
     NES_WARNING("Files were compiled without s2, cannot find closest nodes");
+    (void) center;
+    (void) radius;
     return {};
 #endif
 }

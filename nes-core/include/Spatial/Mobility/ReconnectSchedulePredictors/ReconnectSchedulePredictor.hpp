@@ -31,7 +31,6 @@
 #include <s2/s2point.h>
 #include <s2/s2point_index.h>
 #include <s2/s2polyline.h>
-
 #endif
 
 namespace NES {
@@ -59,6 +58,7 @@ class ReconnectSchedulePredictor {
   public:
     ReconnectSchedulePredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
+#ifdef S2DEF
     /**
      * @brief calculate the distance between the projected point on the path which is closest to coveringNode and the a point on the path
      * which is at a distance of exactly the coverage. This distance equals half of the entire distance on the line covered by a
@@ -73,9 +73,7 @@ class ReconnectSchedulePredictor {
      * @return a pair containing an S2Point marking the end of the coverage and an S1Angle representing the distance between the
      * projected point closest to covering node and the end of coverage (half of the entire covered distance)
      */
-#ifdef S2DEF
     static std::pair<S2Point, S1Angle> findPathCoverage(const S2Polyline& path, S2Point coveringNode, S1Angle coverage);
-#endif
 
     /**
      * @brief calculate a new reconnect schedule based on the location of other workers (potential parents to reconnect
@@ -90,7 +88,6 @@ class ReconnectSchedulePredictor {
      * @param isIndexUpdted indicates if the index was updated or has remained the same since the last schedule was calculated
      * @return the new schedule if one was calculated or nullopt else
      */
-#ifdef S2DEF
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                               const DataTypes::Experimental::GeoLocation& parentLocation,
                                                           const S2PointIndex<uint64_t> &FieldNodeIndex,
@@ -107,6 +104,7 @@ class ReconnectSchedulePredictor {
     bool updatePredictedPath(const NES::Spatial::DataTypes::Experimental::GeoLocation& newPathStart,
                              const NES::Spatial::DataTypes::Experimental::GeoLocation& currentLocation);
 
+#ifdef S2DEF
     /**
      * @brief find the minimal covering set of field nodes covering the predicted path. This represents the reconnect schedule
      * with the least possible reconnects along the predicted trajectory. Use the average movement speed to estimate the time
@@ -114,7 +112,6 @@ class ReconnectSchedulePredictor {
      * @param currentParendLocation : The location of the workers current parent
      * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-#ifdef S2DEF
     bool scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
 #endif
 
@@ -127,25 +124,24 @@ class ReconnectSchedulePredictor {
     bool updateAverageMovementSpeed();
 
     //todo #3365: implement a reset function to lose all non-config state
-
+#ifdef S2DEF
     //configuration
     size_t locationBufferSize;
     size_t locationBufferSaveRate;
     double nodeInfoDownloadRadius;
-#ifdef S2DEF
     S1Angle predictedPathLengthAngle;
     S1Angle pathDistanceDeltaAngle;
     S1Angle reconnectSearchRadius;
     S1Angle defaultCoverageRadiusAngle;
-
     //prediction data
     std::optional<S2Polyline> trajectoryLine;
-#endif
     std::deque<DataTypes::Experimental::Waypoint> locationBuffer;
     std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint> reconnectPoints;
     double bufferAverageMovementSpeed;
     double speedDifferenceThresholdFactor;
     size_t stepsSinceLastLocationSave;
+#endif
+
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES
