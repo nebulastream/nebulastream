@@ -515,7 +515,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    // The plan should have one pipeline
+    // The plan should have two pipelines
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 2u);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
