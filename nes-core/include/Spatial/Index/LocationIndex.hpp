@@ -21,8 +21,8 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#ifdef S2DEF
 #include <Common/Identifiers.hpp>
+#ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
 

@@ -31,15 +31,23 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
 #ifdef S2DEF
 
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
-    if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()
-        > nodeInfoDownloadRadius) {
+    if (configuration->defaultCoverageRadius.getValue() > configuration->nodeIndexUpdateThreshold.getValue()) {
         NES_FATAL_ERROR("Default Coverage Radius: "
-                        << configuration->defaultCoverageRadius.getValue()
-                        << ", node index update threshold: " << configuration->nodeIndexUpdateThreshold.getValue()
-                        << ", node info download radius: " << configuration->nodeInfoDownloadRadius.getValue() << std::endl
-                        << "These values will lead to gaps in reconnect planning. Exiting");
+                            << configuration->defaultCoverageRadius.getValue()
+                            << "is bigger than the node index update threshold: "
+                            << configuration->nodeIndexUpdateThreshold.getValue()
+                            << ". this would lead to nodes not being not discoverable although they are in range. Exiting");
         exit(EXIT_FAILURE);
     }
+    if(configuration->nodeIndexUpdateThreshold.getValue() > nodeInfoDownloadRadius) {
+        NES_FATAL_ERROR("Node info download radius: "
+                            << nodeInfoDownloadRadius
+                            << "is smaller than the node index update threshold: "
+                            << configuration->nodeIndexUpdateThreshold.getValue()
+                            << ". this would lead to downloading node info after every location update. Exiting");
+        exit(EXIT_FAILURE);
+    }
+
     locationBufferSize = configuration->locationBufferSize.getValue();
     locationBufferSaveRate = configuration->locationBufferSaveRate.getValue();
     pathDistanceDeltaAngle = S2Earth::MetersToAngle(configuration->pathDistanceDelta.getValue());
@@ -203,20 +211,20 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
 }
 #endif
 
-void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleReconnects(const S2Point &currentParentLocation,
+bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleReconnects(const S2Point &currentParentLocation,
                                                                                           const S2PointIndex<uint64_t> &fieldNodeIndex ) {
 #ifdef S2DEF
     double remainingTime;
     reconnectPoints.clear();
     if (!trajectoryLine) {
-        return;
+        return false;
     }
 
     //find the end of path coverage of our curent parent
     auto reconnectionPointTuple =
         findPathCoverage(trajectoryLine.value(), currentParentLocation, S1Angle(defaultCoverageRadiusAngle));
     if (reconnectionPointTuple.second.degrees() == 0) {
-        return;
+        return false;
     }
     auto currentParentPathCoverageEnd = reconnectionPointTuple.first;
 
@@ -284,6 +292,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::scheduleR
             break;
         }
     }
+    return true;
 #else
     NES_WARNING("s2 library is required to schedule reconnects")
 #endif

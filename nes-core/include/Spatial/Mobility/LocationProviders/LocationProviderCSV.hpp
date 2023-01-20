@@ -37,8 +37,7 @@ class LocationProviderCSV : public LocationProvider {
     [[nodiscard]] Timestamp getStartTime() const;
 
     /**
-     * @brief get the simulated last known location of the device. if s2 is enabled this will be an interpolated point along
-     * the line between to locations from the csv. If s2 is disabled this will be the waypoint from the csv which has the
+     * @brief get the simulated current location of the device which is the waypoint read from csv which has the
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
@@ -47,7 +46,9 @@ class LocationProviderCSV : public LocationProvider {
 
   private:
     /**
-     * @brief  that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
+     * @brief reads waypoints representing simulated device locations from a csv in the format
+     * "<latitude>, <longitued>; <offset from starttime in nanosec>".
+     * getCurrentWaypoint() will return a waypoints from this list.
      */
     void loadMovementSimulationDataFromCsv();
 
