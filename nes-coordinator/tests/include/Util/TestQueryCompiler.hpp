@@ -24,6 +24,8 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/TestPhaseProvider.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <utility>
 
 namespace NES::TestUtils {
