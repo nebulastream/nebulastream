@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -85,8 +86,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Sum";
+
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
@@ -119,7 +124,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
     auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -152,8 +157,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Count";
+
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType);
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, countAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
@@ -186,7 +195,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue>();
+    auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
     auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(countAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -219,8 +228,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Min";
+    
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType);
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+    
+    auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, minAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
@@ -253,7 +266,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue>();
+    auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
     auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(minAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -286,8 +299,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Max";
+    
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType);
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+    
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, maxAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
@@ -320,7 +337,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue>();
+    auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
     auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(maxAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
@@ -353,8 +370,12 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Avg";
+
     DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType);
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, avgAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
@@ -387,7 +408,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 
     auto executablePipeline = provider->create(pipeline);
 
-    auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue>();
+    auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
     auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(avgAggregationValue));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});

@@ -33,10 +33,7 @@ class ThresholdWindowOperatorHandler : public OperatorHandler {
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    // TODO 3280: maybe move from this class to the aggregation
-    int64_t sum = 0L;// stores the sum aggregation
-    uint64_t recordCount =
-        0;// counts the records contributing to the aggregate,  // TODO 3280: maybe move this count to the AggregationValue
+    uint64_t recordCount = 0;// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
     std::unique_ptr<Aggregation::AggregationValue> AggregationValue;

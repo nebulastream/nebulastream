@@ -29,10 +29,10 @@ struct AggregationValue {
 /**
  * Class for average aggregation Value, maintains sum and count to calc avg in the lower function
  */
-// TODO 3280: should be templated
+template <typename T>
 struct AvgAggregationValue : AggregationValue {
-    int64_t sum = 0;
     int64_t count = 0;
+    T sum = 0;
 };
 
 /**
@@ -46,27 +46,25 @@ struct SumAggregationValue : AggregationValue {
 /**
  * Class for count aggregation Value, maintains the number of occurred tuples
  */
- // TODO 3280: should be templated
+template <typename T>
 struct CountAggregationValue : AggregationValue {
-    int64_t count = 0;
+    T count = 0;
 };
 
 /**
  * Class for min aggregation Value, maintains the min value of all occurred tuples
  */
-// TODO 3280: should be templated
+template <typename T>
 struct MinAggregationValue : AggregationValue {
-    // TODO 3280: Take the max from the logical type
-    int64_t min = std::numeric_limits<int64_t>::max();
+    T min = std::numeric_limits<T>::max();
 };
 
 /**
  * Class for max aggregation Value, maintains the max value of all occurred tuples
  */
-// TODO 3280: should be templated
+template <typename T>
 struct MaxAggregationValue : AggregationValue {
-    // TODO 3280: Take the min from the logical type
-    int64_t max = std::numeric_limits<int64_t>::min();
+    T max = std::numeric_limits<T>::min();
 };
 
 }// namespace NES::Runtime::Execution::Aggregation

@@ -75,7 +75,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
 
     auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
 
-    auto countValue = Aggregation::CountAggregationValue();
+    auto countValue = Aggregation::CountAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
@@ -104,7 +104,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     PhysicalTypePtr integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr doubleType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
-    auto avgValue = Aggregation::AvgAggregationValue();
+    auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
@@ -136,7 +136,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
-    auto minValue = Aggregation::MinAggregationValue();
+    auto minValue = Aggregation::MinAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
     auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
@@ -177,7 +177,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
-    auto maxValue = Aggregation::MaxAggregationValue();
+    auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
     auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);

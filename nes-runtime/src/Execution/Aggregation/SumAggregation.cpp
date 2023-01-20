@@ -41,10 +41,11 @@ Nautilus::Value<> SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     return finalVal;
 }
 
+// TODO 3280 check the type when resetting
 void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = Nautilus::Value<Nautilus::Int64>((int64_t) 0);
     memref.store(zero);
 }
-uint64_t SumAggregationFunction::getSize() { return sizeof(int64_t); }
+uint64_t SumAggregationFunction::getSize() { return inputType->size(); }
 
 }// namespace NES::Runtime::Execution::Aggregation
