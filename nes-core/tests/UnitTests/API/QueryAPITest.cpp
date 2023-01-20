@@ -66,15 +66,12 @@ class QueryAPITest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-
+        Testing::NESBaseTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create();
         physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
         logicalSource = LogicalSource::create("test2", Schema::create());
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }
-
-    void TearDown() override {}
 };
 
 TEST_F(QueryAPITest, testQueryFilter) {

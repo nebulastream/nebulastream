@@ -231,6 +231,13 @@ class NesPortDispatcher {
         }
     }
 
+    ~NesPortDispatcher() { tearDown(); }
+
+    void tearDown() {
+        NES_ASSERT2_FMT(numOfBorrowedPorts == 0,
+                        "There are " << numOfBorrowedPorts << " leaked ports - please check your test logic");
+    }
+
     BorrowedPortPtr getNextPort() {
         while (true) {
             auto nextIndex = data.getNextIndex();
@@ -240,6 +247,7 @@ class NesPortDispatcher {
             }
             NES_ASSERT2_FMT(data[nextIndex].checksum == CHECKSUM, "invalid checksum");
             if (data[nextIndex].free.compare_exchange_strong(expected, false)) {
+                ++numOfBorrowedPorts;
                 return std::make_shared<BorrowedPort>(data[nextIndex].port, nextIndex, this);
             }
             usleep(100 * 1000);// 100ms
@@ -249,11 +257,19 @@ class NesPortDispatcher {
         return nullptr;
     }
 
-    void recyclePort(uint32_t portIndex) { data[portIndex].free.store(true); }
+    void recyclePort(uint32_t portIndex) {
+        auto expected = false;
+        if (data[portIndex].free.compare_exchange_strong(expected, true)) {
+            --numOfBorrowedPorts;
+        } else {
+            NES_ASSERT2_FMT(false, "Port " << data[portIndex].port << " recycled twice");
+        }
+    }
 
   private:
     Util::FileMutex mutex;
     detail::ShmFixedVector<PortHolder> data;
+    std::atomic<size_t> numOfBorrowedPorts{0};
     //        uint32_t numberOfPorts;
 };
 
@@ -262,27 +278,43 @@ static NesPortDispatcher portDispatcher(8000, 10000);
 NESBaseTest::NESBaseTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID()) {}
 
 void NESBaseTest::SetUp() {
-    Base::SetUp();
-    if (!std::filesystem::exists(testResourcePath)) {
-        std::filesystem::create_directories(testResourcePath);
+    auto expected = false;
+    if (setUpCalled.compare_exchange_strong(expected, true)) {
+        Base::SetUp();
+        if (!std::filesystem::exists(testResourcePath)) {
+            std::filesystem::create_directories(testResourcePath);
+        } else {
+            std::filesystem::remove_all(testResourcePath);
+            std::filesystem::create_directories(testResourcePath);
+        }
+        restPort = portDispatcher.getNextPort();
+        rpcCoordinatorPort = portDispatcher.getNextPort();
     } else {
-        std::filesystem::remove_all(testResourcePath);
-        std::filesystem::create_directories(testResourcePath);
+        NES_ERROR2("SetUp called twice in {}", typeid(*this).name());
     }
-    restPort = portDispatcher.getNextPort();
-    rpcCoordinatorPort = portDispatcher.getNextPort();
 }
 
 BorrowedPortPtr NESBaseTest::getAvailablePort() { return portDispatcher.getNextPort(); }
 
 std::filesystem::path NESBaseTest::getTestResourceFolder() const { return testResourcePath; }
 
+NESBaseTest::~NESBaseTest() {
+    NES_ASSERT2_FMT(setUpCalled, "SetUp not called for test " << typeid(*this).name());
+    NES_ASSERT2_FMT(tearDownCalled, "TearDown not called for test " << typeid(*this).name());
+}
+
 void NESBaseTest::TearDown() {
-    restPort.reset();
-    rpcCoordinatorPort.reset();
-    std::filesystem::remove_all(testResourcePath);
-    Base::TearDown();
-    completeTest();
+    auto expected = false;
+    if (tearDownCalled.compare_exchange_strong(expected, true)) {
+        restPort.reset();
+        rpcCoordinatorPort.reset();
+        std::filesystem::remove_all(testResourcePath);
+        Base::TearDown();
+        completeTest();
+        //        portDispatcher.tearDown();
+    } else {
+        NES_ERROR2("TearDown called twice in {}", typeid(*this).name());
+    }
 }
 
 void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
