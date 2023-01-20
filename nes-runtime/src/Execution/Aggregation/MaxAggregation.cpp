@@ -47,10 +47,10 @@ Nautilus::Value<> MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     auto finalVal = AggregationFunction::loadFromMemref(memref, finalType);
     return finalVal;
 }
-
+// TODO 3280 check the type when resetting
 void MaxAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto maxVal = Nautilus::Value<Nautilus::Int64>((int64_t) std::numeric_limits<int64_t>::min());
     memref.store(maxVal);// TODO 3280 check the type
 }
-uint64_t MaxAggregationFunction::getSize() { return sizeof(int64_t); }
+uint64_t MaxAggregationFunction::getSize() { return inputType->size(); }
 }// namespace NES::Runtime::Execution::Aggregation

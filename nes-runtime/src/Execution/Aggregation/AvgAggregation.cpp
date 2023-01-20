@@ -30,63 +30,65 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
 
 void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load memref
-    auto oldSum = AggregationFunction::loadFromMemref(memref, inputType);
+    auto oldCount = AggregationFunction::loadFromMemref(memref, countType);
     // calc the offset to get Memref of the count value
-    auto countMemref = (memref + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
-    auto oldCount = AggregationFunction::loadFromMemref(countMemref, countType);
+    auto oldSumMemref = (memref + (uint64_t) sizeOfCountInBytes).as<Nautilus::MemRef>();
+    auto oldSum = AggregationFunction::loadFromMemref(oldSumMemref, inputType);
 
     // add the values
     auto newSum = oldSum + value;
     auto newCount = oldCount + 1;
     // put updated values back to the memref
-    memref.store(newSum);
-    countMemref.store(newCount);
+    memref.store(newCount);
+    oldSumMemref.store(newSum);
 }
 
 void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
     // load memref1
-    auto sumLeft = AggregationFunction::loadFromMemref(memref1, inputType);
+    auto countLeft = AggregationFunction::loadFromMemref(memref1, countType);
     // calc the offset to get Memref of the count value
-    auto countLeftMemref = (memref1 + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
-    auto countLeft = AggregationFunction::loadFromMemref(countLeftMemref, countType);
+    auto sumLeftMemref = (memref1 + (uint64_t) sizeOfCountInBytes).as<Nautilus::MemRef>();
+    auto sumLeft = AggregationFunction::loadFromMemref(sumLeftMemref, inputType);
     // load memref2
-    auto sumRight = AggregationFunction::loadFromMemref(memref2, inputType);
+    auto countRight = AggregationFunction::loadFromMemref(memref2, countType);
     // calc the offset to get Memref of the count value
-    auto countRightMemref = (memref2 + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
-    auto countRight = AggregationFunction::loadFromMemref(countRightMemref, countType);
+    auto sumRightMemref = (memref2 + (uint64_t) sizeOfCountInBytes).as<Nautilus::MemRef>();
+    auto sumRight = AggregationFunction::loadFromMemref(sumRightMemref, inputType);
 
     // add the values
     auto tmpSum = sumLeft + sumRight;
     auto tmpCount = countLeft + countRight;
     // put updated values back to the memref
-    memref1.store(tmpSum);
-    countLeftMemref.store(tmpCount);
+    memref1.store(tmpCount);
+    sumLeftMemref.store(tmpSum);
 }
 
 Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
     // load memrefs
-    auto sum = AggregationFunction::loadFromMemref(memref, inputType);
-    auto countMemref = (memref + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
-    auto count = AggregationFunction::loadFromMemref(countMemref, countType);
+    auto count = AggregationFunction::loadFromMemref(memref, inputType); // load the count as an inputType to allow Division
+    auto sumMemref = (memref + (uint64_t) sizeOfCountInBytes).as<Nautilus::MemRef>();
+    auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
 
     // calc the average
-    // TODO 3280: where do we set the final type?
+    // TODO 3280: Can we avoid this extra step of storing the result of DivOp?
     auto finalVal = DivOp(sum, count);
+    sumMemref.store(finalVal);
 
     // return the average
-    return finalVal;
+    return loadFromMemref(sumMemref, finalType);
 }
 
+// TODO 3280 check the type when resetting
 void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = Nautilus::Value<Nautilus::Int64>((int64_t) 0);
-    auto countMemref = (memref + (uint64_t) offsetof(AvgAggregationValue, count)).as<Nautilus::MemRef>();
+    auto sumMemref = (memref + (uint64_t) sizeOfCountInBytes).as<Nautilus::MemRef>();
 
     memref.store(zero);
-    countMemref.store(zero);
+    sumMemref.store(zero);
 }
 uint64_t AvgAggregationFunction::getSize() {
     // physically an aggregation value for an avg is 16 byte.
-    return sizeof(AvgAggregationValue);
+    return inputType->size() + sizeOfCountInBytes; // the count is always int64, hence always 8bytes
 }
 
 }// namespace NES::Runtime::Execution::Aggregation

@@ -21,8 +21,6 @@ CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputT
 
 void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<>) {
     // load memref
-    // TODO 3280: or should we explicitly say Int64 here? as the count should always be an int
-    // TODO 3280: however, having it in finalType makes it possible to have a count in int_8 for instance
     auto oldValue = AggregationFunction::loadFromMemref(memref, finalType);
     // add the value
     auto newValue = oldValue + 1;

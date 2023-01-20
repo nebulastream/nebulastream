@@ -49,9 +49,10 @@ Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     return finalVal;
 }
 
+// TODO 3280 check the type when resetting
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto minVal = Nautilus::Value<Nautilus::Int64>((int64_t) std::numeric_limits<int64_t>::max());
-    memref.store(minVal);// TODO 3280 check the type
+    memref.store(minVal);
 }
 uint64_t MinAggregationFunction::getSize() { return sizeof(int64_t); }
 
