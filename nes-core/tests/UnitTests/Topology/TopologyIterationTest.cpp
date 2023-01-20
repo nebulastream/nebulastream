@@ -19,17 +19,22 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES {
 
 class TopologyIteratorTest : public Testing::NESBaseTest {
   public:
-    static void SetUpTestCase() { setupLogging(); }
+    static void SetUpTestCase() {
+
+        NES::Logger::setupLogging("TopologyIteratorTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup TopologyIteratorTest test class.");
+    }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
 
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -46,11 +51,6 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
     }
 
   protected:
-    static void setupLogging() {
-        NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup OperatorPropertiesTest test class.");
-    }
-
     TopologyNodePtr rootNode, mid1, mid2, mid3, src1, src2, src3, src4;
 };
 

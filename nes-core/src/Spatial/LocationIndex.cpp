@@ -65,7 +65,7 @@ bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
     (void) topologyNodeId;
     (void) geoLocation;
-    return false;
+    return true;
 #endif
 }
 
@@ -76,16 +76,18 @@ bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
     if (workerGeoLocation != workerGeoLocationMap.end()) {
         auto geoLocation = workerGeoLocation->second;
         S2Point point(S2LatLng::FromDegrees(geoLocation.getLatitude(), geoLocation.getLongitude()));
-        workerPointIndex.Remove(point, topologyNodeId);
-        workerGeoLocationMap.erase(topologyNodeId);
-        return true;
+        if (workerPointIndex.Remove(point, topologyNodeId)) {
+            workerGeoLocationMap.erase(topologyNodeId);
+            return true;
+        }
+        NES_ERROR("Failed to remove worker location");
+        return false;
     }
-    return false;
 #else
     NES_WARNING("Files were compiled without s2. Nothing can be removed from the spatial index because it does not exist");
     (void) topologyNodeId;
-    return false;
 #endif
+    return true;
 }
 
 std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
