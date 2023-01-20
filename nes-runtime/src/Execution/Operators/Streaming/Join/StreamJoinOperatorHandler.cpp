@@ -60,6 +60,7 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionCont
 
 void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     if (alreadySetup) {
+        NES_DEBUG("StreamJoinOperatorHandler::setup was called already!");
         return;
     }
     alreadySetup = true;

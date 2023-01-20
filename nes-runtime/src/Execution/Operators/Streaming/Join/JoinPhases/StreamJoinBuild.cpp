@@ -36,7 +36,8 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     StreamJoinOperatorHandler* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    auto localHashTablePointer = static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    return localHashTablePointer;
 }
 
 void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
