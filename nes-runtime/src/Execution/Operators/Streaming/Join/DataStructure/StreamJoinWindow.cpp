@@ -68,4 +68,6 @@ uint64_t StreamJoinWindow::getWindowEnd() const { return windowEnd; }
 
 uint64_t StreamJoinWindow::getWindowStart() const { return windowStart; }
 
+std::map<uint64_t, TupleBuffer>& StreamJoinWindow::getMapEmittableBuffers() { return workerIdToEmittableBuffer; }
+
 }// namespace NES::Runtime::Execution

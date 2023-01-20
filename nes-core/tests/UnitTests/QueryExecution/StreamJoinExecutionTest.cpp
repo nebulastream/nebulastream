@@ -16,6 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <TestUtils/UtilityFunctions.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -144,6 +145,8 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
+    resultBuffer = NES::Runtime::Execution::Util::sortBuffersInTupleBuffer(resultBuffer, joinSchema, timeStampField,
+                                                                           executionEngine->getBufferManager());
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
 

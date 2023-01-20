@@ -73,8 +73,8 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
 
             bufferAs->partitionId = i;
             bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getWindowEnd();
-
-            pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
+            buffer.setNumberOfTuples(1);
+            pipelineCtx->emitBuffer(buffer, *workerCtx);
         }
     }
 

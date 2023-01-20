@@ -93,6 +93,12 @@ class StreamJoinWindow {
      */
     uint64_t getWindowStart() const;
 
+    /**
+     * @brief Getter for the map that stores the current TupleBuffer for each worker Id
+     * @return map
+     */
+    std::map<uint64_t, TupleBuffer>& getMapEmittableBuffers();
+
   private:
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableRightSide;
@@ -103,6 +109,7 @@ class StreamJoinWindow {
     uint64_t windowStart;
     uint64_t windowEnd;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
+    std::map<uint64_t, TupleBuffer> workerIdToEmittableBuffer;
 };
 
 }// namespace NES::Runtime::Execution

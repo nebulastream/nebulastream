@@ -152,7 +152,8 @@ bool streamJoinBuildAndCheck(StreamJoinBuildHelper buildHelper) {
         }
 
         if (!correctlyInserted) {
-            NES_ERROR("Could not find buffer in bucket!");
+            auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            NES_ERROR("Could not find record " << Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema) << " in bucket!");
             return false;
         }
     }
@@ -365,7 +366,7 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                     int8_t* bufferPtr = (int8_t*) buffer.getBuffer() + numberOfTuplesInBuffer * sizeJoinedTuple;
                     // Writing window start and end
                     uint64_t windowStart = curWindow * streamJoinSinkHelper.windowSize;
-                    uint64_t windowEnd = ((curWindow + 1) * streamJoinSinkHelper.windowSize) - 1;
+                    uint64_t windowEnd = ((curWindow + 1) * streamJoinSinkHelper.windowSize);
 
                     memcpy(bufferPtr, &windowStart, sizeOfWindowStart);
                     memcpy(bufferPtr + sizeOfWindowStart, &windowEnd, sizeOfWindowEnd);

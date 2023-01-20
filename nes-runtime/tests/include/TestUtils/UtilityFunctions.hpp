@@ -151,13 +151,13 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
 }
 
 /**
-     * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
-     * @param buffersToSort
-     * @param schema
-     * @param sortFieldName
-     * @param bufferManager
-     * @return sorted buffers
-     */
+ * @brief Iterates through buffersToSort and sorts each buffer ascending to sortFieldName
+ * @param buffersToSort
+ * @param schema
+ * @param sortFieldName
+ * @param bufferManager
+ * @return sorted buffers
+ */
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::TupleBuffer>& buffersToSort,
                                                            SchemaPtr schema,
                                                            const std::string& sortFieldName,
