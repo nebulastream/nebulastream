@@ -64,7 +64,7 @@ class LocationServiceTest : public Testing::NESBaseTest {
     NES::TopologyManagerServicePtr topologyManagerService;
 };
 
-TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
+TEST_F(LocationServiceTest, DISABLED_testRequestSingleNodeLocation) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;

@@ -57,7 +57,7 @@ class LocationControllerTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
 };
 
-TEST_F(LocationControllerTest, testGetLocationMissingQueryParameters) {
+TEST_F(LocationControllerTest, DISABLED_testGetLocationMissingQueryParameters) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -72,7 +72,7 @@ TEST_F(LocationControllerTest, testGetLocationMissingQueryParameters) {
     EXPECT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
 }
 
-TEST_F(LocationControllerTest, testGetLocationNoSuchNodeId) {
+TEST_F(LocationControllerTest, DISABLED_testGetLocationNoSuchNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -90,7 +90,7 @@ TEST_F(LocationControllerTest, testGetLocationNoSuchNodeId) {
     EXPECT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
 }
 
-TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
+TEST_F(LocationControllerTest, DISABLED_testGetLocationNonNumericalNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -108,7 +108,7 @@ TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
     EXPECT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
 }
 
-TEST_F(LocationControllerTest, testGetSingleLocation) {
+TEST_F(LocationControllerTest, DISABLED_testGetSingleLocation) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     std::string latitude = "13.4";

@@ -90,10 +90,12 @@ class ReconnectSchedulePredictor {
      * @param isIndexUpdted indicates if the index was updated or has remained the same since the last schedule was calculated
      * @return the new schedule if one was calculated or nullopt else
      */
+#ifdef S2DEF
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
                                               const DataTypes::Experimental::GeoLocation& parentLocation,
                                                           const S2PointIndex<uint64_t> &FieldNodeIndex,
                                                           bool isIndexUpdted);
+#endif
   private:
     /**
      * check if the device deviated further than the defined distance threshold from the predicted path. If so, interpolate a new
@@ -112,7 +114,9 @@ class ReconnectSchedulePredictor {
      * @param currentParendLocation : The location of the workers current parent
      * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-    void scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
+#ifdef S2DEF
+    bool scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
+#endif
 
     /**
      * @brief use positions and timestamps in the location buffer to calculate the devices average  movement speed during the

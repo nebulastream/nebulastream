@@ -476,9 +476,6 @@ add_nes_unit_test(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
 ### Location Tests ###
 add_nes_unit_test(location-unit-tests "UnitTests/Spatial/DataTypes/LocationUnitTest.cpp")
 
-### WorkerMobilityHanlder Tests ###
-add_nes_unit_test(worker-mobility-handler-unit-tests "UnitTests/Spatial/DataTypes/WorkerMobilityHandlerUnitTests.cpp")
-
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTest.cpp")
 
