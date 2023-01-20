@@ -16,8 +16,10 @@
 namespace NES::Runtime::Execution {
 Operators::LocalHashTable* StreamJoinWindow::getLocalHashTable(size_t index, bool leftSide) {
     if (leftSide) {
+        index = index % localHashTableLeftSide.size();
         return localHashTableLeftSide[index].get();
     } else {
+        index = index % localHashTableRightSide.size();
         return localHashTableRightSide[index].get();
     }
 }
