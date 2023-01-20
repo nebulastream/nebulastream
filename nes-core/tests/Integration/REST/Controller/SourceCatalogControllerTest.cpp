@@ -193,7 +193,7 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
                        cpr::Body{request.dump()});
     future.wait();
     cpr::Response r = future.get();
-    EXPECT_EQ(r.status_code, 200l);
+    ASSERT_EQ(r.status_code, 200l);
     nlohmann::json jsonResponse = nlohmann::json::parse(r.text);
     ASSERT_TRUE(jsonResponse["success"]);
     auto coordinatorSchema = sourceCatalog->getLogicalSource("car")->getSchema();
@@ -202,7 +202,6 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     ASSERT_TRUE(coordinatorSchema->hasFieldName("value") != nullptr);
     ASSERT_TRUE(coordinatorSchema->hasFieldName("timestamp") != nullptr);
 }
-
 TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));

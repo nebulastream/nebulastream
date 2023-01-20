@@ -175,11 +175,11 @@ class SourceCatalog {
 
     /**
      * @brief update an existing source
-     * @param sourceName
-     * @param sourceSchema
-     * @return
+     * @param sourceName: name of the logical source
+     * @param sourceSchema: string representing the schema
+     * @return true if successful
      */
-    bool updatedLogicalSource(std::string& sourceName, std::string& sourceSchema);
+    bool updateLogicalSource(const std::string& sourceName, const std::string& sourceSchema);
 
     /**
      * @brief method to update a logical source
@@ -187,7 +187,7 @@ class SourceCatalog {
      * @param schema of logical source as object
      * @return bool indicating if update was successful
      */
-    bool updatedLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr);
+    bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr);
 
     SourceCatalog(QueryParsingServicePtr queryParsingService);
 

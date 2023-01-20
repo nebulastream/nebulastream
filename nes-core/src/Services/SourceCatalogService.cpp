@@ -101,6 +101,18 @@ bool SourceCatalogService::registerLogicalSource(const std::string& logicalSourc
     return sourceCatalog->addLogicalSource(logicalSourceName, std::move(schema));
 }
 
+bool SourceCatalogService::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
+    NES_DEBUG2("SourceCatalogService::update logical source {} with schema {}", logicalSourceName, schema->toString());
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    return sourceCatalog->updateLogicalSource(logicalSourceName, std::move(schema));
+}
+
+bool SourceCatalogService::updateLogicalSource(const std::string& logicalSourceName, const std::string& schema) {
+    NES_DEBUG2("SourceCatalogService::update logical source {} with schema {}", logicalSourceName, schema);
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    return sourceCatalog->updateLogicalSource(logicalSourceName, schema);
+}
+
 bool SourceCatalogService::unregisterLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
     NES_DEBUG("SourceCatalogService::unregisterLogicalSource: register logical source=" << logicalSourceName);

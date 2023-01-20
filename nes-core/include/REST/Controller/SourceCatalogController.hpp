@@ -226,10 +226,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                 return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
             }
             std::string sourceName = reqJson["logicalSourceName"];
-            std::string schemaName = reqJson["schema"];
-            NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source " << sourceName << " and"
-                                                                                                     << schemaName);
-            bool updated = sourceCatalogService->registerLogicalSource(sourceName, schemaName);
+            std::string schema = reqJson["schema"];
+            NES_DEBUG2("SourceCatalogController: updateLogicalSource: Try to update  Logical Source {} with schema {}",
+                       sourceName,
+                       schema);
+            bool updated = sourceCatalogService->updateLogicalSource(sourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?" << updated);
             // Prepare the response
             if (updated) {
@@ -275,7 +276,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            bool updated = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
+            bool updated = sourceCatalogService->updateLogicalSource(sourceName, deserializedSchema);
 
             if (updated) {
                 //Prepare the response
