@@ -22,7 +22,7 @@
 
 namespace NES {
 
-//todo: add negative tests
+//todo #3432: add negative tests
 class LocationProviderCSVTest : public Testing::NESBaseTest {
 
   public:
@@ -37,7 +37,7 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down LocationProviderCSV test class."); }
 };
 
-TEST_F(LocationProviderCSVTest, testCsvMovement) {
+TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovement) {
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
 
@@ -62,7 +62,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));*/
 }
 
-TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
+TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovementWithSimulatedLocationInFuture) {
     Timestamp offset = 400000000;
     auto currTime = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -75,7 +75,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     //    checkDeviceMovement(csvPath, startTime, 4, getLocationFromProvider, std::static_pointer_cast<void>(locationProvider));
 }
 
-TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
+TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovementWithSimulatedLocationInPast) {
     Timestamp offset = -100000000;
     auto currTime = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";

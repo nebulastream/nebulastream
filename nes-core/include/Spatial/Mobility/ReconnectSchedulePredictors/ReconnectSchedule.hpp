@@ -41,8 +41,9 @@ class ReconnectSchedule {
 
     /**
      * @brief removes the upcoming scheduled reconnect point from the front of the list
+     * @return true on success
      */
-    void removeNextReconnect();
+    bool removeNextReconnect();
 
     /**
      * @brief get a reconnect schedule object which does not contain any values to represent that no prediction exists
