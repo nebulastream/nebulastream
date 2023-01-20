@@ -11,21 +11,36 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+#include <API/QueryAPI.hpp>
+#include <API/Schema.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
-#include <gtest/gtest.h>
-
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -38,7 +53,7 @@ limitations under the License.
 namespace NES {
 using namespace EndDeviceProtocol;
 class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
-    friend class EndDeviceProtocolSerializationUtil;
+    //friend class EndDeviceProtocolSerializationUtil;
 
   public:
     /***
@@ -70,6 +85,19 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValue) {
     EXPECT_TRUE(ser_int8 == "\0\0\0"s);
 }
 
+TEST_F(EndDeviceProtocolSerializationUtilTests, FieldAccess) {
+    auto fax = FieldAccessExpressionNode::create("x");
+    auto fay = FieldAccessExpressionNode::create("y");
+
+    auto registers = std::make_shared<std::vector<std::string>>(1, "x");
+
+    auto expected = intsToString({ExpressionInstructions::VAR, 0});
+    EXPECT_EQ(EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fax, registers), expected);
+
+    EXPECT_THROW(auto ignored = EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fay, registers),
+                 EndDeviceProtocolSerializationUtil::UnsupportedEDSerialisationException);
+}
+
 TEST_F(EndDeviceProtocolSerializationUtilTests, Arithmetic) {
     //Test serialization of arithmetic operators.
     //First set up Query
@@ -92,6 +120,39 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, Arithmetic) {
                                   10,
                                   ExpressionInstructions::ADD});
 
+    EXPECT_EQ(res, expected);
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, Logical) {
+    auto registers = std::make_shared<std::vector<std::string>>(std::vector<std::string>{"x", "y"});
+
+    auto left1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, "\x12"s));
+    auto right1 = FieldAccessExpressionNode::create("x");
+    auto eq = EqualsExpressionNode::create(left1, right1);
+    auto neg = NegateExpressionNode::create(eq);
+
+    auto left2 = FieldAccessExpressionNode::create("y");
+    auto right2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, "\x01"));
+    auto gt = GreaterExpressionNode::create(left2, right2);
+
+    auto bor = OrExpressionNode::create(neg, gt);
+
+    auto expected = intsToString({ExpressionInstructions::CONST,
+                                  DataTypes::INT8,
+                                  0x12,
+                                  ExpressionInstructions::VAR,
+                                  0,
+                                  ExpressionInstructions::EQ,
+                                  ExpressionInstructions::NOT,
+                                  ExpressionInstructions::VAR,
+                                  1,
+                                  ExpressionInstructions::CONST,
+                                  DataTypes::INT8,
+                                  0x01,
+                                  ExpressionInstructions::GT,
+                                  ExpressionInstructions::OR});
+
+    auto res = EndDeviceProtocolSerializationUtil::serializeLogicalExpression(bor, registers);
     EXPECT_EQ(res, expected);
 }
 
@@ -124,8 +185,8 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, MapOperation) {
     expected_map.mutable_function()->set_instructions(expected_instructions);
 
     //compare fields
-    EXPECT_EQ(ser_map.attribute(), expected_map.attribute());
-    EXPECT_EQ(ser_map.function().instructions(), expected_map.function().instructions());
+    EXPECT_EQ(ser_map->attribute(), expected_map.attribute());
+    EXPECT_EQ(ser_map->function().instructions(), expected_map.function().instructions());
 
     EXPECT_EQ(registers->at(1), "x");
 }
@@ -143,11 +204,26 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, FilterOperation) {
     auto ser_filter = EndDeviceProtocolSerializationUtil::serializeFilterOperator(filter, registers);
 
     //build expected protobuf
-    auto expected_expr = intsToString({ExpressionInstructions::CONST, DataTypes::INT8, 8, ExpressionInstructions::VAR, 0, ExpressionInstructions::LT});
+    auto expected_expr = intsToString(
+        {ExpressionInstructions::CONST, DataTypes::INT8, 8, ExpressionInstructions::VAR, 0, ExpressionInstructions::LT});
     auto expected_filter = FilterOperation();
     expected_filter.mutable_predicate()->set_instructions(expected_expr);
 
-    EXPECT_EQ(ser_filter.predicate().instructions(), expected_filter.predicate().instructions());
+    EXPECT_EQ(ser_filter->predicate().instructions(), expected_filter.predicate().instructions());
+}
+
+TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
+
+    auto schema = Schema::create()->addField("x", BasicType::INT8);
+    auto loraSourceType = LoRaWANProxySourceType::create();
+    loraSourceType->setSensorFields(std::vector<std::string> {"x"});
+    auto loraDesc = LoRaWANProxySourceDescriptor::create(schema,loraSourceType,"default_logical","default_physical");
+    auto logicalSource = LogicalSource::create("default_logical", schema);
+
+
+    auto query = TestQuery::from(loraDesc).map(Attribute("x") = Attribute("x")).sink(NullOutputSinkDescriptor::create());
+    auto yo = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(query.getQueryPlan());
+    auto gg = yo;
 }
 
 //std::string serializeNumeric(std::variant<int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,float_t,double_t> in){

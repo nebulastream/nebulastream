@@ -41,17 +41,29 @@
 namespace NES {
 class EndDeviceProtocolSerializationUtil {
   public:
-    static std::shared_ptr<EndDeviceProtocol::Query> serializeQueryPlanToEndDevice(QueryPlanPtr QP);
+    class UnsupportedEDSerialisationException : public std::runtime_error {
+      public:
+        UnsupportedEDSerialisationException() : std::runtime_error("Can't serialize this node, since the ED does not support it."){};
+    };
+    using EDRegistersPtr = std::shared_ptr<std::vector<std::string>>;
+    using EDMapOperationPtr = std::shared_ptr<EndDeviceProtocol::MapOperation>;
+    using EDFilterOperationPtr = std::shared_ptr<EndDeviceProtocol::FilterOperation>;
+    using EDWindowOperationPtr = std::shared_ptr<EndDeviceProtocol::WindowOperation>;
+    using EDQueryOperationPtr = std::shared_ptr<EndDeviceProtocol::Query_Operation>;
+    using EDQueryPtr = std::shared_ptr<EndDeviceProtocol::Query>;
+
+    [[nodiscard]] static EDQueryPtr serializeQueryPlanToEndDevice(QueryPlanPtr QP);
 
     [[nodiscard]] static std::string serializeConstantValue(ExpressionNodePtr cnode);
 
-    [[nodiscard]] static std::string serializeArithmeticalExpression(ExpressionNodePtr,std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr, std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static EndDeviceProtocol::MapOperation serializeMapOperator( NodePtr,std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static EndDeviceProtocol::FilterOperation serializeFilterOperator(NodePtr, std::shared_ptr<std::vector<std::string>>);
-    [[nodiscard]] static EndDeviceProtocol::WindowOperation serializeWindowOperator(NodePtr, std::shared_ptr<std::vector<std::string>>);
+    [[nodiscard]] static std::string serializeArithmeticalExpression(ExpressionNodePtr, EDRegistersPtr);
+    [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr, EDRegistersPtr);
+    [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, EDRegistersPtr);
+    [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr, EDRegistersPtr);
+    [[nodiscard]] static EDMapOperationPtr serializeMapOperator( NodePtr, EDRegistersPtr);
+    [[nodiscard]] static EDFilterOperationPtr serializeFilterOperator(NodePtr, EDRegistersPtr);
+    [[nodiscard]] static EDWindowOperationPtr serializeWindowOperator(NodePtr, EDRegistersPtr);
+    [[nodiscard]] static EDQueryOperationPtr serializeOperator(NodePtr, EDRegistersPtr);
     [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
   private:
     static DefaultPhysicalTypeFactory physicalFactory;

@@ -2,16 +2,13 @@
 // Created by kasper on 1/10/23.
 //
 
-#include <Sources/LoRaWANProxySource.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <EndDeviceProtocol.pb.h>
 #include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
@@ -47,11 +44,15 @@
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Sources/DataSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
@@ -62,54 +63,14 @@
 #include <utility>
 namespace NES {
 using namespace EndDeviceProtocol;
-class UnsupportedEDSerialisationException: public std::runtime_error {
-  public:
-    UnsupportedEDSerialisationException(): std::runtime_error("Can't serialize this node, since the ED does not support it.") {};
-};
 
 DefaultPhysicalTypeFactory EndDeviceProtocolSerializationUtil::physicalFactory = DefaultPhysicalTypeFactory();
-
-std::shared_ptr<EndDeviceProtocol::Query> EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlanPtr QP) {
-    //make sure we only have a single LoRaWANProxySource
-    auto sourceOperators = QP->getSourceOperators();
-    if (sourceOperators.size() != 1 && !sourceOperators.at(0)->instanceOf<LoRaWANProxySourceDescriptor>()){
-        NES_THROW_RUNTIME_ERROR("Trying to serialize query with incompatible sources");
-    }
-    auto source = sourceOperators.at(0)->getSourceDescriptor()->as<LoRaWANProxySourceDescriptor>();
-    auto sensorFields = source->getSourceConfig()->getSensorFields();
-
-    auto qpiterator = QueryPlanIterator(std::move(QP));
-    auto operatorNodeList = std::deque<NodePtr>();
-    for (auto opNode :qpiterator) {
-        operatorNodeList.push_back(opNode);
-    }
-
-
-
-    EndDeviceProtocol::Query_Operation operations;
-    for (auto nodeIter = operatorNodeList.rbegin(); nodeIter < operatorNodeList.rend(); ++nodeIter) {
-        auto node = nodeIter->get();
-        node->remove()
-        try {
-            if (!node->instanceOf<ExpressionNode>()){
-                //not an expression
-                continue ;
-            }
-            auto exprNode = node->as<ExpressionNode>();
-            serializeExpression(exprNode);
-        } catch (UnsupportedEDSerialisationException& e){
-
-        }
-    }
-
-}
 
 std::string EndDeviceProtocolSerializationUtil::asString(ExpressionInstructions e) {
     auto res = std::string();
     res.push_back(e);
     return res;
 }
-
 std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePtr node) {
     if (!node->instanceOf<ConstantValueExpressionNode>()) {
         throw UnsupportedEDSerialisationException();
@@ -139,7 +100,8 @@ std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(Expressio
     res += value;
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression( ExpressionNodePtr anode, std::shared_ptr<std::vector<std::string>> registers) {
+std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(ExpressionNodePtr anode,
+                                                                                EDRegistersPtr registers) {
     auto bin = anode->as<ArithmeticalBinaryExpressionNode>();
     std::string res = serializeExpression(bin->getLeft(), registers) + serializeExpression(bin->getRight(), registers);
 
@@ -159,11 +121,11 @@ std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(
 
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( ExpressionNodePtr lnode, std::shared_ptr<std::vector<std::string>> registers) {
+std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression(ExpressionNodePtr lnode, EDRegistersPtr registers) {
     std::string res;
     if (lnode->instanceOf<LogicalBinaryExpressionNode>()) {
         auto bin = lnode->as<LogicalBinaryExpressionNode>();
-        res += serializeExpression(bin->getLeft(),registers) + serializeExpression(bin->getRight(),registers);
+        res += serializeExpression(bin->getLeft(), registers) + serializeExpression(bin->getRight(), registers);
         if (bin->instanceOf<AndExpressionNode>()) {
             res.push_back(ExpressionInstructions::AND);
         } else if (bin->instanceOf<OrExpressionNode>()) {
@@ -186,9 +148,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression( Expr
     }
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(
-    ExpressionNodePtr node,
-    std::shared_ptr<std::vector<std::string>> registers) {
+std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
 
     auto fanode = node->as<FieldAccessExpressionNode>();
     auto name = fanode->getFieldName();
@@ -197,19 +157,17 @@ std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(
         throw UnsupportedEDSerialisationException();
     }
     //TODO: somehow fix this. This is real ugly.
-    auto id = std::distance(registers->begin(),std::find(registers->begin(), registers->end(), name));
+    auto id = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), name));
     std::string res;
     res += asString(ExpressionInstructions::VAR);
     res.push_back(id);
     return res;
 }
-
-std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, std::shared_ptr<std::vector<std::string>> registers) {
-    //TODO: implement
+std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
     if (node->instanceOf<ConstantValueExpressionNode>()) {
         return serializeConstantValue(node->as<ConstantValueExpressionNode>());
-    } else if (node->instanceOf<FieldAccessExpressionNode>()){
-      return serializeFieldAccessExpression(node, registers);
+    } else if (node->instanceOf<FieldAccessExpressionNode>()) {
+        return serializeFieldAccessExpression(node, registers);
     } else if (node->instanceOf<ArithmeticalExpressionNode>()) {
         return serializeArithmeticalExpression(node, registers);
     } else if (node->instanceOf<LogicalExpressionNode>()) {
@@ -218,9 +176,8 @@ std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNo
         throw UnsupportedEDSerialisationException();
     }
 }
-MapOperation
-EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node,
-                                                         std::shared_ptr<std::vector<std::string>> registers) {
+EndDeviceProtocolSerializationUtil::EDMapOperationPtr
+EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegistersPtr registers) {
     auto mapNode = node->as<MapLogicalOperatorNode>();
     auto expressionNode = mapNode->getMapExpression();
     auto fieldexprname = expressionNode->getField()->getFieldName();
@@ -228,44 +185,43 @@ EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node,
     auto expression = serializeExpression(mapexpr, registers);
     int attribute;
 
-    //if field doesnt already exists, then add it
-    if (std::find(registers->begin(),registers->end(),fieldexprname) == registers->end()){
+    //if field doesn't already exists, then add it
+    if (std::find(registers->begin(), registers->end(), fieldexprname) == registers->end()) {
         attribute = registers->size();
         registers->push_back(fieldexprname);
     } else {
         attribute = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), fieldexprname));
-
     }
-    auto result = MapOperation();
-    result.set_attribute(attribute);
-    result.mutable_function()->set_instructions(expression);
+    auto result = std::make_shared<MapOperation>();
+    result->set_attribute(attribute);
+    result->mutable_function()->set_instructions(expression);
     return result;
 }
-
-FilterOperation EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node, std::shared_ptr<std::vector<std::string>> registers) {
+EndDeviceProtocolSerializationUtil::EDFilterOperationPtr
+EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node, EDRegistersPtr registers) {
     auto filterNode = node->as<FilterLogicalOperatorNode>();
     auto expressionNode = filterNode->getPredicate();
     auto ser_expr = serializeLogicalExpression(expressionNode, registers);
 
-    auto result = FilterOperation();
-    result.mutable_predicate()->set_instructions(ser_expr);
+    auto result = std::make_shared<FilterOperation>();
+    result->mutable_predicate()->set_instructions(ser_expr);
     return result;
-
 }
-EndDeviceProtocol::WindowOperation
-EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, std::shared_ptr<std::vector<std::string>> __attribute__((unused))registers ) {
+EndDeviceProtocolSerializationUtil::EDWindowOperationPtr
+EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, EDRegistersPtr __attribute__((unused)) registers) {
+    NES_NOT_IMPLEMENTED();
     //TODO: NES only supports time-based windows while ED atm only supports count-based. Need to add time-based support
     auto windowNode = node->as<WindowOperatorNode>();
     auto definition = windowNode->getWindowDefinition();
 
     auto windowType = definition->getWindowType();
-    if (!windowType->isTumblingWindow()){
+    if (!windowType->isTumblingWindow()) {
         NES_WARNING("Window type not supported. Only tumbling windows are supported currently");
         throw UnsupportedEDSerialisationException();
     }
 
     auto aggregations = definition->getWindowAggregation();
-    if (aggregations.size() > 1){
+    if (aggregations.size() > 1) {
         NES_WARNING("Multiple aggregations not supported here");
         throw UnsupportedEDSerialisationException();
     }
@@ -277,9 +233,77 @@ EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, std::s
         case Windowing::WindowAggregationDescriptor::Max: winAggType = WindowAggregationType::MAX; break;
         case Windowing::WindowAggregationDescriptor::Min: winAggType = WindowAggregationType::MIN; break;
         case Windowing::WindowAggregationDescriptor::Sum: winAggType = WindowAggregationType::SUM; break;
-        default: NES_WARNING("Window Aggregation type not supported"); throw UnsupportedEDSerialisationException(); break;
+        default:
+            NES_WARNING("Window Aggregation type not supported");
+            throw UnsupportedEDSerialisationException();
+            break;
     }
 
-    return EndDeviceProtocol::WindowOperation();
+    return std::make_shared<EndDeviceProtocol::WindowOperation>();
 };
+
+EndDeviceProtocolSerializationUtil::EDQueryOperationPtr
+EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegistersPtr registers) {
+    if (node->instanceOf<MapLogicalOperatorNode>()) {
+        auto map = serializeMapOperator(node, registers);
+        auto queryOp = std::make_shared<Query_Operation>();
+        queryOp->mutable_map()->CopyFrom(*map);
+        return queryOp;
+    }
+    if (node->instanceOf<FilterLogicalOperatorNode>()) {
+        auto filter = serializeFilterOperator(node, registers);
+        auto queryOp = std::make_shared<Query_Operation>();
+        queryOp->mutable_filter()->CopyFrom(*filter);
+        return queryOp;
+    }
+    if (node->instanceOf<WindowLogicalOperatorNode>()) {
+        auto window = serializeWindowOperator(node, registers);
+        auto queryOp = std::make_shared<Query_Operation>();
+        queryOp->mutable_window()->CopyFrom(*window);
+        return queryOp;
+    } else {
+        throw UnsupportedEDSerialisationException();
+    }
+}
+
+EndDeviceProtocolSerializationUtil::EDQueryPtr
+EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlanPtr QP) {
+    //make sure we only have a single LoRaWANProxySource
+    auto sourceOperators = QP->getSourceOperators();
+    auto st = sourceOperators.at(0)->toString();
+    if (sourceOperators.size() != 1 || !sourceOperators.at(0)->getSourceDescriptor()->instanceOf<LoRaWANProxySourceDescriptor>()) {
+        NES_THROW_RUNTIME_ERROR("Trying to serialize query with incompatible sources");
+    }
+    // fetch the source and the sensor_fields
+    auto source = sourceOperators.at(0)->getSourceDescriptor()->as<LoRaWANProxySourceDescriptor>();
+    auto sensorFields = std::make_shared<std::vector<std::string>>(source->getSourceConfig()->getSensorFields()->getValue());
+
+    // get operators as list so we can travel to it in reverse
+    //i.e. from source to sink
+    auto qpiterator = QueryPlanIterator(std::move(QP));
+    auto operatorNodeList = std::deque<NodePtr>();
+    for (auto opNode : qpiterator) {
+        operatorNodeList.push_back(opNode);
+    }
+
+    EDQueryPtr query = std::make_shared<EndDeviceProtocol::Query>();
+    for (auto nodeIter = operatorNodeList.rbegin(); nodeIter < operatorNodeList.rend(); ++nodeIter) {
+        auto node = nodeIter->get();
+        //right now we only support the nodes below
+        if (!(node->instanceOf<WindowOperatorNode>() || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<MapLogicalOperatorNode>())) {
+            //not an operator we support
+            continue;
+        }
+        auto opNode = node->as<LogicalUnaryOperatorNode>();
+        try {
+            auto serialized = serializeOperator(opNode, sensorFields);
+            auto operation = query->add_operations();
+            operation->CopyFrom(*serialized);
+        } catch (UnsupportedEDSerialisationException& e) {
+            NES_DEBUG("unsupported Operation for serialization");
+            break;
+        }
+    }
+    return query;
+}
 }// namespace NES
