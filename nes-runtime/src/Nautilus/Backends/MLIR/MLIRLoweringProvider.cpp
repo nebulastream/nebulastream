@@ -338,9 +338,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressO
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame) {
-    if (loadOp->getStamp()->isBoolean()) {
-        NES_THROW_RUNTIME_ERROR("Cant load a boolean");
-    }
+
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
 
     auto bitcast = builder->create<mlir::LLVM::BitcastOp>(getNameLoc("Bitcasted address"),
