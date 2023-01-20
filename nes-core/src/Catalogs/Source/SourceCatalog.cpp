@@ -91,7 +91,7 @@ bool SourceCatalog::addLogicalSource(const std::string& sourceName, const std::s
 bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
     std::unique_lock lock(catalogMutex);
     //check if source already exist
-    NES_DEBUG("SourceCatalog: search for logical source in addLogicalSource() " << logicalSourceName);
+    NES_DEBUG2("SourceCatalog: Check if logical source {} already exist.", logicalSourceName);
 
     if (!containsLogicalSource(logicalSourceName)) {
         NES_DEBUG("SourceCatalog: add logical source " << logicalSourceName);
@@ -335,7 +335,7 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString() 
     return allLogicalSourceAsString;
 }
 
-bool SourceCatalog::updatedLogicalSource(std::string& sourceName, std::string& sourceSchema) {
+bool SourceCatalog::updateLogicalSource(const std::string& sourceName, const std::string& sourceSchema) {
     NES_INFO("SourceCatalog: Update the logical source " << sourceName << " with the schema " << sourceSchema);
     std::unique_lock lock(catalogMutex);
 
@@ -351,7 +351,7 @@ bool SourceCatalog::updatedLogicalSource(std::string& sourceName, std::string& s
     return true;
 }
 
-bool SourceCatalog::updatedLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
+bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
     std::unique_lock lock(catalogMutex);
     //check if source already exist
     NES_DEBUG("SourceCatalog: search for logical source in addLogicalSource() " << logicalSourceName);
