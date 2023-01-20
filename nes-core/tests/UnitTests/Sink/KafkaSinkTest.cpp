@@ -78,9 +78,9 @@ class KafkaSinkTest : public Testing::NESBaseTest {
     /* Will be called after a test is executed. */
     void TearDown() override {
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("KafkaSinkTest::TearDown() Tear down KafkaSinkTest");
+        Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
