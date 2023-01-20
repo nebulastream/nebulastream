@@ -189,15 +189,18 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
                     if (leftKey == rightKey) {
                         auto dynamicBufJoined = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutJoined, bufferJoined);
                         auto posNewTuple = dynamicBufJoined.getNumberOfTuples();
-                        dynamicBufJoined[posNewTuple][0].write<uint64_t>(leftKey);
+                        dynamicBufJoined[posNewTuple][0].write<uint64_t>(firstTupleTimeStampWindow);
+                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(lastTupleTimeStampWindow);
 
-                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][0].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][2].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][1].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][3].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][2].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][2].write<uint64_t>(leftKey);
 
-                        dynamicBufJoined[posNewTuple][4].write<uint64_t>(dynamicBufRight[tupleRightCnt][0].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][5].write<uint64_t>(dynamicBufRight[tupleRightCnt][1].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][6].write<uint64_t>(dynamicBufRight[tupleRightCnt][2].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][3].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][0].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][4].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][1].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][5].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][2].read<uint64_t>());
+
+                        dynamicBufJoined[posNewTuple][6].write<uint64_t>(dynamicBufRight[tupleRightCnt][0].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][7].write<uint64_t>(dynamicBufRight[tupleRightCnt][1].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][8].write<uint64_t>(dynamicBufRight[tupleRightCnt][2].read<uint64_t>());
 
                         dynamicBufJoined.setNumberOfTuples(posNewTuple + 1);
                         if (dynamicBufJoined.getNumberOfTuples() >= dynamicBufJoined.getCapacity()) {
@@ -263,9 +266,8 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
                                                                        rightSchema);
     auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
     auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(leftSchema, rightSchema, joinFieldNameLeft,
-                                                                            joinFieldNameRight, noWorkerThreads * 2,
-                                                                            numSourcesLeft + numSourcesRight,
-                                                                            joinSizeInByte, windowSize);
+                                                                            joinFieldNameRight, numSourcesLeft + numSourcesRight,
+                                                                            windowSize, joinSizeInByte);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
