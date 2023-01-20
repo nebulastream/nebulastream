@@ -128,6 +128,9 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
      */
     explicit NESBaseTest();
 
+
+    ~NESBaseTest();
+
     /**
      * @brief Fetches the port
      */
@@ -157,6 +160,9 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   private:
     std::filesystem::path testResourcePath;
+
+    std::atomic<bool> setUpCalled{false};
+    std::atomic<bool> tearDownCalled{false};
 };
 }// namespace Testing
 
