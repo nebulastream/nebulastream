@@ -49,7 +49,7 @@ class E2ESingleRun {
      * @param restPort
      */
     explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          int rpcPort, int restPort);
+                          uint16_t rpcPort, uint16_t restPort);
 
     /**
      * @brief destroying this object and taking care of

@@ -38,15 +38,6 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public Abst
         NES_INFO("Setup TraceTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { NES_INFO("Setup TraceTest test case."); }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down TraceTest test case."); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
-
     // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction) {
         auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() {
