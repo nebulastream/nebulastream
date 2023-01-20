@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.4.27](https://github.com/nebulastream/nebulastream/tree/v0.4.27) (2023-01-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.26...v0.4.27)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Docker Build Failing: ubuntu-20\_04-Linux.arm64.deb Not Found [\#3428](https://github.com/nebulastream/nebulastream/issues/3428)
+- \[BUG\] Error if NebulaStream demo is on aarch64 [\#3145](https://github.com/nebulastream/nebulastream/issues/3145)
+
+#### Runtime 
+
+- \[Feature\] General Memory Provider [\#3408](https://github.com/nebulastream/nebulastream/issues/3408)
+
 ## [v0.4.26](https://github.com/nebulastream/nebulastream/tree/v0.4.26) (2023-01-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.25...v0.4.26)
