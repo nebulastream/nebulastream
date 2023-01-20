@@ -47,8 +47,8 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down AdaptiveKFTest test class."); }
 
     void SetUp() override {
-        NES_INFO("Setup AdaptiveKFTest class.");
         Testing::NESBaseTest::SetUp();
+        NES_INFO("Setup AdaptiveKFTest class.");
         dataPort = Testing::NESBaseTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
