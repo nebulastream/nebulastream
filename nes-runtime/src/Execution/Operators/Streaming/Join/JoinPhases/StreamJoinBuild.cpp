@@ -71,7 +71,7 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
             auto bufferAs = buffer.getBuffer<JoinPartitionIdTumpleStamp>();
 
             bufferAs->partitionId = i;
-            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getLastTupleTimeStamp();
+            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getWindowEnd();
 
             pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
         }
@@ -90,7 +90,7 @@ uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
 
 void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "worker context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
@@ -136,7 +136,7 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
 
 void StreamJoinBuild::setup(ExecutionContext& ctx) const {
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
-    Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getWorkerContext());
+    Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
 

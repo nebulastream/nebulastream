@@ -64,9 +64,10 @@ void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
     }
     alreadySetup = true;
 
+    NES_DEBUG("StreamJoinOperatorHandler::setup was called!");
     // It does not matter here if we put true or false as a parameter
     this->numberOfWorkerThreads = newNumberOfWorkerThreads;
-    createNewWindow(/* isLeftSide*/ true);
+    createNewWindow(/**isLeftSide**/ true);
 }
 
 void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
@@ -77,20 +78,24 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
     }
 
     NES_DEBUG("StreamJoinOperatorHandler: create a new window for the stream join");
+    auto windowStart = streamJoinWindows.size() * windowSize;
+    auto windowEnd = windowStart + windowSize - 1;
+
     streamJoinWindows.emplace_back(numberOfWorkerThreads,
                                    counterFinishedBuildingStart,
                                    counterFinishedSinkStart,
                                    totalSizeForDataStructures,
                                    joinSchemaLeft->getSchemaSizeInBytes(),
                                    joinSchemaRight->getSchemaSizeInBytes(),
-                                   lastTupleTimeStamp,
+                                   windowStart,
+                                   windowEnd,
                                    pageSize,
                                    numPartitions);
 }
 
 void StreamJoinOperatorHandler::deleteWindow(uint64_t timeStamp) {
     for (auto it = streamJoinWindows.begin(); it != streamJoinWindows.end(); ++it) {
-        if (timeStamp <= it->getLastTupleTimeStamp()) {
+        if (timeStamp <= it->getWindowEnd()) {
             streamJoinWindows.erase(it);
             break;
         }
@@ -99,7 +104,7 @@ void StreamJoinOperatorHandler::deleteWindow(uint64_t timeStamp) {
 
 bool StreamJoinOperatorHandler::checkWindowExists(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
-        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
+        if (timeStamp <= streamJoinWindow.getWindowEnd()) {
             return true;
         }
     }
@@ -109,7 +114,7 @@ bool StreamJoinOperatorHandler::checkWindowExists(uint64_t timeStamp) {
 
 StreamJoinWindow& StreamJoinOperatorHandler::getWindow(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
-        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
+        if (timeStamp <= streamJoinWindow.getWindowEnd()) {
             return streamJoinWindow;
         }
     }
@@ -158,8 +163,8 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                                size_t numPartitions) {
 
     return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft, joinSchemaRight, joinFieldNameLeft, joinFieldNameRight,
-                                                       counterFinishedBuildingStart, totalSizeForDataStructures,
-                                                       windowSize, pageSize, numPartitions);
+                                                       counterFinishedBuildingStart, windowSize, totalSizeForDataStructures,
+                                                       pageSize, numPartitions);
 }
 
 const std::vector<OperatorId>& StreamJoinOperatorHandler::getJoinOperatorsId() const { return joinOperatorsId; }
