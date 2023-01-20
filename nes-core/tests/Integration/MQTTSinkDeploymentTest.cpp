@@ -49,8 +49,8 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
         NES_INFO("Tear down MQTTSinkDeploymentTest class.");
+        Testing::NESBaseTest::TearDown();
     }
 };
 
