@@ -22,6 +22,7 @@ namespace NES::Nautilus {
  */
 class Boolean : public TraceableType {
   public:
+    using RawType = bool;
     static const inline auto type = TypeIdentifier::create<Boolean>();
 
     Boolean(bool value);
@@ -30,7 +31,7 @@ class Boolean : public TraceableType {
 
     operator bool() const;
 
-    bool getValue();
+    bool getValue() const;
 
     ~Boolean() {}
     Nautilus::IR::Types::StampPtr getType() const override;
