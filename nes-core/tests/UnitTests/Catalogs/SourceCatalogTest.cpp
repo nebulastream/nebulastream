@@ -209,7 +209,7 @@ TEST_F(SourceCatalogTest, testDeleteLogicalSource) {
 TEST_F(SourceCatalogTest, testUpdateLogicalSourceWithInvalidSourceName) {
     std::string logicalSourceName = "test";
     std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
-    bool success = sourceCatalog->updatedLogicalSource(logicalSourceName, newSchema);
+    bool success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_FALSE(success);
 }
 
@@ -219,6 +219,6 @@ TEST_F(SourceCatalogTest, testUpdateLogicalSource) {
     EXPECT_TRUE(success);
 
     std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
-    success = sourceCatalog->updatedLogicalSource(logicalSourceName, newSchema);
+    success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_TRUE(success);
 }
