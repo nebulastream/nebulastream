@@ -172,10 +172,10 @@ TEST_F(NetworkStackTest, serverMustStartAndStopRandomPort) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
-        ZmqServer server("127.0.0.1", 0, 4, exchangeProtocol, buffMgr);
+        ZmqServer server("127.0.0.1", *freeDataPort, 4, exchangeProtocol, buffMgr);
         server.start();
         ASSERT_EQ(server.isServerRunning(), true);
-        ASSERT_GT(server.getServerPort(), 0);
+        ASSERT_GT(server.getServerPort(), *freeDataPort);
     } catch (...) {
         // shutdown failed
         FAIL();

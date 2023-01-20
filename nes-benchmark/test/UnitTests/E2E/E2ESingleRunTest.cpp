@@ -33,22 +33,6 @@ namespace NES::Benchmark {
             NES::Logger::setupLogging("E2ESingleRunTest.log", NES::LogLevel::LOG_DEBUG);
             NES_INFO("Setup E2ESingleRunTest test class.");
         }
-
-        /* Will be called before a test is executed. */
-        void SetUp() override {
-            Testing::NESBaseTest::SetUp();
-            NES_INFO("Setup E2ESingleRunTest test case.");
-
-        }
-
-        /* Will be called before a test is executed. */
-        void TearDown() override {
-            NES_INFO("Tear down E2ESingleRunTest test case.");
-            Testing::NESBaseTest::TearDown();
-        }
-
-        /* Will be called after all tests in this class are finished. */
-        static void TearDownTestCase() { NES_INFO("Tear down E2ESingleRunTest test class."); }
     };
 
 
@@ -68,8 +52,8 @@ namespace NES::Benchmark {
         configPerRun.numberOfBuffersInGlobalBufferManager->setValue(42);
         configPerRun.numberOfBuffersInSourceLocalBufferPool->setValue(43);
 
-        auto rpcCoordinatorPortSaved = *rpcCoordinatorPort;
-        auto restPortSaved = *restPort;
+        uint16_t rpcCoordinatorPortSaved = *rpcCoordinatorPort;
+        uint16_t restPortSaved = *restPort;
         E2ESingleRun singleRun(configPerRun, configOverAllRuns, rpcCoordinatorPortSaved, restPortSaved);
         singleRun.setupCoordinatorConfig();
 
@@ -82,8 +66,6 @@ namespace NES::Benchmark {
                   configPerRun.numberOfBuffersInGlobalBufferManager->getValue());
         EXPECT_EQ(coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
                   configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue());
-        EXPECT_EQ(coordinatorConf->worker.rpcPort.getValue(), rpcCoordinatorPortSaved + 1);
-        EXPECT_EQ(coordinatorConf->worker.dataPort.getValue(), rpcCoordinatorPortSaved + 2);
     }
 
     TEST_F(E2ESingleRunTest, createSources) {

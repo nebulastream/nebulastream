@@ -51,8 +51,6 @@ void E2ESingleRun::setupCoordinatorConfig() {
     coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool =
         configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue();
 
-    coordinatorConf->worker.rpcPort = coordinatorConf->rpcPort.getValue() + 1;
-    coordinatorConf->worker.dataPort = coordinatorConf->rpcPort.getValue() + 2;
     coordinatorConf->worker.coordinatorIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.localWorkerIp = coordinatorConf->coordinatorIp.getValue();
     coordinatorConf->worker.queryCompiler.windowingStrategy = QueryCompilation::QueryCompilerOptions::THREAD_LOCAL;
@@ -355,7 +353,7 @@ void E2ESingleRun::writeMeasurementsToCsv() {
 }
 
 E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                           int rpcPort, int restPort)
+                           uint16_t rpcPort, uint16_t restPort)
     : configPerRun(configPerRun), configOverAllRuns(configOverAllRuns), rpcPortSingleRun(rpcPort), restPortSingleRun(restPort) {}
 
 E2ESingleRun::~E2ESingleRun() {

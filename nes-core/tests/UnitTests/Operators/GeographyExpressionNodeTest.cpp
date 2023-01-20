@@ -49,16 +49,13 @@ class GeographyExpressionNodeTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
         udfCatalog = Catalogs::UDF::UdfCatalog::create();
     }
-
-    static void TearDownTestCase() { NES_INFO("Tear down GeographyExpressionNodeTest test class."); }
-
-    void TearDown() override {}
 
     static void SetUpTestCase() { setupLogging(); }
 
