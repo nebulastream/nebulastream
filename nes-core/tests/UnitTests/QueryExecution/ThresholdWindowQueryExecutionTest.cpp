@@ -54,17 +54,18 @@ class ThresholdWindowQueryExecutionTest
     std::shared_ptr<TestExecutionEngine> executionEngine;
 };
 
+template<typename T>
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(recordIndex * 10);
-        NES_DEBUG("Input tuples: f1=" << recordIndex << " f2=" << recordIndex*10);
+        buf[recordIndex][1].write<T>(recordIndex * 10);
+        NES_DEBUG("Input tuples: f1=" << recordIndex << " f2=" << recordIndex * 10);
     }
     // close the window
     buf[9][0].write<int64_t>(0);
-    buf[9][1].write<int64_t>(0);
+    buf[9][1].write<T>(0);
     buf.setNumberOfTuples(10);
-    NES_DEBUG("Input tuples: f1=" << 0 << " f2="<< 0);
+    NES_DEBUG("Input tuples: f1=" << 0 << " f2=" << 0);
 }
 
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
@@ -84,7 +85,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-    fillBuffer(inputBuffer);
+    fillBuffer<int64_t>(inputBuffer);
 
     ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
     source->emitBuffer(inputBuffer);
@@ -117,7 +118,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-    fillBuffer(inputBuffer);
+    fillBuffer<int64_t>(inputBuffer);
 
     ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
     source->emitBuffer(inputBuffer);
@@ -150,7 +151,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-    fillBuffer(inputBuffer);
+    fillBuffer<int64_t>(inputBuffer);
 
     ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
     source->emitBuffer(inputBuffer);
@@ -183,7 +184,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-    fillBuffer(inputBuffer);
+    fillBuffer<int64_t>(inputBuffer);
 
     ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
     source->emitBuffer(inputBuffer);
@@ -216,7 +217,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
 
     auto source = executionEngine->getDataSource(plan, 0);
     auto inputBuffer = executionEngine->getBuffer(sourceSchema);
-    fillBuffer(inputBuffer);
+    fillBuffer<int64_t>(inputBuffer);
 
     ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
     source->emitBuffer(inputBuffer);
@@ -231,3 +232,106 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
+
+// Test with int32 data types //
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::FLOAT32);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::FLOAT32);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Sum(Attribute("test$f2", FLOAT32))->as(Attribute("test$Sum")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer<float_t>(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<float_t>(), 210.0);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT32);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::INT32);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Sum(Attribute("test$f2", INT32))->as(Attribute("test$Sum")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer<int32_t>(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<int32_t>(), 210);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+// Test with double data types //
+TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
+    auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::FLOAT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::FLOAT64);
+    auto testSink = executionEngine->createDateSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(ThresholdWindow::of(Attribute("test$f1") > 5))
+                     .apply(Sum(Attribute("test$f2", FLOAT64))->as(Attribute("test$Sum")))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer<double_t>(inputBuffer);
+
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
+    EXPECT_EQ(resultBuffer[0][0].read<double_t>(), 210.0);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+// TODO 3280: parameterize test for all agg function and all data types

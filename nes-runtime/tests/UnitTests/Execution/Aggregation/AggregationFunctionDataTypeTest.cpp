@@ -55,7 +55,7 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
             return factory.getPhysicalType(DataTypeFactory::createDouble());
         } else {
-            NES_ERROR("Unknown datat type: " << dataTypeString);
+            NES_ERROR("Unknown data type: " << dataTypeString);
             NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
         }
     }
@@ -78,9 +78,9 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
             return Nautilus::Value<Nautilus::UInt64>((uint64_t) 1);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
-            return Nautilus::Value<Nautilus::Float>((float) 1);
+            return Nautilus::Value<Nautilus::Float>((float) 1.0);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
-            return Nautilus::Value<Nautilus::Double>((double) 1);
+            return Nautilus::Value<Nautilus::Double>((double) 1.0);
         } else {
             NES_ERROR("Unknown data type: " << dataTypeString);
             NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
@@ -110,7 +110,107 @@ class AggregationFunctionDataTypeTest : public Testing::NESBaseTest, public ::te
             } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
                 return std::make_shared<Aggregation::SumAggregationValue<double>>();
             } else {
-                NES_ERROR("Unknown datat type: " << dataTypeString);
+                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
+            }
+        } else if (std::equal(aggFnType.begin(), aggFnType.end(), "avg")) {
+            if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<int8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<int16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<int32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<int64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<uint8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<uint16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<uint32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<uint64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<float>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
+                return std::make_shared<Aggregation::AvgAggregationValue<double>>();
+            } else {
+                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
+            }
+        } else if (std::equal(aggFnType.begin(), aggFnType.end(), "min")) {
+            if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
+                return std::make_shared<Aggregation::MinAggregationValue<int8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
+                return std::make_shared<Aggregation::MinAggregationValue<int16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
+                return std::make_shared<Aggregation::MinAggregationValue<int32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
+                return std::make_shared<Aggregation::MinAggregationValue<int64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
+                return std::make_shared<Aggregation::MinAggregationValue<uint8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
+                return std::make_shared<Aggregation::MinAggregationValue<uint16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
+                return std::make_shared<Aggregation::MinAggregationValue<uint32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
+                return std::make_shared<Aggregation::MinAggregationValue<uint64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
+                return std::make_shared<Aggregation::MinAggregationValue<float>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
+                return std::make_shared<Aggregation::MinAggregationValue<double>>();
+            } else {
+                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
+            }
+        } else if (std::equal(aggFnType.begin(), aggFnType.end(), "max")) {
+            if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<int8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<int16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<int32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<int64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<uint8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<uint16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<uint32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<uint64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<float>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
+                return std::make_shared<Aggregation::MaxAggregationValue<double>>();
+            } else {
+                NES_ERROR("Unknown data type: " << dataTypeString);
+                NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
+            }
+        } else if (std::equal(aggFnType.begin(), aggFnType.end(), "count")) {
+            if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i8")) {
+                return std::make_shared<Aggregation::CountAggregationValue<int8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i16")) {
+                return std::make_shared<Aggregation::CountAggregationValue<int16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i32")) {
+                return std::make_shared<Aggregation::CountAggregationValue<int32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "i64")) {
+                return std::make_shared<Aggregation::CountAggregationValue<int64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui8")) {
+                return std::make_shared<Aggregation::CountAggregationValue<uint8_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui16")) {
+                return std::make_shared<Aggregation::CountAggregationValue<uint16_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
+                return std::make_shared<Aggregation::CountAggregationValue<uint32_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
+                return std::make_shared<Aggregation::CountAggregationValue<uint64_t>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
+                return std::make_shared<Aggregation::CountAggregationValue<float>>();
+            } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
+                return std::make_shared<Aggregation::CountAggregationValue<double>>();
+            } else {
+                NES_ERROR("Unknown data type: " << dataTypeString);
                 NES_THROW_RUNTIME_ERROR("Unknown data type: " << dataTypeString);
             }
         } else {
@@ -148,18 +248,113 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
     auto aggregationResult = sumAgg.lower(memref);
 
     EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+}
 
-    // test reset
-    sumAgg.reset(memref);
+/**
+ * Tests the lift, combine, lower and reset functions of the Avg Aggregation
+ */
+TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineAvg) {
+    physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    std::string aggFunctionType = "avg";
+    PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
+    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType);
+
+    // create an aggregation value based on the aggregation function type and data type
+    auto avgValue = getAggregationValue(aggFunctionType, testParam);
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) avgValue.get());
+
+    // create an incoming value using the selected data type
+    auto incomingValue = getIncomingValue(testParam);
+
+    avgAgg.lift(memref, incomingValue);
+    avgAgg.combine(memref, memref);
+    auto aggregationResult = avgAgg.lower(memref);
+
+    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Min Aggregation
+ */
+TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin) {
+    physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    std::string aggFunctionType = "min";
+    PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
+    auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+
+    // create an aggregation value based on the aggregation function type and data type
+    auto minValue = getAggregationValue(aggFunctionType, testParam);
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) minValue.get());
+
+    // create an incoming value using the selected data type
+    auto incomingValue = getIncomingValue(testParam);
+
+    minAgg.lift(memref, incomingValue);
+    minAgg.combine(memref, memref);
+    auto aggregationResult = minAgg.lower(memref);
+
+    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Max Aggregation
+ */
+TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax) {
+    physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    std::string aggFunctionType = "max";
+    PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
+    auto maxAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+
+    // create an aggregation value based on the aggregation function type and data type
+    auto maxValue = getAggregationValue(aggFunctionType, testParam);
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) maxValue.get());
+
+    // create an incoming value using the selected data type
+    auto incomingValue = getIncomingValue(testParam);
+
+    maxAgg.lift(memref, incomingValue);
+    maxAgg.combine(memref, memref);
+    auto aggregationResult = maxAgg.lower(memref);
+
+    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+}
+
+/**
+ * Tests the lift, combine, lower and reset functions of the Count Aggregation
+ */
+TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
+    physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    std::string aggFunctionType = "count";
+    PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
+    auto countAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+
+    // create an aggregation value based on the aggregation function type and data type
+    auto countValue = getAggregationValue(aggFunctionType, testParam);
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) countValue.get());
+
+    // create an incoming value using the selected data type
+    auto incomingValue = getIncomingValue(testParam);
+
+    countAgg.lift(memref, incomingValue);
+    countAgg.combine(memref, memref);
+    auto aggregationResult = countAgg.lower(memref);
+
+    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
 
 INSTANTIATE_TEST_CASE_P(scanEmitPipelineAgg,
                         AggregationFunctionDataTypeTest,
-                        ::testing::Values("i8", "i16", "i32", "i64", "ui8", "f32", "f64"),
+                        ::testing::Values("i8", "i16", "i32", "i64", "ui8", "ui16", "ui32", "ui64", "f32", "f64"),
                         [](const testing::TestParamInfo<AggregationFunctionDataTypeTest::ParamType>& info) {
                             return info.param;
                         });
-
-// TODO 3280: negative test with non numeric values -> should not work
 
 }// namespace NES::Runtime::Execution::Expressions

@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -22,13 +23,11 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <vector>
 
 namespace NES {
-namespace Windowing {
-class WindowAggregationDescriptor;
-using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
-}// namespace Windowing
+namespace Windowing {}// namespace Windowing
 namespace QueryCompilation {
 
 /**
@@ -101,6 +100,9 @@ class LowerPhysicalToNautilusOperators {
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
+
+    std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
+    getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr dataType);
 };
 }// namespace QueryCompilation
 }// namespace NES

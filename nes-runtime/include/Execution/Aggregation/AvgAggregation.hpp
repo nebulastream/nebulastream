@@ -31,6 +31,7 @@ class AvgAggregationFunction : public AggregationFunction {
 
   private:
     PhysicalTypePtr countType;
+    const static int64_t sizeOfCountInBytes = 8L;
 };
 }// namespace NES::Runtime::Execution::Aggregation
 
