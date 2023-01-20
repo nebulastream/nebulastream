@@ -173,6 +173,10 @@ jobs:
             arch: "X64"
             require_build: "true"
             require_test: "true"
+          - osversion: ubuntu-20_04
+            arch: "arm64"
+            require_build: "true"
+            require_test: "false"
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
