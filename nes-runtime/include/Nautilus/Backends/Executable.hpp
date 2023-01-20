@@ -58,7 +58,8 @@ class Executable {
          * @return returns the result of the function if any
          */
         R operator()(Args... arguments) {
-            if (auto fptr = *std::get_if<FunctionType*>(&function)) {
+            if (std::holds_alternative<FunctionType*>(function)) {
+                auto fptr = std::get<FunctionType*>(function);
                 if constexpr (!std::is_void_v<R>) {
                     return fptr(std::forward<Args>(arguments)...);
                 } else {
