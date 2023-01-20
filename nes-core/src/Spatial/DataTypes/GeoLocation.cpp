@@ -28,7 +28,7 @@ namespace NES::Spatial::DataTypes::Experimental {
     GeoLocation::GeoLocation(double latitude, double longitude) {
         //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
         if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
-            NES_ERROR("Trying to create node with an invalid location");
+            NES_ERROR("Trying to create a location with invalid coordinates");
             throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
         }
         this->latitude = latitude;

@@ -24,6 +24,12 @@ const std::vector<ReconnectPoint>& ReconnectSchedule::getReconnectVector() const
 
 ReconnectSchedule ReconnectSchedule::Empty() { return ReconnectSchedule({}); }
 
-void ReconnectSchedule::removeNextReconnect() { reconnectVector.erase(reconnectVector.begin()); }
+bool ReconnectSchedule::removeNextReconnect() {
+    if (reconnectVector.empty()) {
+        return false;
+    }
+    reconnectVector.erase(reconnectVector.begin());
+    return true;
+}
 
 }// namespace NES::Spatial::Mobility::Experimental
