@@ -336,7 +336,7 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString() 
 }
 
 bool SourceCatalog::updateLogicalSource(const std::string& sourceName, const std::string& sourceSchema) {
-    NES_INFO("SourceCatalog: Update the logical source " << sourceName << " with the schema " << sourceSchema);
+    NES_INFO2("SourceCatalog: Update the logical source {} with the schema {} ", sourceName, sourceSchema);
     std::unique_lock lock(catalogMutex);
 
     NES_TRACE("SourceCatalog: Check if logical source exists in the catalog.");
