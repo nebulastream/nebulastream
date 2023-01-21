@@ -465,7 +465,7 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
               << timestamp);
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
-    if(!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))){
+    if (!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))) {
         reply->set_success(true);
         return Status::OK;
     }

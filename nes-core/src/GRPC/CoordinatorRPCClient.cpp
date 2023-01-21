@@ -695,7 +695,9 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     return softStopCompletionReply.success();
 }
 
-bool CoordinatorRPCClient::sendReconnectPrediction(const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions ) {
+bool CoordinatorRPCClient::sendReconnectPrediction(
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;

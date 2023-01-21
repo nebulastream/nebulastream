@@ -33,12 +33,12 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
-#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES {
 

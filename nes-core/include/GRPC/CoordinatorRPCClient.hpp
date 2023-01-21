@@ -241,7 +241,8 @@ class CoordinatorRPCClient {
      * @param addPredictions new predictions to be added
      * @return true if the information was successfully received at coordinator side
      */
-    bool sendReconnectPrediction(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions );
+    bool sendReconnectPrediction(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+                                 const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed

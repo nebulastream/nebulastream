@@ -34,6 +34,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
@@ -44,7 +45,6 @@
 #include <iostream>
 #include <thread>
 #include <z3++.h>
-#include <Spatial/Index/LocationIndex.hpp>
 
 using namespace NES;
 using namespace NES::Benchmark;

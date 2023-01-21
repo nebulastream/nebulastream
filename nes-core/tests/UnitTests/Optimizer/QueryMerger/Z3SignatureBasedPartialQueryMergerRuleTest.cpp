@@ -43,9 +43,9 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Util/Experimental/SpatialType.hpp>
 #include <iostream>
 #include <z3++.h>
-#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 using namespace Configurations;

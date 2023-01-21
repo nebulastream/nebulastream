@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -25,8 +24,9 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <iostream>
 #include <Util/Experimental/SpatialType.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
 
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>

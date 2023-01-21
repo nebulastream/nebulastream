@@ -117,7 +117,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: the node registration reply
      * @return success
      */
-    Status RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
+    Status
+    RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node
@@ -126,7 +127,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: the node unregistration reply
      * @return success
      */
-    Status UnregisterWorker(ServerContext* context, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) override;
+    Status
+    UnregisterWorker(ServerContext* context, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to register physical source

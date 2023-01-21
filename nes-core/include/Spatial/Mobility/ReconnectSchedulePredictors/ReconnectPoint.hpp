@@ -34,6 +34,6 @@ struct ReconnectPoint {
     uint64_t newParentId;
     Timestamp expectedTime;
 };
-}
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace Spatial::Mobility::Experimental
+}// namespace NES
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_RECONNECTPOINT_HPP_
