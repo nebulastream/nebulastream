@@ -42,12 +42,14 @@ limitations under the License.
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
 #include <utility>
+#include <CL/cl.h>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
-#define NUMBER_OF_TUPLE 10
+#define NUMBER_OF_TUPLES 10
 
+// TODO Documentation
 class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("OpenCLQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
@@ -81,6 +83,18 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
     }
 };
 
+// TODO Documentation
+#define ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, returnValue)                                                           \
+    do {                                                                                                                         \
+        if (status != CL_SUCCESS) {                                                                                              \
+            NES_ERROR(message << ": " << status);                                                                                \
+            return returnValue;                                                                                                  \
+        }                                                                                                                        \
+    } while (0)
+#define ASSERT_OPENCL_SUCCESS(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, true)
+#define ASSERT_OPENCL_SUCCESS_OK(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, ExecutionResult::Ok)
+
+// TODO Documentation
 class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
     class InputRecord {
       public:
@@ -99,9 +113,77 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
         // Get kernel source
+        auto kernelSourceFileName = std::string(TEST_DATA_DIRECTORY) + "computeNesMap.cl";
+        auto kernelSourceFile = std::ifstream(kernelSourceFileName);
+        auto kernelSource = std::string(std::istreambuf_iterator<char>(kernelSourceFile), std::istreambuf_iterator<char>());
+
         // Get OpenCL platform and device
-        // Compile kernel
-        // Create memory buffers
+        cl_int status;
+        cl_uint numPlatforms = 0;
+        status = clGetPlatformIDs(0, nullptr, &numPlatforms);
+        ASSERT_OPENCL_SUCCESS(status, "Failed to get number of OpenCL platforms");
+        if (numPlatforms == 0) {
+            NES_DEBUG("Did not find any OpenCL platforms.");
+            return false;
+        }
+
+        auto platforms = std::vector<cl_platform_id>(numPlatforms);
+        status = clGetPlatformIDs(numPlatforms, platforms.data(), nullptr);
+        ASSERT_OPENCL_SUCCESS(status, "Failed to get OpenCL platform IDs");
+
+        for (auto i = 0u; i < numPlatforms; ++i) {
+            char buffer[1024];
+            status = clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, nullptr);
+            ASSERT_OPENCL_SUCCESS(status, "Failed to get platform vendor");
+            std::stringstream platformInformation;
+            platformInformation << i << ": " << platforms[i] << ": " << buffer << " ";
+            status = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, nullptr);
+            ASSERT_OPENCL_SUCCESS(status, "Failed to get platform name");
+            platformInformation << buffer;
+            NES_DEBUG(platformInformation.str());
+        }
+
+        cl_uint numDevices = 0;
+        cl_platform_id platform = platforms[0];
+        NES_DEBUG("Using OpenCL platform " << platform);
+
+        status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
+        ASSERT_OPENCL_SUCCESS(status, "Failed to get number of devices");
+        if (numDevices == 0) {
+            NES_DEBUG("Did not find any OpenCL device.");
+            return false;
+        }
+
+        auto devices = std::vector<cl_device_id>(numDevices);
+        status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, devices.data(), nullptr);
+        ASSERT_OPENCL_SUCCESS(status, "Failed to get OpenCL device IDs");
+
+        for (auto i = 0u; i < numDevices; ++i) {
+            char buffer[1024];
+            status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(buffer), buffer, nullptr);
+            ASSERT_OPENCL_SUCCESS(status, "Could not get device name");
+            NES_DEBUG(i << ": " << devices[i] << ": " << buffer);
+        }
+        cl_device_id device = devices[0];
+        NES_DEBUG("Using OpenCL device " << device);
+
+        // Create OpenCL context
+        context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &status);
+        ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL context");
+
+        // Create OpenCL command queue
+        commandQueue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &status);
+        ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL command queue");
+
+        // Compile kernel sources and create kernel.
+        const char* kernelSourcePtr = kernelSource.c_str();
+        program = clCreateProgramWithSource(context, 1, &kernelSourcePtr, nullptr, &status);
+        ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL program");
+        status = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
+        ASSERT_OPENCL_SUCCESS(status, "Could not build OpenCL program");
+        kernel = clCreateKernel(program, "computeNesMap", &status);
+        ASSERT_OPENCL_SUCCESS(status, "Could not create OpenCL kernel");
+
         // Done
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
@@ -109,16 +191,57 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
     ExecutionResult execute(Runtime::TupleBuffer& buffer,
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
+        // Create OpenCL memory buffers.
+        // Number of input tuples == number of output tuples for this kernel.
+        auto numberOfTuples = buffer.getNumberOfTuples();
+        auto inputSize = numberOfTuples * sizeof(InputRecord);
+        auto outputSize = numberOfTuples * sizeof(OutputRecord);
+        cl_int status;
+        cl_mem inputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, inputSize, nullptr, &status);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device input buffer");
+        cl_mem outputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, outputSize, nullptr, &status);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device output buffer");
+
+        // Enqueue a write operation of the input to the device.
+        cl_event writeEvent;
+        status = clEnqueueWriteBuffer(commandQueue,
+                                      inputDeviceBuffer, CL_TRUE, 0, inputSize, buffer.getBuffer(), 0, nullptr, &writeEvent);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not buffer write operation");
+
+        // Setup OpenCL kernel call.
+        status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputDeviceBuffer);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (inputTuples)");
+        status = clSetKernelArg(kernel, 1, sizeof(cl_mem), &outputDeviceBuffer);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (resultTuples)");
+        status = clSetKernelArg(kernel, 2, sizeof(cl_ulong), &numberOfTuples);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not set OpenCL kernel parameter (numberOfTuples)");
+
+        // Enqueue the kernel.
+        // TODO Use kernel wait list.
+        cl_event executionEvent;
+        size_t globalSize = 1;
+        size_t localSize = 1;
+        status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &globalSize, &localSize, 0, nullptr, &executionEvent);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue kernel execution");
+        status = clWaitForEvents(1, &executionEvent);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
+        status = clFinish(commandQueue);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish the execution of the command queue");
+
         // Obtain an output buffer.
         auto outputBuffer = wc.allocateTupleBuffer();
 
         // This is a map kernel, so the number of output tuples == number of input tuples.
-        auto numberOfOutputTuples = buffer.getNumberOfTuples();
-        outputBuffer.setNumberOfTuples(numberOfOutputTuples);
+        outputBuffer.setNumberOfTuples(numberOfTuples);
 
-        // TODO Copy memory buffers
-        // TODO Setup kernel call
-        // TODO Execute kernel
+        // Enqueue read operation.
+        cl_event readEvent;
+        status = clEnqueueReadBuffer(commandQueue, outputDeviceBuffer, CL_TRUE, 0, outputSize, outputBuffer.getBuffer(), 0, nullptr, &readEvent);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue read buffer operation");
+
+        // Release memory objects
+        clReleaseMemObject(inputDeviceBuffer);
+        clReleaseMemObject(outputDeviceBuffer);
 
         // Emit the output buffer and return OK.
         ctx.emitBuffer(outputBuffer, wc);
@@ -127,12 +250,23 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
 
     uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
         // Cleanup OpenCL resources
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+        clReleaseCommandQueue(commandQueue);
+        clReleaseContext(context);
         // Done
         return ExecutablePipelineStage::stop(pipelineExecutionContext);
     }
+
+  private:
+    cl_context context;
+    cl_program program;
+    cl_kernel kernel;
+    cl_command_queue commandQueue;
 };
 
-// Test the execution of an external operator on a source with a custom structure
+// TODO Documentation.
+// TODO Extract steps
 TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
     // Create an external operator with the custom OpenCL pipeline stage.
     auto customPipelineStage = std::make_shared<SimpleOpenCLPipelineStage>();
