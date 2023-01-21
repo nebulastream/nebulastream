@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.28](https://github.com/nebulastream/nebulastream/tree/v0.4.28) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.27...v0.4.28)
+
+#### User Defined Functions
+
+- \[Feature\] Inform coordinator that a worker is capable of executing UDFs [\#3075](https://github.com/nebulastream/nebulastream/issues/3075)
+
 ## [v0.4.27](https://github.com/nebulastream/nebulastream/tree/v0.4.27) (2023-01-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.26...v0.4.27)
