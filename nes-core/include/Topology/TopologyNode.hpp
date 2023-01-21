@@ -33,7 +33,7 @@ class Waypoint;
 
 namespace Spatial::Experimental {
 enum class SpatialType;
-}// namespace Spatial::Index::Experimental
+}// namespace Spatial::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;

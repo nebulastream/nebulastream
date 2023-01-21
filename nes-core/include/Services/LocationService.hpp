@@ -110,7 +110,8 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions, const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions );
+    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+                                  const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
 
   private:
     /**
@@ -137,7 +138,8 @@ class LocationService {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id,
+                                                        NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     TopologyPtr topology;

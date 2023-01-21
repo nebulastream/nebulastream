@@ -22,10 +22,10 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 

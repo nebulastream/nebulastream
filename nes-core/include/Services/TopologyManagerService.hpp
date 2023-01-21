@@ -15,14 +15,14 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Common/Identifiers.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <nlohmann/json.hpp>
+#include <vector>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif

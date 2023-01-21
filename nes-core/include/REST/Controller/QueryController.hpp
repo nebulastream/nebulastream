@@ -69,7 +69,8 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     const oatpp::String& completeRouterPrefix,
                     ErrorHandlerPtr errorHandler)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), queryService(std::move(queryService)),
-          queryCatalogService(std::move(queryCatalogService)), globalExecutionPlan(std::move(globalExecutionPlan)), errorHandler(std::move(errorHandler)) {}
+          queryCatalogService(std::move(queryCatalogService)), globalExecutionPlan(std::move(globalExecutionPlan)),
+          errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller
