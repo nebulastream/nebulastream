@@ -14,10 +14,10 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_
 
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <memory>
 #include <vector>
 #ifdef S2DEF
@@ -30,7 +30,7 @@ namespace NES {
 namespace Configurations {
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
-}
+}// namespace Configurations
 
 namespace Spatial::DataTypes::Experimental {
 class Waypoint;
@@ -83,6 +83,6 @@ class LocationProvider {
     DataTypes::Experimental::GeoLocation workerGeoLocation;
     NES::Spatial::Experimental::SpatialType spatialType;
 };
-}//namespace NES::Spatial::Mobility::Experimental
-}
+}// namespace Spatial::Mobility::Experimental
+}// namespace NES
 #endif// NES_CORE_INCLUDE_SPATIAL_MOBILITY_LOCATIONPROVIDER_HPP_

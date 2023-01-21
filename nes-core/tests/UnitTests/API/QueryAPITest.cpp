@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -40,6 +39,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
@@ -47,8 +47,8 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <gmock/gmock-matchers.h>
+#include <gtest/gtest.h>
 #include <iostream>
-#include <Util/Experimental/SpatialType.hpp>
 
 namespace NES {
 

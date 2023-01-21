@@ -20,8 +20,8 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <thread>
 #include <optional>
+#include <thread>
 
 #ifdef S2DEF
 #include <s2/s1angle.h>

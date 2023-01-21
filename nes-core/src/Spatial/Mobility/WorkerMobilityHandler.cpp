@@ -329,7 +329,6 @@ void NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::run(std::vecto
     (void) currentParentWorkerIds;
     NES_ERROR("s2 library is needed to handle worker mobility handler");
 #endif
-
 }
 
 //todo #3365: check if we need insert poison pill: request processor service for reference

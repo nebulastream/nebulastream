@@ -103,7 +103,7 @@ void setupSensorNodeAndSourceCatalogFiveNodes(const Catalogs::Source::SourceCata
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4, properties);
     TopologyNodePtr physicalNode3 = TopologyNode::create(3, "localhost", 4000, 4002, 4, properties);
     TopologyNodePtr physicalNode4 = TopologyNode::create(4, "localhost", 4000, 4002, 4, properties);
-    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4,properties);
+    TopologyNodePtr physicalNode5 = TopologyNode::create(5, "localhost", 4000, 4002, 4, properties);
 
     NES_DEBUG("topo=" << topology->toString());
 

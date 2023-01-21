@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_MOBILITY_TRAJECTORYPREDICTOR_HPP_
 
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <deque>
 #include <memory>
@@ -22,7 +23,6 @@
 #include <optional>
 #include <thread>
 #include <vector>
-#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
@@ -56,7 +56,8 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
  */
 class ReconnectSchedulePredictor {
   public:
-    ReconnectSchedulePredictor(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+    ReconnectSchedulePredictor(
+        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
 #ifdef S2DEF
     /**
@@ -89,8 +90,8 @@ class ReconnectSchedulePredictor {
      * @return the new schedule if one was calculated or nullopt else
      */
     std::optional<ReconnectSchedule> getReconnectSchedule(const DataTypes::Experimental::Waypoint& currentLocation,
-                                              const DataTypes::Experimental::GeoLocation& parentLocation,
-                                                          const S2PointIndex<uint64_t> &FieldNodeIndex,
+                                                          const DataTypes::Experimental::GeoLocation& parentLocation,
+                                                          const S2PointIndex<uint64_t>& FieldNodeIndex,
                                                           bool isIndexUpdted);
 #endif
   private:
@@ -112,7 +113,7 @@ class ReconnectSchedulePredictor {
      * @param currentParendLocation : The location of the workers current parent
      * @param fieldNodeIndex : a spatial index containing ids of fixed location nodes
      */
-    bool scheduleReconnects(const S2Point &currentParentLocation, const S2PointIndex<uint64_t> &fieldNodeIndex );
+    bool scheduleReconnects(const S2Point& currentParentLocation, const S2PointIndex<uint64_t>& fieldNodeIndex);
 #endif
 
     /**
@@ -141,7 +142,6 @@ class ReconnectSchedulePredictor {
     double speedDifferenceThresholdFactor;
     size_t stepsSinceLastLocationSave;
 #endif
-
 };
 }// namespace Spatial::Mobility::Experimental
 }// namespace NES
