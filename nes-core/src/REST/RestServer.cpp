@@ -112,7 +112,8 @@ void RestServer::run() {
                                                                                    globalQueryPlan,
                                                                                    "/queryCatalog",
                                                                                    errorHandler);
-    auto topologyController = REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
+    auto topologyController =
+        REST::Controller::TopologyController::create(objectMapper, topologyManagerService, "/topology", errorHandler);
     auto queryController = REST::Controller::QueryController::create(objectMapper,
                                                                      queryService,
                                                                      queryCatalogService,

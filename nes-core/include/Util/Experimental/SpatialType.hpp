@@ -28,6 +28,6 @@ enum class SpatialType {
     MOBILE_NODE = 2,   //the worker runs on a mobile device which might change its location anytime
     INVALID = 3        //no valid worker type
 };
-}// namespace NES::Spatial::Index::Experimental
+}// namespace NES::Spatial::Experimental
 
 #endif// NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_

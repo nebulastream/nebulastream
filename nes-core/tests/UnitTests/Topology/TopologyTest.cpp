@@ -17,11 +17,11 @@
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <Util/Experimental/SpatialType.hpp>
 
 using namespace NES;
 
@@ -335,7 +335,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     std::string node3Address = "localhost";
     grpcPort++;
     dataPort++;
-    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources,properties);
+    auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources, properties);
     success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
@@ -361,7 +361,7 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
     std::vector<TopologyNodePtr> workers;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
-        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource,properties));
+        workers.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource, properties));
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }

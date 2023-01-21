@@ -14,6 +14,7 @@
 #ifndef NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 #define NES_CORE_INCLUDE_SPATIAL_INDEX_LOCATIONINDEX_HPP_
 
+#include <Common/Identifiers.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
@@ -21,7 +22,6 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <Common/Identifiers.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif

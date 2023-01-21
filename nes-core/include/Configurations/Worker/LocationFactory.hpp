@@ -28,7 +28,6 @@ namespace NES::Configurations::Spatial::Index::Experimental {
 class LocationFactory {
 
   public:
-
     /**
      * @brief obtains a Geographical location objects by parsing string coordinates
      * @param str: Coordinate string in the format "<lat, lng>"

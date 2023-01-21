@@ -100,7 +100,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestSingleNodeLocation) {
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
 
-//todo #3390: should this have an effect for a mobile node?
+    //todo #3390: should this have an effect for a mobile node?
     topologyManagerService->updateGeoLocation(node3Id, {13.4, -23});
 
     // test querying for node which does not exist in the system
@@ -214,7 +214,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestAllMobileNodeLocations) {
         NES_DEBUG("checking element with id " << entry.at("id"));
         EXPECT_TRUE(entry.at("id") == node3Id || entry.at("id") == node4Id);
         if (entry.at("id") == node3Id) {
-//todo #3390: this currently returns the fixed location
+            //todo #3390: this currently returns the fixed location
             /*
             cmpLoc[0] = 52.55227464714949;
             cmpLoc[1] = 13.351743136322877;
