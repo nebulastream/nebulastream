@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.30](https://github.com/nebulastream/nebulastream/tree/v0.4.30) (2023-01-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.29...v0.4.30)
+
+**Implemented enhancements:**
+
+- \[Feature\] Multiple logical and physical source for E2E Benchmarking [\#3332](https://github.com/nebulastream/nebulastream/issues/3332)
+
+## [v0.4.29](https://github.com/nebulastream/nebulastream/tree/v0.4.29) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.28...v0.4.29)
+
 ## [v0.4.28](https://github.com/nebulastream/nebulastream/tree/v0.4.28) (2023-01-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.27...v0.4.28)
