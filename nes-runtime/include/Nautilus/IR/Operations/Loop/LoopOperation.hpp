@@ -28,20 +28,27 @@ namespace NES::Nautilus::IR::Operations {
  */
 class LoopOperation : public Operation {
   public:
-    enum LoopType { ForLoop };
+    enum LoopType { DefaultLoop, CountedLoop };
     LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
+    BasicBlockInvocation& getLoopBodyBlock();
+    BasicBlockInvocation& getLoopFalseBlock();
     BasicBlockInvocation& getLoopHeadBlock();
+    BasicBlockInvocation& getLoopEndBlock();
     void setLoopInfo(std::shared_ptr<LoopInfo> loopInfo);
     std::shared_ptr<LoopInfo> getLoopInfo();
+    void setLoopType(LoopOperation::LoopType loopType);
 
     std::string toString() override;
 
   private:
     LoopType loopType;
     BasicBlockInvocation loopHeadBlock;
+    BasicBlockInvocation loopBodyBlock;
+    BasicBlockInvocation loopFalseBlock;
+    BasicBlockInvocation loopEndBlock;
     std::shared_ptr<LoopInfo> loopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations

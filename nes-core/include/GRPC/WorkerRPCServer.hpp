@@ -37,8 +37,8 @@ namespace Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-class TrajectoryPredictor;
-using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
+class ReconnectSchedulePredictor;
+using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 }// namespace Spatial::Mobility::Experimental
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
@@ -46,7 +46,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                     Monitoring::MonitoringAgentPtr monitoringAgent,
                     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor);
+                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -69,14 +69,11 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
-    Status
-    GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) override;
-
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
-    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
+    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
 };
 
 }// namespace NES

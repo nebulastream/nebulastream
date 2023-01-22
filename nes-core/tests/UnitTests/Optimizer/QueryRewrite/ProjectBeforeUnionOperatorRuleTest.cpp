@@ -21,16 +21,19 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
-using namespace NES;
+namespace NES {
 
 class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
@@ -54,15 +57,23 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
 
     void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
-        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+        TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
+
         LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
         LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);
+
         PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
+
         Catalogs::Source::SourceCatalogEntryPtr sce1 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
         Catalogs::Source::SourceCatalogEntryPtr sce2 =
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
+
         sourceCatalog->addPhysicalSource("x", sce1);
         sourceCatalog->addPhysicalSource("y", sce2);
         sourceCatalog->addLogicalSource("x", schema);
@@ -125,3 +136,4 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     projectionOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 }
+}// namespace NES

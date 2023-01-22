@@ -1,28 +1,23 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
-
-# ~~~ Configurations for the NES E2E Benchmark ~~~
 numberOfWorkerThreads: 1
 numberOfQueriesToDeploy: 1
-
-# engine configuration parameter
-#numberOfBuffersInGlobalBufferManager: 32768
-numberOfBuffersInGlobalBufferManager: 1024
-numberOfBuffersPerPipeline: 128
-numberOfBuffersInSourceLocalBufferPool: 128
-bufferSizeInBytes: 131072
+bufferSizeInBytes: 1024
 numberOfPreAllocatedBuffer: 100
 
-# Benchmark parameter for the entire run
-logLevel: LOG_INFO
+# ~~~ Benchmark parameter for the entire run ~~~
+numberOfBuffersToProduce: 500
+logLevel: LOG_DEBUG
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 0
+startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 1
 
-logicalSourceName: ysb
-numberOfSources: 1
-inputType: MemoryMode
-dataGenerator: YSB
+logicalSources:
+  - name: input1
+    type: ysb
+    numberOfPhysicalSources: 1
+
+
 dataProviderMode: ZeroCopy
 outputFile: FilterOneSource.csv
 benchmarkName: FilterOneSource
-query: 'Query::from("ysb").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input1").filter(Attribute("event_type") < 100).sink(NullOutputSinkDescriptor::create());'

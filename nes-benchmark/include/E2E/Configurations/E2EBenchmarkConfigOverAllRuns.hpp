@@ -43,6 +43,18 @@ class E2EBenchmarkConfigOverAllRuns {
     static E2EBenchmarkConfigOverAllRuns generateConfigOverAllRuns(Yaml::Node yamlConfig);
 
     /**
+     * @brief calculates the total schema size for this run
+     * @return total schema size for all logical sources
+     */
+    size_t getTotalSchemaSize();
+
+    /**
+     * @brief creates a string representation of mapLogicalSrcNameToDataGenerator
+     * @return string representation
+     */
+    std::string getStrLogicalSrcDataGenerators();
+
+    /**
      * @brief all configurations that are constant over all runs
      */
   public:
@@ -58,8 +70,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    Configurations::StringConfigOption dataGenerator;
-    Configurations::StringConfigOption logicalSourceName;
+    std::map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

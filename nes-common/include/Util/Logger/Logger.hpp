@@ -75,7 +75,7 @@ template<>
 struct LogCaller<LogLevel::LOG_INFO> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->info(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -83,7 +83,7 @@ template<>
 struct LogCaller<LogLevel::LOG_TRACE> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->trace(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -91,7 +91,7 @@ template<>
 struct LogCaller<LogLevel::LOG_DEBUG> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->debug(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -99,7 +99,7 @@ template<>
 struct LogCaller<LogLevel::LOG_ERROR> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->error(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -107,7 +107,7 @@ template<>
 struct LogCaller<LogLevel::LOG_FATAL_ERROR> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().fatal(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->fatal(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -115,7 +115,7 @@ template<>
 struct LogCaller<LogLevel::LOG_WARNING> {
     template<typename... arguments>
     constexpr static void do_call(spdlog::source_loc&& loc, fmt::format_string<arguments...> format, arguments&&... args) {
-        NES::Logger::getInstance().warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
+        NES::Logger::getInstance()->warn(std::move(loc), std::move(format), std::forward<arguments>(args)...);
     }
 };
 
@@ -129,7 +129,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
-            auto& __logger = NES::Logger::getInstance();                                                                         \
             std::stringbuf __buffer;                                                                                             \
             std::ostream __os(&__buffer);                                                                                        \
             __os << message;                                                                                                     \
@@ -142,7 +141,6 @@ struct LogCaller<LogLevel::LOG_WARNING> {
     do {                                                                                                                         \
         auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
-            auto& __logger = NES::Logger::getInstance();                                                                         \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__);                \
         }                                                                                                                        \
     } while (0)

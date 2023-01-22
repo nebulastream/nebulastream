@@ -16,19 +16,17 @@
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Health.grpc.pb.h>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Util/Experimental/NodeType.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <filesystem>
 #include <fstream>
-#include <health.grpc.pb.h>
 #include <string>
+
 namespace NES {
 
 namespace detail {
@@ -168,7 +166,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
               << physicalSources.size() << " physical sources to register for worker with id " << workerId);
 
     RegisterPhysicalSourcesRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
 
     for (const auto& physicalSource : physicalSources) {
         PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsources();
@@ -203,7 +201,7 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     RegisterLogicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
     request.set_sourceschema(fileContent);
     NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request=" << request.DebugString());
@@ -221,7 +219,7 @@ bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSo
     NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source" << physicalSourceName << " from logical source ");
 
     UnregisterPhysicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_physicalsourcename(physicalSourceName);
     request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request=" << request.DebugString());
@@ -239,7 +237,7 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
     NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source" << logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
-    request.set_id(workerId);
+    request.set_workerid(workerId);
     request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request=" << request.DebugString());
 
@@ -348,23 +346,23 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
 bool CoordinatorRPCClient::unregisterNode() {
     NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId=" << workerId);
 
-    UnregisterNodeRequest request;
-    request.set_id(workerId);
+    UnregisterWorkerRequest request;
+    request.set_workerid(workerId);
     NES_DEBUG("CoordinatorRPCClient::unregisterNode request=" << request.DebugString());
 
-    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterNodeRequest, UnregisterNodeReply> {
+    class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
       public:
         std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
 
         explicit UnRegisterNodeListener(std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
             : coordinatorStub(coordinatorStub) {}
 
-        Status rpcCall(const UnregisterNodeRequest& request, UnregisterNodeReply* reply) override {
+        Status rpcCall(const UnregisterWorkerRequest& request, UnregisterWorkerReply* reply) override {
             ClientContext context;
 
-            return coordinatorStub->UnregisterNode(&context, request, reply);
+            return coordinatorStub->UnregisterWorker(&context, request, reply);
         }
-        bool onSuccess(const UnregisterNodeReply& reply) override {
+        bool onSuccess(const UnregisterWorkerReply& reply) override {
             NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
             return reply.success();
         }
@@ -380,47 +378,29 @@ bool CoordinatorRPCClient::unregisterNode() {
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
-                                        int64_t grpcPort,
-                                        int64_t dataPort,
-                                        int16_t numberOfSlots,
-                                        const Monitoring::RegistrationMetrics& registrationMetrics,
-                                        Spatial::Index::Experimental::Location fixedCoordinates,
-                                        Spatial::Index::Experimental::NodeType spatialType,
-                                        bool isTfInstalled) {
+bool CoordinatorRPCClient::registerWorker(const RegisterWorkerRequest& registrationRequest) {
 
-    RegisterNodeRequest request;
-    request.set_address(ipAddress);
-    request.set_grpcport(grpcPort);
-    request.set_dataport(dataPort);
-    request.set_numberofslots(numberOfSlots);
-    request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
-    request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
-    request.set_istfinstalled(isTfInstalled);
-    NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
-    Coordinates* pCoordinates = request.mutable_coordinates();
-    pCoordinates->set_lat(fixedCoordinates.getLatitude());
-    pCoordinates->set_lng(fixedCoordinates.getLongitude());
+    NES_DEBUG("CoordinatorRPCClient::RegisterNodeRequest request=" << registrationRequest.DebugString());
 
-    class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
+    class RegisterWorkerListener : public detail::RpcExecutionListener<bool, RegisterWorkerRequest, RegisterWorkerReply> {
       public:
         uint64_t& workerId;
         std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub;
 
-        explicit RegisterNodeListener(uint64_t& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
+        explicit RegisterWorkerListener(uint64_t& workerId, std::unique_ptr<CoordinatorRPCService::Stub>& coordinatorStub)
             : workerId(workerId), coordinatorStub(coordinatorStub) {}
 
-        Status rpcCall(const RegisterNodeRequest& request, RegisterNodeReply* reply) override {
+        Status rpcCall(const RegisterWorkerRequest& request, RegisterWorkerReply* reply) override {
             ClientContext context;
 
-            return coordinatorStub->RegisterNode(&context, request, reply);
+            return coordinatorStub->RegisterWorker(&context, request, reply);
         }
-        bool onSuccess(const RegisterNodeReply& reply) override {
-            workerId = reply.id();
+        bool onSuccess(const RegisterWorkerReply& reply) override {
+            workerId = reply.workerid();
             return true;
         }
         bool onPartialFailure(const Status& status) override {
-            NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
+            NES_ERROR(" CoordinatorRPCClient::registerWorker error=" << status.error_code() << ": " << status.error_message());
             switch (status.error_code()) {
                 case grpc::UNIMPLEMENTED:
                 case grpc::UNAVAILABLE: {
@@ -434,9 +414,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
         bool onFailure() override { return false; }
     };
 
-    auto listener = RegisterNodeListener{workerId, coordinatorStub};
-
-    return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
+    auto listener = RegisterWorkerListener{workerId, coordinatorStub};
+    return detail::processRpc(registrationRequest, rpcRetryAttemps, rpcBackoff, listener);
 }
 
 bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
@@ -479,24 +458,25 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
-CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::LocationPtr location, double radius) {
-    if (!location) {
+std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>>
+CoordinatorRPCClient::getNodeIdsInRange(const Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius) {
+    if (!geoLocation.isValid()) {
         return {};
     }
     GetNodesInRangeRequest request;
-    Coordinates* pCoordinates = request.mutable_coord();
-    pCoordinates->set_lat(location->getLatitude());
-    pCoordinates->set_lng(location->getLongitude());
+    NES::Spatial::Protobuf::GeoLocation* pCoordinates = request.mutable_geolocation();
+    pCoordinates->set_lat(geoLocation.getLatitude());
+    pCoordinates->set_lng(geoLocation.getLongitude());
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodesInRange;
-    for (WorkerLocationInfo workerInfo : *reply.mutable_nodes()) {
-        nodesInRange.emplace_back(workerInfo.id(), workerInfo.coord());
+    std::vector<std::pair<uint64_t, Spatial::DataTypes::Experimental::GeoLocation>> nodesInRange;
+    auto workerLocations = *reply.mutable_nodes();
+    for (auto& workerLocation : workerLocations) {
+        nodesInRange.emplace_back(workerLocation.id(), workerLocation.geolocation());
     }
     return nodesInRange;
 }
@@ -610,34 +590,51 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     return softStopCompletionReply.success();
 }
 
-bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
-                                                   Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect) {
+bool CoordinatorRPCClient::sendReconnectPrediction(
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+    const std::vector<Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {
     ClientContext context;
     SendScheduledReconnectRequest request;
     SendScheduledReconnectReply reply;
 
-    request.set_deviceid(nodeId);
-    SerializableReconnectPrediction* reconnectPoint = request.mutable_reconnect();
-    reconnectPoint->set_id(scheduledReconnect.expectedNewParentId);
-    reconnectPoint->set_time(scheduledReconnect.expectedTime);
+    request.set_deviceid(workerId);
+    auto pointsToAdd = request.mutable_addreconnects();
+    for (auto addedPrediction : addPredictions) {
+        auto addedPoint = pointsToAdd->Add();
+        addedPoint->set_id(addedPrediction.newParentId);
+        addedPoint->set_time(addedPrediction.expectedTime);
+        auto pointLocation = addedPoint->mutable_geolocation();
+        pointLocation->set_lat(addedPrediction.pointGeoLocation.getLatitude());
+        pointLocation->set_lat(addedPrediction.pointGeoLocation.getLongitude());
+    }
+    auto pointsToRemove = request.mutable_removereconnects();
+    for (auto removedPrediction : removePredictions) {
+        auto addedPoint = pointsToAdd->Add();
+        addedPoint->set_id(removedPrediction.newParentId);
+        addedPoint->set_time(removedPrediction.expectedTime);
+        auto pointLocation = addedPoint->mutable_geolocation();
+        pointLocation->set_lat(removedPrediction.pointGeoLocation.getLatitude());
+        pointLocation->set_lat(removedPrediction.pointGeoLocation.getLongitude());
+    }
 
     coordinatorStub->SendScheduledReconnect(&context, request, &reply);
     return reply.success();
 }
 
-bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, Spatial::Index::Experimental::WaypointPtr locationUpdate) {
+bool CoordinatorRPCClient::sendLocationUpdate(const Spatial::DataTypes::Experimental::Waypoint& locationUpdate) {
     ClientContext context;
     LocationUpdateRequest request;
     LocationUpdateReply reply;
 
-    request.set_id(nodeId);
+    request.set_workerid(workerId);
 
-    Coordinates* coordinates = request.mutable_coord();
-    coordinates->set_lat(locationUpdate->getLocation()->getLatitude());
-    coordinates->set_lng(locationUpdate->getLocation()->getLongitude());
+    NES::Spatial::Protobuf::Waypoint* waypoint = request.mutable_waypoint();
+    NES::Spatial::Protobuf::GeoLocation* geoLocation = waypoint->mutable_geolocation();
+    geoLocation->set_lat(locationUpdate.getLocation().getLatitude());
+    geoLocation->set_lng(locationUpdate.getLocation().getLongitude());
 
-    if (locationUpdate->getTimestamp()) {
-        request.set_time(locationUpdate->getTimestamp().value());
+    if (locationUpdate.getTimestamp()) {
+        waypoint->set_timestamp(locationUpdate.getTimestamp().value());
     }
     coordinatorStub->SendLocationUpdate(&context, request, &reply);
     return reply.success();

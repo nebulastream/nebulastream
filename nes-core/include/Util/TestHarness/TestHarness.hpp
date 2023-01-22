@@ -199,7 +199,7 @@ class TestHarness {
                                                WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create()) {
         workerConfiguration->parentId = parentId;
 #ifdef TFDEF
-        workerConfiguration->isTfInstalled = true;
+        workerConfiguration->isTensorflowSupported = true;
 #endif// TFDEF
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto workerId = getNextTopologyId();

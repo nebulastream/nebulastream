@@ -32,6 +32,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -52,13 +53,13 @@
 #include <Services/SourceCatalogService.hpp>
 
 #include <GRPC/HealthCheckRPCServer.hpp>
+#include <Health.pb.h>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <health.pb.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -85,12 +86,14 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
@@ -117,7 +120,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     udfCatalog = Catalogs::UDF::UdfCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, queryRequestQueue);
-    locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    locationService = std::make_shared<NES::LocationService>(topology, locationIndex);
 
     monitoringService =
         std::make_shared<MonitoringService>(workerRpcClient, topology, queryService, queryCatalogService, enableMonitoring);
@@ -193,8 +196,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               restPort,
                                               this->inherited0::weak_from_this(),
                                               queryCatalogService,
-                                              sourceCatalog,
-                                              topology,
+                                              sourceCatalogService,
+                                              topologyManagerService,
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
@@ -344,8 +347,11 @@ NES::Experimental::MaintenanceServicePtr NesCoordinator::getMaintenanceService()
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
+
 SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
+
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
-NES::Spatial::Index::Experimental::LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
+
+LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
 }// namespace NES

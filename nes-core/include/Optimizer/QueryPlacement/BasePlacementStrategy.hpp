@@ -138,8 +138,8 @@ class BasePlacementStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @param downStreamPinnedOperators: the pinned downstream operators
      */
-    void performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
-                              std::vector<OperatorNodePtr> downStreamPinnedOperators);
+    void performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
+                              const std::vector<OperatorNodePtr>& downStreamPinnedOperators);
 
     /**
      * @brief Iterate through operators between pinnedUpStreamOperators and pinnedDownStreamOperators and assign them to the

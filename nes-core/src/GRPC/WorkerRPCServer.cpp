@@ -18,12 +18,11 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Spatial/Index/Waypoint.hpp>
-#include <Spatial/Mobility/LocationProvider.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
-#include <Spatial/Mobility/TrajectoryPredictor.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Spatial/Mobility/LocationProviders/LocationProvider.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <nlohmann/json.hpp>
 #include <utility>
 
@@ -32,7 +31,7 @@ namespace NES {
 WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
                                  Monitoring::MonitoringAgentPtr monitoringAgent,
                                  NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                                 NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor)
+                                 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
       locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
@@ -195,73 +194,16 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
         //return an empty reply
         return Status::OK;
     }
-    auto waypoint = locationProvider->getWaypoint();
-    auto loc = waypoint->getLocation();
-    if (loc->isValid()) {
-        Coordinates* coord = reply->mutable_coord();
-        coord->set_lat(loc->getLatitude());
-        coord->set_lng(loc->getLongitude());
+    auto waypoint = locationProvider->getCurrentWaypoint();
+    auto loc = waypoint.getLocation();
+    auto protoWaypoint = reply->mutable_waypoint();
+    if (loc.isValid()) {
+        auto coord = protoWaypoint->mutable_geolocation();
+        coord->set_lat(loc.getLatitude());
+        coord->set_lng(loc.getLongitude());
     }
-    if (waypoint->getTimestamp()) {
-        reply->set_timestamp(waypoint->getTimestamp().value());
-    }
-    return Status::OK;
-}
-
-Status WorkerRPCServer::GetReconnectSchedule(ServerContext*,
-                                             const GetReconnectScheduleRequest* request,
-                                             GetReconnectScheduleReply* reply) {
-    (void) request;
-    NES_DEBUG("WorkerRPCServer received reconnect schedule request")
-    if (!trajectoryPredictor) {
-        NES_DEBUG("WorkerRPCServer: trajectory planner not set")
-        return Status::CANCELLED;
-    }
-    //obtain the current schedule form the trajectory predictor
-    auto schedule = trajectoryPredictor->getReconnectSchedule();
-    ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
-    scheduleMsg->set_parentid(schedule->getCurrentParentId());
-
-    //if a predicted path was calculated, insert its start and endpoint into the message to be sent
-    auto startLoc = schedule->getPathStart();
-    if (startLoc) {
-        Coordinates* startCoord = scheduleMsg->mutable_pathstart();
-        startCoord->set_lat(startLoc->getLatitude());
-        startCoord->set_lng(startLoc->getLongitude());
-    }
-    auto endLoc = schedule->getPathEnd();
-    if (endLoc) {
-        Coordinates* endCoord = scheduleMsg->mutable_pathend();
-        endCoord->set_lat(endLoc->getLatitude());
-        endCoord->set_lng(endLoc->getLongitude());
-    }
-
-    //if the device downloaded nodes to the local index, insert the location of the device at the time of the update into the message
-    auto updateLocation = schedule->getLastIndexUpdatePosition();
-    if (updateLocation) {
-        Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
-        updateCoordinates->set_lat(updateLocation->getLatitude());
-        updateCoordinates->set_lng(updateLocation->getLongitude());
-    }
-
-    //insert the predicted reconnects into the message (if there are any)
-    auto reconnectVectorPtr = schedule->getReconnectVector();
-    if (reconnectVectorPtr) {
-        auto reconnectVector = *reconnectVectorPtr;
-        for (const auto& elem : reconnectVector) {
-            if (!elem) {
-                NES_WARNING("reconnect vector contains nullpointer");
-                continue;
-            }
-            SerializableReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
-            Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
-            auto loc = elem->predictedReconnectLocation;
-            reconnectLocation->set_lat(loc.getLatitude());
-            reconnectLocation->set_lng(loc.getLongitude());
-            auto reconnectPrediction = reconnectPoint->mutable_reconnectprediction();
-            reconnectPrediction->set_id(elem->reconnectPrediction.expectedNewParentId);
-            reconnectPrediction->set_time(elem->reconnectPrediction.expectedTime);
-        }
+    if (waypoint.getTimestamp()) {
+        protoWaypoint->set_timestamp(waypoint.getTimestamp().value());
     }
     return Status::OK;
 }

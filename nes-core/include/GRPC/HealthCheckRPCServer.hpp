@@ -20,7 +20,7 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 
-#include <health.grpc.pb.h>
+#include <Health.grpc.pb.h>
 
 namespace NES {
 /**

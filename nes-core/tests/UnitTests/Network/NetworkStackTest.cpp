@@ -78,14 +78,12 @@ class NetworkStackTest : public Testing::NESBaseTest {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        NES_INFO("Setup NetworkStackTest");
         freeDataPort = getAvailablePort();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
         freeDataPort.reset();
-        NES_INFO("TearDown NetworkStackTest");
         Testing::NESBaseTest::TearDown();
     }
 
@@ -174,10 +172,10 @@ TEST_F(NetworkStackTest, serverMustStartAndStopRandomPort) {
         auto partMgr = std::make_shared<PartitionManager>();
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
-        ZmqServer server("127.0.0.1", 0, 4, exchangeProtocol, buffMgr);
+        ZmqServer server("127.0.0.1", *freeDataPort, 4, exchangeProtocol, buffMgr);
         server.start();
         ASSERT_EQ(server.isServerRunning(), true);
-        ASSERT_GT(server.getServerPort(), 0);
+        ASSERT_EQ(server.getServerPort(), *freeDataPort);
     } catch (...) {
         // shutdown failed
         FAIL();

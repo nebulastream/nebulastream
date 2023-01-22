@@ -46,10 +46,8 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 class ReplicationService;
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 
-namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}// namespace Spatial::Index::Experimental
 
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
@@ -71,15 +69,16 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService,
-                                  NES::Spatial::Index::Experimental::LocationServicePtr locationService);
+                                  LocationServicePtr locationService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
-     * @param request: node registration request
+     * @param registrationRequest: node registration request
      * @param reply: the node registration reply
      * @return success
      */
-    Status RegisterNode(ServerContext* context, const RegisterNodeRequest* request, RegisterNodeReply* reply) override;
+    Status
+    RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node
@@ -88,7 +87,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: the node unregistration reply
      * @return success
      */
-    Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) override;
+    Status
+    UnregisterWorker(ServerContext* context, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to register physical source
@@ -236,9 +236,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief inform the coordinator that a mobile devices reconnect prediction has changed
-     * @param request : sent from worker to coordinator containing the id of the mobile device and the scheduled reconnect
-     * consisting of the id of the field node which the mobile device expects to connect to and the location and time at which
-     * the reconnect is expected to happen
+     * @param request : sent from worker to coordinator containing the id of the mobile device and a list of the old scheduled
+     * reconnects to be removed as well as the new scheduled reconnects to be added. With each reconnect consisting of
+     * the id of the node which the mobile device expects to connect to and the location and time at which the
+     * reconnect is expected to happen
      * @param reply : sent from coordinator to worker not containing any data
      * @return OK if the coordinator succesfully recorded the data, CANCELLED otherwise
      */
@@ -262,7 +263,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     QueryCatalogServicePtr queryCatalogService;
     Monitoring::MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
-    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
+    LocationServicePtr locationService;
 };
 }// namespace NES
 

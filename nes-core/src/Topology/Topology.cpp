@@ -14,18 +14,18 @@
 
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Spatial/Index/Location.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), locationIndex(std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>()) {}
+Topology::Topology() : rootNode(nullptr) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -62,9 +62,6 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        if (nodeToRemove->getSpatialNodeType() == NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION) {
-            locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
-        }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
         return true;
@@ -247,7 +244,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     std::vector<NodePtr> updatedParents;
     //filters out all parents that are marked for maintenance, as these should be ignored during path finding
     for (auto& parent : parents) {
-        if (!parent->as<TopologyNode>()->getMaintenanceFlag()) {
+        if (!parent->as<TopologyNode>()->isUnderMaintenance()) {
             updatedParents.push_back(parent);
         }
     }
@@ -441,8 +438,9 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
         }
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
-        for (const auto& parent : candidateNode->getParents()) {
-            if (!parent->as<TopologyNode>()->getMaintenanceFlag())
+        auto parents = candidateNode->getParents();
+        for (const auto& parent : parents) {
+            if (!parent->as<TopologyNode>()->isUnderMaintenance())
                 nodesToProcess.push_back(parent);
         }
     }
@@ -490,8 +488,9 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
         }
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
-        for (const auto& child : candidateNode->getChildren()) {
-            if (!child->as<TopologyNode>()->getMaintenanceFlag()) {
+        auto children = candidateNode->getChildren();
+        for (const auto& child : children) {
+            if (!child->as<TopologyNode>()->isUnderMaintenance()) {
                 nodesToProcess.push_back(child);
             }
         }
@@ -546,7 +545,8 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& s
 
     std::vector<TopologyNodePtr> nodesBetween;
     NES_DEBUG("Topology: iterate over parent of the source node and find path between its parent and destination nodes.");
-    for (const auto& sourceParent : sourceNode->getParents()) {
+    auto parents = sourceNode->getParents();
+    for (const auto& sourceParent : parents) {
         std::vector<TopologyNodePtr> foundBetweenNodes = findNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
         if (!foundBetweenNodes.empty()) {
             NES_TRACE("Topology: found a path between source nodes parent and destination nodes.");
@@ -602,6 +602,4 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     }
     return nullptr;
 }
-
-NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() { return locationIndex; }
 }// namespace NES

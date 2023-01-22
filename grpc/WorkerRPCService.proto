@@ -37,7 +37,6 @@ service WorkerRPCService {
 
   rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
 
-  rpc GetReconnectSchedule(GetReconnectScheduleRequest) returns (GetReconnectScheduleReply) {}
   rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
   rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}
@@ -142,8 +141,7 @@ message GetLocationRequest {
 }
 
 message GetLocationReply {
-  Coordinates coord = 1;
-  uint64 timestamp = 2;
+  NES.Spatial.Protobuf.Waypoint waypoint = 1;
 }
 
 message GetReconnectScheduleRequest {
@@ -151,7 +149,7 @@ message GetReconnectScheduleRequest {
 }
 
 message GetReconnectScheduleReply {
-  ReconnectSchedule schedule = 1;
+  NES.Spatial.Protobuf.ReconnectSchedule schedule = 1;
 }
 
 enum MlModelFileUploadStatus {

@@ -20,5 +20,6 @@ std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument) {
     os << argument.identifier;
     return os;
 }
+
 std::string BasicBlockArgument::toString() { return identifier; }
 }// namespace NES::Nautilus::IR::Operations

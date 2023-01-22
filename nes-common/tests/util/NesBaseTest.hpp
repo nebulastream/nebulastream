@@ -65,6 +65,7 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener, public
     void TearDown() override {
         T::TearDown();
         completeTest();
+        Logger::getInstance()->forceFlush();
         Exceptions::removeGlobalErrorListener(self);
         self.reset();
     }
@@ -127,6 +128,8 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
      */
     explicit NESBaseTest();
 
+    ~NESBaseTest();
+
     /**
      * @brief Fetches the port
      */
@@ -156,6 +159,9 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   private:
     std::filesystem::path testResourcePath;
+
+    std::atomic<bool> setUpCalled{false};
+    std::atomic<bool> tearDownCalled{false};
 };
 }// namespace Testing
 

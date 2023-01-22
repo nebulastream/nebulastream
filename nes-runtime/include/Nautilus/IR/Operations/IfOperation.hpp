@@ -15,6 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
 
+#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 
@@ -27,6 +29,7 @@ class IfOperation : public Operation {
     OperationPtr getValue();
 
     BasicBlockPtr getMergeBlock();
+    OperationPtr getBooleanValue();
     void setMergeBlock(BasicBlockPtr mergeBlock);
     BasicBlockInvocation& getTrueBlockInvocation();
     BasicBlockInvocation& getFalseBlockInvocation();
@@ -41,6 +44,7 @@ class IfOperation : public Operation {
     BasicBlockInvocation trueBlockInvocation;
     BasicBlockInvocation falseBlockInvocation;
     std::weak_ptr<BasicBlock> mergeBlock;
+    std::unique_ptr<CountedLoopInfo> countedLoopInfo;
 };
 }// namespace NES::Nautilus::IR::Operations
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_

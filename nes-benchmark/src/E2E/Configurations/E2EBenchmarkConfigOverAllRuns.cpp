@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/Schema.hpp>
+#include <DataGeneration/DefaultDataGenerator.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
 
@@ -37,11 +38,11 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     dataProviderMode =
         ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
-    logicalSourceName = ConfigurationOption<std::string>::create("logicalSourceName", "test", "stream name");
-    dataGenerator = ConfigurationOption<std::string>::create("dataGenerator", "Default", "Generator name");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
+    sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
 }
+
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
     std::stringstream oss;
     oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
@@ -57,31 +58,64 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- batchSize: " << batchSize->getValueAsString() << std::endl
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
-        << "- dataGenerators: " << dataGenerator->getValue() << std::endl
-        << "- logicalSourceName: " << logicalSourceName->getValue() << std::endl;
+        << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl;
 
     return oss.str();
 }
 
 E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(Yaml::Node yamlConfig) {
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-    configOverAllRuns.startupSleepIntervalInSeconds->setValue(yamlConfig["startupSleepIntervalInSeconds"].As<uint32_t>());
-    configOverAllRuns.numMeasurementsToCollect->setValue(yamlConfig["numberOfMeasurementsToCollect"].As<uint32_t>());
-    configOverAllRuns.experimentMeasureIntervalInSeconds->setValue(
-        yamlConfig["experimentMeasureIntervalInSeconds"].As<uint32_t>());
-    configOverAllRuns.outputFile->setValue(yamlConfig["outputFile"].As<std::string>());
-    configOverAllRuns.benchmarkName->setValue(yamlConfig["benchmarkName"].As<std::string>());
-    configOverAllRuns.query->setValue(yamlConfig["query"].As<std::string>());
-    configOverAllRuns.dataProviderMode->setValue(yamlConfig["dataProviderMode"].As<std::string>());
-    configOverAllRuns.connectionString->setValue(yamlConfig["connectionString"].As<std::string>());
-    configOverAllRuns.inputType->setValue(yamlConfig["inputType"].As<std::string>());
-    configOverAllRuns.sourceSharing->setValue(yamlConfig["sourceSharing"].As<std::string>());
-    configOverAllRuns.logicalSourceName->setValue(yamlConfig["logicalSourceName"].As<std::string>());
-    configOverAllRuns.dataGenerator->setValue(yamlConfig["dataGenerator"].As<std::string>());
-    configOverAllRuns.numberOfPreAllocatedBuffer->setValue(yamlConfig["numberOfPreAllocatedBuffer"].As<uint32_t>());
-    configOverAllRuns.batchSize->setValue(yamlConfig["batchSize"].As<uint32_t>());
-    configOverAllRuns.numberOfBuffersToProduce->setValue(yamlConfig["numberOfBuffersToProduce"].As<uint32_t>());
+
+    configOverAllRuns.startupSleepIntervalInSeconds->setValueIfDefined(yamlConfig["startupSleepIntervalInSeconds"]);
+    configOverAllRuns.numMeasurementsToCollect->setValueIfDefined(yamlConfig["numberOfMeasurementsToCollect"]);
+    configOverAllRuns.experimentMeasureIntervalInSeconds->setValueIfDefined(yamlConfig["experimentMeasureIntervalInSeconds"]);
+    configOverAllRuns.outputFile->setValueIfDefined(yamlConfig["outputFile"]);
+    configOverAllRuns.benchmarkName->setValueIfDefined(yamlConfig["benchmarkName"]);
+    configOverAllRuns.query->setValueIfDefined(yamlConfig["query"]);
+    configOverAllRuns.dataProviderMode->setValueIfDefined(yamlConfig["dataProviderMode"]);
+    configOverAllRuns.connectionString->setValueIfDefined(yamlConfig["connectionString"]);
+    configOverAllRuns.inputType->setValueIfDefined(yamlConfig["inputType"]);
+    configOverAllRuns.sourceSharing->setValueIfDefined(yamlConfig["sourceSharing"]);
+    configOverAllRuns.numberOfPreAllocatedBuffer->setValueIfDefined(yamlConfig["numberOfPreAllocatedBuffer"]);
+    configOverAllRuns.batchSize->setValueIfDefined(yamlConfig["batchSize"]);
+    configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
+
+    auto logicalSourcesNode = yamlConfig["logicalSources"];
+    if (logicalSourcesNode.IsSequence()) {
+        configOverAllRuns.sourceNameToDataGenerator.clear();
+        for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
+            auto node = (*entry).second;
+            auto sourceName = node["name"].As<std::string>();
+            if (configOverAllRuns.sourceNameToDataGenerator.contains(sourceName)) {
+                NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
+            }
+
+            auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
+            configOverAllRuns.sourceNameToDataGenerator[sourceName] = dataGenerator;
+        }
+    }
+
     return configOverAllRuns;
 }
 
+std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
+    std::stringstream stringStream;
+    for (auto it = sourceNameToDataGenerator.begin(); it != sourceNameToDataGenerator.end(); ++it) {
+        if (it != sourceNameToDataGenerator.begin()) {
+            stringStream << ", ";
+        }
+        stringStream << it->first << ": " << it->second->getName();
+    }
+
+    return stringStream.str();
+}
+
+size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
+    size_t size = 0;
+    for (auto [logicalSource, dataGenerator] : sourceNameToDataGenerator) {
+        size += dataGenerator->getSchema()->getSchemaSizeInBytes();
+    }
+
+    return size;
+}
 }// namespace NES::Benchmark

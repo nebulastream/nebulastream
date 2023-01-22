@@ -12,24 +12,35 @@
     limitations under the License.
 */
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <algorithm>
 #include <utility>
 
 namespace NES {
 
-TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
+TopologyNode::TopologyNode(uint64_t id,
+                           std::string ipAddress,
+                           uint32_t grpcPort,
+                           uint32_t dataPort,
+                           uint16_t resources,
+                           std::map<std::string, std::any> properties)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      maintenanceFlag(false), spatialType(Spatial::Index::Experimental::NodeType::NO_LOCATION) {}
+      nodeProperties(std::move(properties)) {}
 
-TopologyNodePtr
-TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
+TopologyNodePtr TopologyNode::create(const uint64_t id,
+                                     const std::string& ipAddress,
+                                     const uint32_t grpcPort,
+                                     const uint32_t dataPort,
+                                     const uint16_t resources,
+                                     std::map<std::string, std::any> properties) {
     NES_DEBUG("TopologyNode: Creating node with ID " << id << " and resources " << resources);
-    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
+    return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources, properties);
 }
 
 uint64_t TopologyNode::getId() const { return id; }
@@ -40,9 +51,9 @@ uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
-bool TopologyNode::getMaintenanceFlag() const { return maintenanceFlag; };
+bool TopologyNode::isUnderMaintenance() { return std::any_cast<bool>(nodeProperties[NES::Worker::Properties::MAINTENANCE]); };
 
-void TopologyNode::setMaintenanceFlag(bool flag) { maintenanceFlag = flag; }
+void TopologyNode::setForMaintenance(bool flag) { nodeProperties[NES::Worker::Properties::MAINTENANCE] = flag; }
 
 void TopologyNode::increaseResources(uint16_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
@@ -64,11 +75,10 @@ void TopologyNode::reduceResources(uint16_t usedCapacity) {
 }
 
 TopologyNodePtr TopologyNode::copy() {
-    TopologyNodePtr copy = std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources));
-    copy->nodeProperties = nodeProperties;
+    TopologyNodePtr copy =
+        std::make_shared<TopologyNode>(TopologyNode(id, ipAddress, grpcPort, dataPort, resources, nodeProperties));
     copy->reduceResources(usedResources);
     copy->linkProperties = this->linkProperties;
-    copy->nodeProperties = this->nodeProperties;
     return copy;
 }
 
@@ -148,40 +158,11 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-Spatial::Index::Experimental::WaypointPtr TopologyNode::getCoordinates() {
-    std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-    switch (spatialType) {
-        case Spatial::Index::Experimental::NodeType::MOBILE_NODE:
-            NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
-            return WorkerRPCClient::getWaypoint(destAddress);
-        case Spatial::Index::Experimental::NodeType::FIXED_LOCATION:
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(fixedCoordinates);
-        case Spatial::Index::Experimental::NodeType::NO_LOCATION:
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
-        case Spatial::Index::Experimental::NodeType::INVALID:
-            NES_WARNING("trying to access location of a node with invalid spatial type")
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
-    }
+void TopologyNode::setSpatialType(NES::Spatial::Experimental::SpatialType spatialType) {
+    nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] = spatialType;
 }
 
-NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr TopologyNode::getReconnectSchedule() {
-    if (spatialType == NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
-        std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
-        return WorkerRPCClient::getReconnectSchedule(destAddress);
-    }
-    return {};
+Spatial::Experimental::SpatialType TopologyNode::getSpatialNodeType() {
+    return std::any_cast<Spatial::Experimental::SpatialType>(nodeProperties[NES::Worker::Configuration::SPATIAL_SUPPORT]);
 }
-
-void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
-    setFixedCoordinates(Spatial::Index::Experimental::Location(latitude, longitude));
-}
-
-void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) { fixedCoordinates = geoLoc; }
-
-void TopologyNode::setSpatialNodeType(Spatial::Index::Experimental::NodeType workerSpatialType) {
-    this->spatialType = workerSpatialType;
-}
-
-Spatial::Index::Experimental::NodeType TopologyNode::getSpatialNodeType() { return spatialType; }
 }// namespace NES

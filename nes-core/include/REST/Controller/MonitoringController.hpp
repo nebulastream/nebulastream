@@ -30,6 +30,7 @@
 #include <oatpp/core/parser/Caret.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
@@ -61,9 +62,9 @@ class MonitoringController : public oatpp::web::server::api::ApiController {
                          MonitoringServicePtr mService,
                          Runtime::BufferManagerPtr bManager,
                          ErrorHandlerPtr eHandler,
-                         oatpp::String completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(mService),
-          bufferManager(bManager), errorHandler(eHandler) {}
+                         const oatpp::String& completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), monitoringService(std::move(mService)),
+          bufferManager(std::move(bManager)), errorHandler(std::move(eHandler)) {}
 
     /**
      * Create a shared object of the API controller

@@ -17,13 +17,16 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <NesBaseTest.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -93,7 +96,8 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
 
     std::string physicalSourceName = "testStream";
 
@@ -103,13 +107,11 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     csvSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
-    uint64_t nodeId = topologyManagerService->registerNode(address,
-                                                           4000,
-                                                           5000,
-                                                           6,
-                                                           NES::Spatial::Index::Experimental::Location(),
-                                                           NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                                           /* isTfInstalled */ false);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    uint64_t nodeId = topologyManagerService->registerWorker(address, 4000, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
     //setup test

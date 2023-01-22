@@ -9,17 +9,18 @@ experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 1
 numberOfMeasurementsToCollect: 3
 
-numberOfSources: 3
-logicalSourceName:
-  input1:
+logicalSources:
+  - name: input1
     type: Uniform
     minValue: 0
     maxValue: 1000
-  input2:
+
+  - name: input2
     type: Uniform
     minValue: 0
     maxValue: 1000
-  input3:
+
+  - name: input3
     type: Uniform
     minValue: 0
     maxValue: 1000

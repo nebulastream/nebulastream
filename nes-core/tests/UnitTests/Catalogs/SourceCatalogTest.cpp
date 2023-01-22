@@ -24,8 +24,12 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace std;
@@ -100,8 +104,12 @@ TEST_F(SourceCatalogTest, testGetNotExistingKey) {
 
 TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -116,8 +124,13 @@ TEST_F(SourceCatalogTest, testAddGetPhysicalSource) {
 //TODO: add test for a second physical source add
 
 TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -134,8 +147,12 @@ TEST_F(SourceCatalogTest, testAddRemovePhysicalSource) {
 }
 
 TEST_F(SourceCatalogTest, testAddPhysicalForNotExistingLogicalSource) {
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -164,8 +181,12 @@ TEST_F(SourceCatalogTest, testAddLogicalSourceFromString) {
 }
 
 TEST_F(SourceCatalogTest, testGetPhysicalSourceForLogicalSource) {
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     TopologyPtr topology = Topology::create();
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     auto logicalSource = LogicalSource::create("test_stream", Schema::create());
     sourceCatalog->addLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
@@ -188,7 +209,7 @@ TEST_F(SourceCatalogTest, testDeleteLogicalSource) {
 TEST_F(SourceCatalogTest, testUpdateLogicalSourceWithInvalidSourceName) {
     std::string logicalSourceName = "test";
     std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
-    bool success = sourceCatalog->updatedLogicalSource(logicalSourceName, newSchema);
+    bool success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_FALSE(success);
 }
 
@@ -198,6 +219,6 @@ TEST_F(SourceCatalogTest, testUpdateLogicalSource) {
     EXPECT_TRUE(success);
 
     std::string newSchema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
-    success = sourceCatalog->updatedLogicalSource(logicalSourceName, newSchema);
+    success = sourceCatalog->updateLogicalSource(logicalSourceName, newSchema);
     EXPECT_TRUE(success);
 }

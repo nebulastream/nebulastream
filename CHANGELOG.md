@@ -1,5 +1,75 @@
 # Changelog
 
+## [v0.4.30](https://github.com/nebulastream/nebulastream/tree/v0.4.30) (2023-01-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.29...v0.4.30)
+
+**Implemented enhancements:**
+
+- \[Feature\] Multiple logical and physical source for E2E Benchmarking [\#3332](https://github.com/nebulastream/nebulastream/issues/3332)
+
+## [v0.4.29](https://github.com/nebulastream/nebulastream/tree/v0.4.29) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.28...v0.4.29)
+
+## [v0.4.28](https://github.com/nebulastream/nebulastream/tree/v0.4.28) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.27...v0.4.28)
+
+#### User Defined Functions
+
+- \[Feature\] Inform coordinator that a worker is capable of executing UDFs [\#3075](https://github.com/nebulastream/nebulastream/issues/3075)
+
+## [v0.4.27](https://github.com/nebulastream/nebulastream/tree/v0.4.27) (2023-01-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.26...v0.4.27)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Docker Build Failing: ubuntu-20\_04-Linux.arm64.deb Not Found [\#3428](https://github.com/nebulastream/nebulastream/issues/3428)
+- \[BUG\] Error if NebulaStream demo is on aarch64 [\#3145](https://github.com/nebulastream/nebulastream/issues/3145)
+
+#### Runtime 
+
+- \[Feature\] General Memory Provider [\#3408](https://github.com/nebulastream/nebulastream/issues/3408)
+
+## [v0.4.26](https://github.com/nebulastream/nebulastream/tree/v0.4.26) (2023-01-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.25...v0.4.26)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Continuous sources randomly failing [\#3410](https://github.com/nebulastream/nebulastream/issues/3410)
+
+## [v0.4.25](https://github.com/nebulastream/nebulastream/tree/v0.4.25) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.24...v0.4.25)
+
+#### Build Management
+
+- \[Feature\] Update to LLVM 15 [\#3375](https://github.com/nebulastream/nebulastream/issues/3375)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Add Loop Operations [\#3169](https://github.com/nebulastream/nebulastream/issues/3169)
+
+## [v0.4.24](https://github.com/nebulastream/nebulastream/tree/v0.4.24) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.23...v0.4.24)
+
+## [v0.4.23](https://github.com/nebulastream/nebulastream/tree/v0.4.23) (2023-01-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.22...v0.4.23)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Logger fails on flush while termination [\#3384](https://github.com/nebulastream/nebulastream/issues/3384)
+- \[BUG\] Release and BUILD\_NATIVE lead to half of the tests failing [\#3165](https://github.com/nebulastream/nebulastream/issues/3165)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Explore WAMR/iwasm [\#3385](https://github.com/nebulastream/nebulastream/issues/3385)
+
 ## [v0.4.22](https://github.com/nebulastream/nebulastream/tree/v0.4.22) (2023-01-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.21...v0.4.22)

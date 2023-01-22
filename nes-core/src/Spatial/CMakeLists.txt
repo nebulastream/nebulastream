@@ -12,17 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        DataTypes/Circle.cpp
-        DataTypes/Point.cpp
-        DataTypes/Polygon.cpp
-        DataTypes/Rectangle.cpp
-        Mobility/LocationProviderCSV.cpp
         LocationIndex.cpp
-        Mobility/LocationProvider.cpp
-        Mobility/ReconnectSchedule.cpp
-        Mobility/TrajectoryPredictor.cpp
-        Mobility/ReconnectConfigurator.cpp
-        Location.cpp
-        Waypoint.cpp
-)
+        )
+
+add_subdirectory(DataTypes)
+add_subdirectory(Mobility)
 
