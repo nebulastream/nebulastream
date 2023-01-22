@@ -16,7 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <TestUtils/UtilityFunctions.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -86,6 +86,47 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     return buffer;
 }
 
+/**
+ * @brief checks if the buffers contain the same tuples
+ * @param buffer1
+ * @param buffer2
+ * @param schema
+ * @return boolean if the buffers contain the same tuples
+ */
+bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples");
+    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        return false;
+    }
+
+    std::set<size_t> sameTupleIndices;
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
+        bool idxFoundInBuffer2 = false;
+        for (auto idxBuffer2 = 0UL; buffer2.getNumberOfTuples(); ++idxBuffer2) {
+            if (sameTupleIndices.contains(idxBuffer2)) {
+                continue;
+            }
+            auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
+            auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
+            auto equalTuple = (memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
+            if (equalTuple) {
+                sameTupleIndices.insert(idxBuffer2);
+                idxFoundInBuffer2 = true;
+                break;
+            }
+        }
+
+        if (!idxFoundInBuffer2) {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
+            return false;
+        }
+    }
+
+    return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
+}
+
+
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                                 ->addField("test1$f1_left", BasicType::UINT64)
@@ -145,20 +186,13 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
-    resultBuffer = NES::Runtime::Execution::Util::sortBuffersInTupleBuffer(resultBuffer, joinSchema, timeStampField,
-                                                                           executionEngine->getBufferManager());
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
+    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+    NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
 
-    NES_INFO("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
-    NES_INFO("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
-
-
-
-    EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(),
-                       expectedSinkBuffer.getBuffer().getBuffer(),
-                       expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes())
-                == 0);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
+    ASSERT_TRUE(checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer.getBuffer(),
+                                       joinSchema->getSchemaSizeInBytes()));
 }
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
