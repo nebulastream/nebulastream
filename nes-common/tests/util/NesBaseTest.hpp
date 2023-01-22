@@ -128,7 +128,6 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
      */
     explicit NESBaseTest();
 
-
     ~NESBaseTest();
 
     /**

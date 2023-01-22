@@ -77,14 +77,15 @@ void E2ESingleRun::createSources() {
 
         auto numberOfPhysicalSrc = configPerRun.logicalSrcToNoPhysicalSrc[logicalSource->getLogicalSourceName()];
         auto numberOfTotalBuffers = configOverAllRuns.numberOfPreAllocatedBuffer->getValue() * numberOfPhysicalSrc;
-        auto bufferManager = std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(),
-                                                                      numberOfTotalBuffers);
+        auto bufferManager =
+            std::make_shared<Runtime::BufferManager>(configPerRun.bufferSizeInBytes->getValue(), numberOfTotalBuffers);
         dataGenerator->setBufferManager(bufferManager);
 
         allBufferManagers.emplace_back(bufferManager);
         allDataGenerators.emplace_back(dataGenerator);
 
-        NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source " << logicalSource->getLogicalSourceName());
+        NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source "
+                              << logicalSource->getLogicalSourceName());
         for (uint64_t i = 0; i < numberOfPhysicalSrc; i++) {
 
             auto physicalStreamName = "physical_input" + std::to_string(sourceCnt);
@@ -97,7 +98,7 @@ void E2ESingleRun::createSources() {
             //TODO #3336: static query manager mode is currently not ported therefore only one queue
             size_t taskQueueId = 0;
             if (dataGenerator->getName() == "YSBKafka") {
-    #ifdef ENABLE_KAFKA_BUILD
+#ifdef ENABLE_KAFKA_BUILD
                 //Kafka is not using a data provider as Kafka itself is the provider
                 auto connectionStringVec =
                     NES::Util::splitWithStringDelimiter<std::string>(configOverAllRuns.connectionString->getValue(), ",");
@@ -118,12 +119,11 @@ void E2ESingleRun::createSources() {
                 auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, kafkaSourceType);
                 coordinatorConf->worker.physicalSources.add(physicalSource);
 
-    #else
+#else
                 NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
-    #endif
+#endif
             } else {
-                auto dataProvider =
-                    DataProviding::DataProvider::createProvider(sourceCnt, configOverAllRuns, createdBuffers);
+                auto dataProvider = DataProviding::DataProvider::createProvider(sourceCnt, configOverAllRuns, createdBuffers);
 
                 // Adding necessary items to the corresponding vectors
                 allDataProviders.emplace_back(dataProvider);
@@ -133,12 +133,13 @@ void E2ESingleRun::createSources() {
                     allDataProviders[sourceCnt]->provideNextBuffer(buffer, generatorQueueIndex);
                 };
 
-                LambdaSourceTypePtr sourceConfig = LambdaSourceType::create(dataProvidingFunc,
-                                                                            configOverAllRuns.numberOfBuffersToProduce->getValue(),
-                                                                            /* gatheringValue */ 0,
-                                                                            GatheringMode::INTERVAL_MODE,
-                                                                            sourceAffinity,
-                                                                            taskQueueId);
+                LambdaSourceTypePtr sourceConfig =
+                    LambdaSourceType::create(dataProvidingFunc,
+                                             configOverAllRuns.numberOfBuffersToProduce->getValue(),
+                                             /* gatheringValue */ 0,
+                                             GatheringMode::INTERVAL_MODE,
+                                             sourceAffinity,
+                                             taskQueueId);
 
                 auto physicalSource = PhysicalSource::create(logicalSourceName, physicalStreamName, sourceConfig);
                 coordinatorConf->worker.physicalSources.add(physicalSource);
@@ -194,7 +195,7 @@ void E2ESingleRun::runQuery() {
             for (auto iter : stats) {
                 while (iter->getProcessedTuple() < 1) {
                     NES_DEBUG("Query with id " << id << " not ready with no. tuples = " << iter->getProcessedTuple()
-                                                << ". Sleeping for a second now...");
+                                               << ". Sleeping for a second now...");
                     sleep(1);
                 }
                 NES_INFO("Query with id " << id << " Ready with no. tuples = " << iter->getProcessedTuple());
@@ -336,11 +337,13 @@ void E2ESingleRun::writeMeasurementsToCsv() {
         outputCsvStream << "," << measurementsCsv;
         outputCsvStream << "," << configPerRun.numberOfWorkerThreads->getValue();
         outputCsvStream << "," << configPerRun.numberOfQueriesToDeploy->getValue();
-        outputCsvStream << "," << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\"";
+        outputCsvStream << ","
+                        << "\"" << configPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << "\"";
         outputCsvStream << "," << configPerRun.bufferSizeInBytes->getValue();
         outputCsvStream << "," << configOverAllRuns.inputType->getValue();
         outputCsvStream << "," << configOverAllRuns.dataProviderMode->getValue();
-        outputCsvStream << "," << "\"" << queryString << "\"";
+        outputCsvStream << ","
+                        << "\"" << queryString << "\"";
         outputCsvStream << std::endl;
     }
 
@@ -352,8 +355,10 @@ void E2ESingleRun::writeMeasurementsToCsv() {
     NES_INFO("Done writing the measurements to " << configOverAllRuns.outputFile->getValue() << "!")
 }
 
-E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                           uint16_t rpcPort, uint16_t restPort)
+E2ESingleRun::E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
+                           E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                           uint16_t rpcPort,
+                           uint16_t restPort)
     : configPerRun(configPerRun), configOverAllRuns(configOverAllRuns), rpcPortSingleRun(rpcPort), restPortSingleRun(restPort) {}
 
 E2ESingleRun::~E2ESingleRun() {
@@ -425,12 +430,8 @@ bool E2ESingleRun::waitForQueryToStart(QueryId queryId,
     return false;
 }
 
-    const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const {
-        return coordinatorConf;
-    }
+const CoordinatorConfigurationPtr& E2ESingleRun::getCoordinatorConf() const { return coordinatorConf; }
 
-    Measurements::Measurements& E2ESingleRun::getMeasurements() {
-        return measurements;
-    }
+Measurements::Measurements& E2ESingleRun::getMeasurements() { return measurements; }
 
 }// namespace NES::Benchmark

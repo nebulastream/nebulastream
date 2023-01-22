@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <E2E/E2ERunner.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <E2E/E2ERunner.hpp>
 #include <cstring>
 #include <filesystem>
 
@@ -29,7 +29,7 @@ const std::string logo = "/*****************************************************
                          " ********************************************************/";
 
 class BenchmarkRunner : public NES::Exceptions::ErrorListener {
-public:
+  public:
     void onFatalError(int signalNumber, std::string callStack) override {
         std::ostringstream fatalErrorMessage;
         fatalErrorMessage << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
@@ -87,7 +87,6 @@ int main(int argc, const char* argv[]) {
         std::cerr << "No yaml file provided or the file does not exist!" << std::endl;
         return -1;
     }
-
 
     auto e2EBenchmarkConfig = NES::Benchmark::parseYamlConfig(configPath, logPath);
     NES::Benchmark::writeHeaderToCsvFile(e2EBenchmarkConfig.getConfigOverAllRuns());

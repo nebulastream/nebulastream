@@ -48,8 +48,10 @@ class E2ESingleRun {
      * @param portOffSet
      * @param restPort
      */
-    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          uint16_t rpcPort, uint16_t restPort);
+    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
+                          E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                          uint16_t rpcPort,
+                          uint16_t restPort);
 
     /**
      * @brief destroying this object and taking care of
@@ -106,11 +108,11 @@ class E2ESingleRun {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService,
+    static bool waitForQueryToStart(QueryId queryId,
+                                    const QueryCatalogServicePtr& queryCatalogService,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
-
-private:
+  private:
     E2EBenchmarkConfigPerRun& configPerRun;
     E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
     int rpcPortSingleRun;
