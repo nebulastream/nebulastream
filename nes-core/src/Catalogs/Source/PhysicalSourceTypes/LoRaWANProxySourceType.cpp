@@ -11,6 +11,8 @@
 // *
 
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
+#include <EndDeviceProtocol.pb.h>
+#include <Common/Identifiers.hpp>
 #include <utility>
 
 namespace NES {
@@ -149,7 +151,6 @@ std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> L
     return sensorFields;
 }
 
-EndDeviceProtocol::Message& LoRaWANProxySourceType::getSerializedQueries() { return queries; }
 
 void LoRaWANProxySourceType::setNetworkStack(std::string networkStackValue) {
     networkStack->setValue(std::move(networkStackValue));
@@ -163,8 +164,12 @@ void LoRaWANProxySourceType::setPassword(std::string passwordValue) { password->
 
 void LoRaWANProxySourceType::setAppId(std::string appIdValue) { appId->setValue(std::move(appIdValue)); }
 void LoRaWANProxySourceType::setSensorFields(std::vector<std::string> sensors) { sensorFields->setValue(std::move(sensors)); }
-void LoRaWANProxySourceType::setSerializedQueries(EndDeviceProtocol::Message message) { queries = std::move(message); }
-
+void LoRaWANProxySourceType::addSerializedQuery(QueryId id, std::shared_ptr<EndDeviceProtocol::Query> query) {
+    queries[id] = *query;
+}
+void LoRaWANProxySourceType::removeSerializedQuery(QueryId id) {
+    queries.erase(id);
+}
 void LoRaWANProxySourceType::reset() {
     setNetworkStack(networkStack->getDefaultValue());
     setUrl(url->getDefaultValue());

@@ -5,7 +5,6 @@
 #ifndef NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 #define NES_ENDDEVICEPROTOCOLSERIALIZATIONUTIL_HPP
 
-#include <EndDeviceProtocol.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -43,7 +42,8 @@ class EndDeviceProtocolSerializationUtil {
   public:
     class UnsupportedEDSerialisationException : public std::runtime_error {
       public:
-        UnsupportedEDSerialisationException() : std::runtime_error("Can't serialize this node, since the ED does not support it."){};
+        UnsupportedEDSerialisationException()
+            : std::runtime_error("Can't serialize this node, since the ED does not support it."){};
     };
     using EDRegistersPtr = std::shared_ptr<std::vector<std::string>>;
     using EDMapOperationPtr = std::shared_ptr<EndDeviceProtocol::MapOperation>;
@@ -60,11 +60,12 @@ class EndDeviceProtocolSerializationUtil {
     [[nodiscard]] static std::string serializeLogicalExpression(ExpressionNodePtr, EDRegistersPtr);
     [[nodiscard]] static std::string serializeFieldAccessExpression(ExpressionNodePtr, EDRegistersPtr);
     [[nodiscard]] static std::string serializeExpression(ExpressionNodePtr, EDRegistersPtr);
-    [[nodiscard]] static EDMapOperationPtr serializeMapOperator( NodePtr, EDRegistersPtr);
+    [[nodiscard]] static EDMapOperationPtr serializeMapOperator(NodePtr, EDRegistersPtr);
     [[nodiscard]] static EDFilterOperationPtr serializeFilterOperator(NodePtr, EDRegistersPtr);
     [[nodiscard]] static EDWindowOperationPtr serializeWindowOperator(NodePtr, EDRegistersPtr);
     [[nodiscard]] static EDQueryOperationPtr serializeOperator(NodePtr, EDRegistersPtr);
     [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
+
   private:
     static DefaultPhysicalTypeFactory physicalFactory;
 };

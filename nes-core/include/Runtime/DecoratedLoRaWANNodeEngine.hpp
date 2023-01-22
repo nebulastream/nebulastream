@@ -40,7 +40,9 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr&);
+
+    [[nodiscard]] bool unregisterQuery(QueryId);
 
   private:
     LoRaWANProxySourceTypePtr sourceType;

@@ -3,13 +3,9 @@
 //
 
 #include <Runtime/DecoratedLoRaWANNodeEngine.hpp>
+#include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
 #include <utility>
 namespace NES::Runtime {
-bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const NES::QueryPlanPtr& queryPlan) {
-    NES_DEBUG("DECORATED FUNCTION CALLED")
-    return NodeEngine::registerQueryInNodeEngine(queryPlan);
-}
-
 DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
     std::vector<PhysicalSourcePtr> physicalSources,
     HardwareManagerPtr&& hardwareManager,
@@ -41,7 +37,18 @@ DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
                  numberOfBuffersInGlobalBufferManager,
                  numberOfBuffersInSourceLocalBufferPool,
                  numberOfBuffersPerWorker,
-                 sourceSharing), sourceType(proxysource){
+                 sourceSharing), sourceType(std::move(proxysource)){
     NES_DEBUG("DECORATEDLORAWANCLASS CREATED")
+}
+bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const NES::QueryPlanPtr& queryPlan) {
+    NES_DEBUG("DECORATED FUNCTION CALLED")
+    auto serQuery = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(queryPlan);
+    sourceType->addSerializedQuery(queryPlan->getQueryId(), serQuery);
+    return NodeEngine::registerQueryInNodeEngine(queryPlan);
+}
+
+bool DecoratedLoRaWANNodeEngine::unregisterQuery(QueryId queryId) {
+    sourceType->removeSerializedQuery(queryId);
+    return NodeEngine::unregisterQuery(queryId);
 }
 }// namespace NES::Runtime

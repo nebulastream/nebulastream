@@ -15,6 +15,7 @@
 
 #include <Util/yaml/Yaml.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Common/Identifiers.hpp>
 #include <EndDeviceProtocol.pb.h>
 namespace NES {
 class LoRaWANProxySourceType;
@@ -61,10 +62,10 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getSensorFields();
     void setSensorFields (std::vector<std::string>);
 
-    [[nodiscard]] EndDeviceProtocol::Message& getSerializedQueries();
-    void setSerializedQueries(EndDeviceProtocol::Message);
+    void addSerializedQuery(QueryId, std::shared_ptr<EndDeviceProtocol::Query>);
+    void removeSerializedQuery(QueryId);
 
-  private:
+    private:
 
     /**
      * @brief constructor to create a new LoRaWAN proxysource config object initialized with values from sourceConfigMap
@@ -89,7 +90,7 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     Configurations::StringConfigOption password;
     Configurations::StringConfigOption appId;
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> sensorFields;
-    EndDeviceProtocol::Message queries;
+    std::map<QueryId,EndDeviceProtocol::Query> queries;
 
 
 };
