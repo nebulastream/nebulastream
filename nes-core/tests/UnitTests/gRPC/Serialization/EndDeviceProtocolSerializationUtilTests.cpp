@@ -11,9 +11,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include <EndDeviceProtocol.pb.h>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <NesBaseTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -214,16 +218,29 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, FilterOperation) {
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
 
+    auto expected = EndDeviceProtocol::Query();
+    auto op = expected.mutable_operations()->Add();
+    op->mutable_map()->set_attribute(0);
+    op->mutable_map()->mutable_function()->set_instructions(intsToString({ExpressionInstructions::VAR, 0}));
+
+
     auto schema = Schema::create()->addField("x", BasicType::INT8);
     auto loraSourceType = LoRaWANProxySourceType::create();
     loraSourceType->setSensorFields(std::vector<std::string> {"x"});
     auto loraDesc = LoRaWANProxySourceDescriptor::create(schema,loraSourceType,"default_logical","default_physical");
     auto logicalSource = LogicalSource::create("default_logical", schema);
 
-
     auto query = TestQuery::from(loraDesc).map(Attribute("x") = Attribute("x")).sink(NullOutputSinkDescriptor::create());
-    auto yo = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(query.getQueryPlan());
-    auto gg = yo;
+    auto actual = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(query.getQueryPlan());
+
+    EXPECT_EQ(actual->operations(0).map().attribute(), expected.operations(0).map().attribute());
+    EXPECT_EQ(actual->operations(0).map().function().instructions(), expected.operations(0).map().function().instructions());
+
+    EXPECT_EQ(query.getQueryPlan()->getOperatorByType<MapLogicalOperatorNode>().size(),0);
+    EXPECT_EQ(query.getQueryPlan()->getSourceOperators().size(), 1);
+    EXPECT_EQ(query.getQueryPlan()->getSinkOperators().size(), 1);
+    EXPECT_TRUE(query.getQueryPlan()->getSourceOperators().at(0)->getSourceDescriptor()->equal(loraDesc));
+    EXPECT_TRUE(query.getQueryPlan()->getSinkOperators().at(0)->getSinkDescriptor()->instanceOf<NullOutputSinkDescriptor>());
 }
 
 //std::string serializeNumeric(std::variant<int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,float_t,double_t> in){

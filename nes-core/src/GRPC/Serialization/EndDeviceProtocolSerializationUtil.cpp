@@ -299,6 +299,7 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
             auto serialized = serializeOperator(opNode, sensorFields);
             auto operation = query->add_operations();
             operation->CopyFrom(*serialized);
+            opNode->removeAndJoinParentAndChildren();
         } catch (UnsupportedEDSerialisationException& e) {
             NES_DEBUG("unsupported Operation for serialization");
             break;
