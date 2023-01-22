@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
+#include <DataGeneration/DefaultDataGenerator.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <DataGeneration/DefaultDataGenerator.hpp>
 
 namespace NES::Benchmark {
 E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
@@ -41,7 +41,6 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
-
 }
 
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
