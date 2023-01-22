@@ -71,7 +71,6 @@ class QueryAPITest : public Testing::NESBaseTest {
         physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
         logicalSource = LogicalSource::create("test2", Schema::create());
     }
-
 };
 
 TEST_F(QueryAPITest, testQueryFilter) {
