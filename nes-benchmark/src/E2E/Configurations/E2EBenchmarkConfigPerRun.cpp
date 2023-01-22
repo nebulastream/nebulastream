@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark {
 E2EBenchmarkConfigPerRun::E2EBenchmarkConfigPerRun() {
@@ -65,13 +64,11 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
         Util::splitAndFillIfEmpty<uint32_t>(yamlConfig["numberOfBuffersInSourceLocalBufferPool"].As<std::string>(),
                                             configPerRun.numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 
-
     std::vector<std::map<std::string, uint64_t>> allLogicalSrcToPhysicalSources = {configPerRun.logicalSrcToNoPhysicalSrc};
     if (yamlConfig["logicalSources"].IsNone()) {
         NES_THROW_RUNTIME_ERROR("logicalSources could not been found in the yaml config file!");
     }
-    allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(
-            yamlConfig);
+    allLogicalSrcToPhysicalSources = E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(yamlConfig);
 
     /* Retrieving the maximum number of experiments to run */
     size_t totalBenchmarkRuns = numWorkerOfThreads.size();
@@ -91,7 +88,9 @@ std::vector<E2EBenchmarkConfigPerRun> E2EBenchmarkConfigPerRun::generateAllConfi
     Util::padVectorToSize<uint32_t>(numberOfBuffersInSourceLocalBufferPool,
                                     totalBenchmarkRuns,
                                     numberOfBuffersInSourceLocalBufferPool.back());
-    Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources, totalBenchmarkRuns, allLogicalSrcToPhysicalSources.back());
+    Util::padVectorToSize<std::map<std::string, uint64_t>>(allLogicalSrcToPhysicalSources,
+                                                           totalBenchmarkRuns,
+                                                           allLogicalSrcToPhysicalSources.back());
 
     allConfigPerRuns.reserve(totalBenchmarkRuns);
     for (size_t i = 0; i < totalBenchmarkRuns; ++i) {
@@ -122,7 +121,8 @@ std::string E2EBenchmarkConfigPerRun::getStringLogicalSourceToNumberOfPhysicalSo
     return stringStream.str();
 }
 
-std::vector<std::map<std::string, uint64_t>> E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig) {
+std::vector<std::map<std::string, uint64_t>>
+E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::Node yamlConfig) {
     std::vector<std::map<std::string, uint64_t>> retVectorOfMaps;
 
     auto logicalSourceNode = yamlConfig["logicalSources"];
