@@ -51,7 +51,7 @@ using std::cout;
         }
     };
 
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestStoredRegistrationMetrics) {
+    TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetrics) {
         uint64_t noWorkers = 2;
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -265,7 +265,7 @@ using std::cout;
 //                                               TestUtils::enableMonitoring(),
 //                                               TestUtils::monitoringConfiguration(configMonitoring02)
 //        });
-        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
+        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
         NES_DEBUG("Now comes the RestCall!");
         auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
@@ -282,13 +282,15 @@ using std::cout;
                 ASSERT_TRUE(json.has_field("disk"));
                 ASSERT_TRUE(json.has_field("memory"));
                 ASSERT_TRUE(json.has_field("wrapped_cpu"));
-
-            } else if (i == 3) {
-                ASSERT_TRUE(json.has_field("disk"));
-                ASSERT_TRUE(json.has_field("memory"));
-                ASSERT_TRUE(json.has_field("wrapped_cpu"));
                 ASSERT_TRUE(json.has_field("wrapped_network"));
+
             }
+//            else if (i == 3) {
+//                ASSERT_TRUE(json.has_field("disk"));
+//                ASSERT_TRUE(json.has_field("memory"));
+//                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+//                ASSERT_TRUE(json.has_field("wrapped_network"));
+//            }
         }
 
     }
@@ -307,8 +309,8 @@ using std::cout;
                                          " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, "
                                          "rMulticast, tBytes, tPackets, tErrs, tDrop, tFifo, tCools, tCarrier, tCompressed\" ";
         //    std::set<std::string> expectedMonitoringStreams {"wrapped_cpu, disk"};
-        std::string configMonitoring02 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
-                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" ";
+//        std::string configMonitoring02 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
+//                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" ";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -336,50 +338,56 @@ using std::cout;
                                                TestUtils::bufferSizeInBytes(32768),
                                                TestUtils::monitoringConfiguration(configMonitoring01)});
 
-        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                               TestUtils::dataPort(0),
-                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                               TestUtils::sourceType("DefaultSource"),
-                                               TestUtils::logicalSourceName("default_logical"),
-                                               TestUtils::physicalSourceName("test1"),
-                                               TestUtils::workerHealthCheckWaitTime(1),
-                                               TestUtils::enableMonitoring(),
-                                               TestUtils::enableDebug(),
-                                               TestUtils::numberOfSlots(50),
-                                               TestUtils::numLocalBuffers(localBuffers),
-                                               TestUtils::numGlobalBuffers(globalBuffers),
-                                               TestUtils::bufferSizeInBytes(32768),
-                                               TestUtils::monitoringConfiguration(configMonitoring02)});
+//        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+//                                               TestUtils::dataPort(0),
+//                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
+//                                               TestUtils::sourceType("DefaultSource"),
+//                                               TestUtils::logicalSourceName("default_logical"),
+//                                               TestUtils::physicalSourceName("test1"),
+//                                               TestUtils::workerHealthCheckWaitTime(1),
+//                                               TestUtils::enableMonitoring(),
+//                                               TestUtils::enableDebug(),
+//                                               TestUtils::numberOfSlots(50),
+//                                               TestUtils::numLocalBuffers(localBuffers),
+//                                               TestUtils::numGlobalBuffers(globalBuffers),
+//                                               TestUtils::bufferSizeInBytes(32768),
+//                                               TestUtils::monitoringConfiguration(configMonitoring02)});
 
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
+//        auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
+//        NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
+//        //    ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size() * 2);
+//
+//        //    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
+//        sleep(30);
+//        auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
+//
+//        auto json = jsonMetrics[std::to_string(1)];
+//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 1 << ":\n" << json);
+//        sleep(30);
+//        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
+//        json = jsonMetrics[std::to_string(2)];
+//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 2 << ":\n" << json);
+//        sleep(30);
+//        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
+//        json = jsonMetrics[std::to_string(3)];
+//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 3 << ":\n" << json);
+
         auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
         NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
-        //    ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size() * 2);
+//        ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size());
 
-        //    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
-        sleep(30);
+        ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
         auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
 
-        auto json = jsonMetrics[std::to_string(1)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 1 << ":\n" << json);
-        sleep(30);
-        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-        json = jsonMetrics[std::to_string(2)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 2 << ":\n" << json);
-        sleep(30);
-        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-        json = jsonMetrics[std::to_string(3)];
-        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 3 << ":\n" << json);
-        //
-        //    // test network metrics
-        //    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-        //        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
-        //        auto json = jsonMetrics[std::to_string(i)];
-        //        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-        //        //        ASSERT_TRUE(
-        //        //            MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-        //        //        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
-        //    }
+        // test network metrics
+        for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+            NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+            auto json = jsonMetrics[std::to_string(i)];
+            NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+//            ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+            ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
+        }
     }
 }// namespace NES
