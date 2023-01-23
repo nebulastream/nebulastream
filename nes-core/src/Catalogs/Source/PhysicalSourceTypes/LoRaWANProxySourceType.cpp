@@ -48,6 +48,11 @@ LoRaWANProxySourceType::LoRaWANProxySourceType()
           Configurations::LORAWAN_APP_ID_CONFIG,
           "0102030405060708",
           "AppId for the configured application in the chosen network stack")),
+      deviceEUIs(Configurations::ConfigurationOption<std::vector<std::string>>::create(
+          Configurations::LORAWAN_DEVICE_EUIS,
+          std::vector<std::string>(),
+          "configure the known devices"
+          )),
       sensorFields(Configurations::ConfigurationOption<std::vector<std::string>>::create(
           Configurations::LORAWAN_SENSOR_FIELDS,
           std::vector<std::string>(),
@@ -80,6 +85,20 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string
     }
     if (sourceConfigMap.contains(Configurations::LORAWAN_APP_ID_CONFIG)) {
         appId->setValue(sourceConfigMap.find(Configurations::LORAWAN_APP_ID_CONFIG)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
+    }
+    if (sourceConfigMap.contains(Configurations::LORAWAN_DEVICE_EUIS)) {
+        std::string tmp;
+        std::vector<std::string> devices;
+        auto input = std::stringstream(sourceConfigMap.find(Configurations::LORAWAN_DEVICE_EUIS)->second);
+
+        while (std::getline(input, tmp, ',')) {
+            devices.push_back(tmp);
+        }
+        sensorFields->setValue(devices);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no deviceEUIs defined! Please define them.");
     }
     if (sourceConfigMap.contains(Configurations::LORAWAN_SENSOR_FIELDS)) {
         std::string tmp;
@@ -91,7 +110,7 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string
         }
         sensorFields->setValue(sensors);
     } else {
-        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no sensorFields defined! Please define them.");
     }
 }
 
@@ -100,7 +119,8 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(Yaml::Node yamlConfig) : LoRaWANP
 
     auto hasValue = [&yamlConfig](const std::string& name) {
         auto value = yamlConfig[name];
-        return !value.As<std::string>().empty() && value.As<std::string>() != "\n";
+        return !value.IsNone();
+        //return !value.As<std::string>().empty() && value.As<std::string>() != "\n";
     };
 
     if (hasValue(Configurations::LORAWAN_NETWORK_STACK_CONFIG)) {
@@ -123,6 +143,20 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(Yaml::Node yamlConfig) : LoRaWANP
     }
     if (hasValue(Configurations::LORAWAN_APP_ID_CONFIG)) {
         appId->setValue(yamlConfig[Configurations::LORAWAN_APP_ID_CONFIG].As<std::string>());
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an AppId.");
+    }
+    if (hasValue(Configurations::LORAWAN_DEVICE_EUIS)){
+        auto yamlDevices = yamlConfig[Configurations::LORAWAN_DEVICE_EUIS];
+
+        std::vector<std::string> devices;
+        for (auto i = yamlDevices.Begin(); i != yamlDevices.End(); i++) {
+            auto value = (*i).second.As<std::string>();
+            devices.push_back(value);
+        }
+        deviceEUIs->setValue(devices);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no deviceEUIs defined! Please define them.");
     }
     if (hasValue(Configurations::LORAWAN_SENSOR_FIELDS)) {
         auto yamlSensors = yamlConfig[Configurations::LORAWAN_SENSOR_FIELDS];
@@ -134,7 +168,7 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(Yaml::Node yamlConfig) : LoRaWANP
         }
         sensorFields->setValue(sensors);
     } else {
-        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no sensorFields defined! Please define them.");
     }
 }
 
@@ -165,10 +199,10 @@ void LoRaWANProxySourceType::setPassword(std::string passwordValue) { password->
 void LoRaWANProxySourceType::setAppId(std::string appIdValue) { appId->setValue(std::move(appIdValue)); }
 void LoRaWANProxySourceType::setSensorFields(std::vector<std::string> sensors) { sensorFields->setValue(std::move(sensors)); }
 void LoRaWANProxySourceType::addSerializedQuery(QueryId id, std::shared_ptr<EndDeviceProtocol::Query> query) {
-    queries[id] = *query;
+    queries->at(id).CopyFrom(*query);
 }
 void LoRaWANProxySourceType::removeSerializedQuery(QueryId id) {
-    queries.erase(id);
+    queries->erase(id);
 }
 void LoRaWANProxySourceType::reset() {
     setNetworkStack(networkStack->getDefaultValue());
@@ -206,6 +240,15 @@ bool LoRaWANProxySourceType::equal(const PhysicalSourceTypePtr& other) {
         && userName->getValue() == otherConfig->userName->getValue() && password->getValue() == otherConfig->password->getValue()
         && appId->getValue() == otherConfig->appId->getValue()
         && sensorFields->getValue() == otherConfig->sensorFields->getValue();
+}
+std::shared_ptr<std::map<QueryId,EndDeviceProtocol::Query>> LoRaWANProxySourceType::getSerializedQueries() {
+    return queries;
+}
+std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> LoRaWANProxySourceType::getDeviceEUIs() {
+    return deviceEUIs;
+}
+void LoRaWANProxySourceType::setDeviceEUIs(std::vector<std::string> _deviceEUIs) {
+    deviceEUIs->setValue(_deviceEUIs);
 }
 
 }// namespace NES

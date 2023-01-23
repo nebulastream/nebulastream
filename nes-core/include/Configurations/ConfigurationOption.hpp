@@ -341,6 +341,7 @@ const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsed
 //LoRaWANProxySourceType configs
 const std::string LORAWAN_NETWORK_STACK_CONFIG = "networkStack";
 const std::string LORAWAN_APP_ID_CONFIG = "appId";
+const std::string LORAWAN_DEVICE_EUIS = "deviceEUIs";
 const std::string LORAWAN_SENSOR_FIELDS = "sensorFields";
 //Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
