@@ -15,10 +15,11 @@
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <memory_resource>
 
 namespace NES::Nautilus::Interface {
 
-class ChainedHashTable {
+class ChainedHashMap {
   public:
     using hash_t = uint64_t;
     /**
@@ -33,7 +34,7 @@ class ChainedHashTable {
         Entry(Entry* next, hash_t hash);
     };
 
-    ChainedHashTable(uint64_t keySize, uint64_t valueSize, uint64_t nrOfKeys);
+    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t nrOfKeys);
 
     Entry* findChain(hash_t hash) {
         auto pos = hash & mask;
@@ -60,9 +61,9 @@ class ChainedHashTable {
     Entry* allocateNewEntry() {
         // check if a new page should be allocated
         if (currentSize % entriesPerPage == 0) {
-            // TODO alloc
+            auto page = reinterpret_cast<Entry*>(allocator->allocate(pageSize));
             // set entries to zero
-            pages.emplace_back(buffer.value());
+            pages.emplace_back(page);
         }
         return entryIndexToAddress(currentSize);
     }
@@ -75,52 +76,18 @@ class ChainedHashTable {
     }
 
   private:
+    const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t keySize;
     const uint64_t valueSize;
+    const uint64_t pageSize;
     const uint64_t entriesPerPage;
     const hash_t mask;
     const uint64_t maskPointer = (~(uint64_t) 0) >> (16);
-    const uint64_t maskTag = (~(uint64_t) 0) << (sizeof(uint64_t) * 8 - 16);
     size_t capacity = 0;
     uint64_t currentSize = 0;
     Entry** entries;
     std::vector<Entry*> pages;
 };
-
-class ChainedHashMapRef {
-  public:
-    class EntryRef {
-      public:
-        EntryRef(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset);
-        EntryRef getNext();
-        Value<MemRef> getKeyPtr();
-        Value<MemRef> getValuePtr();
-
-      private:
-        Value<MemRef> ref;
-        int64_t keyOffset;
-        int64_t valueOffset;
-    };
-    ChainedHashMapRef(Value<MemRef> hashTableRef,
-                      int64_t valueOffset,
-                      std::vector<Nautilus::IR::Types::StampPtr> keyTypes,
-                      std::vector<Nautilus::IR::Types::StampPtr> valueTypes);
-
-    EntryRef findOrCreate(std::vector<Value<>> keys);
-    EntryRef findOne(std::vector<Value<>> keys);
-    Value<UInt64> calculateHash(std::vector<Value<>> keys);
-    EntryRef createEntry(std::vector<Value<>> keys, Value<UInt64> hash);
-    EntryRef getEntryFromHashTable(Value<UInt64> hash) const;
-    Value<> compareKeys(std::vector<Value<>> keyValue, Value<MemRef> keys) const;
-    Value<> isValid(std::vector<Value<>>& keyValue, EntryRef& entry) const;
-
-  private:
-    Value<MemRef> hashTableRef;
-    const int64_t valueOffset;
-    const std::vector<Nautilus::IR::Types::StampPtr> keyTypes;
-    const std::vector<Nautilus::IR::Types::StampPtr> valueTypes;
-};
-
 }// namespace NES::Nautilus::Interface
 
 #endif// NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_
