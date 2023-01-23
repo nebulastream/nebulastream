@@ -122,7 +122,7 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 }
 
 TEST_F(ConfigTest, testWorkerMonitoringConfig) {
-    // schema zum Vergleich
+    // create manually the configured schemas for comparison
     std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
     uint64_t sampleDisk = 5000;
     SchemaPtr schemaDisk = Monitoring::DiskMetrics::createSchema("", configuredDisk);
@@ -137,9 +137,7 @@ TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     SchemaPtr schemaNetwork = Monitoring::NetworkMetrics::createSchema("", configuredNetwork);
     std::list<uint64_t> coresTest = {6, 3, 2, 0};
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    //    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
-    //   workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/loell/CLionProjects/nebulastream2/nes-core/tests/test_data/workerConfigLennart.yaml");
-    workerConfigPtr->overwriteConfigWithYAMLFileInput("/home/lenson/CLionProjects/nebulastream2/nes-core/tests/test_data/workerConfigLennart.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
 
     std::string temp_config = workerConfigPtr->monitoringConfiguration.getValue();
     web::json::value configurationMonitoringJson =
@@ -158,9 +156,6 @@ TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     ASSERT_EQ(monitoringPlanJson->getSampleRate(Monitoring::WrappedNetworkMetrics), sampleNetwork);
 
     ASSERT_EQ(monitoringPlanJson->getCores(), coresTest);
-    // TODO: check if Catalog is init right; check the schema for each MetricType
-
-    Monitoring::MonitoringAgentPtr monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlanJson, monitoringCatalog, true);
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {

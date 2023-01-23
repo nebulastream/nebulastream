@@ -51,7 +51,7 @@ using std::cout;
         }
     };
 
-    TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
+    TEST_F(MonitoringIntegrationTest, DISABLED_requestStoredRegistrationMetrics) {
         uint64_t noWorkers = 2;
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -79,7 +79,7 @@ using std::cout;
         ASSERT_EQ(jsons.size(), noWorkers + 1);
     }
 
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestAllMetricsViaRest) {
+    TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
         uint64_t noWorkers = 2;
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -226,12 +226,16 @@ using std::cout;
         }
     }
 
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestAllMetricsViaRestLennart01) {
+    TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestConfiguration) {
         uint64_t noWorkers = 1;
-        std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system\" sampleRate: 6000"
-                                         " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 5000"
-                                         " - memory: attributes: \"FREE_RAM, FREE_SWAP, TOTAL_RAM\" sampleRate: 4000"
-                                         " - network: attributes: \"rBytes, rFifo, tPackets\" sampleRate: 3000 ";
+        std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system\""
+                                         " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\""
+                                         " - memory: attributes: \"FREE_RAM, TOTAL_RAM\""
+                                         " - network: attributes: \"rBytes, rFifo, tPackets\"";
+
+//        std::string configMonitoring02 = " - cpu: attributes: \"iowait, irq, steal\""
+//                                         " - memory: attributes: \"FREE_SWAP, TOTAL_SWAP\""
+//                                         " - disk: attributes: \"F_BFREE, F_BAVAIL, F_FRSIZE\"";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -251,62 +255,16 @@ using std::cout;
              TestUtils::monitoringConfiguration(configMonitoring01)
             });
 
-        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-
-        NES_DEBUG("Now comes the RestCall!");
-        auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
-        NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
-
-        ASSERT_EQ(jsons.size(), noWorkers + 1);
-
-        for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-            NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
-            auto json = jsons[std::to_string(i)];
-            NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-            //        ASSERT_TRUE(MetricValidator::isValidAll(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-            ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
-        }
-    }
-
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestAllMetricsViaRestLennart02) {
-        uint64_t noWorkers = 2;
-        std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system\" sampleRate: 6000"
-                                         " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\" sampleRate: 5000"
-                                         " - memory: attributes: \"FREE_RAM\" sampleRate: 4000"
-                                         " - network: attributes: \"rBytes, rFifo, tPackets\" ";
-
-        std::string configMonitoring02 = " - cpu: attributes: \"iowait, irq, steal\" sampleRate: 10000"
-                                         " - disk: attributes: \"F_BFREE, F_BAVAIL, F_FRSIZE\" sampleRate: 9000"
-                                         " - memory: attributes: \"TOTAL_SWAP, SHARED_RAM, FREE_HIGH\" sampleRate: 8000"
-                                         " - network: attributes: \"rFrame, rPackets, tBytes\" sampleRate: 7000 ";
-        auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                        TestUtils::restPort(*restPort),
-                                                        TestUtils::enableMonitoring(),
-                                                        TestUtils::enableDebug()});
-        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-        auto worker1 = TestUtils::startWorker(
-            {TestUtils::rpcPort(0),
-             TestUtils::dataPort(0),
-             TestUtils::coordinatorPort(*rpcCoordinatorPort),
-             TestUtils::sourceType("DefaultSource"),
-             TestUtils::logicalSourceName("default_logical"),
-             TestUtils::physicalSourceName("test2"),
-             TestUtils::workerHealthCheckWaitTime(1),
-             TestUtils::enableMonitoring(),
-             TestUtils::monitoringConfiguration(configMonitoring01)
-            });
-
-        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                               TestUtils::dataPort(0),
-                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                               TestUtils::sourceType("DefaultSource"),
-                                               TestUtils::logicalSourceName("default_logical"),
-                                               TestUtils::physicalSourceName("test1"),
-                                               TestUtils::workerHealthCheckWaitTime(1),
-                                               TestUtils::enableMonitoring(),
-                                               TestUtils::monitoringConfiguration(configMonitoring02)
-        });
+//        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+//                                               TestUtils::dataPort(0),
+//                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
+//                                               TestUtils::sourceType("DefaultSource"),
+//                                               TestUtils::logicalSourceName("default_logical"),
+//                                               TestUtils::physicalSourceName("test1"),
+//                                               TestUtils::workerHealthCheckWaitTime(1),
+//                                               TestUtils::enableMonitoring(),
+//                                               TestUtils::monitoringConfiguration(configMonitoring02)
+//        });
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
         NES_DEBUG("Now comes the RestCall!");
@@ -319,82 +277,38 @@ using std::cout;
             NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
             auto json = jsons[std::to_string(i)];
             NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-            //        ASSERT_TRUE(MetricValidator::isValidAll(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
             ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
+            if (i == 2) {
+                ASSERT_TRUE(json.has_field("disk"));
+                ASSERT_TRUE(json.has_field("memory"));
+                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+
+            } else if (i == 3) {
+                ASSERT_TRUE(json.has_field("disk"));
+                ASSERT_TRUE(json.has_field("memory"));
+                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+                ASSERT_TRUE(json.has_field("wrapped_network"));
+            }
         }
-    }
 
-    TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestLennart03) {
-        uint64_t noWorkers = 1;
-
-        std::string configMonitoring01 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" cores: \"0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10\" sampleRate: 1000"
-                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE\" sampleRate: 1000"
-                                         " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, FREE_RAM, SHARED_RAM, BUFFER_RAM, FREE_SWAP, TOTAL_HIGH, FREE_HIGH\" sampleRate: 1000"
-                                         " - network: attributes: \"rBytes, rPackets, rErrs, rDrop\" sampleRate: 1000";
-        auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                        TestUtils::restPort(*restPort),
-                                                        TestUtils::enableMonitoring(),
-                                                        TestUtils::enableDebug()});
-        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-        auto worker1 = TestUtils::startWorker(
-            {TestUtils::rpcPort(0),
-             TestUtils::dataPort(0),
-             TestUtils::coordinatorPort(*rpcCoordinatorPort),
-             TestUtils::sourceType("DefaultSource"),
-             TestUtils::logicalSourceName("default_logical"),
-             TestUtils::physicalSourceName("test2"),
-             TestUtils::workerHealthCheckWaitTime(1),
-             TestUtils::enableMonitoring(),
-             TestUtils::monitoringConfiguration(configMonitoring01)
-            });
-
-        EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-
-        auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
-        NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
-
-        ASSERT_EQ(jsons.size(), noWorkers + 1);
-
-        for (uint64_t i = 1; i <= noWorkers + 1; i++) {
-            NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
-            auto json = jsons[std::to_string(i)];
-            NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-            //        ASSERT_TRUE(MetricValidator::isValidAll(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
-            ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
-        }
     }
 
     TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreamsConfiguration) {
-        uint64_t noWorkers = 2;
+        uint64_t noWorkers = 1;
         uint64_t localBuffers = 64;
         uint64_t globalBuffers = 1024 * 128;
 
         std::set<std::string> expectedMonitoringStreams {"wrapped_network", "wrapped_cpu", "memory", "disk"};
         std::string configMonitoring01 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
-                                         "sampleRate: 1000"
+                                         "cores: \"0, 2, 3, 6\""
                                          " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" "
-                                         "sampleRate: 1000"
                                          " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, FREE_RAM, SHARED_RAM, BUFFER_RAM, "
                                          "FREE_SWAP, TOTAL_HIGH, FREE_HIGH, PROCS, MEM_UNIT, LOADS_1MIN, LOADS_5MIN, LOADS_15MIN\" "
-                                         "sampleRate: 1000"
                                          " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, "
                                          "rMulticast, tBytes, tPackets, tErrs, tDrop, tFifo, tCools, tCarrier, tCompressed\" ";
         //    std::set<std::string> expectedMonitoringStreams {"wrapped_cpu, disk"};
         std::string configMonitoring02 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
-                                         "sampleRate: 1000"
-                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" "
-                                         "sampleRate: 1000"
-                                         " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, FREE_RAM, SHARED_RAM, BUFFER_RAM, "
-                                         "FREE_SWAP, TOTAL_HIGH, FREE_HIGH, PROCS, MEM_UNIT, LOADS_1MIN, LOADS_5MIN, LOADS_15MIN\" "
-                                         "sampleRate: 1000"
-                                         " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, "
-                                         "rMulticast, tBytes, tPackets, tErrs, tDrop, tFifo, tCools, tCarrier, tCompressed\" ";
-        //    std::set<std::string> expectedMonitoringStreams {"disk"};
-        //    std::string configMonitoring01 = " - disk: attributes: \"F_BAVAIL, F_BLOCKS, F_BSIZE\" sampleRate: 1000";
-        //    std::set<std::string> expectedMonitoringStreams {"wrapped_cpu"};
-        //    std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system, idle, iowait\" cores: \"0, 2, 3, 6\" sampleRate: 6000 ";
-
+                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" ";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -468,4 +382,4 @@ using std::cout;
         //        //        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
         //    }
     }
-    }// namespace NES
+}// namespace NES

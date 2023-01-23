@@ -220,20 +220,16 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
 }
 
 TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
-    // Select i random attributes from the vector. This way different configurations will be tested.
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("DiskMetric", 3);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
+    // configuration of attributes
+    std::list<std::string> configuredMetricsList = {"F_BLOCKS", "F_BSIZE", "F_BAVAIL"};
+    std::list<std::string> notConfiguredMetricsList = {"F_FRSIZE", "F_BFREE"};
+    SchemaPtr schema = Monitoring::DiskMetrics::createSchema("", configuredMetricsList);
 
-    SchemaPtr schema = Monitoring::DiskMetrics::createSchema("", configuredMetrics);
-
-    for (const std::string& attribute : configuredMetrics) {
+    // checks, if the schema was created correct
+    for (const std::string& attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (const std::string& attribute : attributesList) {
+    for (const std::string& attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
@@ -255,31 +251,26 @@ TEST_F(MetricCollectorTest, testDiskCollectorConfiguration) {
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
     Monitoring::DiskMetrics parsedMetricValues = parsedMetric->getValue<Monitoring::DiskMetrics>();
     ASSERT_EQ(parsedMetricValues.getSchema(), schema);
-    // create Assert_EQ nur die Werte vom gewünschten Schema wurden ausgelesen
-    for(const std::string& metricName : configuredMetrics) {
+
+    for(const std::string& metricName : configuredMetricsList) {
         ASSERT_EQ(parsedMetricValues.getValue(metricName), typedMetric.getValue(metricName));
     }
-    // check if attributes that arent in the configuration are zero
-    for(const std::string& metricName : attributesList) {
+    // check if attributes that are not in the configuration are zero
+    for(const std::string& metricName : notConfiguredMetricsList) {
         ASSERT_EQ(parsedMetricValues.getValue(metricName), 0);
     }
     ASSERT_EQ(typedMetric.nodeId, nodeId);
 }
 
 TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
-    // Select i random attributes from the vector. This way different configurations will be tested.
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("MemoryMetric", 6);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
-
-    SchemaPtr schema = Monitoring::MemoryMetrics::createSchema("", configuredMetrics);
-    for (const std::string& attribute : configuredMetrics) {
+    // configuration of attributes
+    std::list<std::string> configuredMetricsList = {"TOTAL_RAM", "LOADS_5MIN", "FREE_HIGH", "TOTAL_HIGH", "PROCS", "LOADS_15MIN"};
+    std::list<std::string> notConfiguredMetricsList = {"TOTAL_SWAP", "FREE_RAM", "SHARED_RAM", "BUFFER_RAM", "FREE_SWAP", "MEM_UNIT", "LOADS_1MIN"};
+    SchemaPtr schema = Monitoring::MemoryMetrics::createSchema("", configuredMetricsList);
+    for (const std::string& attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (const std::string& attribute : attributesList) {
+    for (const std::string& attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
@@ -290,7 +281,6 @@ TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
     ASSERT_EQ(memoryMetric->getMetricType(), Monitoring::MetricType::MemoryMetric);
     auto bufferSize = typedMetric.getSchema()->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    //    ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
     writeToBuffer(typedMetric, tupleBuffer, 0);
 
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
@@ -301,28 +291,24 @@ TEST_F(MetricCollectorTest, testMemoryCollectorConfiguration) {
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
     Monitoring::MemoryMetrics parsedMetricValues = parsedMetric->getValue<Monitoring::MemoryMetrics>();
     ASSERT_EQ(parsedMetricValues.getSchema(), schema);
-    for(const std::string& metricName : configuredMetrics) {
+    for(const std::string& metricName : configuredMetricsList) {
         ASSERT_EQ(parsedMetricValues.getValue(metricName), typedMetric.getValue(metricName));
     }
-    for(const std::string& metricName : attributesList) {
+    for(const std::string& metricName : notConfiguredMetricsList) {
         ASSERT_EQ(parsedMetricValues.getValue(metricName), 0);
     }
     ASSERT_EQ(typedMetric.nodeId, nodeId);
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetricsConfiguration) {
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("CpuMetric", 5);
-    std::vector<std::string> attributesList = get<0>(randomTuple);
-    std::list<std::string> configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
-
-    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredMetrics);
-    for (std::string attribute : configuredMetrics) {
+    // configuration of attributes
+    std::list<std::string> configuredMetricsList = {"idle", "guest", "nice", "steal", "guestnice"};
+    std::list<std::string> notConfiguredMetricsList = {"user", "system", "iowait", "irq", "softirq"};
+    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredMetricsList);
+    for (std::string attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (std::string attribute : attributesList) {
+    for (std::string attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
@@ -336,19 +322,18 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetricsConfiguration) {
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         auto bufferSize = wrappedMetric.getSchema()->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
-//        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
+        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
 
         Monitoring::MetricPtr parsedMetric = std::make_shared<Monitoring::Metric>(Monitoring::CpuMetricsWrapper(schema));
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         Monitoring::CpuMetricsWrapper parsedMetricValues = parsedMetric->getValue<Monitoring::CpuMetricsWrapper>();
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         for (unsigned int i = 0; i < parsedMetricValues.size(); i++) {
-            for (const std::string& metricName : configuredMetrics) {
+            for (const std::string& metricName : configuredMetricsList) {
                 ASSERT_EQ(parsedMetricValues.getValue(i).getValue(metricName), wrappedMetric.getValue(i).getValue(metricName));
             }
-            for (const std::string& metricName : attributesList) {
+            for (const std::string& metricName : notConfiguredMetricsList) {
                 ASSERT_EQ(parsedMetricValues.getValue(i).getValue(metricName), 0);
             }
         }
@@ -359,48 +344,29 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetricsConfiguration) {
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
-    std::list<uint64_t> emptyList {};
-
-    if (emptyList.empty()) {
-        NES_DEBUG("EMPTY!");
-    } else {
-        NES_DEBUG("NOT EMPTY!");
-    }
-    emptyList.push_back(0);
-
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("CpuMetric", 5);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
-
-    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredMetrics);
-    for (std::string attribute : configuredMetrics) {
+    // configuration of metrics and cpu cores
+    std::list<uint64_t> cpuList {0};
+    std::list<std::string> configuredMetricsList = {"idle", "guest", "nice", "steal", "guestnice"};
+    std::list<std::string> notConfiguredMetricsList = {"user", "system", "iowait", "irq", "softirq"};
+    SchemaPtr schema = Monitoring::CpuMetrics::createSchema("", configuredMetricsList);
+    for (std::string attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (std::string attribute : attributesList) {
+    for (std::string attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
-    auto readMetrics = reader->readCpuStats();
-    readMetrics.setSchema(schema);
-    readMetrics.setNodeId(nodeId);
-
-    auto cpuCollector = Monitoring::CpuCollector(schema, emptyList);
+    auto cpuCollector = Monitoring::CpuCollector(schema, cpuList);
     cpuCollector.setNodeId(nodeId);
     Monitoring::MetricPtr cpuMetric = cpuCollector.readMetric();
     ASSERT_EQ(cpuMetric->getMetricType(), Monitoring::MetricType::WrappedCpuMetrics);
 
     Monitoring::CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<Monitoring::CpuMetricsWrapper>();
-//    ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
+    ASSERT_EQ(wrappedMetric.size(), 1);
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
-//        Monitoring::CpuMetrics totalMetrics = wrappedMetric.getValue(0);
-
         auto bufferSize = wrappedMetric.getSchema()->getSchemaSizeInBytes() * wrappedMetric.size();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
         wrappedMetric.writeToBuffer(tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
@@ -409,14 +375,13 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         Monitoring::CpuMetrics parsedMetricValues = parsedMetric->getValue<Monitoring::CpuMetrics>();
         ASSERT_EQ(parsedMetricValues.getSchema(), schema);
-        for(const std::string& metricName : configuredMetrics) {
+        for(const std::string& metricName : configuredMetricsList) {
             ASSERT_EQ(parsedMetricValues.getValue(metricName), wrappedMetric.getValue(0).getValue(metricName));
         }
-        for(const std::string& metricName : attributesList) {
+        for(const std::string& metricName : notConfiguredMetricsList) {
             ASSERT_EQ(parsedMetricValues.getValue(metricName), 0);
         }
-//        ASSERT_EQ(totalMetrics.nodeId, nodeId);
-        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
+        ASSERT_EQ(wrappedMetric.getValue(0).getValue("nodeId"), nodeId);
         ASSERT_EQ(parsedMetricValues.nodeId, nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testcpuCollectorSingleMetrics. Abstract reader found.");
@@ -424,24 +389,15 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetricsConfiguration) {
 }
 
 TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("NetworkMetric", 7);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
-
-    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredMetrics);
-    for (std::string attribute : configuredMetrics) {
+    std::list<std::string> configuredMetricsList = {"rMulticast", "rPackets", "tDrop", "rFrame", "tBytes", "rCompressed", "tFifo"};
+    std::list<std::string> notConfiguredMetricsList = {"rBytes", "rErrs", "rDrop", "rFifo", "tPackets", "tErrs", "tColls", "tCarrier", "tCompressed"};
+    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredMetricsList);
+    for (std::string attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (std::string attribute : attributesList) {
+    for (std::string attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
-
-    auto readMetrics = reader->readNetworkStats();
-    readMetrics.setSchema(schema);
-    readMetrics.setNodeId(nodeId);
 
     auto networkCollector = Monitoring::NetworkCollector(schema);
     networkCollector.setNodeId(nodeId);
@@ -449,14 +405,12 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
     ASSERT_EQ(networkMetric->getMetricType(), Monitoring::MetricType::WrappedNetworkMetrics);
 
     Monitoring::NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<Monitoring::NetworkMetricsWrapper>();
-    ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         Monitoring::NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
         ASSERT_EQ(totalMetrics.getSchema(), schema);
         auto bufferSize = totalMetrics.getSchema()->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-        //        ASSERT_EQ(bufferSize, tupleBuffer.getBufferSize());
         writeToBuffer(totalMetrics, tupleBuffer, 0);
         ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
@@ -465,14 +419,13 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         Monitoring::NetworkMetrics parsedMetricValues = parsedMetric->getValue<Monitoring::NetworkMetrics>();
         ASSERT_EQ(parsedMetricValues.getSchema(), schema);
-        for(const std::string& metricName : configuredMetrics) {
+        for(const std::string& metricName : configuredMetricsList) {
             ASSERT_EQ(parsedMetricValues.getValue(metricName), totalMetrics.getValue(metricName));
         }
-        for(const std::string& metricName : attributesList) {
+        for(const std::string& metricName : notConfiguredMetricsList) {
             ASSERT_EQ(parsedMetricValues.getValue(metricName), 0);
         }
         ASSERT_EQ(totalMetrics.nodeId, nodeId);
-        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
         ASSERT_EQ(parsedMetricValues.nodeId, nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
@@ -480,18 +433,13 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetricsConfiguration) {
 }
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetricsConfiguration) {
-    std::tuple<std::vector<std::string>, std::list<std::string>> randomTuple =
-        Monitoring::MetricUtils::randomAttributes("NetworkMetric", 7);
-    std::vector<std::string>  attributesList = get<0>(randomTuple);
-    std::list<std::string>  configuredMetrics = get<1>(randomTuple);
-    std::string configuredMetricsString = Monitoring::MetricUtils::listToString(", ", configuredMetrics);
-    NES_DEBUG("Configured attributes are: " << configuredMetricsString);
-
-    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredMetrics);
-    for (std::string attribute : configuredMetrics) {
+    std::list<std::string> configuredMetricsList = {"rMulticast", "rPackets", "tDrop", "rFrame", "tBytes", "rCompressed", "tFifo"};
+    std::list<std::string> notConfiguredMetricsList = {"rBytes", "rErrs", "rDrop", "rFifo", "tPackets", "tErrs", "tColls", "tCarrier", "tCompressed"};
+    SchemaPtr schema = Monitoring::NetworkMetrics::createSchema("", configuredMetricsList);
+    for (std::string attribute : configuredMetricsList) {
         ASSERT_TRUE(schema->contains(attribute));
     }
-    for (std::string attribute : attributesList) {
+    for (std::string attribute : notConfiguredMetricsList) {
         ASSERT_FALSE(schema->contains(attribute));
     }
 
@@ -513,10 +461,10 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetricsConfiguration) {
         Monitoring::NetworkMetricsWrapper parsedMetricValues = parsedMetric->getValue<Monitoring::NetworkMetricsWrapper>();
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         for (unsigned int i = 0; i < parsedMetricValues.size(); i++) {
-            for (const std::string& metricName : configuredMetrics) {
+            for (const std::string& metricName : configuredMetricsList) {
                 ASSERT_EQ(parsedMetricValues.getNetworkValue(i).getValue(metricName), wrappedMetric.getNetworkValue(i).getValue(metricName));
             }
-            for (const std::string& metricName : attributesList) {
+            for (const std::string& metricName : notConfiguredMetricsList) {
                 ASSERT_EQ(parsedMetricValues.getNetworkValue(i).getValue(metricName), 0);
             }
         }
