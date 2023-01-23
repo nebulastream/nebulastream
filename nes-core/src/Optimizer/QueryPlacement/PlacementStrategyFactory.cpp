@@ -20,8 +20,12 @@
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+<<<<<<< HEAD
 #include <Util/PlacementStrategy.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+=======
+#include <Optimizer/QueryPlacement/ExternalICCSPlacementStrategy.hpp>
+>>>>>>> 3e2f6bad38 ([#3442] Add initial external placement skeleton)
 
 namespace NES::Optimizer {
 
@@ -35,6 +39,8 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::Manual:
             return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::ExternalICCS:
+            return ExternalICCSPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
 // #2486        case PlacementStrategy::IFCOP:
 //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
