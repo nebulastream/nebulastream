@@ -120,7 +120,7 @@ jobs:
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-      UBUNTU_VERSION: 22.04
+      UBUNTU_VERSION: 22_04
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
