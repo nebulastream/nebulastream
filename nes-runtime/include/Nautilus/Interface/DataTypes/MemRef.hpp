@@ -15,6 +15,9 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
 namespace NES::Nautilus {
 
 /**
@@ -39,13 +42,49 @@ class MemRef : public TraceableType {
 
     template<class ResultType>
     std::shared_ptr<ResultType> load() {
-        auto rawValue = (int64_t*) value;
-        return std::make_unique<ResultType>(*rawValue);
+        auto typedAddress = reinterpret_cast<typename ResultType::RawType*>(value);
+        return std::make_unique<ResultType>(*typedAddress);
     }
 
+    /**
+     * @brief Stores a value to a memory location.
+     * @tparam T
+     * @param valueType
+     */
+    template<typename T>
     void store(Any& valueType) {
-        auto v = valueType.staticCast<Int64>();
-        *reinterpret_cast<int64_t*>(value) = v.getValue();
+        *reinterpret_cast<typename T::RawType*>(value) = valueType.staticCast<T>().getValue();
+    }
+
+    /**
+     * @brief Stores a value to the pointer in the memref.
+     * Depending on the value type we determine the correct method to store it.
+     * @param valueType
+     */
+    void store(Any& valueType) {
+        if (valueType.isType<Int8>()) {
+            store<Int8>(valueType);
+        } else if (valueType.isType<Int16>()) {
+            store<Int16>(valueType);
+        } else if (valueType.isType<Int32>()) {
+            store<Int32>(valueType);
+        } else if (valueType.isType<Int64>()) {
+            store<Int64>(valueType);
+        } else if (valueType.isType<UInt8>()) {
+            store<UInt8>(valueType);
+        } else if (valueType.isType<UInt16>()) {
+            store<UInt16>(valueType);
+        } else if (valueType.isType<UInt32>()) {
+            store<UInt32>(valueType);
+        } else if (valueType.isType<UInt64>()) {
+            store<UInt64>(valueType);
+        } else if (valueType.isType<Float>()) {
+            store<Float>(valueType);
+        } else if (valueType.isType<Double>()) {
+            store<Double>(valueType);
+        } else if (valueType.isType<Boolean>()) {
+            store<Boolean>(valueType);
+        }
     }
 
     Nautilus::IR::Types::StampPtr getType() const override { return Nautilus::IR::Types::StampFactory::createAddressStamp(); }

@@ -36,6 +36,9 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
+            case BasicPhysicalType::BOOLEAN: {
+                return fieldReference.load<Nautilus::Boolean>();
+            };
             case BasicPhysicalType::INT_8: {
                 return fieldReference.load<Nautilus::Int8>();
             };
