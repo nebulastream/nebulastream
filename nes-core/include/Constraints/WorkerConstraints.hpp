@@ -17,17 +17,20 @@
 
 #include <Constraints/Constraint.hpp>
 #include <string>
+#include <vector>
 
 namespace NES::Constraint {
 
 /**
  * Constraint that requires a worker with desired configuration. The configuration key is passes as the constructor parameter.
  */
-class NeedWorkerWithConfiguredConstraint : public Constraint {
-    NeedWorkerWithConfiguredConstraint(std::string configurationKey);
+class WorkerConstraints : public Constraint {
+    WorkerConstraints();
+
+    void addConstraint(Constraint constraint);
 
   private:
-    std::string configurationKey;
+    std::vector<Constraint> constraints;
 };
 
 }// namespace NES::Constraint

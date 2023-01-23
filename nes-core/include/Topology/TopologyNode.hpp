@@ -192,6 +192,8 @@ class TopologyNode : public Node {
      */
     NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
+    bool satisfiesConstraints(WorkerConstraints workerConstraints);
+
   private:
     uint64_t id;
     std::string ipAddress;

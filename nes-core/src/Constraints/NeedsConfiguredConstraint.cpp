@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Constraints/NeedWorkerWithConfiguredConstraint.hpp>
+#include <Constraints/WorkerConstraints.hpp>
 
-NES::Constraint::NeedWorkerWithConfiguredConstraint::NeedWorkerWithConfiguredConstraint(std::string configurationKey)
+NES::Constraint::WorkerConstraints::WorkerConstraints(std::string configurationKey)
     : configurationKey(configurationKey) {}
