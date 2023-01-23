@@ -102,7 +102,11 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
 
-    std::vector<Constraint::WorkerConstraint> getWorkerConstraints();
+    /**
+     * Get the worker constraints that operator wants to validate before scheduling the operator
+     * @return constraints to be checked
+     */
+    std::vector<Constraint::WorkerConstraintPtr> getWorkerConstraints() const;
 
   protected:
     Optimizer::QuerySignaturePtr z3Signature;

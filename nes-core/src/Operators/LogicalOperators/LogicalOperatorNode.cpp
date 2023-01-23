@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Constraints/WorkerConstraints.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
@@ -56,4 +57,6 @@ void LogicalOperatorNode::updateHashBasedSignature(size_t hashCode, std::string 
         hashBasedSignature[hashCode] = {stringSignature};
     }
 }
+
+std::vector<Constraint::WorkerConstraintPtr> LogicalOperatorNode::getWorkerConstraints() const { return workerConstraints; }
 }// namespace NES

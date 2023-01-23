@@ -13,7 +13,7 @@
 */
 
 #include <filesystem>
-
+#include <Constraints/WorkerPropertyConstraints.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
@@ -30,6 +30,16 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model,
                                                              OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), model(std::move(model)), inputFields(std::move(inputFields)),
       outputFields(std::move(outputFields)) {
+
+    std::vector<std::string> properties;
+
+
+    auto workerPropertyConstraints = std::make_shared<Constraint::WorkerPropertyConstraints>(properties);
+    this->workerConstraints.emplace_back(workerPropertyConstraints);
+
+
+
+
     NES_DEBUG("InferModelLogicalOperatorNode: reading from model " << this->model);
 }
 

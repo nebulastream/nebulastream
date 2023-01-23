@@ -31,9 +31,9 @@ class WorkerConstraints {
 
   public:
     /**
-* Validate if the constraint holds or not
-* @return true if the constraint is satisfied else false
-*/
+     * Validate if the constraint holds or not
+     * @return true if the constraint is satisfied else false
+     */
     virtual bool validate(const TopologyNodePtr& worker) const = 0;
 };
 

@@ -13,3 +13,10 @@
 */
 
 #include <Constraints/WorkerConstraints.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES::Constraint {
+
+/*bool WorkerConstraints::validate(const TopologyNodePtr&) const { NES_NOT_IMPLEMENTED(); }*/
+
+}// namespace NES::Constraint

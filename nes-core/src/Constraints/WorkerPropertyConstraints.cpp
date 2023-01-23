@@ -18,7 +18,7 @@
 
 namespace NES::Constraint {
 
-WorkerPropertyConstraints::WorkerPropertyConstraints(std::vector<std::string> propertiesToValidate)
+WorkerPropertyConstraints::WorkerPropertyConstraints(const std::vector<std::string>& propertiesToValidate)
     : propertiesToValidate(std::move(propertiesToValidate)) {}
 
 bool WorkerPropertyConstraints::validate(const TopologyNodePtr& worker) const {

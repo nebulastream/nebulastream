@@ -26,7 +26,9 @@ namespace NES::Constraint {
  */
 class WorkerPropertyConstraints : public WorkerConstraints {
   public:
-    WorkerPropertyConstraints(std::vector<std::string> propertiesToValidate);
+    WorkerPropertyConstraints(const std::vector<std::string>& propertiesToValidate);
+
+    ~WorkerPropertyConstraints() = default;
 
     bool validate(const TopologyNodePtr& worker) const override;
 
