@@ -1,3 +1,4 @@
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,13 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        RecordBuffer.cpp
-        )
-
-add_subdirectory(Expressions)
-add_subdirectory(Operators)
-add_subdirectory(Pipelines)
-add_subdirectory(MemoryProvider)
-add_subdirectory(Aggregation)
-add_subdirectory(DataStructures)
+add_subdirectory(Hash)
