@@ -17,7 +17,6 @@
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <chrono>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -32,12 +31,41 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { Testing::TestWithErrorHandling<testing::Test>::SetUp(); }
+    void SetUp() override { NES::Testing::NESBaseTest::SetUp(); }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationProviderCSV test class."); }
 };
 
-TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovement) {
+TEST_F(LocationProviderCSVTest, testInvalidCsv) {
+    //test nonexistent file
+    auto csvPath = std::string(TEST_DATA_DIRECTORY) + "non_existent_file.csv";
+    auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+
+    //test empty file
+    csvPath = std::string(TEST_DATA_DIRECTORY) + "emptyFile.csv";
+    locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+
+    //test invalid number formats
+    csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLatitudeFormat.csv";
+    locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLongitudeFormat.csv";
+    locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidOffsetFormat.csv";
+    locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+
+    //test invalid column numbers
+    csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocationsNotEnoughColumns.csv";
+    locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
+    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+}
+
+
+TEST_F(LocationProviderCSVTest, testCsvMovement) {
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
 
@@ -77,7 +105,7 @@ TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovement) {
     }
 }
 
-TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovementWithSimulatedLocationInFuture) {
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     Timestamp offset = 400000000;
     auto currentTimeStamp = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
@@ -134,7 +162,7 @@ TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovementWithSimulatedLocationInF
     }
 }
 
-TEST_F(LocationProviderCSVTest, DISABLED_testCsvMovementWithSimulatedLocationInPast) {
+TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     Timestamp offset = -100000000;
     auto currentTimeStamp = getTimestamp();
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";

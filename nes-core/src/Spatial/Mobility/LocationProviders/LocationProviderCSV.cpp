@@ -20,6 +20,7 @@
 #include <fstream>
 #include <iostream>
 #ifdef S2DEF
+#include "Util/UtilityFunctions.hpp"
 #include <s2/s2point.h>
 #endif
 
@@ -42,31 +43,54 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     std::string latitudeString;
     std::string longitudeString;
     std::string timeString;
+    std::basic_string<char> delimiter = {','};
 
     NES_DEBUG("Started csv location source at " << startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
         std::stringstream stringStream(csvLine);
-        getline(stringStream, latitudeString, ',');
-        getline(stringStream, longitudeString, ',');
-        getline(stringStream, timeString, ',');
-        Timestamp time = std::stoul(timeString);
+        std::vector<std::string> values;
+        try {
+            values = NES::Util::splitWithStringDelimiter<std::string>(csvLine, delimiter);
+        } catch (std::exception e) {
+            NES_THROW_RUNTIME_ERROR(
+                "LocationProviderCSV: An error occurred while splitting delimiter of waypoint CSV. ERROR: " << strerror(errno));
+        }
+        if (values.size() != 3) {
+            NES_THROW_RUNTIME_ERROR(
+                "LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has "
+                << values.size() << " columns");
+        }
+        latitudeString = values[0];
+        longitudeString = values[1];
+        timeString = values[2];
+
+        Timestamp time;
+        double latitude;
+        double longitude;
+        try {
+            time = std::stoul(timeString);
+            latitude = std::stod(latitudeString);
+            longitude = std::stod(longitudeString);
+        } catch (std::exception e) {
+            NES_THROW_RUNTIME_ERROR(
+                "LocationProviderCSV: An error occurred while creating the waypoint. ERROR: " << strerror(errno));
+        }
         NES_TRACE("Read from csv: " << latitudeString << ", " << longitudeString << ", " << time);
 
         //add startTime to the offset obtained from csv to get absolute timestamp
         time += startTime;
 
         //construct a pair containing a location and the time at which the device is at exactly that point
-        // and sve it to a vector containing all waypoints
+        // and add it to a vector containing all waypoints
         auto waypoint = DataTypes::Experimental::Waypoint(
-            DataTypes::Experimental::GeoLocation(std::stod(latitudeString), std::stod(longitudeString)),
+            DataTypes::Experimental::GeoLocation(latitude, longitude),
             time);
-        waypoints.push_back(waypoint);
+            waypoints.push_back(waypoint);
     }
     if (waypoints.empty()) {
-        NES_WARNING("No data in CSV, cannot start location provider");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("No data in CSV, cannot start location provider");
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().getTimestamp().value() << ", last timestamp is "

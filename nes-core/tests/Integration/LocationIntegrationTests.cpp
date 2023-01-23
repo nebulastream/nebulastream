@@ -62,6 +62,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
+    std::chrono::duration<int64_t, std::milli> defaultTimeoutInSec = std::chrono::seconds(TestUtils::defaultTimeout);
 
     struct getGeolocationParameters {
         getGeolocationParameters(TopologyNodePtr node, TopologyManagerServicePtr service) : node(node), service(service) {}
@@ -346,7 +347,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
-    wrkConf1->coordinatorPort = (port);
+    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
@@ -362,12 +363,50 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStartTime();
     TopologyPtr topology = crd->getTopology();
+    auto wrk1id = wrk1->getWorkerId();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
-    auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
 
-    //todo: insert checks
-    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+    //Get the expected waypoints
+    auto expectedWayPoints = getWaypointsFromCsv(csvPath, startTime);
+
+    auto currentTimeStamp = getTimestamp();
+    auto maxTimeStamp = expectedWayPoints.back().getTimestamp().value();
+
+    //set endtime to 1.5 times the duration until the last timestamp so we are more likely to catch the last location
+    auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) * 3;
+
+    bool receivedLocation = false;
+    std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
+    while (currentTimeStamp <= endTime) {
+        auto currentGeoLocation = topologyManagerService->getGeoLocationForNode(wrk1id);
+
+        //after we receivd a location from the location index, there should always be one present for all remaining iterations
+        if (receivedLocation) {
+            ASSERT_TRUE(currentGeoLocation.has_value());
+        }
+        if (currentGeoLocation.has_value()) {
+            receivedLocation = true;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+                actualWayPoints.emplace_back(currentGeoLocation.value());
+            }
+        }
+        currentTimeStamp = getTimestamp();
+    }
+
+    EXPECT_TRUE(!actualWayPoints.empty());
+
+    //check the ordering of the existing waypoints
+    auto expectedIt = expectedWayPoints.cbegin();
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
+        while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
+            expectedIt++;
+        }
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
+        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+    }
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -405,11 +444,50 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
+    auto wrk1id = wrk1->getWorkerId();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
-    auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-    //todo: insert checks
-    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+
+    //Get the expected waypoints
+    auto expectedWayPoints = getWaypointsFromCsv(csvPath, startTime);
+
+    auto currentTimeStamp = getTimestamp();
+    auto maxTimeStamp = expectedWayPoints.back().getTimestamp().value();
+
+    //set endtime to 1.5 times the duration until the last timestamp so we are more likely to catch the last location
+    auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) * 3;
+
+    bool receivedLocation = false;
+    std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
+    while (currentTimeStamp <= endTime) {
+        auto currentGeoLocation = topologyManagerService->getGeoLocationForNode(wrk1id);
+
+        //after we receivd a location from the location index, there should always be one present for all remaining iterations
+        if (receivedLocation) {
+            ASSERT_TRUE(currentGeoLocation.has_value());
+        }
+        if (currentGeoLocation.has_value()) {
+            receivedLocation = true;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+                actualWayPoints.emplace_back(currentGeoLocation.value());
+            }
+        }
+        currentTimeStamp = getTimestamp();
+    }
+
+    EXPECT_TRUE(!actualWayPoints.empty());
+
+    //check the ordering of the existing waypoints
+    auto expectedIt = expectedWayPoints.cbegin();
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
+        while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
+            expectedIt++;
+        }
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
+        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+    }
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -452,11 +530,50 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
                                  NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
+    auto wrk1id = wrk1->getWorkerId();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
-    auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-    //todo: insert checks
-    //    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
+
+    //Get the expected waypoints
+    auto expectedWayPoints = getWaypointsFromCsv(csvPath, startTime);
+
+    auto currentTimeStamp = getTimestamp();
+    auto maxTimeStamp = expectedWayPoints.back().getTimestamp().value();
+
+    //set endtime to 1.5 times the duration until the last timestamp so we are more likely to catch the last location
+    auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) * 3;
+
+    bool receivedLocation = false;
+    std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
+    while (currentTimeStamp <= endTime) {
+        auto currentGeoLocation = topologyManagerService->getGeoLocationForNode(wrk1id);
+
+        //after we receivd a location from the location index, there should always be one present for all remaining iterations
+        if (receivedLocation) {
+            ASSERT_TRUE(currentGeoLocation.has_value());
+        }
+        if (currentGeoLocation.has_value()) {
+            receivedLocation = true;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+                actualWayPoints.emplace_back(currentGeoLocation.value());
+            }
+        }
+        currentTimeStamp = getTimestamp();
+    }
+
+    EXPECT_TRUE(!actualWayPoints.empty());
+
+    //check the ordering of the existing waypoints
+    auto expectedIt = expectedWayPoints.cbegin();
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
+        while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
+            expectedIt++;
+        }
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
+        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+    }
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -492,13 +609,55 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
+    auto locationProvider =
+        std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
+            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+    auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
+    auto wrk1id = wrk1->getWorkerId();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
-    auto parameters = std::make_shared<getGeolocationParameters>(wrk1Node, topologyManagerService);
-    //todo: readd this check
-//    checkDeviceMovement(csvPath, getLocationFromTopologyNode, std::static_pointer_cast<void>(parameters));
-    
+    //Get the expected waypoints
+    auto expectedWayPoints = getWaypointsFromCsv(csvPath, startTime);
+
+    auto currentTimeStamp = getTimestamp();
+    auto maxTimeStamp = expectedWayPoints.back().getTimestamp().value();
+
+    //set endtime to 1.5 times the duration until the last timestamp so we are more likely to catch the last location
+    auto endTime = maxTimeStamp + (maxTimeStamp - currentTimeStamp) * 3;
+
+    bool receivedLocation = false;
+    std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> actualWayPoints;
+    while (currentTimeStamp <= endTime) {
+        auto currentGeoLocation = topologyManagerService->getGeoLocationForNode(wrk1id);
+
+        //after we receivd a location from the location index, there should always be one present for all remaining iterations
+        if (receivedLocation) {
+            ASSERT_TRUE(currentGeoLocation.has_value());
+        }
+        if (currentGeoLocation.has_value()) {
+            receivedLocation = true;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+                actualWayPoints.emplace_back(currentGeoLocation.value());
+            }
+        }
+        currentTimeStamp = getTimestamp();
+    }
+
+    EXPECT_TRUE(!actualWayPoints.empty());
+
+    //check the ordering of the existing waypoints
+    auto expectedIt = expectedWayPoints.cbegin();
+    for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
+        while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
+            expectedIt++;
+        }
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
+        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+    }
+
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
@@ -676,7 +835,8 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         std::dynamic_pointer_cast<TopologyNode>(topology->findNodeWithId(wrk1->getWorkerId())->getParents().front())->getId();
     uint64_t oldParentId = 0;
     std::vector<uint64_t> actualSequence;
-    while (reconnectSequence.size() > 1) {
+    auto startTimestamp = std::chrono::system_clock::now();
+    while (reconnectSequence.size() > 1 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         if (parentId != reconnectSequence.front()) {
             reconnectSequence.erase(reconnectSequence.begin());
         }
@@ -762,8 +922,9 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO("Query ID: " << queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
+    auto startTimestamp = std::chrono::system_clock::now();
     size_t recv_tuples = 0;
-    while (recv_tuples < 5000) {
+    while (recv_tuples < 5000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv before buffering: " << recv_tuples)
@@ -785,15 +946,14 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     }
     wrk1->getNodeEngine()->stopBufferingAllData();
 
-    while (recv_tuples < 10000) {
+    while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv after buffering: " << recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    string expectedContent = compareString;
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+    ASSERT_EQ(recv_tuples, 10001);
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -842,7 +1002,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //wrkConf1->rpcPort.setValue(0);
 
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(4);
@@ -869,7 +1028,8 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     ASSERT_NE(queryId, INVALID_QUERY_ID);
 
     size_t recv_tuples = 0;
-    while (recv_tuples < 5000) {
+    auto startTimestamp = std::chrono::system_clock::now();
+    while (recv_tuples < 5000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv before buffering: " << recv_tuples)
@@ -891,15 +1051,14 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     }
     wrk1->getNodeEngine()->stopBufferingAllData();
 
-    while (recv_tuples < 10000) {
+    while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("recv after buffering: " << recv_tuples)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    string expectedContent = compareString;
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
+    ASSERT_EQ(recv_tuples, 10001);
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
@@ -934,8 +1093,6 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-    //wrkConf1->dataPort.setValue(0);
-    //wrkConf1->rpcPort.setValue(0);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1072,15 +1229,15 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO("Query ID: " << queryId);
     ASSERT_NE(queryId, INVALID_QUERY_ID);
     size_t recv_tuples = 0;
-    while (recv_tuples < 10000) {
+    auto startTimestamp = std::chrono::system_clock::now();
+    while (recv_tuples < 10000 && std::chrono::system_clock::now() < startTimestamp + defaultTimeoutInSec) {
         std::ifstream inFile(testFile);
         recv_tuples = std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n');
         NES_DEBUG("received: " << recv_tuples)
         sleep(1);
     }
 
-    string expectedContent = compareString;
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile, 1));
+    ASSERT_EQ(recv_tuples, 10001);
 
     int response = remove(testFile.c_str());
     ASSERT_TRUE(response == 0);
