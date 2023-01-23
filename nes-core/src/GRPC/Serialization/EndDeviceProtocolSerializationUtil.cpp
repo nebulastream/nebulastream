@@ -8,7 +8,6 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <EndDeviceProtocol.pb.h>
 #include <GRPC/Serialization/EndDeviceProtocolSerializationUtil.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
@@ -51,6 +50,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/LoRaWANProxySource.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -271,15 +271,16 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
     //make sure we only have a single LoRaWANProxySource
     auto sourceOperators = QP->getSourceOperators();
     auto st = sourceOperators.at(0)->toString();
-    if (sourceOperators.size() != 1 || !sourceOperators.at(0)->getSourceDescriptor()->instanceOf<LoRaWANProxySourceDescriptor>()) {
+    if (sourceOperators.size() != 1
+        || !sourceOperators.at(0)->getSourceDescriptor()->instanceOf<LoRaWANProxySourceDescriptor>()) {
         NES_THROW_RUNTIME_ERROR("Trying to serialize query with incompatible sources");
     }
-    // fetch the source and the sensor_fields
-    auto source = sourceOperators.at(0)->getSourceDescriptor()->as<LoRaWANProxySourceDescriptor>();
-    auto sensorFields = std::make_shared<std::vector<std::string>>(source->getSourceConfig()->getSensorFields()->getValue());
+    // fetch the sourceDescriptor and the sensor_fields
+    auto sourceDescriptor = sourceOperators.at(0)->getSourceDescriptor()->as<LoRaWANProxySourceDescriptor>();
+    auto sensorFields = std::make_shared<std::vector<std::string>>(sourceDescriptor->getSourceConfig()->getSensorFields()->getValue());
 
     // get operators as list so we can travel to it in reverse
-    //i.e. from source to sink
+    //i.e. from sourceDescriptor to sink
     auto qpiterator = QueryPlanIterator(std::move(QP));
     auto operatorNodeList = std::deque<NodePtr>();
     for (auto opNode : qpiterator) {
@@ -290,15 +291,25 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
     for (auto nodeIter = operatorNodeList.rbegin(); nodeIter < operatorNodeList.rend(); ++nodeIter) {
         auto node = nodeIter->get();
         //right now we only support the nodes below
-        if (!(node->instanceOf<WindowOperatorNode>() || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<MapLogicalOperatorNode>())) {
+        if (!(node->instanceOf<WindowOperatorNode>() || node->instanceOf<FilterLogicalOperatorNode>()
+              || node->instanceOf<MapLogicalOperatorNode>())) {
             //not an operator we support
             continue;
         }
         auto opNode = node->as<LogicalUnaryOperatorNode>();
         try {
             auto serialized = serializeOperator(opNode, sensorFields);
+            std::string outputTypes;
+            for (const auto& field : opNode->getOutputSchema()->fields) {
+                //TODO: add support for more than 1 datatype
+                if (field->getDataType()->isInteger()){
+                    outputTypes.push_back(EndDeviceProtocol::DataTypes::INT8);
+                }
+            };
+            query->mutable_resulttype()->assign(outputTypes);
             auto operation = query->add_operations();
             operation->CopyFrom(*serialized);
+            sourceDescriptor->setSchema(opNode->getOutputSchema());
             opNode->removeAndJoinParentAndChildren();
         } catch (UnsupportedEDSerialisationException& e) {
             NES_DEBUG("unsupported Operation for serialization");

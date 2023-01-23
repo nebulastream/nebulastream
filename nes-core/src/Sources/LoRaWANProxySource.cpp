@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 #include <utility>
 
+
 namespace NES {
 
 enum class ChirpStackEvent { UP, STATUS, JOIN, ACK, TXACK, LOG, LOCATION, INTEGRATION };
@@ -38,8 +39,12 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
       sourceConfig(sourceConfig) {
     client = std::make_shared<mqtt::async_client>(sourceConfig->getUrl()->getValue(), "LoRaWANProxySource");
     user = sourceConfig->getUserName()->getValue();
-    topic = "application/" + sourceConfig->getAppId()->getValue() + "/#";
-
+    appId = sourceConfig->getAppId()->getValue();
+    deviceEUIs = sourceConfig->getDeviceEUIs()->getValue();
+    topicBase = "application/" + sourceConfig->getAppId()->getValue();
+    topicAll = topicBase + "/#";
+    topicReceive = topicBase + "/event/up";
+    topicSend = topicBase + "/command/down";
     //region initialize parser
     std::vector<std::string> schemaKeys;
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -55,7 +60,7 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
             schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
         }
     }
-    jsonParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
+    //jsonParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
     //endregion
     NES_DEBUG("LoRaWANProxySource::LoRaWANProxySource()")
 }
@@ -95,7 +100,7 @@ bool LoRaWANProxySource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present()) {
-                client->subscribe(topic, 0)->wait();
+                client->subscribe(topicReceive, 0)->wait();
             }
         } catch (const mqtt::exception& error) {
             NES_WARNING("LoRaWANProxySource::connect: " << error);
@@ -103,7 +108,7 @@ bool LoRaWANProxySource::connect() {
         }
 
         if (client->is_connected()) {
-            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topic);
+            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicReceive);
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": connected");
         } else {
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": NOT connected");
@@ -118,7 +123,7 @@ bool LoRaWANProxySource::disconnect() {
         //close();
         NES_DEBUG("LoRaWANProxySource: Shutting down and disconnecting from the MQTT server.");
 
-        client->unsubscribe(topic)->wait();
+        client->unsubscribe(topicReceive)->wait();
 
         client->disconnect()->wait();
         NES_DEBUG("LoRaWANProxySource::disconnect: disconnected.");
@@ -134,6 +139,7 @@ bool LoRaWANProxySource::disconnect() {
     }
     return true;
 }
+
 
 std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
     NES_DEBUG("LoRaWANProxySource " << this << ": receiveData");
@@ -163,15 +169,23 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
             //most important is data which is placed on the "data" field
             try {
                 auto js = nlohmann::json::parse(rcvStr);
-
                 if (!js.contains("data")) {
                     NES_WARNING("LoRaWANProxySource: parsed json does not contain data field");
                 } else {
+                    auto output = EndDeviceProtocol::Output();
+                    output.ParseFromString(js["data"]);
 
-                    jsonParser->writeInputTupleToTupleBuffer(js["data"], 0, buffer, schema, localBufferManager);
-                    //TODO: this is a blocking call, which should get and return data to
-                    //      the caller. But where should we handle control msg or other msgs
-                    //      should prob. impl. async handling of msgs
+                    for (const auto& response : output.responses()){
+                        auto id = response.id();
+                        auto query = sourceConfig->getSerializedQueries()->at(id);
+                        auto resultType = query.resulttype();
+                        auto tupCount = buffer.getNumberOfTuples();
+                        for (size_t i = 0; i < resultType.size(); ++i) {
+                            buffer[tupCount][i].write<int8_t>(resultType[i]);
+                        }
+                        buffer.setNumberOfTuples(buffer.getNumberOfTuples()+1);
+
+                    }
                     ++count;
                 }
             } catch (nlohmann::json::parse_error& ex) {
@@ -192,6 +206,41 @@ std::string LoRaWANProxySource::toString() const {
     return ss.str();
 }
 SourceType LoRaWANProxySource::getType() const { return LORAWAN_SOURCE; }
+bool LoRaWANProxySource::sendQueries() {
+    auto queryMap = sourceConfig->getSerializedQueries();
+    auto pbMsg = EndDeviceProtocol::Message();
+    std::vector<EndDeviceProtocol::Query> queries;
+
+    for (const auto& [_, query] : *queryMap){
+        queries.push_back(query);
+    }
+    pbMsg.mutable_queries()->Assign(queries.begin(), queries.end());
+
+    auto pbEncoded = Util::base64Encode(pbMsg.SerializeAsString());
+
+    for (const auto& devEUI : deviceEUIs){
+        //JSON payload must conform to:
+//        {
+//            "devEui": "0102030405060708",             // this must match the DEV_EUI of the MQTT topic
+//            "confirmed": true,                        // whether the payload must be sent as confirmed data down or not
+//            "fPort": 10,                              // FPort to use (must be > 0)
+//            "data": "...."                            // base64 encoded data (plaintext, will be encrypted by ChirpStack)
+//            "object": {                               // decoded object (when application coded has been configured)
+//                "temperatureSensor": {"1": 25},       // when providing the 'object', you can omit 'data'
+//                "humiditySensor": {"1": 32}
+//            }
+//        }
+        nlohmann::json payload {
+            {"devEui", devEUI},
+            {"confirmed", true},
+            {"fport", 1},
+            {"data", pbEncoded}
+        };
+        NES_DEBUG("sending data to topic: " + topicSend + " with payload " + payload.dump());
+        client->publish(topicSend,payload.dump());
+    }
+    return true;
+}
 
 //debug action listener
 //LoRaWANProxySource::debug_action_listener::debug_action_listener(std::string name) : name(std::move(name)) {}
