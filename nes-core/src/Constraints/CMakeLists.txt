@@ -12,5 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        NeedsConfiguredConstraint.cpp
-        )
+        WorkerConstraints.cpp
+        WorkerPropertyConstraints.cpp)

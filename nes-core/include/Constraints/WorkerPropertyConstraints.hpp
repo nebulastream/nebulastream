@@ -12,7 +12,27 @@
     limitations under the License.
 */
 
-#include <Constraints/WorkerConstraints.hpp>
+#ifndef NES_WORKERPROPERTYCONSTRAINTS_HPP
+#define NES_WORKERPROPERTYCONSTRAINTS_HPP
 
-NES::Constraint::WorkerConstraints::WorkerConstraints(std::string configurationKey)
-    : configurationKey(configurationKey) {}
+#include <Constraints/WorkerConstraints.hpp>
+#include <string>
+#include <vector>
+
+namespace NES::Constraint {
+
+/**
+ * constraint that checks if a worker node has specific property or not
+ */
+class WorkerPropertyConstraints : public WorkerConstraints {
+  public:
+    WorkerPropertyConstraints(std::vector<std::string> propertiesToValidate);
+
+    bool validate(const TopologyNodePtr& worker) const override;
+
+  private:
+    std::vector<std::string> propertiesToValidate;
+};
+
+}// namespace NES::Constraint
+#endif//NES_WORKERPROPERTYCONSTRAINTS_HPP

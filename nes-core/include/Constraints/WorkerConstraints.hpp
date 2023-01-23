@@ -15,24 +15,29 @@
 #ifndef NES_BOOLCONSTRAINT_HPP
 #define NES_BOOLCONSTRAINT_HPP
 
-#include <Constraints/Constraint.hpp>
-#include <string>
-#include <vector>
+#include <memory>
 
-namespace NES::Constraint {
+namespace NES {
+
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+namespace Constraint {
 
 /**
- * Constraint that requires a worker with desired configuration. The configuration key is passes as the constructor parameter.
- */
-class WorkerConstraints : public Constraint {
-    WorkerConstraints();
+* Base class for different types of worker constraints that can be used during optimization decisions (e.g. operator placement)
+*/
+class WorkerConstraints {
 
-    void addConstraint(Constraint constraint);
-
-  private:
-    std::vector<Constraint> constraints;
+  public:
+    /**
+* Validate if the constraint holds or not
+* @return true if the constraint is satisfied else false
+*/
+    virtual bool validate(const TopologyNodePtr& worker) const = 0;
 };
 
-}// namespace NES::Constraint
+}// namespace Constraint
+}// namespace NES
 
 #endif//NES_BOOLCONSTRAINT_HPP

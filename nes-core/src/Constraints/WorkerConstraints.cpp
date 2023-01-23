@@ -12,16 +12,4 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTRAINT_HPP
-#define NES_CONSTRAINT_HPP
-
-namespace NES::Constraint {
-
-/**
- * Base class for different types of constraints that can be used during optimization decisions (e.g. operator placement)
- */
-class Constraint {};
-
-}// namespace NES::Constraint
-
-#endif//NES_CONSTRAINT_HPP
+#include <Constraints/WorkerConstraints.hpp>

@@ -26,13 +26,18 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-namespace NES::Optimizer {
+namespace NES {
+
+namespace Optimizer {
 class TypeInferencePhaseContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
-}// namespace NES::Optimizer
+}// namespace Optimizer
 
-namespace NES {
+namespace Constraint {
+class WorkerConstraint;
+using WorkerConstraintPtr = std::shared_ptr<WorkerConstraint>;
+}// namespace Constraint
 
 /**
  * @brief Logical operator, enables schema inference and signature computation.
@@ -97,10 +102,13 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     virtual bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) = 0;
 
+    std::vector<Constraint::WorkerConstraint> getWorkerConstraints();
+
   protected:
     Optimizer::QuerySignaturePtr z3Signature;
     std::map<size_t, std::set<std::string>> hashBasedSignature;
     std::hash<std::string> hashGenerator;
+    std::vector<Constraint::WorkerConstraintPtr> workerConstraints;
 };
 
 }// namespace NES
