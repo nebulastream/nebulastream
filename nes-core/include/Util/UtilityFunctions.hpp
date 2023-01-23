@@ -216,6 +216,10 @@ void findAndReplaceAll(std::string& data, const std::string& toSearch, const std
  */
 std::string toCSVString(const SchemaPtr& schema);
 
+//TODO: remove this when folly gets updated
+std::string base64Encode(std::string inputBuffer);
+std::string base64Decode(std::string inputBuffer);
+
 /**
  * @brief Returns the next free operator id
  * @return operator id
