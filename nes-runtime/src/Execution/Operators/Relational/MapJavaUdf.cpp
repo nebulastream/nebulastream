@@ -32,11 +32,15 @@ namespace NES::Runtime::Execution::Operators {
 
 inline void jniErrorCheck(void* state, const std::source_location& location = std::source_location::current()) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
-    if (handler->getEnvironment()->ExceptionOccurred()) {
-        // print the stack trace
-        handler->getEnvironment()->ExceptionDescribe();
-        NES_FATAL_ERROR("An error occurred during a map java UDF execution in function " << location.function_name());
-        exit(EXIT_FAILURE);
+    auto exception = handler->getEnvironment()->ExceptionOccurred();
+    if (exception) {
+        // print exception
+        jboolean isCopy = false;
+        auto clazz = handler->getEnvironment()->FindClass("java/lang/Object");
+        auto toString = handler->getEnvironment()->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
+        auto string = (jstring) handler->getEnvironment()->CallObjectMethod(exception, toString);
+        const char* utf = handler->getEnvironment()->GetStringUTFChars(string, &isCopy);
+        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function " << location.function_name() << " at line " << location.line() << ": " << utf);
     }
 }
 
