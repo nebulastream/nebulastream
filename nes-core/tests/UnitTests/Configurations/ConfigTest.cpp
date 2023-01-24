@@ -127,13 +127,13 @@ TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     uint64_t sampleDisk = 1000;
     SchemaPtr schemaDisk = Monitoring::DiskMetrics::createSchema("", configuredDisk);
     std::list<std::string> configuredCpu = {"nice", "user", "system"};
-    uint64_t sampleCpu = 6000;
+    uint64_t sampleCpu = 1000;
     SchemaPtr schemaCpu = Monitoring::CpuMetrics::createSchema("", configuredCpu);
     std::list<std::string> configuredMem = {"FREE_RAM"};
     uint64_t sampleMem = 4000;
     SchemaPtr schemaMem = Monitoring::MemoryMetrics::createSchema("", configuredMem);
     std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
-    uint64_t sampleNetwork = 1000;
+    uint64_t sampleNetwork = 3000;
     SchemaPtr schemaNetwork = Monitoring::NetworkMetrics::createSchema("", configuredNetwork);
     std::list<uint64_t> coresTest = {6, 3, 2, 0};
 

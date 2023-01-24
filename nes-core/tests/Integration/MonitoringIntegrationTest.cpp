@@ -122,7 +122,7 @@ using std::cout;
         }
     }
 
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestStoredMetricsViaRest) {
+    TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
         uint64_t noWorkers = 2;
         auto coordinator = TestUtils::startCoordinator(
             {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
@@ -164,7 +164,7 @@ using std::cout;
         }
     }
 
-    TEST_F(MonitoringIntegrationTest, DISABLED_requestAllMetricsFromMonitoringStreams) {
+    TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
         uint64_t noWorkers = 2;
         uint64_t localBuffers = 64;
         uint64_t globalBuffers = 1024 * 128;
@@ -250,7 +250,7 @@ using std::cout;
         // monitoring configuration
         uint64_t noWorkers = 1;
         std::string configMonitoring = " - cpu: attributes: \"user, nice, system, idle, iowait\" cores: \"0, 9\" sampleRate: 1000"
-                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS\" sampleRate: 1000"
+                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS\""
                                          " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, MEM_UNIT\" sampleRate: 1000";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
@@ -332,7 +332,7 @@ using std::cout;
 
         std::string configMonitoring = " - cpu: attributes: \"user, nice, system, idle, iowait\" cores: \"0, 9\" sampleRate: 1000"
                                        " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS\" sampleRate: 1000"
-                                       " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, MEM_UNIT\" sampleRate: 1000";
+                                       " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, MEM_UNIT\"";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),

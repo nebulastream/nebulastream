@@ -241,19 +241,19 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
         delimiter = "attributes: \"";
         i->erase(0, delimiter.length());
 
-        delimiter = "\" ";
+        delimiter = "\"";
         pos = i->find(delimiter);
         attributes = i->substr(0, pos);
-        i->erase(0, pos + delimiter.length());
+        i->erase(0, pos + delimiter.length() + 1);
 
         if (metricType == "cpu" && (i->find("cores") != std::string::npos)){
             delimiter = "cores: \"";
             i->erase(0, delimiter.length());
 
-            delimiter = "\" ";
+            delimiter = "\"";
             pos = i->find(delimiter);
             cores = i->substr(0, pos);
-            i->erase(0, pos + delimiter.length());
+            i->erase(0, pos + delimiter.length() + 1);
 
             delimiter = ", ";
             if (!(i->find(delimiter) != std::string::npos)) {

@@ -34,7 +34,6 @@ monitoringConfiguration: '
   - cpu:
     attributes: "nice, user, system"
     cores: "0, 2, 3, 6"
-    sampleRate: 6000
   - disk:
     attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
   - memory:
@@ -42,6 +41,7 @@ monitoringConfiguration: '
     sampleRate: 4000
   - network:
     attributes: "rBytes, rFifo, tPackets"
+    sampleRate: 3000
 '
 
 
