@@ -31,7 +31,7 @@
 namespace NES::Runtime::Execution::Operators {
 
 inline void jniErrorCheck(void* state, const std::source_location& location = std::source_location::current()) {
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
     if (handler->getEnvironment()->ExceptionOccurred()) {
         // print the stack trace
         handler->getEnvironment()->ExceptionDescribe();
@@ -44,7 +44,7 @@ inline bool dirExists(const std::string& name) { return std::filesystem::exists(
 
 extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     for (auto entry : byteCodeList) {
         auto bufLen = entry.second.size();
@@ -55,7 +55,7 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
 
 extern "C" jobject deserializeInstance(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     void *object = (void *)handler->getSerializedInstance().data();
     auto clazz = handler->getEnvironment()->FindClass("MapJavaUdfUtils");
@@ -69,7 +69,7 @@ extern "C" jobject deserializeInstance(void* state) {
 
 extern "C" void startVMWithJarFile(void *state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     // Sanity check javaPath
     auto javaPath = handler->getJavaPath().value();
@@ -97,7 +97,7 @@ extern "C" void startVMWithJarFile(void *state) {
 
 extern "C" void startVMWithByteList(void *state){
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     JavaVMInitArgs vmArgs;
     vmArgs.version = JNI_VERSION_1_2;
@@ -112,7 +112,7 @@ extern "C" void startVMWithByteList(void *state){
 
 extern "C" void startVM(void *state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     if (handler->getJavaPath().has_value()) {
         // Get java classes using jar files
@@ -135,7 +135,7 @@ extern "C" void destroyVM(){
 
 extern "C" void* findInputProxyClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
     jniErrorCheck(handler);
@@ -144,7 +144,7 @@ extern "C" void* findInputProxyClass(void* state) {
 
 extern "C" void* findOutputProxyClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassName().c_str());
     jniErrorCheck(handler);
@@ -154,7 +154,7 @@ extern "C" void* findOutputProxyClass(void* state) {
 extern "C" void* allocateObject(void* state, void* classPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto clazz = (jclass) classPtr;
     jobject obj = handler->getEnvironment()->AllocObject(clazz);
@@ -165,7 +165,7 @@ extern "C" void* allocateObject(void* state, void* classPtr) {
 template <typename T>
 void *createObjectType(void *state, T value, std::string className, std::string constructorSignature){
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
     jniErrorCheck(handler);
@@ -201,14 +201,14 @@ extern "C" void *createDoubleObject(void* state, double value) {
 }
 
 extern "C" void *createStringObject(void* state, TextValue *value) {
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
     return handler->getEnvironment()->NewStringUTF(value->c_str());
 }
 
 template <typename T>
 T getObjectTypeValue(void *state, void *object, std::string className, std::string getterName, std::string getterSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
     jniErrorCheck(handler);
@@ -261,7 +261,7 @@ extern "C" double getDoubleObjectValue(void* state, void *object) {
 extern "C" TextValue *getStringObjectValue(void* state, void *object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(object != nullptr, "object should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto size = handler->getEnvironment()->GetStringUTFLength((jstring) object);
     auto resultText = TextValue::create(size);
@@ -275,7 +275,7 @@ T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::st
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;
@@ -337,7 +337,7 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     auto pojoClass = (jclass) classPtr;
     auto pojo = (jobject) objectPtr;
@@ -396,7 +396,7 @@ extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int
 
 extern "C" void freeObject(void* state, void* object){
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     handler->getEnvironment()->DeleteLocalRef((jobject) object);
 }
@@ -404,7 +404,7 @@ extern "C" void freeObject(void* state, void* object){
 extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
-    auto handler = (MapJavaUdfOperatorHandler*) state;
+    auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     // Find class implementing the map udf
     jclass c1 = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
