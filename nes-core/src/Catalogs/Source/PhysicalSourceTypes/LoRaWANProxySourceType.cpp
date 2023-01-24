@@ -11,8 +11,8 @@
 // *
 
 #include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
-#include <EndDeviceProtocol.pb.h>
 #include <Common/Identifiers.hpp>
+#include <EndDeviceProtocol.pb.h>
 #include <utility>
 
 namespace NES {
@@ -48,17 +48,26 @@ LoRaWANProxySourceType::LoRaWANProxySourceType()
           Configurations::LORAWAN_APP_ID_CONFIG,
           "0102030405060708",
           "AppId for the configured application in the chosen network stack")),
-      deviceEUIs(Configurations::ConfigurationOption<std::vector<std::string>>::create(
-          Configurations::LORAWAN_DEVICE_EUIS,
-          std::vector<std::string>(),
-          "configure the known devices"
-          )),
+      capath(Configurations::ConfigurationOption<std::string>::create(Configurations::LORAWAN_CA_PATH,
+                                                                      "",
+                                                                      "Path to ca file used for mqtt connection")),
+      certpath(Configurations::ConfigurationOption<std::string>::create(Configurations::LORAWAN_CERT_PATH,
+                                                                        "",
+                                                                        "Path to certificate file used for mqtt connection")),
+      keypath(
+          Configurations::ConfigurationOption<std::string>::create(Configurations::LORAWAN_KEY_PATH,
+                                                                   "",
+                                                                   "Path to key for certificate file used for mqtt connection")),
+      deviceEUIs(Configurations::ConfigurationOption<std::vector<std::string>>::create(Configurations::LORAWAN_DEVICE_EUIS,
+                                                                                       std::vector<std::string>(),
+                                                                                       "configure the known devices")),
       sensorFields(Configurations::ConfigurationOption<std::vector<std::string>>::create(
           Configurations::LORAWAN_SENSOR_FIELDS,
           std::vector<std::string>(),
           "configure which fields the sensors on the ED corresponds to in the schema "
           "for example if config on sensor has \"sensors: ['ESP32Temperature']\" "
           "then the value from that sensor will be mapped to the \"temperature\" field in the logical schema")) {
+    queries = std::make_shared<std::map<QueryId, std::shared_ptr<EndDeviceProtocol::Query>>>();
     NES_INFO(Configurations::LORAWAN_PROXY_SOURCE_CONFIG + "Init source config object with default values");
 }
 
@@ -87,6 +96,21 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(std::map<std::string, std::string
         appId->setValue(sourceConfigMap.find(Configurations::LORAWAN_APP_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an appId.");
+    }
+    if (sourceConfigMap.contains(Configurations::LORAWAN_CA_PATH)) {
+        capath->setValue(sourceConfigMap.find(Configurations::LORAWAN_CA_PATH)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to ca file defined. Please define a path");
+    }
+    if (sourceConfigMap.contains(Configurations::LORAWAN_CERT_PATH)) {
+        certpath->setValue(sourceConfigMap.find(Configurations::LORAWAN_CERT_PATH)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to cert file defined. Please define a path");
+    }
+    if (sourceConfigMap.contains(Configurations::LORAWAN_KEY_PATH)) {
+        keypath->setValue(sourceConfigMap.find(Configurations::LORAWAN_KEY_PATH)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to key file defined. Please define a path");
     }
     if (sourceConfigMap.contains(Configurations::LORAWAN_DEVICE_EUIS)) {
         std::string tmp;
@@ -146,7 +170,22 @@ LoRaWANProxySourceType::LoRaWANProxySourceType(Yaml::Node yamlConfig) : LoRaWANP
     } else {
         NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no appId defined! Please define an AppId.");
     }
-    if (hasValue(Configurations::LORAWAN_DEVICE_EUIS)){
+    if (hasValue(Configurations::LORAWAN_CA_PATH)) {
+        capath->setValue(yamlConfig[Configurations::LORAWAN_CA_PATH].As<std::string>());
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to ca file defined. Please define a path");
+    }
+    if (hasValue(Configurations::LORAWAN_CERT_PATH)) {
+        certpath->setValue(yamlConfig[Configurations::LORAWAN_CERT_PATH].As<std::string>());
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to cert file defined. Please define a path");
+    }
+    if (hasValue(Configurations::LORAWAN_KEY_PATH)) {
+        keypath->setValue(yamlConfig[Configurations::LORAWAN_KEY_PATH].As<std::string>());
+    } else {
+        NES_THROW_RUNTIME_ERROR("LoRaWANProxySourceType: no path to key file defined. Please define a path");
+    }
+    if (hasValue(Configurations::LORAWAN_DEVICE_EUIS)) {
         auto yamlDevices = yamlConfig[Configurations::LORAWAN_DEVICE_EUIS];
 
         std::vector<std::string> devices;
@@ -185,7 +224,6 @@ std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> L
     return sensorFields;
 }
 
-
 void LoRaWANProxySourceType::setNetworkStack(std::string networkStackValue) {
     networkStack->setValue(std::move(networkStackValue));
 }
@@ -199,11 +237,9 @@ void LoRaWANProxySourceType::setPassword(std::string passwordValue) { password->
 void LoRaWANProxySourceType::setAppId(std::string appIdValue) { appId->setValue(std::move(appIdValue)); }
 void LoRaWANProxySourceType::setSensorFields(std::vector<std::string> sensors) { sensorFields->setValue(std::move(sensors)); }
 void LoRaWANProxySourceType::addSerializedQuery(QueryId id, std::shared_ptr<EndDeviceProtocol::Query> query) {
-    queries->at(id).CopyFrom(*query);
+    queries->insert({id,query});
 }
-void LoRaWANProxySourceType::removeSerializedQuery(QueryId id) {
-    queries->erase(id);
-}
+void LoRaWANProxySourceType::removeSerializedQuery(QueryId id) { queries->erase(id); }
 void LoRaWANProxySourceType::reset() {
     setNetworkStack(networkStack->getDefaultValue());
     setUrl(url->getDefaultValue());
@@ -222,6 +258,9 @@ std::string LoRaWANProxySourceType::toString() {
     ss << password->toStringNameCurrentValue();//
     ss << appId->toStringNameCurrentValue();   //
     // ----------
+    ss << capath->toStringNameCurrentValue();
+    ss << certpath->toStringNameCurrentValue();
+    ss << keypath->toStringNameCurrentValue();
     ss << "sensorFields: [ ";
     for (const auto& field : sensorFields->getValue()) {
         ss << field + ", ";
@@ -239,16 +278,23 @@ bool LoRaWANProxySourceType::equal(const PhysicalSourceTypePtr& other) {
     return networkStack->getValue() == otherConfig->networkStack->getValue() && url->getValue() == otherConfig->url->getValue()
         && userName->getValue() == otherConfig->userName->getValue() && password->getValue() == otherConfig->password->getValue()
         && appId->getValue() == otherConfig->appId->getValue()
-        && sensorFields->getValue() == otherConfig->sensorFields->getValue();
+        && sensorFields->getValue() == otherConfig->sensorFields->getValue()
+        && capath->getValue() == otherConfig->capath->getValue()
+        && certpath->getValue() == otherConfig->certpath->getValue()
+        && keypath->getValue() == otherConfig->keypath->getValue();
 }
-std::shared_ptr<std::map<QueryId,EndDeviceProtocol::Query>> LoRaWANProxySourceType::getSerializedQueries() {
-    return queries;
-}
+EDQueryMapPtr LoRaWANProxySourceType::getSerializedQueries() { return queries; }
 std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> LoRaWANProxySourceType::getDeviceEUIs() {
     return deviceEUIs;
 }
-void LoRaWANProxySourceType::setDeviceEUIs(std::vector<std::string> _deviceEUIs) {
-    deviceEUIs->setValue(_deviceEUIs);
-}
-
+void LoRaWANProxySourceType::setDeviceEUIs(std::vector<std::string> _deviceEUIs) { deviceEUIs->setValue(std::move(_deviceEUIs)); }
+Configurations::StringConfigOption LoRaWANProxySourceType::getCapath() { return capath; }
+void LoRaWANProxySourceType::setCapath(std::string _capath) { capath->setValue(std::move(_capath)); }
+Configurations::StringConfigOption LoRaWANProxySourceType::getCertpath() { return certpath; }
+void LoRaWANProxySourceType::setCertpath(std::string _certpath) { certpath->setValue(std::move(_certpath)); }
+Configurations::StringConfigOption LoRaWANProxySourceType::getKeypath() { return keypath; }
+void LoRaWANProxySourceType::setKeypath(std::string _keypath) { keypath->setValue(std::move(_keypath)); }
+void LoRaWANProxySourceType::setSerializedQueries(EDQueryMapPtr _queries){
+    queries = _queries;
+};
 }// namespace NES

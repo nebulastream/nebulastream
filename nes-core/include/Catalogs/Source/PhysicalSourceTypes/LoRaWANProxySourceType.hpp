@@ -20,7 +20,7 @@
 namespace NES {
 class LoRaWANProxySourceType;
 using LoRaWANProxySourceTypePtr = std::shared_ptr<LoRaWANProxySourceType>;
-
+using EDQueryMapPtr = std::shared_ptr<std::map<QueryId,std::shared_ptr<EndDeviceProtocol::Query>>>;
 class LoRaWANProxySourceType: public PhysicalSourceType {
   public:
     /**
@@ -49,24 +49,31 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
 
     void reset() override;
 
-    [[nodiscard]] std::shared_ptr <Configurations::ConfigurationOption<std::string>> getNetworkStack();
+    [[nodiscard]] Configurations::StringConfigOption getNetworkStack();
     void setNetworkStack(std::string networkStack);
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUrl();
+    [[nodiscard]] Configurations::StringConfigOption getUrl();
     void setUrl( std::string url);
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUserName();
+    [[nodiscard]] Configurations::StringConfigOption getUserName();
     void setUserName( std::string userName);
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getPassword();
+    [[nodiscard]] Configurations::StringConfigOption getPassword();
     void setPassword( std::string password);
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getAppId();
+    [[nodiscard]] Configurations::StringConfigOption getAppId();
     void setAppId( std::string appId);
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getSensorFields();
     void setSensorFields (std::vector<std::string>);
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> getDeviceEUIs();
     void setDeviceEUIs (std::vector<std::string>);
+    [[nodiscard]] Configurations::StringConfigOption getCapath();
+    void setCapath(std::string capath);
+    [[nodiscard]] Configurations::StringConfigOption getCertpath();
+    void setCertpath(std::string certpath);
+    [[nodiscard]] Configurations::StringConfigOption getKeypath();
+    void setKeypath(std::string keypath);
 
     void addSerializedQuery(QueryId, std::shared_ptr<EndDeviceProtocol::Query>);
     void removeSerializedQuery(QueryId);
-    std::shared_ptr<std::map<QueryId,EndDeviceProtocol::Query>> getSerializedQueries();
+    void setSerializedQueries(EDQueryMapPtr);
+    EDQueryMapPtr getSerializedQueries();
 
     private:
 
@@ -92,9 +99,14 @@ class LoRaWANProxySourceType: public PhysicalSourceType {
     Configurations::StringConfigOption userName;
     Configurations::StringConfigOption password;
     Configurations::StringConfigOption appId;
+    Configurations::StringConfigOption capath;
+    Configurations::StringConfigOption certpath;
+    Configurations::StringConfigOption keypath;
+
+  private:
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> deviceEUIs;
     std::shared_ptr<Configurations::ConfigurationOption<std::vector<std::string>>> sensorFields;
-    std::shared_ptr<std::map<QueryId,EndDeviceProtocol::Query>> queries;
+    EDQueryMapPtr queries;
 
 
 };

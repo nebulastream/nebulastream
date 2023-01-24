@@ -27,4 +27,4 @@ logicalSources:
   - logicalSourceName: ls
     fields:
       - name: "temperature"
-        type: "UINT8"
+        type: "INT8"

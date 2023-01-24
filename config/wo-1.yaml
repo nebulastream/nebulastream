@@ -26,21 +26,28 @@
 #                         BinarySource (ToDo: Make source available))
 physicalSources:
   - logicalSourceName: ls
-    physicalSourceName: default_physical
+    physicalSourceName: ps
     type: LoRaWANProxySource
     configuration:
       networkStack: ChirpStack
       ## set url to MQTT endpoint of networkstack. This is to send and receive packets
-      url: tcp://localhost:1883
+      url: tcp://192.168.129.1:1883
       ## Set userName for LoRaWANProxySource
-      userName: hej
+      userName: admin
       ## Set password for LoRaWANProxySource
-      password: hej
+      password: admin
       ## Set appId for the configured application for the LoRaWANProxySource
-      appId: 0102030405060708
+      appId: 125b0092-3243-46b7-937e-bc55486e6788
+      ## Files needed for secure mqtt connection
+      ## Path to folder containing ca file
+      CAPath: /Users/flapkap/Desktop/
+      ## Path for certificate
+      certPath: /Users/flapkap/Desktop/cert.pem
+      ## Path for host
+      keyPath: /Users/flapkap/Desktop/key.pem
       ## configure known devices
       deviceEUIs:
-        - 0102030405060708
+        - 70b3d549938ea1ee
       ## configure which fields the sensors on the ED corresponds to in the schema
       ## for example if config on sensor has 'sensors: ["ESP32Temperature"]
       ## then the value from that sensor will be mapped to the "temperature" field in the logical schema

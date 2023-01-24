@@ -343,6 +343,9 @@ const std::string LORAWAN_NETWORK_STACK_CONFIG = "networkStack";
 const std::string LORAWAN_APP_ID_CONFIG = "appId";
 const std::string LORAWAN_DEVICE_EUIS = "deviceEUIs";
 const std::string LORAWAN_SENSOR_FIELDS = "sensorFields";
+const std::string LORAWAN_CA_PATH = "CAPath";
+const std::string LORAWAN_CERT_PATH = "certPath";
+const std::string LORAWAN_KEY_PATH = "keyPath";
 //Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
