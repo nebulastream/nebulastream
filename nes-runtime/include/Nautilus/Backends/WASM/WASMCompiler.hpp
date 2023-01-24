@@ -14,7 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_
-#ifdef NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM
+
 
 #include <Nautilus/Backends/WASM/Mapping.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -157,5 +157,5 @@ class WASMCompiler {
     static BinaryenType getBinaryenType(const IR::Types::StampPtr& stampPtr);
 };
 }// namespace NES::Nautilus::Backends::WASM
-#endif
+
 #endif//NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_

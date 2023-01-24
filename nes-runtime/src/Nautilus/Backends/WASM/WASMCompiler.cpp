@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM
+
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -748,4 +748,3 @@ BinaryenExpressionRef WASMCompiler::generateCFG() {
 }
 
 }// namespace NES::Nautilus::Backends::WASM
-#endif

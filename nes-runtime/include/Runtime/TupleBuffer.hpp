@@ -162,7 +162,7 @@ class TupleBuffer {
     }
 
     /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
-    TupleBuffer* operator&() = delete;
+    //TupleBuffer* operator&() = delete;
 
     /// @brief Return if this is not valid.
     [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return ptr == nullptr; }
@@ -216,6 +216,12 @@ class TupleBuffer {
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<const T*>(ptr);
     }
+
+    inline void setBuffer(uint8_t* newPtr) noexcept { ptr = newPtr; }
+
+    inline void setBufferSize(uint32_t newSize) noexcept { size = newSize; }
+
+    inline void setControlBlock(detail::BufferControlBlock* newControlBlock) noexcept { controlBlock = newControlBlock; }
 
     [[nodiscard]] inline uint32_t getReferenceCounter() const noexcept {
         return controlBlock ? controlBlock->getReferenceCount() : 0;

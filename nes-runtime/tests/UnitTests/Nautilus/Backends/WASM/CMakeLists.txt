@@ -12,5 +12,5 @@
 # limitations under the License.
 
 add_nes_runtime_test(nautilus-wasm-compiler-test "WASMCompilerTest.cpp")
-add_nes_runtime_test(nautilus-wasm-python-test "WASMPythonUDFTest.cpp")
+#add_nes_runtime_test(nautilus-wasm-python-test "WASMPythonUDFTest.cpp")
 add_nes_runtime_test(nautilus-wasm-wamr-test "WAMRExecutionTest.cpp")

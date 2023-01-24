@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifdef NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM
+
 #include <Nautilus/Backends/WASM/WASMCompiler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -350,4 +350,3 @@ TEST_F(WASMCompilerTest, memRefExpressionTest) {
 }
 
 }// namespace NES::Nautilus
-#endif

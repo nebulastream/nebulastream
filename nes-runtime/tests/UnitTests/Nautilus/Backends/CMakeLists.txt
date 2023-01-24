@@ -18,6 +18,5 @@ add_nes_runtime_test(nautilus-loop-compilation-test "LoopCompilationTest.cpp")
 add_nes_runtime_test(nautilus-memory-compilation-test "MemoryAccessCompilationTest.cpp")
 add_nes_runtime_test(nautilus-type-compilation-test "TypeCompilationTest.cpp")
 add_nes_runtime_test(nautilus-function-compilation-test "FunctionCompilationTest.cpp")
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME)
-    add_subdirectory(WASM)
-endif()
+
+add_subdirectory(WASM)

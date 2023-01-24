@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifdef NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME
 #include "Nautilus/Backends/WASM/WASMRuntime.hpp"
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
@@ -51,3 +52,4 @@ TEST_F(WASMPythonUDFTest, addPythonUDF) {
 }
 
 }// namespace NES::Nautilus
+#endif
