@@ -127,6 +127,33 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
 }
 
 /**
+ * @brief Test simple UDF with byte objects as input and output (IntegerMapFunction<Byte, Byte>)
+ * The UDF increments incoming tuples by 10.
+*/
+TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
+    std::string path = testDataPath;
+    SchemaPtr input = Schema::create()->addField("id", NES::INT8);
+    SchemaPtr output = Schema::create()->addField("id", NES::INT8);
+    std::string method = "map";
+    std::string clazz = "ByteMapFunction";
+    std::string inputClass = "java/lang/Byte";
+    std::string outputClass = "java/lang/Byte";
+    std::unordered_map<std::string, std::vector<char>> byteCodeList;
+    std::vector<char> serializedInstance;
+
+    auto initialValue = 42;
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto map = MapJavaUdf(0, input, output);
+    auto collector = std::make_shared<CollectOperator>();
+    map.setChild(collector);
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Value<>(initialValue)}});
+    map.execute(ctx, record);
+    ASSERT_EQ(record.read("id"), initialValue + 10);
+}
+
+/**
  * @brief Test simple UDF with long objects as input and output (IntegerMapFunction<Long, Long>)
  * The UDF increments incoming tuples by 10.
 */
