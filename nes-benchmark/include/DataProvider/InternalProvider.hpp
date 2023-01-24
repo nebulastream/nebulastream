@@ -19,7 +19,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
 
   public:
@@ -75,6 +75,6 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
     uint64_t currentlyEmittedBuffer = 0;
     bool started = false;
 };
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
 
 #endif//NES_INTERNALPROVIDER_HPP

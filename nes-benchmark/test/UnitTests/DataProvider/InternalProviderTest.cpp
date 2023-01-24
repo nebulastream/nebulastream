@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
     class InternalProviderTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
@@ -220,4 +220,4 @@ namespace NES::Benchmark::DataProviding {
 
         ASSERT_EQ(preAllocatedBuffers.size(), 0);
     }
-}//namespace NES::Benchmark::DataProviding
+}//namespace NES::Benchmark::DataProvision

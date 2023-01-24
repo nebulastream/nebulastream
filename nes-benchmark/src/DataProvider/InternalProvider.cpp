@@ -14,7 +14,7 @@
 
 #include <DataProvider/InternalProvider.hpp>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 InternalProvider::InternalProvider(uint64_t id,
                                    DataProvider::DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
@@ -59,4 +59,4 @@ InternalProvider::~InternalProvider() {
     preAllocatedBuffers.clear();
 }
 
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
