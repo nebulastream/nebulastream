@@ -44,22 +44,16 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapJavaUDFPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MapJavaUDFPipelineTest test class." << std::endl;
+        NES_INFO("Setup MapJavaUDFPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup MapJavaUDFPipelineTest test case." << std::endl;
+        NES_INFO("Setup MapJavaUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down MapJavaUDFPipelineTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down MapJavaUDFPipelineTest test class." << std::endl; }
 
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
