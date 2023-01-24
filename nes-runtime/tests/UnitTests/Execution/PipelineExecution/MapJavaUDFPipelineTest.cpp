@@ -315,7 +315,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap) {
 /**
  * @brief Test a pipeline containing a scan, a java map with shorts, and a emit operator
  */
-TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineDoubleMap) {
+TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -377,7 +377,7 @@ TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineDoubleMap) {
 /**
  * @brief Test a pipeline containing a scan, a java map with booleans, and a emit operator
  */
-TEST_P(MapJavaUDFPipelineTest, DISABLED_scanMapEmitPipelineBooleanMap) {
+TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -560,7 +560,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         dynamicBuffer[i]["floatVariable"].write((float) i);
         dynamicBuffer[i]["doubleVariable"].write((double) i);
         dynamicBuffer[i]["booleanVariable"].write(true);
-        //dynamicBuffer[i]["stringVariable"].write(strIndex);
+        dynamicBuffer[i]["stringVariable"].write(strIndex);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -593,11 +593,11 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
         ASSERT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
         ASSERT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
         ASSERT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
-        /*auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
+        auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        ASSERT_EQ(std::string(textValue->c_str(), size), "testValue_appended");*/
+        ASSERT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
     }
 }
 
