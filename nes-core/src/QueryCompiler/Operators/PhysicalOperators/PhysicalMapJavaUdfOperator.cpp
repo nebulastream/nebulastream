@@ -44,7 +44,7 @@ std::string PhysicalMapJavaUdfOperator::toString() const { return "PhysicalMapJa
 
 OperatorNodePtr PhysicalMapJavaUdfOperator::copy() { return create(id, inputSchema, outputSchema, javaUdfDescriptor); }
 
-Catalogs::UDF::JavaUdfDescriptorPtr PhysicalMapJavaUdfOperator::getjavaUdfDescriptor() {
+Catalogs::UDF::JavaUdfDescriptorPtr PhysicalMapJavaUdfOperator::getJavaUdfDescriptor() {
     return javaUdfDescriptor;
 }
 }// namespace NES::QueryCompilation::PhysicalOperators
