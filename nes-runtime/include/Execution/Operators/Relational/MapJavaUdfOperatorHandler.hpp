@@ -128,7 +128,7 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
      * @brief This method sets the jni environment of the java udf
      * @param env jni environment
      */
-    void setEnvironment(JNIEnv* env) { MapJavaUdfOperatorHandler::env = env; }
+    void setEnvironment(JNIEnv* env) { this->env = env; }
 
   private:
     const std::string className;
