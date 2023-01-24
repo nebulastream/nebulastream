@@ -228,7 +228,7 @@ class Value : BaseValue {
      * @return void
      */
     template<typename InputValue, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
-    void store(Value<InputValue>& storeValue) {
+    void store(const Value<InputValue>& storeValue) {
         if (Tracing::TraceUtil::inInterpreter()) {
             this->value->store(storeValue.getValue());
         } else {
