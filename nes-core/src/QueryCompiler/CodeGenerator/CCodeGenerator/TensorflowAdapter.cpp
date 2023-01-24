@@ -77,11 +77,11 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (float*) malloc(output_size);
+        int outputSize = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (float*) malloc(outputSize);
 
         //Copy value to the output
-        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+        TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
     } else if (dataType == BasicPhysicalType::NativeType::FLOAT) {
         //create input for tensor
@@ -105,11 +105,11 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (float*) malloc(output_size);
+        int outputSize = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (float*) malloc(outputSize);
 
         //Copy value to the output
-        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+        TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
     } else if (dataType == BasicPhysicalType::NativeType::DOUBLE) {
         //create input for tensor
@@ -133,11 +133,11 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (float*) malloc(output_size);
+        int outputSize = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (float*) malloc(outputSize);
 
         //Copy value to the output
-        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+        TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
 
     } else if (dataType == BasicPhysicalType::NativeType::BOOLEAN) {
         //create input for tensor
@@ -161,11 +161,11 @@ void NES::TensorflowAdapter::infer(uint8_t dataType, int n, ...) {
 
         //Prepare output tensor
         const TfLiteTensor* outputTensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-        int output_size = (int) (TfLiteTensorByteSize(outputTensor));
-        output = (float*) malloc(output_size);
+        int outputSize = (int) (TfLiteTensorByteSize(outputTensor));
+        output = (float*) malloc(outputSize);
 
         //Copy value to the output
-        TfLiteTensorCopyToBuffer(outputTensor, output, output_size);
+        TfLiteTensorCopyToBuffer(outputTensor, output, outputSize);
     }
 
     va_end(vl);
