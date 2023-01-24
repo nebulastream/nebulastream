@@ -36,21 +36,18 @@ class JVMContext {
      * First time calling leads to the creation of a JVM. Make sure to call detach before exiting.
      * @param env JNI environment to use for the thread
      * @param args initialization arguments needed when calling for the first time.
-     * @return attach successful
      */
-    bool createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args);
+    void createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args);
 
-    /**
+    /*
      * @brief A thread attached to the VM must detach itself before exiting.
-     * @return detach successful
      */
-    bool detachFromJVM();
+    void detachFromJVM();
 
     /**
      * @brief Unloads a Java VM and reclaims its resources.
-     * @return unloading successful
      */
-    bool destroyJVM();
+    void destroyJVM();
 
   private:
     JVMContext() {};
