@@ -236,7 +236,7 @@ T getObjectTypeValue(void *state, void *object, std::string className, std::stri
     } else if constexpr(std::is_same<T, int8_t>::value) {
         value = handler->getEnvironment()->CallByteMethod((jobject) object, mid);
     } else {
-        NES_NOT_IMPLEMENTED();
+        NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
     jniErrorCheck(handler->getEnvironment());
     return value;
@@ -312,7 +312,7 @@ T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::st
     } else if constexpr(std::is_same<T, TextValue*>::value) {
         value = (T) handler->getEnvironment()->GetObjectField(pojo, id);
     } else {
-        NES_NOT_IMPLEMENTED();
+        NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
     jniErrorCheck(handler->getEnvironment());
     return value;
@@ -378,10 +378,10 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
         handler->getEnvironment()->SetByteField(pojo, id, (jbyte) value);
     } else if constexpr(std::is_same<T, const TextValue*>::value) {
         const TextValue *sourceString = value;
-        jstring string = handler->getEnvironment()->NewString((jchar *)sourceString->c_str(), sourceString->length());
+        jstring string = handler->getEnvironment()->NewStringUTF(sourceString->c_str());
         handler->getEnvironment()->SetObjectField(pojo, id, (jstring) string);
     } else {
-        NES_NOT_IMPLEMENTED();
+        NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
     jniErrorCheck(handler->getEnvironment());
 }
@@ -441,15 +441,11 @@ extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
     jmethodID mid = handler->getEnvironment()->GetMethodID(c1, handler->getMethodName().c_str(), sig.c_str());
     jniErrorCheck(handler->getEnvironment());
 
-    jobject udf_result;
+    jobject udf_result, instance;
     // The map udf class will be either loaded from a serialized instance or allocated using class information
     if (!handler->getSerializedInstance().empty()) {
         // Load instance if defined
-        jobject instance = deserializeInstance(state);
-
-        // Call udf function
-        udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
-        jniErrorCheck(handler->getEnvironment());
+        instance = deserializeInstance(state);
     } else {
         // Create instance object using class information
         jclass clazz = handler->getEnvironment()->FindClass(handler->getClassName().c_str());
@@ -457,13 +453,13 @@ extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
 
         // Here we assume the default constructor is available
         auto constr = handler->getEnvironment()->GetMethodID(clazz,"<init>", "()V");
-        jobject instance = handler->getEnvironment()->NewObject(clazz, constr);
-        jniErrorCheck(handler->getEnvironment());
-
-        // Call udf function
-        udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
+        instance = handler->getEnvironment()->NewObject(clazz, constr);
         jniErrorCheck(handler->getEnvironment());
     }
+
+    // Call udf function
+    udf_result = handler->getEnvironment()->CallObjectMethod(instance, mid, pojoObjectPtr);
+    jniErrorCheck(handler->getEnvironment());
     return udf_result;
 }
 
@@ -502,7 +498,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
             inputPojoPtr = FunctionCall<>("createStringObject", createStringObject, handler, record.read(fieldName).as<Text>()->getReference());
         } else {
-            NES_NOT_IMPLEMENTED();
+            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map input
@@ -575,7 +571,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                                Value<Int32>(i),
                                record.read(fieldName).as<Text>()->getReference());
             } else {
-                NES_NOT_IMPLEMENTED();
+                NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
             }
         }
     }
@@ -621,7 +617,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             Value<> val = FunctionCall<>("getStringObjectValue", getStringObjectValue, handler, outputPojoPtr);
             record.write(fieldName, val);
         } else {
-            NES_NOT_IMPLEMENTED();
+            NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
     } else {
         // 2. Complex, a plain old java object with multiple primitive types as map input
@@ -662,7 +658,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
                     FunctionCall<>("getStringField", getStringField, handler, outputClassPtr, outputPojoPtr, Value<Int32>(i));
                 record.write(fieldName, val);
             } else {
-                NES_NOT_IMPLEMENTED();
+                NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
             }
         }
     }

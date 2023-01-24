@@ -1,5 +1,3 @@
-//package stream.nebula.udf;
-
 import java.io.Serializable;
 
 public class StringMapFunction implements MapFunction<String, String> {

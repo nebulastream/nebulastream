@@ -1,5 +1,3 @@
-//package stream.nebula.udf;
-
 import java.io.Serializable;
 
 public class FloatMapFunction implements MapFunction<Float, Float> {
