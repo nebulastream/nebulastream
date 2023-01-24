@@ -374,7 +374,6 @@ bool NesWorker::connect() {
             }
             NES_DEBUG("NesWorker: start with register source");
 
-            //TODO: here is the change
             registerLogicalSources(physicalSources);
 
             bool success = registerPhysicalSources(physicalSources);
