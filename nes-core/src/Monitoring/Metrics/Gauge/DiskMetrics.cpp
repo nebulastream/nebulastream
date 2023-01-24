@@ -85,7 +85,6 @@ uint64_t DiskMetrics::getValue(const std::string& metricName) const {
         return nodeId;
     } else {
         NES_DEBUG("Unknown Metricname: " << metricName);
-        //todo: find right exception
         throw std::exception();
     }
 }
@@ -99,7 +98,6 @@ void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
                "DiskMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
-    // TODO auffangen, wenn kein Schema da ist oder ein leeres
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);//NodeId has always to be filled
     if (schema->contains("F_BSIZE")) {

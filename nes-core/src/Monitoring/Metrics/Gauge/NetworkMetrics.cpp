@@ -155,7 +155,6 @@ uint64_t NetworkMetrics::getValue(const std::string& metricName) const {
         return nodeId;
     }else {
         NES_DEBUG("Unknown Metricname: " << metricName);
-        //todo: find right exception
         throw std::exception();
     }
 }

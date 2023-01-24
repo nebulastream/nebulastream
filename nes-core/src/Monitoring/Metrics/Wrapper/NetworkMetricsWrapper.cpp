@@ -69,7 +69,6 @@ void NetworkMetricsWrapper::setSchema(SchemaPtr newSchema) {
 SchemaPtr NetworkMetricsWrapper::getSchema() const { return this->schema; }
 
 void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto schema = this->schema;
     auto totalSize = schema->getSchemaSizeInBytes() * size();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "NetworkMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
@@ -78,20 +77,19 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
     for (unsigned int i = 0; i < size(); i++) {
         NetworkMetrics metrics = getNetworkValue(i);
         metrics.nodeId = nodeId;
-        metrics.setSchema(schema);
+        metrics.setSchema(this->schema);
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
 
 void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    auto schema = this->schema;
     auto interfaceList = std::vector<NetworkMetrics>();
     NES_TRACE("NetworkMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics
         NetworkMetrics metrics{};
-        metrics.setSchema(schema);
+        metrics.setSchema(this->schema);
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         interfaceList.emplace_back(metrics);
     }

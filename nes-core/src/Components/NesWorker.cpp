@@ -146,7 +146,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
             monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
                                                       workerConfig->enableMonitoring);
-            //         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
             NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
         } else if (workerConfig->enableMonitoring) {
             web::json::value configurationMonitoringJson =
@@ -363,7 +362,6 @@ bool NesWorker::connect() {
             }
             NES_DEBUG("NesWorker: start with register source");
 
-            //TODO: here is the change
             registerLogicalSources(physicalSources);
 
             bool success = registerPhysicalSources(physicalSources);

@@ -130,7 +130,6 @@ uint64_t MemoryMetrics::getValue(const std::string& metricName) const {
         return nodeId;
     }else {
         NES_DEBUG("Unknown Metricname: " << metricName);
-        //todo: find right exception
         throw std::exception();
     }
 }

@@ -206,10 +206,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
-//        auto metricCollector =
-//            Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
         auto metricType = Monitoring::MetricUtils::metricTypeFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
-//        auto monitoringAgent = nodeEngine->getMonitoringAgent();
         auto metricCollector = nodeEngine->getMonitoringAgent()->getCollector(metricType);
         metricCollector->setNodeId(nodeEngine->getNodeId());
         return createMonitoringSource(metricCollector,
