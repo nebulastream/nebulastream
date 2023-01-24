@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
-
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 
@@ -74,4 +72,3 @@ bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
 void JavaUdfDescriptor::setInputSchema(const SchemaPtr& inputSchema) { JavaUdfDescriptor::inputSchema = inputSchema; }
 
 }// namespace NES::Catalogs::UDF
-#endif // ENABLE_JIN

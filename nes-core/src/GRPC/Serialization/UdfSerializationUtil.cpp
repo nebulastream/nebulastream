@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
-
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/Serialization/UdfSerializationUtil.hpp>
 
@@ -67,5 +65,3 @@ UdfSerializationUtil::deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessag
 }
 
 }// namespace NES
-
-#endif

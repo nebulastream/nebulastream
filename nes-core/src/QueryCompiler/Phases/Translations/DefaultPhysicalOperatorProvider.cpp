@@ -188,10 +188,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
-#ifdef ENABLE_JNI
     } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
         lowerJavaUdfMapOperator(queryPlan, operatorNode);
-#endif // ENABLE_JNI
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -253,7 +251,6 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     operatorNode->replace(physicalMapOperator);
 }
 
-#ifdef ENABLE_JNI
 void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto mapJavaUdfOperator = operatorNode->as<MapJavaUdfLogicalOperatorNode>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUdfOperator::create(mapJavaUdfOperator->getInputSchema(),
@@ -261,7 +258,6 @@ void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr
                                                                                      mapJavaUdfOperator->getJavaUdfDescriptor());
     operatorNode->replace(physicalMapOperator);
 }
-#endif // ENABLE_JNI
 
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();

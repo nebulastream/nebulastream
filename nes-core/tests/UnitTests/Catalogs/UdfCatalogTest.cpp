@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
@@ -131,5 +130,3 @@ TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
 }
 
 }// namespace NES::Catalogs::UDF
-
-#endif // ENABLE_JNI

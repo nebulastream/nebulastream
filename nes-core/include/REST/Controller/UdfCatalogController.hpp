@@ -76,7 +76,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         return std::make_shared<UdfCatalogController>(objectMapper, udfCatalog, completeRouterPrefix, errorHandler);
     }
 
-#ifdef ENABLE_JNI
     /**
      *  Endpoint to retrieve udf descriptor
      *  returns 200 and descriptor if present
@@ -106,7 +105,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
-#endif // ENABLE_JNI
 
     /**
      * Endpoint to retrieve names of all udfs
@@ -127,7 +125,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
         }
     }
 
-#ifdef ENABLE_JNI
     /**
      * Endpoint to register a java udf
      * Request body must contain a protobuf message serialized as string
@@ -159,7 +156,6 @@ class UdfCatalogController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, "Internal Server error");
         }
     }
-#endif // ENABLE_JNI
 
     /**
      * Endpoint for deleting udfs
