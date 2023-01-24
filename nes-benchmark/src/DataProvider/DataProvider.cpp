@@ -17,7 +17,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstring>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 DataProviderPtr DataProvider::createProvider(uint64_t providerId,
                                              NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
                                              std::vector<Runtime::TupleBuffer> buffers) {
@@ -29,6 +29,8 @@ DataProviderPtr DataProvider::createProvider(uint64_t providerId,
     } else {
         NES_THROW_RUNTIME_ERROR("Could not parse dataProviderMode = " << configOverAllRuns.dataProviderMode->getValue() << "!");
     }
+
+    // TODO add case for ExternalProvider
 
     // Later on we might have a second data provider. For now all data providers are of type InternalProvider
     return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
@@ -60,4 +62,4 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
     }
 }
 
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
