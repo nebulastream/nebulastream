@@ -26,8 +26,8 @@ EOF
 
 bin/zkServer.sh start
 cd ${HOME}
-KAFKA_DIR=kafka_2.12-2.4.0
-wget "http://mirror.dkd.de/apache/kafka/2.4.0/kafka_2.12-2.4.0.tgz" -O ${KAFKA_DIR}.tgz && tar -zxf ${KAFKA_DIR}.tgz && cd ${KAFKA_DIR} && rm -rf /tmp/kafka-logs/
+KAFKA_DIR=kafka_2.12-3.3.2
+wget "https://downloads.apache.org/kafka/3.3.2/kafka_2.12-3.3.2.tgz" -O ${KAFKA_DIR}.tgz && tar -zxf ${KAFKA_DIR}.tgz && cd ${KAFKA_DIR} && rm -rf /tmp/kafka-logs/
 bin/kafka-server-start.sh config/server.properties &> /tmp/kafka-server.log &
 sleep 1                         # waiting for kafka server ready
 cd ${HOME}
