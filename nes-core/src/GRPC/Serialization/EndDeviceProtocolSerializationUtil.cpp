@@ -151,7 +151,9 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression(Expre
 std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
 
     auto fanode = node->as<FieldAccessExpressionNode>();
-    auto name = fanode->getFieldName();
+    auto fullName = fanode->getFieldName();
+    auto pos = fullName.find('$');
+    auto name = fullName.substr(pos+1, fullName.length() - pos-1);
     if (std::find(registers->begin(), registers->end(), name) == registers->end()) {
         NES_WARNING("No register defined for field: " + name);
         throw UnsupportedEDSerialisationException();
@@ -267,17 +269,17 @@ EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegistersP
 }
 
 EndDeviceProtocolSerializationUtil::EDQueryPtr
-EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlanPtr QP) {
+EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlanPtr QP, LoRaWANProxySourceTypePtr st) {
     //make sure we only have a single LoRaWANProxySource
     auto sourceOperators = QP->getSourceOperators();
-    auto st = sourceOperators.at(0)->toString();
-    if (sourceOperators.size() != 1
-        || !sourceOperators.at(0)->getSourceDescriptor()->instanceOf<LoRaWANProxySourceDescriptor>()) {
+//    auto st = sourceOperators.at(0)->toString();
+    if (sourceOperators.size() != 1) {
         NES_THROW_RUNTIME_ERROR("Trying to serialize query with incompatible sources");
     }
-    // fetch the sourceDescriptor and the sensor_fields
-    auto sourceDescriptor = sourceOperators.at(0)->getSourceDescriptor()->as<LoRaWANProxySourceDescriptor>();
-    auto sensorFields = std::make_shared<std::vector<std::string>>(sourceDescriptor->getSourceConfig()->getSensorFields()->getValue());
+//    // fetch the sourceDescriptor and the sensor_fields
+    auto sourceDescriptor = sourceOperators.at(0)->getSourceDescriptor();
+//    auto sensorFields = std::make_shared<std::vector<std::string>>(sourceDescriptor->getSourceConfig()->getSensorFields()->getValue());
+    auto sensorFields = std::make_shared<std::vector<std::string>>(st->getSensorFields()->getValue());
 
     // get operators as list so we can travel to it in reverse
     //i.e. from sourceDescriptor to sink
@@ -309,6 +311,7 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
             query->mutable_resulttype()->assign(outputTypes);
             auto operation = query->add_operations();
             operation->CopyFrom(*serialized);
+
             sourceDescriptor->setSchema(opNode->getOutputSchema());
             opNode->removeAndJoinParentAndChildren();
         } catch (UnsupportedEDSerialisationException& e) {

@@ -179,7 +179,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                  originId,
                                  numSourceLocalBuffers,
                                  successors);
-    } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
+    }
+    else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
         const Network::networkSourceDescriptorPtr networkSourceDescriptor =
             sourceDescriptor->as<Network::NetworkSourceDescriptor>();
@@ -236,7 +237,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                          originId,
                                                          numSourceLocalBuffers,
                                                          successors);
-    } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
+    }
+    else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
         return createBenchmarkSource(benchmarkSourceDescriptor->getSchema(),
@@ -270,27 +272,39 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
                                   successors);
+    } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating LoRaWANPRoxySource");
+        auto loraSourceDescriptor = sourceDescriptor->as<LoRaWANProxySourceDescriptor>();
+        return createLoRaWANProxySource(
+            loraSourceDescriptor->getSchema(),
+            bufferManager,
+            queryManager,
+            loraSourceDescriptor->getSourceConfig(),
+            operatorId,
+            originId,
+            numSourceLocalBuffers,
+            successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
-        auto materializedViewSourceDescriptor =
-            sourceDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
-        auto viewId = materializedViewSourceDescriptor->getViewId();
-        NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
-        if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
-            view = nodeEngine->getMaterializedViewManager()->getView(viewId);
-        } else {
-            view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
-                                                                        viewId);
-        }
-        return NES::Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
-                                                                                 bufferManager,
-                                                                                 queryManager,
-                                                                                 operatorId,
-                                                                                 originId,
-                                                                                 numSourceLocalBuffers,
-                                                                                 successors,
-                                                                                 std::move(view));
-    } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
+            NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
+            auto materializedViewSourceDescriptor =
+                sourceDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
+            auto viewId = materializedViewSourceDescriptor->getViewId();
+            NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
+            if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
+                view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+            } else {
+                view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
+                                                                            viewId);
+            }
+            return NES::Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
+                                                                                     bufferManager,
+                                                                                     queryManager,
+                                                                                     operatorId,
+                                                                                     originId,
+                                                                                     numSourceLocalBuffers,
+                                                                                     successors,
+                                                                                     std::move(view));
+        } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
         return createTCPSource(tcpSourceDescriptor->getSchema(),
@@ -301,20 +315,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                originId,
                                numSourceLocalBuffers,
                                successors);
-    } else if (sourceDescriptor->instanceOf<LoRaWANProxySourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating LoRaWANPRoxySource");
-        auto loRaWANProxySourceDescriptor = sourceDescriptor->as<LoRaWANProxySourceDescriptor>();
-        return createLoRaWANProxySource(
-            loRaWANProxySourceDescriptor->getSchema(),
-            bufferManager,
-            queryManager,
-            loRaWANProxySourceDescriptor->getSourceConfig(),
-            operatorId,
-            originId,
-            numSourceLocalBuffers,
-            successors);
-    }
-    else {
+    } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }

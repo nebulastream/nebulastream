@@ -108,7 +108,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] virtual bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -117,14 +117,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    [[nodiscard]] virtual bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool unregisterQuery(QueryId queryId);
+    [[nodiscard]] virtual bool unregisterQuery(QueryId queryId);
 
     /**
      * @brief method to start a already deployed query

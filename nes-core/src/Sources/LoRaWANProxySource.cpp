@@ -12,7 +12,6 @@
 #include <nlohmann/json.hpp>
 #include <utility>
 
-
 namespace NES {
 
 enum class ChirpStackEvent { UP, STATUS, JOIN, ACK, TXACK, LOG, LOCATION, INTEGRATION };
@@ -45,6 +44,11 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
     topicAll = topicBase + "/#";
     topicReceive = topicBase + "/event/up";
     topicSend = topicBase + "/command/down";
+
+    capath = sourceConfig->getCapath()->getValue();
+    certpath = sourceConfig->getCertpath()->getValue();
+    keypath = sourceConfig->getKeypath()->getValue();
+
     //region initialize parser
     std::vector<std::string> schemaKeys;
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -81,9 +85,20 @@ bool LoRaWANProxySource::connect() {
     if (!client->is_connected()) {
         open();
         try {
-            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
-            auto connOpts =
-                mqtt::connect_options_builder().user_name(user).automatic_reconnect(true).clean_session(true).finalize();
+            //TODO: actually get authentication to work
+//            auto sslopt = mqtt::ssl_options_builder()
+//                              .ca_path(capath)
+//                              .trust_store(certpath)
+//                              .private_key(keypath)
+//                              .verify(false)
+//                              .enable_server_cert_auth(false)
+//                              .finalize();
+//            //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
+            auto connOpts = mqtt::connect_options_builder()
+                                //.ssl(sslopt)
+                                .automatic_reconnect(true)
+                                .clean_session(true)
+                                .finalize();
 
             // Start consumer before connecting to make sure to not miss messages
             client->start_consuming();
@@ -103,13 +118,16 @@ bool LoRaWANProxySource::connect() {
                 client->subscribe(topicReceive, 0)->wait();
             }
         } catch (const mqtt::exception& error) {
-            NES_WARNING("LoRaWANProxySource::connect: " << error);
+            NES_ERROR("LoRaWANProxySource::connect: " << error);
             return false;
         }
 
         if (client->is_connected()) {
             NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicReceive);
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": connected");
+
+            NES_DEBUG("Sending Queries...");
+            sendQueries();
         } else {
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": NOT connected");
         }
@@ -139,7 +157,6 @@ bool LoRaWANProxySource::disconnect() {
     }
     return true;
 }
-
 
 std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
     NES_DEBUG("LoRaWANProxySource " << this << ": receiveData");
@@ -175,16 +192,15 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
                     auto output = EndDeviceProtocol::Output();
                     output.ParseFromString(js["data"]);
 
-                    for (const auto& response : output.responses()){
+                    for (const auto& response : output.responses()) {
                         auto id = response.id();
                         auto query = sourceConfig->getSerializedQueries()->at(id);
-                        auto resultType = query.resulttype();
+                        auto resultType = query->resulttype();
                         auto tupCount = buffer.getNumberOfTuples();
                         for (size_t i = 0; i < resultType.size(); ++i) {
                             buffer[tupCount][i].write<int8_t>(resultType[i]);
                         }
-                        buffer.setNumberOfTuples(buffer.getNumberOfTuples()+1);
-
+                        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
                     }
                     ++count;
                 }
@@ -211,36 +227,34 @@ bool LoRaWANProxySource::sendQueries() {
     auto pbMsg = EndDeviceProtocol::Message();
     std::vector<EndDeviceProtocol::Query> queries;
 
-    for (const auto& [_, query] : *queryMap){
-        queries.push_back(query);
+    for (const auto& [_, query] : *queryMap) {
+        auto serializedQuery = EndDeviceProtocol::Query();
+        serializedQuery.CopyFrom(*query);
+        queries.push_back(serializedQuery);
     }
     pbMsg.mutable_queries()->Assign(queries.begin(), queries.end());
 
     auto pbEncoded = Util::base64Encode(pbMsg.SerializeAsString());
 
-    for (const auto& devEUI : deviceEUIs){
+    for (const auto& devEUI : deviceEUIs) {
         //JSON payload must conform to:
-//        {
-//            "devEui": "0102030405060708",             // this must match the DEV_EUI of the MQTT topic
-//            "confirmed": true,                        // whether the payload must be sent as confirmed data down or not
-//            "fPort": 10,                              // FPort to use (must be > 0)
-//            "data": "...."                            // base64 encoded data (plaintext, will be encrypted by ChirpStack)
-//            "object": {                               // decoded object (when application coded has been configured)
-//                "temperatureSensor": {"1": 25},       // when providing the 'object', you can omit 'data'
-//                "humiditySensor": {"1": 32}
-//            }
-//        }
-        nlohmann::json payload {
-            {"devEui", devEUI},
-            {"confirmed", true},
-            {"fport", 1},
-            {"data", pbEncoded}
-        };
+        //        {
+        //            "devEui": "0102030405060708",             // this must match the DEV_EUI of the MQTT topic
+        //            "confirmed": true,                        // whether the payload must be sent as confirmed data down or not
+        //            "fPort": 10,                              // FPort to use (must be > 0)
+        //            "data": "...."                            // base64 encoded data (plaintext, will be encrypted by ChirpStack)
+        //            "object": {                               // decoded object (when application coded has been configured)
+        //                "temperatureSensor": {"1": 25},       // when providing the 'object', you can omit 'data'
+        //                "humiditySensor": {"1": 32}
+        //            }
+        //        }
+        nlohmann::json payload{{"devEui", devEUI}, {"confirmed", true}, {"fport", 1}, {"data", pbEncoded}};
         NES_DEBUG("sending data to topic: " + topicSend + " with payload " + payload.dump());
-        client->publish(topicSend,payload.dump());
+        client->publish(topicSend, payload.dump());
     }
     return true;
 }
+const LoRaWANProxySourceTypePtr& LoRaWANProxySource::getSourceConfig() const { return sourceConfig; }
 
 //debug action listener
 //LoRaWANProxySource::debug_action_listener::debug_action_listener(std::string name) : name(std::move(name)) {}

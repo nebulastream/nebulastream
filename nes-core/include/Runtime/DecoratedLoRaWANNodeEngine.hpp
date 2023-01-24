@@ -32,7 +32,6 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
 
     /**
      * @brief registers a query
-     * TODO: since this doesn't override it only hides the function from the parent class.
      * This means any internal call from the parent class will refer to the parent method. not the child.
      * Possibly not an issue
      * @param queryId: id of the query sub plan to be registered
@@ -40,9 +39,11 @@ class DecoratedLoRaWANNodeEngine: public NodeEngine
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr&);
+    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr&) override;
 
-    [[nodiscard]] bool unregisterQuery(QueryId);
+    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) override;
+
+    [[nodiscard]] bool unregisterQuery(QueryId) override;
 
   private:
     LoRaWANProxySourceTypePtr sourceType;

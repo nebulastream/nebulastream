@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LoRaWANProxySourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
@@ -40,6 +41,7 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/LoRaWANProxySource.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -47,6 +49,11 @@ namespace NES {
 SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const DataSourcePtr& dataSource) {
     SourceType srcType = dataSource->getType();
     switch (srcType) {
+        case LORAWAN_SOURCE: {
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating LoRaWANProxySource");
+            auto loraSource = std::dynamic_pointer_cast<LoRaWANProxySource>(dataSource);
+            return LoRaWANProxySourceDescriptor::create(dataSource->getSchema(), loraSource->getSourceConfig());
+        }
         case ZMQ_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating ZMQ source");
             const ZmqSourcePtr zmqSourcePtr = std::dynamic_pointer_cast<ZmqSource>(dataSource);

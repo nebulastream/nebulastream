@@ -22,7 +22,7 @@ class LoRaWANProxySourceDescriptor: public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType, std::string logicalSourceName, std::string physicalSourceName);
-
+    static SourceDescriptorPtr create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType);
     /**
      * @brief get source config ptr with all configurations for LoRaWANProxySource
      */

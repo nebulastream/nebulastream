@@ -46,5 +46,8 @@ SourceDescriptorPtr LoRaWANProxySourceDescriptor::copy() {
     return LoRaWANProxySourceDescriptor::create(schema->copy(),loRaWanProxySourceType, logicalSourceName, physicalSourceName); }
 
 LoRaWANProxySourceTypePtr LoRaWANProxySourceDescriptor::getSourceConfig() const { return loRaWanProxySourceType; }
+SourceDescriptorPtr LoRaWANProxySourceDescriptor::create(SchemaPtr schema, LoRaWANProxySourceTypePtr loRaWanProxySourceType) {
+    return LoRaWANProxySourceDescriptor::create(schema, loRaWanProxySourceType, "", "");
+}
 
 }// namespace NES

@@ -55,6 +55,8 @@ class LoRaWANProxySource : public DataSource {
     std::optional<Runtime::TupleBuffer> receiveData() override;
     std::string toString() const override;
     SourceType getType() const override;
+    const LoRaWANProxySourceTypePtr& getSourceConfig() const;
+
 
   private:
     LoRaWANProxySourceTypePtr sourceConfig;
@@ -66,6 +68,10 @@ class LoRaWANProxySource : public DataSource {
     std::string topicAll;
     std::string topicReceive;
     std::string topicSend;
+
+    std::string capath;
+    std::string certpath;
+    std::string keypath;
 
     std::unique_ptr<Parser> inputParser;
 

@@ -17,6 +17,7 @@ import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
 import "SerializableSchema.proto";
 import "JavaUdfDescriptorMessage.proto";
+import "EndDeviceProtocol.proto";
 package NES;
 
 option java_package = "stream.nebula.protobuf";
@@ -95,6 +96,20 @@ message SerializablePhysicalSourceType{
     bool cleanSession = 6;
     float flushIntervalMS = 7;
     InputFormat inputFormat = 8;
+  }
+
+  message SerializableLoRaWANProxySourceType {
+    string networkStack = 1;
+    string url = 2;
+    string userName = 3;
+    string password = 4;
+    string appId = 5;
+    string capath = 6;
+    string certpath = 7;
+    string keypath = 8;
+    repeated string deviceEUIs = 9;
+    repeated string sensorFields = 10;
+    map<uint64, EndDeviceProtocol.Query> queries = 11;
   }
 
     /**
@@ -185,6 +200,11 @@ message SerializableOperator{
       bool autoCommit = 4;
       uint64 kafkaConnectTimeout = 5;
       SerializableSchema sourceSchema = 6;
+    }
+
+    message SerializableLoRaWANProxySourceDescriptor {
+      SerializablePhysicalSourceType physicalSourceType = 1;
+      SerializableSchema sourceSchema = 2;
     }
 
     message SerializableLogicalSourceDescriptor {

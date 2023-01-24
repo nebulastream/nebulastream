@@ -33,6 +33,7 @@
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LoRaWANProxySourceType.hpp>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
@@ -52,7 +53,7 @@ class EndDeviceProtocolSerializationUtil {
     using EDQueryOperationPtr = std::shared_ptr<EndDeviceProtocol::Query_Operation>;
     using EDQueryPtr = std::shared_ptr<EndDeviceProtocol::Query>;
 
-    [[nodiscard]] static EDQueryPtr serializeQueryPlanToEndDevice(QueryPlanPtr QP);
+    [[nodiscard]] static EDQueryPtr serializeQueryPlanToEndDevice(QueryPlanPtr QP, LoRaWANProxySourceTypePtr st);
 
     [[nodiscard]] static std::string serializeConstantValue(ExpressionNodePtr cnode);
 

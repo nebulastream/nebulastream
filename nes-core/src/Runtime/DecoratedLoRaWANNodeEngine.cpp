@@ -42,7 +42,7 @@ DecoratedLoRaWANNodeEngine::DecoratedLoRaWANNodeEngine(
 }
 bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const NES::QueryPlanPtr& queryPlan) {
     NES_DEBUG("DECORATED FUNCTION CALLED")
-    auto serQuery = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(queryPlan);
+    auto serQuery = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(queryPlan, sourceType);
     sourceType->addSerializedQuery(queryPlan->getQueryId(), serQuery);
     return NodeEngine::registerQueryInNodeEngine(queryPlan);
 }
@@ -50,5 +50,8 @@ bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const NES::QueryPlanP
 bool DecoratedLoRaWANNodeEngine::unregisterQuery(QueryId queryId) {
     sourceType->removeSerializedQuery(queryId);
     return NodeEngine::unregisterQuery(queryId);
+}
+bool DecoratedLoRaWANNodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
+    return NodeEngine::registerQueryInNodeEngine(queryExecutionPlan);
 }
 }// namespace NES::Runtime
