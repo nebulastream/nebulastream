@@ -11,11 +11,4 @@
 # limitations under the License.
 
 
-add_source_files(nes-runtime
-        FunctionCall.cpp
-        Record.cpp
-        )
-
-add_subdirectory(Hash)
-add_subdirectory(HashMap)
-add_subdirectory(DataTypes)
+add_subdirectory(ChainedHashMap)

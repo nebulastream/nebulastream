@@ -53,18 +53,16 @@ class ChainedHashMap {
         return newEntry;
     }
 
-
-
      ~ChainedHashMap();
 
   private:
     const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t pageSize;
-    const uint64_t keySize;
-    const uint64_t valueSize;
+    [[maybe_unused]] const uint64_t keySize;
+    [[maybe_unused]] const uint64_t valueSize;
     const uint64_t entrySize;
     const uint64_t entriesPerPage;
-    const uint64_t maskPointer = (~(uint64_t) 0) >> (16);
+    [[maybe_unused]] const uint64_t maskPointer = (~(uint64_t) 0) >> (16);
     const size_t capacity;
     const hash_t mask;
     uint64_t currentSize = 0;
