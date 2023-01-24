@@ -27,73 +27,58 @@ JVMContext& JVMContext::instance() {
 
 inline void jniErrorCheck(jint rc) {
     if (rc == JNI_OK) {
-        NES_TRACE("Java VM startup/attach/detach was successful");
+        NES_INFO("Java VM startup/attach/detach was successful");
     } else if (rc == JNI_ERR) {
-        NES_FATAL_ERROR("An unknown error occurred during Java VM startup/attach/detach!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("An unknown error occurred during Java VM startup/attach/detach!");
     } else if (rc == JNI_EDETACHED) {
-        NES_FATAL_ERROR("Thread detached from the VM during Java VM startup/attach/detach!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("Thread detached from the VM during Java VM startup/attach/detach!");
     } else if (rc == JNI_EVERSION) {
-        NES_FATAL_ERROR("A JNI version error occurred during Java VM startup/attach/detach!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("A JNI version error occurred during Java VM startup/attach/detach!");
     } else if (rc == JNI_ENOMEM) {
-        NES_FATAL_ERROR("Not enough memory during Java VM startup/attach/detach!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("Not enough memory during Java VM startup/attach/detach!");
     } else if (rc == JNI_EEXIST) {
-        NES_FATAL_ERROR("Java VM already exists!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("Java VM already exists!");
     } else if (rc == JNI_EINVAL) {
-        NES_FATAL_ERROR("Invalid arguments during Java VM startup/attach/detach!");
-        exit(EXIT_FAILURE);
+        NES_THROW_RUNTIME_ERROR("Invalid arguments during Java VM startup/attach/detach!");
     }
 }
 
-bool JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args) {
+void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args) {
+    std::lock_guard<std::mutex> lock(mutex);
     if(!created) {
-        mutex.lock();
         jint rc = JNI_CreateJavaVM(&jvm, (void**) env, &args);
         jniErrorCheck(rc);
         created = true;
         attached = true;
-        mutex.unlock();
-        return true;
     } else if (created && !attached) {
-        mutex.lock();
-        jint rc = jvm->AttachCurrentThread((void **) env, nullptr);
+        jint rc = jvm->AttachCurrentThread((void**) env, nullptr);
         jniErrorCheck(rc);
         attached = true;
-        mutex.unlock();
-        return true;
     } else {
-        return false;
+        NES_THROW_RUNTIME_ERROR("Try to attach to a JVM that is already attached!");
     }
 }
 
-bool JVMContext::detachFromJVM() {
+void JVMContext::detachFromJVM() {
+    std::lock_guard<std::mutex> lock(mutex);
     if (created && attached) {
-        mutex.lock();
         jint rc = jvm->DetachCurrentThread();
         jniErrorCheck(rc);
         attached = false;
-        mutex.unlock();
-        return true;
     } else {
-        return false;
+        NES_THROW_RUNTIME_ERROR("Try to detach from a JVM that is not attached!");
     }
 }
 
-bool JVMContext::destroyJVM() {
+void JVMContext::destroyJVM() {
+    std::lock_guard<std::mutex> lock(mutex);
     if (created) {
-        mutex.lock();
         jint rc = jvm->DestroyJavaVM();
         jniErrorCheck(rc);
         created = false;
         attached = false;
-        mutex.unlock();
-        return true;
     } else {
-        return false;
+        NES_THROW_RUNTIME_ERROR("Try to destroy a JVM that is not created!");
     }
 }
 
