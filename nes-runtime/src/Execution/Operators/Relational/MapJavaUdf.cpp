@@ -23,10 +23,10 @@
 #include <jni.h>
 #include <utility>
 #include <cstring>
+#include <filesystem>
 #if not(defined(__APPLE__))
 #include <experimental/source_location>
 #endif
-#include "boost/filesystem.hpp"
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -40,7 +40,7 @@ inline void jniErrorCheck(void* state, const std::source_location& location = st
     }
 }
 
-inline bool dirExists(const std::string& name) { return boost::filesystem::exists(name.c_str()); }
+inline bool dirExists(const std::string& name) { return std::filesystem::exists(name.c_str()); }
 
 extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
     auto handler = (MapJavaUdfOperatorHandler*) state;
