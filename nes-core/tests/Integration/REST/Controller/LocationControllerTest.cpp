@@ -70,6 +70,8 @@ TEST_F(LocationControllerTest, testGetLocationMissingQueryParameters) {
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(LocationControllerTest, testGetLocationNoSuchNodeId) {
@@ -106,6 +108,8 @@ TEST_F(LocationControllerTest, testGetLocationNonNumericalNodeId) {
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(LocationControllerTest, testGetSingleLocation) {
@@ -135,6 +139,10 @@ TEST_F(LocationControllerTest, testGetSingleLocation) {
     nlohmann::json::array_t locationData = res["location"];
     EXPECT_EQ(locationData[0].dump(), latitude);
     EXPECT_EQ(locationData[1].dump(), longitude);
+    bool stopwrk1 = wrk1->stop(false);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided) {
@@ -156,6 +164,10 @@ TEST_F(LocationControllerTest, testGetSingleLocationWhenNoLocationDataIsProvided
     EXPECT_EQ(response.status_code, 200l);
     auto res = nlohmann::json::parse(response.text);
     EXPECT_TRUE(res["location"].is_null());
+    bool stopwrk1 = wrk1->stop(false);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes) {
@@ -182,6 +194,10 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationsNoMobileNodes) {
     auto res = nlohmann::json::parse(response.text);
     //no mobile nodes added yet, response should be empty
     EXPECT_TRUE(res.empty());
+    bool stopwrk1 = wrk1->stop(false);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 
 #ifdef S2DEF
@@ -249,6 +265,14 @@ TEST_F(LocationControllerTest, testGetAllMobileLocationMobileNodesExist) {
         EXPECT_TRUE(entry.contains("location"));
         EXPECT_EQ(entry["location"], locationData);
     }
+    bool stopwrk1 = wrk1->stop(false);
+    ASSERT_TRUE(stopwrk1);
+    bool stopwrk2 = wrk2->stop(false);
+    ASSERT_TRUE(stopwrk2);
+    bool stopwrk3 = wrk3->stop(false);
+    ASSERT_TRUE(stopwrk3);
+    bool stopCrd = coordinator->stopCoordinator(false);
+    ASSERT_TRUE(stopCrd);
 }
 #endif
 }// namespace NES
