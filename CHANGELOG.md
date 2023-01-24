@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.4.32](https://github.com/nebulastream/nebulastream/tree/v0.4.32) (2023-01-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.31...v0.4.32)
+
+### Bug Fixes 🐛
+
+- \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
+- \[BUG\] NebulaStream on multi user systems [\#3009](https://github.com/nebulastream/nebulastream/issues/3009)
+
 ## [v0.4.31](https://github.com/nebulastream/nebulastream/tree/v0.4.31) (2023-01-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.30...v0.4.31)
