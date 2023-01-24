@@ -30,15 +30,14 @@ ChainedHashMap::ChainedHashMap(uint64_t keySize,
     std::memset(entries, 0, capacity * sizeof(Entry*));
 
     // allocate initial page
-    auto page = reinterpret_cast<Entry*>(this->allocator->allocate(pageSize));
+    auto page = reinterpret_cast<int8_t*>(this->allocator->allocate(pageSize));
     pages.emplace_back(page);
 }
 
 ChainedHashMap::Entry* ChainedHashMap::allocateNewEntry() {
     // check if a new page should be allocated
     if (currentSize % entriesPerPage == 0) {
-        auto page = reinterpret_cast<Entry*>(allocator->allocate(pageSize));
-        // set entries to zero
+        auto page = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
         pages.emplace_back(page);
     }
     return entryIndexToAddress(currentSize);
@@ -46,10 +45,12 @@ ChainedHashMap::Entry* ChainedHashMap::allocateNewEntry() {
 
 ChainedHashMap::Entry* ChainedHashMap::entryIndexToAddress(uint64_t entryIndex) {
     auto pageIndex = entryIndex / entriesPerPage;
-    auto* page = pages[pageIndex];
+    int8_t* page = pages[pageIndex];
     auto entryOffsetInBuffer = entryIndex - (pageIndex * entriesPerPage);
-    return page + entryOffsetInBuffer;
+    return reinterpret_cast<Entry*>(page + (entryOffsetInBuffer * entrySize));
 }
+
+uint64_t ChainedHashMap::getCurrentSize() const { return currentSize; }
 
 ChainedHashMap::~ChainedHashMap() {
     for (auto* page : pages) {

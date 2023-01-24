@@ -14,6 +14,25 @@ extern "C" void* insetProxy(void* state, uint64_t hash) {
     return hashMap->insertEntry(hash);
 }
 
+ChainedHashMapRef::EntryRef::EntryRef(const Value<MemRef>& ref, uint64_t keyOffset, uint64_t valueOffset)
+    : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
+
+Value<MemRef> ChainedHashMapRef::EntryRef::getKeyPtr() { return (ref + keyOffset).as<MemRef>(); }
+
+Value<MemRef> ChainedHashMapRef::EntryRef::getValuePtr() { return (ref + valueOffset).as<MemRef>(); }
+
+ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() {
+    // This assumes that the next ptr is stored as the first element in the entry.
+    static_assert(offsetof(ChainedHashMap::Entry, next) == 0);
+    // perform a load to load the next value
+    auto next = ref.load<MemRef>();
+    return {next, keyOffset, valueOffset};
+}
+
+bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) {
+    return ref != 0;
+}
+
 ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize)
     : hashTableRef(hashTableRef), keyOffset(sizeof(ChainedHashMap::Entry)), valueOffset(keyOffset + keySize) {}
 
@@ -39,7 +58,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash,
                                                             const std::vector<Value<>>& keys,
-                                                            const std::function<void(const EntryRef&)>& onInsert) {
+                                                            const std::function<void(EntryRef&)>& onInsert) {
     auto entry = findChain(hash);
     for (; entry != nullptr; entry = entry.getNext()) {
         if (compareKeys(entry, keys)) {
@@ -65,7 +84,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
     });
 }
 
-Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef entry, const std::vector<Value<>>& keys) {
+Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
     Value<Boolean> equals = true;
     auto ref = entry.getKeyPtr();
     for (auto& keyValue : keys) {
