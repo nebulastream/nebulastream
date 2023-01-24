@@ -310,7 +310,11 @@ T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::st
     } else if constexpr(std::is_same<T, int8_t>::value) {
         value = (T) handler->getEnvironment()->GetByteField(pojo, id);
     } else if constexpr(std::is_same<T, TextValue*>::value) {
-        value = (T) handler->getEnvironment()->GetObjectField(pojo, id);
+        auto jstr = (jstring) handler->getEnvironment()->GetObjectField(pojo, id);
+        auto size = handler->getEnvironment()->GetStringUTFLength((jstring) jstr);
+        value = TextValue::create(size);
+        auto resultText = handler->getEnvironment()->GetStringUTFChars(jstr, 0);
+        std::memcpy(value->str(), resultText, size);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
     }
