@@ -14,7 +14,7 @@
 
 #include <DataProvider/ExternalProvider.hpp>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
                                    uint64_t ingestionRateInBuffers,
@@ -41,7 +41,7 @@ IngestionFrequencyDistribution ExternalProvider::getDistributionFromString(std::
 }
 
 void ExternalProvider::generateIngestionRates() {
-    for (uint64_t i = 0; i < experimentRuntime; i++) {
+    for (auto i = 0UL; i < experimentRuntime; ++i) {
         if (ingestionFrequencyDistribution == UNIFORM) {
             predefinedIngestionRates.push_back(ingestionRateInBuffers);
         } else if (ingestionFrequencyDistribution == SINUS || ingestionFrequencyDistribution == COSINUS) {

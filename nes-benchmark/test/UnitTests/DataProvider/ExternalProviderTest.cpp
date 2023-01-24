@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
     class ExternalProviderTest : public Testing::NESBaseTest {
       public:
         /* Will be called before any test in this class are executed. */
@@ -43,4 +43,7 @@ namespace NES::Benchmark::DataProviding {
     };
 
     // TODO test all member functions of ExternalProviderTest.hpp
-}//namespace NES::Benchmark::DataProviding
+    TEST_F(ExternalProviderTest, readNextBufferTest) {
+        NES_NOT_IMPLEMENTED();
+    }
+}//namespace NES::Benchmark::DataProvision
