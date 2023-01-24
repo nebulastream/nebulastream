@@ -13,6 +13,10 @@
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
-        MapJavaUdf.cpp
-        JVMContext.cpp
         )
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    add_source_files(nes-runtime
+            MapJavaUdf.cpp
+            JVMContext.cpp
+            )
+endif()
