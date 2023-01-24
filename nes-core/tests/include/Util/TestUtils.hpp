@@ -153,6 +153,9 @@ template<typename T>
     return "--monitoringConfiguration=" + config;
 }
 
+[[nodiscard]] std::string restServerType(string sType) {
+    return "--serverType=" + SERVER_TYPE + sType;
+}
 // 2884: Fix configuration to disable distributed window rule
 [[nodiscard]] std::string disableDistributedWindowingOptimization() {
     return "--optimizer.performDistributedWindowOptimization=false";
