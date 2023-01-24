@@ -17,7 +17,7 @@
 
 #include <DataProvider/DataProvider.hpp>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 
 enum IngestionFrequencyDistribution {
     UNIFORM,
@@ -49,6 +49,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @param providerMode
      * @param ingestionFrequencyDistribution
      */
+     // TODO remove ingestionRateInBuffers & ingestionFrequencyDistribution from constructor, add predefinedIngestionRates
     ExternalProvider(uint64_t id,
                      std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
                      uint64_t ingestionRateInBuffers,
@@ -98,6 +99,6 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     bool started = false;
     std::thread generatorThread;
 };
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
 
 #endif//NES_EXTERNALPROVIDER_HPP
