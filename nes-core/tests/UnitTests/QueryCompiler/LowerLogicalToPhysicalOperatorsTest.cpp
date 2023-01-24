@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
 
@@ -144,13 +145,7 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
-        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("nonEmpty",
-                                                           "nonEmpty",
-                                                           std::vector<char>({'a'}),
-                                                           std::unordered_map<std::string, std::vector<char>>({{"nonEmpty", {'a'}}}),
-                                                           Schema::create()->addField("nonEmpty",INT32),
-                                                                          "nonEmpty",
-                                                                          "nonEmpty");
+        auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
         mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
     }
 

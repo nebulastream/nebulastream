@@ -157,6 +157,8 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 #ifdef ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
         auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+        // We can't copy the descriptor because it is in nes-core and the MapJavaUdfOperatorHandler is in nes-runtime
+        // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
         auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
         auto className = mapJavaUdfDescriptor->getClassName();
         auto methodName = mapJavaUdfDescriptor->getMethodName();
