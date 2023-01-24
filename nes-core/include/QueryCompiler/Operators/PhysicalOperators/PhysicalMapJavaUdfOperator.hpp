@@ -49,7 +49,7 @@ class PhysicalMapJavaUdfOperator : public PhysicalUnaryOperator {
      * @brief Returns the java udf descriptor of this map operator
      * @return FieldAssignmentExpressionNodePtr
      */
-     Catalogs::UDF::JavaUdfDescriptorPtr getjavaUdfDescriptor();
+     Catalogs::UDF::JavaUdfDescriptorPtr getJavaUdfDescriptor();
 
   protected:
     const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;

@@ -157,7 +157,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 #ifdef ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
         auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
-        auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
+        auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
         auto className = mapJavaUdfDescriptor->getClassName();
         auto methodName = mapJavaUdfDescriptor->getMethodName();
         auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
@@ -384,7 +384,7 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOp
                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                   uint64_t handlerIndex) {
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
-    auto mapJavaUdfDescriptor = mapOperator->getjavaUdfDescriptor();
+    auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
     auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
     auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
 
