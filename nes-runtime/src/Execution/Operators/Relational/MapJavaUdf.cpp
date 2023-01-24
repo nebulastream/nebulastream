@@ -43,6 +43,7 @@ inline void jniErrorCheck(void* state, const std::source_location& location = st
 inline bool dirExists(const std::string& name) { return std::filesystem::exists(name.c_str()); }
 
 extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<std::string, std::vector<char>>& byteCodeList) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     for (auto entry : byteCodeList) {
@@ -53,6 +54,7 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
 }
 
 extern "C" jobject deserializeInstance(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     void *object = (void *)handler->getSerializedInstance().data();
@@ -66,6 +68,7 @@ extern "C" jobject deserializeInstance(void* state) {
 }
 
 extern "C" void startVMWithJarFile(void *state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     // Sanity check javaPath
@@ -93,6 +96,7 @@ extern "C" void startVMWithJarFile(void *state) {
 }
 
 extern "C" void startVMWithByteList(void *state){
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     JavaVMInitArgs vmArgs;
@@ -107,6 +111,7 @@ extern "C" void startVMWithByteList(void *state){
 }
 
 extern "C" void startVM(void *state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     if (handler->getJavaPath().has_value()) {
@@ -129,6 +134,7 @@ extern "C" void destroyVM(){
 }
 
 extern "C" void* findInputProxyClass(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
@@ -137,6 +143,7 @@ extern "C" void* findInputProxyClass(void* state) {
 }
 
 extern "C" void* findOutputProxyClass(void* state) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     jclass clazz = handler->getEnvironment()->FindClass(handler->getOutputClassName().c_str());
@@ -145,6 +152,8 @@ extern "C" void* findOutputProxyClass(void* state) {
 }
 
 extern "C" void* allocateObject(void* state, void* classPtr) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     auto clazz = (jclass) classPtr;
@@ -155,6 +164,7 @@ extern "C" void* allocateObject(void* state, void* classPtr) {
 
 template <typename T>
 void *createObjectType(void *state, T value, std::string className, std::string constructorSignature){
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
@@ -197,6 +207,7 @@ extern "C" void *createStringObject(void* state, TextValue *value) {
 
 template <typename T>
 T getObjectTypeValue(void *state, void *object, std::string className, std::string getterName, std::string getterSignature) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     auto clazz = handler->getEnvironment()->FindClass(className.c_str());
@@ -248,7 +259,10 @@ extern "C" double getDoubleObjectValue(void* state, void *object) {
 }
 
 extern "C" TextValue *getStringObjectValue(void* state, void *object) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(object != nullptr, "object should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
+
     auto size = handler->getEnvironment()->GetStringUTFLength((jstring) object);
     auto resultText = TextValue::create(size);
     auto sourceText = handler->getEnvironment()->GetStringUTFChars((jstring) object, nullptr);
@@ -258,6 +272,9 @@ extern "C" TextValue *getStringObjectValue(void* state, void *object) {
 
 template <typename T>
 T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::string signature){
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
+    NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     auto pojoClass = (jclass) classPtr;
@@ -317,6 +334,9 @@ extern "C" TextValue *getStringField(void* state, void* classPtr, void* objectPt
 
 template <typename T>
 void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
+    NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     auto pojoClass = (jclass) classPtr;
@@ -375,12 +395,15 @@ extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int
 }
 
 extern "C" void freeObject(void* state, void* object){
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     handler->getEnvironment()->DeleteLocalRef((jobject) object);
 }
 
 extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
+    NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = (MapJavaUdfOperatorHandler*) state;
 
     // Find class implementing the map udf
