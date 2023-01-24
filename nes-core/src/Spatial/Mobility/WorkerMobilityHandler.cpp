@@ -337,7 +337,11 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::stop() {
         return false;
     }
     isRunning = false;
-    return true;
+    if (workerMobilityHandlerThread->joinable()) {
+        workerMobilityHandlerThread->join();
+        return true;
+    }
+    return false;
 }
 
 NES::Spatial::DataTypes::Experimental::NodeIdToGeoLocationMap
