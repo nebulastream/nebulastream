@@ -40,8 +40,7 @@ template<class T>
 concept IsValueType = std::is_base_of<BaseValue, T>::value;
 
 template<class T>
-concept IsNotValueType = !
-std::is_base_of<BaseValue, T>::value;
+concept IsNotValueType = !std::is_base_of<BaseValue, T>::value;
 
 /**
  * @brief The Value class provides the elementary wrapper for any data value that inherents from Any.
@@ -211,10 +210,17 @@ class Value : BaseValue {
     template<typename ResultType, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
     auto load() {
         if (Tracing::TraceUtil::inTracer()) {
-            auto result = std::make_shared<ResultType>((int64_t) 0);
-            auto resultValue = Value<ResultType>(std::move(result));
-            Tracing::TraceUtil::traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
-            return resultValue;
+            if constexpr (std::is_same_v<ResultType, MemRef>) {
+                auto result = std::make_shared<MemRef>(nullptr);
+                auto resultValue = Value<ResultType>(std::move(result));
+                Tracing::TraceUtil::traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
+                return resultValue;
+            } else {
+                auto result = std::make_shared<ResultType>(0);
+                auto resultValue = Value<ResultType>(std::move(result));
+                Tracing::TraceUtil::traceUnaryOperation(Nautilus::Tracing::OpCode::LOAD, resultValue.ref, this->ref);
+                return resultValue;
+            }
         } else {
             auto result = ((MemRef*) this->value.get())->load<ResultType>();
             return Value<ResultType>(std::move(result));

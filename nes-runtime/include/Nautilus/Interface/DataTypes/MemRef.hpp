@@ -26,7 +26,7 @@ namespace NES::Nautilus {
 class MemRef : public TraceableType {
   public:
     static const inline auto type = TypeIdentifier::create<MemRef>();
-
+    using RawType = int8_t*;
     MemRef(int8_t* value) : TraceableType(&type), value(value){};
     MemRef(MemRef&& a) : MemRef(a.value) {}
     MemRef(MemRef& a) : MemRef(a.value) {}

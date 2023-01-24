@@ -11,7 +11,7 @@ class ChainedHashMapRef {
   public:
     class EntryRef {
       public:
-        EntryRef(Value<MemRef> ref, uint64_t keyOffset, uint64_t valueOffset);
+        EntryRef(const Value<MemRef>& ref, uint64_t keyOffset, uint64_t valueOffset);
         EntryRef getNext();
         Value<MemRef> getKeyPtr();
         Value<MemRef> getValuePtr();
@@ -27,13 +27,13 @@ class ChainedHashMapRef {
     EntryRef findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
     EntryRef findOrCreate(const Value<UInt64>& hash,
                           const std::vector<Value<>>& keys,
-                          const std::function<void(const EntryRef&)>& onInsert);
+                          const std::function<void(EntryRef&)>& onInsert);
     EntryRef findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
 
   private:
     EntryRef findChain(const Value<UInt64>& hash);
     EntryRef insert(const Value<UInt64>& hash);
-    Value<Boolean> compareKeys(EntryRef entry, const std::vector<Value<>>& keys);
+    Value<Boolean> compareKeys(EntryRef& entry, const std::vector<Value<>>& keys);
     Value<MemRef> hashTableRef;
     uint64_t keyOffset;
     uint64_t valueOffset;
