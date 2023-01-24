@@ -22,6 +22,7 @@ namespace NES::Nautilus::Interface {
 class ChainedHashMap {
   public:
     using hash_t = uint64_t;
+    static const size_t DEFAULT_PAGE_SIZE = 1024;
     /**
      * @brief HashTable Entry
      * Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
@@ -31,24 +32,46 @@ class ChainedHashMap {
         Entry* next;
         hash_t hash;
         // payload data follows this header
-        Entry(Entry* next, hash_t hash);
+        explicit Entry(hash_t hash) : next(nullptr), hash(hash){};
     };
 
-    ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t nrOfKeys);
+    ChainedHashMap(uint64_t keySize,
+                   uint64_t valueSize,
+                   uint64_t nrOfKeys,
+                   std::unique_ptr<std::pmr::memory_resource> allocator,
+                   size_t pageSize = DEFAULT_PAGE_SIZE);
 
-    Entry* findChain(hash_t hash) {
+    inline Entry* findChain(hash_t hash) {
         auto pos = hash & mask;
         return entries[pos];
     }
 
-    Entry* insertEntry(hash_t hash) {
+    inline Entry* insertEntry(hash_t hash) {
         auto newEntry = allocateNewEntry();
-        newEntry->hash = hash;
+        newEntry = std::construct_at(newEntry, hash);
         insert(newEntry, hash);
         return newEntry;
     }
 
-    void insert(Entry* entry, hash_t hash) {
+
+
+     ~ChainedHashMap();
+
+  private:
+    const std::unique_ptr<std::pmr::memory_resource> allocator;
+    const uint64_t pageSize;
+    const uint64_t keySize;
+    const uint64_t valueSize;
+    const uint64_t entrySize;
+    const uint64_t entriesPerPage;
+    const uint64_t maskPointer = (~(uint64_t) 0) >> (16);
+    const size_t capacity;
+    const hash_t mask;
+    uint64_t currentSize = 0;
+    Entry** entries;
+    std::vector<Entry*> pages;
+
+    inline void insert(Entry* entry, hash_t hash) {
         const size_t pos = hash & mask;
         assert(pos <= mask);
         assert(pos < capacity);
@@ -57,36 +80,9 @@ class ChainedHashMap {
         entries[pos] = entry;
         this->currentSize++;
     }
+    Entry* allocateNewEntry();
+    Entry* entryIndexToAddress(uint64_t entryIndex);
 
-    Entry* allocateNewEntry() {
-        // check if a new page should be allocated
-        if (currentSize % entriesPerPage == 0) {
-            auto page = reinterpret_cast<Entry*>(allocator->allocate(pageSize));
-            // set entries to zero
-            pages.emplace_back(page);
-        }
-        return entryIndexToAddress(currentSize);
-    }
-
-    Entry* entryIndexToAddress(uint64_t entry) {
-        auto pageIndex = entry / entriesPerPage;
-        auto* page = pages[pageIndex];
-        auto entryOffsetInBuffer = entry - (pageIndex * entriesPerPage);
-        return page + entryOffsetInBuffer;
-    }
-
-  private:
-    const std::unique_ptr<std::pmr::memory_resource> allocator;
-    const uint64_t keySize;
-    const uint64_t valueSize;
-    const uint64_t pageSize;
-    const uint64_t entriesPerPage;
-    const hash_t mask;
-    const uint64_t maskPointer = (~(uint64_t) 0) >> (16);
-    size_t capacity = 0;
-    uint64_t currentSize = 0;
-    Entry** entries;
-    std::vector<Entry*> pages;
 };
 }// namespace NES::Nautilus::Interface
 
