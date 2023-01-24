@@ -49,7 +49,6 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         ASSERT_TRUE(responseJson == expected);
     }
 
-#ifdef ENABLE_JNI
     static void verifySerializedInstance(const UDF::JavaSerializedInstance& actual, const std::string& expected) {
         auto converted = UDF::JavaSerializedInstance{expected.begin(), expected.end()};
         ASSERT_EQ(actual, converted);
@@ -66,7 +65,6 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
             ASSERT_EQ(actualByteCode->second, converted);
         }
     }
-#endif // ENABLE_JNI
 
     [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const cpr::Response& response) {
         GetJavaUdfDescriptorResponse udfResponse;
@@ -89,7 +87,6 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
 };
 
-#ifdef ENABLE_JNI
 //Test if retrieval of a UDF added directly to UdfCatalog over POST returns same UDF
 TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
     startCoordinator();
@@ -141,7 +138,6 @@ TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
     ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
 }
-#endif // ENABLE_JNI
 
 
 //Test if Oatpp framework correctly returns 404 when endpoint isn't defined
@@ -160,7 +156,6 @@ TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
     ASSERT_EQ(response.status_code, Status::CODE_404.code);
 }
 
-#ifdef ENABLE_JNI
 //Test if RegisterJavaUdf endpoint handles exceptions without returning a stack trace
 TEST_F(UdfCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutReturningAStackTrace) {
     startCoordinator();
@@ -243,7 +238,6 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
     auto responseJson = nlohmann::json::parse(response.text);
     verifyResponseResult(response, json);
 }
-#endif // ENABLE_JNI
 
 //Test if removeUdf endpoint handles non-existent UDF correctly
 TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointIfUdfDoesNotExist) {
@@ -292,7 +286,6 @@ TEST_F(UdfCatalogControllerTest, testIfRemoveUdfEndpointHandlesExtraQueryParamet
     verifyResponseResult(response, json);
 }
 
-#ifdef ENABLE_JNI
 //Test if listUdfs endpoint handles missing query parameters correctly
 TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParameters) {
     startCoordinator();
@@ -330,7 +323,6 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
 }
-#endif // ENABLE_JNI
 
 //Test if listUdfs endpoint behaves correctly when no UDFs are registered
 TEST_F(UdfCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {

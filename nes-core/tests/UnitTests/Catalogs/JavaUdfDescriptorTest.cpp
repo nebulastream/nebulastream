@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
@@ -150,5 +149,3 @@ TEST_F(JavaUdfDescriptorTest, InEquality) {
 }
 
 }// namespace NES::Catalogs::UDF
-
-#endif // ENABLE_JNI

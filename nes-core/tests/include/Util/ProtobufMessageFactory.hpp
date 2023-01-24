@@ -28,7 +28,6 @@ namespace NES {
  */
 class ProtobufMessageFactory {
   public:
-#ifdef ENABLE_JNI
     /**
      * @brief Construct a RegisterJavaUdfRequest protobuf message.
      * @see UdfCatalog::registerJavaUdf
@@ -74,7 +73,6 @@ class ProtobufMessageFactory {
                                             javaUdfDescriptor->getInputClassName(),
                                             javaUdfDescriptor->getOutputClassName());
     }
-#endif // ENABLE_JNI
 };
 
 }// namespace NES

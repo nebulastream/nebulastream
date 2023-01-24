@@ -504,7 +504,6 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
 
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
-#ifdef ENABLE_JNI
     {
         auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
         auto javaUdfMap = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
@@ -512,7 +511,6 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
     }
-#endif // ENABLE_JNI
 
     {
         auto rename = LogicalOperatorFactory::createRenameSourceOperator("newSourceName");

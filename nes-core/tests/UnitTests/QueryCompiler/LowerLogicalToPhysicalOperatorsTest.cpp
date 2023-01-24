@@ -144,7 +144,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
         sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
-#ifdef ENABLE_JNI
         auto javaUdfDescriptor = Catalogs::UDF::JavaUdfDescriptor::create("nonEmpty",
                                                            "nonEmpty",
                                                            std::vector<char>({'a'}),
@@ -153,7 +152,6 @@ class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
                                                                           "nonEmpty",
                                                                           "nonEmpty");
         mapJavaUdfOp = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
-#endif
     }
 
   protected:
@@ -728,7 +726,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
 
-#ifdef ENABLE_JNI
 /**
  * @brief Input Query Plan:
  *
@@ -759,7 +756,6 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapJavaUdfQuery) {
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
-#endif // ENABLE_JNI
 
 /**
  * @brief Input Query Plan:

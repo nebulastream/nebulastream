@@ -1480,7 +1480,6 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
 }
 
-#ifdef ENABLE_JNI
 /**
  * @brief In this test we infer schema for a query with mapudf defined
  */
@@ -1626,6 +1625,5 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("logicalSource1$outputAttribute1"));
 }
-#endif // ENABLE_JNI
 
 }// namespace NES

@@ -202,7 +202,6 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr
     createCEPIterationOperator(uint64_t minIterations, uint64_t maxIterations, OperatorId id = Util::getNextOperatorId());
 
-#ifdef ENABLE_JNI
     /**
      * Create a new MapJavaUdfLogicalOperatorNode.
      *
@@ -213,7 +212,6 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr
     createMapJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
                                     OperatorId id = Util::getNextOperatorId());
-#endif // ENABLE_JIN
 };
 
 }// namespace NES

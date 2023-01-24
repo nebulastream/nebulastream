@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_JNI
-
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -78,5 +76,3 @@ TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferStringSignature) {
 }
 
 }// namespace NES
-
-#endif // ENABLE_JNI
