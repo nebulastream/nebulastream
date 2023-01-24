@@ -64,26 +64,70 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
+    /**
+     * @brief This method returns the class name of the java udf
+     * @return std::string class name
+     */
     const std::string& getClassName() const { return className; }
 
+    /**
+     * @brief This method returns the method name of the java udf
+     * @return std::string method name
+     */
     const std::string& getMethodName() const { return methodName; }
 
+    /**
+     * @brief This method returns the class name of the input class name of the java udf
+     * @return std::string input class name
+     */
     const std::string& getInputClassName() const { return inputClassName; }
 
+    /**
+     * @brief This method returns the class name of the output class name of the java udf
+     * @return std::string output class name
+     */
     const std::string& getOutputClassName() const { return outputClassName; }
 
+    /**
+     * @brief This method returns the byte code list of the java udf
+     * @return std::unordered_map<std::string, std::vector<char>> byte code list
+     */
     const std::unordered_map<std::string, std::vector<char>>& getByteCodeList() const { return byteCodeList; }
 
+    /**
+     * @brief This method returns the serialized instance of the java udf
+     * @return std::vector<char> serialized instance
+     */
     const std::vector<char>& getSerializedInstance() const { return serializedInstance; }
 
+    /**
+     * @brief This method returns the input schema of the java udf
+     * @return SchemaPtr input schema
+     */
     const SchemaPtr& getInputSchema() const { return inputSchema; }
 
+    /**
+     * @brief This method returns the output schema of the java udf
+     * @return SchemaPtr output schema
+     */
     const SchemaPtr& getOutputSchema() const { return outputSchema; }
 
+    /**
+     * @brief This method returns the java path of the java udf jar
+     * @return std::optional<std::string> java path
+     */
     const std::optional<std::string>& getJavaPath() const { return javaPath; }
 
+    /**
+     * @brief This method returns the jni environment of the java udf
+     * @return JNIEnv* java udf instance
+     */
     JNIEnv* getEnvironment() const { return env; }
 
+    /**
+     * @brief This method sets the jni environment of the java udf
+     * @param env jni environment
+     */
     void setEnvironment(JNIEnv* env) { MapJavaUdfOperatorHandler::env = env; }
 
   private:
