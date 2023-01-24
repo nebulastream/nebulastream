@@ -154,34 +154,6 @@ MetricType MetricUtils::metricTypeFromCollectorType(MetricCollectorType type) {
     return UnknownMetric;
 }
 
-std::tuple<std::vector<std::string>, std::list<std::string>> MetricUtils::randomAttributes(std::string metric, int numberOfAttributes) {
-    std::vector<std::string> attributesVector;
-
-    if (metric == "CpuMetric") {
-        attributesVector = CpuMetrics::getAttributesVector();
-    } else if (metric == "DiskMetric") {
-        attributesVector = DiskMetrics::getAttributesVector();
-    } else if (metric == "MemoryMetric") {
-        attributesVector = MemoryMetrics::getAttributesVector();
-    } else if (metric == "NetworkMetric") {
-        attributesVector = NetworkMetrics::getAttributesVector();
-    } else {
-        // TODO through exception
-    }
-
-    std::list<std::string> configuredAttributes;
-
-    int random;
-    for (int i = 0; i < numberOfAttributes; i++) {
-        random = std::rand() % attributesVector.size();
-        configuredAttributes.push_back(attributesVector[random]);
-        attributesVector.erase(attributesVector.begin()+random);
-    }
-
-    std::tuple<std::vector<std::string>, std::list<std::string>> returnTuple(attributesVector, configuredAttributes);
-    return returnTuple;
-}
-
 MetricType MetricUtils::metricTypeFromSourceName(std::string sourceName) {
     MetricType metricType;
     if (sourceName.substr(0, 4) == "disk"){

@@ -124,7 +124,7 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     // create manually the configured schemas for comparison
     std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
-    uint64_t sampleDisk = 5000;
+    uint64_t sampleDisk = 1000;
     SchemaPtr schemaDisk = Monitoring::DiskMetrics::createSchema("", configuredDisk);
     std::list<std::string> configuredCpu = {"nice", "user", "system"};
     uint64_t sampleCpu = 6000;
@@ -136,8 +136,10 @@ TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     uint64_t sampleNetwork = 1000;
     SchemaPtr schemaNetwork = Monitoring::NetworkMetrics::createSchema("", configuredNetwork);
     std::list<uint64_t> coresTest = {6, 3, 2, 0};
+
+
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerConfigLennart.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerMonitoringConfig.yaml");
 
     std::string temp_config = workerConfigPtr->monitoringConfiguration.getValue();
     web::json::value configurationMonitoringJson =

@@ -37,7 +37,6 @@ monitoringConfiguration: '
     sampleRate: 6000
   - disk:
     attributes: "F_BSIZE, F_BLOCKS, F_FRSIZE"
-    sampleRate: 5000
   - memory:
     attributes: "FREE_RAM"
     sampleRate: 4000

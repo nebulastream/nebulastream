@@ -22,6 +22,8 @@ limitations under the License.
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 
+#include "Monitoring/MetricCollectors/DiskCollector.hpp"
+#include "Monitoring/MetricCollectors/MemoryCollector.hpp"
 #include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -227,15 +229,29 @@ using std::cout;
     }
 
     TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRestConfiguration) {
-        uint64_t noWorkers = 1;
-        std::string configMonitoring01 = " - cpu: attributes: \"nice, user, system\""
-                                         " - disk: attributes: \"F_BSIZE, F_BLOCKS, F_FRSIZE\""
-                                         " - memory: attributes: \"FREE_RAM, TOTAL_RAM\""
-                                         " - network: attributes: \"rBytes, rFifo, tPackets\"";
+        // collect constant values for later comparison
+        std::list<std::string> memoryCompareMetricsList = {"TOTAL_RAM", "TOTAL_SWAP", "MEM_UNIT"};
+        auto memoryCollector = Monitoring::MemoryCollector();
+        Monitoring::MetricPtr memoryMetric = memoryCollector.readMetric();
+        Monitoring::MemoryMetrics typedMetricMemory = memoryMetric->getValue<Monitoring::MemoryMetrics>();
+        std::vector<uint64_t> memoryCompareValues;
+        for(const std::string& metricName : memoryCompareMetricsList) {
+            memoryCompareValues.push_back(typedMetricMemory.getValue(metricName));
+        }
+        std::list<std::string> diskCompareMetricsList = {"F_BLOCKS", "F_BSIZE", "F_FRSIZE"};
+        auto diskCollector = Monitoring::DiskCollector();
+        Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
+        Monitoring::DiskMetrics typedMetricDisk = diskMetric->getValue<Monitoring::DiskMetrics>();
+        std::vector<uint64_t> diskCompareValues;
+        for(const std::string& metricName : diskCompareMetricsList) {
+            diskCompareValues.push_back(typedMetricDisk.getValue(metricName));
+        }
 
-//        std::string configMonitoring02 = " - cpu: attributes: \"iowait, irq, steal\""
-//                                         " - memory: attributes: \"FREE_SWAP, TOTAL_SWAP\""
-//                                         " - disk: attributes: \"F_BFREE, F_BAVAIL, F_FRSIZE\"";
+        // monitoring configuration
+        uint64_t noWorkers = 1;
+        std::string configMonitoring = " - cpu: attributes: \"user, nice, system, idle, iowait\" cores: \"0, 9\" sampleRate: 1000"
+                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS\" sampleRate: 1000"
+                                         " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, MEM_UNIT\" sampleRate: 1000";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -252,19 +268,9 @@ using std::cout;
              TestUtils::physicalSourceName("test2"),
              TestUtils::workerHealthCheckWaitTime(1),
              TestUtils::enableMonitoring(),
-             TestUtils::monitoringConfiguration(configMonitoring01)
+             TestUtils::monitoringConfiguration(configMonitoring)
             });
 
-//        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-//                                               TestUtils::dataPort(0),
-//                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
-//                                               TestUtils::sourceType("DefaultSource"),
-//                                               TestUtils::logicalSourceName("default_logical"),
-//                                               TestUtils::physicalSourceName("test1"),
-//                                               TestUtils::workerHealthCheckWaitTime(1),
-//                                               TestUtils::enableMonitoring(),
-//                                               TestUtils::monitoringConfiguration(configMonitoring02)
-//        });
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
         NES_DEBUG("Now comes the RestCall!");
@@ -279,38 +285,54 @@ using std::cout;
             NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
             ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
             if (i == 2) {
+                //check if the correct metric types are collected
                 ASSERT_TRUE(json.has_field("disk"));
                 ASSERT_TRUE(json.has_field("memory"));
                 ASSERT_TRUE(json.has_field("wrapped_cpu"));
-                ASSERT_TRUE(json.has_field("wrapped_network"));
-
+                // check if each metric type has the correct amount of metric attributes
+                ASSERT_EQ(json["disk"].size(), 4U);
+                ASSERT_EQ(json["memory"].size(), 4U);
+                ASSERT_EQ(json["wrapped_cpu"]["TOTAL"].size(), 7U);
+                // check if wrapped_cpu has the correct cpu cores
+                ASSERT_TRUE(json["wrapped_cpu"].has_field("CORE_9"));
+                ASSERT_EQ(json["wrapped_cpu"].size(), 2U);
+                // check static values
+                ASSERT_EQ(json["disk"]["F_BLOCKS"], diskCompareValues[0]);
+                ASSERT_EQ(json["disk"]["F_BSIZE"], diskCompareValues[1]);
+                ASSERT_EQ(json["disk"]["F_FRSIZE"], diskCompareValues[2]);
+                ASSERT_EQ(json["memory"]["TOTAL_RAM"], memoryCompareValues[0]);
+                ASSERT_EQ(json["memory"]["TOTAL_SWAP"], memoryCompareValues[1]);
+                ASSERT_EQ(json["memory"]["MEM_UNIT"], memoryCompareValues[2]);
             }
-//            else if (i == 3) {
-//                ASSERT_TRUE(json.has_field("disk"));
-//                ASSERT_TRUE(json.has_field("memory"));
-//                ASSERT_TRUE(json.has_field("wrapped_cpu"));
-//                ASSERT_TRUE(json.has_field("wrapped_network"));
-//            }
         }
-
     }
 
     TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreamsConfiguration) {
+        // collect constant values for later comparison
+        std::list<std::string> memoryCompareMetricsList = {"TOTAL_RAM", "TOTAL_SWAP", "MEM_UNIT"};
+        auto memoryCollector = Monitoring::MemoryCollector();
+        Monitoring::MetricPtr memoryMetric = memoryCollector.readMetric();
+        Monitoring::MemoryMetrics typedMetricMemory = memoryMetric->getValue<Monitoring::MemoryMetrics>();
+        std::vector<uint64_t> memoryCompareValues;
+        for(const std::string& metricName : memoryCompareMetricsList) {
+            memoryCompareValues.push_back(typedMetricMemory.getValue(metricName));
+        }
+        std::list<std::string> diskCompareMetricsList = {"F_BLOCKS", "F_BSIZE", "F_FRSIZE"};
+        auto diskCollector = Monitoring::DiskCollector();
+        Monitoring::MetricPtr diskMetric = diskCollector.readMetric();
+        Monitoring::DiskMetrics typedMetricDisk = diskMetric->getValue<Monitoring::DiskMetrics>();
+        std::vector<uint64_t> diskCompareValues;
+        for(const std::string& metricName : diskCompareMetricsList) {
+            diskCompareValues.push_back(typedMetricDisk.getValue(metricName));
+        }
+
         uint64_t noWorkers = 1;
         uint64_t localBuffers = 64;
         uint64_t globalBuffers = 1024 * 128;
 
-        std::set<std::string> expectedMonitoringStreams {"wrapped_network", "wrapped_cpu", "memory", "disk"};
-        std::string configMonitoring01 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
-                                         "cores: \"0, 2, 3, 6\""
-                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" "
-                                         " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, FREE_RAM, SHARED_RAM, BUFFER_RAM, "
-                                         "FREE_SWAP, TOTAL_HIGH, FREE_HIGH, PROCS, MEM_UNIT, LOADS_1MIN, LOADS_5MIN, LOADS_15MIN\" "
-                                         " - network: attributes: \"rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, "
-                                         "rMulticast, tBytes, tPackets, tErrs, tDrop, tFifo, tCools, tCarrier, tCompressed\" ";
-        //    std::set<std::string> expectedMonitoringStreams {"wrapped_cpu, disk"};
-//        std::string configMonitoring02 = " - cpu: attributes: \"user, nice, system, idle, iowait, irq, softirq, steal, guest, guestnice\" "
-//                                         " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS, F_BFREE, F_BAVAIL\" ";
+        std::string configMonitoring = " - cpu: attributes: \"user, nice, system, idle, iowait\" cores: \"0, 9\" sampleRate: 1000"
+                                       " - disk: attributes: \"F_BSIZE, F_FRSIZE, F_BLOCKS\" sampleRate: 1000"
+                                       " - memory: attributes: \"TOTAL_RAM, TOTAL_SWAP, MEM_UNIT\" sampleRate: 1000";
 
         auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                         TestUtils::restPort(*restPort),
@@ -336,49 +358,14 @@ using std::cout;
                                                TestUtils::numLocalBuffers(localBuffers),
                                                TestUtils::numGlobalBuffers(globalBuffers),
                                                TestUtils::bufferSizeInBytes(32768),
-                                               TestUtils::monitoringConfiguration(configMonitoring01)});
-
-//        auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-//                                               TestUtils::dataPort(0),
-//                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
-//                                               TestUtils::sourceType("DefaultSource"),
-//                                               TestUtils::logicalSourceName("default_logical"),
-//                                               TestUtils::physicalSourceName("test1"),
-//                                               TestUtils::workerHealthCheckWaitTime(1),
-//                                               TestUtils::enableMonitoring(),
-//                                               TestUtils::enableDebug(),
-//                                               TestUtils::numberOfSlots(50),
-//                                               TestUtils::numLocalBuffers(localBuffers),
-//                                               TestUtils::numGlobalBuffers(globalBuffers),
-//                                               TestUtils::bufferSizeInBytes(32768),
-//                                               TestUtils::monitoringConfiguration(configMonitoring02)});
-
+                                               TestUtils::monitoringConfiguration(configMonitoring)});
         EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
-
-//        auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
-//        NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
-//        //    ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size() * 2);
-//
-//        //    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
-//        sleep(30);
-//        auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-//
-//        auto json = jsonMetrics[std::to_string(1)];
-//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 1 << ":\n" << json);
-//        sleep(30);
-//        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-//        json = jsonMetrics[std::to_string(2)];
-//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 2 << ":\n" << json);
-//        sleep(30);
-//        jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
-//        json = jsonMetrics[std::to_string(3)];
-//        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << 3 << ":\n" << json);
 
         auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
         NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
-//        ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size());
-
-        ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 100, *restPort));
+        ASSERT_EQ(jsonStart.size(), 7);
+        // waiting for the values to arrive at the storage
+        sleep(15);
         auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
 
         // test network metrics
@@ -388,6 +375,26 @@ using std::cout;
             NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
 //            ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
             ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
+            if (i == 2) {
+                //check if the correct metric types are collected
+                ASSERT_TRUE(json.has_field("disk"));
+                ASSERT_TRUE(json.has_field("memory"));
+                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+                // check if each metric type has the correct amount of metric attributes
+                ASSERT_EQ(json["disk"][0]["value"].size(), 4U);
+                ASSERT_EQ(json["memory"][0]["value"].size(), 4U);
+                ASSERT_EQ(json["wrapped_cpu"][0]["value"]["TOTAL"].size(), 7U);
+                // check if wrapped_cpu has the correct cpu cores
+                ASSERT_TRUE(json["wrapped_cpu"][0]["value"].has_field("CORE_9"));
+                ASSERT_EQ(json["wrapped_cpu"][0]["value"].size(), 2U);
+                // check static values
+                ASSERT_EQ(json["disk"][0]["value"]["F_BLOCKS"], diskCompareValues[0]);
+                ASSERT_EQ(json["disk"][0]["value"]["F_BSIZE"], diskCompareValues[1]);
+                ASSERT_EQ(json["disk"][0]["value"]["F_FRSIZE"], diskCompareValues[2]);
+                ASSERT_EQ(json["memory"][0]["value"]["TOTAL_RAM"], memoryCompareValues[0]);
+                ASSERT_EQ(json["memory"][0]["value"]["TOTAL_SWAP"], memoryCompareValues[1]);
+                ASSERT_EQ(json["memory"][0]["value"]["MEM_UNIT"], memoryCompareValues[2]);
+            }
         }
     }
 }// namespace NES
