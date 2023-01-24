@@ -22,7 +22,7 @@
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <cstdint>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 
 class DataProvider;
 using DataProviderPtr = std::shared_ptr<DataProvider>;
@@ -80,6 +80,6 @@ class DataProvider {
     DataProviderMode providerMode;
     cuckoohash_map<uintptr_t, TupleBufferHolder> collector;
 };
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
 
 #endif//NES_DATAPROVIDER_HPP
