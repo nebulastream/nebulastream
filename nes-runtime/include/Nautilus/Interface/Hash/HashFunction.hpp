@@ -7,9 +7,9 @@ class HashFunction {
   public:
     using HashValue = Value<UInt64>;
 
-    HashValue calculate(Value<>& value);
+    HashValue calculate(Value<> value);
     HashValue calculate(std::vector<Value<>>& values);
-
+    virtual ~HashFunction() = default;
   protected:
     virtual HashValue init() = 0;
     virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;

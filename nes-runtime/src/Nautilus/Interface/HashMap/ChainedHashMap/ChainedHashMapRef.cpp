@@ -1,6 +1,6 @@
-#include <Execution/DataStructures/ChainedHashMap/ChainedHashMap.hpp>
-#include <Execution/DataStructures/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 
 namespace NES::Nautilus::Interface {
 
@@ -14,15 +14,17 @@ extern "C" void* insetProxy(void* state, uint64_t hash) {
     return hashMap->insertEntry(hash);
 }
 
+ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize)
+    : hashTableRef(hashTableRef), keyOffset(sizeof(ChainedHashMap::Entry)), valueOffset(keyOffset + keySize) {}
+
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const Value<UInt64>& hash) {
     auto entry = FunctionCall<>("findChainProxy", findChainProxy, hashTableRef, hash);
-
-    return {entry, 0, 0};
+    return {entry, keyOffset, valueOffset};
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash) {
     auto entry = FunctionCall<>("insertProxy", insetProxy, hashTableRef, hash);
-    return {entry, 0, 0};
+    return {entry, keyOffset, valueOffset};
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {

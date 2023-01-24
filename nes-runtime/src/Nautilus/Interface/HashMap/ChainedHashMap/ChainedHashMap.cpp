@@ -1,4 +1,4 @@
-#include <Execution/DataStructures/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 namespace NES::Nautilus::Interface {
 

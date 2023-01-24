@@ -11,7 +11,7 @@ class ChainedHashMapRef {
   public:
     class EntryRef {
       public:
-        EntryRef(Value<MemRef> ref, int64_t keyOffset, int64_t valueOffset);
+        EntryRef(Value<MemRef> ref, uint64_t keyOffset, uint64_t valueOffset);
         EntryRef getNext();
         Value<MemRef> getKeyPtr();
         Value<MemRef> getValuePtr();
@@ -22,7 +22,7 @@ class ChainedHashMapRef {
         uint64_t keyOffset;
         uint64_t valueOffset;
     };
-    ChainedHashMapRef(Value<MemRef> hashTableRef, uint64_t keySize);
+    ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize);
 
     EntryRef findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
     EntryRef findOrCreate(const Value<UInt64>& hash,

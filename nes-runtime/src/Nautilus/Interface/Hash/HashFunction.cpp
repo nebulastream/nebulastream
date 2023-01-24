@@ -1,7 +1,7 @@
-#include <Execution/DataStructures/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
 
 namespace NES::Nautilus::Interface {
-HashFunction::HashValue HashFunction::calculate(Value<>& value) {
+HashFunction::HashValue HashFunction::calculate(Value<> value) {
     auto hash = init();
     return calculate(hash, value);
 };
