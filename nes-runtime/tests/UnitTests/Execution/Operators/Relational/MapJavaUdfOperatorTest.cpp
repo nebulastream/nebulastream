@@ -37,15 +37,6 @@ class MapJavaUdfOperatorTest : public testing::Test {
                 std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
             }
 
-            /* Will be called before a test is executed. */
-            void SetUp() override { std::cout << "Setup MapJavaUdfOperatorTest test case." << std::endl; }
-
-            /* Will be called before a test is executed. */
-            void TearDown() override { std::cout << "Tear down MapJavaUdfOperatorTest test case." << std::endl; }
-
-            /* Will be called after all tests in this class are finished. */
-            static void TearDownTestCase() { std::cout << "Tear down MapJavaUdfOperatorTest test class." << std::endl; }
-
             std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
 
@@ -291,12 +282,14 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
 
 /**
  * @brief Test simple UDF with loaded java classes as input and output (ComplexMapFunction<ComplexPojo, ComplexPojo>)
- * The UDF appends incoming tuples the postfix 'appended'.
+ * The UDF sets the bool to false, numerics +10 and appends to strings the postfix 'appended'.
 */
 TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
     std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
-    SchemaPtr output = Schema::create()->addField("intVariable", NES::INT32)->addField("floatVariable", NES::FLOAT32)->addField("booleanVariable", NES::BOOLEAN);
+    SchemaPtr input = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
+    SchemaPtr output = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
     std::string method = "map";
     std::string clazz = "ComplexPojoMapFunction";
     std::string inputClass = "ComplexPojo";
@@ -304,20 +297,29 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     std::unordered_map<std::string, std::vector<char>> byteCodeList;
     std::vector<char> serializedInstance;
 
-    auto initialInt = 10;
-    auto initialFloat = 10.0f;
-    auto initialBool = true;
+    int8_t initialByte = 10;
+    int16_t initialShort = 10;
+    int32_t initialInt = 10;
+    int64_t initialLong = 10;
+    float initialFloat = 10.0;
+    double initialDouble = 10.0;
+    bool initialBool = true;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"intVariable", Value<>(initialInt)}, {"floatVariable", Value<>(initialFloat)}, {"booleanVariable", Value<>(initialBool)}});
+    auto record = Record({{"byteVariable", Value<>(initialByte)}, {"shortVariable", Value<>(initialShort)}, {"intVariable", Value<>(initialInt)}, {"longVariable", Value<>(initialLong)}, {"floatVariable", Value<>(initialFloat)}, {"doubleVariable", Value<>(initialDouble)}, {"stringVariable", Value<Text>("testValue")}, {"booleanVariable", Value<>(initialBool)}});
     map.execute(ctx, record);
 
+    ASSERT_EQ(record.read("byteVariable"), initialByte + 10);
+    ASSERT_EQ(record.read("shortVariable"), initialShort + 10);
     ASSERT_EQ(record.read("intVariable"), initialInt + 10);
+    ASSERT_EQ(record.read("longVariable"), initialLong + 10);
     ASSERT_EQ(record.read("floatVariable"), initialFloat + 10.0);
+    ASSERT_EQ(record.read("doubleVariable"), initialDouble + 10.0);
+    ASSERT_EQ(record.read("stringVariable"), Value<Text>("testValue_appended"));
     ASSERT_EQ(record.read("booleanVariable"), false);
 }
 
