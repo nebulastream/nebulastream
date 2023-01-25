@@ -13,16 +13,13 @@
 */
 
 #include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
 #include <iostream>
-#ifdef S2DEF
-#include "Util/UtilityFunctions.hpp"
-#include <s2/s2point.h>
-#endif
 
 namespace NES::Spatial::Mobility::Experimental {
 
