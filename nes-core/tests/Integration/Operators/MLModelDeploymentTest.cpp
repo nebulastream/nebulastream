@@ -54,6 +54,75 @@ class MLModelDeploymentTest : public Testing::NESBaseTest,
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MLModelDeploymentTest test class.");
     }
+
+    // The following methods create the test data for the parameterized test.
+    // The test data is a four-tuple which contains the name of the test, the input schema,
+    // the CSV file containing the operator input, and the expected model output.
+    static auto createBooleanTestData() {
+        return std::make_tuple("Boolean",
+                               Schema::create()
+                                   ->addField("id", DataTypeFactory::createUInt64())
+                                   ->addField("f1", DataTypeFactory::createBoolean())
+                                   ->addField("f2", DataTypeFactory::createBoolean())
+                                   ->addField("f3", DataTypeFactory::createBoolean())
+                                   ->addField("f4", DataTypeFactory::createBoolean())
+                                   ->addField("target", DataTypeFactory::createUInt64()),
+                               "iris_short_bool.csv",
+                               std::vector<Output>{{0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894}});
+    }
+
+    static auto createFloatTestData() {
+        return std::make_tuple("Float",
+                               Schema::create()
+                                   ->addField("id", DataTypeFactory::createUInt64())
+                                   ->addField("f1", DataTypeFactory::createFloat())
+                                   ->addField("f2", DataTypeFactory::createFloat())
+                                   ->addField("f3", DataTypeFactory::createFloat())
+                                   ->addField("f4", DataTypeFactory::createFloat())
+                                   ->addField("target", DataTypeFactory::createUInt64()),
+                               "iris_short.csv",
+                               std::vector<Output>{{{0.86352879, 0.12861125, 0.0078599472},
+                                                    {0.82480621, 0.16215269, 0.013041073},
+                                                    {0.84584343, 0.14335836, 0.010798273},
+                                                    {0.81788188, 0.16869366, 0.013424426},
+                                                    {0.86857224, 0.12411855, 0.0073091877},
+                                                    {0.8524667, 0.13982011, 0.007713221},
+                                                    {0.84102476, 0.14806809, 0.010907203},
+                                                    {0.84742284, 0.14333251, 0.0092447177},
+                                                    {0.80810225, 0.17601806, 0.01587967},
+                                                    {0.82949907, 0.15858534, 0.011915659}}});
+    }
+
+    static auto createIntTestData() {
+        return std::make_tuple("Int",
+                               Schema::create()
+                                   ->addField("id", DataTypeFactory::createUInt64())
+                                   ->addField("f1", DataTypeFactory::createUInt64())
+                                   ->addField("f2", DataTypeFactory::createUInt64())
+                                   ->addField("f3", DataTypeFactory::createUInt64())
+                                   ->addField("f4", DataTypeFactory::createUInt64())
+                                   ->addField("target", DataTypeFactory::createUInt64()),
+                               "iris_short.csv",
+                               std::vector<Output>{{0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894},
+                                                   {0.43428239, 0.31287873, 0.25283894}});
+    }
 };
 
 /**
@@ -164,69 +233,9 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 INSTANTIATE_TEST_CASE_P(TestInputs,
                         MLModelDeploymentTest,
                         ::testing::Values(
-                            // Test booleans in input schema.
-                            // Output is same as ints but different input file.
-                            std::make_tuple("Boolean",
-                                            Schema::create()
-                                                ->addField("id", DataTypeFactory::createUInt64())
-                                                ->addField("f1", DataTypeFactory::createBoolean())
-                                                ->addField("f2", DataTypeFactory::createBoolean())
-                                                ->addField("f3", DataTypeFactory::createBoolean())
-                                                ->addField("f4", DataTypeFactory::createBoolean())
-                                                ->addField("target", DataTypeFactory::createUInt64()),
-                                            "iris_short_bool.csv",
-                                            std::vector<Output>{{0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894},
-                                                                {0.43428239, 0.31287873, 0.25283894}}),
-                            // Test floats in input schema.
-                            std::make_tuple("Float",
-                                            Schema::create()
-                                                ->addField("id", DataTypeFactory::createUInt64())
-                                                ->addField("f1", DataTypeFactory::createFloat())
-                                                ->addField("f2", DataTypeFactory::createFloat())
-                                                ->addField("f3", DataTypeFactory::createFloat())
-                                                ->addField("f4", DataTypeFactory::createFloat())
-                                                ->addField("target", DataTypeFactory::createUInt64()),
-                                            "iris_short.csv",
-                                            std::vector<Output>{{{0.86352879, 0.12861125, 0.0078599472},
-                                                                 {0.82480621, 0.16215269, 0.013041073},
-                                                                 {0.84584343, 0.14335836, 0.010798273},
-                                                                 {0.81788188, 0.16869366, 0.013424426},
-                                                                 {0.86857224, 0.12411855, 0.0073091877},
-                                                                 {0.8524667, 0.13982011, 0.007713221},
-                                                                 {0.84102476, 0.14806809, 0.010907203},
-                                                                 {0.84742284, 0.14333251, 0.0092447177},
-                                                                 {0.80810225, 0.17601806, 0.01587967},
-                                                                 {0.82949907, 0.15858534, 0.011915659}}}),
-                            // Test ints in output schema.
-                            std::make_tuple("Int",
-                                            Schema::create()
-                                                ->addField("id", DataTypeFactory::createUInt64())
-                                                ->addField("f1", DataTypeFactory::createUInt64())
-                                                ->addField("f2", DataTypeFactory::createUInt64())
-                                                ->addField("f3", DataTypeFactory::createUInt64())
-                                                ->addField("f4", DataTypeFactory::createUInt64())
-                                                ->addField("target", DataTypeFactory::createUInt64()),
-                                            "iris_short.csv",
-                                            std::vector<Output>{
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894},
-                                                {0.43428239, 0.31287873, 0.25283894}
-                                            })),
+                            MLModelDeploymentTest::createBooleanTestData(),
+                            MLModelDeploymentTest::createFloatTestData(),
+                            MLModelDeploymentTest::createIntTestData()),
                         [](const testing::TestParamInfo<MLModelDeploymentTest::ParamType>& info) {
                             std::string name = std::get<0>(info.param);
                             return name;
