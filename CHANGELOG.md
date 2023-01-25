@@ -1,12 +1,31 @@
 # Changelog
 
+## [v0.4.33](https://github.com/nebulastream/nebulastream/tree/v0.4.33) (2023-01-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.32...v0.4.33)
+
+### Bug Fixes 🐛
+
+- \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
+
+#### Runtime 
+
+- \[Feature\] Bool Support in Nautilus MemoryProvider/MemoryLayout [\#3373](https://github.com/nebulastream/nebulastream/issues/3373)
+
+#### REST API 
+
+- Delete all components of old REST API and ccprest usages [\#3001](https://github.com/nebulastream/nebulastream/issues/3001)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Port different ingestion rates to new Benchmark repo [\#3336](https://github.com/nebulastream/nebulastream/issues/3336)
+
 ## [v0.4.32](https://github.com/nebulastream/nebulastream/tree/v0.4.32) (2023-01-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.31...v0.4.32)
 
 ### Bug Fixes 🐛
 
-- \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
 - \[BUG\] NebulaStream on multi user systems [\#3009](https://github.com/nebulastream/nebulastream/issues/3009)
 
 ## [v0.4.31](https://github.com/nebulastream/nebulastream/tree/v0.4.31) (2023-01-23)
