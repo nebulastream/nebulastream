@@ -143,4 +143,4 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
 
 install(DIRECTORY ${CLANG_INCLUDE_DIR}
         COMPONENT nesHeaders
-        DESTINATION ${CMAKE_INSTALL_BINDIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/clang/${LLVM_PACKAGE_VERSION}/include/)
