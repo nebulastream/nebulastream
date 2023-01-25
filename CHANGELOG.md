@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.4.32](https://github.com/nebulastream/nebulastream/tree/v0.4.32) (2023-01-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.31...v0.4.32)
+
+### Bug Fixes 🐛
+
+- \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
+- \[BUG\] NebulaStream on multi user systems [\#3009](https://github.com/nebulastream/nebulastream/issues/3009)
+
+## [v0.4.31](https://github.com/nebulastream/nebulastream/tree/v0.4.31) (2023-01-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.30...v0.4.31)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Float values written into DynamicTupleBuffer differ at read [\#3374](https://github.com/nebulastream/nebulastream/issues/3374)
+
 ## [v0.4.30](https://github.com/nebulastream/nebulastream/tree/v0.4.30) (2023-01-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.29...v0.4.30)
@@ -7,6 +24,11 @@
 **Implemented enhancements:**
 
 - \[Feature\] Multiple logical and physical source for E2E Benchmarking [\#3332](https://github.com/nebulastream/nebulastream/issues/3332)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Remote Client Test fails randomly [\#3414](https://github.com/nebulastream/nebulastream/issues/3414)
+- \[BUG\] Location Integration Test and Remote Client Test always fail [\#3402](https://github.com/nebulastream/nebulastream/issues/3402)
 
 ## [v0.4.29](https://github.com/nebulastream/nebulastream/tree/v0.4.29) (2023-01-21)
 
