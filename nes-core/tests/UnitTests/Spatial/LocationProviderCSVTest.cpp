@@ -21,7 +21,6 @@
 
 namespace NES {
 
-//todo #3432: add negative tests
 class LocationProviderCSVTest : public Testing::NESBaseTest {
 
   public:
@@ -40,28 +39,28 @@ TEST_F(LocationProviderCSVTest, testInvalidCsv) {
     //test nonexistent file
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "non_existent_file.csv";
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
 
     //test empty file
     csvPath = std::string(TEST_DATA_DIRECTORY) + "emptyFile.csv";
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
 
     //test invalid number formats
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLatitudeFormat.csv";
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLongitudeFormat.csv";
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidOffsetFormat.csv";
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
 
     //test invalid column numbers
     csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocationsNotEnoughColumns.csv";
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    EXPECT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
 }
 
 
@@ -87,7 +86,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -113,7 +112,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     auto locationProvider =
         std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
-    EXPECT_EQ(startTime, simulatedStartTime);
+    ASSERT_EQ(startTime, simulatedStartTime);
 
     //Get the expected waypoints
     auto expectedWayPoints = getWaypointsFromCsv(csvPath, locationProvider->getStartTime());
@@ -138,7 +137,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -170,7 +169,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     auto locationProvider =
         std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath, simulatedStartTime);
     auto startTime = locationProvider->getStartTime();
-    EXPECT_EQ(startTime, simulatedStartTime);
+    ASSERT_EQ(startTime, simulatedStartTime);
 
 
     //Get the expected waypoints
@@ -190,7 +189,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();

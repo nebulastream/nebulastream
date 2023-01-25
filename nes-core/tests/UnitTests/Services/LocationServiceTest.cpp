@@ -90,12 +90,12 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     // test querying for node which does not exist in the system
-    EXPECT_EQ(locationService->requestNodeLocationDataAsJson(1234), nullptr);
+    ASSERT_EQ(locationService->requestNodeLocationDataAsJson(1234), nullptr);
 
     //test getting location of node which does not have a location
     cmpJson = locationService->requestNodeLocationDataAsJson(node1Id);
     EXPECT_EQ(cmpJson["id"], node1Id);
-    EXPECT_TRUE(cmpJson["location"].empty());
+    ASSERT_TRUE(cmpJson["location"].empty());
 
     //test getting location of field node
     cmpJson = locationService->requestNodeLocationDataAsJson(node2Id);
@@ -103,12 +103,12 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_EQ(entry.at("id").get<uint64_t>(), node2Id);
     cmpLoc[0] = 13.4;
     cmpLoc[1] = -23;
-    EXPECT_EQ(cmpJson.at("location"), cmpLoc);
+    ASSERT_EQ(cmpJson.at("location"), cmpLoc);
 
     //test getting location of a mobile node
     cmpJson = nullptr;
     cmpJson = locationService->requestNodeLocationDataAsJson(node3Id);
-    EXPECT_EQ(cmpJson["id"], node3Id);
+    ASSERT_EQ(cmpJson["id"], node3Id);
     cmpLoc[0] = 52.55227464714949;
     cmpLoc[1] = 13.351743136322877;
 }
@@ -146,14 +146,14 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
 
     auto response0 = locationService->requestLocationDataFromAllMobileNodesAsJson();
 
-    EXPECT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
+    ASSERT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
 
 
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 
     auto response1 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp1 = response1.get<std::vector<nlohmann::json>>();
-    EXPECT_TRUE(getLocResp1.size() == 1);
+    ASSERT_TRUE(getLocResp1.size() == 1);
 
     nlohmann::json cmpLoc;
     cmpLoc[0] = 52.55227464714949;
@@ -163,13 +163,13 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     EXPECT_TRUE(entry.find("id") != entry.end());
     EXPECT_EQ(entry.at("id"), node3Id);
     EXPECT_TRUE(entry.find("location") != entry.end());
-    EXPECT_EQ(entry.at("location"), cmpLoc);
+    ASSERT_EQ(entry.at("location"), cmpLoc);
 
     topologyManagerService->updateGeoLocation(node4Id, {53.55227464714949, -13.351743136322877});
 
     auto response2 = locationService->requestLocationDataFromAllMobileNodesAsJson();
     auto getLocResp2 = response2.get<std::vector<nlohmann::json>>();
-    EXPECT_EQ(getLocResp2.size(), 2);
+    ASSERT_EQ(getLocResp2.size(), 2);
 
     for (auto e : getLocResp2) {
         entry = e.get<std::map<std::string, nlohmann::json>>();
@@ -216,7 +216,7 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart3);
+    ASSERT_TRUE(retStart3);
 
     auto response1 = locationService->requestReconnectScheduleAsJson(node3Id);
     auto entry = response1.get<std::map<std::string, nlohmann::json>>();
@@ -228,10 +228,10 @@ TEST_F(LocationServiceTest, DISABLED_testRequestEmptyReconnectSchedule) {
     EXPECT_NE(entry.find("indexUpdatePosition"), entry.end());
     EXPECT_EQ(entry.at("indexUpdatePosition"), nullptr);
     EXPECT_NE(entry.find("reconnectPoints"), entry.end());
-    EXPECT_EQ(entry.at("reconnectPoints").size(), 0);
+    ASSERT_EQ(entry.at("reconnectPoints").size(), 0);
 
     bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
+    ASSERT_TRUE(retStopWrk3);
 }
 
 TEST_F(LocationServiceTest, testConvertingToJson) {
@@ -242,19 +242,18 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
 
     EXPECT_EQ(validLocJson["id"], 1);
     EXPECT_EQ(validLocJson["location"][0], lat);
-    EXPECT_EQ(validLocJson["location"][1], lng);
+    ASSERT_EQ(validLocJson["location"][1], lng);
 
     auto invalidLoc = NES::Spatial::DataTypes::Experimental::GeoLocation();
     auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
     NES_DEBUG("Invalid location json: " << invalidLocJson.dump())
     EXPECT_EQ(invalidLocJson["id"], 2);
-
-    EXPECT_TRUE(invalidLocJson["location"].empty());
+    ASSERT_TRUE(invalidLocJson["location"].empty());
 
     NES::Spatial::DataTypes::Experimental::GeoLocation locNullPtr;
     auto nullLocJson = convertNodeLocationInfoToJson(3, locNullPtr);
     EXPECT_EQ(nullLocJson["id"], 3);
-    EXPECT_TRUE(nullLocJson["location"].empty());
+    ASSERT_TRUE(nullLocJson["location"].empty());
 }
 }// namespace NES
 #endif

@@ -60,7 +60,7 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     NES_DEBUG("point on line coverage in meters: " << S2Earth::ToMeters(resultOnLinePoint.second))
     EXPECT_TRUE(
         S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
-    EXPECT_TRUE(abs(resultOnLinePoint.second - coverage) < allowedError);
+    ASSERT_TRUE(abs(resultOnLinePoint.second - coverage) < allowedError);
     NES_DEBUG("coverage end for point on line: " << S2LatLng(resultOnLinePoint.first))
 
     //create a point whose unit vector is orthogonal to start and end of the polyline
@@ -75,7 +75,7 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
         NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path,
                                                                                            coveringPointCovAwayFromLine,
                                                                                            coverage);
-    EXPECT_TRUE(resultCovaway.second.degrees() == 0);
+    ASSERT_TRUE(resultCovaway.second.degrees() == 0);
 
     //test different distances from the line which are greater than zero but smaller than coverage
     for (int i = 1; i < 100; ++i) {
@@ -93,7 +93,7 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
         //check that the returned coverage end point is on the path and that the distance covered on line matches
         EXPECT_TRUE(S2::ApproxEquals(result.first, comparePoint, allowedError));
         //check that the returned point has the right distance to the covering node
-        EXPECT_TRUE(abs(coverage - S1Angle(result.first, coveringPointAwayFromPath)) < allowedError);
+        ASSERT_TRUE(abs(coverage - S1Angle(result.first, coveringPointAwayFromPath)) < allowedError);
     }
 }
 #endif
