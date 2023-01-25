@@ -15,18 +15,43 @@
 #ifndef NES_INGESTIONRATEGENERATOR_HPP
 #define NES_INGESTIONRATEGENERATOR_HPP
 
+#include <Util/Logger/Logger.hpp>
+#include <cstdint>
+#include <vector>
+#include <string>
+
 namespace NES::Benchmark::IngestionRateGeneration {
+
+enum IngestionRateDistribution {
+    UNIFORM,
+    SINUS,
+    COSINUS,
+    M1,
+    M2,
+    D1,
+    D2
+};
+
 class IngestionRateGenerator {
   public:
     /**
-     *
-     * @return
+     * @brief constructor for an ingestion rate generator
      */
-    virtual std::vector<uint64_t> generateFrequencies() = 0;
-  private:
+    IngestionRateGenerator();
+
     /**
-     *
+     * @brief creates a vector of ingestion rates
+     * @return vector of predefined ingestion rates
      */
+    virtual std::vector<uint64_t> generateIngestionRates() = 0;
+
+  protected:
+    /**
+     * @brief determines whether the given ingestion rate distribution is supported
+     * @param ingestionRateDistribution
+     * @return IngestionRateDistribution
+     */
+    IngestionRateDistribution getDistributionFromString(std::string ingestionRateDistribution);
 };
 }// namespace NES::Benchmark::IngestionRateGeneration
 

@@ -12,10 +12,19 @@
     limitations under the License.
 */
 
-#include "IngestionRateGenerator.hpp"
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
-namespace NES {
-namespace Benchmark {
-namespace IngestionRateGenerating {}// namespace IngestionRateGenerating
-}// namespace Benchmark
-}// namespace NES
+namespace NES::Benchmark::IngestionRateGeneration {
+IngestionRateGenerator::IngestionRateGenerator() {}
+
+IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string ingestionRateDistribution) {
+    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform") return UNIFORM;
+    else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus") return SINUS;
+    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus" || ingestionRateDistribution == "cosinus") return COSINUS;
+    else if (ingestionRateDistribution == "M1" || ingestionRateDistribution == "m1") return M1;
+    else if (ingestionRateDistribution == "M2" || ingestionRateDistribution == "m2") return M2;
+    else if (ingestionRateDistribution == "D1" || ingestionRateDistribution == "d1") return D1;
+    else if (ingestionRateDistribution == "D2" || ingestionRateDistribution == "d2") return D2;
+    else NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
+}
+}// namespace NES::Benchmark::IngestionRateGeneration
