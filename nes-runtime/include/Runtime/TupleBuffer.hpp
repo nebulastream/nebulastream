@@ -217,12 +217,6 @@ class TupleBuffer {
         return reinterpret_cast<const T*>(ptr);
     }
 
-    inline void setBuffer(uint8_t* newPtr) noexcept { ptr = newPtr; }
-
-    inline void setBufferSize(uint32_t newSize) noexcept { size = newSize; }
-
-    inline void setControlBlock(detail::BufferControlBlock* newControlBlock) noexcept { controlBlock = newControlBlock; }
-
     [[nodiscard]] inline uint32_t getReferenceCounter() const noexcept {
         return controlBlock ? controlBlock->getReferenceCount() : 0;
     }
@@ -280,6 +274,16 @@ class TupleBuffer {
     [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept {
         return controlBlock->getNumberOfChildrenBuffer();
     }
+
+#ifdef NES_ENABLE_WAMR
+    inline void setBuffer(uint8_t* newPtr) noexcept { ptr = newPtr; }
+
+    inline void setBufferSize(uint32_t newSize) noexcept { size = newSize; }
+
+    inline void setControlBlock(detail::BufferControlBlock* newControlBlock) noexcept { controlBlock = newControlBlock; }
+
+    inline detail::BufferControlBlock* getControlBlockPub() const { return controlBlock; }
+#endif
 
   private:
     /**

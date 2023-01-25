@@ -187,6 +187,10 @@ class alignas(64) BufferControlBlock {
     void dumpOwningThreadInfo();
 #endif
 
+#ifdef NES_ENABLE_WAMR
+
+#endif
+
   private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;

@@ -18,9 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
-#include <wasm_export.h>
-#include <Runtime/WorkerContext.hpp>
-#include "Runtime/BufferManager.hpp"
+#include <Runtime/detail/TupleBufferImpl.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 
@@ -41,65 +39,6 @@ void* allocateBufferProxy(void* workerContextPtr) {
     return tb;
 }
 
-int foo(wasm_exec_env_t execEnv, int a, int b) {
-    std::cout << "Calling foo\n";
-    auto tmp = execEnv;
-    return a + b;
-}
-
-class DummyClass {
-  public:
-    DummyClass(int* p, uint8_t s) : ptr(p), size(s) {}
-    int* getptr() {
-        return ptr;
-    }
-    [[nodiscard]] uint32_t getSize() const {
-        return size;
-    }
-    void setSize(uint32_t size2) {
-        size = size2;
-    }
-    void setPtr(int* p) {
-        ptr = p;
-    }
-  private:
-    int* ptr = nullptr;
-    uint32_t size = 10;
-};
-
-void dataRead(wasm_exec_env_t execEnv, uint32_t msg_offset, int32_t buf_len) {
-    std::cout << "Received: " << msg_offset << " and " << buf_len << std::endl;
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    const char* buffer = "7";
-    char* msg;
-
-    if (!wasm_runtime_validate_app_str_addr(moduleInstance, msg_offset))
-        return;
-
-    msg = static_cast<char*>(wasm_runtime_addr_app_to_native(moduleInstance, msg_offset));
-    std::cout << msg << std::endl;
-    strncpy(msg, buffer, 1);
-    std::cout << msg << std::endl;
-}
-
-void writeClass(wasm_exec_env_t execEnv, uint32_t memoryOffset) {
-    std::cout << "Received: " << memoryOffset << std::endl;
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    DummyClass Dummy{nullptr, 1};
-    auto *dummyPtr = &Dummy;
-    dummyPtr->setSize(4);
-    auto *memPtr = static_cast<DummyClass*>(wasm_runtime_addr_app_to_native(moduleInstance, memoryOffset));
-    *memPtr = *dummyPtr;
-}
-
-void readClass(wasm_exec_env_t execEnv, uint32_t memoryOffset) {
-    std::cout << "Received: " << memoryOffset << std::endl;
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    auto *memPtr = static_cast<Runtime::TupleBuffer*>(wasm_runtime_addr_app_to_native(moduleInstance, memoryOffset));
-    auto bufferSize = memPtr->getBufferSize();
-    std::cout << "Class members(ptr, bufferSize): (" << *memPtr << "," << bufferSize << ")" << std::endl;
-}
-
 uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
     auto bm = std::make_shared<Runtime::BufferManager>();
@@ -110,11 +49,18 @@ uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     auto buf = bm->getBufferBlocking();
     Runtime::TupleBuffer* tupleBuffer = &buf;
     auto p = tupleBuffer->getBuffer();
+    auto cb = tupleBuffer->getControlBlockPub();
     auto wasmTBPtr = wasm_runtime_module_dup_data(moduleInstance, reinterpret_cast<const char*>(tupleBuffer), 1024);
     auto wasmBufferPtr = wasm_runtime_module_dup_data(moduleInstance, reinterpret_cast<const char*>(p), tupleBuffer->getBufferSize());
-    std::cout << "-> " << tupleBuffer->getBufferSize() << std::endl;
-    auto *memPtr = static_cast<Runtime::TupleBuffer*>(wasm_runtime_addr_app_to_native(moduleInstance, wasmTBPtr));
-    memPtr->setBufferSize(1024);
+    auto wasmCBPtr = wasm_runtime_module_dup_data(moduleInstance, reinterpret_cast<const char*>(cb), sizeof(*cb));
+
+    auto *nativeTBPtr = static_cast<Runtime::TupleBuffer*>(wasm_runtime_addr_app_to_native(moduleInstance, wasmTBPtr));
+    auto *nativeBufferPtr = static_cast<unsigned char*>(wasm_runtime_addr_app_to_native(moduleInstance, wasmBufferPtr));
+    auto *nativeCBPtr = static_cast<Runtime::detail::BufferControlBlock*>(wasm_runtime_addr_app_to_native(moduleInstance, wasmCBPtr));
+    nativeTBPtr->setBuffer(nativeBufferPtr);
+    nativeTBPtr->setControlBlock(nativeCBPtr);
+
+    //std::cout << "! " << nativeTBPtr->getNumberOfTuples() << std::endl;
     //auto* p = static_cast<Runtime::TupleBuffer*>(wasm_runtime_addr_app_to_native(moduleInstance, wasmPtr));
     //auto wasmPtr = wasm_runtime_module_malloc(moduleInstance, 250, &tb2);
     /*
@@ -148,48 +94,59 @@ uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     return wasmTBPtr;
 }
 
-uint32_t host_allocateBufferProxy(wasm_exec_env_t execEnv, uint32_t pointer) {
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    auto *memPtr = wasm_runtime_addr_app_to_native(moduleInstance, pointer);
-    auto *tmp = allocateBufferProxy(memPtr);
-    auto x = static_cast<Runtime::TupleBuffer*>(tmp);
-    auto y = *x;
-    auto wasmPtr = wasm_runtime_module_malloc(moduleInstance, sizeof(y), &tmp);
-    return wasmPtr;
+uintptr_t* native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    (void) execEnv;
+    auto* ptr = (void*) pointer;
+    auto* tmp = allocateBufferProxy(ptr);
+    return static_cast<uintptr_t*>(tmp);
 }
 
-uint64_t host_getWatermark(wasm_exec_env_t execEnv, uint32_t pointer) {
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    auto *memPtr = wasm_runtime_addr_app_to_native(moduleInstance, pointer);
-    auto *buffer = static_cast<Runtime::TupleBuffer*>(memPtr);
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) memPtr;
-    auto wm = thisPtr_->getWatermark();
-    std::cout << "Watermark: " << wm << std::endl;
-    if (wm == 20) {
-        thisPtr_->release();
-    }
-    return wm;
+uintptr_t* NES_Runtime_TupleBuffer_getBuffer(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    (void) execEnv;
+    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
+    return reinterpret_cast<uintptr_t*>(thisPtr_->getBuffer());
 }
 
-void host_setWatermark(wasm_exec_env_t execEnv, uint32_t pointer, uint64_t value) {
-    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    auto *memPtr = wasm_runtime_addr_app_to_native(moduleInstance, pointer);
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) memPtr;
-    thisPtr_->setWatermark(value);
+uint64_t NES_Runtime_TupleBuffer_getWatermark(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    (void) execEnv;
+    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
+    return thisPtr_->getWatermark();
+}
+
+void NES_Runtime_TupleBuffer_setWatermark(wasm_exec_env_t execEnv, uintptr_t* pointer, uint64_t value) {
+    (void) execEnv;
+    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
+    return thisPtr_->setWatermark(value);
+}
+
+uint64_t NES_Runtime_TupleBuffer_getNumberOfTuples(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    (void) execEnv;
+    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
+    return thisPtr_->getNumberOfTuples();
+}
+
+void NES_Runtime_TupleBuffer_setNumberOfTuples(wasm_exec_env_t execEnv, uintptr_t* pointer, uint64_t numberOfTuples) {
+    (void) execEnv;
+    auto* tupleBuffer = (Runtime::TupleBuffer*) pointer;
+    tupleBuffer->setNumberOfTuples(numberOfTuples);
+}
+
+uint64_t NES_Runtime_TupleBuffer_getBufferSize(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    (void) execEnv;
+    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
+    return thisPtr_->getBufferSize();
 }
 
 int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     std::cout << "Starting WAMR\n";
-    static NativeSymbol nativeSymbols[] = {
-        EXPORT_WASM_API_WITH_SIG(foo, "(ii)i"),
-        EXPORT_WASM_API_WITH_SIG(dataRead, "(ii)"),
-        EXPORT_WASM_API_WITH_SIG(writeClass, "(i)"),
-        EXPORT_WASM_API_WITH_SIG(readClass, "(i)"),
-        EXPORT_WASM_API_WITH_SIG(host_allocateBufferProxy, "(i)i"),
-        EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
-        EXPORT_WASM_API_WITH_SIG(host_getWatermark, "(i)I"),
-        EXPORT_WASM_API_WITH_SIG(host_setWatermark, "(iI)")
-    };
+    static NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(native_allocateBufferProxy, "(r)r"),
+                                           EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBuffer, "(r)r"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getNumberOfTuples, "(r)I"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setNumberOfTuples, "(rI)"),
+                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBufferSize, "(r)I")};
 
     auto x = binaryLength;
     auto y = queryBinary;
@@ -199,15 +156,13 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     auto wasmBuffer = reinterpret_cast<uint8_t*>(wasmString.data());
 
     char errorBuffer[128];
-    uint32_t stackSize = 4*8092, heapSize = 16*8092;
+    uint32_t stackSize = 4 * 8092, heapSize = 16 * 8092;
 
-    if(!wasm_runtime_init()) {
+    if (!wasm_runtime_init()) {
         printf("WAMR init failed\n");
     }
     int numNativeSymbols = sizeof(nativeSymbols) / sizeof(NativeSymbol);
-    if (!wasm_runtime_register_natives("ProxyFunctions",
-                                       nativeSymbols,
-                                       numNativeSymbols)) {
+    if (!wasm_runtime_register_natives("ProxyFunctions", nativeSymbols, numNativeSymbols)) {
         printf("Host function registering failed\n");
     }
 
@@ -232,30 +187,7 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     return 0;
 }
 
-void WAMRRuntime::linkHostFunction(const std::string& proxyFunctionName) {
-    if (proxyFunctionName == "NES__Runtime__TupleBuffer__getBuffer") {
-        host_NES__Runtime__TupleBuffer__getBuffer(proxyFunctionName);
-    } else if (proxyFunctionName == "NES__Runtime__TupleBuffer__getBufferSize") {
-        host_NES__Runtime__TupleBuffer__getBufferSize(proxyFunctionName);
-    } else if (proxyFunctionName == "NES__Runtime__TupleBuffer__getNumberOfTuples") {
-        //host_NES__Runtime__TupleBuffer__getNumberOfTuples(proxyFunctionName);
-    } else if (proxyFunctionName == "NES__Runtime__TupleBuffer__setNumberOfTuples") {
-        //host_NES__Runtime__TupleBuffer__setNumberOfTuples(proxyFunctionName);
-    } else {
-        NES_NOT_IMPLEMENTED();
-    }
-}
-
 void WAMRRuntime::prepareCPython() {
-}
-
-void WAMRRuntime::host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName) {
-    std::cout << proxyFunctionName << std::endl;
-}
-
-/*uint64_t*/ void WAMRRuntime::host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName) {
-    std::cout << proxyFunctionName << std::endl;
-
 }
 
 std::string WAMRRuntime::parseWATFile(const char* fileName) {

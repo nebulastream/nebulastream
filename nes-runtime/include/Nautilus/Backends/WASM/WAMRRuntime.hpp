@@ -14,8 +14,11 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WAMRRUNTIME_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WAMRRUNTIME_HPP_
 
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <cstdint>
 #include <string>
+#include <wasm_export.h>
 
 namespace NES::Nautilus::Backends::WASM {
 
@@ -42,13 +45,8 @@ class WAMRRuntime {
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
     std::string proxyFunctionModule = "ProxyFunction";
 
-    void linkHostFunction(const std::string& proxyFunction);
     std::string parseWATFile(const char* fileName);
     void prepareCPython();
-    void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
-    //void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
-    //void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
 };
 
 }// namespace NES::Nautilus::Backends::WASM
