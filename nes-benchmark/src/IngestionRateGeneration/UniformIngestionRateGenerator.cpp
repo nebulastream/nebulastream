@@ -12,4 +12,17 @@
     limitations under the License.
 */
 
-#include "UniformIngestionRateGenerator.hpp"
+#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
+
+namespace NES::Benchmark::IngestionRateGeneration {
+UniformIngestionRateGenerator::UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers, uint64_t ingestionRateCnt)
+    : IngestionRateGenerator(), ingestionRateInBuffers(ingestionRateInBuffers), ingestionRateCnt(ingestionRateCnt) {}
+
+std::vector<std::uint64_t> UniformIngestionRateGenerator::generateIngestionRates() {
+    for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
+        predefinedIngestionRates.push_back(ingestionRateInBuffers);
+    }
+
+    return predefinedIngestionRates;
+}
+}// namespace NES::Benchmark::IngestionRateGeneration

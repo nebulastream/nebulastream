@@ -21,12 +21,22 @@ namespace NES::Benchmark::IngestionRateGeneration {
 class UniformIngestionRateGenerator : public IngestionRateGenerator {
   public:
     /**
-     *
+     * @brief constructor for a uniform ingestion rate generator
+     * @param ingestionRateInBuffers
+     * @param ingestionRateCnt
      */
+     explicit UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers, uint64_t ingestionRateCnt);
+
+     /**
+      * @brief creates a vector of length ingestionRateCnt with value ingestionRateInBuffers
+      * @return predefinedIngestionRates
+      */
+     std::vector<std::uint64_t> generateIngestionRates() override;
+
   private:
-    /**
-     *
-     */
+    uint64_t ingestionRateInBuffers;
+    uint64_t ingestionRateCnt;
+    std::vector<uint64_t> predefinedIngestionRates;
 };
 }// namespace NES::Benchmark::IngestionRateGeneration
 
