@@ -190,18 +190,18 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
+    ASSERT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092));
     topologyManagerService->updateGeoLocation(
         node2->getId(),
         NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
-    EXPECT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
+    ASSERT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
     NES_INFO("NEIGHBORS");
     auto inRange = topologyManagerService->getNodesIdsInRange(
         NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
         50.0);
-    EXPECT_EQ(inRange.size(), (size_t) 3);
+    ASSERT_EQ(inRange.size(), (size_t) 3);
     topologyManagerService->updateGeoLocation(
         node3->getId(),
         NES::Spatial::DataTypes::Experimental::GeoLocation(53.559524264262194, 10.039384739854102));
@@ -270,10 +270,10 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     ASSERT_TRUE(retConWrk2);
     NES_INFO("worker 2 started connected ");
 
-    EXPECT_EQ(wrk1->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
-    EXPECT_EQ(wrk2->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
+    ASSERT_EQ(wrk1->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    ASSERT_EQ(wrk2->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 
-    EXPECT_EQ(wrk2->getLocationProvider()->getCurrentWaypoint().getLocation(),
+    ASSERT_EQ(wrk2->getLocationProvider()->getCurrentWaypoint().getLocation(),
               NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
@@ -283,9 +283,10 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     ASSERT_EQ(node2->getSpatialNodeType(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 
     auto node1Location = topologyManagerService->getGeoLocationForNode(node1->getId());
-    EXPECT_TRUE(node1Location.has_value() && node1Location.value().isValid());
+    ASSERT_TRUE(node1Location.has_value());
+    ASSERT_TRUE(node1Location.value().isValid());
     auto node2Location = topologyManagerService->getGeoLocationForNode(node2->getId());
-    EXPECT_EQ(node2Location, NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
+    ASSERT_EQ(node2Location, NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -383,7 +384,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 
         //after we receivd a location from the location index, there should always be one present for all remaining iterations
         if (receivedLocation) {
-            ASSERT_TRUE(currentGeoLocation.has_value());
+            EXPECT_TRUE(currentGeoLocation.has_value());
         }
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
@@ -394,7 +395,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -475,7 +476,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -486,7 +487,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
                                                " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
-        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+        ASSERT_NE(expectedIt, expectedWayPoints.cend());
     }
 
     bool retStopCord = crd->stopCoordinator(false);
@@ -561,7 +562,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -644,7 +645,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
         currentTimeStamp = getTimestamp();
     }
 
-    EXPECT_TRUE(!actualWayPoints.empty());
+    ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
     auto expectedIt = expectedWayPoints.cbegin();
@@ -659,7 +660,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     }
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 
     bool retStopWrk1 = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk1);
@@ -853,7 +854,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     EXPECT_EQ(parentId, 10005);
-    EXPECT_EQ(reconnectSequence.size(), 1);
+    ASSERT_EQ(reconnectSequence.size(), 1);
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
@@ -1140,7 +1141,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO("coordinator started successfully")
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(waitForNodes(5, 1, topology));
+    ASSERT_TRUE(waitForNodes(5, 1, topology));
 
     TopologyNodePtr node = topology->getRoot();
     std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> locVec = {
