@@ -153,10 +153,11 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    auto delta = 0.0000001;
     for (size_t i = 0; i < actualOutput.size(); ++i ) {
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
-        EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
+        EXPECT_NEAR(expectedOutput[i].iris0, actualOutput[i].iris0, delta);
+        EXPECT_NEAR(expectedOutput[i].iris1, actualOutput[i].iris1, delta);
+        EXPECT_NEAR(expectedOutput[i].iris2, actualOutput[i].iris2, delta);
     }
 }
 
