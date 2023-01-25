@@ -22,6 +22,8 @@ add_source_files(nes-benchmark
         DataProvider/ExternalProvider.cpp
         DataProvider/InternalProvider.cpp
         IngestionRateGeneration/IngestionRateGenerator.cpp
+        IngestionRateGeneration/MDIngestionRateGenerator.cpp
+        IngestionRateGeneration/TrigonometricIngestionRateGenerator.cpp
         IngestionRateGeneration/UniformIngestionRateGenerator.cpp
         Measurements.cpp
         E2E/E2ERunner.cpp
