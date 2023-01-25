@@ -150,7 +150,7 @@ endif ()
 
 if (NES_RUNTIME_BENCHMARKS)
     # Add tests with command
-   # add_subdirectory(benchmark)
+    add_subdirectory(benchmark)
     message(STATUS "Runtime benchmarks are enabled")
 endif ()
 
