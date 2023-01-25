@@ -66,15 +66,16 @@ class LoRaWANProxySource : public DataSource {
     std::vector<std::string> deviceEUIs;
     std::string topicBase;
     std::string topicAll;
-    std::string topicReceive;
-    std::string topicSend;
-
+    std::string topicDevice;
+    std::string topicReceiveSuffix;
+    std::string topicSendSuffix;
+    std::string topicAllDevicesReceive;
     std::string capath;
     std::string certpath;
     std::string keypath;
 
     std::unique_ptr<Parser> inputParser;
-
+    std::vector<QueryId> runningQueries;
     bool sendQueries();
 
     //TODO: Should maybe be macro'ed in by DEBUG flag

@@ -42,9 +42,10 @@ LoRaWANProxySource::LoRaWANProxySource(const SchemaPtr& schema,
     deviceEUIs = sourceConfig->getDeviceEUIs()->getValue();
     topicBase = "application/" + sourceConfig->getAppId()->getValue();
     topicAll = topicBase + "/#";
-    topicReceive = topicBase + "/event/up";
-    topicSend = topicBase + "/command/down";
-
+    topicDevice =  topicBase + "/device";
+    topicReceiveSuffix = "/event/up";
+    topicSendSuffix = "/command/down";
+    topicAllDevicesReceive = topicDevice + "/+" + topicReceiveSuffix;
     capath = sourceConfig->getCapath()->getValue();
     certpath = sourceConfig->getCertpath()->getValue();
     keypath = sourceConfig->getKeypath()->getValue();
@@ -115,7 +116,7 @@ bool LoRaWANProxySource::connect() {
             // there is a session, then the server remembers us and our
             // subscriptions.
             if (!rsp.is_session_present()) {
-                client->subscribe(topicReceive, 0)->wait();
+                client->subscribe(topicAllDevicesReceive, 0)->wait();
             }
         } catch (const mqtt::exception& error) {
             NES_ERROR("LoRaWANProxySource::connect: " << error);
@@ -123,7 +124,7 @@ bool LoRaWANProxySource::connect() {
         }
 
         if (client->is_connected()) {
-            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicReceive);
+            NES_DEBUG("LoRaWANProxySource::connect: Connection established with topic: " << topicAll);
             NES_DEBUG("LoRaWANProxySource::connect:  " << this << ": connected");
 
             NES_DEBUG("Sending Queries...");
@@ -141,7 +142,7 @@ bool LoRaWANProxySource::disconnect() {
         //close();
         NES_DEBUG("LoRaWANProxySource: Shutting down and disconnecting from the MQTT server.");
 
-        client->unsubscribe(topicReceive)->wait();
+        client->unsubscribe(topicAllDevicesReceive)->wait();
 
         client->disconnect()->wait();
         NES_DEBUG("LoRaWANProxySource::disconnect: disconnected.");
@@ -176,11 +177,11 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
             auto rcvStr = msg->get_payload_str();
             auto rcvTopic = msg->get_topic();
             NES_TRACE("Received msg no. " << count << " on topic: \"" << rcvTopic << "\" with payload: \"" << rcvStr << "\"")
-            // 0                                35            58
+            // 0                                55            78
             // |                                |             |
             // application/APPLICATION_ID/device/DEV_EUI/event/EVENT
-            auto devEUI = rcvTopic.substr(36, 64 / 4);
-            auto event = rcvTopic.substr(59, rcvTopic.length());
+            auto devEUI = rcvTopic.substr(56, 64 / 4);
+            auto event = rcvTopic.substr(79, rcvTopic.length());
 
             //rcvStr should be formatted as shown here: https://www.chirpstack.io/docs/chirpstack/integrations/events.html#up---uplink-event
             //most important is data which is placed on the "data" field
@@ -190,15 +191,17 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
                     NES_WARNING("LoRaWANProxySource: parsed json does not contain data field");
                 } else {
                     auto output = EndDeviceProtocol::Output();
-                    output.ParseFromString(js["data"]);
+                    output.ParseFromString(Util::base64Decode(js["data"]));
 
-                    for (const auto& response : output.responses()) {
-                        auto id = response.id();
-                        auto query = sourceConfig->getSerializedQueries()->at(id);
+                    for (const auto& queryResponse : output.responses()) {
+                        auto id = queryResponse.id();
+                        auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
                         auto resultType = query->resulttype();
+                        //TODO: actually use the resulttype
+                        auto result = queryResponse.response();
                         auto tupCount = buffer.getNumberOfTuples();
                         for (size_t i = 0; i < resultType.size(); ++i) {
-                            buffer[tupCount][i].write<int8_t>(resultType[i]);
+                            buffer[tupCount][i].write<int8_t>(result.at(i)[0]);
                         }
                         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
                     }
@@ -227,10 +230,11 @@ bool LoRaWANProxySource::sendQueries() {
     auto pbMsg = EndDeviceProtocol::Message();
     std::vector<EndDeviceProtocol::Query> queries;
 
-    for (const auto& [_, query] : *queryMap) {
+    for (const auto& [qid, query] : *queryMap) {
         auto serializedQuery = EndDeviceProtocol::Query();
         serializedQuery.CopyFrom(*query);
         queries.push_back(serializedQuery);
+        runningQueries.push_back(qid);
     }
     pbMsg.mutable_queries()->Assign(queries.begin(), queries.end());
 
@@ -248,9 +252,11 @@ bool LoRaWANProxySource::sendQueries() {
         //                "humiditySensor": {"1": 32}
         //            }
         //        }
-        nlohmann::json payload{{"devEui", devEUI}, {"confirmed", true}, {"fport", 1}, {"data", pbEncoded}};
-        NES_DEBUG("sending data to topic: " + topicSend + " with payload " + payload.dump());
-        client->publish(topicSend, payload.dump());
+        nlohmann::json payload{{"devEui", devEUI}, {"confirmed", true}, {"fPort", 1}, {"data", pbEncoded}};
+        auto topic = topicDevice + "/" +devEUI + topicSendSuffix;
+        NES_DEBUG("sending data: " + pbMsg.DebugString() + " to topic: " + topic + " with payload " + payload.dump());
+        client->publish(topic, payload.dump());
+
     }
     return true;
 }
