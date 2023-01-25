@@ -36,7 +36,7 @@ class MDIngestionRateGenerator : public IngestionRateGenerator {
     explicit MDIngestionRateGenerator(std::string ingestionRateDistribution, uint64_t ingestionRateCnt);
 
     /**
-      * @brief creates a vector of length ingestionRateCnt with values of m1Values, m2Values, d1Values or d2Values
+      * @brief creates a vector of length ingestionRateCnt and fills it with values of m1Values, m2Values, d1Values or d2Values
       * @return predefinedIngestionRates
       */
     std::vector<std::uint64_t> generateIngestionRates() override;

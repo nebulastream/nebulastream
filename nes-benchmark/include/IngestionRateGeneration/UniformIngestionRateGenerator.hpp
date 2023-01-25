@@ -28,7 +28,7 @@ class UniformIngestionRateGenerator : public IngestionRateGenerator {
     explicit UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers, uint64_t ingestionRateCnt);
 
     /**
-     * @brief creates a vector of length ingestionRateCnt with value ingestionRateInBuffers
+     * @brief creates a vector of length ingestionRateCnt and fills it with value ingestionRateInBuffers
      * @return predefinedIngestionRates
      */
     std::vector<std::uint64_t> generateIngestionRates() override;
