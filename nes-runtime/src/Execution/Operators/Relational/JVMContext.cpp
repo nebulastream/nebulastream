@@ -54,8 +54,6 @@ void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args) {
         jint rc = jvm->AttachCurrentThread((void**) env, nullptr);
         jniErrorCheck(rc);
         attached = true;
-    } else {
-        NES_THROW_RUNTIME_ERROR("Try to attach to a JVM that is already attached!");
     }
 }
 
