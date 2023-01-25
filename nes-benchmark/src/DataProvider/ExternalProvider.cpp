@@ -16,60 +16,15 @@
 
 namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
-                                   std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   uint64_t ingestionRateInBuffers,
-                                   uint64_t experimentRuntime, // TODO maybe change variable name
                                    DataProviderMode providerMode,
-                                   std::string ingestionFrequencyDistribution)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateInBuffers(ingestionRateInBuffers),
-      experimentRuntime(experimentRuntime), ingestionFrequencyDistribution(getDistributionFromString(ingestionFrequencyDistribution)) {
+                                   std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                                   std::vector<uint64_t> predefinedIngestionRates,
+                                   uint64_t ingestionRateCnt)
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), predefinedIngestionRates(predefinedIngestionRates),
+      ingestionRateCnt(ingestionRateCnt) {
 
-    generateIngestionRates();
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
     bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
-}
-
-IngestionFrequencyDistribution ExternalProvider::getDistributionFromString(std::string ingestionDistribution) {
-    if (ingestionDistribution == "UNIFORM") return UNIFORM;
-    else if (ingestionDistribution == "SINUS") return SINUS;
-    else if (ingestionDistribution == "COSINUS") return COSINUS;
-    else if (ingestionDistribution == "M1") return M1;
-    else if (ingestionDistribution == "M2") return M2;
-    else if (ingestionDistribution == "D1") return D1;
-    else if (ingestionDistribution == "D2") return D2;
-    else NES_THROW_RUNTIME_ERROR("Provider mode not supported");
-}
-
-void ExternalProvider::generateIngestionRates() {
-    for (auto i = 0UL; i < experimentRuntime; ++i) {
-        if (ingestionFrequencyDistribution == UNIFORM) {
-            predefinedIngestionRates.push_back(ingestionRateInBuffers);
-        } else if (ingestionFrequencyDistribution == SINUS || ingestionFrequencyDistribution == COSINUS) {
-            generateTrigonometricValues(i);
-        }
-        // TODO replace %18 and %30 with %(vector.size) when M1 through D2 are implemented as a vector
-        else if (ingestionFrequencyDistribution == M1) {
-            predefinedIngestionRates.push_back(m1Values[i % 18]);
-        } else if (ingestionFrequencyDistribution == M2) {
-            predefinedIngestionRates.push_back(m2Values[i % 18]);
-        } else if (ingestionFrequencyDistribution == D1) {
-            predefinedIngestionRates.push_back(d1Values[i % 30]);
-        } else if (ingestionFrequencyDistribution == D2) {
-            predefinedIngestionRates.push_back(d2Values[i % 30]);
-        }
-    }
-}
-
-void ExternalProvider::generateTrigonometricValues(uint64_t xValue) {
-    if (ingestionFrequencyDistribution == SINUS) {
-        // this is a sinus function with period length of experimentRuntime
-        auto value = (long double)(0.5 * (1 + sin(2 * (long double)std::numbers::pi * xValue / experimentRuntime))) * ingestionRateInBuffers;
-        predefinedIngestionRates.push_back(value);
-    } else {
-        // this is a cosinus function with period length of experimentRuntime
-        auto value = (long double)(0.5 * (1 + cos(2 * (long double)std::numbers::pi * xValue / experimentRuntime))) * ingestionRateInBuffers;
-        predefinedIngestionRates.push_back(value);
-    }
 }
 
 void ExternalProvider::start() {
@@ -132,7 +87,7 @@ void ExternalProvider::generateData() {
 
             if (lastSecond != currentSecond) {
                 // TODO change /100 according to workingTimeDelta (see ExternalProvider.hpp)
-                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % experimentRuntime] / 100) == 0) {
+                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % ingestionRateCnt] / 100) == 0) {
                     buffersToProducePer10ms = 1;
                 }
 
