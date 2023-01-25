@@ -10,9 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(GlobalTimeWindow)
-add_subdirectory(KeyedTimeWindow)
-
 add_source_files(nes-runtime
-        WindowProcessingException.cpp
+        KeyedSlice.cpp
+        KeyedThreadLocalSliceStore.cpp
+        KeyedSlicePreAggregation.cpp
         )
