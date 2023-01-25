@@ -43,6 +43,7 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         field->setName(newQualifierName + fieldName);
     }
     // set the derived input schema
+    // TODO: check if this corresponds to the schema of the parent operator
     javaUdfDescriptor->setInputSchema(inputSchema);
     return true;
 }
