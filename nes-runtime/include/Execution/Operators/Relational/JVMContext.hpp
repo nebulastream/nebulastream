@@ -33,7 +33,9 @@ class JVMContext {
 
     /**
      * @brief The pointer to the JNI environment is only valid in the current thread. This call registers a thread.
-     * First time calling leads to the creation of a JVM. Make sure to call detach before exiting.
+     * First time calling leads to the creation of a JVM.
+     * Trying to attach a thread that is already attached is a no-op.
+     * Make sure to call detach before exiting.
      * @param env JNI environment to use for the thread
      * @param args initialization arguments needed when calling for the first time.
      */
