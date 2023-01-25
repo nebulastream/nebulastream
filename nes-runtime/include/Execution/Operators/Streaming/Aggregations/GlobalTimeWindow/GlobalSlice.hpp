@@ -36,11 +36,6 @@ class State {
     explicit State(uint64_t stateSize);
 
     /**
-     * @brief Resets the value of isInitialized
-     */
-    void reset();
-
-    /**
      * @brief Destructor for the state, which frees the memory chuck.
      */
     ~State();
