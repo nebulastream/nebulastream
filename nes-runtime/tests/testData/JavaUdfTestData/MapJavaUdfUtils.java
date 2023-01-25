@@ -7,6 +7,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class MapJavaUdfUtils {
+   /**
+    * Deserialize a ByteBuffer into an Object.
+    * @param byteBuffer The ByteBuffer to deserialize.
+    * @return The deserialized Object.
+    */
     public Object deserialize(ByteBuffer byteBuffer) {
         try (ObjectInputStream os = new ObjectInputStream(new ByteArrayInputStream(byteBuffer.array()))) {
             return os.readObject();
@@ -15,6 +20,11 @@ public class MapJavaUdfUtils {
         }
     }
 
+    /**
+     * Serialize an Object into a ByteBuffer.
+     * @param object The Object to serialize.
+     * @return The serialized ByteBuffer.
+     */
     public ByteBuffer serialize(Object object) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
