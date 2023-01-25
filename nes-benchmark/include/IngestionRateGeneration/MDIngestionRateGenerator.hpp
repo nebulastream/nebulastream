@@ -33,7 +33,7 @@ class MDIngestionRateGenerator : public IngestionRateGenerator {
      * @param ingestionRateDistribution
      * @param ingestionRateCnt
      */
-    explicit MDIngestionRateGenerator(std::string  ingestionRateDistribution, uint64_t ingestionRateCnt);
+    explicit MDIngestionRateGenerator(std::string ingestionRateDistribution, uint64_t ingestionRateCnt);
 
     /**
       * @brief creates a vector of length ingestionRateCnt with values of m1Values, m2Values, d1Values or d2Values
@@ -42,7 +42,7 @@ class MDIngestionRateGenerator : public IngestionRateGenerator {
     std::vector<std::uint64_t> generateIngestionRates() override;
 
   private:
-    std::string ingestionRateDistribution;
+    IngestionRateDistribution ingestionRateDistribution;
     uint64_t ingestionRateCnt;
     std::vector<uint64_t> predefinedIngestionRates;
 };

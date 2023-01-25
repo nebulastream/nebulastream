@@ -16,17 +16,17 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 MDIngestionRateGenerator::MDIngestionRateGenerator(std::string ingestionRateDistribution, uint64_t ingestionRateCnt)
-    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution), ingestionRateCnt(ingestionRateCnt) {}
+    : IngestionRateGenerator(), ingestionRateDistribution(getDistributionFromString(ingestionRateDistribution)), ingestionRateCnt(ingestionRateCnt) {}
 
 std::vector<std::uint64_t> MDIngestionRateGenerator::generateIngestionRates() {
     for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
-        if (ingestionRateDistribution == "M1" || ingestionRateDistribution == "m1") {
+        if (ingestionRateDistribution == M1) {
             predefinedIngestionRates.push_back(m1Values[i % 18]);
-        } else if (ingestionRateDistribution == "M2" || ingestionRateDistribution == "m2") {
+        } else if (ingestionRateDistribution == M2) {
             predefinedIngestionRates.push_back(m2Values[i % 18]);
-        } else if (ingestionRateDistribution == "D1" || ingestionRateDistribution == "d1") {
+        } else if (ingestionRateDistribution == D1) {
             predefinedIngestionRates.push_back(d1Values[i % 30]);
-        } else if (ingestionRateDistribution == "D2" || ingestionRateDistribution == "d2") {
+        } else if (ingestionRateDistribution == D2) {
             predefinedIngestionRates.push_back(d2Values[i % 30]);
         }
     }
