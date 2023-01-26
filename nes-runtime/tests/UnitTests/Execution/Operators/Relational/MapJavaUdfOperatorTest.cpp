@@ -37,10 +37,7 @@ class MapJavaUdfOperatorTest : public testing::Test {
                 std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
             }
 
-            std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
-
-
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
@@ -63,20 +60,23 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
     std::vector<TupleBuffer> buffers;
 };
 
+std::string path = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
+std::string method = "map";
+std::unordered_map<std::string, std::vector<char>> byteCodeList;
+std::vector<char> serializedInstance;
+SchemaPtr input, output;
+std::string clazz, inputClass, outputClass;
+
 /**
  * @brief Test simple UDF with integer objects as input and output (IntegerMapFunction<Integer, Integer>)
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::INT32);
-    SchemaPtr output = Schema::create()->addField("id", NES::INT32);
-    std::string method = "map";
-    std::string clazz = "IntegerMapFunction";
-    std::string inputClass = "java/lang/Integer";
-    std::string outputClass = "java/lang/Integer";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::INT32);
+    output = Schema::create()->addField("id", NES::INT32);
+    clazz = "IntegerMapFunction";
+    inputClass = "java/lang/Integer";
+    outputClass = "java/lang/Integer";
 
     auto initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -95,15 +95,11 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::INT16);
-    SchemaPtr output = Schema::create()->addField("id", NES::INT16);
-    std::string method = "map";
-    std::string clazz = "ShortMapFunction";
-    std::string inputClass = "java/lang/Short";
-    std::string outputClass = "java/lang/Short";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::INT16);
+    output = Schema::create()->addField("id", NES::INT16);
+    clazz = "ShortMapFunction";
+    inputClass = "java/lang/Short";
+    outputClass = "java/lang/Short";
 
     auto initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -122,15 +118,11 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::INT8);
-    SchemaPtr output = Schema::create()->addField("id", NES::INT8);
-    std::string method = "map";
-    std::string clazz = "ByteMapFunction";
-    std::string inputClass = "java/lang/Byte";
-    std::string outputClass = "java/lang/Byte";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::INT8);
+    output = Schema::create()->addField("id", NES::INT8);
+    clazz = "ByteMapFunction";
+    inputClass = "java/lang/Byte";
+    outputClass = "java/lang/Byte";
 
     auto initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -149,15 +141,11 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::INT64);
-    SchemaPtr output = Schema::create()->addField("id", NES::INT64);
-    std::string method = "map";
-    std::string clazz = "LongMapFunction";
-    std::string inputClass = "java/lang/Long";
-    std::string outputClass = "java/lang/Long";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::INT64);
+    output = Schema::create()->addField("id", NES::INT64);
+    clazz = "LongMapFunction";
+    inputClass = "java/lang/Long";
+    outputClass = "java/lang/Long";
 
     auto initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -176,15 +164,11 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::FLOAT64);
-    SchemaPtr output = Schema::create()->addField("id", NES::FLOAT64);
-    std::string method = "map";
-    std::string clazz = "DoubleMapFunction";
-    std::string inputClass = "java/lang/Double";
-    std::string outputClass = "java/lang/Double";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::FLOAT64);
+    output = Schema::create()->addField("id", NES::FLOAT64);
+    clazz = "DoubleMapFunction";
+    inputClass = "java/lang/Double";
+    outputClass = "java/lang/Double";
 
     double initialValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -203,15 +187,11 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
  * The UDF increments incoming tuples by 10.
 */
 TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::FLOAT32);
-    SchemaPtr output = Schema::create()->addField("id", NES::FLOAT32);
-    std::string method = "map";
-    std::string clazz = "FloatMapFunction";
-    std::string inputClass = "java/lang/Float";
-    std::string outputClass = "java/lang/Float";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::FLOAT32);
+    output = Schema::create()->addField("id", NES::FLOAT32);
+    clazz = "FloatMapFunction";
+    inputClass = "java/lang/Float";
+    outputClass = "java/lang/Float";
 
     float initialValue = 42.0;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -230,15 +210,11 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
  * The UDF sets incoming tuples to false.
 */
 TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::BOOLEAN);
-    SchemaPtr output = Schema::create()->addField("id", NES::BOOLEAN);
-    std::string method = "map";
-    std::string clazz = "BooleanMapFunction";
-    std::string inputClass = "java/lang/Boolean";
-    std::string outputClass = "java/lang/Boolean";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::BOOLEAN);
+    output = Schema::create()->addField("id", NES::BOOLEAN);
+    clazz = "BooleanMapFunction";
+    inputClass = "java/lang/Boolean";
+    outputClass = "java/lang/Boolean";
 
     auto initialValue = true;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
@@ -259,15 +235,11 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
 TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::TEXT);
-    SchemaPtr output = Schema::create()->addField("id", NES::TEXT);
-    std::string method = "map";
-    std::string clazz = "StringMapFunction";
-    std::string inputClass = "java/lang/String";
-    std::string outputClass = "java/lang/String";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::TEXT);
+    output = Schema::create()->addField("id", NES::TEXT);
+    clazz = "StringMapFunction";
+    inputClass = "java/lang/String";
+    outputClass = "java/lang/String";
 
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
     auto map = MapJavaUdf(0, input, output);
@@ -287,15 +259,11 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
 TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
-    SchemaPtr output = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
-    std::string method = "map";
-    std::string clazz = "ComplexPojoMapFunction";
-    std::string inputClass = "ComplexPojo";
-    std::string outputClass = "ComplexPojo";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
+    output = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
+    clazz = "ComplexPojoMapFunction";
+    inputClass = "ComplexPojo";
+    outputClass = "ComplexPojo";
 
     int8_t initialByte = 10;
     int16_t initialShort = 10;
@@ -327,15 +295,11 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
 * @brief Test UDF with multiple internal dependencies (DummyRichMapFunction<Integer, Integer>)
 */
 TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
-    std::string path = testDataPath;
-    SchemaPtr input = Schema::create()->addField("id", NES::INT32);
-    SchemaPtr output = Schema::create()->addField("id", NES::INT32);
-    std::string method = "map";
-    std::string clazz = "DummyRichMapFunction";
-    std::string inputClass = "java/lang/Integer";
-    std::string outputClass = "java/lang/Integer";
-    std::unordered_map<std::string, std::vector<char>> byteCodeList;
-    std::vector<char> serializedInstance;
+    input = Schema::create()->addField("id", NES::INT32);
+    output = Schema::create()->addField("id", NES::INT32);
+    clazz = "DummyRichMapFunction";
+    inputClass = "java/lang/Integer";
+    outputClass = "java/lang/Integer";
 
     auto initalValue = 42;
     auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
