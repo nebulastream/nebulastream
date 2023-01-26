@@ -26,17 +26,9 @@ std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestio
     for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
         if (ingestionRateDistribution == SINUS) {
             uint64_t curIngestionRate = round(getSinValue(i) * ingestionRateInBuffers);
-            if (curIngestionRate == 0) {
-                curIngestionRate = 1;
-            }
-
             predefinedIngestionRates.push_back(curIngestionRate);
         } else if (ingestionRateDistribution == COSINUS) {
             uint64_t curIngestionRate = round(getCosValue(i) * ingestionRateInBuffers);
-            if (curIngestionRate == 0) {
-                curIngestionRate = 1;
-            }
-
             predefinedIngestionRates.push_back(curIngestionRate);
         }
     }
