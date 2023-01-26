@@ -39,14 +39,14 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
      * @param x
      * @return value
      */
-    long double getSinValue(uint64_t x);
+    double getSinValue(uint64_t x);
 
     /**
      * @brief calculates the cosine of x. Cosine has a period length of ingestionRateInBuffers/numberOfPeriods
      * @param x
      * @return value
      */
-    long double getCosValue(uint64_t x);
+    double getCosValue(uint64_t x);
 
     IngestionRateDistribution ingestionRateDistribution;
     uint64_t ingestionRateInBuffers;
