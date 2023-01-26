@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.34](https://github.com/nebulastream/nebulastream/tree/v0.4.34) (2023-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.33...v0.4.34)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Output of `inferModel` operation is all 0 [\#3421](https://github.com/nebulastream/nebulastream/issues/3421)
+
 ## [v0.4.33](https://github.com/nebulastream/nebulastream/tree/v0.4.33) (2023-01-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.32...v0.4.33)
