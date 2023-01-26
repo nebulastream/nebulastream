@@ -89,18 +89,18 @@ TEST_F(LocationProviderCSVTest, testCsvMovement) {
     ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
-    auto expectedIt = expectedWayPoints.cbegin();
+    auto expectedItr = expectedWayPoints.cbegin();
     for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
-        while (expectedIt != expectedWayPoints.cend() && expectedIt->getTimestamp().value() != actualIt->getTimestamp().value()) {
-            expectedIt++;
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+            expectedItr++;
         }
         NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                  " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+                  " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
-        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+        EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
         //because the timestamps match, the location must match as well
-        EXPECT_EQ(expectedIt->getLocation(), actualIt->getLocation()) ;
+        EXPECT_EQ(expectedItr->getLocation(), actualIt->getLocation()) ;
     }
 }
 
@@ -140,7 +140,7 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
     ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
-    auto expectedIt = expectedWayPoints.cbegin();
+    auto expectedItr = expectedWayPoints.cbegin();
     for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
 
         //skip comparing initial location as it might have differing timestamp
@@ -148,16 +148,16 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInFuture) {
             continue;
         }
 
-        while (expectedIt != expectedWayPoints.cend() && expectedIt->getTimestamp().value() != actualIt->getTimestamp().value()) {
-            expectedIt++;
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+            expectedItr++;
         }
         NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
-        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+        EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
         //because the timestamps match, the location must match as well
-        EXPECT_EQ(expectedIt->getLocation(), actualIt->getLocation()) ;
+        EXPECT_EQ(expectedItr->getLocation(), actualIt->getLocation()) ;
     }
 }
 
@@ -192,18 +192,18 @@ TEST_F(LocationProviderCSVTest, testCsvMovementWithSimulatedLocationInPast) {
     ASSERT_TRUE(!actualWayPoints.empty());
 
     //check the ordering of the existing waypoints
-    auto expectedIt = expectedWayPoints.cbegin();
+    auto expectedItr = expectedWayPoints.cbegin();
     for (auto actualIt = actualWayPoints.cbegin(); actualIt != actualWayPoints.cend(); ++actualIt) {
-        while (expectedIt != expectedWayPoints.cend() && expectedIt->getTimestamp().value() != actualIt->getTimestamp().value()) {
-            expectedIt++;
+        while (expectedItr != expectedWayPoints.cend() && expectedItr->getTimestamp().value() != actualIt->getTimestamp().value()) {
+            expectedItr++;
         }
         NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedItr));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
-        EXPECT_NE(expectedIt, expectedWayPoints.cend());
+        EXPECT_NE(expectedItr, expectedWayPoints.cend());
 
         //because the timestamps match, the location must match as well
-        EXPECT_EQ(expectedIt->getLocation(), actualIt->getLocation()) ;
+        EXPECT_EQ(expectedItr->getLocation(), actualIt->getLocation()) ;
     }
 }
 }// namespace NES
