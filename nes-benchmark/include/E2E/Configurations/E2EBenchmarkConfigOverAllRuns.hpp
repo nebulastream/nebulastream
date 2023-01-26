@@ -64,6 +64,10 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::IntConfigOption numberOfPreAllocatedBuffer;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption batchSize;
+    Configurations::IntConfigOption ingestionRateInBuffers;
+    Configurations::IntConfigOption ingestionRateCnt;
+    Configurations::IntConfigOption numberOfPeriods;
+    Configurations::StringConfigOption ingestionRateDistribution;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;

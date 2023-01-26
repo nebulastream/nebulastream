@@ -79,6 +79,10 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.numberOfPreAllocatedBuffer->setValueIfDefined(yamlConfig["numberOfPreAllocatedBuffer"]);
     configOverAllRuns.batchSize->setValueIfDefined(yamlConfig["batchSize"]);
     configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
+    configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(yamlConfig["ingestionRateInBuffers"]);
+    configOverAllRuns.ingestionRateCnt->setValueIfDefined(yamlConfig["ingestionRateCnt"]);
+    configOverAllRuns.numberOfPeriods->setValueIfDefined(yamlConfig["numberOfPeriods"]);
+    configOverAllRuns.ingestionRateDistribution->setValueIfDefined(yamlConfig["ingestionRateDistribution"]);
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsSequence()) {
