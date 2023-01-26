@@ -114,7 +114,7 @@ extern "C" void startVMWithJarFile(void *state) {
     vmArgs.nOptions = 3;
     vmArgs.options = options;
     vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = true; // invalid options make the JVM init fail
+    vmArgs.ignoreUnrecognized = false; // invalid options make the JVM init fail
 
     auto env = handler->getEnvironment();
     JVMContext::instance().createOrAttachToJVM(&env, vmArgs);
@@ -131,7 +131,7 @@ extern "C" void startVMWithByteList(void *state){
 
     JavaVMInitArgs vmArgs;
     vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = true; // invalid options make the JVM init fail
+    vmArgs.ignoreUnrecognized = false; // invalid options make the JVM init fail
 
     JVMContext &context = JVMContext::instance();
     auto env = handler->getEnvironment();
