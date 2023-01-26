@@ -123,7 +123,8 @@ void E2ESingleRun::createSources() {
                 NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
 #endif
             } else {
-                auto dataProvider = DataProviding::DataProvider::createProvider(sourceCnt, configOverAllRuns, createdBuffers);
+                auto dataProvider =
+                    DataProvision::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
 
                 // Adding necessary items to the corresponding vectors
                 allDataProviders.emplace_back(dataProvider);
