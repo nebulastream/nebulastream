@@ -47,8 +47,9 @@ struct Output {
     bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
 };
 
-class MLModelDeploymentTest : public Testing::NESBaseTest,
-                              public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
+class MLModelDeploymentTest
+    : public Testing::NESBaseTest,
+      public testing::WithParamInterface<std::tuple<std::string, SchemaPtr, std::string, std::vector<Output>>> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
@@ -173,24 +174,23 @@ TEST_F(MLModelDeploymentTest, DISABLED_testSimpleMLModelDeploymentMixedTypes) {
         bool operator==(Output const& rhs) const { return (iris0 == rhs.iris0 && iris1 == rhs.iris1 && iris2 == rhs.iris2); }
     };
 
-    std::vector<Output> expectedOutput =
-        {
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-            {0.4731167, 0.31782052, 0.2090628},
-        };
+    std::vector<Output> expectedOutput = {
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+        {0.4731167, 0.31782052, 0.2090628},
+    };
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+    for (size_t i = 0; i < actualOutput.size(); ++i) {
         EXPECT_FLOAT_EQ(expectedOutput[i].iris0, actualOutput[i].iris0);
         EXPECT_FLOAT_EQ(expectedOutput[i].iris1, actualOutput[i].iris1);
         EXPECT_FLOAT_EQ(expectedOutput[i].iris2, actualOutput[i].iris2);
@@ -223,7 +223,7 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     auto delta = 0.0000001;
-    for (size_t i = 0; i < actualOutput.size(); ++i ) {
+    for (size_t i = 0; i < actualOutput.size(); ++i) {
         EXPECT_NEAR(expectedOutput[i].iris0, actualOutput[i].iris0, delta);
         EXPECT_NEAR(expectedOutput[i].iris1, actualOutput[i].iris1, delta);
         EXPECT_NEAR(expectedOutput[i].iris2, actualOutput[i].iris2, delta);
@@ -232,10 +232,9 @@ TEST_P(MLModelDeploymentTest, testSimpleMLModelDeployment) {
 
 INSTANTIATE_TEST_CASE_P(TestInputs,
                         MLModelDeploymentTest,
-                        ::testing::Values(
-                            MLModelDeploymentTest::createBooleanTestData(),
-                            MLModelDeploymentTest::createFloatTestData(),
-                            MLModelDeploymentTest::createIntTestData()),
+                        ::testing::Values(MLModelDeploymentTest::createBooleanTestData(),
+                                          MLModelDeploymentTest::createFloatTestData(),
+                                          MLModelDeploymentTest::createIntTestData()),
                         [](const testing::TestParamInfo<MLModelDeploymentTest::ParamType>& info) {
                             std::string name = std::get<0>(info.param);
                             return name;
