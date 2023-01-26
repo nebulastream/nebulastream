@@ -5,7 +5,7 @@ COPY ./nes-$TARGETARCH.deb nes.deb
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  \
     libstdc++-11-dev \
     libobjc-11-dev \
-    libstdc++6 \
+    libstdc++6  \
     libgcc-s1 \
     libc6  \
     libc6-dev \
