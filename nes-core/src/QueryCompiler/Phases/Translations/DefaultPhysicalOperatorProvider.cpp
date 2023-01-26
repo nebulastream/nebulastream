@@ -318,9 +318,38 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         //FIXME Once #3353 is merged, sliding window can be added
         NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
 
-        // FIXME Once #3407 is done, we can continue with this here
-        auto timeStampFieldNameLeft = "test1$timestamp"; // windowType->getTimeCharacteristic()->getField()->getName();
-        auto timeStampFieldNameRight = "test2$timestamp"; // windowType->getTimeCharacteristic()->getField()->getName();
+        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+
+        std::string timeStampFieldNameLeft = "";
+        std::string timeStampFieldNameRight = "";
+        auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        auto leftSchema = joinOperator->getLeftInputSchema();
+        auto leftSourceNameQualifier = leftSchema->getSourceNameQualifier();
+        for (auto& field : leftSchema->fields) {
+            auto fieldName = field->getName();
+            auto fieldNameWithoutSourceName = fieldName.substr(leftSourceNameQualifier.size());
+            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
+                timeStampFieldNameLeft = fieldName;
+                break;
+            }
+        }
+
+        auto rightSchema = joinOperator->getRightInputSchema();
+        auto rightSourceNameQualifier = rightSchema->getSourceNameQualifier();
+        for (auto& field : rightSchema->fields) {
+            auto fieldName = field->getName();
+            auto fieldNameWithoutSourceName = fieldName.substr(rightSourceNameQualifier.size());
+            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
+                timeStampFieldNameRight = fieldName;
+                break;
+            }
+        }
+
+        if (timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()) {
+            NES_THROW_RUNTIME_ERROR("Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+        }
 
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
