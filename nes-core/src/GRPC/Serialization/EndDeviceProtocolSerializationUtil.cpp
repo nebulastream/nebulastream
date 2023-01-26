@@ -71,6 +71,12 @@ std::string EndDeviceProtocolSerializationUtil::asString(ExpressionInstructions 
     res.push_back(e);
     return res;
 }
+
+std::string getFieldNameFromSchemaName(std::string s){
+    auto pos = s.find('$');
+    return s.substr(pos+1, s.length() - pos-1);
+  };
+
 std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(ExpressionNodePtr node) {
     if (!node->instanceOf<ConstantValueExpressionNode>()) {
         throw UnsupportedEDSerialisationException();
@@ -81,21 +87,22 @@ std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(Expressio
     auto basicPhysType = dynamic_pointer_cast<BasicPhysicalType>(physType);
 
     std::string res = asString(ExpressionInstructions::CONST);
-    auto value = basicValue->value;
-
-    switch (basicPhysType->nativeType) {
-        case BasicPhysicalType::INT_8: res.push_back(DataTypes::INT8); break;
-        case BasicPhysicalType::UINT_8: res.push_back(DataTypes::UINT8); break;
-        case BasicPhysicalType::INT_16: res.push_back(DataTypes::INT16); break;
-        case BasicPhysicalType::UINT_16: res.push_back(DataTypes::UINT16); break;
-        case BasicPhysicalType::INT_32: res.push_back(DataTypes::INT32); break;
-        case BasicPhysicalType::UINT_32: res.push_back(DataTypes::UINT32); break;
-        case BasicPhysicalType::INT_64: res.push_back(DataTypes::INT64); break;
-        case BasicPhysicalType::UINT_64: res.push_back(DataTypes::UINT64); break;
-        case BasicPhysicalType::FLOAT: res.push_back(DataTypes::FLOAT); break;
-        case BasicPhysicalType::DOUBLE: res.push_back(DataTypes::DOUBLE); break;
-        default: throw UnsupportedEDSerialisationException();
-    }
+    //TODO: fix here to allow for other data types
+    int8_t value = stoi(basicValue->value);
+    res.push_back(DataTypes::INT8);
+//    switch (basicPhysType->nativeType) {
+//        case BasicPhysicalType::INT_8: res.push_back(DataTypes::INT8); break;
+//        case BasicPhysicalType::UINT_8: res.push_back(DataTypes::UINT8); break;
+//        case BasicPhysicalType::INT_16: res.push_back(DataTypes::INT16); break;
+//        case BasicPhysicalType::UINT_16: res.push_back(DataTypes::UINT16); break;
+//        case BasicPhysicalType::INT_32: res.push_back(DataTypes::INT32); break;
+//        case BasicPhysicalType::UINT_32: res.push_back(DataTypes::UINT32); break;
+//        case BasicPhysicalType::INT_64: res.push_back(DataTypes::INT64); break;
+//        case BasicPhysicalType::UINT_64: res.push_back(DataTypes::UINT64); break;
+//        case BasicPhysicalType::FLOAT: res.push_back(DataTypes::FLOAT); break;
+//        case BasicPhysicalType::DOUBLE: res.push_back(DataTypes::DOUBLE); break;
+//        default: throw UnsupportedEDSerialisationException();
+//    }
 
     res += value;
     return res;
@@ -152,8 +159,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(E
 
     auto fanode = node->as<FieldAccessExpressionNode>();
     auto fullName = fanode->getFieldName();
-    auto pos = fullName.find('$');
-    auto name = fullName.substr(pos+1, fullName.length() - pos-1);
+    auto name = getFieldNameFromSchemaName(fullName);
     if (std::find(registers->begin(), registers->end(), name) == registers->end()) {
         NES_WARNING("No register defined for field: " + name);
         throw UnsupportedEDSerialisationException();
@@ -182,17 +188,17 @@ EndDeviceProtocolSerializationUtil::EDMapOperationPtr
 EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegistersPtr registers) {
     auto mapNode = node->as<MapLogicalOperatorNode>();
     auto expressionNode = mapNode->getMapExpression();
-    auto fieldexprname = expressionNode->getField()->getFieldName();
+    auto schemaFieldName = expressionNode->getField()->getFieldName();
     auto mapexpr = expressionNode->getAssignment();
     auto expression = serializeExpression(mapexpr, registers);
     int attribute;
 
     //if field doesn't already exists, then add it
-    if (std::find(registers->begin(), registers->end(), fieldexprname) == registers->end()) {
+    if (std::find(registers->begin(), registers->end(), schemaFieldName) == registers->end()) {
         attribute = registers->size();
-        registers->push_back(fieldexprname);
+        registers->push_back(getFieldNameFromSchemaName(schemaFieldName));
     } else {
-        attribute = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), fieldexprname));
+        attribute = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), schemaFieldName));
     }
     auto result = std::make_shared<MapOperation>();
     result->set_attribute(attribute);
