@@ -17,6 +17,21 @@
 namespace NES::Benchmark::IngestionRateGeneration {
 IngestionRateGenerator::IngestionRateGenerator() {}
 
+IngestionRateGenerator IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns configOverAllRuns) {
+    auto ingestionRateDistribution = getDistributionFromString(configOverAllRuns.ingestionRateDistribution->getValue());
+    auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
+    auto ingestionRateCnt = configOverAllRuns.ingestionRateCnt->getValue();
+    auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
+
+    if (ingestionRateDistribution == UNIFORM) {
+        return UniformIngestionRateGenerator(ingestionRateInBuffers, ingestionRateCnt);
+    } else if (ingestionRateDistribution == SINUS || ingestionRateDistribution == COSINUS) {
+        return TrigonometricIngestionRateGenerator(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCnt, numberOfPeriods);
+    } else {
+        return MDIngestionRateGenerator(ingestionRateDistribution, ingestionRateCnt);
+    }
+}
+
 IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string ingestionRateDistribution) {
     if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform") return UNIFORM;
     else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus") return SINUS;
