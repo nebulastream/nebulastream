@@ -11,15 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Nautilus/Backends/WASM/WASMCompiler.hpp"
-#include "Execution/RecordBuffer.hpp"
-#include "Nautilus/Interface/DataTypes/MemRef.hpp"
-#include "Nautilus/Interface/DataTypes/Value.hpp"
-#include "Nautilus/Tracing/Phases/SSACreationPhase.hpp"
-#include "Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp"
-#include "Nautilus/Tracing/Trace/ExecutionTrace.hpp"
-#include "Nautilus/Tracing/TraceContext.hpp"
-#include "Util/Logger/Logger.hpp"
+
+#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Backends/WASM/WASMLoweringProvider.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <binaryen-c.h>
 #include <gtest/gtest.h>
 
@@ -34,7 +35,7 @@ class WASMCompilerTest : public testing::Test {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
-    Nautilus::Backends::WASM::WASMCompiler wasmCompiler;
+    Nautilus::Backends::WASM::WASMLoweringProvider wasmCompiler;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WASMCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup WASMCompilerTest test class." << std::endl;
@@ -317,7 +318,7 @@ TEST_F(WASMCompilerTest, loopFunctionTest) {
     std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
+    auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();
     wasmCompiler->lower(ir);
 }
 
@@ -344,7 +345,7 @@ TEST_F(WASMCompilerTest, memRefExpressionTest) {
     std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
+    auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();
     wasmCompiler->lower(ir);
 }
 
