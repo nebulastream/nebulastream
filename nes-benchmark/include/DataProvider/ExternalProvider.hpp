@@ -16,6 +16,7 @@
 #define NES_EXTERNALPROVIDER_HPP
 
 #include <DataProvider/DataProvider.hpp>
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::DataProvision {
 
@@ -35,8 +36,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     ExternalProvider(uint64_t id,
                      DataProviderMode providerMode,
                      std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     std::vector<uint64_t> predefinedIngestionRates,
-                     uint64_t ingestionRateCnt);
+                     IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator);
 
     /**
      * @brief overrides the start function and generates the data
@@ -55,8 +55,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     void generateData();
 
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
-    std::vector<uint64_t> predefinedIngestionRates;
-    uint64_t ingestionRateCnt;
+    IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
     bool started = false;
     std::thread generatorThread;

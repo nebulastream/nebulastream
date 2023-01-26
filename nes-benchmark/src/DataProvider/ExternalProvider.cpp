@@ -18,19 +18,12 @@ namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   std::vector<uint64_t> predefinedIngestionRates,
-                                   uint64_t ingestionRateCnt)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), predefinedIngestionRates(predefinedIngestionRates),
-      ingestionRateCnt(ingestionRateCnt) {
-
-    uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
-    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
-}
+                                   IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator)
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(ingestionRateGenerator) {}
 
 void ExternalProvider::start() {
     if (!started) {
         generatorThread = std::thread([this] {this->generateData();});
-        started = true;
     }
 }
 
@@ -46,6 +39,11 @@ void ExternalProvider::stop() {
 void ExternalProvider::generateData() {
     sleep(5);   // TODO why is this sleep necessary?
 
+    auto predefinedIngestionRates = ingestionRateGenerator.generateIngestionRates();
+
+    uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
+    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
+
     uint64_t nextPeriodStartTime;
     uint64_t periodStartTime;
     uint64_t periodEndTime;
@@ -57,6 +55,8 @@ void ExternalProvider::generateData() {
     // TODO why is workingTimeDelta not being used here?
     uint64_t buffersToProducePer10ms = predefinedIngestionRates[0];
     NES_ASSERT(buffersToProducePer10ms != 0, "Ingestion ratio is too small");
+
+    started = true;
 
     uint64_t runningOverAllCount = 0;
     uint64_t ingestionRateIndex = 0;
@@ -87,7 +87,7 @@ void ExternalProvider::generateData() {
 
             if (lastSecond != currentSecond) {
                 // TODO change /100 according to workingTimeDelta (see ExternalProvider.hpp)
-                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % ingestionRateCnt] / 100) == 0) {
+                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] / 100) == 0) {
                     buffersToProducePer10ms = 1;
                 }
 

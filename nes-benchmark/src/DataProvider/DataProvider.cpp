@@ -13,9 +13,7 @@
 */
 
 #include <DataProvider/DataProvider.hpp>
-#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/MDIngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -38,30 +36,8 @@ DataProviderPtr DataProvider::createProvider(uint64_t providerId,
         auto internalProvider = std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
         return internalProvider;
     } else if (configOverAllRuns.dataProvider->getValue() == "External") {
-        IngestionRateGeneration::IngestionRateDistribution ingestionRateDistribution =
-            IngestionRateGeneration::IngestionRateGenerator::getDistributionFromString(
-                configOverAllRuns.ingestionRateDistribution->getValue());
-
-        std::vector<uint64_t> ingestionRates;
-        if (ingestionRateDistribution == IngestionRateGeneration::UNIFORM) {
-            auto uniformIngestionRateGenerator =
-                IngestionRateGeneration::UniformIngestionRateGenerator(
-                    configOverAllRuns.ingestionRateInBuffers->getValue(), configOverAllRuns. ingestionRateCnt->getValue());
-            ingestionRates = uniformIngestionRateGenerator.generateIngestionRates();
-        } else if (ingestionRateDistribution == IngestionRateGeneration::SINUS || ingestionRateDistribution == IngestionRateGeneration::COSINUS) {
-            auto trigonometricIngestionRateGenerator =
-                IngestionRateGeneration::TrigonometricIngestionRateGenerator(ingestionRateDistribution,
-                                                                             configOverAllRuns.ingestionRateInBuffers->getValue(),
-                                                                             configOverAllRuns.ingestionRateCnt->getValue(),
-                                                                             configOverAllRuns.numberOfPeriods->getValue());
-            ingestionRates = trigonometricIngestionRateGenerator.generateIngestionRates();
-        } else {
-            auto mdIngestionRateGenerator =
-                IngestionRateGeneration::MDIngestionRateGenerator(ingestionRateDistribution, configOverAllRuns.ingestionRateCnt->getValue());
-            ingestionRates = mdIngestionRateGenerator.generateIngestionRates();
-        }
-
-        auto externalProvider = std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, ingestionRates, configOverAllRuns.ingestionRateCnt->getValue());
+        IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
+        auto externalProvider = std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, ingestionRateGenerator);
         return externalProvider;
     } else {
         NES_THROW_RUNTIME_ERROR("Could not parse dataProvider = " << configOverAllRuns.dataProvider->getValue() << "!");
