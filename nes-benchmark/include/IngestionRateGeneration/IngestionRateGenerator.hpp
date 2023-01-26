@@ -45,13 +45,12 @@ class IngestionRateGenerator {
      */
     virtual std::vector<uint64_t> generateIngestionRates() = 0;
 
-  protected:
     /**
      * @brief determines whether the given ingestion rate distribution is supported
      * @param ingestionRateDistribution
      * @return IngestionRateDistribution
      */
-    IngestionRateDistribution getDistributionFromString(std::string ingestionRateDistribution);
+    static IngestionRateDistribution getDistributionFromString(std::string ingestionRateDistribution);
 };
 }// namespace NES::Benchmark::IngestionRateGeneration
 
