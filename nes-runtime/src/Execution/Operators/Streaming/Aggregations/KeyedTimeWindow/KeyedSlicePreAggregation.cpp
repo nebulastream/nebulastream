@@ -31,8 +31,8 @@ void* getSliceStoreProxy(void* op, uint64_t workerId) {
 }
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
-    auto sliceStore = static_cast<KeyedSlicePreAggregationHandler*>(ss);
-    return sliceStore->findSliceByTs(ts)->getState()->ptr;
+    auto sliceStore = static_cast<KeyedThreadLocalSliceStore*>(ss);
+    return sliceStore->findSliceByTs(ts)->getState();
 }
 
 void triggerThreadLocalStateProxy(void* op,
@@ -42,7 +42,7 @@ void triggerThreadLocalStateProxy(void* op,
                                   uint64_t originId,
                                   uint64_t sequenceNumber,
                                   uint64_t watermarkTs) {
-    auto handler = static_cast<GlobalSlicePreAggregationHandler*>(op);
+    auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
     auto workerContext = static_cast<WorkerContext*>(wctx);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(pctx);
     handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
@@ -52,10 +52,6 @@ void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size);
-}
-void* getDefaultState(void* ss) {
-    auto handler = static_cast<KeyedSlicePreAggregationHandler*>(ss);
-    return handler->getDefaultState()->ptr;
 }
 
 class LocalSliceStoreState : public Operators::OperatorState {
@@ -90,7 +86,6 @@ void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
                            valueSize);
-    auto defaultState = Nautilus::FunctionCall("getDefaultState", getDefaultState, globalOperatorHandler);
 }
 
 void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
@@ -116,9 +111,6 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     for(const auto& exp : keyExpressions){
         keyValues.emplace_back(exp->execute(record));
     }
-    std::transform(keyExpressions.begin(), keyExpressions.end(), keyValues.begin(), [&record](auto expression) {
-        return expression->execute(record);
-    });
 
     // 3. load the reference to the slice store and find the correct slice.
     auto sliceStore = reinterpret_cast<LocalSliceStoreState*>(ctx.getLocalState(this));
@@ -146,7 +138,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
     // with the current watermark ts to check if we can trigger a window.

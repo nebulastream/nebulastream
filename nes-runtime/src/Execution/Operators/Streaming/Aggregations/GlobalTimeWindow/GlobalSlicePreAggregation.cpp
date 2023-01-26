@@ -120,7 +120,7 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     }
 }
 void GlobalSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(0);
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
     // with the current watermark ts to check if we can trigger a window.
