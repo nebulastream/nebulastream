@@ -1,5 +1,26 @@
 # Changelog
 
+## [v0.4.35](https://github.com/nebulastream/nebulastream/tree/v0.4.35) (2023-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.34...v0.4.35)
+
+**Implemented enhancements:**
+
+- \[TASK\] Removing Quotations in Query Definition of Tests [\#3448](https://github.com/nebulastream/nebulastream/issues/3448)
+
+### Bug Fixes 🐛
+
+- Parsing Oatpp String into nlohmann::json throws error [\#2967](https://github.com/nebulastream/nebulastream/issues/2967)
+
+#### REST API 
+
+- Find and Add Json library [\#2950](https://github.com/nebulastream/nebulastream/issues/2950)
+- Make host and port of REST Server configuratble when using Oatpp framework [\#2905](https://github.com/nebulastream/nebulastream/issues/2905)
+- Refactor MaintenanceController and SourceCatalogController, revisit response codes  [\#2719](https://github.com/nebulastream/nebulastream/issues/2719)
+- Refactor TopologyController, revisit response codes [\#2718](https://github.com/nebulastream/nebulastream/issues/2718)
+- Refactor QueryCatalogController, revisit response codes [\#2717](https://github.com/nebulastream/nebulastream/issues/2717)
+- Refactor BaseController [\#2716](https://github.com/nebulastream/nebulastream/issues/2716)
+
 ## [v0.4.34](https://github.com/nebulastream/nebulastream/tree/v0.4.34) (2023-01-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.33...v0.4.34)
