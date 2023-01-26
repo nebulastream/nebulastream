@@ -31,7 +31,7 @@ physicalSources:
     configuration:
       networkStack: ChirpStack
       ## set url to MQTT endpoint of networkstack. This is to send and receive packets
-      url: tcp://192.168.129.1:1883
+      url: tcp://192.168.202.1:1883
       ## Set userName for LoRaWANProxySource
       userName: admin
       ## Set password for LoRaWANProxySource
@@ -53,3 +53,4 @@ physicalSources:
       ## then the value from that sensor will be mapped to the "temperature" field in the logical schema
       sensorFields:
         - temperature
+        - acceleration

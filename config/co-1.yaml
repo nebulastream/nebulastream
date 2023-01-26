@@ -28,3 +28,5 @@ logicalSources:
     fields:
       - name: "temperature"
         type: "INT8"
+      - name: "acceleration"
+        type: "INT8"
