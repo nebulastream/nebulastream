@@ -65,7 +65,12 @@ namespace NES::Benchmark {
             << "- batchSize: 1" << std::endl
             << "- dataProviderMode: ZeroCopy" << std::endl
             << "- connectionString: " << std::endl
-            << "- logicalSources: input1: Uniform" << std::endl;
+            << "- logicalSources: input1: Uniform" << std::endl
+            << "- ingestionRateInBuffers: 1" << std::endl
+            << "- ingestionRateCnt: 100000" << std::endl
+            << "- numberOfPeriods: 1" << std::endl
+            << "- ingestionRateDistribution: Uniform" << std::endl
+            << "- dataProvider: Internal" << std::endl;
         auto expectedString = oss.str();
 
         ASSERT_EQ(defaultString, expectedString);
@@ -93,6 +98,11 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPreAllocatedBuffer->getValue(), 100);
         ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), 500);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateInBuffers->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCnt->getValue(), 100000);
+        ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 1);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Uniform");
+        ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "Internal");
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
 
