@@ -40,7 +40,7 @@ namespace NES::Benchmark {
         E2EBenchmarkConfigPerRun configPerRun;
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
 
-        EXPECT_NO_THROW(E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort));
+        ASSERT_NO_THROW(E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort));
     }
 
     TEST_F(E2ESingleRunTest, setUpCoordinatorAndWorkerConfig) {
@@ -58,13 +58,13 @@ namespace NES::Benchmark {
         singleRun.setupCoordinatorConfig();
 
         auto coordinatorConf = singleRun.getCoordinatorConf();
-        EXPECT_EQ(coordinatorConf->rpcPort.getValue(), rpcCoordinatorPortSaved);
-        EXPECT_EQ(coordinatorConf->restPort.getValue(), restPortSaved);
-        EXPECT_EQ(coordinatorConf->worker.numWorkerThreads.getValue(), configPerRun.numberOfWorkerThreads->getValue());
-        EXPECT_EQ(coordinatorConf->worker.bufferSizeInBytes.getValue(), configPerRun.bufferSizeInBytes->getValue());
-        EXPECT_EQ(coordinatorConf->worker.numberOfBuffersInGlobalBufferManager.getValue(),
+        ASSERT_EQ(coordinatorConf->rpcPort.getValue(), rpcCoordinatorPortSaved);
+        ASSERT_EQ(coordinatorConf->restPort.getValue(), restPortSaved);
+        ASSERT_EQ(coordinatorConf->worker.numWorkerThreads.getValue(), configPerRun.numberOfWorkerThreads->getValue());
+        ASSERT_EQ(coordinatorConf->worker.bufferSizeInBytes.getValue(), configPerRun.bufferSizeInBytes->getValue());
+        ASSERT_EQ(coordinatorConf->worker.numberOfBuffersInGlobalBufferManager.getValue(),
                   configPerRun.numberOfBuffersInGlobalBufferManager->getValue());
-        EXPECT_EQ(coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
+        ASSERT_EQ(coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
                   configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue());
     }
 
@@ -77,6 +77,7 @@ namespace NES::Benchmark {
         const auto defaultDataGeneratorName = defaultDataGenerator->getName();
         const auto zipfianDataGeneratorName = zipfianDataGenerator->getName();
 
+        configOverAllRuns.sourceNameToDataGenerator.clear();
         configOverAllRuns.sourceNameToDataGenerator[defaultDataGeneratorName] = std::move(defaultDataGenerator);
         configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
         configOverAllRuns.numberOfPreAllocatedBuffer->setValue(10);
@@ -95,11 +96,11 @@ namespace NES::Benchmark {
             singleRun.createSources();
 
             auto coordinatorConf = singleRun.getCoordinatorConf();
-            EXPECT_EQ(coordinatorConf->logicalSources.size(), 2);
+            ASSERT_EQ(coordinatorConf->logicalSources.size(), 2);
 
-            EXPECT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), defaultDataGeneratorName);
-            EXPECT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), zipfianDataGeneratorName);
-            EXPECT_EQ(coordinatorConf->worker.physicalSources.size(), cnt + 1 + cnt + 2);
+            ASSERT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), zipfianDataGeneratorName);
+            ASSERT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), defaultDataGeneratorName);
+            ASSERT_EQ(coordinatorConf->worker.physicalSources.size(), cnt + 1 + cnt + 2);
 
             std::map<std::string, uint64_t> tmpMap{{defaultDataGeneratorName, 0},
                                                    {zipfianDataGeneratorName, 0}};
@@ -108,8 +109,8 @@ namespace NES::Benchmark {
                 tmpMap[physicalSource.getValue()->getLogicalSourceName()] += 1;
             }
 
-            EXPECT_EQ(tmpMap[defaultDataGeneratorName], cnt + 1);
-            EXPECT_EQ(tmpMap[zipfianDataGeneratorName], cnt + 2);
+            ASSERT_EQ(tmpMap[defaultDataGeneratorName], cnt + 1);
+            ASSERT_EQ(tmpMap[zipfianDataGeneratorName], cnt + 2);
         }
     }
 
@@ -123,11 +124,11 @@ namespace NES::Benchmark {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort);
 
-        std::stringstream expected;
-        expected << defaultDataGenerator->getName() << ": " << 123 << ", "
+        std::stringstream ASSERTed;
+        ASSERTed << defaultDataGenerator->getName() << ": " << 123 << ", "
                  << zipfianDataGenerator->getName() << ": " << 456;
 
-        EXPECT_EQ(expected.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
+        ASSERT_EQ(ASSERTed.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
     }
 
 
@@ -153,6 +154,7 @@ namespace NES::Benchmark {
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
+        configOverAllRuns.sourceNameToDataGenerator.clear();
         configOverAllRuns.sourceNameToDataGenerator[defaultDataGeneratorName] = std::move(defaultDataGenerator);
         configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
         configOverAllRuns.inputType->setValue(inputType);
@@ -175,8 +177,8 @@ namespace NES::Benchmark {
         auto availFixedBufferSumStart = 294;
         auto MAX_TIMESTAMP = 10;
 
-        std::stringstream expectedCsvFile;
-        expectedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+        std::stringstream ASSERTedCsvFile;
+        ASSERTedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
                            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
                            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
                            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
@@ -195,7 +197,7 @@ namespace NES::Benchmark {
                                            timeStamp);
 
             if (i < MAX_TIMESTAMP - 1) {
-                expectedCsvFile << "\"" << bmName << "\""
+                ASSERTedCsvFile << "\"" << bmName << "\""
                                 << "," << NES_VERSION << "," << schemaSizeInB
                                 << "," << timeStamp << "," << (processedTasksStart + i)
                                 << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i)
@@ -217,6 +219,6 @@ namespace NES::Benchmark {
 
         std::ifstream ifs(csvFile);
         std::string writtenCsvFile((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-        EXPECT_EQ(writtenCsvFile, expectedCsvFile.str());
+        ASSERT_EQ(writtenCsvFile, ASSERTedCsvFile.str());
     }
 }
