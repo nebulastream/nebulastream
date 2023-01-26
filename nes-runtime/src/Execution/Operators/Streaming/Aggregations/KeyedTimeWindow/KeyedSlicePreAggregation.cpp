@@ -32,7 +32,7 @@ void* getSliceStoreProxy(void* op, uint64_t workerId) {
 
 void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
     auto sliceStore = static_cast<KeyedThreadLocalSliceStore*>(ss);
-    return sliceStore->findSliceByTs(ts)->getState();
+    return sliceStore->findSliceByTs(ts)->getState().get();
 }
 
 void triggerThreadLocalStateProxy(void* op,

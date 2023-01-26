@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEPREAGGREGATIONHANDLER_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEPREAGGREGATIONHANDLER_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
@@ -44,14 +44,14 @@ class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandl
     KeyedSlicePreAggregationHandler(uint64_t windowSize,
                                     uint64_t windowSlide,
                                     const std::vector<OriginId>& origins,
-                                    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr);
+                                    std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator
      * @param ctx PipelineExecutionContext
      * @param entrySize Size of the aggregated values in memory
      */
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
+    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize);
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
@@ -99,7 +99,6 @@ class KeyedSlicePreAggregationHandler : public Runtime::Execution::OperatorHandl
     std::weak_ptr<KeyedSliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<KeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
-    std::unique_ptr<State> defaultState;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_GLOBALSLICEPREAGGREGATIONHANDLER_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDSLICEPREAGGREGATIONHANDLER_HPP_

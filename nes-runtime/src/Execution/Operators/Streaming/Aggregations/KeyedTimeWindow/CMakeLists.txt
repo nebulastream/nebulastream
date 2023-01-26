@@ -14,4 +14,8 @@ add_source_files(nes-runtime
         KeyedSlice.cpp
         KeyedThreadLocalSliceStore.cpp
         KeyedSlicePreAggregation.cpp
+        KeyedSlicePreAggregationHandler.cpp
+        KeyedSliceStaging.cpp
+        KeyedSliceMerging.cpp
+        KeyedSliceMergingHandler.cpp
         )
