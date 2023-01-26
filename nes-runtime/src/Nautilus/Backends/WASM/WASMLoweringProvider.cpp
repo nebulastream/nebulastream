@@ -21,8 +21,6 @@
 
 namespace NES::Nautilus::Backends::WASM {
 
-WASMLoweringProvider::WASMLoweringProvider() = default;
-
 std::pair<size_t, char*> WASMLoweringProvider::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     wasm = BinaryenModuleCreate();
     BinaryenSetColorsEnabled(true);
@@ -51,9 +49,7 @@ std::pair<size_t, char*> WASMLoweringProvider::lower(const std::shared_ptr<IR::I
 void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::FunctionOperation>& functionOp) {
     BinaryenExpressions bodyList;
     std::vector<BinaryenType> args;
-    /**
-     * Handle function arguments or Block_0() arguments 
-     */
+    //Handle function arguments or Block_0() arguments
     for (const auto& inputArg : functionOp->getFunctionBasicBlock()->getArguments()) {
         BinaryenExpressionRef argExpression;
         if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(inputArg->getStamp().get())) {
@@ -80,35 +76,29 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Fu
         localVarMapping.setValue(inputArg->getIdentifier(), argExpression);
         bodyList.setValue(inputArg->getIdentifier(), argExpression);
         consumed.emplace(inputArg->getIdentifier(), argExpression);
-        localVariablesIndex++;
+        ++localVariablesIndex;
     }
 
     generateWASM(functionOp->getFunctionBasicBlock(), bodyList);
 
-    /**
-     * Add function args
-     */
+    //Add function args
     auto argsArray = std::make_unique<BinaryenType[]>(args.size());
     int funcArgsIndex = 0;
     for (const auto& arg : args) {
         argsArray[funcArgsIndex] = arg;
-        funcArgsIndex++;
+        ++funcArgsIndex;
     }
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), funcArgsIndex);
 
-    /**
-     * Extract variables and set them as locals
-     */
+    //Extract variables and set them as locals
     auto varArray = std::make_unique<BinaryenType[]>(localVariables.size());
     int numLocalsTypes = 0;
     for (const auto& mapping : localVariables.getMapping()) {
         varArray[numLocalsTypes] = mapping.second;
-        numLocalsTypes++;
+        ++numLocalsTypes;
     }
 
-    /**
-     * Adding imports for proxy functions here
-     */
+    //Adding imports for proxy functions here
     auto proxies = proxyFunctions.getMapping();
     for (const auto& proxyFunction : proxies) {
         auto proxyName = proxyFunction.first;
@@ -119,15 +109,12 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Fu
         BinaryenAddFunctionImport(wasm, proxyName.c_str(), proxyFunctionModule, proxyName.c_str(), params, returnType);
         types.push_back(returnType);
     }
-    /**
-     * Memory stuff here, extract it later on
-     */
+
     BinaryenSetMemory(wasm, 64, 64, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, true, memoryName);
 
     BinaryenExpressionRef body = generateCFG();
-    /**
-     * execute function is generated here
-     */
+
+    //execute function is generated here
     BinaryenFunctionRef function = BinaryenAddFunction(wasm,
                                                        functionOp->getName().c_str(),
                                                        arguments,
@@ -135,9 +122,8 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Fu
                                                        varArray.get(),
                                                        localVariables.size(),
                                                        body);
-    /**
-     * Need to export the execute function so it is callable
-     */
+
+    //Need to export the execute function so it is callable
     BinaryenAddFunctionExport(wasm, functionOp->getName().c_str(), functionOp->getName().c_str());
 }
 
@@ -427,14 +413,13 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Pr
     auto proxyCall = BinaryenCall(wasm, proxyCallName.c_str(), paramExpressions.data(), paramExpressions.size(), returnType);
 
     proxyFunctions.setUniqueValue(proxyCallName, paramsAndReturnType);
-    /**
+    /*
      * Pointers lead to variable name "re-usage", when the pointer is passed as a function argument (ex. 0_0):
      * Block_0(0_0:ptr):
      *  0_0 = NES__Runtime__TupleBuffer__getNumberOfTuples(0_0) :ui64
      *  return (0_0) :ptr
      * }
-     * Maybe move this check into Mapping
-     * */
+     */
     if (expressions.contains(proxyCallId)) {
         expressions.setValue(proxyCallId + "_ptr", expressions.getValue(proxyCallId));
         consumed.emplace(proxyCallId + "_ptr", expressions.getValue(proxyCallId));
@@ -471,7 +456,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Ca
     auto outputStamp = castOperation->getStamp();
     auto inputId = castOperation->getInput()->getIdentifier();
     BinaryenExpressionRef cast;
-    /**For now just support extending/promoting*/
+    //For now just support extending/promoting
     if (inputStamp->isInteger() && outputStamp->isInteger()) {
         cast = BinaryenUnary(wasm, BinaryenExtendSInt32(), expressions.getValue(inputId));
     } else if (inputStamp->isFloat() && outputStamp->isFloat()) {
@@ -594,7 +579,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Br
             expressions.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
             localVarMapping.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
             consumed.emplace(nextTrueArguments[i]->getIdentifier(), localGet);
-            localVariablesIndex++;
+            ++localVariablesIndex;
         }
         blockArgs.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
     }
@@ -645,7 +630,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::If
                 expressions.setValue(nextTrue[i]->getIdentifier(), localGet);
                 localVarMapping.setValue(nextTrue[i]->getIdentifier(), localGet);
                 consumed.emplace(nextTrue[i]->getIdentifier(), localGet);
-                localVariablesIndex++;
+                ++localVariablesIndex;
             }
         }
         trueBlockArgs.setValue(nextTrue[i]->getIdentifier(), localGet);
@@ -676,7 +661,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::If
                 expressions.setValue(nextFalse[i]->getIdentifier(), localGet);
                 localVarMapping.setValue(nextFalse[i]->getIdentifier(), localGet);
                 consumed.emplace(nextFalse[i]->getIdentifier(), localGet);
-                localVariablesIndex++;
+                ++localVariablesIndex;
             }
         }
         falseBlockArgs.setValue(nextFalse[i]->getIdentifier(), localGet);
@@ -692,7 +677,7 @@ void WASMLoweringProvider::generateBody(BinaryenExpressions expressions) {
     for (const auto& exp : expressions.getMapping()) {
         if (!consumed.contains(exp.first)) {
             bodyArray[numChildren] = exp.second;
-            numChildren++;
+            ++numChildren;
         }
     }
     auto block = BinaryenBlock(wasm, currentBlock->getIdentifier().c_str(), bodyArray.get(), numChildren, BinaryenTypeAuto());

@@ -27,7 +27,7 @@
 namespace NES::Runtime::Execution {
 using namespace Nautilus;
 class RecordBuffer;
-}
+}// namespace NES::Runtime::Execution
 
 namespace NES::Nautilus {
 
@@ -62,7 +62,6 @@ TEST_F(WASMCompilerTest, addIntFunctionTest) {
         return int32AddExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -79,7 +78,6 @@ TEST_F(WASMCompilerTest, subIntFunctionTest) {
         return int32SubExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -96,7 +94,6 @@ TEST_F(WASMCompilerTest, mulIntFunctionTest) {
         return int32MulExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -113,7 +110,6 @@ TEST_F(WASMCompilerTest, divIntFunctionTest) {
         return int32DivExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -131,7 +127,6 @@ TEST_F(WASMCompilerTest, addInt32ArgsFunctionTest) {
         return int32AddArgsExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -149,7 +144,6 @@ TEST_F(WASMCompilerTest, addInt64ArgsFunctionTest) {
         return int64AddArgsExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -166,7 +160,6 @@ TEST_F(WASMCompilerTest, orBooleanFunctionTest) {
         return booleanOrExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -184,11 +177,9 @@ TEST_F(WASMCompilerTest, divFloatFunctionTest) {
         return floatDivArgsExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
-    
 }
 
 Value<> int32GTExpression(Value<Int32> x) {
@@ -202,7 +193,6 @@ TEST_F(WASMCompilerTest, gtInt32FunctionTest) {
         return int32GTExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -223,7 +213,6 @@ TEST_F(WASMCompilerTest, ifFunctionTest) {
         return ifExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -245,13 +234,10 @@ TEST_F(WASMCompilerTest, ifFunction2Test) {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return ifExpression2(tempx);
     });
-    
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
-    
 }
 
 Value<> ifElseExpression(Value<Int32> x) {
@@ -271,7 +257,6 @@ TEST_F(WASMCompilerTest, ifElseFunctionTest) {
         return ifElseExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -294,7 +279,6 @@ TEST_F(WASMCompilerTest, ifElseIfFunctionTest) {
         return ifElseIfExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     wasmCompiler.lower(ir);
@@ -315,7 +299,6 @@ TEST_F(WASMCompilerTest, loopFunctionTest) {
         return loopExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();
@@ -326,12 +309,6 @@ Value<> memRefExpression(Value<Int32> y) {
     Value<Int32> x = y;
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(nullptr)));
     Runtime::Execution::RecordBuffer recordBuffer = Runtime::Execution::RecordBuffer(memRef);
-    /*
-    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    if (y == 9) {
-        memRef.store(x);
-    }
-    */
     return recordBuffer.getNumRecords();
 }
 
@@ -342,7 +319,6 @@ TEST_F(WASMCompilerTest, memRefExpressionTest) {
         return memRefExpression(tempx);
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();

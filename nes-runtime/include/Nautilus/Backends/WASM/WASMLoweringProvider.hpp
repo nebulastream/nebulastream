@@ -54,7 +54,7 @@ class WASMLoweringProvider {
     using ProxyFunctions = Mapping<std::string, std::vector<BinaryenType>>;
 
   public:
-    WASMLoweringProvider();
+    WASMLoweringProvider() {}
     /**
      * Lowers/translates Nautilus IR to WebAssembly binary code
      * @param ir Nautilus IR that needs to be lowered
@@ -66,14 +66,14 @@ class WASMLoweringProvider {
     /**
      * Binaryen module which generates the final wasm binary code
      */
-    BinaryenModuleRef wasm;
+    BinaryenModuleRef wasm{};
     /**
      * The Relooper instance used for creating structured CFGs. We first generate code blocks, which
      * are not connected with each other. With the help of the Relooper algorithm we link these code blocks
      * accordingly and infer how they're connected, via if/else or a loop for example.
      * For more details: https://dl.acm.org/doi/abs/10.1145/2048147.2048224
      */
-    RelooperRef relooper;
+    RelooperRef relooper{};
     /**
      * Create RelooperBlock from BinaryenBlocks and store them
      */
@@ -137,7 +137,7 @@ class WASMLoweringProvider {
      * Function arguments and locals share the same index space in Webassembly. When creating new locals, we need to track
      * the index.
      */
-    int localVariablesIndex;
+    int localVariablesIndex{};
 
     /**
      * We iterate over a given IR and depending on the expression, generate WebAssembly code
