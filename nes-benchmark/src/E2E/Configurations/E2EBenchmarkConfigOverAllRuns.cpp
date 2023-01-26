@@ -41,6 +41,11 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
+    ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 1, "Number of buffers ingested per time interval");
+    ingestionRateCnt = ConfigurationOption<uint32_t>::create("ingestionRateCnt", 100000, "Number of potentially different ingestion rates");
+    numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
+    ingestionRateDistribution = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
+    dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
 }
 
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -58,7 +63,12 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- batchSize: " << batchSize->getValueAsString() << std::endl
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
-        << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl;
+        << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl
+        << "- ingestionRateInBuffers: " << ingestionRateInBuffers->getValueAsString() << std::endl
+        << "- ingestionRateCnt: " << ingestionRateCnt->getValueAsString() << std::endl
+        << "- numberOfPeriods: " << numberOfPeriods->getValueAsString() << std::endl
+        << "- ingestionRateDistribution: " << ingestionRateDistribution->getValue() << std::endl
+        << "- dataProvider: " << dataProvider->getValue() << std::endl;
 
     return oss.str();
 }
@@ -83,6 +93,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.ingestionRateCnt->setValueIfDefined(yamlConfig["ingestionRateCnt"]);
     configOverAllRuns.numberOfPeriods->setValueIfDefined(yamlConfig["numberOfPeriods"]);
     configOverAllRuns.ingestionRateDistribution->setValueIfDefined(yamlConfig["ingestionRateDistribution"]);
+    configOverAllRuns.dataProvider->setValueIfDefined(yamlConfig["dataProvider"]);
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsSequence()) {
