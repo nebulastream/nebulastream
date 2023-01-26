@@ -15,8 +15,8 @@
 #include <IngestionRateGeneration/MDIngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
-MDIngestionRateGenerator::MDIngestionRateGenerator(std::string ingestionRateDistribution, uint64_t ingestionRateCnt)
-    : IngestionRateGenerator(), ingestionRateDistribution(getDistributionFromString(ingestionRateDistribution)), ingestionRateCnt(ingestionRateCnt) {}
+MDIngestionRateGenerator::MDIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateCnt)
+    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution), ingestionRateCnt(ingestionRateCnt) {}
 
 std::vector<std::uint64_t> MDIngestionRateGenerator::generateIngestionRates() {
     for (uint64_t i = 0; i < ingestionRateCnt; ++i) {

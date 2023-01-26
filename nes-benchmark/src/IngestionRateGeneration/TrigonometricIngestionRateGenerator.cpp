@@ -15,11 +15,11 @@
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
-TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(std::string ingestionRateDistribution,
+TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution,
                                                                          uint64_t ingestionRateInBuffers,
                                                                          uint64_t ingestionRateCnt,
                                                                          uint64_t numberOfPeriods)
-    : IngestionRateGenerator(), ingestionRateDistribution(getDistributionFromString(ingestionRateDistribution)),
+    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution),
       ingestionRateInBuffers(ingestionRateInBuffers), ingestionRateCnt(ingestionRateCnt), numberOfPeriods(numberOfPeriods) {}
 
 std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestionRates() {
