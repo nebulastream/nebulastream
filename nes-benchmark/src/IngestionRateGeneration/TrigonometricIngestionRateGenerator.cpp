@@ -25,22 +25,30 @@ TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(std::st
 std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestionRates() {
     for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
         if (ingestionRateDistribution == SINUS) {
-            auto value = getSinValue(i);
-            predefinedIngestionRates.push_back(value * ingestionRateInBuffers);
+            uint64_t curIngestionRate = round(getSinValue(i) * ingestionRateInBuffers);
+            if (curIngestionRate == 0) {
+                curIngestionRate = 1;
+            }
+
+            predefinedIngestionRates.push_back(curIngestionRate);
         } else if (ingestionRateDistribution == COSINUS) {
-            auto value = getCosValue(i);
-            predefinedIngestionRates.push_back(value * ingestionRateInBuffers);
+            uint64_t curIngestionRate = round(getCosValue(i) * ingestionRateInBuffers);
+            if (curIngestionRate == 0) {
+                curIngestionRate = 1;
+            }
+
+            predefinedIngestionRates.push_back(curIngestionRate);
         }
     }
 
     return predefinedIngestionRates;
 }
 
-long double TrigonometricIngestionRateGenerator::getSinValue(uint64_t x) {
-    return (0.5 * (1 + sin(2 * std::numbers::pi * x * numberOfPeriods / ingestionRateCnt)));
+double TrigonometricIngestionRateGenerator::getSinValue(uint64_t x) {
+    return (0.5 * (1 + sin(2.0 * std::numbers::pi * x * (numberOfPeriods / (double) ingestionRateCnt))));
 }
 
-long double TrigonometricIngestionRateGenerator::getCosValue(uint64_t x) {
-    return (0.5 * (1 + cos(2 * std::numbers::pi * x * numberOfPeriods / ingestionRateCnt)));
+double TrigonometricIngestionRateGenerator::getCosValue(uint64_t x) {
+    return (0.5 * (1 + cos(2.0 * std::numbers::pi * x * (numberOfPeriods / (double) ingestionRateCnt))));
 }
 }// namespace NES::Benchmark::IngestionRateGeneration
