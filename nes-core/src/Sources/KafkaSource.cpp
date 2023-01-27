@@ -96,8 +96,8 @@ KafkaSource::~KafkaSource() {
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
-    NES_DEBUG("TCPSource  " << this << ": receiveData ");
-    NES_DEBUG("TCPSource buffer allocated ");
+    NES_DEBUG2("TCPSource  {}: receiveData.", this);
+    NES_DEBUG2("TCPSource buffer allocated.");
     if (!connect()) {
         return std::nullopt;
     }
