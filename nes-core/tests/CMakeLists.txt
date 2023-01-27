@@ -381,6 +381,8 @@ add_nes_unit_test(query-placement-test "UnitTests/Optimizer/QueryPlacement/Query
 
 add_nes_unit_test(ilp-placement-test "UnitTests/Optimizer/QueryPlacement/ILPPlacementTest.cpp")
 
+add_nes_unit_test(adaptive-active-standby-test "UnitTests/Optimizer/QueryPlacement/AdaptiveActiveStandbyTest.cpp")
+
 if(NES_USE_TF)
     add_nes_unit_test(ml-heuristic-placement-test "UnitTests/Optimizer/QueryPlacement/MlHeuristicPlacementTest.cpp")
 endif()

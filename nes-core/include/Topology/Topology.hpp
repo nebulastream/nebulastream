@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 
 namespace NES {
 
@@ -82,7 +83,9 @@ class Topology {
      * @param destinationNode: the destination start node
      * @return physical location of the leaf node in the graph.
      */
-    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& startNode, const TopologyNodePtr& destinationNode);
+    std::optional<TopologyNodePtr> findAllPathBetween(const TopologyNodePtr& startNode,
+                                                      const TopologyNodePtr& destinationNode,
+                                                      const std::set<uint64_t>& nodesToExclude = {});
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
@@ -91,7 +94,8 @@ class Topology {
      * @return a vector of start nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
     std::vector<TopologyNodePtr> findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
-                                                 const std::vector<TopologyNodePtr>& destinationNodes);
+                                                 const std::vector<TopologyNodePtr>& destinationNodes,
+                                                 const std::set<uint64_t>& nodesToExclude = {});
 
     /**
      * @brief a Physical Node with the ip address and grpc port exists
@@ -157,6 +161,13 @@ class Topology {
     TopologyNodePtr findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes);
 
     /**
+     * @brief Find all the closest common ancestors for the set of Topology nodes
+     * @param topologyNodes: the set of topology nodes
+     * @return the set of all closest common ancestors
+     */
+    std::set<TopologyNodePtr> findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes);
+
+    /**
      * @brief Find the immediate common child for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
      * @return the immediate common child.
@@ -202,6 +213,17 @@ class Topology {
      */
     NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
 
+    /**
+    * @brief Checks whether a path exists between a given source and destination node that does not include a specific node
+    * @param sourceNode : the source topology node
+    * @param destinationNode : the destination topology node
+    * @param nodeToExclude : the topology node that must not be in the path
+    * @return true if there is a path, false if there is not
+    */
+    bool isPathBetweenExcluding(const TopologyNodePtr& sourceNode,
+                                const TopologyNodePtr& destinationNode,
+                                const TopologyNodePtr& nodeToExclude);
+
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 
@@ -214,7 +236,8 @@ class Topology {
      * @return the node where the searched node is found
      */
     TopologyNodePtr
-    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
+    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes,
+         const std::set<uint64_t>& nodesToExclude = {});
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;

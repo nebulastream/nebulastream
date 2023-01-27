@@ -20,6 +20,7 @@ add_source_files(nes-core
         IFCOPStrategy.cpp
 		ILPStrategy.cpp
         PlacementStrategyFactory.cpp
+		AdaptiveActiveStandby.cpp
 #        LowLatencyStrategy.cpp
 #        HighAvailabilityStrategy.cpp
 #        HighThroughputStrategy.cpp

@@ -56,10 +56,13 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         // 2. Place the operators
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 3. add network source and sink operators
+        // 3. Create and place backup operators
+        executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        // 4. Perform type inference on all updated query plans
+        // 5. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
     } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());

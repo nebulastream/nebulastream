@@ -233,13 +233,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
-    // 8. Perform operator placement.
+    // 9. Perform operator placement.
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-    // 9. Add network source and sink operators.
+    // 10. Create and place backup operators
+    executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+    // 11. Add network source and sink operators.
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-    // 10. Run the type inference phase and return.
+    // 12. Run the type inference phase and return.
     return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 

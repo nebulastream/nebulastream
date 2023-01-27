@@ -74,14 +74,16 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 }
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
-                                                       const std::vector<TopologyNodePtr>& destinationNodes) {
+                                                       const std::vector<TopologyNodePtr>& destinationNodes,
+                                                       const std::set<uint64_t>& nodesToExclude) {
     std::unique_lock lock(topologyLock);
     NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (const auto& sourceNode : sourceNodes) {
         NES_TRACE("Topology: Finding all paths between the source node " << sourceNode << " and a set of destination nodes");
         std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
-        TopologyNodePtr startNodeOfGraph = find(sourceNode, destinationNodes, mapOfUniqueNodes);
+        TopologyNodePtr startNodeOfGraph =
+            find(sourceNode, destinationNodes, mapOfUniqueNodes, nodesToExclude);
         NES_TRACE("Topology: Validate if all destination nodes reachable");
         for (const auto& destinationNode : destinationNodes) {
             if (mapOfUniqueNodes.find(destinationNode->getId()) == mapOfUniqueNodes.end()) {
@@ -96,6 +98,51 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
     NES_TRACE("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of "
               "the merged graph.");
     return mergeSubGraphs(startNodesOfGraph);
+}
+
+bool Topology::isPathBetweenExcluding(const TopologyNodePtr& sourceNode,
+                                      const TopologyNodePtr& destinationNode,
+                                      const TopologyNodePtr& nodeToExclude) {
+    std::unique_lock lock(topologyLock);
+
+    auto destinationNodeId = destinationNode->getId();
+    auto nodeToExcludeId = nodeToExclude->getId();
+
+    NES_INFO("Topology: Checking if a path exists between source (" << sourceNode->getId() <<
+             ") and destination node (" << destinationNodeId <<
+             "), without involving a certain node (" << nodeToExcludeId << ")");
+
+    // no path if destination is to be excluded
+    if (destinationNodeId == nodeToExcludeId)
+        return false;
+
+    // there is a path if the source is the same as the destination
+    if (sourceNode->getId() == destinationNodeId)
+        return true;
+
+    // start iterating over the parents of the source
+    auto sourceParentNodes = sourceNode->getParents();
+    std::deque<NodePtr> ancestorsToProcess(sourceParentNodes.begin(), sourceParentNodes.end());
+    while (!ancestorsToProcess.empty()) {
+        TopologyNodePtr currentAncestor = ancestorsToProcess.front()->as<TopologyNode>();
+        ancestorsToProcess.pop_front();
+
+        NES_DEBUG("Topology: isPathBetweenExcluding checking ancestor node " << currentAncestor->getId());
+
+        // check if current ancestor is the target
+        if (currentAncestor->getId() == destinationNodeId)
+            return true;
+
+        // check if current ancestor should be excluded
+        if (currentAncestor->getId() == nodeToExcludeId)
+            continue;
+
+        // if target is not yet found and node does not have to be excluded, then add its parents to the queue for processing
+        for (const auto& parentNode :currentAncestor->getParents()) {
+            ancestorsToProcess.push_back(parentNode);
+        }
+    }
+    return false;
 }
 
 std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes) {
@@ -207,14 +254,15 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
 }
 
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& startNode,
-                                                            const TopologyNodePtr& destinationNode) {
+                                                            const TopologyNodePtr& destinationNode,
+                                                            const std::set<uint64_t>& nodesToExclude) {
     std::unique_lock lock(topologyLock);
     NES_DEBUG("Topology: Finding path between " << startNode->toString() << " and " << destinationNode->toString());
 
     std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> searchedNodes{destinationNode};
     std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
-    TopologyNodePtr found = find(startNode, searchedNodes, mapOfUniqueNodes);
+    TopologyNodePtr found = find(startNode, searchedNodes, mapOfUniqueNodes, nodesToExclude);
     if (found) {
         NES_DEBUG("Topology: Found path between " << startNode->toString() << " and " << destinationNode->toString());
         return found;
@@ -225,12 +273,21 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePt
 
 TopologyNodePtr Topology::find(TopologyNodePtr testNode,
                                std::vector<TopologyNodePtr> searchedNodes,
-                               std::map<uint64_t, TopologyNodePtr>& uniqueNodes) {
+                               std::map<uint64_t, TopologyNodePtr>& uniqueNodes,
+                               const std::set<uint64_t>& nodesToExclude) {
 
-    NES_TRACE("Topology: check if test node is one of the searched node");
+    NES_TRACE("Topology: check if test node is one of the searched nodes");
     auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](const TopologyNodePtr& searchedNode) {
         return searchedNode->getId() == testNode->getId();
     });
+
+    if (!nodesToExclude.empty()) {
+        NES_DEBUG("Topology: check if test node " << testNode->toString() << " is one of the nodes to be excluded");
+        if (nodesToExclude.contains(testNode->getId())) {
+            NES_DEBUG("Topology: test node must be excluded");
+            return nullptr;
+        }
+    }
 
     if (found != searchedNodes.end()) {
         NES_DEBUG("Topology: found the destination node");
@@ -259,7 +316,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
 
     TopologyNodePtr foundNode = nullptr;
     for (auto& parent : updatedParents) {
-        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
+        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes, nodesToExclude);
         if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             if (!foundNode) {
@@ -451,6 +508,69 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
     return nullptr;
 }
 
+std::set<TopologyNodePtr> Topology::findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes) {
+    NES_DEBUG("Topology: find all closest common ancestors for a set of topology nodes.");
+    // closest: parents of common ancestors not included
+
+    if (topologyNodes.empty()) {
+        NES_ERROR("Topology: Input topology node list was empty.");
+        return {};
+    }
+
+    // Check if one of the input node is a root node of the topology
+    auto rootFoundInInput = std::find_if(topologyNodes.begin(), topologyNodes.end(), [&](const TopologyNodePtr& topologyNode) {
+        return rootNode->getId() == topologyNode->getId();
+    });
+
+    // If a root node found in the input nodes then return an empty list
+    if (rootFoundInInput != topologyNodes.end()) {
+        return {};
+    }
+
+    NES_DEBUG("Topology: Selecting a start node to identify common ancestors.");
+    TopologyNodePtr startNode = topologyNodes[0];
+    bool foundAncestor = false;
+    std::set<TopologyNodePtr> resultAncestors;
+    NES_TRACE("Topology: Adding selected nodes to the deque for further processing.");
+    std::deque<NodePtr> nodesToProcess{startNode};
+    while (!nodesToProcess.empty()) {
+        TopologyNodePtr candidateNode = nodesToProcess.front()->as<TopologyNode>();
+        nodesToProcess.pop_front();
+        NES_TRACE(
+            "Topology: Check if the children topology nodes of the node under consideration contains all input topology nodes.");
+        std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren(false);
+        for (auto& nodeToLook : topologyNodes) {
+            auto found = std::find_if(children.begin(), children.end(), [&](const NodePtr& child) {
+                return nodeToLook->getId() == child->as<TopologyNode>()->getId();
+            });
+
+            if (found == children.end()) {
+                NES_TRACE("Topology: Unable to find the input topology node as child of the node under consideration.");
+                foundAncestor = false;
+                break;
+            }
+            foundAncestor = true;
+        }
+
+        if (foundAncestor) {
+            NES_TRACE("Topology: The node under consideration contains all input nodes as its children.");
+            resultAncestors.insert(candidateNode);
+        } else {
+            NES_TRACE("Topology: Add parents of the the node under consideration to the deque for further processing.");
+            for (const auto& parent : candidateNode->getParents()) {
+                if (!parent->as<TopologyNode>()->getMaintenanceFlag())
+                    nodesToProcess.push_back(parent);
+            }
+        }
+    }
+
+    if (resultAncestors.empty()) {
+        NES_ERROR("Topology: Unable to find a common ancestor topology node for the input topology nodes.");
+    }
+
+    return resultAncestors;
+}
+
 TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyNodes) {
     NES_INFO("Topology: find common child node for a set of parent topology nodes.");
 
@@ -534,7 +654,8 @@ TopologyNodePtr Topology::findCommonNodeBetween(std::vector<TopologyNodePtr> chi
 std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& sourceNode,
                                                         const TopologyNodePtr& destinationNode) {
 
-    NES_DEBUG("Topology: Find topology nodes between source and destination nodes.");
+    NES_DEBUG("Topology: Find topology nodes between source " << sourceNode->toString()
+                                                              << " and destination node " << destinationNode->toString());
     if (sourceNode->getId() == destinationNode->getId()) {
         NES_DEBUG("Topology: Both source and destination are same node.");
         return {sourceNode};
