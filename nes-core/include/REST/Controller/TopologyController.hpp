@@ -105,7 +105,6 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             bool added = topologyManagerService->addParent(childId, parentId);
             if (added) {
                 NES_DEBUG2("TopologyController::handlePost:addParent: created link successfully new topology is=");
-                topology->print();
             } else {
                 NES_ERROR2("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
