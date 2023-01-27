@@ -98,23 +98,23 @@ MQTTSource::MQTTSource(SchemaPtr schema,
             break;
     }
 
-    NES_DEBUG2("MQTTSource::MQTTSource {}: Init MQTTSource to {} with client id: {}.", this, serverAddress, clientId);
+    NES_DEBUG2("MQTTSource::MQTTSource: Init MQTTSource to {} with client id: {}.", serverAddress, clientId);
 }
 
 MQTTSource::~MQTTSource() {
     NES_DEBUG2("MQTTSource::~MQTTSource()");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG2("MQTTSource::~MQTTSource {}: Destroy MQTT Source",  this);
+        NES_DEBUG2("MQTTSource::~MQTTSource: Destroy MQTT Source");
     } else {
-        NES_ERROR2("MQTTSource::~MQTTSource {}: Destroy MQTT Source failed cause it could not be disconnected", this);
+        NES_ERROR2("MQTTSource::~MQTTSource: Destroy MQTT Source failed cause it could not be disconnected");
         assert(0);
     }
-    NES_DEBUG2("MQTTSource::~MQTTSource {}: Destroy MQTT Source",  this);
+    NES_DEBUG2("MQTTSource::~MQTTSource: Destroy MQTT Source");
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
-    NES_DEBUG2("MQTTSource  {}: receiveData ",  this);
+    NES_DEBUG2("MQTTSource: receiveData ");
     auto buffer = allocateBuffer();
     if (connect()) {
         if (!fillBuffer(buffer)) {
@@ -224,7 +224,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 
 bool MQTTSource::connect() {
     if (!connected) {
-        NES_DEBUG2("MQTTSource was !connect now connect {}: connected",  this);
+        NES_DEBUG2("MQTTSource was !connect now connect: connected");
         // connect with user name and password
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
@@ -250,16 +250,16 @@ bool MQTTSource::connect() {
             }
             connected = client->is_connected();
         } catch (const mqtt::exception& error) {
-            NES_WARNING2("MQTTSource::connect: {}", error);
+            NES_WARNING2("MQTTSource::connect: {}", error.to_string());
             connected = false;
             return connected;
         }
 
         if (connected) {
             NES_DEBUG2("MQTTSource::connect: Connection established with topic: {}",  topic);
-            NES_DEBUG2("MQTTSource::connect:  {}: connected",  this);
+            NES_DEBUG2("MQTTSource::connect: connected");
         } else {
-            NES_DEBUG2("MQTTSource::connect:  {}: NOT connected",  this);
+            NES_DEBUG2("MQTTSource::connect: NOT connected");
         }
     }
     return connected;
@@ -286,9 +286,9 @@ bool MQTTSource::disconnect() {
         connected = client->is_connected();
     }
     if (!connected) {
-        NES_DEBUG2("MQTTSource::disconnect:  {}: disconnected",  this);
+        NES_DEBUG2("MQTTSource::disconnect: disconnected");
     } else {
-        NES_DEBUG2("MQTTSource::disconnect:  {}: NOT disconnected",  this);
+        NES_DEBUG2("MQTTSource::disconnect: NOT disconnected");
         return connected;
     }
     return !connected;
