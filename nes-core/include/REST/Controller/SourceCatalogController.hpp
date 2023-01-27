@@ -141,7 +141,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             std::string logicalSourceName = reqJson["logicalSourceName"];
             std::string schema = reqJson["schema"];
             NES_DEBUG2("SourceCatalogController: addLogicalSource: Try to add new Logical Source {} and {}", logicalSourceName, schema);
-            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
+            bool added = sourceCatalogService->registerLogicalSource(logicalSourceName, schema);
             NES_DEBUG2("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", added);
             //Prepare the response
             if (added) {
@@ -181,7 +181,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
+            bool added = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
             NES_DEBUG2("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ? {}", added);
 
             if (!added) {
