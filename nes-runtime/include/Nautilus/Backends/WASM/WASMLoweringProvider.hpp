@@ -86,7 +86,7 @@ class WASMLoweringProvider {
     /**
      * Local variables mapped to BinaryenIndex.
      */
-    Mapping<std::string, BinaryenExpressionRef> localVarMapping;
+    Mapping<std::string, BinaryenExpressionRef> localVarBinaryenMapping;
     /**
      * Contains all expressions that are already used in another expression. That way we prevent adding duplicate
      * expressions on the stack. For example, in
@@ -132,7 +132,10 @@ class WASMLoweringProvider {
      * so all defined proxy functions use the same module name and are just separated by the function name
      */
     const char* proxyFunctionModule = "ProxyFunction";
-
+    /**
+     * Set the max size of the result array holding the generated WASM binary code
+     */
+    static constexpr size_t outputSize = 2048;
     /**
      * Function arguments and locals share the same index space in Webassembly. When creating new locals, we need to track
      * the index.

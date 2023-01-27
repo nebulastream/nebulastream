@@ -35,14 +35,12 @@ std::pair<size_t, char*> WASMLoweringProvider::lower(const std::shared_ptr<IR::I
 
     BinaryenModuleAutoDrop(wasm);
     if (!BinaryenModuleValidate(wasm)) {
-        NES_ERROR("Generated pre-optimized wasm is incorrect!");
+        NES_THROW_RUNTIME_ERROR("Generated pre-optimized wasm is incorrect!");
     }
-    BinaryenModulePrintStackIR(wasm, false);
-    std::cout << "------ Optimized WASM ------" << std::endl;
     BinaryenModuleOptimize(wasm);
     BinaryenModulePrintStackIR(wasm, false);
-    static char result[2048];
-    auto wasmLength = BinaryenModuleWrite(wasm, result, 2048);
+    static char result[outputSize];
+    auto wasmLength = BinaryenModuleWrite(wasm, result, outputSize);
     return std::make_pair(wasmLength, result);
 }
 
@@ -194,7 +192,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Fu
             args.push_back(BinaryenTypeInt64());
             argExpression = BinaryenLocalGet(wasm, localVariablesIndex, BinaryenTypeInt64());
         }
-        localVarMapping.setValue(inputArg->getIdentifier(), argExpression);
+        localVarBinaryenMapping.setValue(inputArg->getIdentifier(), argExpression);
         bodyList.setValue(inputArg->getIdentifier(), argExpression);
         consumed.emplace(inputArg->getIdentifier(), argExpression);
         ++localVariablesIndex;
@@ -369,14 +367,14 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::An
 
 void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::LoopOperation>& loopOp,
                                         BinaryenExpressions& expressions) {
-    auto x = loopOp->toString();
-    auto y = expressions.size();
+    (void) loopOp;
+    (void) expressions;
 }
-
+//TODO: Rework memory access operations (address, load and store) to use externref. Issue: #3461
 void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::AddressOperation>& addressOp,
                                         BinaryenExpressions& expressions) {
-    auto x = addressOp->toString();
-    auto y = expressions.size();
+    (void) addressOp;
+    (void) expressions;
 }
 
 void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::LoadOperation>& loadOp,
@@ -502,12 +500,10 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Di
     auto right = expressions.getValue(divOp->getRightInput()->getIdentifier());
     auto type = BinaryenExpressionGetType(left);
     BinaryenExpressionRef divExpression;
-    if (divOp->getStamp()->isFloat()) {
-        if (type == BinaryenTypeFloat32()) {
-            divExpression = BinaryenBinary(wasm, BinaryenDivFloat32(), left, right);
-        } else {
-            divExpression = BinaryenBinary(wasm, BinaryenDivFloat64(), left, right);
-        }
+    if (type == BinaryenTypeFloat32()) {
+        divExpression = BinaryenBinary(wasm, BinaryenDivFloat32(), left, right);
+    } else if (type == BinaryenTypeFloat64()) {
+        divExpression = BinaryenBinary(wasm, BinaryenDivFloat64(), left, right);
     } else if (type == BinaryenTypeInt32()) {
         divExpression = BinaryenBinary(wasm, BinaryenDivSInt32(), left, right);
     } else {
@@ -586,11 +582,8 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Ca
     //For now just support extending/promoting
     if (inputStamp->isInteger() && outputStamp->isInteger()) {
         cast = BinaryenUnary(wasm, BinaryenExtendSInt32(), expressions.getValue(inputId));
-    } else if (inputStamp->isFloat() && outputStamp->isFloat()) {
-        cast = BinaryenUnary(wasm, BinaryenPromoteFloat32(), expressions.getValue(inputId));
     } else {
-        NES_THROW_RUNTIME_ERROR("Cast from " << inputStamp->toString() << " to " << outputStamp->toString()
-                                             << " is not supported.");
+        cast = BinaryenUnary(wasm, BinaryenPromoteFloat32(), expressions.getValue(inputId));
     }
     consumed.emplace(inputId, expressions.getValue(inputId));
     expressions.setValue(castOperation->getIdentifier(), cast);
@@ -622,39 +615,39 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Re
 void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::BranchOperation>& branchOp,
                                         BinaryenExpressions& expressions) {
     BinaryenExpressions blockArgs;
-    auto currentTrueArguments = branchOp->getNextBlockInvocation().getArguments();
-    auto nextTrueArguments = branchOp->getNextBlockInvocation().getBlock()->getArguments();
-    for (int i = 0; i < (int) currentTrueArguments.size(); i++) {
+    auto currentTrueBlockArgs = branchOp->getNextBlockInvocation().getArguments();
+    auto nextTrueBlockArgs = branchOp->getNextBlockInvocation().getBlock()->getArguments();
+    for (int i = 0; i < (int) currentTrueBlockArgs.size(); i++) {
         BinaryenExpressionRef localGet;
-        auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
+        auto currVar = expressions.getValue(currentTrueBlockArgs[i]->getIdentifier());
         /*
          * The local variable for the next block already exists
          */
-        if (localVarMapping.contains("set_" + nextTrueArguments[i]->getIdentifier())) {
+        if (localVarBinaryenMapping.contains("set_" + nextTrueBlockArgs[i]->getIdentifier())) {
             auto localSet = BinaryenLocalSet(
                 wasm,
-                BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextTrueArguments[i]->getIdentifier())),
+                BinaryenLocalSetGetIndex(localVarBinaryenMapping.getValue("set_" + nextTrueBlockArgs[i]->getIdentifier())),
                 currVar);
-            expressions.setValue("set_" + nextTrueArguments[i]->getIdentifier(), localSet);
-            localGet = localVarMapping.getValue(nextTrueArguments[i]->getIdentifier());
+            expressions.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
+            localGet = localVarBinaryenMapping.getValue(nextTrueBlockArgs[i]->getIdentifier());
         }
         /*
          * Create a new local variable which will be passed into the next block as a block argument
          */
         else {
-            auto nextArgumentType = BinaryenExpressionGetType(expressions.getValue(currentTrueArguments[i]->getIdentifier()));
-            localVariables.setUniqueValue(nextTrueArguments[i]->getIdentifier(), nextArgumentType);
+            auto nextArgumentType = BinaryenExpressionGetType(expressions.getValue(currentTrueBlockArgs[i]->getIdentifier()));
+            localVariables.setUniqueValue(nextTrueBlockArgs[i]->getIdentifier(), nextArgumentType);
             auto localSet =
-                BinaryenLocalSet(wasm, localVariablesIndex, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
-            expressions.setValue("set_" + nextTrueArguments[i]->getIdentifier(), localSet);
-            localVarMapping.setValue("set_" + nextTrueArguments[i]->getIdentifier(), localSet);
+                BinaryenLocalSet(wasm, localVariablesIndex, expressions.getValue(currentTrueBlockArgs[i]->getIdentifier()));
+            expressions.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
+            localVarBinaryenMapping.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
             localGet = BinaryenLocalGet(wasm, localVariablesIndex, nextArgumentType);
-            expressions.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
-            localVarMapping.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
-            consumed.emplace(nextTrueArguments[i]->getIdentifier(), localGet);
+            expressions.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
+            localVarBinaryenMapping.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
+            consumed.emplace(nextTrueBlockArgs[i]->getIdentifier(), localGet);
             ++localVariablesIndex;
         }
-        blockArgs.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
+        blockArgs.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
     }
     blockLinking.emplace_back(
         blockBranches(currentBlock->getIdentifier(), branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), nullptr));
@@ -679,36 +672,36 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::If
 
     consumed.emplace(ifOp->getValue()->getIdentifier(), expressions.getValue(ifOp->getValue()->getIdentifier()));
 
-    auto currentTrueArguments = ifOp->getTrueBlockInvocation().getArguments();
-    auto nextTrue = ifOp->getTrueBlockInvocation().getBlock()->getArguments();
-    for (int i = 0; i < (int) currentTrueArguments.size(); i++) {
+    auto currentTrueBlockArgs = ifOp->getTrueBlockInvocation().getArguments();
+    auto nextTrueBlockArgs = ifOp->getTrueBlockInvocation().getBlock()->getArguments();
+    for (int i = 0; i < (int) currentTrueBlockArgs.size(); i++) {
         BinaryenExpressionRef localGet;
-        auto currVar = expressions.getValue(currentTrueArguments[i]->getIdentifier());
+        auto currVar = expressions.getValue(currentTrueBlockArgs[i]->getIdentifier());
         if (BinaryenExpressionGetId(currVar) == 8) {
             localGet = currVar;
         } else {
-            if (localVarMapping.contains("set_" + nextTrue[i]->getIdentifier())) {
+            if (localVarBinaryenMapping.contains("set_" + nextTrueBlockArgs[i]->getIdentifier())) {
                 auto localSet =
                     BinaryenLocalSet(wasm,
-                                     BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextTrue[i]->getIdentifier())),
-                                     expressions.getValue(currentTrueArguments[i]->getIdentifier()));
-                expressions.setValue("set_" + nextTrue[i]->getIdentifier(), localSet);
-                localGet = localVarMapping.getValue(nextTrue[i]->getIdentifier());
+                                     BinaryenLocalSetGetIndex(localVarBinaryenMapping.getValue("set_" + nextTrueBlockArgs[i]->getIdentifier())),
+                                     expressions.getValue(currentTrueBlockArgs[i]->getIdentifier()));
+                expressions.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
+                localGet = localVarBinaryenMapping.getValue(nextTrueBlockArgs[i]->getIdentifier());
             } else {
-                auto nextTrueType = BinaryenExpressionGetType(expressions.getValue(currentTrueArguments[i]->getIdentifier()));
-                localVariables.setUniqueValue(nextTrue[i]->getIdentifier(), nextTrueType);
+                auto nextTrueType = BinaryenExpressionGetType(expressions.getValue(currentTrueBlockArgs[i]->getIdentifier()));
+                localVariables.setUniqueValue(nextTrueBlockArgs[i]->getIdentifier(), nextTrueType);
                 auto localSet =
-                    BinaryenLocalSet(wasm, localVariablesIndex, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
-                expressions.setValue("set_" + nextTrue[i]->getIdentifier(), localSet);
-                localVarMapping.setValue("set_" + nextTrue[i]->getIdentifier(), localSet);
+                    BinaryenLocalSet(wasm, localVariablesIndex, expressions.getValue(currentTrueBlockArgs[i]->getIdentifier()));
+                expressions.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
+                localVarBinaryenMapping.setValue("set_" + nextTrueBlockArgs[i]->getIdentifier(), localSet);
                 localGet = BinaryenLocalGet(wasm, localVariablesIndex, nextTrueType);
-                expressions.setValue(nextTrue[i]->getIdentifier(), localGet);
-                localVarMapping.setValue(nextTrue[i]->getIdentifier(), localGet);
-                consumed.emplace(nextTrue[i]->getIdentifier(), localGet);
+                expressions.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
+                localVarBinaryenMapping.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
+                consumed.emplace(nextTrueBlockArgs[i]->getIdentifier(), localGet);
                 ++localVariablesIndex;
             }
         }
-        trueBlockArgs.setValue(nextTrue[i]->getIdentifier(), localGet);
+        trueBlockArgs.setValue(nextTrueBlockArgs[i]->getIdentifier(), localGet);
     }
 
     auto currentFalse = ifOp->getFalseBlockInvocation().getArguments();
@@ -719,23 +712,23 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::If
         if (BinaryenExpressionGetId(currVar) == 8) {
             localGet = currVar;
         } else {
-            if (localVarMapping.contains("set_" + nextFalse[i]->getIdentifier())) {
+            if (localVarBinaryenMapping.contains("set_" + nextFalse[i]->getIdentifier())) {
                 auto localSet =
                     BinaryenLocalSet(wasm,
-                                     BinaryenLocalSetGetIndex(localVarMapping.getValue("set_" + nextFalse[i]->getIdentifier())),
+                                     BinaryenLocalSetGetIndex(localVarBinaryenMapping.getValue("set_" + nextFalse[i]->getIdentifier())),
                                      expressions.getValue(currentFalse[i]->getIdentifier()));
                 expressions.setValue("set_" + nextFalse[i]->getIdentifier(), localSet);
-                localGet = localVarMapping.getValue(nextFalse[i]->getIdentifier());
+                localGet = localVarBinaryenMapping.getValue(nextFalse[i]->getIdentifier());
             } else {
                 auto nextFalseType = BinaryenExpressionGetType(expressions.getValue(currentFalse[i]->getIdentifier()));
                 localVariables.setUniqueValue(nextFalse[i]->getIdentifier(), nextFalseType);
                 auto localSet =
                     BinaryenLocalSet(wasm, localVariablesIndex, expressions.getValue(currentFalse[i]->getIdentifier()));
                 expressions.setValue("set_" + nextFalse[i]->getIdentifier(), localSet);
-                localVarMapping.setValue("set_" + nextFalse[i]->getIdentifier(), localSet);
+                localVarBinaryenMapping.setValue("set_" + nextFalse[i]->getIdentifier(), localSet);
                 localGet = BinaryenLocalGet(wasm, localVariablesIndex, nextFalseType);
                 expressions.setValue(nextFalse[i]->getIdentifier(), localGet);
-                localVarMapping.setValue(nextFalse[i]->getIdentifier(), localGet);
+                localVarBinaryenMapping.setValue(nextFalse[i]->getIdentifier(), localGet);
                 consumed.emplace(nextFalse[i]->getIdentifier(), localGet);
                 ++localVariablesIndex;
             }
