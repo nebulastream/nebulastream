@@ -180,7 +180,11 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return parentOperator;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinSinkOperator>()) {
         auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinSinkOperator>();
-        auto handlerIndex = insertStreamJoinOperatorHandlerIfNeeded(operatorHandlers, sinkOperator->getId(), sinkOperator->getOperatorHandler());
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(sinkOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
 
         auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamJoinSink>(handlerIndex);
         pipeline.setRootOperator(joinSinkNautilus);
@@ -188,7 +192,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()) {
         auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
-        auto handlerIndex = insertStreamJoinOperatorHandlerIfNeeded(operatorHandlers, buildOperator->getId(), buildOperator->getOperatorHandler());
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
 
         auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
         auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft() : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
@@ -203,32 +210,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return joinBuildNautilus;
     }
     NES_NOT_IMPLEMENTED();
-}
-
-uint64_t LowerPhysicalToNautilusOperators::insertStreamJoinOperatorHandlerIfNeeded(std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                                                                   OperatorId operatorId,
-                                                                                   const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler) {
-    auto handlerIndex = 0UL;
-    bool found = false;
-    for (auto& opHandler : operatorHandlers) {
-        if (opHandler->instanceOf<Runtime::Execution::Operators::StreamJoinOperatorHandler>()) {
-            auto streamJoinOpHandler = opHandler->as<Runtime::Execution::Operators::StreamJoinOperatorHandler>();
-            auto& joinOperatorIds = streamJoinOpHandler->getJoinOperatorsId();
-            if (std::find(joinOperatorIds.begin(), joinOperatorIds.end(), operatorId) != joinOperatorIds.end()) {
-                found = true;
-                break;
-            }
-        }
-        ++handlerIndex;
-    }
-
-    if (!found) {
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-        operatorHandlers.push_back(streamJoinOperatorHandler);
-        handlerIndex = operatorHandlers.size() - 1;
-    }
-
-    return handlerIndex;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerGlobalSliceMergingOperator(

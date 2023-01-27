@@ -20,6 +20,9 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
+/**
+ * @brief This class is the parent class of the PhysicalStreamJoinBuild and PhysicalStreamJoinSink operators.
+ */
 class PhysicalStreamJoinOperator : public AbstractEmitOperator {
   public:
     [[nodiscard]] Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr getOperatorHandler() const;

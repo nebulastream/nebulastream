@@ -20,6 +20,9 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
+/**
+ * @brief This class represents the physical stream join build operator and gets translated to a StreamJoinBuild operator
+ */
 class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, public PhysicalUnaryOperator {
   public:
 
