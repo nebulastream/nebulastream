@@ -325,6 +325,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         std::string timeStampFieldNameRight = "";
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
+        // Extracting here the left timestamp field name
         auto leftSchema = joinOperator->getLeftInputSchema();
         auto leftSourceNameQualifier = leftSchema->getSourceNameQualifier();
         for (auto& field : leftSchema->fields) {
@@ -336,6 +337,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
             }
         }
 
+        // Extracting here the right timestamp field name
         auto rightSchema = joinOperator->getRightInputSchema();
         auto rightSourceNameQualifier = rightSchema->getSourceNameQualifier();
         for (auto& field : rightSchema->fields) {

@@ -20,7 +20,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
-
+/**
+ * @brief This class represents the physical stream join sink operator and gets translated to a StreamJoinSink operator
+ */
 class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
 
   public:
