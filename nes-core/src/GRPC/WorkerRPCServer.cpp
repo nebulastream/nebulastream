@@ -40,8 +40,7 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
-                                                                          << " plan=" << queryPlan->toString());
+    NES_DEBUG2("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}", queryPlan->getQueryId(), queryPlan->toString());
     bool success = 0;
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);

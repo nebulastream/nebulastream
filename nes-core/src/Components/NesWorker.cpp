@@ -284,7 +284,7 @@ bool NesWorker::stop(bool) {
 bool NesWorker::connect() {
 
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
-    NES_DEBUG("NesWorker::connect() Registering worker with coordinator at " << coordinatorAddress);
+    NES_DEBUG2("NesWorker::connect() Registering worker with coordinator at {}", coordinatorAddress);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
 
     RegisterWorkerRequest registrationRequest;

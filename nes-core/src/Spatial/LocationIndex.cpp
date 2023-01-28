@@ -42,7 +42,7 @@ bool LocationIndex::updateFieldNodeCoordinates(TopologyNodeId topologyNodeId,
 bool LocationIndex::setFieldNodeCoordinates(TopologyNodeId topologyNodeId,
                                             Spatial::DataTypes::Experimental::GeoLocation&& geoLocation) {
     if (!geoLocation.isValid()) {
-        NES_WARNING("trying to set node coordinates to invalid value")
+        NES_WARNING2("trying to set node coordinates to invalid value")
         return false;
     }
     double newLat = geoLocation.getLatitude();
@@ -109,7 +109,7 @@ std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(TopologyNodeId top
 
     auto geoLocation = workerGeoLocation->second;
     if (!geoLocation.isValid()) {
-        NES_WARNING("Trying to get the closest node to a node that does not have a location")
+        NES_WARNING2("Trying to get the closest node to a node that does not have a location")
         return {};
     }
 

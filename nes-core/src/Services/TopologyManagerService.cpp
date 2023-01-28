@@ -45,15 +45,14 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
                                                 const int64_t dataPort,
                                                 const uint16_t numberOfSlots,
                                                 std::map<std::string, std::any> workerProperties) {
-    NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
+    NES_TRACE2("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG2("TopologyManagerService::registerWorker: topology before insert");
-    NES_DEBUG2(topology->toString());
+    NES_DEBUG2("", topology->toString());
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR("TopologyManagerService::registerWorker: node with address " << address << " and grpc port " << grpcPort
-                                                                               << " already exists");
+        NES_ERROR2("TopologyManagerService::registerWorker: node with address {} and grpc port {} already exists", address, grpcPort);
         return INVALID_TOPOLOGY_NODE_ID;
     }
 
@@ -63,7 +62,7 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots, workerProperties);
 
     if (!newTopologyNode) {
-        NES_ERROR("TopologyManagerService::RegisterNode : node not created");
+        NES_ERROR2("TopologyManagerService::RegisterNode : node not created");
         return INVALID_TOPOLOGY_NODE_ID;
     }
 
@@ -217,7 +216,7 @@ bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRem
 }
 
 nlohmann::json TopologyManagerService::getTopologyAsJson() {
-    NES_INFO("TopologyController: getting topology as JSON");
+    NES_INFO2("TopologyController: getting topology as JSON");
 
     nlohmann::json topologyJson{};
     auto root = topology->getRoot();
@@ -266,7 +265,7 @@ nlohmann::json TopologyManagerService::getTopologyAsJson() {
 
         nodes.push_back(currentNodeJsonValue);
     }
-    NES_INFO("TopologyController: no more topology node to add");
+    NES_INFO2("TopologyController: no more topology node to add");
 
     // add `nodes` and `edges` JSON array to the final JSON result
     topologyJson["nodes"] = nodes;
@@ -280,20 +279,20 @@ bool TopologyManagerService::addGeoLocation(TopologyNodeId topologyNodeId,
 
     auto topologyNode = topology->findNodeWithId(topologyNodeId);
     if (!topologyNode) {
-        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        NES_ERROR2("Unable to find node with id {}", topologyNodeId);
         return false;
     }
 
     if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
+        NES_DEBUG2("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
         locationIndex->initializeFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
     } else {
-        NES_DEBUG("added node is a non field node");
+        NES_DEBUG2("added node is a non field node");
         if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
-            NES_DEBUG("added node is a mobile node");
+            NES_DEBUG2("added node is a mobile node");
         } else {
-            NES_DEBUG("added node is a non mobile node");
+            NES_DEBUG2("added node is a non mobile node");
         }
     }
     return true;
@@ -304,20 +303,20 @@ bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
 
     auto topologyNode = topology->findNodeWithId(topologyNodeId);
     if (!topologyNode) {
-        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        NES_ERROR2("Unable to find node with id {}", topologyNodeId);
         return false;
     }
 
     if (geoLocation.isValid() && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::FIXED_LOCATION) {
-        NES_DEBUG("added node with geographical location: " << geoLocation.getLatitude() << ", " << geoLocation.getLongitude());
+        NES_DEBUG2("added node with geographical location: {}, {}", geoLocation.getLatitude(), geoLocation.getLongitude());
         locationIndex->updateFieldNodeCoordinates(topologyNodeId, std::move(geoLocation));
     } else {
-        NES_DEBUG("added node is a non field node");
+        NES_DEBUG2("added node is a non field node");
         if (topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
             locationIndex->addMobileNode(topologyNode->getId(), std::move(geoLocation));
-            NES_DEBUG("added node is a mobile node");
+            NES_DEBUG2("added node is a mobile node");
         } else {
-            NES_DEBUG("added node is a non mobile node");
+            NES_DEBUG2("added node is a non mobile node");
         }
     }
     return true;
@@ -326,7 +325,7 @@ bool TopologyManagerService::updateGeoLocation(TopologyNodeId topologyNodeId,
 bool TopologyManagerService::removeGeoLocation(TopologyNodeId topologyNodeId) {
     auto topologyNode = topology->findNodeWithId(topologyNodeId);
     if (!topologyNode) {
-        NES_ERROR("Unable to find node with id " << topologyNodeId);
+        NES_ERROR2("Unable to find node with id {}", topologyNodeId);
         return false;
     }
     return locationIndex->removeNodeFromSpatialIndex(topologyNodeId);

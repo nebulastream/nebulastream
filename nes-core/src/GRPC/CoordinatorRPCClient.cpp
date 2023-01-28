@@ -130,7 +130,7 @@ template<typename ReturnType, typename RequestType, typename ReplyType>
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient:: error=" << status.error_code() << ": " << status.error_message());
+            NES_DEBUG2(" CoordinatorRPCClient:: error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }
@@ -187,7 +187,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
 }
 
 bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath) {
-    NES_DEBUG("CoordinatorRPCClient: registerLogicalSource " << logicalSourceName << " with path" << filePath);
+    NES_DEBUG2("CoordinatorRPCClient: registerLogicalSource {} with path{}",  logicalSourceName, filePath);
 
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
@@ -216,13 +216,13 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
 }
 
 bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source" << physicalSourceName << " from logical source ");
+    NES_DEBUG2("CoordinatorRPCClient: unregisterPhysicalSource physical source {} from logical source", physicalSourceName);
 
     UnregisterPhysicalSourceRequest request;
     request.set_workerid(workerId);
     request.set_physicalsourcename(physicalSourceName);
     request.set_logicalsourcename(logicalSourceName);
-    NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request=" << request.DebugString());
+    NES_DEBUG2("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request={}", request.DebugString());
 
     return detail::processGenericRpc<bool, UnregisterPhysicalSourceRequest, UnregisterPhysicalSourceReply>(
         request,
@@ -251,7 +251,7 @@ bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSou
 }
 
 bool CoordinatorRPCClient::addParent(uint64_t parentId) {
-    NES_DEBUG("CoordinatorRPCClient: addParent parentId=" << parentId << " workerId=" << workerId);
+    NES_DEBUG2("CoordinatorRPCClient: addParent parentId={} workerId={}", parentId, workerId);
 
     AddParentRequest request;
     request.set_parentid(parentId);
@@ -268,14 +268,13 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
 }
 
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
-    NES_DEBUG("CoordinatorRPCClient: replaceParent oldParentId=" << oldParentId << " newParentId=" << newParentId
-                                                                 << " workerId=" << workerId);
+    NES_DEBUG2("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}", oldParentId, newParentId, workerId);
 
     ReplaceParentRequest request;
     request.set_childid(workerId);
     request.set_oldparent(oldParentId);
     request.set_newparent(newParentId);
-    NES_DEBUG("CoordinatorRPCClient::replaceParent request=" << request.DebugString());
+    NES_DEBUG2("CoordinatorRPCClient::replaceParent request={}", request.DebugString());
 
     class ReplaceParentListener : public detail::RpcExecutionListener<bool, ReplaceParentRequest, ReplaceParentReply> {
       public:
@@ -290,11 +289,11 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
             return coordinatorStub->ReplaceParent(&context, request, reply);
         }
         bool onSuccess(const ReplaceParentReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
+            NES_DEBUG2("CoordinatorRPCClient::removeParent: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::removeParent error=" << status.error_code() << ": " << status.error_message());
+            NES_DEBUG2(" CoordinatorRPCClient::removeParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }
@@ -308,12 +307,12 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
 uint64_t CoordinatorRPCClient::getId() const { return workerId; }
 
 bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
-    NES_DEBUG("CoordinatorRPCClient: removeParent parentId" << parentId << " workerId=" << workerId);
+    NES_DEBUG2("CoordinatorRPCClient: removeParent parentId{} workerId={}", parentId, workerId);
 
     RemoveParentRequest request;
     request.set_parentid(parentId);
     request.set_childid(workerId);
-    NES_DEBUG("CoordinatorRPCClient::RemoveParentRequest request=" << request.DebugString());
+    NES_DEBUG2("CoordinatorRPCClient::RemoveParentRequest request={}", request.DebugString());
 
     class RemoveParentListener : public detail::RpcExecutionListener<bool, RemoveParentRequest, RemoveParentReply> {
       public:
@@ -328,11 +327,11 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
             return coordinatorStub->RemoveParent(&context, request, reply);
         }
         bool onSuccess(const RemoveParentReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
+            NES_DEBUG2("CoordinatorRPCClient::removeParent: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::removeParent error=" << status.error_code() << ": " << status.error_message());
+            NES_DEBUG2(" CoordinatorRPCClient::removeParent error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }
@@ -344,11 +343,11 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
 }
 
 bool CoordinatorRPCClient::unregisterNode() {
-    NES_DEBUG("CoordinatorRPCClient::unregisterNode workerId=" << workerId);
+    NES_DEBUG2("CoordinatorRPCClient::unregisterNode workerId={}", workerId);
 
     UnregisterWorkerRequest request;
     request.set_workerid(workerId);
-    NES_DEBUG("CoordinatorRPCClient::unregisterNode request=" << request.DebugString());
+    NES_DEBUG2("CoordinatorRPCClient::unregisterNode request={}", request.DebugString());
 
     class UnRegisterNodeListener : public detail::RpcExecutionListener<bool, UnregisterWorkerRequest, UnregisterWorkerReply> {
       public:
@@ -363,11 +362,11 @@ bool CoordinatorRPCClient::unregisterNode() {
             return coordinatorStub->UnregisterWorker(&context, request, reply);
         }
         bool onSuccess(const UnregisterWorkerReply& reply) override {
-            NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
+            NES_DEBUG2("CoordinatorRPCClient::unregisterNode: status ok return success={}", reply.success());
             return reply.success();
         }
         bool onPartialFailure(const Status& status) override {
-            NES_DEBUG(" CoordinatorRPCClient::unregisterNode error=" << status.error_code() << ": " << status.error_message());
+            NES_DEBUG2(" CoordinatorRPCClient::unregisterNode error={}: {}", status.error_code(), status.error_message());
             return false;
         }
         bool onFailure() override { return false; }

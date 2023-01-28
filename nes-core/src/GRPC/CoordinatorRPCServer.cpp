@@ -46,7 +46,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,
                                             RegisterWorkerReply* reply) {
 
-    NES_DEBUG("Received worker registration request " << registrationRequest->DebugString());
+    NES_DEBUG2("Received worker registration request {}", registrationRequest->DebugString());
     auto address = registrationRequest->address();
     auto grpcPort = registrationRequest->grpcport();
     auto dataPort = registrationRequest->dataport();
@@ -60,7 +60,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     workerProperties[NES::Worker::Configuration::SPATIAL_SUPPORT] =
         NES::Spatial::Util::SpatialTypeUtility::protobufEnumToNodeType(registrationRequest->spatialtype());
 
-    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
+    NES_DEBUG2("TopologyManagerService::RegisterNode: request ={}", registrationRequest->DebugString());
     uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
 
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
@@ -79,7 +79,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     monitoringManager->addMonitoringData(workerId, registrationMetrics);
 
     if (workerId != 0) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id={}", workerId);
+        NES_DEBUG2("CoordinatorRPCServer::RegisterNode: success id={}", workerId);
         reply->set_workerid(workerId);
         return Status::OK;
     }
@@ -90,7 +90,7 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
 
 Status
 CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
-    NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: request ={}", request->DebugString());
 
     auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
     bool success = topologyManagerService->removeGeoLocation(request->workerid())
@@ -103,11 +103,11 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
             return Status::CANCELLED;
         }
         monitoringManager->removeMonitoringNode(request->workerid());
-        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
+        NES_DEBUG2("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
+    NES_ERROR2("CoordinatorRPCServer::UnregisterNode: sensor was not removed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -115,7 +115,7 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
 Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                     const RegisterPhysicalSourcesRequest* request,
                                                     RegisterPhysicalSourcesReply* reply) {
-    NES_DEBUG2("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::RegisterPhysicalSource: request ={}", request->DebugString());
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     for (const auto& physicalSourceDefinition : request->physicalsources()) {
         bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
@@ -135,7 +135,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
 Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
                                                       const UnregisterPhysicalSourceRequest* request,
                                                       UnregisterPhysicalSourceReply* reply) {
-    NES_DEBUG2("CoordinatorRPCServer::UnregisterPhysicalSource: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::UnregisterPhysicalSource: request ={}", request->DebugString());
 
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->workerid());
     bool success =
@@ -154,8 +154,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
 Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
                                                    const RegisterLogicalSourceRequest* request,
                                                    RegisterLogicalSourceReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request = " << request);
-    //NES_DEBUG2("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::RegisterLogicalSource: request = {}", request->DebugString());
 
     bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
 
@@ -172,8 +171,7 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
 Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
                                                      const UnregisterLogicalSourceRequest* request,
                                                      UnregisterLogicalSourceReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request =" << request);
-    //NES_DEBUG2("CoordinatorRPCServer::UnregisterLogicalSource: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::RegisterLogicalSource: request ={}", request->DebugString());
 
     bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
     if (success) {
@@ -187,8 +185,7 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
 }
 
 Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* request, AddParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::AddParent: request = " << request);
-    //NES_DEBUG2("CoordinatorRPCServer::AddParent: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::AddParent: request = {}", request->DebugString());
 
     bool success = topologyManagerService->addParent(request->childid(), request->parentid());
     if (success) {
@@ -202,8 +199,7 @@ Status CoordinatorRPCServer::AddParent(ServerContext*, const AddParentRequest* r
 }
 
 Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRequest* request, ReplaceParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::ReplaceParent: request = " << request);
-    //NES_DEBUG2("CoordinatorRPCServer::ReplaceParent: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::ReplaceParent: request = {}", request->DebugString());
 
     bool success = topologyManagerService->removeParent(request->childid(), request->oldparent());
     if (success) {
@@ -226,8 +222,7 @@ Status CoordinatorRPCServer::ReplaceParent(ServerContext*, const ReplaceParentRe
 }
 
 Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequest* request, RemoveParentReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RemoveParent: request = " << request);
-    //NES_DEBUG2("CoordinatorRPCServer::RemoveParent: request ={}", request);
+    NES_DEBUG2("CoordinatorRPCServer::RemoveParent: request = {}", request->DebugString());
 
     bool success = topologyManagerService->removeParent(request->childid(), request->parentid());
     if (success) {
@@ -304,8 +299,8 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 
 Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
     try {
-        NES_ERROR("CoordinatorRPCServer::sendErrors: failure message received."
-                  << "Id of worker: " << request->workerid() << " Reason for failure: " << request->errormsg());
+        NES_ERROR2("CoordinatorRPCServer::sendErrors: failure message received."
+                    "Id of worker: {} Reason for failure: {}", request->workerid(), request->errormsg());
         // TODO implement here what happens with received Error Messages
         reply->set_success(true);
         return Status::OK;
@@ -390,9 +385,8 @@ Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
     auto coordinates = request->waypoint().geolocation();
     auto timestamp = request->waypoint().timestamp();
-    NES_DEBUG("Coordinator received location update from node with id "
-              << request->workerid() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS "
-              << timestamp);
+    NES_DEBUG2("Coordinator received location update from node with id {} which reports [{}, {}] at TS {}",
+              request->workerid() , coordinates.lat() ,coordinates.lng(), timestamp);
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
     if (!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))) {
