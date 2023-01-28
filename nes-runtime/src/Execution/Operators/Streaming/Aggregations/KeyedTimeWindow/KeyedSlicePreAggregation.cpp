@@ -51,14 +51,15 @@ void triggerThreadLocalStateProxy(void* op,
 void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
-    handler->setup(*pipelineExecutionContext, size);
+    handler->setup(*pipelineExecutionContext, size, 8);
 }
 
 class LocalSliceStoreState : public Operators::OperatorState {
   public:
     explicit LocalSliceStoreState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
     Nautilus::Interface::ChainedHashMapRef findSliceStateByTs(Value<UInt64>& timestampValue) {
-        Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStoreState, timestampValue);
+        auto htPtr = Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStoreState, timestampValue);
+        return Interface::ChainedHashMapRef(htPtr, 8);
     }
     const Value<MemRef> sliceStoreState;
 };
@@ -108,7 +109,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 2. derive key values
     std::vector<Value<>> keyValues;
-    for(const auto& exp : keyExpressions){
+    for (const auto& exp : keyExpressions) {
         keyValues.emplace_back(exp->execute(record));
     }
 

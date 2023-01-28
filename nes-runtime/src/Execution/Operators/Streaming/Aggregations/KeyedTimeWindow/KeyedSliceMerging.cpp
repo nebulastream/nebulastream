@@ -63,7 +63,7 @@ void deletePartition(void* p) {
 void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<KeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
-    handler->setup(*pipelineExecutionContext, size);
+    handler->setup(*pipelineExecutionContext, size,8);
 }
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
