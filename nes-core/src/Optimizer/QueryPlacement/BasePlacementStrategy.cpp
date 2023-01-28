@@ -683,7 +683,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
                                                                      const OperatorNodePtr& operatorNode,
                                                                      const ExecutionNodePtr& executionNode) {
 
-    NES_DEBUG2("BasePlacementStrategy: Get candidate query plan for the operator {} on execution node with id{}", operatorNode, executionNode->getId());
+    NES_DEBUG2("BasePlacementStrategy: Get candidate query plan for the operator {} on execution node with id{}", operatorNode->toString(), executionNode->getId());
 
     // Get all query sub plans for the query id on the execution node
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
@@ -712,7 +712,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
         });
 
         if (found != querySubPlans.end()) {
-            NES_TRACE2("BasePlacementStrategy: Found query plan with child operator {}", child);
+            NES_TRACE2("BasePlacementStrategy: Found query plan with child operator {}", child->toString());
             queryPlansWithChildren.push_back(*found);
             querySubPlans.erase(found);
         }

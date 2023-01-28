@@ -62,7 +62,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
         auto dumpContext = DumpContext::create("QueryCompilation-" + std::to_string(queryId) + "-" + std::to_string(subPlanId));
 
         timer.start();
-        NES_DEBUG2("compile query with id: " << queryId << " subPlanId:  {}",  subPlanId);
+        NES_DEBUG2("compile query with id: {} subPlanId: {}", queryId, subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");

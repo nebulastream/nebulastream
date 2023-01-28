@@ -87,14 +87,14 @@ QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
 }
 
 void NemoWindowPinningRule::createCentralWindowOperator(const WindowOperatorNodePtr& windowOp) {
-    NES_DEBUG2("NemoWindowPinningRule::apply: introduce centralized window operator for window {} {}", windowOp, windowOp->toString());
+    NES_DEBUG2("NemoWindowPinningRule::apply: introduce centralized window operator for window {}", windowOp->toString());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     NES_DEBUG2("NemoWindowPinningRule::apply: newNode={} old node={}", newWindowOp->toString(), windowOp->toString());
     windowOp->replace(newWindowOp);
 }
 
 void NemoWindowPinningRule::pinWindowOperators(const WindowOperatorNodePtr& windowOp, const QueryPlanPtr& queryPlan) {
-    NES_DEBUG2("NemoWindowPinningRule::apply: introduce new distributed window operator for window {} {}", windowOp,
+    NES_DEBUG2("NemoWindowPinningRule::apply: introduce new distributed window operator for window {}",
                                                                                                     windowOp->toString());
     auto parents = windowOp->getParents();
     auto mergerNodes = getMergerNodes(windowOp, windowDistributionCombinerThreshold);
@@ -202,8 +202,7 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
     //if window has more than 4 edges, we introduce a combiner
 
-    NES_DEBUG2("NemoWindowPinningRule::apply: introduce distributed window operator for window "
-              << logicalWindowOperator << " << logicalWindowOperator->toString()");
+    NES_DEBUG2("NemoWindowPinningRule::apply: introduce distributed window operator for window {}", logicalWindowOperator->toString());
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
     auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -273,8 +272,8 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
         }
-        NES_DEBUG2("NemoWindowPinningRule::apply: created logical window definition for slice merger operator"
-                  << windowDef->toString());
+        NES_DEBUG2("NemoWindowPinningRule::apply: created logical window definition for slice merger operator {}",
+                  windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
         finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
 
@@ -284,7 +283,7 @@ void NemoWindowPinningRule::createDistributedWindowOperator(const WindowOperator
 
     //adding slicer
     for (auto& child : windowChildren) {
-        NES_DEBUG2("NemoWindowPinningRule::apply: process child  {}",  child->toString());
+        NES_DEBUG2("NemoWindowPinningRule::apply: process child {}", child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation[0]->copy();

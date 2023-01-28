@@ -831,7 +831,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
 
         context->code->currentCodeInsertionPoint->addStatement(setWatermarkStatement.createCopy());
     } else {
-        NES_ERROR2("CCodeGenerator: cannot generate code for watermark strategy {}", watermarkStrategy);
+        NES_ERROR2("CCodeGenerator: cannot generate code for watermark strategy");
     }
 
     return true;
@@ -2537,7 +2537,7 @@ bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
     auto index = context->registerOperatorHandler(handler);
     auto recordHandler = context->getRecordHandler();
 
-    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using {} and {}", context, index);
+    NES_DEBUG2("CCodeGenerator::generateCodeForCEPIteration: call getCEPOperatorHandler using index: {}", index);
     auto CEPOperatorHandlerDeclaration =
         getCEPIterationOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
     // creates the following line of code
@@ -2577,7 +2577,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(
     QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
     PipelineContextPtr context,
     uint64_t windowOperatorId) {
-    NES_DEBUG2("CCodeGenerator::generateCodeForSlicingWindow with {} pipeline {}", window, context);
+    NES_DEBUG2("CCodeGenerator::generateCodeForSlicingWindow with {} pipeline {}", window->toString(), context->pipelineName);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
     return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
@@ -3122,7 +3122,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         }
     }
 
-    NES_DEBUG2("CCodeGenerator: Generate code for : {} with code={}", context->pipelineName, context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for : {}", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
@@ -3344,7 +3344,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         }
     }
 
-    NES_DEBUG2("CCodeGenerator: Generate code for {}: with code={}", context->pipelineName, context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}:", context->pipelineName);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context,
@@ -3420,7 +3420,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     insertCall->addParameter(currentTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
 
-    NES_DEBUG2("CCodeGenerator: Generate code for {}: with code={}", context->pipelineName, context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}", context->pipelineName);
 
     return true;
 }
@@ -3506,7 +3506,7 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
         recordHandler->registerAttribute(field->getName(), joinPartnerAccessStatement.copy());
     }
 
-    NES_DEBUG2("CCodeGenerator: Generate code for {}: with code={}", context->pipelineName, context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}:", context->pipelineName);
 
     return true;
 }
@@ -3517,7 +3517,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     PipelineContextPtr context,
     uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
-    NES_DEBUG2("CCodeGenerator: Generate code for combine window  {}",  window);
+    NES_DEBUG2("CCodeGenerator: Generate code for combine window.");
     auto code = context->code;
 
     if (window->getDistributionType()->getType() == Windowing::DistributionCharacteristic::Type::Combining) {
@@ -3724,7 +3724,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         }
     }
 
-    NES_DEBUG2("CCodeGenerator: Generate code for {}: with code={}", context->pipelineName, context->code);
+    NES_DEBUG2("CCodeGenerator: Generate code for {}", context->pipelineName);
 
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs

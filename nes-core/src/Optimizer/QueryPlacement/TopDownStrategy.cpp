@@ -116,7 +116,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
-        NES_DEBUG2("TopDownStrategy: Place  {}",  operatorNode);
+        NES_DEBUG2("TopDownStrategy: Place  {}",  operatorNode->toString());
         if ((operatorNode->hasMultipleChildrenOrParents() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
             && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
 
@@ -175,7 +175,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
                 if (topologyNodes && topologyNodes->getAvailableResources() > 0) {
                     candidateTopologyNode = topologyNodes;
                     NES_DEBUG2(
-                        "TopDownStrategy: Found NES node for placing the operators with id : " << candidateTopologyNode->getId());
+                        "TopDownStrategy: Found NES node for placing the operators with id : {}", candidateTopologyNode->getId());
                     break;
                 }
             }

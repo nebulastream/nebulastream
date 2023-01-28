@@ -163,7 +163,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             if (operatorMap.find(downStreamOperatorId) != operatorMap.end()) {
 
                 auto distance = position - operatorPositionMap.find(downStreamOperatorId)->second;
-                NES_DEBUG2("distance: {} {}", operatorID, distance);
+                NES_DEBUG2("distance: {} {}", operatorID, distance.to_string());
                 double output;
                 if (!operatorNode->hasProperty("output")) {
                     output = getDefaultOperatorOutput(operatorNode);
@@ -175,7 +175,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             }
         }
     }
-    NES_DEBUG2("cost_net:  {}",  cost_net);
+    NES_DEBUG2("cost_net:  {}",  cost_net.to_string());
 
     // 4. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
@@ -210,7 +210,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // At this point, we already get the solution.
     // 7. Get the model to retrieve the optimization solution.
     auto z3Model = opt.get_model();
-    NES_DEBUG2("ILPStrategy:model: {}",  z3Model);
+    NES_DEBUG2("ILPStrategy:model: {}",  z3Model.to_string());
     NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node

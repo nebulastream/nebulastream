@@ -73,7 +73,7 @@ QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
 }
 
 void DistributedWindowRule::createCentralWindowOperator(const WindowOperatorNodePtr& windowOp) {
-    NES_DEBUG2("DistributedWindowRule::apply: introduce centralized window operator for window {} {}", windowOp, windowOp->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: introduce centralized window operator for window {}", windowOp->toString());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
@@ -92,7 +92,7 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
 
     //if window has more than 4 edges, we introduce a combiner
 
-    NES_DEBUG2("DistributedWindowRule::apply: introduce distributed window operator for window {} logicalWindowOperator->toString()", logicalWindowOperator );
+    NES_DEBUG2("DistributedWindowRule::apply: introduce distributed window operator for window {}", logicalWindowOperator->toString());
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
     auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();

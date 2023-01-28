@@ -155,7 +155,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
 
 bool ThreadPool::stop() {
     std::unique_lock lock(reconfigLock);
-    NES_DEBUG2("ThreadPool: stop thread pool while {} with {} threads {}", (running.load() ? "running" : "not running"), numThreads, (running.load() ?, );
+    NES_DEBUG2("ThreadPool: stop thread pool while {} with {} threads", (running.load() ? "running" : "not running"), numThreads);
     auto expected = true;
     if (!running.compare_exchange_strong(expected, false)) {
         return false;
