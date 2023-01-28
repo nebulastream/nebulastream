@@ -66,8 +66,6 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
      * @return GlobalSlicePtr
      */
     KeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
-    const State* getDefaultState() const;
-
     ~KeyedSliceMergingHandler();
 
   private:

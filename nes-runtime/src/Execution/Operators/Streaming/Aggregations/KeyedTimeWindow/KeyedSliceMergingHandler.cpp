@@ -47,8 +47,6 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
 GlobalSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
     return std::make_unique<KeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
 }
-const State* KeyedSliceMergingHandler::getDefaultState() const { return defaultState.get(); }
-
 KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
 
