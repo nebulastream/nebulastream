@@ -80,7 +80,10 @@ bool ExecutableQueryPlan::fail() {
         NES_DEBUG2("QueryExecutionPlan: fail query={} sublplan={}", queryId, querySubPlanId);
         for (auto& stage : pipelines) {
             if (!stage->fail()) {
-                NES_ERROR2("QueryExecutionPlan: fail failed for stage {}", stage);
+                std::stringstream s;
+                s << stage;
+                std::string stageAsString = s.str();
+                NES_ERROR2("QueryExecutionPlan: fail failed for stage {}", stageAsString);
                 ret = false;
             }
         }
@@ -146,7 +149,10 @@ bool ExecutableQueryPlan::stop() {
         NES_DEBUG2("QueryExecutionPlan: stop {}-{} is marked as stopped now", queryId, querySubPlanId);
         for (auto& stage : pipelines) {
             if (!stage->stop(QueryTerminationType::HardStop)) {
-                NES_ERROR2("QueryExecutionPlan: stop failed for stage {}", stage);
+                std::stringstream s;
+                s << stage;
+                std::string stageAsString = s.str();
+                NES_ERROR2("QueryExecutionPlan: stop failed for stage {}", stageAsString);
                 allStagesStopped = false;
             }
         }
