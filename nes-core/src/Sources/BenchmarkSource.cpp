@@ -87,7 +87,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
         }
     }
 
-    NES_DEBUG("BenchmarkSource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG2("BenchmarkSource() numBuffersToProcess={} memoryAreaSize={}",  numBuffersToProcess, memoryAreaSize);
 }
 
 BenchmarkSource::~BenchmarkSource() { numaLocalMemoryArea.release(); }

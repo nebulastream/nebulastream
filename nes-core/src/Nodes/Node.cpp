@@ -265,7 +265,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;
     }
-    NES_ERROR("Node: could not remove child from  old node: " << oldNode->toString());
+    NES_ERROR2("Node: could not remove child from  old node: {}", oldNode->toString());
 
     success = removeParent(oldNode);
     NES_DEBUG2("Node: remove parent old node: {}", oldNode->toString());
@@ -276,7 +276,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
         }
         return true;//TODO: I think this is wrong
     }
-    NES_ERROR("Node: could not remove parent from  old node: "<< oldNode->toString());
+    NES_ERROR2("Node: could not remove parent from  old node: {}", oldNode->toString());
 
     return false;
 }
