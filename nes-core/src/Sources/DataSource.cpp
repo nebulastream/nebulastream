@@ -104,7 +104,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
-            NES_DEBUG2("push task for queueid= {} successor= {}", queueId, &successor);
+            NES_DEBUG2("push task for queueid= {} successor= ", queueId/*, &successor*/);
             queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }

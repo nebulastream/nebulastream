@@ -256,7 +256,7 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
                     "Cannot find source " << source->getOperatorId() << " in sub query plan " << querySubPlanId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << querySubPlanId << " = " << terminationType);
-    NES_DEBUG2("QEP {} Source {} is terminated; tokens left = {}" querySubPlanId,source->getOperatorId(), (tokensLeft - 1));
+    NES_DEBUG2("QEP {} Source {} is terminated; tokens left = {}", querySubPlanId,source->getOperatorId(), (tokensLeft - 1));
     // the following check is necessary because a data sources first emits an EoS marker and then calls this method.
     // However, it might happen that the marker is so fast that one possible execution is as follows:
     // 1) Data Source emits EoS marker

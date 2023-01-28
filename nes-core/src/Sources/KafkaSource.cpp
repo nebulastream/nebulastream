@@ -198,12 +198,14 @@ bool KafkaSource::connect() {
 
         // Print the assigned partitions on assignment
         consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG2("Got assigned: {}", partitions);
+            auto dumpMeAgain = partitions;
+            NES_DEBUG2("Got assigned");//{}", partitions);// TODO convert to string not possible unless changing dependencies?
         });
 
         // Print the revoked partitions on revocation
         consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-            NES_DEBUG2("Got revoked: {}", partitions);
+            auto dumpMeAgain = partitions;
+            NES_DEBUG2("Got revoked");// {}", partitions); // TODO convert to string not possible unless changing dependencies?
         });
 
         // Subscribe to the topic

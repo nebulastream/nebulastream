@@ -150,6 +150,16 @@ class Timer {
         return str;
     };
 
+    friend std::string printString(Timer t){
+        std::stringstream string;
+        string << "overall runtime: " << t.getPrintTime() << getTimeUnitString();
+        for (auto& s : t.getSnapshots()) {
+            string << Timer<TimeUnit, PrintTimeUnit, PrintTimePrecision>::printHelper(std::string(), s);
+        }
+        std::string output = string.str();
+        return output;
+    };
+
     /**
      * @brief return timer runtime converted ConvertUnit with ConvertPrecision e.g. for printing purposes.
      */

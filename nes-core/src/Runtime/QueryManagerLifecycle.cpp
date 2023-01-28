@@ -41,7 +41,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     {
         std::scoped_lock lock(queryMutex);
         // test if elements already exist
-        NES_DEBUG2("AbstractQueryManager: resolving sources for query  {}  with sources= {}",  qep,  qep->getSources().size());
+        NES_DEBUG2("AbstractQueryManager: resolving sources for query  {}  with sources= {}",  qep->getQueryId(),  qep->getSources().size());
 
         for (const auto& source : qep->getSources()) {
             // source already exists, add qep to source set if not there
@@ -117,19 +117,25 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
     // 3a. pre-start net sources
     for (const auto& source : netSources) {
+        std::stringstream s;
+        s << source;
+        std::string sourceString = s.str();
         if (!source->bind()) {
-            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  source);
+            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  sourceString);
         } else {
-            NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  source);
+            NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  sourceString);
         }
     }
 
     // 3b. start net sources
     for (const auto& source : netSources) {
+        std::stringstream s;
+        s << source;
+        std::string sourceString = s.str();
         if (!source->start()) {
-            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  source);
+            NES_WARNING2("AbstractQueryManager: network source {} could not started as it is already running",  sourceString);
         } else {
-            NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  source);
+            NES_DEBUG2("AbstractQueryManager: network source  {}  started successfully",  sourceString);
         }
     }
 
@@ -179,11 +185,14 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             continue;
         }
-        NES_DEBUG2("AbstractQueryManager: start source  {}  str= {}",  source,  source->toString());
+        std::stringstream s;
+        s << source;
+        std::string sourceString = s.str();
+        NES_DEBUG2("AbstractQueryManager: start source  {}  str= {}",  sourceString,  source->toString());
         if (!source->start()) {
-            NES_WARNING2("AbstractQueryManager: source {} could not started as it is already running",  source);
+            NES_WARNING2("AbstractQueryManager: source {} could not started as it is already running",  sourceString);
         } else {
-            NES_DEBUG2("AbstractQueryManager: source  {}  started successfully",  source);
+            NES_DEBUG2("AbstractQueryManager: source  {}  started successfully",  sourceString);
         }
     }
 
@@ -446,7 +455,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
             auto reconfMessageSink =
                 ReconfigurationMessage(sink->get()->getQueryId(), sink->get()->getParentPlanId(), FailEndOfStream, (*sink));
             addReconfigurationMessage(sink->get()->getQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
-            NES_DEBUG2("failure end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep {}" <<sourceId, FailEndOfStream, sink->get()->getParentPlanId(), threadPool->getNumberOfThreads(), sink->get()->getQueryId());
+            NES_DEBUG2("failure end-of-stream Sink opId={} reconfType={} queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep {}", sourceId, FailEndOfStream, sink->get()->getParentPlanId(), threadPool->getNumberOfThreads(), sink->get()->getQueryId());
         }
     }
     return true;

@@ -77,7 +77,7 @@ MQTTSink::~MQTTSink() NES_NOEXCEPT(false) {
     NES_TRACE2("MQTTSink::~MQTTSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_TRACE2("MQTTSink::~MQTTSink {}: MQTT Sink Destroyed", this);
+        NES_TRACE2("MQTTSink::~MQTTSink: MQTT Sink Destroyed");
     } else {
         NES_ASSERT2_FMT(false, "MQTTSink::~MQTTSink " << this << ": Destroy MQTT Sink failed cause it could not be disconnected");
     }
@@ -112,11 +112,11 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
         // that were not successfully sent to an MQTT broker.
         if ((asynchronousClient && client->getNumberOfUnsentMessages() > 0)) {
-            NES_ERROR2("MQTTSink::writeData: " << client->getNumberOfUnsentMessages() <<  {}", messages could not be sent");
+            NES_ERROR2("MQTTSink::writeData: {} messages could not be sent", client->getNumberOfUnsentMessages());
             return false;
         }
     } catch (const mqtt::exception& ex) {
-        NES_ERROR2("MQTTSink::writeData: Error during writeData in MQTT sink:  {}",  ex.what());
+        NES_ERROR2("MQTTSink::writeData: Error during writeData in MQTT sink: {}",  ex.what());
         return false;
     }
     updateWatermarkCallback(inputBuffer);
@@ -160,9 +160,9 @@ bool MQTTSink::connect() {
         }
     }
     if (connected) {
-        NES_DEBUG2("MQTTSink::disconnect:  {} : connected address= {}",  this,  address);
+        NES_DEBUG2("MQTTSink::disconnect: connected address= {}", address);
     } else {
-        NES_DEBUG2("MQTTSink::disconnect:  {} : NOT connected= {}",  this,  address);
+        NES_DEBUG2("MQTTSink::disconnect: NOT connected= {}", address);
     }
     return connected;
 }
@@ -173,7 +173,7 @@ bool MQTTSink::disconnect() {
         client->disconnect();
         connected = false;
     } else {
-        NES_DEBUG2("MQTTSink::disconnect:  {} : NOT connected",  this);
+        NES_DEBUG2("MQTTSink::disconnect NOT connected");
     }
     NES_TRACE2("MQTTSink::disconnect: connected value is {}",  connected);
     return !connected;

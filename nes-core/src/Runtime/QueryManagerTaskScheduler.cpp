@@ -173,12 +173,18 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
-        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} getQuerySubPlanId={} queueId={}", (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, (*nextPipeline)->getQueryId(), (*nextPipeline)->getQuerySubPlanId(), queueId);
+        std::stringstream s;
+        s << buffer;
+        std::string bufferString = s.str();
+        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queryId={} getQuerySubPlanId={} queueId={}", (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), bufferString, (*nextPipeline)->getQueryId(), (*nextPipeline)->getQuerySubPlanId(), queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
-        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}",  sink->get()->toString(), buffer, queueId);
+        std::stringstream s;
+        s << buffer;
+        std::string bufferString = s.str();
+        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}",  sink->get()->toString(), bufferString, queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     } else {
@@ -215,11 +221,17 @@ void MultiQueueQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_WARNING2("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
-        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",  (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), buffer, queueId);
+        std::stringstream s;
+        s << buffer;
+        std::string bufferString = s.str();
+        NES_TRACE2("QueryManager: added Task this pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",  (*nextPipeline)->getPipelineId(), (*nextPipeline)->getSuccessors().size(), bufferString, queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
-        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}", sink->get()->toString(), buffer, queueId);
+        std::stringstream s;
+        s << buffer;
+        std::string bufferString = s.str();
+        NES_TRACE2("QueryManager: added Task for Sink {} inputBuffer {} queueId={}", sink->get()->toString(), bufferString, queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
     } else {

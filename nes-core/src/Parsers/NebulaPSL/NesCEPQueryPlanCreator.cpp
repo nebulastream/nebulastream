@@ -413,7 +413,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
             rightQueryPlan = QueryPlanBuilder::addMap(Attribute(cepRightKey) = 1, rightQueryPlan);
 
             //then, define the artificial attributes as key attributes
-            NES_DEBUG2("NesCEPQueryPlanCreater: add name cepLeftKey " << cepLeftKey << "and name cepRightKey {}",  cepRightKey);
+            NES_DEBUG2("NesCEPQueryPlanCreater: add name cepLeftKey {} and name cepRightKey {}", cepLeftKey, cepRightKey);
             ExpressionItem onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
             ExpressionItem onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
             auto leftKeyFieldAccess = onLeftKey.getExpressionNode()->as<FieldAccessExpressionNode>();
@@ -451,8 +451,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 else {
                     sourceNameLeft = sourceNameLeft + "$" + timestamp;
                 }
-                NES_DEBUG2("NesCEPQueryPlanCreater: ExpressionItem for Left Source "
-                          << sourceNameLeft << "and ExpressionItem for Right Source " << sourceNameRight);
+                NES_DEBUG2("NesCEPQueryPlanCreater: ExpressionItem for Left Source {} and ExpressionItem for Right Source {}", sourceNameLeft, sourceNameRight);
                 //create filter expression and add it to queryPlan
                 leftQueryPlan =
                     QueryPlanBuilder::addFilter(Attribute(sourceNameLeft) < Attribute(sourceNameRight), leftQueryPlan);
