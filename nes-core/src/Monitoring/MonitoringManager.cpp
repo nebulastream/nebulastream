@@ -154,7 +154,7 @@ StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
-    NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {} in store {}", toString(metrics->getMetricType()), nodeId, metricStore);
+    NES_TRACE2("MonitoringManager: Adding metrics of type {} for node {}", toString(metrics->getMetricType()), nodeId);
     metricStore->addMetrics(nodeId, metrics);
 }
 

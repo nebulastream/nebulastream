@@ -86,7 +86,7 @@ NodeEngine::~NodeEngine() {
 
 bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG2("Runtime: deployQueryInNodeEngine query using qep  {}",  queryExecutionPlan);
+    NES_DEBUG2("Runtime: deployQueryInNodeEngine query using qep with queryId: {}",  queryExecutionPlan->getQueryId());
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
     if (!successRegister) {
         NES_ERROR2("Runtime::deployQueryInNodeEngine: failed to register query");
@@ -127,7 +127,7 @@ bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanP
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
-    NES_DEBUG2("Runtime: registerQueryInNodeEngine query  {}  queryId= {}  querySubPlanId = {}",  queryExecutionPlan,  queryId,  querySubPlanId);
+    NES_DEBUG2("Runtime: registerQueryInNodeEngine query with queryId= {} querySubPlanId = {}", queryId, querySubPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
     if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         auto found = queryIdToQuerySubPlanIds.find(queryId);
