@@ -418,16 +418,19 @@ endif ()
 if (NES_USE_KAFKA)
     # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
+        find_package(RdKafka CONFIG REQUIRED)
+        set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka RdKafka::rdkafka++)
+
         include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
         add_compile_definitions(ENABLE_KAFKA_BUILD)
         add_library(cppkafka::cppkafka SHARED IMPORTED)
         set_target_properties(cppkafka::cppkafka
                 PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
                 INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
                 )
-        install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
+        #install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
     endif ()
 endif ()
