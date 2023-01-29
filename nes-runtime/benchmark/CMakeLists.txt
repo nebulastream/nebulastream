@@ -16,6 +16,12 @@ include(ExternalProject)
 add_library(nes-runtime-benchmark INTERFACE)
 target_include_directories(nes-runtime-benchmark INTERFACE "../tests/include/")
 target_link_libraries(nes-runtime-benchmark INTERFACE nes-runtime)
+
+find_package(benchmark CONFIG REQUIRED)
+if (NOT ${benchmark_FOUND})
+    message(FATAL_ERROR "Unable to find google benchmark")
+endif ()
+
 target_link_libraries(nes-runtime-benchmark INTERFACE benchmark::benchmark)
 
 find_package(benchmark)
