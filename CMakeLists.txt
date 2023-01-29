@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION vcleanup)
+set(VCPKG_BINARY_VERSION v29.9)
 set(LLVM_BINARY_VERSION v1)
 set(LLVM_VERSION 15)
 # Activate self hosting, such that the compiler from the dependencies is taken
