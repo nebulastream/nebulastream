@@ -47,7 +47,7 @@ class List : public Nautilus::Any {
         Value<UInt32> currentIndex;
     };
 
-    List(const TypeIdentifier* childType) : Any(childType){};
+    explicit List(const TypeIdentifier* childType) : Any(childType){};
 
     /**
      * @brief Return the length of the list.
@@ -80,7 +80,7 @@ class List : public Nautilus::Any {
     ListValueIterator begin();
     ListValueIterator end();
 
-    virtual ~List() override;
+    ~List() override;
 };
 
 /**
@@ -112,7 +112,7 @@ class TypedList final : public List {
      * @brief Constructor to create a typed list from a reference to the correct raw type.
      * @param ref
      */
-    TypedList(TypedRef<RawType> ref);
+    explicit TypedList(TypedRef<RawType> ref);
 
     /**
      * @brief Return the length of the list.
