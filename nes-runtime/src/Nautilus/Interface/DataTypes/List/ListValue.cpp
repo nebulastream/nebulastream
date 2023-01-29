@@ -80,6 +80,72 @@ ListValue<T>::~ListValue() {
     Runtime::recycleTupleBuffer(this);
 }
 
+template<class T>
+ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const {
+    auto leftListSize = length();
+    auto rightListSize = other->length();
+    // create the result list, which is the current list length + the other list length
+    auto resultList = ListValue<T>::create(leftListSize + rightListSize);
+
+    // copy this list into result
+    auto resultDataPtr = resultList->data();
+    for (uint32_t i = 0; i < length(); i++) {
+        resultDataPtr[i] = c_data()[i];
+    }
+    // copy other list in result
+    for (uint32_t i = 0; i < other->length(); i++) {
+        resultDataPtr[leftListSize + i] = c_data()[i];
+    }
+    return resultList;
+}
+
+template<class T>
+ListValue<T>* ListValue<T>::append(T element) const {
+    // create result list
+    auto resultList = ListValue<T>::create(length() + 1);
+    // TODO append on element to the result list
+    return resultList;
+}
+
+template<class T>
+ListValue<T>* ListValue<T>::prepend(T element) const {
+    // create result list
+    auto resultList = ListValue<T>::create(length() + 1);
+    // TODO prepend on element to the result list
+    return resultList;
+}
+
+template<class T>
+bool ListValue<T>::contains(T element) const {
+    // TODO check if the element is contained in the list and return true in this case
+    return false;
+}
+
+template<class T>
+uint32_t ListValue<T>::listPosition(T element) const {
+    // TODO return the index of the element. If it is not contained return 0.
+    return 0;
+}
+template<class T>
+ListValue<T>* ListValue<T>::sort() const {
+    // create copy of list
+    auto resultList = ListValue<T>::create(length());
+    std::memcpy(resultList->data(), c_data(), length());
+    // TODO sort content of list (resultList->data()): look at the following links for inspiration
+    // https://stackoverflow.com/questions/56115960/can-i-use-stdsort-on-heap-allocated-raw-arrays
+    // https://en.cppreference.com/w/cpp/algorithm/sort
+    return resultList;
+}
+template<class T>
+ListValue<T>* ListValue<T>::revers() const {
+    // create copy of list
+    auto resultList = ListValue<T>::create(length());
+    std::memcpy(resultList->data(), c_data(), length());
+    // TODO reverse content of list (resultList->data()): look at the following links for inspiration
+    // https://cplusplus.com/reference/algorithm/reverse/
+    return resultList;
+}
+
 // Instantiate ListValue types
 template class ListValue<int8_t>;
 template class ListValue<int16_t>;

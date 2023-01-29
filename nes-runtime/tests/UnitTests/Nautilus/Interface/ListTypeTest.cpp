@@ -67,10 +67,26 @@ TEST_F(ListTypeTest, createListTypeFromArray) {
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list = ListValue<int32_t>::create(array, 6);
     for (auto i = 0; i < 6; i++) {
-        ASSERT_EQ(array[i], i);
+        ASSERT_EQ(list->data()[i], i);
     }
     // free list value explicitly here.
     list->~ListValue<int32_t>();
+}
+
+TEST_F(ListTypeTest, concatTest) {
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+    auto list2 = ListValue<int32_t>::create(array, 6);
+
+    auto result = list1->concat(list2);
+    ASSERT_EQ(result->length(), 12);
+    for (int32_t i = 0; i < 12; i++) {
+        ASSERT_EQ(result->data()[i], i % 6);
+    }
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+    list2->~ListValue<int32_t>();
+    result->~ListValue<int32_t>();
 }
 
 }// namespace NES::Nautilus

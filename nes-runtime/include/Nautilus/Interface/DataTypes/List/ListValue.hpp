@@ -66,6 +66,53 @@ class ListValue final : public BaseListValue {
     bool equals(const ListValue<T>* other) const;
 
     /**
+     * @brief Concatenates two lists.
+     * @param other
+     * @return
+     */
+    ListValue<T>* concat(const ListValue<T>* other) const;
+
+    /**
+     * @brief Appends element to list.
+     * @param element
+     * @return
+     */
+    ListValue<T>* append(T element) const;
+
+    /**
+     * @brief Prepends element to list.
+     * @param element
+     * @return
+     */
+    ListValue<T>* prepend(T element) const;
+
+    /**
+     * @brief Returns true if the list contains the element.
+     * @param element
+     * @return
+     */
+    bool contains(T element) const;
+
+    /**
+     * @brief Returns the index of the element if the list contains the element.
+     * @param element
+     * @return
+     */
+    uint32_t listPosition(T element) const;
+
+    /**
+     * @brief Sorts the elements of the list.
+     * @return
+     */
+    ListValue<T>* sort() const;
+
+    /**
+     * @brief Reverse the elements of the list.
+     * @return
+     */
+    ListValue<T>* revers() const;
+
+    /**
      * @brief Returns pointer to the underling array of values.
      * @return T*
      */
