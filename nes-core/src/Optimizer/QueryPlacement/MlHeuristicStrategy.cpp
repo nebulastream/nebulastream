@@ -202,7 +202,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
     if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
 
-        NES_DEBUG2("MlHeuristicStrategy: Place  {}",  operatorNode);
+        NES_DEBUG2("MlHeuristicStrategy: Place operatorNode");
         if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
             || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE2("MlHeuristicStrategy: Received an NAry operator for placement.");
