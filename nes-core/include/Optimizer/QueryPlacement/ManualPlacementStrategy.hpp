@@ -33,12 +33,15 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static std::unique_ptr<ManualPlacementStrategy>
-    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase,
+           PlacementStrategy::ValueAAS placementStrategyAAS);
 
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,
-                                     TypeInferencePhasePtr typeInferencePhase);
+                                     TypeInferencePhasePtr typeInferencePhase,
+                                     PlacementStrategy::ValueAAS placementStrategyAAS);
+    PlacementStrategy::ValueAAS placementStrategyAAS;
 };
 
 }// namespace NES::Optimizer

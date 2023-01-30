@@ -734,12 +734,14 @@ TEST_F(AdaptiveActiveStandbyTest, generalStuff) {
 //    }
 //}
 
+/// GREEDY TESTS
+
 /* Test replica placements on a simple query, on a sequential topology of 3 nodes
  * 3
  * 2
  * 1
  */
-TEST_F(AdaptiveActiveStandbyTest, testAASSequential3) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedySequential3) {
 
     setupTopologyAndSourceCatalogSequential3();
 
@@ -772,7 +774,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSequential3) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -830,7 +833,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSequential3) {
  * 2
  * 1
  */
-TEST_F(AdaptiveActiveStandbyTest, testAASSequential4) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedySequential4) {
 
     setupTopologyAndSourceCatalogSequential4();
 
@@ -863,7 +866,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSequential4) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -903,7 +907,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSequential4) {
 }
 
 /* Test replica placements on a simple query, on a simple short diamond topology */
-TEST_F(AdaptiveActiveStandbyTest, testAASSimpleShortDiamond) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedySimpleShortDiamond) {
 
     setupTopologyAndSourceCatalogSimpleShortDiamond();
 
@@ -936,7 +940,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSimpleShortDiamond) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -980,7 +985,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASSimpleShortDiamond) {
 // 3 -\
 // |   2
 // 1 -/
-TEST_F(AdaptiveActiveStandbyTest, testAASTriangle) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedyTriangle) {
 
     setupTopologyAndSourceCatalogTriangle();
 
@@ -1013,7 +1018,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAASTriangle) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -1057,7 +1063,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASTriangle) {
 // 3  6
 // 2  5
 // 1 -/
-TEST_F(AdaptiveActiveStandbyTest, testAASTallDiamond) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedyTallDiamond) {
 
     setupTopologyAndSourceCatalogTallDiamond();
 
@@ -1227,7 +1233,8 @@ TEST_F(AdaptiveActiveStandbyTest, testTopDownPlacementOfSelfJoinQuery) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -1270,7 +1277,7 @@ TEST_F(AdaptiveActiveStandbyTest, testTopDownPlacementOfSelfJoinQuery) {
  * 2     4
  * 1     3
  */
-TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSeparatePath) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedy2PhysicalSourcesSeparatePath) {
     setupTopologyAndSourceCatalog2PhysicalSourcesSeparatePath();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1302,7 +1309,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSeparatePath) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -1373,7 +1381,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSeparatePath) {
  * /- 2 -\
  * 1     3
  */
-TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSamePath) {
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedy2PhysicalSourcesSamePath) {
     setupTopologyAndSourceCatalog2PhysicalSourcesSamePath();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1405,7 +1413,8 @@ TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSamePath) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan);
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     std::cout << "topology " + topology->toString() << std::endl;
@@ -1480,3 +1489,85 @@ TEST_F(AdaptiveActiveStandbyTest, testAAS2PhysicalSourcesSamePath) {
         }
     }
 }
+
+/// LOCAL SEARCH TESTS
+/* Test replica placements on a simple query, on a sequential topology of 4 nodes
+ * 4
+ * 3
+ * 2
+ * 1
+ */
+TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchSequential4) {
+    setupTopologyAndSourceCatalogSequential4();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topology,
+                                                                      typeInferencePhase,
+                                                                      z3Context,
+                                                                      false /*query reconfiguration*/);
+
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::LocalSearch_AAS);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    std::cout << "topology " + topology->toString() << std::endl;
+    std::cout << "query plan " + queryPlan->toString() << std::endl;
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3U);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            // filter should be placed on source node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 3) {
+            // map should be placed on cloud node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            //ASSERT_EQ(actualRootOperator->getId(), 4);
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+        }
+    }
+
+    // TODO: if & where backup was placed
+}
+
+/// ILP TESTS

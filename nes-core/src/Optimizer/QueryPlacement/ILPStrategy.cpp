@@ -39,15 +39,20 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           z3::ContextPtr z3Context) {
-    return std::make_unique<ILPStrategy>(ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context));
+                                                           z3::ContextPtr z3Context,
+                                                           PlacementStrategy::ValueAAS placementStrategyAAS) {
+    return std::make_unique<ILPStrategy>
+        (ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context, placementStrategyAAS));
 }
 
 ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         z3::ContextPtr z3Context)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
+                         z3::ContextPtr z3Context,
+                         PlacementStrategy::ValueAAS placementStrategyAAS)
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {
+    this->placementStrategyAAS = placementStrategyAAS;
+}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                             FaultToleranceType::Value faultToleranceType,
@@ -237,7 +242,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 10. Create and place backup operators
-    executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+    executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators, placementStrategyAAS);
 
     // 11. Add network source and sink operators.
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

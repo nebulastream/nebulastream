@@ -32,15 +32,21 @@ namespace NES::Optimizer {
 std::unique_ptr<ManualPlacementStrategy>
 ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                 NES::TopologyPtr topology,
-                                NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
+                                NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                PlacementStrategy::ValueAAS placementStrategyAAS) {
     return std::make_unique<ManualPlacementStrategy>(
-        ManualPlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
+        ManualPlacementStrategy(std::move(globalExecutionPlan), std::move(topology),
+                                std::move(typeInferencePhase), placementStrategyAAS));
 }
 
 ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                  NES::TopologyPtr topology,
-                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
+                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                                 PlacementStrategy::ValueAAS placementStrategyAAS)
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology),
+                            std::move(typeInferencePhase)) {
+    this->placementStrategyAAS = placementStrategyAAS;
+}
 
 bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     QueryId queryId /*queryId*/,
@@ -57,7 +63,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
         placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
         // 3. Create and place backup operators
-        executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+        executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators, placementStrategyAAS);
 
         // 4. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

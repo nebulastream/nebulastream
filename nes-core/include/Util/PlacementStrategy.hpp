@@ -29,13 +29,20 @@ class PlacementStrategy {
         IFCOP = 2,
         ILP = 3,
         Manual = 4,
-        MlHeuristic = 5
+        MlHeuristic = 5,
         // FIXME: enable them with issue #755
         // LowLatency,
         //  HighThroughput,
         //  MinimumResourceConsumption,
         //  MinimumEnergyConsumption,
         // HighAvailability
+    };
+
+    enum ValueAAS : uint8_t {
+        None = 0,
+        Greedy_AAS = 1,
+        LocalSearch_AAS = 2,
+        ILP_AAS = 3,
     };
 
     /**

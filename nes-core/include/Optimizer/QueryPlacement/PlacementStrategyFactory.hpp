@@ -65,7 +65,8 @@ class PlacementStrategyFactory {
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
                                                 const TypeInferencePhasePtr& typeInferencePhase,
-                                                const z3::ContextPtr& z3Context);
+                                                const z3::ContextPtr& z3Context,
+                                                PlacementStrategy::ValueAAS placementStrategyAAS);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

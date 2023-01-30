@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
+#include <Util/PlacementStrategy.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -202,7 +203,8 @@ class BasePlacementStrategy {
 
     bool executeAdaptiveActiveStandby(QueryId queryId,
                                       const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                      PlacementStrategy::ValueAAS placementStrategyAAS);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

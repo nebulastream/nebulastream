@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "Optimizer/QueryPlacement/AdaptiveActiveStandby.hpp"
+#include <Optimizer/QueryPlacement/AdaptiveActiveStandby.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
@@ -779,9 +780,13 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
 
 bool BasePlacementStrategy::executeAdaptiveActiveStandby(QueryId queryId,
                                                          const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                         const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                                         PlacementStrategy::ValueAAS placementStrategyAAS) {
 
-    auto adaptiveActiveStandby = AdaptiveActiveStandby::create(topology);
+    if (placementStrategyAAS == PlacementStrategy::ValueAAS::None)
+        return false;
+
+    auto adaptiveActiveStandby = AdaptiveActiveStandby::create(topology, placementStrategyAAS);
 
     auto success = adaptiveActiveStandby->execute(pinnedUpStreamOperators);
 

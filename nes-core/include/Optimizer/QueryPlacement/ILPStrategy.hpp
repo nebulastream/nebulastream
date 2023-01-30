@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
 
+#include <Util/PlacementStrategy.hpp>
 #include <Nodes/Node.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <z3++.h>
@@ -49,7 +50,8 @@ class ILPStrategy : public BasePlacementStrategy {
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
                                            TypeInferencePhasePtr typeInferencePhase,
-                                           z3::ContextPtr z3Context);
+                                           z3::ContextPtr z3Context,
+                                           PlacementStrategy::ValueAAS placementStrategyAAS);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight
@@ -83,11 +85,13 @@ class ILPStrategy : public BasePlacementStrategy {
     //map to hold operators to place
     std::map<OperatorId, OperatorNodePtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
+    PlacementStrategy::ValueAAS placementStrategyAAS;
 
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         z3::ContextPtr z3Context);
+                         z3::ContextPtr z3Context,
+                         PlacementStrategy::ValueAAS placementStrategyAAS);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
      * @param z3Model a Z3 z3Model from the Z3 Optimize

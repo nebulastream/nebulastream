@@ -83,7 +83,8 @@ class QueryPlacementPhase {
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan,
+                 PlacementStrategy::ValueAAS placementStrategyAAS = PlacementStrategy::ValueAAS::None);
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,

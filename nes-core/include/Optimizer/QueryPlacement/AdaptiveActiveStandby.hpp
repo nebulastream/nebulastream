@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <Operators/OperatorId.hpp>
 #include <Topology/TopologyNodeId.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -45,6 +46,11 @@ using OperatorToTopologyMap = std::unordered_map<OperatorId, std::pair<TopologyN
 // unordered map that saves for every topology node: a vector of all operators pinned on it and its topology specific score
 using TopologyToOperatorMap = std::unordered_map<TopologyNodeId, std::pair<std::vector<OperatorId>, double>>;
 
+// pair< pair< vector<what to move from current node>, current node>, pair < vector<what to move from target node>, target node> >
+using LocalSearchStep = std::pair<
+    std::pair<std::vector<OperatorId>, TopologyNodeId>,
+    std::pair<std::vector<OperatorId>, TopologyNodeId>
+    >;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -74,7 +80,7 @@ class AdaptiveActiveStandby {
   public:
     ~AdaptiveActiveStandby() = default;
 
-    static AdaptiveActiveStandbyPtr create(TopologyPtr topology);
+    static AdaptiveActiveStandbyPtr create(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS);
 
     bool execute(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
@@ -93,6 +99,8 @@ class AdaptiveActiveStandby {
     static int getOperatorCost(const OperatorNodePtr& operatorNode);
 
   private:
+    PlacementStrategy::ValueAAS placementStrategy;
+    std::map<TopologyNodeId, std::map<TopologyNodeId, double>> distances;
     // new topology node properties
     int nNewTopologyNodes = 0;
     int newTopologyNodeIdStart = 1000;      // Assumption: IDs above this reserved for new nodes
@@ -130,7 +138,7 @@ class AdaptiveActiveStandby {
     OperatorToTopologyMap candidateOperatorToTopologyMap;
     TopologyToOperatorMap candidateTopologyToOperatorMap;
 
-    explicit AdaptiveActiveStandby(TopologyPtr topology);
+    explicit AdaptiveActiveStandby(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS);
 
     /**
      * Deploy new topology nodes so that every operator can be replicated and have a secondary path
@@ -139,7 +147,18 @@ class AdaptiveActiveStandby {
     void deployNewNodes(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
-     * Check whether a primary operator's replica would have a separate path to the sink from the target topology node, without
+     * Check whether a primary operator's replica would have a separate path to the target from the start topology node, without
+     * including the nodes where the primary and its ancestors are placed
+     * @param primaryOperator: primary operator which is to be replicated
+     * @param startTopologyNode: topology node where the separate path should begin
+     * @param targetTopologyNode: topology node to which a separate path is searched
+     */
+    bool separatePathExists(const OperatorNodePtr& primaryOperator,
+                            const TopologyNodePtr& startTopologyNode,
+                            const TopologyNodePtr& targetTopologyNode);
+
+    /**
+     * Check whether a primary operator's replica would have a separate path to the sink from the start topology node, without
      * including the nodes where the primary and its ancestors are placed
      * @param primaryOperator: primary operator which is to be replicated
      * @param startTopologyNode: topology node where the separate path should begin
@@ -250,7 +269,7 @@ class AdaptiveActiveStandby {
      * @param operatorNodes: vector of operator nodes as NodePtr whose pinned topology nodes are searched for
      * @return set of topology node ids, so that no duplicates are contained
      */
-    std::set<TopologyNodeId> getAllTopologyNodesWherePinned(const std::vector<NodePtr>& operatorNodes);
+    std::set<TopologyNodeId> getAllTopologyNodesByIdWherePinned(const std::vector<NodePtr>& operatorNodes);
 
     /**
      * Calculate the score of the best path in a subgraph between a single start and destination node based on linkProperties.
@@ -275,6 +294,15 @@ class AdaptiveActiveStandby {
     TopologyNodePtr findNodeWherePinned(const NodePtr& operatorNode);
 
     /**
+     * Checks if the distance between two nodes has already been calculated. Returns it if yes,
+     * otherwise calls calculateDistance and stores result
+     * @param start: node from which distance is to be calculated
+     * @param target: node to which distance is to be calculated
+     * @return sum of 1/bandwidth between each connection, 0 if start = target
+     */
+    double getDistance(const TopologyNodePtr& start, const TopologyNodePtr& target);
+
+    /**
      * Calculates the distance between two nodes.
      * @param start: node from which distance is to be calculated
      * @param goal: node to which distance is to be calculated
@@ -285,10 +313,19 @@ class AdaptiveActiveStandby {
     /**
      * Calculates if the candidate node would be over-utilized if a replica of an operator would be placed there
      * @param candidateNode: node for which over-utilization is calculated
-     * @param primaryOperator: operator whose replica would be placed on the node
+     * @param operatorNode: operator whose replica would be placed on / removed from the node
+     * @param placeOrRemove: decide whether operatorNode is placed on (true) or removed from (false) the candidateNode
      * @return over-utilization penalty
      */
-    double calculateOverUtilizationPenalty(const TopologyNodePtr& candidateNode, const OperatorNodePtr& primaryOperator = nullptr);
+    double calculateOverUtilizationPenalty(const TopologyNodePtr& candidateNode, const OperatorNodePtr& operatorNode);
+
+    /**
+     * Calculates if the candidate node is over-utilized / would be over-utilized after a change of resources
+     * @param candidateNode: node for which over-utilization is calculated
+     * @param reserveResources: amount of resources that are to be reserved / freed up. set to 0 by default
+     * @return over-utilization penalty
+     */
+    double calculateOverUtilizationPenalty(const TopologyNodePtr& candidateNode, int reserveResources = 0);
 
     /**
      * Calculates the available resources of a topology node, based on the finished primary and the candidate secondary placement
@@ -303,6 +340,41 @@ class AdaptiveActiveStandby {
      */
     bool pinOperators();
 
+
+    /**
+     * Get the primary operator of a secondary
+     * @param secondaryOperator: replica whose primary is searched for
+     * @return OperatorNodePtr to primary
+     */
+    OperatorNodePtr getPrimaryOperatorOfSecondary(const OperatorNodePtr& secondaryOperator);
+
+    /**
+     * Calculates and evaluates all possible steps for local search for a replica
+     * @param secondaryToMove: replica that is to be moved
+     * @return best step as a pair of LocalSearchStep and its score change
+     */
+    std::pair<LocalSearchStep, double> getBestStepLocalSearch(const OperatorNodePtr& secondaryToMove);
+
+    /**
+     * Evaluates a simple local search step, which consists of either moving a single operator from its current node to another
+     * (targetSecondary = nullptr), or of swapping two single operators from their current nodes (targetSecondary required).
+     * The validity has to be checked before calling the function.
+     * @param currentSecondary: secondary to move/swap
+     * @param currentNode: current node of currentSecondary
+     * @param targetNode: node to which currentSecondary is to be moved
+     * @param targetSecondary: optional, secondary operator on targetNode with which currentSecondary is to be swapped
+     * @return Pair of corresponding LocalSearchStep and its calculated change of the current score.
+     */
+    std::pair<LocalSearchStep, double> evaluateSimpleStepLocalSearch(const OperatorNodePtr& currentSecondary,
+                                                                     const TopologyNodePtr& currentNode,
+                                                                     const TopologyNodePtr& targetNode,
+                                                                     const OperatorNodePtr& targetSecondary = nullptr);
+    /**
+     * Create a string from a LocalSearchStep.
+     * @param step: from which string is to be created
+     * @return string
+     */
+    static std::string localSearchStepToString(const LocalSearchStep& step);
 };
 }// namespace NES::Optimizer
 
