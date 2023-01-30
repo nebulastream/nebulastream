@@ -73,7 +73,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
     bool isIndexUpdated) {
     //if the device location has not changed, there are no new calculations to be made
     if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
-        NES_DEBUGNES_2("Location has not changed, do not recalculate schedule")
+        NES_DEBUGNES_2("Location has not changed, do not recalculate schedule");
         return std::nullopt;
     }
 
@@ -82,7 +82,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
         if (stepsSinceLastLocationSave == locationBufferSaveRate) {
             locationBuffer.push_back(currentOwnLocation);
             stepsSinceLastLocationSave = 0;
-            NES_DEBUG2("Location buffer is not filled yet, do not recalculate schedule")
+            NES_DEBUG2("Location buffer is not filled yet, do not recalculate schedule");
         } else {
             ++stepsSinceLastLocationSave;
         }
@@ -107,7 +107,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
     //if any of the input data for the reconnect prediction has changed, the scheduled reconnects need to be recalculated
 
     if (isIndexUpdated || isPathUpdated || isSpeedChanged) {
-        NES_INFO2("reconnect prediction data has changed")
+        NES_INFO2("reconnect prediction data has changed");
         //todo #2815: instead of updating right away, look at if the new trajectory stabilizes itself after a turn
         scheduleReconnects(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(parentLocation), fieldNodeIndex);
         return ReconnectSchedule(reconnectPoints);
@@ -128,8 +128,8 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updateAve
     //if this is the case, update the value
     if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * speedDifferenceThresholdFactor) {
         bufferAverageMovementSpeed = meanDegreesPerNanosec;
-        NES_TRACE2("average movement speed was updated to {}", bufferAverageMovementSpeed)
-        NES_TRACE2("threshhold is {}", bufferAverageMovementSpeed * speedDifferenceThresholdFactor)
+        NES_TRACE2("average movement speed was updated to {}", bufferAverageMovementSpeed);
+        NES_TRACE2("threshhold is {}", bufferAverageMovementSpeed * speedDifferenceThresholdFactor);
         return true;
     }
     return false;
@@ -177,7 +177,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::updatePre
 #else
     (void) newPathStart;
     (void) currentLocation;
-    NES_WARNING2("s2 library is needed to update predicted path")
+    NES_WARNING2("s2 library is needed to update predicted path");
     return false;
 #endif
 }
@@ -190,11 +190,11 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCovera
     int vertexIndex = 0;
     auto projectedPoint = path.Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
-    NES_TRACE2("distance from path in meters: {}", S2Earth::ToMeters(distanceAngle))
+    NES_TRACE2("distance from path in meters: {}", S2Earth::ToMeters(distanceAngle));
 
     //if the distance is more than the coverage, it is not possible to cover the line
     if (distanceAngle > coverage) {
-        NES_WARNING2("no coverage possible with this node")
+        NES_WARNING2("no coverage possible with this node");
         return {S2Point(), S1Angle::Degrees(0)};
     }
 
