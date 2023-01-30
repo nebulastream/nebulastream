@@ -198,14 +198,20 @@ bool KafkaSource::connect() {
 
         // Print the assigned partitions on assignment
         consumer->set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-            auto dumpMeAgain = partitions;
-            NES_DEBUG2("Got assigned");//{}", partitions);// TODO convert to string not possible unless changing dependencies?
+            // TODO do we want to keep this way as a work around for missing toString methods for cppkafka:: ?
+            std::stringstream s;
+            s << partitions;
+            std::string partitionsAsString = s.str();
+            NES_DEBUG2("Got assigned {}", partitionsAsString);
         });
 
         // Print the revoked partitions on revocation
         consumer->set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-            auto dumpMeAgain = partitions;
-            NES_DEBUG2("Got revoked");// {}", partitions); // TODO convert to string not possible unless changing dependencies?
+            // TODO do we want to keep this way as a work around for missing toString methods for cppkafka:: ?
+            std::stringstream s;
+            s << partitions;
+            std::string partitionsAsString = s.str();
+            NES_DEBUG2("Got revoked {}", partitionsAsString);
         });
 
         // Subscribe to the topic
