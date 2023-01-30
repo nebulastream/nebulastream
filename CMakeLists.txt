@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v29.9)
+set(VCPKG_BINARY_VERSION v29)
 set(LLVM_BINARY_VERSION v1)
 set(LLVM_VERSION 15)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -430,8 +430,9 @@ if (NES_USE_KAFKA)
                 IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
                 INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
                 )
-        #install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    else()
+        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()
 endif ()
 
