@@ -103,7 +103,7 @@ template<class T>
 ListValue<T>* ListValue<T>::append(T element) const {
     // create result list
     auto resultList = ListValue<T>::create(length() + 1);
-    // TODO append on element to the result list
+    // TODO copy list and append on element to the result list
     return resultList;
 }
 
@@ -111,7 +111,7 @@ template<class T>
 ListValue<T>* ListValue<T>::prepend(T element) const {
     // create result list
     auto resultList = ListValue<T>::create(length() + 1);
-    // TODO prepend on element to the result list
+    // TODO copy list and prepend on element to the result list
     return resultList;
 }
 
