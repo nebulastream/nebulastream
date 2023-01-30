@@ -26,18 +26,42 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
 
   public:
+    /**
+     * @brief creates a PhysicalStreamJoinSinkOperator with a provided operatorId
+     * @param id
+     * @param leftSchema
+     * @param rightSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @return PhysicalStreamJoinSinkOperator
+     */
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& leftSchema,
                                       const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
 
-    static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
-                                     const SchemaPtr& rightSchema,
-                                     const SchemaPtr& outputSchema,
-                                     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
+    /**
+     * @brief creates a PhysicalStreamJoinSinkOperator that retrieves a new operatorId by calling method
+     * @param leftSchema
+     * @param rightSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @return PhysicalStreamJoinSinkOperator
+     */
+    static PhysicalOperatorPtr create(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
 
 
+    /**
+     * @brief Constructor for a PhysicalStreamJoinSinkOperator
+     * @param id
+     * @param leftSchema
+     * @param rightSchema
+     * @param outputSchema
+     * @param operatorHandler
+     */
     PhysicalStreamJoinSinkOperator(OperatorId id,
                                    SchemaPtr leftSchema,
                                    SchemaPtr rightSchema,

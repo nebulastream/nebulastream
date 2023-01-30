@@ -25,15 +25,44 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, public PhysicalUnaryOperator {
   public:
-
+    /**
+     * @brief creates a PhysicalStreamJoinSinkOperator with a provided operatorId
+     * @param id
+     * @param leftSchema
+     * @param rightSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @param buildSide
+     * @param timeStampFieldName
+     * @return PhysicalStreamJoinSinkOperator
+     */
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide, const std::string& timeStampFieldName);
 
+    /**
+     * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
+     * @param leftSchema
+     * @param rightSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @param buildSide
+     * @param timeStampFieldName
+     * @return PhysicalStreamJoinBuildOperator
+     */
     static PhysicalOperatorPtr create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       JoinBuildSideType buildSide, const std::string& timeStampFieldName);
 
+    /**
+     * @brief Constructor for PhysicalStreamJoinBuildOperator
+     * @param id
+     * @param inputSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @param buildSide
+     * @param timeStampFieldName
+     */
     explicit PhysicalStreamJoinBuildOperator(OperatorId id,
                                              SchemaPtr inputSchema,
                                              SchemaPtr outputSchema,
