@@ -73,7 +73,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::getReconnectSc
     bool isIndexUpdated) {
     //if the device location has not changed, there are no new calculations to be made
     if (!locationBuffer.empty() && currentOwnLocation.getLocation() == locationBuffer.back().getLocation()) {
-        NES_DEBUGNES_2("Location has not changed, do not recalculate schedule");
+        NES_DEBUG2("Location has not changed, do not recalculate schedule");
         return std::nullopt;
     }
 
