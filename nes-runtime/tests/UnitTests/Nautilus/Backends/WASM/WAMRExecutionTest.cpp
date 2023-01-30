@@ -93,11 +93,20 @@ TEST_P(WAMRExecutionTest, allocateBufferTest) {
     auto equalsExpression = std::make_shared<Runtime::Execution::Expressions::EqualsExpression>(readF1, readF2);
     auto selectionOperator = std::make_shared<Runtime::Execution::Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
-
+    /*
     auto emitMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Runtime::Execution::Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
-
+    */
+    auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < 100; i++) {
+        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer.setNumberOfTuples(i + 1);
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(testEmitOperator,

@@ -29,7 +29,7 @@ WAMRRuntime::WAMRRuntime() {
 void WAMRRuntime::setup() {
 }
 
-void* allocateBufferProxy(void* workerContextPtr) {
+Runtime::TupleBuffer* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
@@ -94,11 +94,22 @@ uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     return wasmTBPtr;
 }
 
-uintptr_t* native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
-    (void) execEnv;
-    auto* ptr = (void*) pointer;
-    auto* tmp = allocateBufferProxy(ptr);
-    return static_cast<uintptr_t*>(tmp);
+uint32_t native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
+    auto ptr = (void*) pointer;
+    auto tupleBuffer = allocateBufferProxy(ptr);
+    auto buffer = tupleBuffer->getBuffer();
+    // Copy TupleBuffer into WASM linear memory
+    auto wasmTBPtr = wasm_runtime_module_dup_data(moduleInstance, reinterpret_cast<const char*>(tupleBuffer), sizeof(Runtime::TupleBuffer));
+    // Copy buffer into WASM linear memory
+    auto wasmBufferPtr =
+        wasm_runtime_module_dup_data(moduleInstance, reinterpret_cast<const char*>(buffer), tupleBuffer->getBufferSize());
+    // Translate wasm -> native pointer address
+    auto nativeTBPtr = wasm_runtime_addr_app_to_native(moduleInstance, wasmTBPtr);
+    auto nativeBufferPtr = wasm_runtime_addr_app_to_native(moduleInstance, wasmBufferPtr);
+    auto wasmTB = static_cast<Runtime::TupleBuffer*>(nativeTBPtr);
+    wasmTB->setBuffer(static_cast<uint8_t*>(nativeBufferPtr));
+    return wasmBufferPtr;
 }
 
 uintptr_t* NES_Runtime_TupleBuffer_getBuffer(wasm_exec_env_t execEnv, uintptr_t* pointer) {
@@ -139,7 +150,7 @@ uint64_t NES_Runtime_TupleBuffer_getBufferSize(wasm_exec_env_t execEnv, uintptr_
 
 int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     std::cout << "Starting WAMR\n";
-    static NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(native_allocateBufferProxy, "(r)r"),
+    static NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(native_allocateBufferProxy, "(i)r"),
                                            EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
                                            EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
                                            EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
