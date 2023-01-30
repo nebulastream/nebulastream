@@ -57,7 +57,6 @@ int main(int argc, const char* argv[]) {
     auto runner = std::make_shared<BenchmarkRunner>();
     NES::Exceptions::installGlobalErrorListener(runner);
 
-
     if (argc > 3 || argc == 0) {
         std::cerr << "Error: Only --configPath= and --logPath= are allowed as a command line argument!\nExiting now..."
                   << std::endl;
