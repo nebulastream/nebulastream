@@ -38,17 +38,17 @@ class WASMCompilerTest : public testing::Test {
     Nautilus::Backends::WASM::WASMLoweringProvider wasmCompiler;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WASMCompilerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup WASMCompilerTest test class." << std::endl;
+        NES_DEBUG("Setup WASMCompilerTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup WASMCompilerTest test case." << std::endl; }
+    void SetUp() override { NES_DEBUG("Setup WASMCompilerTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down WASMCompilerTest test case." << std::endl; }
+    void TearDown() override { NES_DEBUG("Tear down WASMCompilerTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down WASMCompilerTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_DEBUG("Tear down WASMCompilerTest test class."); }
 };
 
 Value<> int32AddExpression() {
@@ -63,7 +63,7 @@ TEST_F(WASMCompilerTest, addIntFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -79,7 +79,7 @@ TEST_F(WASMCompilerTest, subIntFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -95,7 +95,7 @@ TEST_F(WASMCompilerTest, mulIntFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -111,7 +111,7 @@ TEST_F(WASMCompilerTest, divIntFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -128,7 +128,7 @@ TEST_F(WASMCompilerTest, addInt32ArgsFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -145,7 +145,7 @@ TEST_F(WASMCompilerTest, addInt64ArgsFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -161,7 +161,7 @@ TEST_F(WASMCompilerTest, orBooleanFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -178,7 +178,7 @@ TEST_F(WASMCompilerTest, divFloatFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -194,7 +194,7 @@ TEST_F(WASMCompilerTest, gtInt32FunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -214,7 +214,7 @@ TEST_F(WASMCompilerTest, ifFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -236,7 +236,7 @@ TEST_F(WASMCompilerTest, ifFunction2Test) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -258,7 +258,7 @@ TEST_F(WASMCompilerTest, ifElseFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -280,7 +280,7 @@ TEST_F(WASMCompilerTest, ifElseIfFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     wasmCompiler.lower(ir);
 }
 
@@ -300,7 +300,7 @@ TEST_F(WASMCompilerTest, loopFunctionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();
     wasmCompiler->lower(ir);
 }
@@ -320,7 +320,7 @@ TEST_F(WASMCompilerTest, memRefExpressionTest) {
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto ir = irCreationPhase.apply(executionTrace);
-    std::cout << ir->toString() << std::endl;
+    NES_DEBUG(ir->toString());
     auto wasmCompiler = std::make_unique<Backends::WASM::WASMLoweringProvider>();
     wasmCompiler->lower(ir);
 }
