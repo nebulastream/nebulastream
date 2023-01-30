@@ -237,9 +237,11 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto joinBuildLeft =
-        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(),
+                                          QueryCompilation::JoinBuildSideType::Left);
     auto joinBuildRight =
-        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(),
+                                          QueryCompilation::JoinBuildSideType::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
@@ -289,9 +291,11 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto source3 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
     auto joinBuildLeft =
-        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(),
+                                          QueryCompilation::JoinBuildSideType::Left);
     auto joinBuildRight =
-        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(),
+                                          QueryCompilation::JoinBuildSideType::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
