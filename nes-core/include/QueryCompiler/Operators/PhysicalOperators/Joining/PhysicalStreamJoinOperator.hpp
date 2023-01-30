@@ -25,13 +25,26 @@ namespace NES::QueryCompilation::PhysicalOperators {
  */
 class PhysicalStreamJoinOperator : public AbstractEmitOperator {
   public:
+    /**
+     * @brief Getter for the StreamJoinOperatorHandler
+     * @return StreamJoinOperatorHandler
+     */
     [[nodiscard]] Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr getOperatorHandler() const;
 
+    /**
+     * @brief virtual deconstructor of PhysicalStreamJoinOperator
+     */
     virtual ~PhysicalStreamJoinOperator() noexcept = default;
 
-  protected:
+    /**
+     * @brief Constructor for PhysicalStreamJoinOperator
+     * @param operatorHandler
+     * @param id
+     */
     explicit PhysicalStreamJoinOperator(Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
                                         OperatorId id);
+
+  protected:
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler;
 };
 

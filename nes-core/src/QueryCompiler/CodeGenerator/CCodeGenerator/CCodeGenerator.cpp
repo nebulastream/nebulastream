@@ -3143,7 +3143,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                               PipelineContextPtr context,
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                               QueryCompilation::JoinBuildSideType buildSide) {
-    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << buildSide
+    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << magic_enum::enum_name(buildSide)
                             << " out=" << joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
@@ -3175,7 +3175,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    if (buildSide == QueryCompilation::Left) {
+    if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
         auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration,
                                                             joinDef->getLeftJoinKey()->getStamp(),
                                                             "InputTuple",
