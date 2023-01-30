@@ -166,19 +166,17 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args) {
 
     for (size_t i = 0; i < args.size(); i++) {
         if (auto* value = std::any_cast<int8_t>(&args[i])) {
-            registerFile[code.arguments[i]] = (int64_t) *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<int16_t>(&args[i])) {
-            registerFile[code.arguments[i]] = (int64_t) *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<int32_t>(&args[i])) {
-            registerFile[code.arguments[i]] = (int64_t) *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<int64_t>(&args[i])) {
-            registerFile[code.arguments[i]] = (int64_t) *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<float>(&args[i])) {
-            auto floatReg = reinterpret_cast<float*>(&registerFile[code.arguments[i]]);
-            *floatReg = *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<double>(&args[i])) {
-            auto floatReg = reinterpret_cast<double*>(&registerFile[code.arguments[i]]);
-            *floatReg = *value;
+            writeReg<>(registerFile, code.arguments[i], *value);
         } else if (auto* value = std::any_cast<void*>(&args[i])) {
             auto val = (int64_t) *value;
             registerFile[code.arguments[i]] = val;
