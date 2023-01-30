@@ -23,15 +23,16 @@ namespace NES::Nautilus::Backends::BC {
  */
 class BCInterpreter : public Executable {
   public:
+    /**
+     * Constructor to create a bytecode interpreter.
+     */
     BCInterpreter(Code code, RegisterFile registerFile);
     ~BCInterpreter() override = default;
 
   public:
     void* getInvocableFunctionPtr(const std::string& member) override;
     bool hasInvocableFunctionPtr() override;
-    std::any invokeGeneric(const std::vector<std::any>& arguments);
     std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string& string) override;
-
   private:
     int64_t execute(RegisterFile& regs) const;
     Code code;
