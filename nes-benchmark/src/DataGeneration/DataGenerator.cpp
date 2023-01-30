@@ -43,7 +43,7 @@ NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() { return bufferManager
 DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::Node generatorNode) {
 
     NES_INFO("DataGenerator created from type: " << type)
-    if (type == "Default") {
+    if (type == "Default" || type.empty()) {
         return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
     } else if (type == "Uniform") {
         if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
