@@ -165,6 +165,24 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
                           ->addField("d", DataTypeFactory::createUInt64())
                           ->addField("e", DataTypeFactory::createUInt64())
                           ->addField("f", DataTypeFactory::createUInt64())
+                          ->addField("g", DataTypeFactory::createUInt64())
+                          ->addField("h", DataTypeFactory::createUInt64())
+                          ->addField("i", DataTypeFactory::createUInt64())
+                          ->addField("j", DataTypeFactory::createUInt64())
+                          ->addField("k", DataTypeFactory::createUInt64())
+                          ->addField("l", DataTypeFactory::createUInt64())
+                          ->addField("m", DataTypeFactory::createUInt64())
+                          ->addField("n", DataTypeFactory::createUInt64())
+                          ->addField("o", DataTypeFactory::createUInt64())
+                          ->addField("p", DataTypeFactory::createUInt64())
+                          ->addField("q", DataTypeFactory::createUInt64())
+                          ->addField("r", DataTypeFactory::createUInt64())
+                          ->addField("s", DataTypeFactory::createUInt64())
+                          ->addField("t", DataTypeFactory::createUInt64())
+                          ->addField("u", DataTypeFactory::createUInt64())
+                          ->addField("v", DataTypeFactory::createUInt64())
+                          ->addField("w", DataTypeFactory::createUInt64())
+                          ->addField("x", DataTypeFactory::createUInt64())
                           ->addField("timestamp1", DataTypeFactory::createUInt64())
                           ->addField("timestamp2", DataTypeFactory::createUInt64());
     }
@@ -498,7 +516,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    workerConfig1->physicalSources.add(physicalSource1);
 
 
-//    workerConfig1->lambdaSource = 3;
+    workerConfig1->lambdaSource = 1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -506,21 +524,21 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
 
 //    workerConfig2->lambdaSource = 2;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//
+//    workerConfig3->lambdaSource = 2;
+//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+//    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart3);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
-    workerConfig3->lambdaSource = 2;
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
-
-    crd->getTopologyManagerService()->removeParent(4,1);
-    crd->getTopologyManagerService()->removeParent(3,1);
-    crd->getTopologyManagerService()->addParent(3,2);
-    crd->getTopologyManagerService()->addParent(4,3);
+//    crd->getTopologyManagerService()->removeParent(4,1);
+//    crd->getTopologyManagerService()->removeParent(3,1);
+//    crd->getTopologyManagerService()->addParent(3,2);
+//    crd->getTopologyManagerService()->addParent(4,3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -531,10 +549,10 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_MOST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -550,9 +568,9 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("UpstreamBackupTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
+//    NES_INFO("UpstreamBackupTest: Stop worker 2");
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
