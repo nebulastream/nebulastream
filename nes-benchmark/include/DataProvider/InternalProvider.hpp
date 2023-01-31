@@ -31,9 +31,9 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode, std::vector<Runtime::TupleBuffer> buffers);
     /**
-     * @brief
+     * @brief destructor
      */
-    ~InternalProvider();
+    ~InternalProvider() override;
 
     /**
      * @brief returns a reference to preAllocatedBuffers
