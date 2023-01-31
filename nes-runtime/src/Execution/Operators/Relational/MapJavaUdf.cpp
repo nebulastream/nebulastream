@@ -83,6 +83,7 @@ extern "C" jobject deserializeInstance(void* state) {
     void *object = (void *)handler->getSerializedInstance().data();
     auto clazz = handler->getEnvironment()->FindClass("MapJavaUdfUtils");
     jniErrorCheck(handler->getEnvironment());
+    // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
     auto mid = handler->getEnvironment()->GetMethodID(clazz, "deserialize", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
     jniErrorCheck(handler->getEnvironment());
     auto obj = handler->getEnvironment()->CallStaticObjectMethod(clazz, mid, object);
