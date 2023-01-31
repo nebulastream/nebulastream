@@ -17,12 +17,12 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <vector>
 
 namespace NES {
@@ -63,7 +63,6 @@ class LowerPhysicalToNautilusOperators {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
   private:
-
     /**
      * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist
      * @param operatorHandlers
@@ -71,9 +70,10 @@ class LowerPhysicalToNautilusOperators {
      * @param streamJoinOperatorHandler
      * @return handlerIndex of the streamJoinOperatorHandler
      */
-    uint64_t insertStreamJoinOperatorHandlerIfNeeded(std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                                     OperatorId operatorId,
-                                                     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
+    uint64_t insertStreamJoinOperatorHandlerIfNeeded(
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+        OperatorId operatorId,
+        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,

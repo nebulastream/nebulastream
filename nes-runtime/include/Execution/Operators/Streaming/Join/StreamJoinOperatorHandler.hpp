@@ -18,9 +18,9 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <cstddef>
 #include <list>
 #include <queue>

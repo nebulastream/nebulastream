@@ -36,9 +36,12 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
      * @param timeStampFieldName
      * @return PhysicalStreamJoinSinkOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide, const std::string& timeStampFieldName);
+                                      JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName);
 
     /**
      * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
@@ -50,9 +53,11 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
      * @param timeStampFieldName
      * @return PhysicalStreamJoinBuildOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema,
+    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSideType buildSide, const std::string& timeStampFieldName);
+                                      JoinBuildSideType buildSide,
+                                      const std::string& timeStampFieldName);
 
     /**
      * @brief Constructor for PhysicalStreamJoinBuildOperator
@@ -68,7 +73,7 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
                                              SchemaPtr outputSchema,
                                              Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
                                              JoinBuildSideType buildSide,
-                                             std::string  timeStampFieldName);
+                                             std::string timeStampFieldName);
 
     ~PhysicalStreamJoinBuildOperator() noexcept override = default;
 
@@ -83,9 +88,8 @@ class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, publi
   private:
     std::string timeStampFieldName;
     JoinBuildSideType buildSide;
-
 };
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_PHYSICALSTREAMJOINBUILDOPERATOR_HPP

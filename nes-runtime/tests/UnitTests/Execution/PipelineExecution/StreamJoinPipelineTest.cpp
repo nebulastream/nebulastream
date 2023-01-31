@@ -265,9 +265,13 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
                                                                        timeStampField,
                                                                        rightSchema);
     auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(leftSchema, rightSchema, joinFieldNameLeft,
-                                                                            joinFieldNameRight, numSourcesLeft + numSourcesRight,
-                                                                            windowSize, joinSizeInByte);
+    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(leftSchema,
+                                                                            rightSchema,
+                                                                            joinFieldNameLeft,
+                                                                            joinFieldNameRight,
+                                                                            numSourcesLeft + numSourcesRight,
+                                                                            windowSize,
+                                                                            joinSizeInByte);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);

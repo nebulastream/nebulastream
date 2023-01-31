@@ -23,7 +23,9 @@ namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief This class represents the physical stream join sink operator and gets translated to a StreamJoinSink operator
  */
-class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
+class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator,
+                                       public PhysicalBinaryOperator,
+                                       public AbstractScanOperator {
 
   public:
     /**
@@ -49,10 +51,10 @@ class PhysicalStreamJoinSinkOperator : public PhysicalStreamJoinOperator, public
      * @param operatorHandler
      * @return PhysicalStreamJoinSinkOperator
      */
-    static PhysicalOperatorPtr create(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema,
+    static PhysicalOperatorPtr create(const SchemaPtr& leftSchema,
+                                      const SchemaPtr& rightSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
-
 
     /**
      * @brief Constructor for a PhysicalStreamJoinSinkOperator

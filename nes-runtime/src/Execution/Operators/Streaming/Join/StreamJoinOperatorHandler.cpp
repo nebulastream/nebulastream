@@ -31,8 +31,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
       joinFieldNameRight(joinFieldNameRight), counterFinishedBuildingStart(counterFinishedBuildingStart),
       counterFinishedSinkStart(numPartitions), totalSizeForDataStructures(totalSizeForDataStructures),
-      lastTupleTimeStampLeft(windowSize - 1), lastTupleTimeStampRight(windowSize - 1),
-      windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
+      lastTupleTimeStampLeft(windowSize - 1), lastTupleTimeStampRight(windowSize - 1), windowSize(windowSize), pageSize(pageSize),
+      numPartitions(numPartitions) {
 
     NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
@@ -163,9 +163,15 @@ StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& 
                                                                size_t pageSize,
                                                                size_t numPartitions) {
 
-    return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft, joinSchemaRight, joinFieldNameLeft, joinFieldNameRight,
-                                                       counterFinishedBuildingStart, windowSize, totalSizeForDataStructures,
-                                                       pageSize, numPartitions);
+    return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft,
+                                                       joinSchemaRight,
+                                                       joinFieldNameLeft,
+                                                       joinFieldNameRight,
+                                                       counterFinishedBuildingStart,
+                                                       windowSize,
+                                                       totalSizeForDataStructures,
+                                                       pageSize,
+                                                       numPartitions);
 }
 
 const std::vector<OperatorId>& StreamJoinOperatorHandler::getJoinOperatorsId() const { return joinOperatorsId; }
