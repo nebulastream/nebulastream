@@ -23,7 +23,7 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 
-enum IngestionRateDistribution {
+enum class IngestionRateDistribution : uint8_t {
     UNIFORM,
     SINUS,
     COSINUS,
@@ -31,7 +31,7 @@ enum IngestionRateDistribution {
     M2,
     D1,
     D2,
-    NOT_SUPPORTED
+    UNDEFINED
 };
 
 class IngestionRateGenerator;
@@ -61,12 +61,13 @@ class IngestionRateGenerator {
      */
     static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
+  private:
     /**
      * @brief determines whether the given ingestion rate distribution is supported
      * @param ingestionRateDistribution
      * @return IngestionRateDistribution
      */
-    static IngestionRateDistribution getDistributionFromString(std::string ingestionRateDistribution);
+    static IngestionRateDistribution getDistributionFromString(std::string& ingestionRateDistribution);
 };
 }// namespace NES::Benchmark::IngestionRateGeneration
 
