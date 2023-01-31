@@ -163,9 +163,11 @@ class Topology {
     /**
      * @brief Find all the closest common ancestors for the set of Topology nodes
      * @param topologyNodes: the set of topology nodes
+     * @param strictAncestor: decide if strictly an ancestor is searched (true), or one of the topologyNodes is accepted (false)
      * @return the set of all closest common ancestors
      */
-    std::set<TopologyNodePtr> findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes);
+    std::set<TopologyNodePtr> findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes,
+                                                            bool strictAncestor = true);
 
     /**
      * @brief Find the immediate common child for the set of Topology nodes

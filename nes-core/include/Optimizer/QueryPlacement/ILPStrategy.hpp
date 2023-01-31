@@ -93,7 +93,7 @@ class ILPStrategy : public BasePlacementStrategy {
                          z3::ContextPtr z3Context,
                          PlacementStrategy::ValueAAS placementStrategyAAS);
     /**
-     * @brief assigns operators to topology nodes based on ILP solution
+     * @brief assigns operators to topology nodes based on ILP solution, reduces resources accordingly
      * @param z3Model a Z3 z3Model from the Z3 Optimize
      * @param placementVariables a mapping between concatenation of operator id and placement id and their z3 expression
      */

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Optimizer/QueryPlacement/AdaptiveActiveStandby.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/DumpContext.hpp>
@@ -238,11 +239,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // 8. Pin the operators based on ILP solution.
     pinOperators(z3Model, placementVariables);
 
-    // 9. Perform operator placement.
-    placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+    // 9. Create and place secondary operators
+    executeAdaptiveActiveStandby(pinnedUpStreamOperators, placementStrategyAAS);
 
-    // 10. Create and place backup operators
-    executeAdaptiveActiveStandby(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators, placementStrategyAAS);
+    // 10. Perform operator placement.
+    placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     // 11. Add network source and sink operators.
     addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
@@ -367,6 +368,11 @@ bool ILPStrategy::pinOperators(z3::model& z3Model, std::map<std::string, z3::exp
             //Pin the operator to the location identified by ILP algorithm
             auto logicalOperator = operatorMap[operatorId];
             logicalOperator->addProperty(PINNED_NODE_ID, topologyNodeId);
+
+            auto cost = AdaptiveActiveStandby::getOperatorCost(logicalOperator);
+            NES_DEBUG("ILPStrategy: Reducing node " << topologyNodeId << "'s remaining CPU capacity by " << cost);
+            // Reduce the processing capacity by its cost
+            topology->reduceResources(topologyNodeId, cost);
         }
     }
     return true;

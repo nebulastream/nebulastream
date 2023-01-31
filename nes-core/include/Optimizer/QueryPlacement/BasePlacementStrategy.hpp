@@ -201,9 +201,7 @@ class BasePlacementStrategy {
      */
     std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
 
-    bool executeAdaptiveActiveStandby(QueryId queryId,
-                                      const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+    bool executeAdaptiveActiveStandby(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                       PlacementStrategy::ValueAAS placementStrategyAAS);
 
     GlobalExecutionPlanPtr globalExecutionPlan;

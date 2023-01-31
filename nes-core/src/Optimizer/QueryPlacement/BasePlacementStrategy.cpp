@@ -254,11 +254,12 @@ void BasePlacementStrategy::placePinnedOperators(QueryId queryId,
 //            pinnedNode->reduceResources(1);
 //            topology->reduceResources(pinnedNode->getId(), 1);
 
-            auto cost = AdaptiveActiveStandby::getOperatorCost(pinnedOperator);
-            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by " << cost);
-            // Reduce the processing capacity by its cost
-//            pinnedNode->reduceResources(cost);    // currently pinnedNode is not a copy, no need to reduce resources there
-            topology->reduceResources(pinnedNode->getId(), cost);
+            // reduce resources before calling this function
+//            auto cost = AdaptiveActiveStandby::getOperatorCost(pinnedOperator);
+//            NES_DEBUG("BasePlacementStrategy: Reducing the node remaining CPU capacity by " << cost);
+//            // Reduce the processing capacity by its cost
+////            pinnedNode->reduceResources(cost);    // currently pinnedNode is not a copy, no need to reduce resources there
+//            topology->reduceResources(pinnedNode->getId(), cost);
         }
 
         //3. Check if this operator in the pinned downstream operator list.
@@ -778,9 +779,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
     return candidateQueryPlan;
 }
 
-bool BasePlacementStrategy::executeAdaptiveActiveStandby(QueryId queryId,
-                                                         const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                         const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+bool BasePlacementStrategy::executeAdaptiveActiveStandby(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                          PlacementStrategy::ValueAAS placementStrategyAAS) {
 
     if (placementStrategyAAS == PlacementStrategy::ValueAAS::None)
@@ -789,14 +788,6 @@ bool BasePlacementStrategy::executeAdaptiveActiveStandby(QueryId queryId,
     auto adaptiveActiveStandby = AdaptiveActiveStandby::create(topology, placementStrategyAAS);
 
     auto success = adaptiveActiveStandby->execute(pinnedUpStreamOperators);
-
-    if (success) {
-        // NOTE: may have issues if there are operators (e.g. filters) placed on the sensors.
-        // Reason: If children (e.g. filter) of an already placed operator (source) is also placed on the same node, then the
-        // whole ancestor path is skipped. Should not be hard to fix, but not relevant for this thesis.
-        // Works well if there are no operators on source nodes (other than the sources).
-        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
-    }
 
     return success;
 }

@@ -44,7 +44,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 // unordered map that saves for every operator: the topology node where it is pinned and the score of this placement
 using OperatorToTopologyMap = std::unordered_map<OperatorId, std::pair<TopologyNodeId, double>>;
 // unordered map that saves for every topology node: a vector of all operators pinned on it and its topology specific score
-using TopologyToOperatorMap = std::unordered_map<TopologyNodeId, std::pair<std::vector<OperatorId>, double>>;
+using TopologyToOperatorMap = std::unordered_map<TopologyNodeId, std::pair<std::set<OperatorId>, double>>;
 
 // pair< pair< vector<what to move from current node>, current node>, pair < vector<what to move from target node>, target node> >
 using LocalSearchStep = std::pair<
@@ -217,7 +217,8 @@ class AdaptiveActiveStandby {
     std::map<TopologyNodeId, double> getCandidatePlacementsGreedy(const OperatorNodePtr& primaryOperator);
 
     /**
-     * Pin a secondary operator to a topology node by adding the correct values to both candidate placement maps.
+     * Pin a secondary operator to a topology node by adding the correct values to both candidate placement maps. Checks if the
+     * operator was pinned to a different node before, unpins it from that node in that case.
      * @param secondaryOperatorId: id of secondary operator to pin
      * @param topologyNodeId: id of topology node where secondary operator is to be pinned
      */
@@ -246,23 +247,30 @@ class AdaptiveActiveStandby {
 
     /**
      * Replicates an operator by copying its properties. The replica has a different ID, and the children and parents are also
-     * replicas of the corresponding operators, or are the primaries if those cannot be replicated (e.g. on source or sink nodes)
+     * replicas of the corresponding operators, or are the primaries if those cannot be replicated (e.g. on source or sink nodes).
      * @param primaryOperator: operator to replicate
      * @return pointer to replica
      */
     OperatorNodePtr createReplica(const OperatorNodePtr& primaryOperator);
 
     /**
-     * Evaluate the placement of a single secondary operator on a specific topology node.
+     * Evaluates the placement of a single secondary operator on a specific topology node by evaluating all the links to its
+     * parents and children.
      * @param secondaryOperator: secondary operator that is to be evaluated
      * @param topologyNode: the topology node where placement should be evaluated
-     * @param update: boolean parameter with a false default value. Decides if the previous placement score should be overwritten
-     * in the candidate map. Should only be set to true if topologyNodeId is the same as the current candidate placement of the
-     * secondary operator.
      * @return score of placing the secondary operator on the target topology node
      */
-    double evaluateSinglePlacement(const OperatorNodePtr& secondaryOperator, const TopologyNodePtr& topologyNode,
-                                   bool update = false);
+    double evaluateSinglePlacement(const OperatorNodePtr& secondaryOperator, const TopologyNodePtr& topologyNode);
+
+    /**
+     * Evaluates the placement of a single secondary operator on its current topology node by evaluating all the links to its
+     * parents and children. For the final evaluation, every link between replicas is counted twice, therefore these scores are
+     * halved for each replica. The connections to primary operators (e.g. sources, sinks) are only counted once.
+     * Also updates the corresponding score in the candidateOperatorToTopologyMap.
+     * @param secondaryOperator: secondary operator that is to be evaluated
+     * @return score of the placement of the secondary operator on its current node
+     */
+    double evaluateSinglePlacement(const OperatorNodePtr& secondaryOperator);
 
     /**
      * Get all topology nodes where a vector of primary operators are placed
@@ -335,7 +343,7 @@ class AdaptiveActiveStandby {
     int calculateAvailableResources(const TopologyNodePtr& topologyNode);
 
     /**
-     * Assigns operators to topology nodes based on the best candidate
+     * Assigns operators to topology nodes based on the best candidate, reduces resources accordingly
      * @return true if successful
      */
     bool pinOperators();

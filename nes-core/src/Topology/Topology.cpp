@@ -508,7 +508,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
     return nullptr;
 }
 
-std::set<TopologyNodePtr> Topology::findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes) {
+std::set<TopologyNodePtr> Topology::findAllClosestCommonAncestors(std::vector<TopologyNodePtr> topologyNodes, bool strictAncestor) {
     NES_DEBUG("Topology: find all closest common ancestors for a set of topology nodes.");
     // closest: parents of common ancestors not included
 
@@ -539,6 +539,8 @@ std::set<TopologyNodePtr> Topology::findAllClosestCommonAncestors(std::vector<To
         NES_TRACE(
             "Topology: Check if the children topology nodes of the node under consideration contains all input topology nodes.");
         std::vector<NodePtr> children = candidateNode->getAndFlattenAllChildren(false);
+        if (!strictAncestor)
+            children.push_back(candidateNode);
         for (auto& nodeToLook : topologyNodes) {
             auto found = std::find_if(children.begin(), children.end(), [&](const NodePtr& child) {
                 return nodeToLook->getId() == child->as<TopologyNode>()->getId();
