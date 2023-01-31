@@ -197,13 +197,17 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto handlerIndex = operatorHandlers.size() - 1;
 
         auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
-        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft() : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
-        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft() : buildOperator->getOperatorHandler()->getJoinSchemaRight();
+        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
+                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
+        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
+                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
 
-        auto joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex, isLeftSide,
-                                                                                                  joinFieldName,
-                                                                                                  buildOperator->getTimeStampFieldName(),
-                                                                                                  joinSchema);
+        auto joinBuildNautilus =
+            std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex,
+                                                                             isLeftSide,
+                                                                             joinFieldName,
+                                                                             buildOperator->getTimeStampFieldName(),
+                                                                             joinSchema);
 
         parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
         return joinBuildNautilus;

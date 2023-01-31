@@ -146,6 +146,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
 };
 
-} // namespace NES::QueryCompilation
+}// namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

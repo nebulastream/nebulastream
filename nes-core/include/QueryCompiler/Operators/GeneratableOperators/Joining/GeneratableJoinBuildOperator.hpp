@@ -31,8 +31,9 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
      * @param buildSide indicator if this is the left or right build side.
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler,
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Join::JoinOperatorHandlerPtr operatorHandler,
                                          JoinBuildSideType buildSide);
 
     /**

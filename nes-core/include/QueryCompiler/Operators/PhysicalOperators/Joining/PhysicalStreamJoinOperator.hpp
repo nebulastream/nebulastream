@@ -48,6 +48,6 @@ class PhysicalStreamJoinOperator : public AbstractEmitOperator {
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler;
 };
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_PHYSICALSTREAMJOINOPERATOR_HPP

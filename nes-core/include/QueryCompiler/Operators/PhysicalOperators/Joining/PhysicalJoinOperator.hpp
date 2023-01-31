@@ -31,5 +31,5 @@ class PhysicalJoinOperator {
 
     Join::JoinOperatorHandlerPtr operatorHandler;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_

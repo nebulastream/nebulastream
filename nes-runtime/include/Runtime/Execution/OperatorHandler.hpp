@@ -73,10 +73,11 @@ class OperatorHandler : public Reconfigurable {
         if (instanceOf<OperatorHandlerType>()) {
             return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
         }
-        NES_THROW_RUNTIME_ERROR("OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
+        NES_THROW_RUNTIME_ERROR("OperatorHandler:: we performed an invalid cast of operator to type "
+                                + std::string(typeid(OperatorHandlerType).name()));
     }
 };
 
-} // namespace NES::Runtime::Execution
+}// namespace NES::Runtime::Execution
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

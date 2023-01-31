@@ -200,8 +200,10 @@ bool checkIfBufferFoundAndRemove(std::vector<Runtime::TupleBuffer>& emittedBuffe
 
     for (auto tupleBufferIt = emittedBuffers.begin(); tupleBufferIt != emittedBuffers.end(); ++tupleBufferIt) {
         NES_TRACE("Comparing versus " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema));
-        if (memcmp(tupleBufferIt->getBuffer(), expectedBuffer.getBuffer(),
-                   joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples()) == 0) {
+        if (memcmp(tupleBufferIt->getBuffer(),
+                   expectedBuffer.getBuffer(),
+                   joinSchema->getSchemaSizeInBytes() * expectedBuffer.getNumberOfTuples())
+            == 0) {
             NES_TRACE("Removing buffer #" << removedBuffer << " " << Util::printTupleBufferAsCSV(*tupleBufferIt, joinSchema)
                                           << " of size " << joinSchema->getSchemaSizeInBytes());
             emittedBuffers.erase(tupleBufferIt);
@@ -227,16 +229,16 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
     auto workerContext = std::make_shared<WorkerContext>(/*workerId*/ 0,
                                                          streamJoinSinkHelper.bufferManager,
                                                          streamJoinSinkHelper.numberOfBuffersPerWorker);
-    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(streamJoinSinkHelper.leftSchema,
-                                                                            streamJoinSinkHelper.rightSchema,
-                                                                            streamJoinSinkHelper.joinFieldNameLeft,
-                                                                            streamJoinSinkHelper.joinFieldNameRight,
-                                                                            streamJoinSinkHelper.numSourcesLeft
-                                                                                + streamJoinSinkHelper.numSourcesRight,
-                                                                            streamJoinSinkHelper.windowSize,
-                                                                            streamJoinSinkHelper.joinSizeInByte,
-                                                                            streamJoinSinkHelper.pageSize,
-                                                                            streamJoinSinkHelper.numPartitions);
+    auto streamJoinOpHandler =
+        Operators::StreamJoinOperatorHandler::create(streamJoinSinkHelper.leftSchema,
+                                                     streamJoinSinkHelper.rightSchema,
+                                                     streamJoinSinkHelper.joinFieldNameLeft,
+                                                     streamJoinSinkHelper.joinFieldNameRight,
+                                                     streamJoinSinkHelper.numSourcesLeft + streamJoinSinkHelper.numSourcesRight,
+                                                     streamJoinSinkHelper.windowSize,
+                                                     streamJoinSinkHelper.joinSizeInByte,
+                                                     streamJoinSinkHelper.pageSize,
+                                                     streamJoinSinkHelper.numPartitions);
 
     auto streamJoinOperatorTest = streamJoinSinkHelper.streamJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
@@ -270,7 +272,6 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
 
     streamJoinBuildLeft->setup(executionContext);
     streamJoinBuildRight->setup(executionContext);
-
 
     std::vector<std::vector<Nautilus::Record>> leftRecords;
     std::vector<std::vector<Nautilus::Record>> rightRecords;
@@ -400,8 +401,8 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                                                                            streamJoinSinkHelper.timeStampField,
                                                                            streamJoinSinkHelper.bufferManager);
 
-                        bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema,
-                                                                       removedBuffer);
+                        bool foundBuffer =
+                            checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
 
                         if (!foundBuffer) {
                             NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema)
@@ -422,8 +423,7 @@ bool streamJoinSinkAndCheck(StreamJoinSinkHelper streamJoinSinkHelper) {
                                                                joinSchema,
                                                                streamJoinSinkHelper.timeStampField,
                                                                streamJoinSinkHelper.bufferManager);
-            bool foundBuffer =
-                checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
+            bool foundBuffer = checkIfBufferFoundAndRemove(sortedEmittedBuffers, sortedBuffer[0], joinSchema, removedBuffer);
             if (!foundBuffer) {
                 NES_ERROR("Could not find buffer " << Util::printTupleBufferAsCSV(buffer, joinSchema) << " in emittedBuffers!");
                 return false;

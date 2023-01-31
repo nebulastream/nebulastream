@@ -146,7 +146,8 @@ size_t executeJoinForBuckets(PipelineExecutionContext* pipelineCtx,
                         memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd, lhsKeyPtr, sizeOfKey);
                         memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + sizeOfKey, lhsRecordPtr, leftSchemaSize);
                         memcpy(bufferPtr + sizeOfWindowStart + sizeOfWindowEnd + sizeOfKey + leftSchemaSize,
-                               rhsRecordPtr, rightSchemaSize);
+                               rhsRecordPtr,
+                               rightSchemaSize);
 
                         numberOfTuplesInBuffer += 1;
                         currentTupleBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
@@ -198,13 +199,23 @@ void performJoin(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCtx, v
     size_t joinedTuples = 0;
     if (leftBucketSize && rightBucketSize) {
         if (leftBucketSize > rightBucketSize) {
-            joinedTuples =
-                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(rightBucket), std::move(leftBucket),
-                                      currentWindow, windowStart, windowEnd);
+            joinedTuples = executeJoinForBuckets(pipelineCtx,
+                                                 workerCtx,
+                                                 opHandler,
+                                                 std::move(rightBucket),
+                                                 std::move(leftBucket),
+                                                 currentWindow,
+                                                 windowStart,
+                                                 windowEnd);
         } else {
-            joinedTuples =
-                executeJoinForBuckets(pipelineCtx, workerCtx, opHandler, std::move(leftBucket), std::move(rightBucket),
-                                      currentWindow, windowStart, windowEnd);
+            joinedTuples = executeJoinForBuckets(pipelineCtx,
+                                                 workerCtx,
+                                                 opHandler,
+                                                 std::move(leftBucket),
+                                                 std::move(rightBucket),
+                                                 currentWindow,
+                                                 windowStart,
+                                                 windowEnd);
         }
     }
 

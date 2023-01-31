@@ -16,15 +16,14 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalStreamJoinSinkOperator::PhysicalStreamJoinSinkOperator(OperatorId id,
-                                                               SchemaPtr leftSchema,
-                                                               SchemaPtr rightSchema,
-                                                               SchemaPtr outputSchema,
-                                                               Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler)
+PhysicalStreamJoinSinkOperator::PhysicalStreamJoinSinkOperator(
+    OperatorId id,
+    SchemaPtr leftSchema,
+    SchemaPtr rightSchema,
+    SchemaPtr outputSchema,
+    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalStreamJoinOperator(std::move(operatorHandler), id),
-      PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)) {
-}
-
+      PhysicalBinaryOperator(id, std::move(leftSchema), std::move(rightSchema), std::move(outputSchema)) {}
 
 std::string PhysicalStreamJoinSinkOperator::toString() const { return "PhysicalStreamJoinSinkOperator"; }
 
@@ -32,14 +31,16 @@ OperatorNodePtr PhysicalStreamJoinSinkOperator::copy() {
     return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler);
 }
 
-PhysicalOperatorPtr PhysicalStreamJoinSinkOperator::create(const SchemaPtr& leftSchema,
-                                                           const SchemaPtr& rightSchema,
-                                                           const SchemaPtr& outputSchema,
-                                                           const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler) {
+PhysicalOperatorPtr
+PhysicalStreamJoinSinkOperator::create(const SchemaPtr& leftSchema,
+                                       const SchemaPtr& rightSchema,
+                                       const SchemaPtr& outputSchema,
+                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler) {
     return create(Util::getNextOperatorId(), leftSchema, rightSchema, outputSchema, operatorHandler);
 }
 
-PhysicalOperatorPtr PhysicalStreamJoinSinkOperator::create(OperatorId id,
+PhysicalOperatorPtr
+PhysicalStreamJoinSinkOperator::create(OperatorId id,
                                        const SchemaPtr& leftSchema,
                                        const SchemaPtr& rightSchema,
                                        const SchemaPtr& outputSchema,
