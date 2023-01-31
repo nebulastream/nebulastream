@@ -167,6 +167,7 @@ void RestServer::run() {
         std::unique_lock lock(mutex);
         return !stopRequested;
     });
+    connectionHandler->stop();
 }
 
 }// namespace NES

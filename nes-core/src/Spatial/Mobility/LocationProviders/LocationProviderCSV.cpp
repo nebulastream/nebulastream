@@ -20,6 +20,7 @@
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
 #include <iostream>
+#include <Exceptions/LocationProviderException.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -50,14 +51,17 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
         std::vector<std::string> values;
         try {
             values = NES::Util::splitWithStringDelimiter<std::string>(csvLine, delimiter);
-        } catch (std::exception e) {
-            NES_THROW_RUNTIME_ERROR(
-                "LocationProviderCSV: An error occurred while splitting delimiter of waypoint CSV. ERROR: " << strerror(errno));
+        } catch (std::exception &e) {
+            std::string errorString = std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ") + strerror(errno);
+            NES_ERROR("LocationProviderCSV:  " << errorString);
+            throw Spatial::Exception::LocationProviderException(errorString);
         }
         if (values.size() != 3) {
-            NES_THROW_RUNTIME_ERROR(
-                "LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has "
-                << values.size() << " columns");
+            std::string errorString =
+                std::string("LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has ") +
+                std::to_string(values.size()) + std::string(" columns");
+            NES_ERROR("LocationProviderCSV:  " << errorString);
+            throw Spatial::Exception::LocationProviderException(errorString);
         }
         latitudeString = values[0];
         longitudeString = values[1];
@@ -70,9 +74,10 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             time = std::stoul(timeString);
             latitude = std::stod(latitudeString);
             longitude = std::stod(longitudeString);
-        } catch (std::exception e) {
-            NES_THROW_RUNTIME_ERROR(
-                "LocationProviderCSV: An error occurred while creating the waypoint. ERROR: " << strerror(errno));
+        } catch (std::exception &e) {
+            std::string errorString = std::string("An error occurred while creating the waypoint. ERROR: ") + strerror(errno);
+            NES_ERROR("LocationProviderCSV:  " << errorString);
+            throw Spatial::Exception::LocationProviderException(errorString);
         }
         NES_TRACE("Read from csv: " << latitudeString << ", " << longitudeString << ", " << time);
 
@@ -87,7 +92,9 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             waypoints.push_back(waypoint);
     }
     if (waypoints.empty()) {
-        NES_THROW_RUNTIME_ERROR("No data in CSV, cannot start location provider");
+        std::string errorString = std::string("No data in CSV, cannot start location provider");
+        NES_ERROR("LocationProviderCSV:  " << errorString);
+        throw Spatial::Exception::LocationProviderException(errorString);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
     NES_DEBUG("first timestamp is " << waypoints.front().getTimestamp().value() << ", last timestamp is "
