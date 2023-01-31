@@ -928,10 +928,9 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
 }
 
 /**
- * @brief read mobile device path waypoints from csv
- * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
- * @param startTime the real or simulated start time of the LocationProvider
- * @return a vector of waypoints with timestamps calculated by adding startTime to the offset obtained from csv
+ * @brief write mobile device path waypoints to a csv file to use as input for the LocationProviderCSV class
+ * @param csvPath path to the output file
+ * @param waypoints a vector of waypoints to be written to the file
  */
 void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints) {
     remove(csvPath.c_str());
