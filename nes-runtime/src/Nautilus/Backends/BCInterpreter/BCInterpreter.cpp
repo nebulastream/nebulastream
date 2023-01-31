@@ -211,7 +211,7 @@ int64_t BCInterpreter::execute(RegisterFile& regs) const {
             OpTable[(int16_t) c.op](c, regs);
         }
         // handle terminator
-        if (const auto* res = std::get_if<JumpOp>(&currentBlock->terminatorOp)) {
+        if (const auto* res = std::get_if<BranchOp>(&currentBlock->terminatorOp)) {
             currentBlock = &code.blocks[res->nextBlock];
         } else if (const auto* res = std::get_if<ConditionalJumpOp>(&currentBlock->terminatorOp)) {
             if (readReg<bool>(regs, res->conditionalReg)) {

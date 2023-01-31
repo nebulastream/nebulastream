@@ -22,7 +22,10 @@
 
 namespace NES::Nautilus::Backends::BC {
 
-
+/**
+ * @brief This defines the central register file for the byte-code interpreter.
+ * In the current version we only support 256 registers at max.
+ */
 using RegisterFile = std::array<int64_t, 256>;
 
 /**
@@ -159,9 +162,9 @@ enum class ByteCode : short {
 
 enum class Type : uint8_t { v, i8, i16, i32, i64, ui8, ui16, ui32, ui64, d, f, b, ptr };
 
-struct OpCode;
-typedef void Operation(const OpCode&, RegisterFile& regs);
-
+/**
+ * @brief Defines a function call target, that contains all information's necessary to call a function
+ */
 class FunctionCallTarget {
   public:
     FunctionCallTarget(std::vector<std::pair<short, Type>> arguments, void* functionPtr);
@@ -169,12 +172,18 @@ class FunctionCallTarget {
     void* functionPtr;
 };
 
+/**
+ * @brief The general definition of opcode, that contains a bytecode, at max two input registers and a result register.
+ */
 struct OpCode {
     ByteCode op;
     short reg1;
     short reg2;
     short output;
 };
+
+typedef void Operation(const OpCode&, RegisterFile& regs);
+
 
 template<class RegisterType>
 auto inline readReg(RegisterFile& regs, short reg) {
@@ -251,7 +260,7 @@ void call(const OpCode& c, RegisterFile& regs) {
     }
 }
 /**
- * @brief Defines an addition in the bytecode interpreter
+ * @brief Defines an and in the bytecode interpreter
  * @tparam RegisterType
  * @param c
  * @param regs
@@ -263,6 +272,12 @@ void andOp(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l && r);
 }
 
+/**
+ * @brief Defines an or in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void orOp(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -270,6 +285,12 @@ void orOp(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l || r);
 }
 
+/**
+ * @brief Defines an add in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void add(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -277,13 +298,25 @@ void add(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l + r);
 }
 
-template<class RegisterType>
+/**
+ * @brief Defines an sub in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
+ template<class RegisterType>
 void sub(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l - r);
 }
 
+/**
+ * @brief Defines an mul in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void mul(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -291,6 +324,12 @@ void mul(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l * r);
 }
 
+/**
+ * @brief Defines a div in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void div(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -298,6 +337,12 @@ void div(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l / r);
 }
 
+/**
+ * @brief Defines an equals in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void equals(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -305,6 +350,13 @@ void equals(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l == r);
 }
 
+
+/**
+ * @brief Defines an less than in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void lessThan(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -312,6 +364,12 @@ void lessThan(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l < r);
 }
 
+/**
+ * @brief Defines an greater than in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void greaterThan(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
@@ -319,6 +377,12 @@ void greaterThan(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, l > r);
 }
 
+/**
+ * @brief Defines an load in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void load(const OpCode& c, RegisterFile& regs) {
     auto address = readReg<int64_t>(regs, c.reg1);
@@ -326,6 +390,12 @@ void load(const OpCode& c, RegisterFile& regs) {
     writeReg(regs, c.output, *ptr);
 }
 
+/**
+ * @brief Defines an store in the bytecode interpreter
+ * @tparam RegisterType
+ * @param c
+ * @param regs
+ */
 template<class RegisterType>
 void store(const OpCode& c, RegisterFile& regs) {
     auto address = readReg<int64_t>(regs, c.reg1);
@@ -333,16 +403,25 @@ void store(const OpCode& c, RegisterFile& regs) {
     *reinterpret_cast<RegisterType*>(address) = value;
 }
 
-struct JumpOp {
+/**
+ * @brief Defines a final branch terminator operation
+ */
+struct BranchOp {
     short nextBlock;
 };
 
+/**
+ * @brief Defines a condition jump
+ */
 struct ConditionalJumpOp {
     short conditionalReg;
     short trueBlock;
     short falseBlock;
 };
 
+/**
+ * @brief Defines a return
+ */
 struct ReturnOp {
     short resultReg;
 };
@@ -351,7 +430,7 @@ class CodeBlock {
   public:
     CodeBlock() = default;
     std::vector<OpCode> code = std::vector<OpCode>();
-    std::variant<JumpOp, ConditionalJumpOp, ReturnOp> terminatorOp = ReturnOp{0};
+    std::variant<BranchOp, ConditionalJumpOp, ReturnOp> terminatorOp = ReturnOp{0};
 };
 
 class Code {
