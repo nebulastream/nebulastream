@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.4.36](https://github.com/nebulastream/nebulastream/tree/v0.4.36) (2023-01-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.35...v0.4.36)
+
+#### Runtime 
+
+- \[Feature\] Integrate StreamJoin into Nautilus and the QueryPlan [\#3339](https://github.com/nebulastream/nebulastream/issues/3339)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Call CPython.wasm via Host-Function [\#3334](https://github.com/nebulastream/nebulastream/issues/3334)
+- Update documentation of REST API [\#2961](https://github.com/nebulastream/nebulastream/issues/2961)
+- Complete Oatpp testing: Comparing Content of response [\#2960](https://github.com/nebulastream/nebulastream/issues/2960)
+
 ## [v0.4.35](https://github.com/nebulastream/nebulastream/tree/v0.4.35) (2023-01-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.34...v0.4.35)
