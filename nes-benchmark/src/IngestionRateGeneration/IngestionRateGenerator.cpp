@@ -20,31 +20,32 @@
 namespace NES::Benchmark::IngestionRateGeneration {
 
 IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
-    auto ingestionRateDistribution = getDistributionFromString(configOverAllRuns.ingestionRateDistribution->getValue());
+    auto ingestionRateDistributionStr = configOverAllRuns.ingestionRateDistribution->getValue();
+    auto ingestionRateDistribution = getDistributionFromString(ingestionRateDistributionStr);
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
     auto ingestionRateCnt = configOverAllRuns.ingestionRateCnt->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
 
-    if (ingestionRateDistribution == UNIFORM) {
+    if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM) {
         return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCnt);
-    } else if (ingestionRateDistribution == SINUS || ingestionRateDistribution == COSINUS) {
+    } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
         return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCnt, numberOfPeriods);
-    } else if ( ingestionRateDistribution == M1 || ingestionRateDistribution == M2 ||
-                ingestionRateDistribution == D1 || ingestionRateDistribution == D2) {
+    } else if (ingestionRateDistribution == IngestionRateDistribution::M1 || ingestionRateDistribution == IngestionRateDistribution::M2 ||
+               ingestionRateDistribution == IngestionRateDistribution::D1 || ingestionRateDistribution == IngestionRateDistribution::D2) {
         return std::make_unique<MDIngestionRateGenerator>(ingestionRateDistribution, ingestionRateCnt);
     } else {
-        NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported. Could not create IngestionRateGenerator");
+        NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
     }
 }
 
-IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string ingestionRateDistribution) {
-    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform") return UNIFORM;
-    else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus") return SINUS;
-    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus" || ingestionRateDistribution == "cosinus") return COSINUS;
-    else if (ingestionRateDistribution == "M1" || ingestionRateDistribution == "m1") return M1;
-    else if (ingestionRateDistribution == "M2" || ingestionRateDistribution == "m2") return M2;
-    else if (ingestionRateDistribution == "D1" || ingestionRateDistribution == "d1") return D1;
-    else if (ingestionRateDistribution == "D2" || ingestionRateDistribution == "d2") return D2;
-    else NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
+IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string& ingestionRateDistribution) {
+    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform") return IngestionRateDistribution::UNIFORM;
+    else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus") return IngestionRateDistribution::SINUS;
+    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus" || ingestionRateDistribution == "cosinus") return IngestionRateDistribution::COSINUS;
+    else if (ingestionRateDistribution == "M1" || ingestionRateDistribution == "m1") return IngestionRateDistribution::M1;
+    else if (ingestionRateDistribution == "M2" || ingestionRateDistribution == "m2") return IngestionRateDistribution::M2;
+    else if (ingestionRateDistribution == "D1" || ingestionRateDistribution == "d1") return IngestionRateDistribution::D1;
+    else if (ingestionRateDistribution == "D2" || ingestionRateDistribution == "d2") return IngestionRateDistribution::D2;
+    else return IngestionRateDistribution::UNDEFINED;
 }
 }// namespace NES::Benchmark::IngestionRateGeneration
