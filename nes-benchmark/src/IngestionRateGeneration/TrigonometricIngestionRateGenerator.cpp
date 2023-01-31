@@ -24,10 +24,10 @@ TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(Ingesti
 
 std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestionRates() {
     for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
-        if (ingestionRateDistribution == SINUS) {
+        if (ingestionRateDistribution == IngestionRateDistribution::SINUS) {
             uint64_t curIngestionRate = round(getSinValue(i) * ingestionRateInBuffers);
             predefinedIngestionRates.push_back(curIngestionRate);
-        } else if (ingestionRateDistribution == COSINUS) {
+        } else if (ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
             uint64_t curIngestionRate = round(getCosValue(i) * ingestionRateInBuffers);
             predefinedIngestionRates.push_back(curIngestionRate);
         }
