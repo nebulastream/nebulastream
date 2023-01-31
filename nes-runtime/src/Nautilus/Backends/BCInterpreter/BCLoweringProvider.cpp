@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "Nautilus/IR/Types/AddressStamp.hpp"
-#include "Nautilus/IR/Types/FloatStamp.hpp"
-#include "Nautilus/IR/Types/IntegerStamp.hpp"
+#include <Nautilus/IR/Types/AddressStamp.hpp>
+#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <utility>
 
@@ -134,18 +134,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     auto type = addOpt->getStamp();
     ByteCode bc;
     switch (getType(type)) {
-        case i8: bc = ByteCode::ADD_i8; break;
-        case i16: bc = ByteCode::ADD_i16; break;
-        case i32: bc = ByteCode::ADD_i32; break;
-        case i64: bc = ByteCode::ADD_i64; break;
-        case ui8: bc = ByteCode::ADD_ui8; break;
-        case ui16: bc = ByteCode::ADD_ui16; break;
-        case ui32: bc = ByteCode::ADD_ui32; break;
-        case ui64: bc = ByteCode::ADD_ui64; break;
-        case d: bc = ByteCode::ADD_i8; break;
-        case f: bc = ByteCode::ADD_d; break;
-        case ptr: bc = ByteCode::ADD_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::ADD_i8; break;
+        case Type::i16: bc = ByteCode::ADD_i16; break;
+        case Type::i32: bc = ByteCode::ADD_i32; break;
+        case Type::i64: bc = ByteCode::ADD_i64; break;
+        case Type::ui8: bc = ByteCode::ADD_ui8; break;
+        case Type::ui16: bc = ByteCode::ADD_ui16; break;
+        case Type::ui32: bc = ByteCode::ADD_ui32; break;
+        case Type::ui64: bc = ByteCode::ADD_ui64; break;
+        case Type::d: bc = ByteCode::ADD_i8; break;
+        case Type::f: bc = ByteCode::ADD_d; break;
+        case Type::ptr: bc = ByteCode::ADD_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -162,18 +162,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     frame.setValue(subOpt->getIdentifier(), resultReg);
     ByteCode bc;
     switch (getType(subOpt->getStamp())) {
-        case i8: bc = ByteCode::SUB_i8; break;
-        case i16: bc = ByteCode::SUB_i16; break;
-        case i32: bc = ByteCode::SUB_i32; break;
-        case i64: bc = ByteCode::SUB_i64; break;
-        case ui8: bc = ByteCode::SUB_ui8; break;
-        case ui16: bc = ByteCode::SUB_ui16; break;
-        case ui32: bc = ByteCode::SUB_ui32; break;
-        case ui64: bc = ByteCode::SUB_ui64; break;
-        case d: bc = ByteCode::SUB_i8; break;
-        case f: bc = ByteCode::SUB_d; break;
-        case ptr: bc = ByteCode::SUB_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::SUB_i8; break;
+        case Type::i16: bc = ByteCode::SUB_i16; break;
+        case Type::i32: bc = ByteCode::SUB_i32; break;
+        case Type::i64: bc = ByteCode::SUB_i64; break;
+        case Type::ui8: bc = ByteCode::SUB_ui8; break;
+        case Type::ui16: bc = ByteCode::SUB_ui16; break;
+        case Type::ui32: bc = ByteCode::SUB_ui32; break;
+        case Type::ui64: bc = ByteCode::SUB_ui64; break;
+        case Type::d: bc = ByteCode::SUB_i8; break;
+        case Type::f: bc = ByteCode::SUB_d; break;
+        case Type::ptr: bc = ByteCode::SUB_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -191,18 +191,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
 
     ByteCode bc;
     switch (getType(mulOpt->getStamp())) {
-        case i8: bc = ByteCode::MUL_i8; break;
-        case i16: bc = ByteCode::MUL_i16; break;
-        case i32: bc = ByteCode::MUL_i32; break;
-        case i64: bc = ByteCode::MUL_i64; break;
-        case ui8: bc = ByteCode::MUL_ui8; break;
-        case ui16: bc = ByteCode::MUL_ui16; break;
-        case ui32: bc = ByteCode::MUL_ui32; break;
-        case ui64: bc = ByteCode::MUL_ui64; break;
-        case d: bc = ByteCode::MUL_i8; break;
-        case f: bc = ByteCode::MUL_d; break;
-        case ptr: bc = ByteCode::MUL_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::MUL_i8; break;
+        case Type::i16: bc = ByteCode::MUL_i16; break;
+        case Type::i32: bc = ByteCode::MUL_i32; break;
+        case Type::i64: bc = ByteCode::MUL_i64; break;
+        case Type::ui8: bc = ByteCode::MUL_ui8; break;
+        case Type::ui16: bc = ByteCode::MUL_ui16; break;
+        case Type::ui32: bc = ByteCode::MUL_ui32; break;
+        case Type::ui64: bc = ByteCode::MUL_ui64; break;
+        case Type::d: bc = ByteCode::MUL_i8; break;
+        case Type::f: bc = ByteCode::MUL_d; break;
+        case Type::ptr: bc = ByteCode::MUL_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -219,18 +219,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     frame.setValue(divOp->getIdentifier(), resultReg);
     ByteCode bc;
     switch (getType(divOp->getStamp())) {
-        case i8: bc = ByteCode::DIV_i8; break;
-        case i16: bc = ByteCode::DIV_i16; break;
-        case i32: bc = ByteCode::DIV_i32; break;
-        case i64: bc = ByteCode::DIV_i64; break;
-        case ui8: bc = ByteCode::DIV_ui8; break;
-        case ui16: bc = ByteCode::DIV_ui16; break;
-        case ui32: bc = ByteCode::DIV_ui32; break;
-        case ui64: bc = ByteCode::DIV_ui64; break;
-        case d: bc = ByteCode::DIV_i8; break;
-        case f: bc = ByteCode::DIV_d; break;
-        case ptr: bc = ByteCode::DIV_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::DIV_i8; break;
+        case Type::i16: bc = ByteCode::DIV_i16; break;
+        case Type::i32: bc = ByteCode::DIV_i32; break;
+        case Type::i64: bc = ByteCode::DIV_i64; break;
+        case Type::ui8: bc = ByteCode::DIV_ui8; break;
+        case Type::ui16: bc = ByteCode::DIV_ui16; break;
+        case Type::ui32: bc = ByteCode::DIV_ui32; break;
+        case Type::ui64: bc = ByteCode::DIV_ui64; break;
+        case Type::d: bc = ByteCode::DIV_i8; break;
+        case Type::f: bc = ByteCode::DIV_d; break;
+        case Type::ptr: bc = ByteCode::DIV_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -250,18 +250,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
-            case i8: bc = ByteCode::EQ_i8; break;
-            case i16: bc = ByteCode::EQ_i16; break;
-            case i32: bc = ByteCode::EQ_i32; break;
-            case i64: bc = ByteCode::EQ_i64; break;
-            case ui8: bc = ByteCode::EQ_ui8; break;
-            case ui16: bc = ByteCode::EQ_ui16; break;
-            case ui32: bc = ByteCode::EQ_ui32; break;
-            case ui64: bc = ByteCode::EQ_ui64; break;
-            case d: bc = ByteCode::EQ_i8; break;
-            case f: bc = ByteCode::EQ_d; break;
-            case ptr: bc = ByteCode::EQ_i64; break;
-            default:{
+            case Type::i8: bc = ByteCode::EQ_i8; break;
+            case Type::i16: bc = ByteCode::EQ_i16; break;
+            case Type::i32: bc = ByteCode::EQ_i32; break;
+            case Type::i64: bc = ByteCode::EQ_i64; break;
+            case Type::ui8: bc = ByteCode::EQ_ui8; break;
+            case Type::ui16: bc = ByteCode::EQ_ui16; break;
+            case Type::ui32: bc = ByteCode::EQ_ui32; break;
+            case Type::ui64: bc = ByteCode::EQ_ui64; break;
+            case Type::d: bc = ByteCode::EQ_i8; break;
+            case Type::f: bc = ByteCode::EQ_d; break;
+            case Type::ptr: bc = ByteCode::EQ_i64; break;
+            default: {
                 NES_NOT_IMPLEMENTED();
             }
         }
@@ -271,18 +271,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         auto type = cmpOp->getLeftInput()->getStamp();
         ByteCode bc;
         switch (getType(type)) {
-            case i8: bc = ByteCode::LESS_THAN_i8; break;
-            case i16: bc = ByteCode::LESS_THAN_i16; break;
-            case i32: bc = ByteCode::LESS_THAN_i32; break;
-            case i64: bc = ByteCode::LESS_THAN_i64; break;
-            case ui8: bc = ByteCode::LESS_THAN_ui8; break;
-            case ui16: bc = ByteCode::LESS_THAN_ui16; break;
-            case ui32: bc = ByteCode::LESS_THAN_ui32; break;
-            case ui64: bc = ByteCode::LESS_THAN_ui64; break;
-            case d: bc = ByteCode::LESS_THAN_i8; break;
-            case f: bc = ByteCode::LESS_THAN_d; break;
-            case ptr: bc = ByteCode::LESS_THAN_i64; break;
-            default:{
+            case Type::i8: bc = ByteCode::LESS_THAN_i8; break;
+            case Type::i16: bc = ByteCode::LESS_THAN_i16; break;
+            case Type::i32: bc = ByteCode::LESS_THAN_i32; break;
+            case Type::i64: bc = ByteCode::LESS_THAN_i64; break;
+            case Type::ui8: bc = ByteCode::LESS_THAN_ui8; break;
+            case Type::ui16: bc = ByteCode::LESS_THAN_ui16; break;
+            case Type::ui32: bc = ByteCode::LESS_THAN_ui32; break;
+            case Type::ui64: bc = ByteCode::LESS_THAN_ui64; break;
+            case Type::d: bc = ByteCode::LESS_THAN_i8; break;
+            case Type::f: bc = ByteCode::LESS_THAN_d; break;
+            case Type::ptr: bc = ByteCode::LESS_THAN_i64; break;
+            default: {
                 NES_NOT_IMPLEMENTED();
             }
         }
@@ -292,18 +292,18 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
         ByteCode bc;
         auto type = cmpOp->getLeftInput()->getStamp();
         switch (getType(type)) {
-            case i8: bc = ByteCode::GREATER_THAN_i8; break;
-            case i16: bc = ByteCode::GREATER_THAN_i16; break;
-            case i32: bc = ByteCode::GREATER_THAN_i32; break;
-            case i64: bc = ByteCode::GREATER_THAN_i64; break;
-            case ui8: bc = ByteCode::GREATER_THAN_ui8; break;
-            case ui16: bc = ByteCode::GREATER_THAN_ui16; break;
-            case ui32: bc = ByteCode::GREATER_THAN_ui32; break;
-            case ui64: bc = ByteCode::GREATER_THAN_ui64; break;
-            case d: bc = ByteCode::GREATER_THAN_i8; break;
-            case f: bc = ByteCode::GREATER_THAN_d; break;
-            case ptr: bc = ByteCode::GREATER_THAN_i64; break;
-            default:{
+            case Type::i8: bc = ByteCode::GREATER_THAN_i8; break;
+            case Type::i16: bc = ByteCode::GREATER_THAN_i16; break;
+            case Type::i32: bc = ByteCode::GREATER_THAN_i32; break;
+            case Type::i64: bc = ByteCode::GREATER_THAN_i64; break;
+            case Type::ui8: bc = ByteCode::GREATER_THAN_ui8; break;
+            case Type::ui16: bc = ByteCode::GREATER_THAN_ui16; break;
+            case Type::ui32: bc = ByteCode::GREATER_THAN_ui32; break;
+            case Type::ui64: bc = ByteCode::GREATER_THAN_ui64; break;
+            case Type::d: bc = ByteCode::GREATER_THAN_i8; break;
+            case Type::f: bc = ByteCode::GREATER_THAN_d; break;
+            case Type::ptr: bc = ByteCode::GREATER_THAN_i64; break;
+            default: {
                 NES_NOT_IMPLEMENTED();
             }
         }
@@ -323,22 +323,22 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     auto type = loadOp->getStamp();
     ByteCode bc;
     switch (getType(type)) {
-        case i8: bc = ByteCode::LOAD_i8; break;
-        case i16: bc = ByteCode::LOAD_i16; break;
-        case i32: bc = ByteCode::LOAD_i32; break;
-        case i64: bc = ByteCode::LOAD_i64; break;
-        case ui8: bc = ByteCode::LOAD_ui8; break;
-        case ui16: bc = ByteCode::LOAD_ui16; break;
-        case ui32: bc = ByteCode::LOAD_ui32; break;
-        case ui64: bc = ByteCode::LOAD_ui64; break;
-        case d: bc = ByteCode::LOAD_i8; break;
-        case f: bc = ByteCode::LOAD_d; break;
-        case ptr: bc = ByteCode::LOAD_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::LOAD_i8; break;
+        case Type::i16: bc = ByteCode::LOAD_i16; break;
+        case Type::i32: bc = ByteCode::LOAD_i32; break;
+        case Type::i64: bc = ByteCode::LOAD_i64; break;
+        case Type::ui8: bc = ByteCode::LOAD_ui8; break;
+        case Type::ui16: bc = ByteCode::LOAD_ui16; break;
+        case Type::ui32: bc = ByteCode::LOAD_ui32; break;
+        case Type::ui64: bc = ByteCode::LOAD_ui64; break;
+        case Type::d: bc = ByteCode::LOAD_i8; break;
+        case Type::f: bc = ByteCode::LOAD_d; break;
+        case Type::ptr: bc = ByteCode::LOAD_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
     }
-    
+
     OpCode oc = {bc, address, -1, resultReg};
     program.blocks[block].code.emplace_back(oc);
 }
@@ -351,21 +351,21 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
     auto type = storeOp->getValue()->getStamp();
     ByteCode bc;
     switch (getType(type)) {
-        case i8: bc = ByteCode::STORE_i8; break;
-        case i16: bc = ByteCode::STORE_i16; break;
-        case i32: bc = ByteCode::STORE_i32; break;
-        case i64: bc = ByteCode::STORE_i64; break;
-        case ui8: bc = ByteCode::STORE_ui8; break;
-        case ui16: bc = ByteCode::STORE_ui16; break;
-        case ui32: bc = ByteCode::STORE_ui32; break;
-        case ui64: bc = ByteCode::STORE_ui64; break;
-        case d: bc = ByteCode::STORE_i8; break;
-        case f: bc = ByteCode::STORE_d; break;
-        case ptr: bc = ByteCode::STORE_i64; break;
-        default:{
+        case Type::i8: bc = ByteCode::STORE_i8; break;
+        case Type::i16: bc = ByteCode::STORE_i16; break;
+        case Type::i32: bc = ByteCode::STORE_i32; break;
+        case Type::i64: bc = ByteCode::STORE_i64; break;
+        case Type::ui8: bc = ByteCode::STORE_ui8; break;
+        case Type::ui16: bc = ByteCode::STORE_ui16; break;
+        case Type::ui32: bc = ByteCode::STORE_ui32; break;
+        case Type::ui64: bc = ByteCode::STORE_ui64; break;
+        case Type::d: bc = ByteCode::STORE_i8; break;
+        case Type::f: bc = ByteCode::STORE_d; break;
+        case Type::ptr: bc = ByteCode::STORE_i64; break;
+        default: {
             NES_NOT_IMPLEMENTED();
         }
-    }    
+    }
     OpCode oc = {bc, addressReg, valueReg, -1};
     program.blocks[block].code.emplace_back(oc);
 }
@@ -410,7 +410,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
                                                   RegisterFrame& frame) {
     process(branchOp->getNextBlockInvocation(), block, frame);
     auto blockIndex = process(branchOp->getNextBlockInvocation().getBlock(), frame);
-    program.blocks[block].terminatorOp = JumpOp{blockIndex};
+    program.blocks[block].terminatorOp = BranchOp{blockIndex};
 }
 
 void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Operations::Operation>& opt,
@@ -471,7 +471,7 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
             if (returnOpt->hasReturnValue()) {
                 auto returnFOp = frame.getValue(returnOpt->getReturnValue()->getIdentifier());
                 program.blocks[block].terminatorOp = ReturnOp{returnFOp};
-                program.returnType = getType( returnOpt->getReturnValue()->getStamp());
+                program.returnType = getType(returnOpt->getReturnValue()->getStamp());
                 return;
             } else {
                 program.blocks[block].terminatorOp = ReturnOp{-1};
