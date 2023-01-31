@@ -21,8 +21,11 @@
 namespace NES::Benchmark::DataProvision {
 
 // TODO add support for workingTimeDelta, currently set to 10ms, it should be possible to set to e.g. 20ms
-auto constexpr workingTimeDelta = 10;
+auto constexpr workingTimeDelta = 10;       // in milliseconds
 
+/**
+ * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
+ */
 class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
   public:
     /**
@@ -39,6 +42,11 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
                      IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator);
 
     /**
+     * @brief destructor
+     */
+    ~ExternalProvider() override;
+
+    /**
      * @brief overrides the start function and generates the data
      */
     void start() override;
@@ -48,10 +56,23 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void stop() override;
 
+    /**
+     * @brief overrides readNextBuffer by providing the next buffer to be added to NES
+     * @param sourceId
+     * @return
+     */
     std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
 
+    /**
+     * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
+     * @param buffer
+     */
     void recyclePooledBuffer(Runtime::detail::MemorySegment *buffer) override;
 
+    /**
+     * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
+     * @param buffer
+     */
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment *buffer) override;
 
 private:

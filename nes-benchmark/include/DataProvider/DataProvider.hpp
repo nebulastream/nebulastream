@@ -28,6 +28,9 @@ namespace NES::Benchmark::DataProvision {
 class DataProvider;
 using DataProviderPtr = std::shared_ptr<DataProvider>;
 
+/**
+ * @brief This class enables support for different types of ingestion methods: either as quickly as possible or dynamically predefined.
+ */
 class DataProvider {
   public:
     enum class DataProviderMode : uint8_t { ZERO_COPY, MEM_COPY };
