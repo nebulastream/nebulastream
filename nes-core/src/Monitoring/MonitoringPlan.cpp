@@ -67,17 +67,17 @@ uint64_t MonitoringPlan::getSampleRate(MetricType metric) {
 
 std::list<uint64_t> MonitoringPlan::getCores() { return cpuCores; }
 
-MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetrics) {
+MonitoringPlanPtr MonitoringPlan::setSchemaJson(nlohmann::json& configuredMetrics) {
     std::map <MetricType, std::pair<SchemaPtr, uint64_t>> configuredMonitoringPlan;
     SchemaPtr schema;
-    web::json::value attributesArray;
+    nlohmann::json attributesArray;
     std::list<std::string> attributesList;
     uint64_t sampleRate = 1000;
     std::list<uint64_t> cores {};
     std::pair<MetricType, std::pair<SchemaPtr, uint64_t>> tempPair;
     if (configuredMetrics["cpu"].is_object()) {
         if (configuredMetrics["cpu"]["sampleRate"].is_number()) {
-            sampleRate = configuredMetrics["cpu"]["sampleRate"].as_integer();
+            sampleRate = configuredMetrics["cpu"]["sampleRate"];
         } else {
             sampleRate = 1000;
         }
@@ -89,7 +89,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
         configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["disk"].is_object()) {
         if (configuredMetrics["disk"]["sampleRate"].is_number()) {
-            sampleRate = configuredMetrics["disk"]["sampleRate"].as_integer();
+            sampleRate = configuredMetrics["disk"]["sampleRate"];
         } else {
             sampleRate = 1000;
         }
@@ -98,7 +98,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
         configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["memory"].is_object()) {
         if (configuredMetrics["memory"]["sampleRate"].is_number()) {
-            sampleRate = configuredMetrics["memory"]["sampleRate"].as_integer();
+            sampleRate = configuredMetrics["memory"]["sampleRate"];
         } else {
             sampleRate = 1000;
         }
@@ -107,7 +107,7 @@ MonitoringPlanPtr MonitoringPlan::setSchemaJson(web::json::value& configuredMetr
         configuredMonitoringPlan.insert(tempPair);
     } if (configuredMetrics["network"].is_object()) {
         if (configuredMetrics["network"]["sampleRate"].is_number()) {
-            sampleRate = configuredMetrics["network"]["sampleRate"].as_integer();
+            sampleRate = configuredMetrics["network"]["sampleRate"];
 
         } else {
             sampleRate = 1000;
@@ -126,17 +126,7 @@ std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
 
 bool MonitoringPlan::hasMetric(MetricType metric) const {
     return monitoringPlan.contains(metric);
-//    std::string metricStr = NES::Monitoring::toString(metric);
-//    for (auto metricType : monitoringPlan) {
-//        std::string metricTypeStr = NES::Monitoring::toString(metricType.first);
-//        if (metricTypeStr ==  metricStr) {
-//            return true;
-//        }
-//    }
-//    return false;
 }
-
-bool MonitoringPlan::hasMetric(MetricType metric) const { return metricTypes.contains(metric); }
 
 std::string MonitoringPlan::toString() const {
     std::stringstream output;

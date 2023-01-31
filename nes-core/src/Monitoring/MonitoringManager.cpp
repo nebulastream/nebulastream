@@ -211,17 +211,17 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {        //für jeden Collector wird ein Logicalstream
+bool MonitoringManager::registerLogicalMonitoringStreamsDefault(const Configurations::CoordinatorConfigurationPtr config) {
     if (enableMonitoring) {
-        for (auto collectorType : monitoringCollectors) {   //Collectoren erzeugen die Logicalstreams;
+        for (auto collectorType : monitoringCollectors) {
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
             std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_default";
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
-            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));             //hier wird der Logicalstream erzeugt
-        }                                                                                                                //feste Schema, jeder MetricCollector hat ein festes Schema
+            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
+        }
         return true;
     }
     NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");

@@ -70,13 +70,6 @@ class MemoryMetrics {
      */
     uint64_t getValue(const std::string& metricName) const;
 
-//    /**
-//     * @brief Returns the schema of the class with a given prefix.
-//     * @param prefix
-//     * @return the schema
-//     */
-//    static SchemaPtr getSchema(const std::string& prefix = "");
-
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
      * @param buf the tuple buffer

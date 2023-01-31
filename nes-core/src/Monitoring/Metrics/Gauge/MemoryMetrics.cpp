@@ -235,8 +235,6 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     }
 }
 
-SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
-
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
     return nodeId == rhs.nodeId && TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
         && SHARED_RAM == rhs.SHARED_RAM && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP

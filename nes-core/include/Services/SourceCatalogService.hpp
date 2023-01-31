@@ -49,13 +49,6 @@ class SourceCatalogService {
     bool logicalSourceLookUp(const std::string& logicalSourceName);
 
     /**
-     * @brief Checks of a logical source name exist at the catalog
-     * @param logicalSourceName
-     * @return True, if logical source exits
-     */
-    bool logicalSourceLookUp(const std::string& logicalSourceName);
-
-    /**
      * @brief method to register a physical source
      * @param topologyNode : the topology node
      * @param logicalSourceName: logical source name

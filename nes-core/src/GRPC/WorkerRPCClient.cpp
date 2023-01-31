@@ -316,28 +316,28 @@ bool WorkerRPCClient::stopQueryAsync(const std::string& address,
     return true;
 }
 
-//bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
-//    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
-//
-//    MonitoringRegistrationRequest request;
-//    for (auto metric : plan->getMetricTypes()) {
-//        request.mutable_metrictypes()->Add(metric);
-//    }
-//    ClientContext context;
-//    MonitoringRegistrationReply reply;
-//
-//    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-//    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-//    Status status = workerStub->RegisterMonitoringPlan(&context, request, &reply);
-//
-//    if (status.ok()) {
-//        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-//        return true;
-//    }
-//    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-//                            + status.error_message());
-//    return false;
-//}
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
+    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+
+    MonitoringRegistrationRequest request;
+    for (auto metric : plan->getMetricTypes()) {
+        request.mutable_metrictypes()->Add(metric);
+    }
+    ClientContext context;
+    MonitoringRegistrationReply reply;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->RegisterMonitoringPlan(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        return true;
+    }
+    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
+                            + status.error_message());
+    return false;
+}
 
 std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);

@@ -269,6 +269,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5);
 
+
 /**
  * @brief create a monitoring data sink
  * @param metricStore
@@ -281,7 +282,6 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
-                                 Monitoring::MonitoringManagerPtr monitoringManager,
                                  Monitoring::MetricCollectorType collectorType,
                                  const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,

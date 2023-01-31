@@ -106,8 +106,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: logical source and schema registration reply
      * @return success
      */
-    Status RegisterLogicalSourceNEW(ServerContext* context, const RegisterLogicalSourceNEWRequest* request,
-                                    RegisterLogicalSourceNEWReply* reply) override;
+    Status RegisterLogicalSourceV2(ServerContext* context, const RegisterLogicalSourceV2Request* request,
+                                    RegisterLogicalSourceV2Reply* reply) override;
 
     /**
      * @brief RPC Call to register a node

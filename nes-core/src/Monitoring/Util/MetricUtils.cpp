@@ -193,9 +193,9 @@ std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPt
     return logicalSourceName;
 }
 
-web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawConfigString) {
+nlohmann::json MetricUtils::parseMonitoringConfigStringToJson(std::string rawConfigString) {
     // init json to save everything
-    web::json::value monitoringConfigurationJson;
+    nlohmann::json monitoringConfigurationJson;
     // argument for splitting the string
     std::string delimiter(" - ");
 
@@ -226,10 +226,10 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
 
     std::string metricType;
     std::string attributes;
-    std::vector<web::json::value> vectorAttributes;
+    std::vector<std::string> vectorAttributes;
     std::string sampleRate;
     std::string cores;
-    std::vector<web::json::value> vectorCores;
+    std::vector<uint64_t> vectorCores;
     std::list<std::string>::iterator j;
     // split the metric configuration strings and parse them to json
     for (i = tokenList.begin(); i != tokenList.end(); ++i) {
@@ -260,13 +260,13 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
                 while ((pos = cores.find(delimiter)) != std::string::npos) {
                     token = cores.substr(0, pos);
                     cores.erase(0, pos + delimiter.length());
-                    vectorCores.push_back(web::json::value::number(std::stoi(token)));
+                    vectorCores.emplace_back(stoi(token));
                 }
             } else {
-                vectorCores.push_back(web::json::value::number(std::stoi(cores)));
+                vectorCores.emplace_back(stoi(cores));
             }
-            vectorCores.push_back(web::json::value::number(std::stoi(cores)));
-            monitoringConfigurationJson[metricType]["cores"] = web::json::value::array(vectorCores);
+            vectorCores.emplace_back(stoi(cores));
+            monitoringConfigurationJson[metricType]["cores"] = vectorCores;
             vectorCores.clear();
         }
 
@@ -278,9 +278,9 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
             pos = i->find(delimiter);
             sampleRate = i->substr(0, pos);
 
-            monitoringConfigurationJson[metricType]["sampleRate"] = web::json::value::number(std::stoi(sampleRate));
+            monitoringConfigurationJson[metricType]["sampleRate"] = std::stoi(sampleRate);
         } else {
-            monitoringConfigurationJson[metricType]["sampleRate"] = web::json::value::number(1000);
+            monitoringConfigurationJson[metricType]["sampleRate"] = 1000;
         }
 
         // parse attribute string to list of strings
@@ -289,36 +289,36 @@ web::json::value MetricUtils::parseMonitoringConfigStringToJson(std::string rawC
             while ((pos = attributes.find(delimiter)) != std::string::npos) {
                 token = attributes.substr(0, pos);
                 attributes.erase(0, pos + delimiter.length());
-                vectorAttributes.push_back(web::json::value::string(token));
+                vectorAttributes.push_back(token);
             }
         } else {
-            vectorAttributes.push_back(web::json::value::string(attributes));
+            vectorAttributes.emplace_back(attributes);
         }
-        vectorAttributes.push_back(web::json::value::string(attributes));
-        monitoringConfigurationJson[metricType]["attributes"] = web::json::value::array(vectorAttributes);
+        vectorAttributes.push_back(attributes);
+        monitoringConfigurationJson[metricType]["attributes"] = vectorAttributes;
         vectorAttributes.clear();
     }
 
     return monitoringConfigurationJson;
 }
 
-std::list<std::string> MetricUtils:: jsonArrayToList(web::json::value jsonAttributes) {
+std::list<std::string> MetricUtils:: jsonArrayToList(nlohmann::json jsonAttributes) {
     std::list<std::string> attributesList;
     int i;
     auto arrayLength = jsonAttributes.size();
     for (i = 0; i < static_cast<int>(arrayLength); i++) {
-        attributesList.push_front(jsonAttributes[i].as_string());
+        attributesList.push_front(jsonAttributes[i]);
     }
 
     return attributesList;
 }
 
-std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(web::json::value jsonAttributes) {
+std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(nlohmann::json jsonAttributes) {
     std::list<uint64_t> coresList;
     int i;
     auto arrayLength = jsonAttributes.size();
     for (i = 0; i < static_cast<int>(arrayLength); i++) {
-        coresList.push_front(jsonAttributes[i].as_integer());
+        coresList.push_front(jsonAttributes[i]);
     }
 
     return coresList;

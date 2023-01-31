@@ -66,101 +66,6 @@ Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << registrationRequest);
     uint64_t workerId = topologyManagerService->registerWorker(address, grpcPort, dataPort, slots, workerProperties);
 
-Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
-
-    std::map <Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlanMap;
-    std::pair<SchemaPtr, uint64_t> pairTemp;
-    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
-    SchemaPtr schema;
-    Monitoring::MetricType metricType;
-    std::list<uint64_t> coreList;
-    for (const auto& monitoringPlanPart : request->monitoringplanpart()) {
-        metricType = Monitoring::parse(monitoringPlanPart.metrictype());
-        schema = Schema::parse(monitoringPlanPart.schema());
-        pairTemp = std::make_pair(schema, monitoringPlanPart.samplerate());
-        monitoringPlanMap[metricType] = pairTemp;
-    }
-    for (const auto& coreNum : request->coreslist()) {
-        coreList.push_back(coreNum.corenum());
-    }
-    Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::create(monitoringPlanMap, coreList);
-    bool success = monitoringManager->registerMonitoringPlans(request->id(), monitoringPlan);
-    if (!success) {
-        NES_ERROR("CoordinatorRPCServer::RegisterMonitoringPlan failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-    }
-    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan Succeed");
-    reply->set_success(true);
-    return Status::OK;
-}
-
-Status CoordinatorRPCServer::RegisterLogicalSourceName(ServerContext*, const RegisterLogicalSourceNameRequest* request, RegisterLogicalSourceNameReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: request =" << request);
-
-    bool success = monitoringManager->insertLogicalSource(request->logicalsourcename());
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource successfully inserted");
-        reply->set_success(true);
-        return Status::OK;
-    }
-    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource already in set");
-    reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: request =" << request);
-
-    bool success = sourceCatalogService->logicalSourceLookUp(request->logicalsourcename());
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does already exist");
-        reply->set_success(true);
-        return Status::OK;
-    }
-    NES_INFO("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does not exist yet");
-    reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const RegisterLogicalSourceNEWRequest* request
-                                                      , RegisterLogicalSourceNEWReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: request =" << request);
-
-    SchemaPtr schema = Schema::parse(request->logicalsourceschema());
-    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), schema);
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource successfully registered");
-        reply->set_success(true);
-        return Status::OK;
-    }
-    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource NOT successfully registered");
-    reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
-    uint64_t id;
-    if (request->has_coordinates()) {
-        NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-        id = topologyManagerService->registerNode(
-            request->address(),
-            request->grpcport(),
-            request->dataport(),
-            request->numberofslots(),
-            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-            NES::Spatial::Index::Experimental::Location(request->coordinates()));
-    } else {
-        /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
-        of geographical location */
-        id = topologyManagerService->registerNode(
-            request->address(),
-            request->grpcport(),
-            request->dataport(),
-            request->numberofslots(),
-            NES::Spatial::Util::NodeTypeUtilities::protobufEnumToNodeType(request->spatialtype()),
-            NES::Spatial::Index::Experimental::Location());
     NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation(registrationRequest->waypoint().geolocation().lat(),
                                                                    registrationRequest->waypoint().geolocation().lng());
 
@@ -186,6 +91,27 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     return Status::CANCELLED;
 }
 
+Status
+CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
+
+    bool success = topologyManagerService->removeGeoLocation(request->workerid());
+    if (success) {
+        if (!topologyManagerService->unregisterNode(request->workerid())) {
+            NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
+            reply->set_success(false);
+            return Status::CANCELLED;
+        }
+        monitoringManager->removeMonitoringNode(request->workerid());
+        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
 Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
 
@@ -244,8 +170,8 @@ Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSo
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const RegisterLogicalSourceNEWRequest* request
-                                                      , RegisterLogicalSourceNEWReply* reply) {
+Status CoordinatorRPCServer::RegisterLogicalSourceV2(ServerContext*, const RegisterLogicalSourceV2Request* request
+                                                      , RegisterLogicalSourceV2Reply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: request =" << request);
 
     SchemaPtr schema = Schema::parse(request->logicalsourceschema());
@@ -256,27 +182,6 @@ Status CoordinatorRPCServer::RegisterLogicalSourceNEW(ServerContext*, const Regi
         return Status::OK;
     }
     NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource NOT successfully registered");
-    reply->set_success(false);
-    return Status::CANCELLED;
-}
-
-Status
-CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
-
-    bool success = topologyManagerService->removeGeoLocation(request->workerid());
-    if (success) {
-        if (!topologyManagerService->unregisterNode(request->workerid())) {
-            NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
-            reply->set_success(false);
-            return Status::CANCELLED;
-        }
-        monitoringManager->removeMonitoringNode(request->workerid());
-        NES_DEBUG("CoordinatorRPCServer::UnregisterNode: Worker successfully removed");
-        reply->set_success(true);
-        return Status::OK;
-    }
-    NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
@@ -454,8 +359,8 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>> inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->geolocation()),
+    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> inRange =
+        topologyManagerService->getNodesIdsInRange(NES::Spatial::DataTypes::Experimental::GeoLocation(request->geolocation()),
                                                    request->radius());
 
     for (auto elem : inRange) {

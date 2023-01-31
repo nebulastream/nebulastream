@@ -49,11 +49,7 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
-
 #include <utility>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/MonitoringCatalog.hpp>
-
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -67,7 +63,7 @@ namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore,
                      Monitoring::MonitoringManagerPtr monitoringManager)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), workerId(INVALID_TOPOLOGY_NODE_ID),
       metricStore(metricStore), parentId(workerConfig->parentId),
       mobilityConfig(std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>(
           workerConfig->mobilityConfiguration)), monitoringManager(monitoringManager) {
@@ -156,12 +152,12 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                       workerConfig->enableMonitoring);
             NES_DEBUG("NesWorker: Starting Worker with default monitoring config");
         } else if (workerConfig->enableMonitoring) {
-            web::json::value configurationMonitoringJson =
+            nlohmann::json configurationMonitoringJson =
                 Monitoring::MetricUtils::parseMonitoringConfigStringToJson(workerConfig->monitoringConfiguration.getValue());
 
             Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::setSchemaJson(configurationMonitoringJson);
             Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlan);
-            std::vector<uint64_t> nodeIdVector {topologyNodeId};
+            std::vector<uint64_t> nodeIdVector {workerId};
 
             monitoringAgent = Monitoring::MonitoringAgent::create(monitoringPlan, monitoringCatalog,
                                                       workerConfig->enableMonitoring);
@@ -437,7 +433,7 @@ void NesWorker::registerLogicalSources(const vector<PhysicalSourcePtr>& physical
             }
             Monitoring::MetricType metricType = Monitoring::MetricUtils::metricTypeFromSourceName(logicalSourceName);
             SchemaPtr schema = monitoringAgent->getMonitoringPlan()->getSchema(metricType);
-            success = coordinatorRpcClient->registerLogicalSourceNEW(logicalSourceName, schema);
+            success = coordinatorRpcClient->registerLogicalSourceV2(logicalSourceName, schema);
         }
     }
 }

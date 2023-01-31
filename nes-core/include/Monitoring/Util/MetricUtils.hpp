@@ -136,19 +136,19 @@ class MetricUtils {
      * @brief Creates a json object according to the configuration of the monitoring
      * @param rawConfigString: the string of the monitoring configuration
      */
-    static web::json::value parseMonitoringConfigStringToJson(std::string rawConfigString);
+    static nlohmann::json parseMonitoringConfigStringToJson(std::string rawConfigString);
 
     /**
      * @brief Parses a json object to a list of strings
      * @param jsonAttributes
      */
-    static std::list<std::string> jsonArrayToList(web::json::value jsonAttributes);
+    static std::list<std::string> jsonArrayToList(nlohmann::json jsonAttributes);
 
     /**
      * @brief Parses a json object to a list of integer
      * @param jsonAttributes
      */
-    static std::list<uint64_t> jsonArrayToIntegerList(web::json::value jsonAttributes);
+    static std::list<uint64_t> jsonArrayToIntegerList(nlohmann::json jsonAttributes);
 
     /**
      * @brief Creates a metric pointer for a given metric collector type and schema

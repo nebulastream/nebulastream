@@ -54,20 +54,6 @@ class MonitoringCatalog {
     [[nodiscard]] bool hasMetric(MetricType metric) const;
 
     /**
-     * @brief Creates a monitoring catalog for a given monitoring plan
-     * @param monitoringPlan
-     * @return Ptr to the monitoring catalog
-     */
-    static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
-
-    /**
-     * @brief Checkes if a catalog has a metric type
-     * @param metric
-     * @return True, if metric type exists in catalog
-     */
-    [[nodiscard]] bool hasMetric(MetricType metric) const;
-
-    /**
      * Creates a MonitoringCatalog with a pre-initialized map that contains basic MetricTypes and their collectors.
      * @return the catalog
      */

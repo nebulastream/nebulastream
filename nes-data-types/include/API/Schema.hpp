@@ -54,18 +54,6 @@ class Schema {
     [[nodiscard]] std::string toStringForLogicalSourceName() const;
 
     /**
-     * @brief Parse a string that represents a schema to a schema pointer
-     * @param schemaString
-     * @return Schema pointer that represents the schema string
-     */
-    static SchemaPtr parse(std::string schemaString);
-
-    /**
-     * @brief Creates a string that represents the schema and is used for naming logical sources for the monitoring.
-     */
-    [[nodiscard]] std::string toStringForLogicalSourceName() const;
-
-    /**
      * @brief Schema qualifier separator
      */
     constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";

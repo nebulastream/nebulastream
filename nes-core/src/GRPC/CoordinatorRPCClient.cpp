@@ -299,24 +299,24 @@ bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourc
         });
 }
 
-bool CoordinatorRPCClient::registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema) {
-    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW workerId=" << workerId);
+bool CoordinatorRPCClient::registerLogicalSourceV2(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema) {
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceV2 workerId=" << workerId);
 
     std::string logicalSourceSchemaString = logicalSourceSchema->toString();
 
-    RegisterLogicalSourceNEWRequest request;
+    RegisterLogicalSourceV2Request request;
     request.set_id(workerId);
     request.set_logicalsourcename(logicalSourceName);
     request.set_logicalsourceschema(logicalSourceSchemaString);
 
-    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceNEW request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::registerLogicalSourceV2 request=" << request.DebugString());
 
-    return detail::processGenericRpc<bool, RegisterLogicalSourceNEWRequest, RegisterLogicalSourceNEWReply>(
+    return detail::processGenericRpc<bool, RegisterLogicalSourceV2Request, RegisterLogicalSourceV2Reply>(
         request,
         rpcRetryAttemps,
         rpcBackoff,
-        [this](ClientContext* context, const RegisterLogicalSourceNEWRequest& request, RegisterLogicalSourceNEWReply* reply) {
-            return coordinatorStub->RegisterLogicalSourceNEW(context, request, reply);
+        [this](ClientContext* context, const RegisterLogicalSourceV2Request& request, RegisterLogicalSourceV2Reply* reply) {
+            return coordinatorStub->RegisterLogicalSourceV2(context, request, reply);
         });
 }
 

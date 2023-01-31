@@ -28,7 +28,7 @@ service CoordinatorRPCService {
       returns (RegisterLogicalSourceNameReply) {}
 
   // Register logicalSource at SourceCatalog
-  rpc RegisterLogicalSourceNEW (RegisterLogicalSourceNEWRequest) returns (RegisterLogicalSourceNEWReply) {}
+  rpc RegisterLogicalSourceV2 (RegisterLogicalSourceV2Request) returns (RegisterLogicalSourceV2Reply) {}
 
   // Sends a registration request for new worker to the coordinator
   rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerReply) {}
@@ -119,13 +119,13 @@ message RegisterLogicalSourceNameReply {
   bool success = 1;
 }
 
-message RegisterLogicalSourceNEWRequest {
+message RegisterLogicalSourceV2Request {
   uint64 id = 1;
   string logicalSourceName = 2;
   string logicalSourceSchema = 3;
 }
 
-message RegisterLogicalSourceNEWReply {
+message RegisterLogicalSourceV2Reply {
   bool success = 1;
 }
 

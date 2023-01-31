@@ -88,36 +88,7 @@ class CoordinatorRPCClient {
      * @param logicalSourceSchema
      * @return bool indicating success
      */
-    bool registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
-
-    /**
-     * @brief Register the monitoring plan at the monitoring manager
-     * @param monitoringPlan
-     * @return bool indicating success
-     */
-    bool registerMonitoringPlan(const Monitoring::MonitoringPlanPtr& monitoringPlan);
-
-    /**
-     * @brief Checks at the source catalog if a logical source with the name already exists
-     * @param logicalSourceName
-     * @return bool indicating success
-     */
-    bool logicalSourceLookUp(const std::string& logicalSourceName);
-
-    /**
-     * @brief Register a logical source name at the source catalog
-     * @param logicalSourceName
-     * @return bool indicating success
-     */
-    bool registerLogicalSourceName(const std::string& logicalSourceName);
-
-    /**
-     * @brief Register a logical source with is schema at the source catalog
-     * @param logicalSourceName
-     * @param logicalSourceSchema
-     * @return bool indicating success
-     */
-    bool registerLogicalSourceNEW(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
+    bool registerLogicalSourceV2(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
 
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator

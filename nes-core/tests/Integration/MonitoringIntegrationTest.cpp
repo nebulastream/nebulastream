@@ -280,7 +280,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
 
         NES_DEBUG("Now comes the RestCall!");
         auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
-        NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+        NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.dump());
 
         ASSERT_EQ(jsons.size(), noWorkers + 1);
 
@@ -291,15 +291,15 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
             ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
             if (i == 2) {
                 //check if the correct metric types are collected
-                ASSERT_TRUE(json.has_field("disk"));
-                ASSERT_TRUE(json.has_field("memory"));
-                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+                ASSERT_TRUE(json.contains("disk"));
+                ASSERT_TRUE(json.contains("memory"));
+                ASSERT_TRUE(json.contains("wrapped_cpu"));
                 // check if each metric type has the correct amount of metric attributes
                 ASSERT_EQ(json["disk"].size(), 4U);
                 ASSERT_EQ(json["memory"].size(), 4U);
                 ASSERT_EQ(json["wrapped_cpu"]["TOTAL"].size(), 7U);
                 // check if wrapped_cpu has the correct cpu cores
-                ASSERT_TRUE(json["wrapped_cpu"].has_field("CORE_9"));
+                ASSERT_TRUE(json["wrapped_cpu"].contains("CORE_9"));
                 ASSERT_EQ(json["wrapped_cpu"].size(), 2U);
                 // check static values
                 ASSERT_EQ(json["disk"]["F_BLOCKS"], diskCompareValues[0]);
@@ -382,15 +382,15 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
             ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
             if (i == 2) {
                 //check if the correct metric types are collected
-                ASSERT_TRUE(json.has_field("disk"));
-                ASSERT_TRUE(json.has_field("memory"));
-                ASSERT_TRUE(json.has_field("wrapped_cpu"));
+                ASSERT_TRUE(json.contains("disk"));
+                ASSERT_TRUE(json.contains("memory"));
+                ASSERT_TRUE(json.contains("wrapped_cpu"));
                 // check if each metric type has the correct amount of metric attributes
                 ASSERT_EQ(json["disk"][0]["value"].size(), 4U);
                 ASSERT_EQ(json["memory"][0]["value"].size(), 4U);
                 ASSERT_EQ(json["wrapped_cpu"][0]["value"]["TOTAL"].size(), 7U);
                 // check if wrapped_cpu has the correct cpu cores
-                ASSERT_TRUE(json["wrapped_cpu"][0]["value"].has_field("CORE_9"));
+                ASSERT_TRUE(json["wrapped_cpu"][0]["value"].contains("CORE_9"));
                 ASSERT_EQ(json["wrapped_cpu"][0]["value"].size(), 2U);
                 // check static values
                 ASSERT_EQ(json["disk"][0]["value"]["F_BLOCKS"], diskCompareValues[0]);

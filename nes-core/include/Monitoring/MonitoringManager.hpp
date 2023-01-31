@@ -119,27 +119,12 @@ class MonitoringManager {
     bool insertLogicalSource (std::string logicalSourceName);
 
     /**
-     * @brief Registers a monitoring plan of a node at the monitoringPlanMap
-     * @param nodeId
-     * @param monitoringPlan
-     * @return True, if registration was succesful
-     */
-    bool registerMonitoringPlans(const uint64_t& nodeId, const MonitoringPlanPtr& monitoringPlan);
-
-    /**
-     * @brief Registers a logical source name at the deployedMonitoringQueries
-     * @param logicalSourceName
-     * @return True, if registration was succesful
-     */
-    bool insertLogicalSource (std::string logicalSourceName);
-
-    /**
      * @brief Register a monitoring plan for given nodes.
      * @param nodeId
      * @param monitoringPlan
      * @return True, if successful, else false
     */
-//    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.

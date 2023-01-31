@@ -298,8 +298,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &isTensorflowSupported
 #endif
         };
-    }
-};
+    };
 }// namespace Configurations
 }// namespace NES
 

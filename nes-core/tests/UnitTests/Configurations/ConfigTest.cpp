@@ -34,7 +34,6 @@
 #include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/MonitoringAgent.hpp>
 
 namespace NES {
 
@@ -145,7 +144,7 @@ TEST_F(ConfigTest, testWorkerMonitoringConfig) {
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerMonitoringConfig.yaml");
 
     std::string temp_config = workerConfigPtr->monitoringConfiguration.getValue();
-    web::json::value configurationMonitoringJson =
+    nlohmann::json configurationMonitoringJson =
         Monitoring::MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
     Monitoring::MonitoringPlanPtr monitoringPlanJson = Monitoring::MonitoringPlan::setSchemaJson(configurationMonitoringJson);
     Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlanJson);

@@ -56,7 +56,7 @@ class MonitoringPlan {
      * @param configuredMetrics: configuration of the monitoring
      * @return Ptr to the monitoring plan
     */
-    static MonitoringPlanPtr setSchemaJson(web::json::value& configuredMetrics);
+    static MonitoringPlanPtr setSchemaJson(nlohmann::json& configuredMetrics);
 
     /**
      * @brief Gets a list of cpu core numbers that have to be monitored

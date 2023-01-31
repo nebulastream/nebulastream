@@ -46,7 +46,6 @@ class MonitoringSink : public SinkMedium {
      */
     explicit MonitoringSink(SinkFormatPtr sinkFormat,
                             Monitoring::MetricStorePtr metricStore,
-                            Monitoring::MonitoringManagerPtr monitoringManager,
                             Monitoring::MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
