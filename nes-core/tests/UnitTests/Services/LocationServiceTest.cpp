@@ -26,6 +26,7 @@
 #include <Topology/Topology.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
@@ -40,6 +41,9 @@ class LocationServiceTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Set up LocationServiceTest test class.")
+        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        remove(singleLocationPath.c_str());
+        writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
     }
     static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
 
@@ -147,7 +151,6 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     auto response0 = locationService->requestLocationDataFromAllMobileNodesAsJson();
 
     ASSERT_EQ(response0.get<std::vector<nlohmann::json>>().size(), 0);
-
 
     topologyManagerService->updateGeoLocation(node3Id, {52.55227464714949, 13.351743136322877});
 

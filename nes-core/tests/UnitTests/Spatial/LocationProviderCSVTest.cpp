@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/LocationProviderException.hpp>
 #include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
@@ -30,37 +31,78 @@ class LocationProviderCSVTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { NES::Testing::NESBaseTest::SetUp(); }
+    void SetUp() override {
+        NES::Testing::NESBaseTest::SetUp();
+        std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints;
+        waypoints.push_back({{52.55227464714949, 13.351743136322877}, 0});
+        waypoints.push_back({{2.574709862890394, 13.419206057808077}, 1000000000});
+        waypoints.push_back({{2.61756571840606, 13.505980882863446}, 2000000000});
+        waypoints.push_back({{2.67219559419452, 13.591124924963108}, 3000000000});
 
-    static void TearDownTestCase() { NES_INFO("Tear down LocationProviderCSV test class."); }
+        auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+        writeWaypointsToCsv(csvPath, waypoints);
+    }
+
+    static void TearDownTestCase() {
+        NES_INFO("Tear down LocationProviderCSV test class.");
+        auto csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocations.csv";
+        remove(csvPath.c_str());
+    }
 };
 
 TEST_F(LocationProviderCSVTest, testInvalidCsv) {
     //test nonexistent file
     auto csvPath = std::string(TEST_DATA_DIRECTORY) + "non_existent_file.csv";
+    remove(csvPath.c_str());
     auto locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
 
     //test empty file
     csvPath = std::string(TEST_DATA_DIRECTORY) + "emptyFile.csv";
+    remove(csvPath.c_str());
+    std::ofstream emptyOut(csvPath);
+    emptyOut.close();
+    ASSERT_FALSE(emptyOut.fail());
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
 
     //test invalid number formats
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLatitudeFormat.csv";
+    remove(csvPath.c_str());
+    std::ofstream invalidLatFormatFile(csvPath);
+    invalidLatFormatFile << "ire22, 13.419206057808077, 1000000000";
+    invalidLatFormatFile.close();
+    ASSERT_FALSE(invalidLatFormatFile.fail());
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
+
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidLongitudeFormat.csv";
+    remove(csvPath.c_str());
+    std::ofstream invalidLngFormatFile(csvPath);
+    invalidLngFormatFile << "52.61756571840606, g13.505980882863446, 2000000000";
+    invalidLngFormatFile.close();
+    ASSERT_FALSE(invalidLngFormatFile.fail());
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
+
     csvPath = std::string(TEST_DATA_DIRECTORY) + "invalidOffsetFormat.csv";
+    remove(csvPath.c_str());
+    std::ofstream invalidOffsetFormatFile(csvPath);
+    invalidOffsetFormatFile << "52.55227464714949, 13.351743136322877, h0";
+    invalidOffsetFormatFile.close();
+    ASSERT_FALSE(invalidOffsetFormatFile.fail());
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
 
     //test invalid column numbers
     csvPath = std::string(TEST_DATA_DIRECTORY) + "testLocationsNotEnoughColumns.csv";
+    remove(csvPath.c_str());
+    std::ofstream notEnoughColumnsFile(csvPath);
+    notEnoughColumnsFile << "52.574709862890394, 13.0";
+    notEnoughColumnsFile.close();
+    ASSERT_FALSE(notEnoughColumnsFile.fail());
     locationProvider = std::make_shared<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(csvPath);
-    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), Exceptions::RuntimeException);
+    ASSERT_THROW(auto waypoint = locationProvider->getCurrentWaypoint(), NES::Spatial::Exception::LocationProviderException);
 }
 
 

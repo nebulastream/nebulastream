@@ -35,6 +35,12 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LocationControllerIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LocationControllerIntegrationTest test class.");
+        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        remove(singleLocationPath.c_str());
+        writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
+        std::string singleLocationPath2 = std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv";
+        remove(singleLocationPath2.c_str());
+        writeWaypointsToCsv(singleLocationPath2, {{{53.55227464714949, -13.351743136322877}, 0}});
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationControllerIntegrationTest test class."); }
