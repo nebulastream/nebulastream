@@ -125,4 +125,13 @@ std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t so
 
 void ExternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
 void ExternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
+
+ExternalProvider::~ExternalProvider() {
+    started = false;
+    if (generatorThread.joinable()) {
+        generatorThread.join();
+    }
+
+    preAllocatedBuffers.clear();
+}
 }// namespace NES::Benchmark::DateProviding
