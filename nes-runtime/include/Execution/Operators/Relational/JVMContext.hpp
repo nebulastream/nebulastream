@@ -53,6 +53,7 @@ class JVMContext {
 
   private:
     JVMContext() {};
+    ~JVMContext();
     JVMContext(JVMContext const&)      = delete;
     void operator=(JVMContext const&)  = delete;
     JVMContext(JVMContext const&&)      = delete;

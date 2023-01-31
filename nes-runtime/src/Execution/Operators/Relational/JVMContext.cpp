@@ -80,5 +80,12 @@ void JVMContext::destroyJVM() {
     }
 }
 
+JVMContext::~JVMContext() {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (created) {
+        jint rc = jvm->DestroyJavaVM();
+        jniErrorCheck(rc);
+    }
+}
 }; //NES::Runtime::Execution::Operators
 #endif //ENABLE_JNI
