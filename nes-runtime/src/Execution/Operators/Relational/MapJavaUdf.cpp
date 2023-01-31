@@ -797,6 +797,8 @@ extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
+    // We need to ensure that the current thread is attached to the JVM
+    // When we can guarantee that the operator is always executed in the same thread we can remove attaching and detaching
     FunctionCall("startOrAttachVM", startOrAttachVM, handler);
 
     // Allocate java input class
