@@ -281,14 +281,14 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto record = Record({{"byteVariable", Value<>(initialByte)}, {"shortVariable", Value<>(initialShort)}, {"intVariable", Value<>(initialInt)}, {"longVariable", Value<>(initialLong)}, {"floatVariable", Value<>(initialFloat)}, {"doubleVariable", Value<>(initialDouble)}, {"stringVariable", Value<Text>("testValue")}, {"booleanVariable", Value<>(initialBool)}});
     map.execute(ctx, record);
 
-    ASSERT_EQ(record.read("byteVariable"), initialByte + 10);
-    ASSERT_EQ(record.read("shortVariable"), initialShort + 10);
-    ASSERT_EQ(record.read("intVariable"), initialInt + 10);
-    ASSERT_EQ(record.read("longVariable"), initialLong + 10);
-    ASSERT_EQ(record.read("floatVariable"), initialFloat + 10.0);
-    ASSERT_EQ(record.read("doubleVariable"), initialDouble + 10.0);
-    ASSERT_EQ(record.read("stringVariable"), Value<Text>("testValue_appended"));
-    ASSERT_EQ(record.read("booleanVariable"), false);
+    EXPECT_EQ(record.read("byteVariable"), initialByte + 10);
+    EXPECT_EQ(record.read("shortVariable"), initialShort + 10);
+    EXPECT_EQ(record.read("intVariable"), initialInt + 10);
+    EXPECT_EQ(record.read("longVariable"), initialLong + 10);
+    EXPECT_EQ(record.read("floatVariable"), initialFloat + 10.0);
+    EXPECT_EQ(record.read("doubleVariable"), initialDouble + 10.0);
+    EXPECT_EQ(record.read("stringVariable"), Value<Text>("testValue_appended"));
+    EXPECT_EQ(record.read("booleanVariable"), false);
 }
 
 /**

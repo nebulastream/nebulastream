@@ -375,18 +375,18 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
-        ASSERT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
+        EXPECT_EQ(resultDynamicBuffer[i]["byteVariable"].read<int8_t>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["shortVariable"].read<int16_t>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["intVariable"].read<int32_t>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["longVariable"].read<int64_t>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["floatVariable"].read<float>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["doubleVariable"].read<double>(), i + 10);
+        EXPECT_EQ(resultDynamicBuffer[i]["booleanVariable"].read<bool>(), false);
         auto index = resultDynamicBuffer[i]["stringVariable"].read<uint32_t>();
         auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
         auto textValue = varLengthBuffer.getBuffer<TextValue>();
         auto size = textValue->length();
-        ASSERT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
+        EXPECT_EQ(std::string(textValue->c_str(), size), "testValue_appended");
     }
 }
 
