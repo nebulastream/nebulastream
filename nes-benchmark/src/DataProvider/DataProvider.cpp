@@ -49,7 +49,7 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
     auto providedBuffer = readNextBuffer(sourceId);
     if (providedBuffer.has_value()) {
         switch (providerMode) {
-            case ZERO_COPY: {
+            case DataProviderMode::ZERO_COPY: {
                 auto dataPtr = reinterpret_cast<uintptr_t>(buffer.getBuffer());
                 bool success = collector.insert(dataPtr, TupleBufferHolder(buffer));
                 NES_ASSERT(success, "could not put buffer into collector");
@@ -60,7 +60,7 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
                 buffer = providedBuffer.value();
                 return;
             };
-            case MEM_COPY: {
+            case DataProviderMode::MEM_COPY: {
                 std::memcpy(buffer.getBuffer(), providedBuffer.value().getBuffer(), buffer.getBufferSize());
                 providedBuffer.value().setCreationTimestampInMS(buffer.getCreationTimestampInMS());
                 return;
