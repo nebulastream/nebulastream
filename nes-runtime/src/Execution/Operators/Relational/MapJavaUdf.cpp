@@ -94,7 +94,7 @@ extern "C" jobject deserializeInstance(void* state) {
  * Start the java vm and load the classes given in the javaPath
  * @param state operator handler state
  */
-extern "C" void startVMWithJarFile(void *state) {
+extern "C" void startOrAttachVMWithJarFile(void *state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -125,7 +125,7 @@ extern "C" void startVMWithJarFile(void *state) {
  * Start the java vm and load the classes given in the byteCodeList
  * @param state operator handler state
  */
-extern "C" void startVMWithByteList(void *state){
+extern "C" void startOrAttachVMWithByteList(void *state){
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -141,21 +141,21 @@ extern "C" void startVMWithByteList(void *state){
 }
 
 /**
- * Wrapper for starting the java vm.
+ * Wrapper for starting or attaching to the java vm.
  * The java classes will be either loaded from the given jar file or from the given byte code list.
  * When no java path is given, the byte code list is used.
  * @param state operator handler state
  */
-extern "C" void startVM(void *state) {
+extern "C" void startOrAttachVM(void *state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     if (handler->getJavaPath().has_value()) {
         // Get java classes using jar files
-        startVMWithJarFile(state);
+        startOrAttachVMWithJarFile(state);
     } else {
         // Get java classes using byte list
-        startVMWithByteList(state);
+        startOrAttachVMWithByteList(state);
     }
 }
 
@@ -797,7 +797,7 @@ extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
 void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    FunctionCall("startVM", startVM, handler);
+    FunctionCall("startOrAttachVM", startOrAttachVM, handler);
 
     // Allocate java input class
     auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
