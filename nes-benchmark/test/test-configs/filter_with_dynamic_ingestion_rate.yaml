@@ -1,0 +1,24 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+numberOfWorkerThreads: 1
+bufferSizeInBytes: 512, 1024, 2048
+
+# ~~~ Benchmark parameter for the entire run ~~~
+logLevel: LOG_INFO
+experimentMeasureIntervalInSeconds: 1
+startupSleepIntervalInSeconds: 1
+numberOfMeasurementsToCollect: 3
+numberOfPreAllocatedBuffer: 10000000
+
+logicalSources:
+  - name: input1
+
+inputType: MemoryMode
+dataProviderMode: ZeroCopy
+dataProvider: External
+ingestionRateDistribution: Sinus
+ingestionRateInBuffers: 50000
+ingestionRateCnt: 1000
+numberOfPeriods: 64
+outputFile: FilterWithDynamicIngestionRate.csv
+benchmarkName: FilterWithDynamicIngestionRate
+query: 'Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());'
