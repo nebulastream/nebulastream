@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Exceptions/LocationProviderException.hpp"
+#include <Exceptions/LocationProviderException.hpp>
 
 #include <utility>
 namespace NES::Spatial::Exception {
