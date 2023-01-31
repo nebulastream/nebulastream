@@ -23,6 +23,9 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 
+/**
+ * @brief This class defines the different types of supported ingestion rate generators.
+ */
 enum class IngestionRateDistribution : uint8_t {
     UNIFORM,
     SINUS,
@@ -37,6 +40,9 @@ enum class IngestionRateDistribution : uint8_t {
 class IngestionRateGenerator;
 using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
 
+/**
+ * @brief This class is used by the ExternalProvider to create a vector of potentially different ingestion rates in order to support dynamic ingestion rates.
+ */
 class IngestionRateGenerator {
   public:
     /**
@@ -55,10 +61,11 @@ class IngestionRateGenerator {
      */
     virtual std::vector<uint64_t> generateIngestionRates() = 0;
 
-    /**
-     * @brief
-     * @return
-     */
+     /**
+      * @brief creates a specific type of ingestion rate generator based on the given ingestion rate distribution
+      * @param configOverAllRuns
+      * @return pointer to a type of ingestion rate generator
+      */
     static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
   private:
