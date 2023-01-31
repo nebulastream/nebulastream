@@ -63,7 +63,7 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
         auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(1, memoryLayout, tupleBuffer);
         for (auto i = 0u; i < numberOfTuples; ++i) {
             idField[i] = i;
-            valueField[i] = 1;
+            valueField[i] = i;
         }
         tupleBuffer.setNumberOfTuples(numberOfTuples);
     }
@@ -96,13 +96,13 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
 
 // TODO Documentation
 class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-    class InputRecord {
+    struct __attribute__((packed)) InputRecord {
       public:
         [[maybe_unused]] int32_t id;
         [[maybe_unused]] int32_t value;
     };
 
-    class OutputRecord {
+    struct __attribute__((packed)) OutputRecord {
       public:
         [[maybe_unused]] int32_t id;
         [[maybe_unused]] int32_t value;
@@ -196,6 +196,7 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
         auto numberOfTuples = buffer.getNumberOfTuples();
         auto inputSize = numberOfTuples * sizeof(InputRecord);
         auto outputSize = numberOfTuples * sizeof(OutputRecord);
+        NES_DEBUG("numberOfTuples = " << numberOfTuples << "; inputSize = " << inputSize << "; outputSize = " << outputSize);
         cl_int status;
         cl_mem inputDeviceBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, inputSize, nullptr, &status);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not create OpenCL device input buffer");
@@ -204,9 +205,22 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
 
         // Enqueue a write operation of the input to the device.
         cl_event writeEvent;
+        auto input = buffer.getBuffer<InputRecord>();
+//        auto input = (InputRecord*) malloc(inputSize);
+//        cl_mem ddInput = clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR, inputSize, nullptr, &status);
+//        ASSERT_OPENCL_SUCCESS_OK(status, "Could not create host input buffer");
+//        auto input = (InputRecord*) clEnqueueMapBuffer(commandQueue, ddInput, CL_TRUE, CL_MAP_WRITE, 0, inputSize, 0, nullptr, nullptr, &status);
+//        ASSERT_OPENCL_SUCCESS_OK(status, "Could not retrieve pointer to host input buffer");
+//        for (unsigned i = 0; i < numberOfTuples; ++i) {
+//            input[i].id = i;
+//            input[i].value = i;
+//        }
+//        std::memcpy(input, buffer.getBuffer<InputRecord>(), inputSize);
         status = clEnqueueWriteBuffer(commandQueue,
-                                      inputDeviceBuffer, CL_TRUE, 0, inputSize, buffer.getBuffer(), 0, nullptr, &writeEvent);
+                                      inputDeviceBuffer, CL_TRUE, 0, inputSize, input, 0, nullptr, &writeEvent);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not buffer write operation");
+        status = clFinish(commandQueue);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after writing buffer");
 
         // Setup OpenCL kernel call.
         status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &inputDeviceBuffer);
@@ -219,14 +233,13 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
         // Enqueue the kernel.
         // TODO Use kernel wait list.
         cl_event executionEvent;
-        size_t globalSize = 1;
-        size_t localSize = 1;
-        status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &globalSize, &localSize, 0, nullptr, &executionEvent);
+        size_t globalSize = numberOfTuples;
+        status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &globalSize, nullptr, 0, nullptr, &executionEvent);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue kernel execution");
-        status = clWaitForEvents(1, &executionEvent);
-        ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
+//        status = clWaitForEvents(1, &executionEvent);
+//        ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
         status = clFinish(commandQueue);
-        ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish the execution of the command queue");
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after executing kernel");
 
         // Obtain an output buffer.
         auto outputBuffer = wc.allocateTupleBuffer();
@@ -236,8 +249,12 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
 
         // Enqueue read operation.
         cl_event readEvent;
-        status = clEnqueueReadBuffer(commandQueue, outputDeviceBuffer, CL_TRUE, 0, outputSize, outputBuffer.getBuffer(), 0, nullptr, &readEvent);
+        auto output = outputBuffer.getBuffer<OutputRecord>();
+//        auto output = (OutputRecord*) malloc(outputSize);
+        status = clEnqueueReadBuffer(commandQueue, outputDeviceBuffer, CL_TRUE, 0, outputSize, output, 0, nullptr, &readEvent);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue read buffer operation");
+        status = clFinish(commandQueue);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after reading output buffer");
 
         // Release memory objects
         clReleaseMemObject(inputDeviceBuffer);
@@ -316,14 +333,14 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
                             ->addField("new2", BasicType::INT32);
 
     // Create a sink for the test.
-    const auto numberOfTuples = 10;
+    const auto numberOfTuples = 16;
     auto testSink = std::make_shared<TestSink>(numberOfTuples, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     // Create a dummy query into which we can execute the custom pipeline.
     // TODO Why not use from(Schema) method?
     // TODO Can we do this without the filter?
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 1000).sink(testSinkDescriptor);
 
     // Insert the custom pipeline stage into the query.
     auto typeInferencePhase =
@@ -373,7 +390,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
         // There should be one output buffer with 5 tuples.
         EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
         auto resultBuffer = testSink->get(0);
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), numberOfTuples);
 
         // Compare results
         auto outputMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -381,9 +398,9 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
         auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(1, outputMemoryLayout, resultBuffer);
         auto new1Field = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(2, outputMemoryLayout, resultBuffer);
         auto new2Field = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(3, outputMemoryLayout, resultBuffer);
-        for (auto i = 0u; i < 5u; ++i) {
+        for (auto i = 0u; i < numberOfTuples; ++i) {
             EXPECT_EQ(idField[i], i);
-            EXPECT_EQ(valueField[i], 1);
+            EXPECT_EQ(valueField[i], i);
             EXPECT_EQ(new1Field[i], idField[i] * 2);
             EXPECT_EQ(new2Field[i], idField[i] + 2);
         }
