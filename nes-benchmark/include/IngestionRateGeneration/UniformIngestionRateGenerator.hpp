@@ -18,6 +18,9 @@
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
+/**
+ * @brief This class inherits from IngestionRateGenerator and allows for the generation of uniform distributed ingestion rates.
+ */
 class UniformIngestionRateGenerator : public IngestionRateGenerator {
   public:
     /**
