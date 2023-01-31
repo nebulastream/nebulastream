@@ -30,7 +30,7 @@ using DataProviderPtr = std::shared_ptr<DataProvider>;
 
 class DataProvider {
   public:
-    enum DataProviderMode { ZERO_COPY, MEM_COPY };
+    enum class DataProviderMode : uint8_t { ZERO_COPY, MEM_COPY };
 
     /**
          * @brief creates a DataProvider object
