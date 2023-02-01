@@ -261,7 +261,8 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
                                                                       false /*query reconfiguration*/);
 
     //Prepare query plan
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+//    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
     for (const auto& sink : queryPlan->getSinkOperators()) {

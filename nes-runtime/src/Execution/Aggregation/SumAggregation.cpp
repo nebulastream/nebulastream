@@ -41,7 +41,6 @@ Nautilus::Value<> SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     return finalVal;
 }
 
-// TODO 3280 check the type when resetting
 void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = createConstValue(0L, inputType);
     memref.store(zero);
