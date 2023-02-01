@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <Nautilus/IR/Types/AddressStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <utility>
 
 namespace NES::Nautilus::Backends::BC {

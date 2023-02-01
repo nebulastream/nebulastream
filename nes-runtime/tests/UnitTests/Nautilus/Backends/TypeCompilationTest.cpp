@@ -243,7 +243,7 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t,void*>("execute");
+    auto function = engine->getInvocableMember<int64_t, void*>("execute");
     ASSERT_EQ(function(listRef.get()), 4);
 }
 
