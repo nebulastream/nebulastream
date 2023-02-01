@@ -13,13 +13,13 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-#include <Util/MetricValidator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
 #include <Util/TestUtils.hpp>
 #include <assert.h>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <memory>
 
 using std::cout;
