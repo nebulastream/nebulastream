@@ -31,7 +31,8 @@ class AvgAggregationFunction : public AggregationFunction {
 
   private:
     PhysicalTypePtr countType;
-    const static int64_t sizeOfCountInBytes = 8L;
+
+    Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

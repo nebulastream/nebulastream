@@ -41,9 +41,8 @@ Nautilus::Value<> SumAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     return finalVal;
 }
 
-// TODO 3280 check the type when resetting
 void SumAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::Int64>((int64_t) 0);
+    auto zero = createConstValue(0L, inputType);
     memref.store(zero);
 }
 uint64_t SumAggregationFunction::getSize() { return inputType->size(); }

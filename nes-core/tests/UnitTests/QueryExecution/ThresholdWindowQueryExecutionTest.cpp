@@ -61,13 +61,17 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
         buf[recordIndex][1].write<T>(recordIndex * 10);
         NES_DEBUG("Input tuples: f1=" << recordIndex << " f2=" << recordIndex * 10);
     }
-    // close the window
+    // The following buffer closes the window in the query in all test cases in this file
+    // It's second field is 0 and our Threshold window query always check if the value is greater than 5
     buf[9][0].write<int64_t>(0);
     buf[9][1].write<T>(0);
     buf.setNumberOfTuples(10);
     NES_DEBUG("Input tuples: f1=" << 0 << " f2=" << 0);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Sum aggregation.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -101,6 +105,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSum) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Max aggregation.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -134,6 +141,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Min aggregation.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -167,6 +177,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Average aggregation.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -200,6 +213,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Count aggregation.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -233,7 +249,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-// Test with int32 data types //
+/**
+ * Test the execution of a query with threshold window operator and apply a Sum aggregation of float32 data.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::FLOAT32);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -267,6 +285,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+/**
+ * Test the execution of a query with threshold window operator and apply a Sum aggregation of Int32 data.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT32);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -300,7 +321,9 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-// Test with double data types //
+/**
+ * Test the execution of a query with threshold window operator and apply a Sum aggregation of float64/Double data.
+ */
 TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::FLOAT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
@@ -334,4 +357,4 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-// TODO 3280: parameterize test for all agg function and all data types
+// TODO 3468: parameterize test for all agg function and all data types

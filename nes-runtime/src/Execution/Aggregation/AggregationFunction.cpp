@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Common/PhysicalTypes/BasicPhysicalType.hpp"
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <utility>
 
@@ -63,6 +63,51 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
         NES_NOT_IMPLEMENTED();
     }
 }
+Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const PhysicalTypePtr& physicalType) {
+    if (physicalType->isBasicType()) {
+        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
+        switch (basicType->nativeType) {
+            case BasicPhysicalType::INT_8: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Int8>(value));
+            };
+            case BasicPhysicalType::INT_16: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Int16>(value));
+            };
+            case BasicPhysicalType::INT_32: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Int32>(value));
+            };
+            case BasicPhysicalType::INT_64: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Int64>(value));
+            };
+            case BasicPhysicalType::UINT_8: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::UInt8>(value));
+            };
+            case BasicPhysicalType::UINT_16: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::UInt16>(value));
+            };
+            case BasicPhysicalType::UINT_32: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::UInt32>(value));
+            };
+            case BasicPhysicalType::UINT_64: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::UInt64>(value));
+            };
+            case BasicPhysicalType::FLOAT: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Float>(value));
+            };
+            case BasicPhysicalType::DOUBLE: {
+                return Nautilus::Value<>(std::make_unique<Nautilus::Double>(value));
+            };
+            default: {
+                NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is currently not supported");
+                NES_NOT_IMPLEMENTED();
+            };
+        }
+    } else {
+        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is not a basic type and is currently not supported");
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
 AggregationFunction::~AggregationFunction() = default;
 
 }// namespace NES::Runtime::Execution::Aggregation
