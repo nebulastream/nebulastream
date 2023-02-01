@@ -114,7 +114,14 @@ class LowerPhysicalToNautilusOperators {
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
 
+    /**
+     * Create a unique pointer of an aggregation value of the given aggregation function then return it
+     * @param aggregationType the type of this aggregation
+     * @param inputType the data type of the input tuples for this aggregation
+     * @return
+     */
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
+    getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr dataType);
 #ifdef ENABLE_JNI
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

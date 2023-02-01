@@ -516,11 +516,11 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
 std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
 LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
     Windowing::WindowAggregationDescriptor::Type aggregationType,
-    DataTypePtr dataType) {
+    DataTypePtr inputType) {
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
-    auto physicalType = physicalTypeFactory.getPhysicalType(std::move(dataType));
+    auto physicalType = physicalTypeFactory.getPhysicalType(std::move(inputType));
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-    // TODO 3280: Check if we can make this ugly nested switch case better
+    // TODO 3468: Check if we can make this ugly nested switch case better
     switch (aggregationType) {
         case Windowing::WindowAggregationDescriptor::Avg:
             switch (basicType->nativeType) {

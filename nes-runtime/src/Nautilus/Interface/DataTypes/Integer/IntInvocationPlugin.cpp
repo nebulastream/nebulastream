@@ -63,7 +63,7 @@ class IntInvocationPlugin : public InvocationPlugin {
     std::optional<Value<>> Div(const Value<>& left, const Value<>& right) const override {
         return performBinaryOperationAndCast(left, right, [](const Int& left, const Int& right) {
             if (Tracing::TraceUtil::inTracer()) {
-                // TODO avoid division in tracing. For now we just substitute with an add.
+                // FIXME avoid division in tracing. For now we just substitute with an add.
                 auto result = left.add(right);
                 return Value<>(std::move(result));
             } else {

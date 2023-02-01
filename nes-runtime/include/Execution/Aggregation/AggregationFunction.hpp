@@ -61,7 +61,15 @@ class AggregationFunction {
     PhysicalTypePtr inputType;
     PhysicalTypePtr finalType;
 
+    /**
+     * @brief Load a value from a memref as a specific pyhsical type
+     * @param memref the memref to load from
+     * @param physicalType the intended data type to which the value should be casted
+     * @return value in the type of physicalType
+     */
     static Nautilus::Value<> loadFromMemref(Nautilus::Value<Nautilus::MemRef> memref, PhysicalTypePtr physicalType);
+
+    static Nautilus::Value<> createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;

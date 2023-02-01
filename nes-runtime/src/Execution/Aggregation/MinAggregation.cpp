@@ -49,11 +49,11 @@ Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     return finalVal;
 }
 
-// TODO 3280 check the type when resetting
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto minVal = Nautilus::Value<Nautilus::Int64>((int64_t) std::numeric_limits<int64_t>::max());
+    auto minVal = createConstValue(std::numeric_limits<int64_t>::max(), inputType);
+
     memref.store(minVal);
 }
-uint64_t MinAggregationFunction::getSize() { return sizeof(int64_t); }
+uint64_t MinAggregationFunction::getSize() { return inputType->size(); }
 
 }// namespace NES::Runtime::Execution::Aggregation

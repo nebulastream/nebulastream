@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Execution/Aggregation/CountAggregation.hpp"
+#include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
@@ -73,8 +73,9 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
     if (val) {
         auto aggregatedValue = Value<Int64>(1L); // default value to aggregate (i.e., for countAgg)
         auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunction);
+        // if the agg function is not a count, then get the aggregated value from the "onField" field
+        // otherwise, just increment the count
         if (!isCountAggregation) {
-            // if the agg function is not a count, then get the aggregated value from the "onField" field
             aggregatedValue = aggregatedFieldAccessExpression->execute(record);
         }
         FunctionCall("incrementCount", incrementCount, handler);
