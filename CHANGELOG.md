@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.38](https://github.com/nebulastream/nebulastream/tree/v0.4.38) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.37...v0.4.38)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Simple Bytecode interpreter for Nautilus [\#3416](https://github.com/nebulastream/nebulastream/issues/3416)
+
 ## [v0.4.37](https://github.com/nebulastream/nebulastream/tree/v0.4.37) (2023-02-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.36...v0.4.37)
