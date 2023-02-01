@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/BCInterpreter/BCInterpreterBackend.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
+#include <Nautilus/Backends/BCInterpreter/BCInterpreterBackend.hpp>
 #include <Nautilus/Backends/BCInterpreter/BCLoweringProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
@@ -34,4 +34,4 @@ std::unique_ptr<Executable> BCInterpreterBackend::compile(std::shared_ptr<IR::IR
     return std::make_unique<BCInterpreter>(std::get<0>(result), std::get<1>(result));
 }
 
-}// namespace NES::Nautilus::Backends::MLIR
+}// namespace NES::Nautilus::Backends::BC

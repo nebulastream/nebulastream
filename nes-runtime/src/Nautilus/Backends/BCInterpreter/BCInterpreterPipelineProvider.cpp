@@ -27,4 +27,4 @@ class ByteCodeInterpreterPipelineProvider : public ExecutablePipelineProvider {
 
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<ByteCodeInterpreterPipelineProvider>
     bcInterpreterPipelineProvider("BCInterpreter");
-}
+}// namespace NES::Runtime::Execution

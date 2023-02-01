@@ -184,7 +184,6 @@ struct OpCode {
 
 typedef void Operation(const OpCode&, RegisterFile& regs);
 
-
 template<class RegisterType>
 auto inline readReg(RegisterFile& regs, short reg) {
     return *reinterpret_cast<RegisterType*>(&regs[reg]);
@@ -304,7 +303,7 @@ void add(const OpCode& c, RegisterFile& regs) {
  * @param c
  * @param regs
  */
- template<class RegisterType>
+template<class RegisterType>
 void sub(const OpCode& c, RegisterFile& regs) {
     auto l = readReg<RegisterType>(regs, c.reg1);
     auto r = readReg<RegisterType>(regs, c.reg2);
@@ -349,7 +348,6 @@ void equals(const OpCode& c, RegisterFile& regs) {
     auto r = readReg<RegisterType>(regs, c.reg2);
     writeReg(regs, c.output, l == r);
 }
-
 
 /**
  * @brief Defines an less than in the bytecode interpreter

@@ -25,5 +25,4 @@ std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(std
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
     compilationPipelineProvider("PipelineCompiler");
 
-
 }// namespace NES::Runtime::Execution

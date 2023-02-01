@@ -13,8 +13,8 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BC_BYTECODEINTERPRETERBACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_BC_BYTECODEINTERPRETERBACKEND_HPP_
-#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::BC {
 
 /**

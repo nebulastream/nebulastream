@@ -49,7 +49,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t,void*>("execute");
+    auto function = engine->getInvocableMember<int64_t, void*>("execute");
 
     ASSERT_EQ(function(&valI), 42);
 }
@@ -70,7 +70,7 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
         storeFunction(tempPara);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<void,void*>("execute");
+    auto function = engine->getInvocableMember<void, void*>("execute");
     function(&valI);
     ASSERT_EQ(valI, 43);
 }
@@ -94,7 +94,7 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t ,int, void*>("execute");
+    auto function = engine->getInvocableMember<int64_t, int, void*>("execute");
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
     ASSERT_EQ(function(7, array), 28);
 }

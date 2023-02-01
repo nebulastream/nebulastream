@@ -38,9 +38,7 @@ class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractComp
     static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
-int64_t addInt(int64_t x, int64_t y) {
-    return x + y;
-};
+int64_t addInt(int64_t x, int64_t y) { return x + y; };
 
 Value<> addIntFunction() {
     auto x = Value<Int64>((int64_t) 2);
@@ -101,7 +99,7 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t,int64_t>("execute");
+    auto function = result->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }

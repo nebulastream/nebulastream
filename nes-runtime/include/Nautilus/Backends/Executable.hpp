@@ -82,8 +82,6 @@ class Executable {
         std::variant<FunctionType*, std::unique_ptr<GenericInvocable>> function;
     };
 
-
-
     /**
      * @brief Returns an invokable function for the member.
      * @tparam R return type
