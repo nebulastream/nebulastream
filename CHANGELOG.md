@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.37](https://github.com/nebulastream/nebulastream/tree/v0.4.37) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.36...v0.4.37)
+
+#### Build Management
+
+- \[Feature\] Cleanup VCPKG dependencies [\#3411](https://github.com/nebulastream/nebulastream/issues/3411)
+
 ## [v0.4.36](https://github.com/nebulastream/nebulastream/tree/v0.4.36) (2023-01-31)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.35...v0.4.36)
