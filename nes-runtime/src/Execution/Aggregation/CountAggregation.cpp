@@ -23,7 +23,7 @@ void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Na
     // load memref
     auto oldValue = AggregationFunction::loadFromMemref(memref, finalType);
     // add the value
-    auto newValue = oldValue + 1UL;
+    auto newValue = oldValue + (uint64_t) 1;
     // put back to the memref
     memref.store(newValue);
 }
@@ -42,7 +42,7 @@ Nautilus::Value<> CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemR
 }
 
 void CountAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::UInt64>(0UL); // count always use UInt64
+    auto zero = Nautilus::Value<Nautilus::UInt64>((uint64_t) 0); // count always use UInt64
     memref.store(zero);
 }
 uint64_t CountAggregationFunction::getSize() { return sizeof(int64_t); }
