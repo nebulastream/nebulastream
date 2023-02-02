@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.4.39](https://github.com/nebulastream/nebulastream/tree/v0.4.39) (2023-02-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.38...v0.4.39)
+
+### Bug Fixes 🐛
+
+- \[BUG\] E2EBenchmarkMain broken [\#3464](https://github.com/nebulastream/nebulastream/issues/3464)
+
 ## [v0.4.38](https://github.com/nebulastream/nebulastream/tree/v0.4.38) (2023-02-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.37...v0.4.38)
