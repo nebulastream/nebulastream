@@ -23,6 +23,8 @@ ExternalProvider::ExternalProvider(uint64_t id,
 
 std::vector<Runtime::TupleBuffer>& ExternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
 
+std::thread& ExternalProvider::getGeneratorThread() { return generatorThread; }
+
 void ExternalProvider::start() {
     if (!started) {
         generatorThread = std::thread([this] {this->generateData();});
@@ -39,37 +41,27 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
-    sleep(5);   // TODO why is sleep necessary?
-
     auto predefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
     bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
 
-    uint64_t nextPeriodStartTime;
-    uint64_t periodStartTime;
-    uint64_t periodEndTime;
-    uint64_t currentTime;
-    uint64_t currentSecond;
-    uint64_t lastSecond = 0;
-
-    uint64_t buffersProcessedCount;
     auto workingTimeDeltaInSec = workingTimeDelta / 1000;
-    // TODO why was workingTimeDelta originally not used here?
-    uint64_t buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
+    auto buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
     NES_ASSERT(buffersToProducePerWorkingTimeDelta != 0, "Ingestion rate is too small!");
 
-    uint64_t runningOverAllCount = 0;
-    uint64_t ingestionRateIndex = 0;
+    auto lastSecond = 0L;
+    auto runningOverAllCount = 0L;
+    auto ingestionRateIndex = 0L;
 
     started = true;
     while (started) {
-        periodStartTime =
+        auto periodStartTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        buffersProcessedCount = 0;
+        auto buffersProcessedCount = 0UL;
 
         while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
-            currentSecond =
+            auto currentSecond =
                 std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
             auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
@@ -100,17 +92,13 @@ void ExternalProvider::generateData() {
             buffersProcessedCount++;
         }// while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta)
 
-        periodEndTime =
+        auto currentTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        nextPeriodStartTime = periodStartTime + workingTimeDelta;
+        auto nextPeriodStartTime = periodStartTime + workingTimeDelta;
 
-        if (nextPeriodStartTime < periodEndTime) {
+        if (nextPeriodStartTime < currentTime) {
             NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
         }
-
-        // TODO maybe just use periodEndTime
-        currentTime =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
         while (currentTime < nextPeriodStartTime) {
             currentTime =
@@ -133,7 +121,7 @@ std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t so
     if (res) {
         return bufferHolder.bufferToHold;
     } else if (!started) {
-        return NES::Runtime::TupleBuffer::reinterpretAsTupleBuffer(nullptr);
+        return std::nullopt;
     } else {
         NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
     }
