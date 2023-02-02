@@ -63,7 +63,7 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
         auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(1, memoryLayout, tupleBuffer);
         for (auto i = 0u; i < numberOfTuples; ++i) {
             idField[i] = i;
-            valueField[i] = i;
+            valueField[i] = 1;
         }
         tupleBuffer.setNumberOfTuples(numberOfTuples);
     }
@@ -90,7 +90,7 @@ class OpenCLQueryExecutionTest : public Testing::TestWithErrorHandling<testing::
             NES_ERROR(message << ": " << status);                                                                                \
             return returnValue;                                                                                                  \
         }                                                                                                                        \
-    } while (0)
+    } while (false)
 #define ASSERT_OPENCL_SUCCESS(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, true)
 #define ASSERT_OPENCL_SUCCESS_OK(status, message) ASSERT_OPENCL_SUCCESS_AND_RETURN(status, message, ExecutionResult::Ok)
 
@@ -216,8 +216,7 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
 //            input[i].value = i;
 //        }
 //        std::memcpy(input, buffer.getBuffer<InputRecord>(), inputSize);
-        status = clEnqueueWriteBuffer(commandQueue,
-                                      inputDeviceBuffer, CL_TRUE, 0, inputSize, input, 0, nullptr, &writeEvent);
+        status = clEnqueueWriteBuffer(commandQueue, inputDeviceBuffer, CL_TRUE, 0, inputSize, input, 0, nullptr, &writeEvent);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not buffer write operation");
         status = clFinish(commandQueue);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after writing buffer");
@@ -333,7 +332,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
                             ->addField("new2", BasicType::INT32);
 
     // Create a sink for the test.
-    const auto numberOfTuples = 16;
+    const auto numberOfTuples = 256;
     auto testSink = std::make_shared<TestSink>(numberOfTuples, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -400,7 +399,7 @@ TEST_F(OpenCLQueryExecutionTest, simpleOpenCLKernel) {
         auto new2Field = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(3, outputMemoryLayout, resultBuffer);
         for (auto i = 0u; i < numberOfTuples; ++i) {
             EXPECT_EQ(idField[i], i);
-            EXPECT_EQ(valueField[i], i);
+            EXPECT_EQ(valueField[i], 1);
             EXPECT_EQ(new1Field[i], idField[i] * 2);
             EXPECT_EQ(new2Field[i], idField[i] + 2);
         }
