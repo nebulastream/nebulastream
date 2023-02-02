@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <DataProvider/ExternalProvider.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -29,6 +31,7 @@ namespace NES::Benchmark::DataProvision {
         /* Will be called before a test is executed. */
         void SetUp() override {
             Testing::NESBaseTest::SetUp();
+            bufferManager =  std::make_shared<Runtime::BufferManager>();
             NES_INFO("Setup ExternalProviderTest test case.");
         }
 
@@ -40,10 +43,94 @@ namespace NES::Benchmark::DataProvision {
 
         /* Will be called after all tests in this class are finished. */
         static void TearDownTestCase() { NES_INFO("Tear down ExternalProviderTest test class."); }
+
+        std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
     // TODO test all member functions of ExternalProviderTest.hpp
     TEST_F(ExternalProviderTest, readNextBufferTest) {
         NES_NOT_IMPLEMENTED();
+    }
+
+    TEST_F(ExternalProviderTest, stopRowLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->stop();
+
+        //auto generatorThread = externalProviderDefault->getGeneratorThread();
+        //ASSERT_TRUE(!generatorThread.joinable());
+
+        auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
+        ASSERT_EQ(preAllocatedBuffers.size(), 0);
+    }
+
+    TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->stop();
+
+        //auto generatorThread = externalProviderDefault->getGeneratorThread();
+        //ASSERT_TRUE(!generatorThread.joinable());
+
+        auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
+        ASSERT_EQ(preAllocatedBuffers.size(), 0);
     }
 }//namespace NES::Benchmark::DataProvision
