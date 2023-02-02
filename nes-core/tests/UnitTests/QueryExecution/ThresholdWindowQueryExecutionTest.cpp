@@ -113,7 +113,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMax) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Max", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -149,7 +149,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithMin) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Min", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -185,7 +185,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithAvg) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Avg", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -221,7 +221,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCount) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Count", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -257,7 +257,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumFloat) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::FLOAT32);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -293,7 +293,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumInt32) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::INT32);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
@@ -329,7 +329,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestSumDouble) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$Sum", BasicType::FLOAT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
