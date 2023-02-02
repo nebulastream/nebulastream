@@ -54,6 +54,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
 
     /**
+     * @brief returns a reference to generatorThread
+     * @return generatorThread
+     */
+    std::thread& getGeneratorThread();
+
+    /**
      * @brief overrides the start function and generates the data
      */
     void start() override;
