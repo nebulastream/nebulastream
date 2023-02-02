@@ -86,8 +86,8 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->stop();
 
-        //auto generatorThread = externalProviderDefault->getGeneratorThread();
-        //ASSERT_TRUE(!generatorThread.joinable());
+        auto& generatorThread = externalProviderDefault->getGeneratorThread();
+        ASSERT_TRUE(!generatorThread.joinable());
 
         auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
         ASSERT_EQ(preAllocatedBuffers.size(), 0);
@@ -127,8 +127,8 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->stop();
 
-        //auto generatorThread = externalProviderDefault->getGeneratorThread();
-        //ASSERT_TRUE(!generatorThread.joinable());
+        auto& generatorThread = externalProviderDefault->getGeneratorThread();
+        ASSERT_TRUE(!generatorThread.joinable());
 
         auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
         ASSERT_EQ(preAllocatedBuffers.size(), 0);
