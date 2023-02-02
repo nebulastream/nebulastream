@@ -13,7 +13,7 @@ logicalSources:
   - name: input1
 
 dataProvider:
-  - name: External
+  name: External
 
 inputType: MemoryMode
 dataProviderMode: ZeroCopy

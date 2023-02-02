@@ -13,12 +13,12 @@ logicalSources:
   - name: input1
 
 dataProvider:
-  - name: External
-  - ingestionRateDistribution:
-    - type: Sinus
-    - numberOfPeriods: 64
-    - ingestionRateInBuffers: 35000
-  - ingestionRateCnt: 1000
+  name: External
+  ingestionRateCnt: 1000
+  ingestionRateDistribution:
+    type: Sinus
+    numberOfPeriods: 64
+    ingestionRateInBuffers: 35000
 
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
