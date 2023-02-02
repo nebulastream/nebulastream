@@ -41,8 +41,8 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
-    ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 1, "Number of buffers ingested per time interval");
-    ingestionRateCnt = ConfigurationOption<uint32_t>::create("ingestionRateCnt", 100000, "Number of potentially different ingestion rates");
+    ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
+    ingestionRateCnt = ConfigurationOption<uint32_t>::create("ingestionRateCnt", 10000, "Number of potentially different ingestion rates");
     numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
     ingestionRateDistribution = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
@@ -89,11 +89,19 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.numberOfPreAllocatedBuffer->setValueIfDefined(yamlConfig["numberOfPreAllocatedBuffer"]);
     configOverAllRuns.batchSize->setValueIfDefined(yamlConfig["batchSize"]);
     configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
-    configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(yamlConfig["ingestionRateInBuffers"]);
-    configOverAllRuns.ingestionRateCnt->setValueIfDefined(yamlConfig["ingestionRateCnt"]);
-    configOverAllRuns.numberOfPeriods->setValueIfDefined(yamlConfig["numberOfPeriods"]);
-    configOverAllRuns.ingestionRateDistribution->setValueIfDefined(yamlConfig["ingestionRateDistribution"]);
-    configOverAllRuns.dataProvider->setValueIfDefined(yamlConfig["dataProvider"]);
+
+    auto dataProviderNode = yamlConfig["dataProvider"];
+    if (!dataProviderNode.IsNone()) {
+        configOverAllRuns.dataProvider->setValueIfDefined(dataProviderNode["name"]);
+        configOverAllRuns.ingestionRateCnt->setValueIfDefined(dataProviderNode["ingestionRateCnt"]);
+
+        auto ingestionRateDistributionNode = dataProviderNode["ingestionRateDistribution"];
+        if (!ingestionRateDistributionNode.IsNone()) {
+            configOverAllRuns.ingestionRateDistribution->setValueIfDefined(ingestionRateDistributionNode["type"]);
+            configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(ingestionRateDistributionNode["ingestionRateInBuffers"]);
+            configOverAllRuns.numberOfPeriods->setValueIfDefined(ingestionRateDistributionNode["numberOfPeriods"]);
+        }
+    }
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsSequence()) {
