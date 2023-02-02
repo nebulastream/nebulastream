@@ -34,24 +34,27 @@ class ThresholdWindow : public ExecutableOperator {
      */
     ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
                     uint64_t minCount,
-                    Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression,
-                    Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier,
-                    Execution::Aggregation::AggregationFunctionPtr aggregationFunction,
+                    const std::vector<Expressions::ExpressionPtr>& aggregatedFieldAccessExpressions,
+                    const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
+                    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                     uint64_t operatorHandlerIndex)
         : predicateExpression(std::move(predicateExpression)),
-          aggregatedFieldAccessExpression(std::move(aggregatedFieldAccessExpression)),
-          aggregationResultFieldIdentifier(std::move(aggregationResultFieldIdentifier)), minCount(minCount),
-          operatorHandlerIndex(operatorHandlerIndex), aggregationFunction(std::move(aggregationFunction)){};
+          aggregatedFieldAccessExpressions(std::move(aggregatedFieldAccessExpressions)),
+          aggregationResultFieldIdentifiers(std::move(aggregationResultFieldIdentifiers)), minCount(minCount),
+          operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(std::move(aggregationFunctions)){
+            NES_ASSERT(aggregationFunctions.size() == aggregatedFieldAccessExpressions.size(),
+                   "The number of aggregation expression and aggregation functions need to be equals");
+                                                      };
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
   private:
     const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
-    const Runtime::Execution::Expressions::ExpressionPtr aggregatedFieldAccessExpression;
-    const Nautilus::Record::RecordFieldIdentifier aggregationResultFieldIdentifier;
+    const std::vector<Expressions::ExpressionPtr> aggregatedFieldAccessExpressions;
+    const std::vector<Nautilus::Record::RecordFieldIdentifier> aggregationResultFieldIdentifiers;
     uint64_t minCount = 0;
     uint64_t operatorHandlerIndex;
-    const std::shared_ptr<Aggregation::AggregationFunction> aggregationFunction;
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions;
 };
 }// namespace NES::Runtime::Execution::Operators
 

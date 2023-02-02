@@ -60,7 +60,7 @@ extern "C" void unlockWindowHandler(void* state) {
 
 extern "C" void* getAggregationValue(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
-    return (void*) handler->AggregationValue.get();
+    return (void*) handler->AggregationValues.begin()->get();
 }
 
 void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
@@ -71,26 +71,35 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
 
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        auto aggregatedValue = Value<Int64>(1L); // default value to aggregate (i.e., for countAgg)
-        auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunction);
-        if (!isCountAggregation) {
-            // if the agg function is not a count, then get the aggregated value from the "onField" field
-            aggregatedValue = aggregatedFieldAccessExpression->execute(record);
+        for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+            auto aggregatedValue = Value<Int64>(1L); // default value to aggregate (i.e., for countAgg)
+            auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i]);
+            if (!isCountAggregation) {
+                // if the agg function is not a count, then get the aggregated value from the "onField" field
+                aggregatedValue = aggregatedFieldAccessExpressions[i]->execute(record);
+            }
+            FunctionCall("incrementCount", incrementCount, handler);
+            aggregationFunctions[i]->lift(aggregationValueMemref, aggregatedValue);
+            FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
+            aggregationValueMemref = aggregationValueMemref + aggregationFunctions[i]->getSize();
         }
-        FunctionCall("incrementCount", incrementCount, handler);
-        aggregationFunction->lift(aggregationValueMemref, aggregatedValue);
-        FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
         if (isWindowOpen) {
             auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
             if (recordCount >= minCount) {
-                auto aggregationResult = aggregationFunction->lower(aggregationValueMemref);
-                auto resultRecord = Record({{aggregationResultFieldIdentifier, aggregationResult}});
-
-                child->execute(ctx, resultRecord);
+                std::map<Nautilus::Record::RecordFieldIdentifier,Value<>> aggResults;
+                for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+                    auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
+                    aggResults.insert(std::pair<Nautilus::Record::RecordFieldIdentifier,Value<>>(aggregationResultFieldIdentifiers[i], aggregationResult));
+                    //auto resultRecord = Record({{aggregationResultFieldIdentifiers, aggregationResult}});
+                }
+                    auto resultRecord = Record(std::map<Nautilus::Record::RecordFieldIdentifier,Value<>>(aggResults));
+                    child->execute(ctx, resultRecord);
             }
-            aggregationFunction->reset(aggregationValueMemref);
+            for (auto& aggregationFunction : aggregationFunctions) {
+                aggregationFunction->reset(aggregationValueMemref);
+            }
             FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
         }
         FunctionCall("resetCount", resetCount, handler);

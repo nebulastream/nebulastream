@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -38,6 +40,9 @@ namespace NES::Runtime::Execution::Operators {
 
 class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
   public:
+    std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
+    std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
+    std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -45,7 +50,9 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
+    static void TearDownTestCase() {
+        NES_INFO("Tear down ThresholdWindowOperatorTest test class.");
+    }
 };
 
 /**
@@ -64,14 +71,19 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    resultFieldVector.push_back(aggregationResultFieldName);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, aggFieldAccessExpressionsVector, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -92,6 +104,9 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
+    aggFieldAccessExpressionsVector.clear();
+    resultFieldVector.clear();
+    aggVector.clear();
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -109,14 +124,19 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    resultFieldVector.push_back(aggregationResultFieldName);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 0, aggFieldAccessExpressionsVector, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -137,6 +157,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
+    aggFieldAccessExpressionsVector.clear();
+    resultFieldVector.clear();
+    aggVector.clear();
+
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -151,19 +175,23 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     // Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
-
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    resultFieldVector.push_back(aggregationResultFieldName);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggVector.push_back(sumAgg);
     auto thresholdWindowOperator =
-        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, readF2, aggregationResultFieldName, sumAgg, 0);
+        std::make_shared<ThresholdWindow>(greaterThanExpression, 3, aggFieldAccessExpressionsVector, resultFieldVector, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
-    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
@@ -177,6 +205,10 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 0);
+
+    aggFieldAccessExpressionsVector.clear();
+    resultFieldVector.clear();
+    aggVector.clear();
 
     thresholdWindowOperator->terminate(ctx);
 }
@@ -361,6 +393,119 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2);
+
+    thresholdWindowOperator->terminate(ctx);
+}
+
+/**
+ * @brief Tests the threshold window operator with multiple aggregations.
+ */
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    // Attribute(f1) > 42, sum(f2)
+
+    auto aggregationResultFieldNameSum = "sum";
+    auto aggregationResultFieldNameMax = "max";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType);
+    resultFieldVector.emplace_back(aggregationResultFieldNameSum);
+    resultFieldVector.emplace_back(aggregationResultFieldNameMax);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggFieldAccessExpressionsVector.push_back(readF1);
+    aggVector.push_back(sumAgg);
+    aggVector.push_back(maxAgg);
+    auto thresholdWindowOperator =
+        std::make_shared<ThresholdWindow>(greaterThanExpression,0, aggFieldAccessExpressionsVector, resultFieldVector, aggVector, 0);
+
+    auto collector = std::make_shared<CollectOperator>();
+    thresholdWindowOperator->setChild(collector);
+
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    std::unique_ptr<Aggregation::MaxAggregationValue> maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue>();
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    aggValues.emplace_back(std::move(maxAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+
+    thresholdWindowOperator->setup(ctx);
+
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 1);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 2);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameSum), 5);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMax), 3);
+
+    aggFieldAccessExpressionsVector.clear();
+    resultFieldVector.clear();
+    aggVector.clear();
+
+    thresholdWindowOperator->terminate(ctx);
+}
+
+/**
+ * @brief Tests the threshold window operator with multiple aggregations.
+ */
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations2) {
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    // Attribute(f1) > 42, sum(f2)
+
+    auto aggregationResultFieldNameSum = "sum";
+    auto aggregationResultFieldNameMean = "mean";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    DataTypePtr doubleType = DataTypeFactory::createDouble();
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType);
+    resultFieldVector.emplace_back(aggregationResultFieldNameSum);
+    resultFieldVector.emplace_back(aggregationResultFieldNameMean);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggVector.push_back(sumAgg);
+    aggVector.push_back(avgAgg);
+    auto thresholdWindowOperator =
+        std::make_shared<ThresholdWindow>(greaterThanExpression,0, aggFieldAccessExpressionsVector, resultFieldVector, aggVector, 0);
+
+    auto collector = std::make_shared<CollectOperator>();
+    thresholdWindowOperator->setChild(collector);
+
+    std::unique_ptr<Aggregation::SumAggregationValue> sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue>();
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+
+    thresholdWindowOperator->setup(ctx);
+
+    auto recordFifty = Record({{"f1", Value<>(50)}, {"f2", Value<>(2)}});
+    auto recordNinety = Record({{"f1", Value<>(90)}, {"f2", Value<>(3)}});
+    auto recordTwenty = Record({{"f1", Value<>(20)}, {"f2", Value<>(4)}});// closes the window
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 1);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 2);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMean), 2.5);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameSum), 5);
+
+    aggFieldAccessExpressionsVector.clear();
+    resultFieldVector.clear();
+    aggVector.clear();
 
     thresholdWindowOperator->terminate(ctx);
 }
