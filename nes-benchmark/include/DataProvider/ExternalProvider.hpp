@@ -19,9 +19,10 @@
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::DataProvision {
-
-// TODO add support for workingTimeDelta, currently set to 10ms, it should be possible to set to e.g. 20ms
-auto constexpr workingTimeDelta = 10;       // in milliseconds
+/**
+ * @brief sets the time period in milliseconds in which the predefined amount of buffers is ingested
+ */
+auto constexpr workingTimeDelta = 10;
 
 /**
  * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
@@ -45,6 +46,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @brief destructor
      */
     ~ExternalProvider() override;
+
+    /**
+     * @brief returns a reference to preAllocatedBuffers
+     * @return preAllocatedBuffers
+     */
+    std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
 
     /**
      * @brief overrides the start function and generates the data

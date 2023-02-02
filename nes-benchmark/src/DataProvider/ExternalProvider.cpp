@@ -21,6 +21,8 @@ ExternalProvider::ExternalProvider(uint64_t id,
                                    IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(std::move(ingestionRateGenerator)) {}
 
+std::vector<Runtime::TupleBuffer>& ExternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
+
 void ExternalProvider::start() {
     if (!started) {
         generatorThread = std::thread([this] {this->generateData();});
@@ -37,7 +39,7 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
-    sleep(5);   // TODO why is this sleep necessary?
+    sleep(5);   // TODO why is sleep necessary?
 
     auto predefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
@@ -52,21 +54,21 @@ void ExternalProvider::generateData() {
     uint64_t lastSecond = 0;
 
     uint64_t buffersProcessedCount;
-    // TODO why is workingTimeDelta not being used here?
-    uint64_t buffersToProducePer10ms = predefinedIngestionRates[0];
-    NES_ASSERT(buffersToProducePer10ms != 0, "Ingestion ratio is too small");
-
-    started = true;
+    auto workingTimeDeltaInSec = workingTimeDelta / 1000;
+    // TODO why was workingTimeDelta originally not used here?
+    uint64_t buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
+    NES_ASSERT(buffersToProducePerWorkingTimeDelta != 0, "Ingestion rate is too small!");
 
     uint64_t runningOverAllCount = 0;
     uint64_t ingestionRateIndex = 0;
 
+    started = true;
     while (started) {
         periodStartTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         buffersProcessedCount = 0;
 
-        while (buffersProcessedCount < buffersToProducePer10ms) {
+        while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
             currentSecond =
                 std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
@@ -86,9 +88,9 @@ void ExternalProvider::generateData() {
             }
 
             if (lastSecond != currentSecond) {
-                // TODO change /100 according to workingTimeDelta (see ExternalProvider.hpp)
-                if ((buffersToProducePer10ms = predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] / 100) == 0) {
-                    buffersToProducePer10ms = 1;
+                if ((buffersToProducePerWorkingTimeDelta =
+                         predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec) == 0) {
+                    buffersToProducePerWorkingTimeDelta = 1;
                 }
 
                 lastSecond = currentSecond;
@@ -96,11 +98,11 @@ void ExternalProvider::generateData() {
             }
 
             buffersProcessedCount++;
-        }// while (buffersProcessedCount < buffersToProducePer10ms)
+        }// while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta)
 
         periodEndTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        nextPeriodStartTime = periodStartTime + 10; // TODO change +10 according to workingTimeDelta (see ExternalProvider.hpp)
+        nextPeriodStartTime = periodStartTime + workingTimeDelta;
 
         if (nextPeriodStartTime < periodEndTime) {
             NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
@@ -120,7 +122,21 @@ void ExternalProvider::generateData() {
 std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t sourceId) {
     // For now, we only have a single source
     ((void) sourceId);
-    NES_NOT_IMPLEMENTED();
+
+    TupleBufferHolder bufferHolder;
+    auto res = false;
+
+    while (started && !res) {
+        res = bufferQueue.read(bufferHolder);
+    }
+
+    if (res) {
+        return bufferHolder.bufferToHold;
+    } else if (!started) {
+        return NES::Runtime::TupleBuffer::reinterpretAsTupleBuffer(nullptr);
+    } else {
+        NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
+    }
 }
 
 void ExternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
