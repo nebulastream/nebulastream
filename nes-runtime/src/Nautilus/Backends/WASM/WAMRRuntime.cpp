@@ -94,7 +94,7 @@ uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     return wasmTBPtr;
 }
 
-uint32_t native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+uint32_t WAMRRuntime::native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
     wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
     auto ptr = (void*) pointer;
     auto tupleBuffer = allocateBufferProxy(ptr);
@@ -107,15 +107,18 @@ uint32_t native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer)
     // Translate wasm -> native pointer address
     auto nativeTBPtr = wasm_runtime_addr_app_to_native(moduleInstance, wasmTBPtr);
     auto nativeBufferPtr = wasm_runtime_addr_app_to_native(moduleInstance, wasmBufferPtr);
+    // Set the buffer pointer in the WASM TupleBuffer to point to the buffer we copied into WASM memory
     auto wasmTB = static_cast<Runtime::TupleBuffer*>(nativeTBPtr);
     wasmTB->setBuffer(static_cast<uint8_t*>(nativeBufferPtr));
     return wasmBufferPtr;
 }
 
-uintptr_t* NES_Runtime_TupleBuffer_getBuffer(wasm_exec_env_t execEnv, uintptr_t* pointer) {
-    (void) execEnv;
-    auto* thisPtr_ = (Runtime::TupleBuffer*) pointer;
-    return reinterpret_cast<uintptr_t*>(thisPtr_->getBuffer());
+uint32_t NES_Runtime_TupleBuffer_getBuffer(wasm_exec_env_t execEnv, uint32_t pointer) {
+    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
+    auto nativePtr = wasm_runtime_addr_app_to_native(moduleInstance, pointer);
+    auto tupleBuffer = (Runtime::TupleBuffer*) nativePtr;
+    auto buffer = tupleBuffer->getBuffer();
+    return wasm_runtime_addr_native_to_app(moduleInstance, buffer);
 }
 
 uint64_t NES_Runtime_TupleBuffer_getWatermark(wasm_exec_env_t execEnv, uintptr_t* pointer) {
@@ -148,23 +151,22 @@ uint64_t NES_Runtime_TupleBuffer_getBufferSize(wasm_exec_env_t execEnv, uintptr_
     return thisPtr_->getBufferSize();
 }
 
-int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
+int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary, ) {
     std::cout << "Starting WAMR\n";
-    static NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(native_allocateBufferProxy, "(i)r"),
-                                           EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBuffer, "(r)r"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getNumberOfTuples, "(r)I"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setNumberOfTuples, "(rI)"),
-                                           EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBufferSize, "(r)I")};
+    NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(WAMRRuntime::native_allocateBufferProxy, "(i)r"),
+                                    EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBuffer, "(i)i"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getNumberOfTuples, "(r)I"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setNumberOfTuples, "(rI)"),
+                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBufferSize, "(r)I")};
 
-    auto x = binaryLength;
-    auto y = queryBinary;
-    auto wasmString = parseWATFile("/home/victor/add.wasm");
 
-    auto length = wasmString.length();
-    auto wasmBuffer = reinterpret_cast<uint8_t*>(wasmString.data());
+    //auto wasmString = parseWATFile("/home/victor/add.wasm");
+    //auto length = wasmString.length();
+
+    auto wasmBuffer = reinterpret_cast<uint8_t*>(queryBinary);
 
     char errorBuffer[128];
     uint32_t stackSize = 4 * 8092, heapSize = 16 * 8092;
@@ -180,7 +182,7 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary) {
     wasm_module_inst_t moduleInstance;
     wasm_module_t module;
 
-    module = wasm_runtime_load(wasmBuffer, length, errorBuffer, sizeof(errorBuffer));
+    module = wasm_runtime_load(wasmBuffer, binaryLength, errorBuffer, sizeof(errorBuffer));
     if (module == nullptr) {
         printf("Loading failed\n");
     } else {

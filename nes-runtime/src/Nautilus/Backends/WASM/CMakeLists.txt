@@ -10,8 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        WASMCompiler.cpp
-        WASMRuntime.cpp
-        WAMRRuntime.cpp
-        )
+if (NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM)
+    add_source_files(nes-runtime WASMCompiler.cpp)
+endif ()
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME)
+    add_source_files(nes-runtime WASMRuntime.cpp)
+endif ()
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_WAMR)
+    add_source_files(nes-runtime WAMRRuntime.cpp)
+endif ()

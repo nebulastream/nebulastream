@@ -27,7 +27,14 @@ class WAMRRuntime {
     WAMRRuntime();
     void setup();
     int32_t run(size_t binaryLength, char* queryBinary);
-
+    /**
+     * Gets passed a pointer to a WorkerContext and creates a TupleBuffer. We copy the TupleBuffer and it's buffer into WASM
+     * linear memory. Otherwise, WASM's sandbox will not allow us to access the buffer from within WASM.
+     * @param execEnv
+     * @param pointer
+     * @return WASM pointer to the TupleBuffer
+     */
+    static uint32_t native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer);
   private:
 
     const char* wat = "(module\n"

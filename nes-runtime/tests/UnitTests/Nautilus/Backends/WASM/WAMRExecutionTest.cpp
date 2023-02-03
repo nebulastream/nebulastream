@@ -12,38 +12,44 @@
     limitations under the License.
 */
 
-#include "Nautilus/Backends/WASM/WAMRRuntime.hpp"
-#include "Runtime/BufferManager.hpp"
-#include "Runtime/WorkerContext.hpp"
-#include "TestUtils/AbstractPipelineExecutionTest.hpp"
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
+#include <Nautilus/Tracing/TraceContext.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Nautilus/Backends/WASM/WAMRRuntime.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
 namespace NES::Nautilus {
 
-class WAMRExecutionTest : public Testing::NESBaseTest, public Runtime::AbstractPipelineExecutionTest {
+class WAMRExecutionTest : public Testing::NESBaseTest {
   public:
     //Runtime::Execution::ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::WorkerContext> wc;
+    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WAMRExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -54,8 +60,8 @@ class WAMRExecutionTest : public Testing::NESBaseTest, public Runtime::AbstractP
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
         //provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        //bm = std::make_shared<Runtime::BufferManager>();
-        //wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
+        bm = std::make_shared<Runtime::BufferManager>();
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -74,46 +80,99 @@ const char* wat = "(module\n"
                   " )\n"
                   ")";
 
-TEST_P(WAMRExecutionTest, callAddFunction) {
+TEST_F(WAMRExecutionTest, callAddFunction) {
     auto wamrRuntime = std::make_unique<Backends::WASM::WAMRRuntime>();
     auto result = wamrRuntime->run(strlen(wat), const_cast<char*>(wat));
     //ASSERT_EQ(0, result);
 }
 
-TEST_P(WAMRExecutionTest, allocateBufferTest) {
+TEST_F(WAMRExecutionTest, allocateBufferTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>();
+    auto wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    schema->addField("f2", BasicType::INT64);
+    auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Runtime::Execution::Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto readF1 = std::make_shared<Runtime::Execution::Expressions::ConstantIntegerExpression>(5);
-    auto readF2 = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Runtime::Execution::Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = std::make_shared<Runtime::Execution::Operators::Selection>(equalsExpression);
-    scanOperator->setChild(selectionOperator);
+    auto pipelineContext = Runtime::Execution::Operators::MockedPipelineExecutionContext();
+    auto memoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    auto emitOperator = Runtime::Execution::Operators::Emit(std::move(memoryProviderPtr));
+    auto ctx = Runtime::Execution::ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto recordBuffer = Runtime::Execution::RecordBuffer(Value<MemRef>(nullptr));
+    emitOperator.open(ctx, recordBuffer);
+    auto record = Record({{"f1", Value<>(0)}, {"f2", Value<>(10)}});
+    auto execution = Nautilus::Tracing::traceFunction([&ctx, &emitOperator, &record]() {
+        emitOperator.execute(ctx, record);
+    });
+    emitOperator.close(ctx, recordBuffer);
+    auto executionTrace = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *executionTrace << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    auto s = ir->toString();
+    std::cout << s << std::endl;
     /*
-    auto emitMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Runtime::Execution::Operators::Emit>(std::move(emitMemoryProviderPtr));
-    selectionOperator->setChild(emitOperator);
-    */
-    auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
+    auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+
+    auto pipelineExeCxtRef = Value<MemRef>((int8_t*) nullptr);
+    pipelineExeCxtRef.ref =
+        Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+    auto wcRef = Value<MemRef>((int8_t*) nullptr);
+    wcRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+
+    auto memoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+    auto scanOperator = Runtime::Execution::Operators::Scan(std::move(memoryProviderPtr));
+    auto collector = std::make_shared<Runtime::Execution::Operators::CollectOperator>();
+    scanOperator.setChild(collector);
+
     auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 100; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(columnMemoryLayout, buffer);
+    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
+        dynamicBuffer[i]["f1"].write((int64_t) i % 2);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
-}
+    auto ctx = Runtime::Execution::ExecutionContext(wcRef, pipelineExeCxtRef);
+    auto recordBuffer = NES::Runtime::Execution::RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
 
-INSTANTIATE_TEST_CASE_P(testEmitOperator,
-                        WAMRExecutionTest,
-                        ::testing::Values("WASM"),
-                        [](const testing::TestParamInfo<WAMRExecutionTest::ParamType>& info) {
-                            return info.param;
-                        });
+    auto execution = Nautilus::Tracing::traceFunction([&]() {
+        int x = 10;
+        int y = x + 10;
+    });
+    */
+    /*
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::UINT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scan = Runtime::Execution::Operators::Scan(std::move(memoryProviderPtr));
+    auto emit = Runtime::Execution::Operators::Emit(std::move(memoryProviderPtr));
+    scan.setChild(emit);
+
+    auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
+    RecordBuffer recordBuffer = RecordBuffer(memRef);
+
+    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
+    memRefPCTX.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
+    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
+    wctxRefPCTX.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
+    RuntimeExecutionContext executionContext = RuntimeExecutionContext(memRefPCTX);
+
+    auto execution = Nautilus::Tracing::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
+        scan.open(executionContext, recordBuffer);
+        scan.close(executionContext, recordBuffer);
+    });
+
+    auto executionTrace = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *executionTrace << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    auto s = ir->toString();
+    std::cout << s << std::endl;
+     */
+}
 
 }// namespace NES::Nautilus
