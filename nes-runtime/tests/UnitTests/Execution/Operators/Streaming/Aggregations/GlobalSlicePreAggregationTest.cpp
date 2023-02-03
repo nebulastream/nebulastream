@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -86,12 +87,13 @@ class GlobalSlicePreAggregationTest : public testing::Test {
 TEST_F(GlobalSlicePreAggregationTest, createNewFieldTest) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto integer = DataTypeFactory::createInt64();
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto slicePreAggregation =
         GlobalSlicePreAggregation(0 /*handler index*/,
                                   readTs,
                                   {readF2},
-                                  {std::make_shared<Aggregation::CountAggregationFunction>(integer, integer)});
+                                  {std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType)});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
