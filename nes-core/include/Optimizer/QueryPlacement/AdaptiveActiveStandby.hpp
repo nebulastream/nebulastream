@@ -114,6 +114,7 @@ class AdaptiveActiveStandby {
     std::chrono::seconds timeConstraint{60};
     double overUtilizationPenaltyWeight = 0.2;
     double networkCostWeight = 0.8;
+    bool excludeNodesConnectingPrimaries = true;    // false -> only exclude nodes that host the primary operators themselves
 
     // NOTE: replace topology->findNodeWithId(ID) with topologyMap[ID], if topologyMap contains all relevant paths instead of a
     //  single one?
@@ -164,6 +165,16 @@ class AdaptiveActiveStandby {
      * @param startTopologyNode: topology node where the separate path should begin
      */
     bool separatePathExists(const OperatorNodePtr& primaryOperator, const TopologyNodePtr& startTopologyNode);
+
+    /**
+     * Gets the Ids of topology nodes that host the primary operator and its ancestors up until a target topology node
+     * if excludeNodesConnectingPrimaries is set to true, then it also includes the intermediate connecting nodes
+     * @param primaryOperator: whose path is searched for
+     * @param targetTopologyNode: where the path should end
+     * @return a set of the Ids of the result topology nodes
+     */
+    std::set<TopologyNodeId> getNodeIdsToExcludeToTarget(const OperatorNodePtr& primaryOperator,
+                                                         const TopologyNodePtr& targetTopologyNode);
 
     /**
      * Predicate for sorting lists of OperatorNodePtr. Sorts in ascending order, primarily based on the output, secondarily based
