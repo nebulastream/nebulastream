@@ -69,7 +69,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+        for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
             auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunctions[i]);
@@ -88,7 +88,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
             auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
             if (recordCount >= minCount) {
                 std::map<Nautilus::Record::RecordFieldIdentifier, Value<>> aggResults;
-                for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+                for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
