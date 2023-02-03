@@ -18,7 +18,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -29,6 +28,15 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+
+
+namespace NES {
+  namespace Runtime {
+    namespace MemoryLayouts {
+      class DynamicTupleBuffer;
+    }
+  }
+}
 
 namespace NES {
 class KalmanFilter;
@@ -295,7 +303,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
-    Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+    // Todo forward ref DynamicTupleBuffer
+    NES::Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
 
   protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;

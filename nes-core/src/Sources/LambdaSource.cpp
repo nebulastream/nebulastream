@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
