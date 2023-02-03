@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
@@ -81,7 +82,8 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto aggregationResultFieldName = "test$sum";
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
