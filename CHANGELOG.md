@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.4.40](https://github.com/nebulastream/nebulastream/tree/v0.4.40) (2023-02-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.39...v0.4.40)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Location service responses are inconsistent [\#3390](https://github.com/nebulastream/nebulastream/issues/3390)
+- \[BUG\] YSB Source Test e2e [\#3246](https://github.com/nebulastream/nebulastream/issues/3246)
+- \[BUG\] Error message from the network stack that a host is not reachable should be a warning [\#2741](https://github.com/nebulastream/nebulastream/issues/2741)
+- Memory leaks in NES [\#1655](https://github.com/nebulastream/nebulastream/issues/1655)
+
 ## [v0.4.39](https://github.com/nebulastream/nebulastream/tree/v0.4.39) (2023-02-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.38...v0.4.39)
