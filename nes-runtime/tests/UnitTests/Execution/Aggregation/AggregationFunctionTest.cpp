@@ -48,7 +48,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>( 1L);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>( (int64_t) 1);
     // test lift
     sumAgg.lift(memref, incomingValue);
     ASSERT_EQ(sumValue.sum, 1);
@@ -78,7 +78,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     auto countValue = Aggregation::CountAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>(1L);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
     countAgg.lift(memref, incomingValue);
     ASSERT_EQ(countValue.count, 1);
@@ -139,8 +139,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
-    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10L);
-    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1L);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
 
     // lift value in minAgg
@@ -180,9 +180,9 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
-    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10L);
-    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1L);
-    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>(15L);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
 
     // lift value in minAgg
     maxAgg.lift(memref, incomingValueFive);
