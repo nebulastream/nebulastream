@@ -58,6 +58,7 @@ class WorkerContext {
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
     std::ofstream statisticsFile;
     std::ofstream storageFile;
+    std::ofstream propagationFile;
     uint64_t currentEpoch;
 
   public:
@@ -146,7 +147,7 @@ class WorkerContext {
      * @param nesPartitionId partition id
      * @param timestamp timestamp
      */
-    void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp);
+    void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay);
 
     /**
      * @brief removes a registered network channel with a termination type

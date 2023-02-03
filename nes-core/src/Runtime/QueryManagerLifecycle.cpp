@@ -450,7 +450,7 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
     return true;
 }
 
-bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier) {
+bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay) {
     std::unique_lock queryLock(queryMutex);
     bool isPropagated = false;
     auto queryId = getQueryId(querySubPlanId);
@@ -464,7 +464,7 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, 
                                                     qep->getQuerySubPlanId(),
                                                     Runtime::ReconfigurationType::PropagateEpoch,
                                                     sink,
-                                                    std::make_any<uint64_t>(epochBarrier));
+                                                    std::make_any<EpochMessage>(epochBarrier, propagationDelay));
             addReconfigurationMessage(queryId, qep->getQuerySubPlanId(), newReconf);
             isPropagated = true;
         }
@@ -475,7 +475,7 @@ bool AbstractQueryManager::sendTrimmingReconfiguration(uint64_t querySubPlanId, 
     return false;
 }
 
-bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier) {
+bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay) {
     std::unique_lock queryLock(queryMutex);
     auto queryId = getQueryId(querySubPlanId);
     auto qep = getQueryExecutionPlan(querySubPlanId);
@@ -487,7 +487,7 @@ bool AbstractQueryManager::propagateEpochBackwards(uint64_t  querySubPlanId, uin
                                                              querySubPlanId,
                                                              Runtime::ReconfigurationType::PropagateEpoch,
                                                              source,
-                                                             std::make_any<uint64_t>(epochBarrier));
+                                                             std::make_any<EpochMessage>(epochBarrier, propagationDelay));
             addReconfigurationMessage(queryId, querySubPlanId, newReconf);
             isPropagated = true;
         }

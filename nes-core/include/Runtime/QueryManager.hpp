@@ -294,7 +294,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param epochBarrier timestamp that should be trimmed in the storage
      * @return true if successful
      */
-    bool sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier);
+    bool sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay);
 
     /**
      * @brief Triggers an epoch propagation for all network sinks
@@ -303,7 +303,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param epochBarrier timestamp that should be trimmed in the storage
      * @return true if successful
      */
-    bool propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier);
+    bool propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay);
 
 
     bool propagateKEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t replicationLevel);

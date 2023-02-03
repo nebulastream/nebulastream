@@ -59,14 +59,17 @@ class BaseEvent {
 };
 
 struct PropagateEpochEvent {
-    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
+    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp, uint64_t propagationDelay) : type(type), timestamp(timestamp), propagationDelay(propagationDelay) {}
 
     Runtime::EventType getEventType() const { return type; }
 
     uint64_t timestampValue() const { return timestamp; }
 
+    uint64_t propagationDelayValue() const { return propagationDelay; }
+
     Runtime::EventType type;
     uint64_t timestamp;
+    uint64_t propagationDelay;
 };
 
 struct PropagateKEpochEvent {

@@ -524,10 +524,10 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
 
 //    workerConfig2->lambdaSource = 2;
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 //
 //    workerConfig3->lambdaSource = 2;
 //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
@@ -536,8 +536,8 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
 //    crd->getTopologyManagerService()->removeParent(4,1);
-//    crd->getTopologyManagerService()->removeParent(3,1);
-//    crd->getTopologyManagerService()->addParent(3,2);
+    crd->getTopologyManagerService()->removeParent(3,1);
+    crd->getTopologyManagerService()->addParent(3,2);
 //    crd->getTopologyManagerService()->addParent(4,3);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -552,7 +552,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));

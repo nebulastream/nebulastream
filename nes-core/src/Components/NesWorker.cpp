@@ -353,15 +353,14 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 statisticsFile << "latencyAVG,";
                 statisticsFile << "queueSizeAVG,";
                 statisticsFile << "availableGlobalBufferAVG,";
-                statisticsFile << "availableFixedBufferAVG,";
-                statisticsFile << "workerId\n";
+                statisticsFile << "availableFixedBufferAVG\n";
                 while (isRunning) {
                     auto ts = std::chrono::system_clock::now();
                     auto timeNow = std::chrono::system_clock::to_time_t(ts);
                     auto stats = nodeEngine->getQueryStatistics(true);
                     for (auto& query : stats) {
                         statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
-                                       << query.getQueryStatisticsAsString() << getWorkerId() << "\n";
+                                       << query.getQueryStatisticsAsString() << "\n";
                         statisticsFile.flush();
                     }
                     sleep(1);

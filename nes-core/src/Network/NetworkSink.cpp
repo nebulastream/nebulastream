@@ -151,11 +151,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::PropagateEpoch: {
 //            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
 //            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
+              auto epochMessage = task.getUserData<EpochMessage>();
 //            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
 //                                                                 << "punctuation= " << timestamp);
 //            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.trimStorage(nesPartition, timestamp);
+            workerContext.trimStorage(nesPartition, epochMessage.getTimestamp(), epochMessage.getReplicationLevel());
             break;
         }
         default: {
@@ -187,10 +187,11 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
         auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
         auto epochBarrier = epochEvent->timestampValue();
-        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+        auto propagationDelay = epochEvent->propagationDelayValue();
+        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier, propagationDelay);
         if (success) {
             NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
-            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier);
+            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier, propagationDelay);
             if (success) {
                 NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
             } else {
@@ -214,7 +215,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
             }
         }
         else {
-            auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier);
+            auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier, 0);
             if (success) {
                 NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
                 success = queryManager->propagateKEpochBackwards(querySubPlanId, epochBarrier, 0);

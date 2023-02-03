@@ -63,7 +63,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
     ss << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
     ss << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load())  << ",";
-    ss << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
+    ss << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     return ss.str();
 }
 
