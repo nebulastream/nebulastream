@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
+add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp" SelectivityRuntimeTest.cpp)
 target_link_libraries(runtime-scan-emit-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-scan-emit-pipeline-test COMMAND runtime-scan-emit-pipeline-test)
 
@@ -26,3 +26,7 @@ add_test(NAME runtime-threshold-window-pipeline-test COMMAND runtime-threshold-w
 add_executable(runtime-text-pipeline-test "TextPipelineTest.cpp")
 target_link_libraries(runtime-text-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-text-pipeline-test COMMAND runtime-text-pipeline-test)
+
+add_executable(runtime-selectivity-runtime-test "SelectivityRuntimeTest.cpp")
+target_link_libraries(runtime-selectivity-runtime-test nes-runtime-tests ${GTEST_LIBRARIES})
+add_test(NAME runtime-selectivity-runtime-test COMMAND runtime-selectivity-runtime-test)
