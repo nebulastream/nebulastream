@@ -39,8 +39,18 @@ ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTuple
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     auto bufferRef = Value<MemRef>((int8_t*) std::addressof(inputTupleBuffer));
     auto recordBuffer = RecordBuffer(bufferRef);
+
+    std::cout << "Number of input tuples: " << inputTupleBuffer.getNumberOfTuples() << std::endl;
+    auto runtimeStart = std::chrono::high_resolution_clock::now();
+
     physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
     physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
+
+    auto runtimeEnd = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
+    std::cout << "Number of emitted tuples: " << pipelineExecutionContext.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << duration.count() << " microseconds" << std::endl;
+
     return ExecutionResult::Finished;
 }
 

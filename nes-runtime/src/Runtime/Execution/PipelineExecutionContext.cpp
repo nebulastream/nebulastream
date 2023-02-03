@@ -35,6 +35,7 @@ PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {
     // call the function handler
+    numberOfEmittedTuples = buffer.getNumberOfTuples();
     emitFunctionHandler(buffer, workerContext);
 }
 
@@ -48,5 +49,6 @@ std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() 
 std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
 uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const { return numberOfWorkerThreads; }
 Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const { return bufferProvider; }
+uint64_t PipelineExecutionContext::getNumberOfEmittedTuples() { return numberOfEmittedTuples; }
 
 }// namespace NES::Runtime::Execution

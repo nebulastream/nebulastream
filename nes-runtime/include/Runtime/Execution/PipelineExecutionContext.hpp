@@ -103,6 +103,12 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     Runtime::BufferManagerPtr getBufferManager() const;
 
+    /**
+     * @brief Returns the number of emitted tuples of the tuple buffer
+     * @return uint64_t
+     */
+    uint64_t getNumberOfEmittedTuples();
+
   private:
     /**
      * @brief Id of the pipeline
@@ -130,6 +136,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 
     const Runtime::BufferManagerPtr bufferProvider;
     size_t numberOfWorkerThreads;
+
+    uint64_t numberOfEmittedTuples;
 
     std::vector<PredecessorExecutablePipeline> predecessors;
 };
