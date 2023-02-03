@@ -20,6 +20,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -351,6 +352,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema,
                                       bool autoCommit,
                                       uint64_t kafkaConsumerTimeout,
                                       std::string offsetMode,
+                                      const KafkaSourceTypePtr& kafkaSourceType,
                                       OperatorId operatorId,
                                       OriginId originId,
                                       size_t numSourceLocalBuffers,

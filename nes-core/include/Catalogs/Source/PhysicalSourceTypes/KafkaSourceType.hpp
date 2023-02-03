@@ -104,6 +104,11 @@ class KafkaSourceType : public PhysicalSourceType {
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getOffsetMode() const;
 
     /**
+     * @brief Get input data format
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<Configurations::InputFormat>> getInputFormat() const;
+
+    /**
      * @brief Set offsetMode
      */
     void setOffsetMode(std::string offsetMode);
@@ -138,6 +143,17 @@ class KafkaSourceType : public PhysicalSourceType {
      */
     void setBatchSize(uint32_t batchSize);
 
+    /**
+     * @brief Set input data format
+     */
+    void setInputFormat(std::string inputFormat);
+
+    /**
+     * @brief Sets the input data format given as Configuration::InputFormat
+     * @param inputFormatValue
+     */
+    void setInputFormat(Configurations::InputFormat inputFormatValue);
+
   private:
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
@@ -162,6 +178,7 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption connectionTimeout;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption batchSize;
+    Configurations::InputFormatConfigOption inputFormat;
 };
 }// namespace NES
 #endif// NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

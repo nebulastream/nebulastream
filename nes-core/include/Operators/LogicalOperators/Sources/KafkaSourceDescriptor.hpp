@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
 
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {
@@ -76,6 +77,11 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     const std::string& getGroupId() const;
 
     /**
+     * @brief Get the input type for the source
+     */
+    KafkaSourceTypePtr getSourceConfigPtr() const;
+
+    /**
      * @brief Is kafka topic offset to be auto committed
      */
     bool isAutoCommit() const;
@@ -119,6 +125,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     std::string offsetMode;
     uint64_t numbersOfBufferToProduce;
     uint64_t batchSize;
+    KafkaSourceTypePtr kafkaSourceType;
 };
 
 using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;
