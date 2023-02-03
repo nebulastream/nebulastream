@@ -197,17 +197,21 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return mapJavaUdf;
 #endif// ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        // TODO #3294: Support multiple aggregation functions
-        auto agg = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
-                       ->getOperatorHandler()
-                       ->getWindowDefinition()
-                       ->getWindowAggregation()[0];
-        auto aggregationType = agg->getType();
+        auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
+                        ->getOperatorHandler()
+                        ->getWindowDefinition()
+                        ->getWindowAggregation();
 
-        auto aggregationValue = getAggregationValueForThresholdWindow(aggregationType, agg->getInputStamp());
-
+        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
+        // iterate over all aggregation functions
+        for (size_t i = 0; i < aggs.size(); ++i) {
+            auto aggregationType = aggs[i]->getType();
+            // collect aggValues for each aggType
+            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
+        }
+        // pass aggValues to ThresholdWindowHandler
         auto handler =
-            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggregationValue));
+            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 
@@ -493,33 +497,34 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    // TODO: 3315 Support multiple aggregation functions
-    if (aggregations.size() != 1) {
-        NES_NOT_IMPLEMENTED();
-    } else {
-        auto aggregation = aggregations[0];
-        std::shared_ptr<Runtime::Execution::Expressions::Expression> aggregatedFieldAccess = nullptr;
-
-        auto aggregationFunction = lowerAggregations(aggregations)[0];
-
+    std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
+    std::vector<std::string> aggregationResultFieldNames;
+    std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
+    // iterate over all aggregation function and lower them
+    for (size_t i = 0; i < aggregations.size(); ++i) {
+        auto aggregation = aggregations[i];
+        auto aggregationFunction = lowerAggregations(aggregations)[i];
+        aggregationFunctions.emplace_back(aggregationFunction);
         // Obtain the field name used to store the aggregation result
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         auto aggregationResultFieldName =
             thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + aggregation->getTypeAsString();
+        aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
 
         if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
-            aggregatedFieldAccess = lowerExpression(aggregation->on());
+            auto aggregatedFieldAccess = lowerExpression(aggregation->on());
             // The onField for count should not be set to anything
+            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
         }
-
-        return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
-                                                                                minCount,
-                                                                                aggregatedFieldAccess,
-                                                                                aggregationResultFieldName,
-                                                                                aggregationFunction,
-                                                                                handlerIndex);
     }
+
+    return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
+                                                                            minCount,
+                                                                            aggregatedFieldAccesses,
+                                                                            aggregationResultFieldNames,
+                                                                            aggregationFunctions,
+                                                                            handlerIndex);
 }
 
 #ifdef ENABLE_JNI
