@@ -21,6 +21,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
@@ -151,20 +152,23 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         return map;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         // TODO #3294: Support multiple aggregation functions
-        auto agg = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
+        auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()
                        ->getOperatorHandler()
                        ->getWindowDefinition()
-                       ->getWindowAggregation()[0];
-        auto aggregationType = agg->getType();
-//        auto aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AggregationValue>();
+                       ->getWindowAggregation();
 
-        auto aggregationValue = getAggregationValueForThresholdWindow(aggregationType, agg->getInputStamp());
-
+        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
+        // iterate over all aggregation functions
+        for (size_t i = 0; i < aggs.size(); ++i) {
+            auto aggregationType = aggs[i]->getType();
+            // auto aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AggregationValue>();
+            //std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> aggregationValue = getAggregationValueForThresholdWindow(aggregationType, agg[i]->getInputStamp());
+            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
+        }
         auto handler =
-            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggregationValue));
+            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
-
         auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
         parentOperator->setChild(thresholdWindow);
         return thresholdWindow;
@@ -302,34 +306,37 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
-    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
-    // TODO: 3315 Support multiple aggregation functions
-    if (aggregations.size() != 1) {
-        NES_NOT_IMPLEMENTED();
-    } else {
-        auto aggregation = aggregations[0];
-        std::shared_ptr<Runtime::Execution::Expressions::Expression> aggregatedFieldAccess = nullptr;
+    std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
+    std::vector<std::string> aggregationResultFieldNames;
+    std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
 
-        auto aggregationFunction = lowerAggregations(aggregations)[0];
+    for(size_t i = 0; i < aggregations.size(); ++i) {
+        auto aggregation = aggregations[i];
+
+        auto aggregationFunction = lowerAggregations(aggregations)[i];
+        aggregationFunctions.emplace_back(aggregationFunction);
 
         // Obtain the field name used to store the aggregation result
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         auto aggregationResultFieldName =
             thresholdWindowResultSchema->getSourceNameQualifier() + "$" + aggregation->getTypeAsString();
+        aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
 
         if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
-            aggregatedFieldAccess = lowerExpression(aggregation->on());
+            auto aggregatedFieldAccess = lowerExpression(aggregation->on());
             // The onField for count should not be set to anything
+            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
         }
+    }
 
         return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
                                                                                 minCount,
-                                                                                aggregatedFieldAccess,
-                                                                                aggregationResultFieldName,
-                                                                                aggregationFunction,
+                                                                                aggregatedFieldAccesses,
+                                                                                aggregationResultFieldNames,
+                                                                                aggregationFunctions,
                                                                                 handlerIndex);
-    }
+
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
@@ -429,6 +436,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
         });
     return aggregationFunctions;
 }
+
 std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
 LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
     Windowing::WindowAggregationDescriptor::Type aggregationType,
