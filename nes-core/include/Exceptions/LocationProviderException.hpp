@@ -28,8 +28,9 @@ class LocationProviderException : public std::exception {
     explicit LocationProviderException(std::string message);
 
     const char* what() const noexcept override;
+
   private:
     std::string message;
 };
-}//NES::Spatial::Exception
+}// namespace NES::Spatial::Exception
 #endif//NES_CORE_INCLUDE_EXCEPTIONS_LOCATIONPROVIDEREXCEPTION_HPP

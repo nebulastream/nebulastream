@@ -75,10 +75,10 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         remove(interpolatedCsv.c_str());
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypointsToInterpolate;
         waypointsToInterpolate.push_back({{52.58210307572243, 12.987507417206261}, 0});
-       waypointsToInterpolate.push_back({{52.5225665088927, 13.198478869225813}, 1000000000});
-       waypointsToInterpolate.push_back({{52.5824815034542, 13.280594641984383}, 2000000000});
-       waypointsToInterpolate.push_back({{52.5251960754162, 13.400310793986574}, 3000000000});
-       waypointsToInterpolate.push_back({{52.51309876750171, 13.57837236374691}, 5000000000});
+        waypointsToInterpolate.push_back({{52.5225665088927, 13.198478869225813}, 1000000000});
+        waypointsToInterpolate.push_back({{52.5824815034542, 13.280594641984383}, 2000000000});
+        waypointsToInterpolate.push_back({{52.5251960754162, 13.400310793986574}, 3000000000});
+        waypointsToInterpolate.push_back({{52.51309876750171, 13.57837236374691}, 5000000000});
         auto interpolatedPath = interpolatePath(waypointsToInterpolate, 1000);
         writeWaypointsToCsv(interpolatedCsv, interpolatedPath);
 
@@ -149,33 +149,33 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         return true;
     }
 
-    static std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> interpolatePath(
-        std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints, Timestamp amount) {
+    static std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>
+    interpolatePath(std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints, Timestamp amount) {
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> interpolatedPath;
         Timestamp step = waypoints.back().getTimestamp().value() / amount;
         for (auto waypointsItr = waypoints.cbegin(); waypointsItr != waypoints.cend(); ++waypointsItr) {
-           auto next = waypointsItr + 1;
-           if (next == waypoints.cend()) {
-               interpolatedPath.emplace_back(*waypointsItr);
-               break;
-           }
-           auto prevLocation = waypointsItr->getLocation();
-           auto prevTime = waypointsItr->getTimestamp().value();
-           auto nextLocation = next->getLocation();
-           auto nextTime = next->getTimestamp().value();
-           Timestamp timerange = nextTime - prevTime;
-           S2Point prevPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(prevLocation);
-           S2Point nextPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextLocation);
-           S2Polyline path({prevPoint, nextPoint});
-           for (Timestamp i = 0; i < timerange; i += step) {
-              double frac = (double) i / (double) timerange;
-              S2LatLng interpolated(path.Interpolate(frac));
-              interpolatedPath.emplace_back(
-                  NES::Spatial::DataTypes::Experimental::GeoLocation(interpolated.lat().degrees(), interpolated.lng().degrees()),
-                  prevTime + i);
-           }
-       }
-       return interpolatedPath;
+            auto next = waypointsItr + 1;
+            if (next == waypoints.cend()) {
+                interpolatedPath.emplace_back(*waypointsItr);
+                break;
+            }
+            auto prevLocation = waypointsItr->getLocation();
+            auto prevTime = waypointsItr->getTimestamp().value();
+            auto nextLocation = next->getLocation();
+            auto nextTime = next->getTimestamp().value();
+            Timestamp timerange = nextTime - prevTime;
+            S2Point prevPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(prevLocation);
+            S2Point nextPoint = NES::Spatial::Util::S2Utilities::geoLocationToS2Point(nextLocation);
+            S2Polyline path({prevPoint, nextPoint});
+            for (Timestamp i = 0; i < timerange; i += step) {
+                double frac = (double) i / (double) timerange;
+                S2LatLng interpolated(path.Interpolate(frac));
+                interpolatedPath.emplace_back(NES::Spatial::DataTypes::Experimental::GeoLocation(interpolated.lat().degrees(),
+                                                                                                 interpolated.lng().degrees()),
+                                              prevTime + i);
+            }
+        }
+        return interpolatedPath;
     }
 
     static void TearDownTestCase() {
@@ -459,7 +459,8 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         }
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
-            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
+                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -474,8 +475,8 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
+                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -540,7 +541,8 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         }
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
-            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
+                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -555,8 +557,8 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
+                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         ASSERT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -626,7 +628,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
         }
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
-            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
+                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -641,8 +644,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
+                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -683,7 +686,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     ASSERT_TRUE(retStart1);
     auto locationProvider =
         std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV,
-            NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
+                                 NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     auto wrk1id = wrk1->getWorkerId();
@@ -709,7 +712,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
         }
         if (currentGeoLocation.has_value()) {
             receivedLocation = true;
-            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {;
+            if (actualWayPoints.empty() || currentGeoLocation.value() != actualWayPoints.back().getLocation()) {
+                ;
                 actualWayPoints.emplace_back(currentGeoLocation.value());
             }
         }
@@ -724,8 +728,8 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
         while (expectedIt != expectedWayPoints.cend() && expectedIt->getLocation() != actualIt->getLocation()) {
             expectedIt++;
         }
-        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) <<
-                                               " to expected waypoint " << std::distance(expectedWayPoints.cbegin(), expectedIt));
+        NES_DEBUG("comparing actual waypoint " << std::distance(actualWayPoints.cbegin(), actualIt) << " to expected waypoint "
+                                               << std::distance(expectedWayPoints.cbegin(), expectedIt));
         //only if an unexpected location was observed the iterator could have reached the end of the list of expected waypoints
         EXPECT_NE(expectedIt, expectedWayPoints.cend());
     }
@@ -819,13 +823,12 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
 
     std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> locVec;
     //fixed location node on path
-    locVec.emplace_back(52.57828047889124,12.988243103027346);
-    locVec.emplace_back(52.53968787768964,13.109092712402346);
-    locVec.emplace_back(52.544487724835534,13.207969665527346);
-    locVec.emplace_back(52.55930133381748,13.3154296875);
-    locVec.emplace_back(52.5221535423678,13.411216735839846);
-    locVec.emplace_back(52.50523880235127,13.540649414062502);
-
+    locVec.emplace_back(52.57828047889124, 12.988243103027346);
+    locVec.emplace_back(52.53968787768964, 13.109092712402346);
+    locVec.emplace_back(52.544487724835534, 13.207969665527346);
+    locVec.emplace_back(52.55930133381748, 13.3154296875);
+    locVec.emplace_back(52.5221535423678, 13.411216735839846);
+    locVec.emplace_back(52.50523880235127, 13.540649414062502);
 
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -838,59 +841,42 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         topology->addNewTopologyNodeAsChild(node, currNode);
         topologyManagerService->addGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(elem));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem),
-                      currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem), currNode->getId());
         idCount++;
     }
 
-    std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> offPathVec({
-        {52.5357946437949,13.025665283203127},
-        {52.50656427051772,13.168487548828127},
-        {52.627534956324375,13.303070068359377},
-        {52.60836876528842,13.355255126953125},
-        {52.52744509312945,13.341522216796877},
-        {52.49988031135493,13.432159423828125},
-        {52.485673523569304,13.270111083984377},
-        {52.61670292287682,13.209686279296875},
-        {52.61086917912814,13.08746337890625},
-        {52.590028034393036,13.452758789062502},
-        {52.56667417928053,13.559875488281252},
-        {52.44888169881338,13.493957519531252},
-        {52.42712661816063,13.345642089843752},
-        {52.43047425278167,13.189086914062502},
-        {52.46393661692312,13.345642089843752},
-        {52.462264102421585,13.073730468750002},
-        {52.46560906788363,12.970733642578125},
-        {52.51742353671031,12.886962890625002},
-        {52.654187004059686,12.991333007812502},
-        {52.66167996673036,13.139648437500002},
-        {52.68831121111206,13.24127197265625},
-        {52.66667456166765,13.374481201171877},
-        {52.65002369203887,13.465118408203127},
-        {52.64835825622956,13.568115234375002},
-        {52.40284866297361,13.454132080078127},
-        {52.3927987027365,13.253631591796877},
-        {52.533289945284096,13.627166748046877},
-        {52.45390057676374,13.592834472656252}
-    });
+    std::vector<NES::Spatial::DataTypes::Experimental::GeoLocation> offPathVec(
+        {{52.5357946437949, 13.025665283203127},   {52.50656427051772, 13.168487548828127},
+         {52.627534956324375, 13.303070068359377}, {52.60836876528842, 13.355255126953125},
+         {52.52744509312945, 13.341522216796877},  {52.49988031135493, 13.432159423828125},
+         {52.485673523569304, 13.270111083984377}, {52.61670292287682, 13.209686279296875},
+         {52.61086917912814, 13.08746337890625},   {52.590028034393036, 13.452758789062502},
+         {52.56667417928053, 13.559875488281252},  {52.44888169881338, 13.493957519531252},
+         {52.42712661816063, 13.345642089843752},  {52.43047425278167, 13.189086914062502},
+         {52.46393661692312, 13.345642089843752},  {52.462264102421585, 13.073730468750002},
+         {52.46560906788363, 12.970733642578125},  {52.51742353671031, 12.886962890625002},
+         {52.654187004059686, 12.991333007812502}, {52.66167996673036, 13.139648437500002},
+         {52.68831121111206, 13.24127197265625},   {52.66667456166765, 13.374481201171877},
+         {52.65002369203887, 13.465118408203127},  {52.64835825622956, 13.568115234375002},
+         {52.40284866297361, 13.454132080078127},  {52.3927987027365, 13.253631591796877},
+         {52.533289945284096, 13.627166748046877}, {52.45390057676374, 13.592834472656252}});
 
     idCount = 20001;
     for (auto elem : offPathVec) {
         TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0, properties);
         topology->addNewTopologyNodeAsChild(node, currNode);
         topologyManagerService->addGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(elem));
-        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem),
-                      currNode->getId());
+        nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(elem), currNode->getId());
         idCount++;
     }
 
     uint64_t initialParentId = 20000;
-    auto outOfCoverageLocation =  NES::Spatial::DataTypes::Experimental::GeoLocation(52.7091055763087, 13.128662109375002);
+    auto outOfCoverageLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(52.7091055763087, 13.128662109375002);
     TopologyNodePtr currNode = TopologyNode::create(initialParentId, "127.0.0.1", 1, 0, 0, properties);
     topology->addNewTopologyNodeAsChild(node, currNode);
-    topologyManagerService->addGeoLocation(currNode->getId(), NES::Spatial::DataTypes::Experimental::GeoLocation(outOfCoverageLocation));
-    nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(outOfCoverageLocation),
-                  currNode->getId());
+    topologyManagerService->addGeoLocation(currNode->getId(),
+                                           NES::Spatial::DataTypes::Experimental::GeoLocation(outOfCoverageLocation));
+    nodeIndex.Add(NES::Spatial::Util::S2Utilities::geoLocationToS2Point(outOfCoverageLocation), currNode->getId());
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -907,8 +893,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY)
-                                                                    + "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
@@ -1287,8 +1272,7 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     wrkConf1->mobilityConfiguration.mobilityHandlerUpdateInterval.setValue(1000);
     wrkConf1->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY)
-                                                                    + "path1.csv");
+    wrkConf1->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "path1.csv");
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

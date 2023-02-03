@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
+#include <Exceptions/LocationProviderException.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <fstream>
 #include <iostream>
-#include <Exceptions/LocationProviderException.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -51,15 +51,16 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
         std::vector<std::string> values;
         try {
             values = NES::Util::splitWithStringDelimiter<std::string>(csvLine, delimiter);
-        } catch (std::exception &e) {
-            std::string errorString = std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ") + strerror(errno);
+        } catch (std::exception& e) {
+            std::string errorString =
+                std::string("An error occurred while splitting delimiter of waypoint CSV. ERROR: ") + strerror(errno);
             NES_ERROR("LocationProviderCSV:  " << errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
         if (values.size() != 3) {
             std::string errorString =
-                std::string("LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has ") +
-                std::to_string(values.size()) + std::string(" columns");
+                std::string("LoationProviderCSV: could not read waypoints from csv, expected 3 columns but input file has ")
+                + std::to_string(values.size()) + std::string(" columns");
             NES_ERROR("LocationProviderCSV:  " << errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
@@ -74,7 +75,7 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             time = std::stoul(timeString);
             latitude = std::stod(latitudeString);
             longitude = std::stod(longitudeString);
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             std::string errorString = std::string("An error occurred while creating the waypoint. ERROR: ") + strerror(errno);
             NES_ERROR("LocationProviderCSV:  " << errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
@@ -86,10 +87,8 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and add it to a vector containing all waypoints
-        auto waypoint = DataTypes::Experimental::Waypoint(
-            DataTypes::Experimental::GeoLocation(latitude, longitude),
-            time);
-            waypoints.push_back(waypoint);
+        auto waypoint = DataTypes::Experimental::Waypoint(DataTypes::Experimental::GeoLocation(latitude, longitude), time);
+        waypoints.push_back(waypoint);
     }
     if (waypoints.empty()) {
         std::string errorString = std::string("No data in CSV, cannot start location provider");
