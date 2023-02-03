@@ -71,7 +71,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
 
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        auto aggregatedValue = Value<Int64>(1L); // default value to aggregate (i.e., for countAgg)
+        auto aggregatedValue = Value<Int64>((int64_t) 1); // default value to aggregate (i.e., for countAgg)
         auto isCountAggregation = std::dynamic_pointer_cast<Aggregation::CountAggregationFunction>(aggregationFunction);
         // if the agg function is not a count, then get the aggregated value from the "onField" field
         // otherwise, just increment the count
