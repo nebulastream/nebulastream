@@ -127,6 +127,7 @@ class MQTTSource : public DataSource {
      * @brief Get source type
      */
     SourceType getType() const override;
+
     /**
      * @brief get physicalTypes
      * @return physicalTypes

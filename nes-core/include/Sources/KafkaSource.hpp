@@ -16,6 +16,8 @@
 #define NES_CORE_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
+#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -39,6 +41,7 @@ class KafkaSource : public DataSource {
                 bool autoCommit,
                 uint64_t kafkaConsumerTimeout,
                 std::string offsetMode,
+                const KafkaSourceTypePtr& kafkaSourceType,
                 OriginId originId,
                 OperatorId operatorId,
                 size_t numSourceLocalBuffers,
@@ -93,6 +96,24 @@ class KafkaSource : public DataSource {
      */
     const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
 
+    /**
+     * @brief get physicalTypes
+     * @return physicalTypes
+     */
+    std::vector<PhysicalTypePtr> getPhysicalTypes() const;
+
+    /**
+     * @brief getter for source config
+     * @return mqttSourceType
+     */
+    const KafkaSourceTypePtr& getSourceConfigPtr() const;
+
+    /**
+     * @brief fill buffer tuple by tuple using the appropriate parser
+     * @param tupleBuffer buffer to be filled
+     */
+    bool fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer);
+
   private:
     /**
      * @brief method to connect kafka using the host and port specified before
@@ -106,7 +127,9 @@ class KafkaSource : public DataSource {
     std::string groupId;
     bool autoCommit;
     std::unique_ptr<cppkafka::Configuration> config;
+    KafkaSourceTypePtr sourceConfig;
     bool connected{false};
+    bool useJson{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
@@ -117,6 +140,8 @@ class KafkaSource : public DataSource {
     uint64_t successFullPollCnt = 0;
     uint64_t failedFullPollCnt = 0;
     uint64_t reuseCnt = 0;
+    std::unique_ptr<Parser> inputParser;
+    std::vector<PhysicalTypePtr> physicalTypes;
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;

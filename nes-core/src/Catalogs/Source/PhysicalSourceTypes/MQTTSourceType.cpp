@@ -62,7 +62,7 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
         flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
     }
     if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second);
+        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
     }
 }
 

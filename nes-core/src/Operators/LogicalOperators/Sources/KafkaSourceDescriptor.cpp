@@ -101,6 +101,8 @@ bool KafkaSourceDescriptor::isAutoCommit() const { return autoCommit; }
 
 uint64_t KafkaSourceDescriptor::getKafkaConnectTimeout() const { return kafkaConnectTimeout; }
 
+KafkaSourceTypePtr KafkaSourceDescriptor::getSourceConfigPtr() const { return kafkaSourceType; }
+
 const std::string& KafkaSourceDescriptor::getGroupId() const { return groupId; }
 bool KafkaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<KafkaSourceDescriptor>()) {
