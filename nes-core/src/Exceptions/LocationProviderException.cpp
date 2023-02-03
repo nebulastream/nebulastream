@@ -19,4 +19,4 @@ namespace NES::Spatial::Exception {
 LocationProviderException::LocationProviderException(std::string message) : message(std::move(message)) {}
 
 const char* LocationProviderException::what() const noexcept { return message.c_str(); }
-}//NES::Spatial::Exception
+}// namespace NES::Spatial::Exception
