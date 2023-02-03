@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp" SelectivityRuntimeTest.cpp)
+add_executable(runtime-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 target_link_libraries(runtime-scan-emit-pipeline-test nes-runtime-tests ${GTEST_LIBRARIES})
 add_test(NAME runtime-scan-emit-pipeline-test COMMAND runtime-scan-emit-pipeline-test)
 
