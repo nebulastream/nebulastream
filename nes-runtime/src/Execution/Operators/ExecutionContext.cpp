@@ -20,7 +20,7 @@
 
 namespace NES::Runtime::Execution {
 
-ExecutionContext::ExecutionContext(Value<NES::Nautilus::MemRef> workerContext, Value<NES::Nautilus::MemRef> pipelineContext)
+ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext, const Value<NES::Nautilus::MemRef>& pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext) {}
 
 void* allocateBufferProxy(void* workerContextPtr) {

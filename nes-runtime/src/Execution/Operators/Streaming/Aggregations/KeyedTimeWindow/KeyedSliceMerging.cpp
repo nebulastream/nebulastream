@@ -25,7 +25,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
+void* createGlobalState2(void* op, void* sliceMergeTaskPtr) {
     auto handler = static_cast<KeyedSliceMergingHandler*>(op);
     auto sliceMergeTask = static_cast<SliceMergeTask*>(sliceMergeTaskPtr);
     auto globalState = handler->createGlobalSlice(sliceMergeTask);
@@ -33,37 +33,37 @@ void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
     return globalState.release();
 }
 
-void* getGlobalSliceState(void* gs) {
+void* getGlobalSliceState2(void* gs) {
     auto globalSlice = static_cast<KeyedSlice*>(gs);
     return globalSlice->getState().get();
 }
 
-void* erasePartition(void* op, uint64_t ts) {
+void* erasePartition2(void* op, uint64_t ts) {
     auto handler = static_cast<KeyedSliceMergingHandler*>(op);
     auto partition = handler->getSliceStaging().erasePartition(ts);
     // we give nautilus the ownership, thus deletePartition must be called.
     return partition.release();
 }
 
-uint64_t getSizeOfPartition(void* p) {
+uint64_t getNumberOfPartition2(void* p) {
     auto partition = static_cast<KeyedSliceStaging::Partition*>(p);
     return partition->partialStates.size();
 }
 
-void* getPartitionState(void* p, uint64_t index) {
+void* getPartitionState2(void* p, uint64_t index) {
     auto partition = static_cast<KeyedSliceStaging::Partition*>(p);
     return partition->partialStates[index].get();
 }
 
-void deletePartition(void* p) {
+void deletePartition2(void* p) {
     auto partition = static_cast<KeyedSliceStaging::Partition*>(p);
     delete partition;
 }
 
-void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
+void setupSliceMergingHandler2(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<KeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
-    handler->setup(*pipelineExecutionContext, size,8);
+    handler->setup(*pipelineExecutionContext, size, 8);
 }
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
@@ -77,7 +77,7 @@ void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
         valueSize = valueSize + function->getSize();
     }
     Nautilus::FunctionCall("setupSliceMergingHandler",
-                           setupSliceMergingHandler,
+                           setupSliceMergingHandler2,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
                            valueSize);
@@ -102,27 +102,42 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
 Value<MemRef> KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
                                                           Value<MemRef>& sliceMergeTask,
                                                           Value<>& endSliceTs) const {
-    auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
-    auto partition = Nautilus::FunctionCall("erasePartition", erasePartition, globalOperatorHandler, endSliceTs.as<UInt64>());
-    auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
-    for (Value<UInt64> i = (uint64_t) 0; i < sizeOfPartitions; i = i + (uint64_t) 1) {
-        auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
+    auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState2, globalOperatorHandler, sliceMergeTask);
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
+    auto partition = Nautilus::FunctionCall("erasePartition", erasePartition2, globalOperatorHandler, endSliceTs.as<UInt64>());
+    auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfPartitions", getNumberOfPartition2, partition);
+    for (Value<UInt64> i = (uint64_t) 0; i < numberOfPartitions; i = i + (uint64_t) 1) {
+        auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState2, partition, i);
         for (const auto& function : aggregationFunctions) {
             function->combine(globalSliceState, partitionState);
             partitionState = partitionState + function->getSize();
             globalSliceState = globalSliceState + function->getSize();
         }
     }
-    Nautilus::FunctionCall("deletePartition", deletePartition, partition);
+    Nautilus::FunctionCall("deletePartition", deletePartition2, partition);
     return globalSlice;
+}
+
+void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalHashTable,
+                                       Interface::ChainedHashMapRef& threadLocalHashTable) const {
+    for (const auto& thEntry : threadLocalHashTable) {
+        globalHashTable.insertEntryOrUpdate(thEntry, [&](auto& gEntry) {
+            auto thValuePtr = thEntry.getValuePtr();
+            auto gValuePtr = gEntry.getValuePtr();
+            for (const auto& function : aggregationFunctions) {
+                function->combine(thValuePtr, gValuePtr);
+                thValuePtr = thValuePtr + function->getSize();
+                gValuePtr = gValuePtr + function->getSize();
+            }
+        });
+    }
 }
 
 void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowStart,
                                    Value<>& windowEnd,
                                    Value<MemRef>& globalSlice) const {
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
 
     Record resultWindow;
     resultWindow.write("start_ts", windowStart);

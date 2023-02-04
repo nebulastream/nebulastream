@@ -47,7 +47,7 @@ class ChainedHashMapTest : public Testing::NESBaseTest {
 TEST_F(ChainedHashMapTest, insertEntryTableTest) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 100, std::move(allocator));
-    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
     auto f1 = Value<Int8>((int8_t) 42);
 
     // check if entry already exists
@@ -70,7 +70,7 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest) {
 TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
-    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
 
     for (uint64_t i = 0; i < 100; i++) {
         Value<Int64> key = (int64_t) i;
@@ -92,7 +92,7 @@ TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey) {
 TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
-    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
 
     for (uint64_t i = 0; i < 10000; i++) {
         Value<Int64> key = (int64_t) i;
@@ -114,7 +114,7 @@ TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey) {
 TEST_F(ChainedHashMapTest, updateValues) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
-    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
 
     // insert
     for (uint64_t i = 0; i < 100; i++) {
@@ -145,7 +145,7 @@ TEST_F(ChainedHashMapTest, updateValues) {
 TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation) {
     auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
-    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
 
     // call findOrCreate multiple times with same key.
     for (uint64_t i = 0; i < 10000; i++) {
@@ -164,6 +164,34 @@ TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation) {
         auto entry1 = hashMapRef.findOne(hash, {key});
         auto value = entry1.getValuePtr().load<Int64>();
         ASSERT_EQ(value, (int64_t) i);
+    }
+}
+
+TEST_F(ChainedHashMapTest, entryIterator) {
+    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator), 64);
+    auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*) &hashMap), 8, 8);
+
+    for (uint64_t i = 0; i < 1000; i++) {
+        Value<Int64> key = (int64_t) i;
+        auto hash = hf->calculate(key);
+        auto entry1 = hashMapRef.findOrCreate(hash, {key});
+        Value<Int64> value = (int64_t) i;
+        entry1.getValuePtr().store(value);
+    }
+    ASSERT_EQ(hashMap.getCurrentSize(), 1000);
+
+    for (const auto& entry : hashMapRef) {
+        auto value = entry.getValuePtr().load<Int64>();
+        entry.getValuePtr().store(value + (int64_t) 42);
+    }
+
+    for (uint64_t i = 0; i < 1000; i++) {
+        Value<Int64> key = (int64_t) i;
+        auto hash = hf->calculate(key);
+        auto entry1 = hashMapRef.findOne(hash, {key});
+        auto value = entry1.getValuePtr().load<Int64>();
+        ASSERT_EQ(value, (int64_t) i + 42);
     }
 }
 

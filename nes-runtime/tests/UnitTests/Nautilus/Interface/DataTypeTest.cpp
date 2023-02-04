@@ -15,6 +15,7 @@
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Utils.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -210,6 +211,22 @@ TEST_F(DataTypeTest, FloatTest) {
     Value<Float> f2 = 0.2f;
     ASSERT_EQ(cast<Float>(f2.value)->getValue(), 0.2f);
     ASSERT_TRUE(f2.value->getType()->isFloat());
+}
+
+struct TestS {
+    uint64_t x;
+    uint64_t y;
+    uint64_t z;
+};
+
+TEST_F(DataTypeTest, LoadMemberTest) {
+
+    auto test = TestS{10, 20, 30};
+
+    Value<MemRef> ref = Value<MemRef>((int8_t*) &test);
+    ASSERT_EQ(getMember(ref, TestS, x).load<UInt64>(), (uint64_t) 10);
+    ASSERT_EQ(getMember(ref, TestS, y).load<UInt64>(), (uint64_t) 20);
+    ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), (uint64_t) 30);
 }
 
 }// namespace NES::Nautilus

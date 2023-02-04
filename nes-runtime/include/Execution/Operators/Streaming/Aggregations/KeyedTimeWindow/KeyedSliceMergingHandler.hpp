@@ -32,6 +32,7 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
     using inherited1 = Runtime::Reconfigurable;
 
   public:
+    static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
     /**
      * @brief Constructor for the KeyedSliceMergingHandler
      * @param windowDefinition
@@ -65,8 +66,8 @@ class KeyedSliceMergingHandler : public Runtime::Execution::OperatorHandler,
      * @param sliceMergeTask SliceMergeTask
      * @return GlobalSlicePtr
      */
-    KeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
-    ~KeyedSliceMergingHandler();
+    KeyedSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
+    ~KeyedSliceMergingHandler() override;
 
   private:
     uint64_t keySize;

@@ -17,6 +17,7 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -45,6 +46,7 @@ class KeyedSliceMerging : public Operator {
      */
     Value<MemRef>
     combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<>& endSliceTs) const;
+    void mergeHashTable(Interface::ChainedHashMapRef& globalHashTable, Interface::ChainedHashMapRef& threadLocalHashTable) const;
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context

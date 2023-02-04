@@ -14,9 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
-#include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Execution/Operators/OperatorState.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -42,7 +42,7 @@ class ExecutionContext final {
      * @param workerContext reference to the worker context.
      * @param pipelineContext reference to the pipeline context.
      */
-    ExecutionContext(Value<MemRef> workerContext, Value<MemRef> pipelineContext);
+    ExecutionContext(const Value<MemRef>& workerContext, const Value<MemRef>& pipelineContext);
 
     /**
      * @brief Set local operator state that keeps state in a single pipeline invocation.
