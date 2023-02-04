@@ -32,7 +32,8 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
                              Expressions::ExpressionPtr timestampExpression,
                              const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                              const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
-                             const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+                             const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                             const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;

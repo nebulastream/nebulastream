@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
-#include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
@@ -29,6 +29,8 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -42,28 +44,19 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class KeyedSlicePreAggregationTest : public testing::Test {
+class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("KeyedSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup KeyedSlicePreAggregationTest test class." << std::endl;
-    }
+    static void SetUpTestCase() { NES::Logger::setupLogging("KeyedSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup KeyedSlicePreAggregationTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
         bm = std::make_shared<BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down KeyedSlicePreAggregationTest test case." << std::endl; }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down KeyedSlicePreAggregationTest test class." << std::endl; }
 
     void emitWatermark(KeyedSlicePreAggregation& slicePreAggregation,
                        ExecutionContext& ctx,
@@ -96,7 +89,8 @@ TEST_F(KeyedSlicePreAggregationTest, createNewFieldTest) {
                                  readTs,
                                  {readKey},
                                  {readV1},
-                                 {std::make_shared<Aggregation::CountAggregationFunction>(integer, integer)});
+                                 {std::make_shared<Aggregation::SumAggregationFunction>(integer, integer)},
+                                 std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
     auto sliceStaging = std::make_shared<KeyedSliceStaging>();
     std::vector<OriginId> origins = {0};
@@ -112,27 +106,25 @@ TEST_F(KeyedSlicePreAggregationTest, createNewFieldTest) {
 
     slicePreAggregation.open(ctx, rb);
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 11)}, {"k1", Value<>(11)}, {"v1", Value<>(2)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(12)}, {"v1", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"ts", Value<>((uint64_t) 12)}, {"k1", Value<>(11)}, {"v1", Value<>(3)}}));
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
-   /* auto value = ((uint64_t*) stateStore->getFirstSlice()->getState()->ptr);
-    ASSERT_EQ(*value, 2);
+    auto& hashMap = stateStore->getFirstSlice()->getState();
+    ASSERT_EQ(hashMap->getCurrentSize(), 2);
+    // heck entries in hash table.
+    struct KVPair : public Interface::ChainedHashMap::Entry {
+        uint64_t key;
+        uint64_t value;
+    };
 
-    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 24)}, {"f2", Value<>(42)}}));
-    ASSERT_EQ(stateStore->getNumberOfSlices(), 2);
-    ASSERT_EQ(stateStore->getLastSlice()->getStart(), 20);
-    ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);
-    value = ((uint64_t*) stateStore->getLastSlice()->getState()->ptr);
-    ASSERT_EQ(*value, 1);
-    emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
-    auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
-    ASSERT_EQ(smt->startSlice, 10);
-    ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, 0);
-    ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
-    */
+    auto entries = (KVPair*) hashMap->getPage(0);
+    ASSERT_EQ(entries[0].key, 11);
+    ASSERT_EQ(entries[0].value, 5);
+    ASSERT_EQ(entries[1].key, 12);
+    ASSERT_EQ(entries[1].value, 42);
 }
 
 }// namespace NES::Runtime::Execution::Operators

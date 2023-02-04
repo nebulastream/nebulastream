@@ -25,17 +25,18 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getSliceStoreProxy(void* op, uint64_t workerId) {
+void* getSliceStoreProxy2(void* op, uint64_t workerId) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
     return handler->getThreadLocalSliceStore(workerId);
 }
 
-void* findSliceStateByTsProxy(void* ss, uint64_t ts) {
+void* findSliceStateByTsProxy2(void* ss, uint64_t ts) {
     auto sliceStore = static_cast<KeyedThreadLocalSliceStore*>(ss);
     return sliceStore->findSliceByTs(ts)->getState().get();
 }
 
-void triggerThreadLocalStateProxy(void* op,
+void triggerThreadLocalStateProxy2(
+    void* op,
                                   void* wctx,
                                   void* pctx,
                                   uint64_t workerId,
@@ -48,7 +49,7 @@ void triggerThreadLocalStateProxy(void* op,
     handler->triggerThreadLocalState(*workerContext, *pipelineExecutionContext, workerId, originId, sequenceNumber, watermarkTs);
 }
 
-void setupWindowHandler(void* ss, void* ctx, uint64_t size) {
+void setupWindowHandler2(void* ss, void* ctx, uint64_t size) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size, 8);
@@ -58,8 +59,8 @@ class LocalSliceStoreState : public Operators::OperatorState {
   public:
     explicit LocalSliceStoreState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
     Nautilus::Interface::ChainedHashMapRef findSliceStateByTs(Value<UInt64>& timestampValue) {
-        auto htPtr = Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStoreState, timestampValue);
-        return Interface::ChainedHashMapRef(htPtr, 8);
+        auto htPtr = Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy2, sliceStoreState, timestampValue);
+        return Interface::ChainedHashMapRef(htPtr, 8, 8);
     }
     const Value<MemRef> sliceStoreState;
 };
@@ -69,9 +70,10 @@ KeyedSlicePreAggregation::KeyedSlicePreAggregation(
     Expressions::ExpressionPtr timestampExpression,
     const std::vector<Expressions::ExpressionPtr>& keyExpressions,
     const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
-    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timestampExpression(std::move(timestampExpression)),
-      keyExpressions(keyExpressions), aggregationExpressions(aggregationExpressions), aggregationFunctions(aggregationFunctions) {
+      keyExpressions(keyExpressions), aggregationExpressions(aggregationExpressions), aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)) {
     NES_ASSERT(aggregationFunctions.size() == aggregationExpressions.size(),
                "The number of aggregation expression and aggregation functions need to be equals");
 }
@@ -83,7 +85,7 @@ void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
         valueSize = valueSize + function->getSize();
     }
     Nautilus::FunctionCall("setupWindowHandler",
-                           setupWindowHandler,
+                           setupWindowHandler2,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
                            valueSize);
@@ -95,7 +97,7 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const 
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy2, globalOperatorHandler, ctx.getWorkerId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalSliceStoreState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
@@ -121,12 +123,12 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     auto hash = hashFunction->calculate(keyValues);
 
     // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
-    auto entry = sliceState.findOrCreate(hash, keyValues, [this](Nautilus::Interface::ChainedHashMapRef::EntryRef& entry) {
+    auto entry = sliceState.findOrCreate(hash, keyValues, [this](auto& entry) {
         // set aggregation values if a new entry was created
         auto valuePtr = entry.getValuePtr();
-        for (const auto& function : aggregationFunctions) {
-            function->reset(valuePtr);
-            valuePtr = valuePtr + function->getSize();
+        for (const auto& aggFunction : aggregationFunctions) {
+            aggFunction->reset(valuePtr);
+            valuePtr = valuePtr + aggFunction->getSize();
         }
     });
 
@@ -144,7 +146,7 @@ void KeyedSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuffe
     // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
     // with the current watermark ts to check if we can trigger a window.
     Nautilus::FunctionCall("triggerThreadLocalStateProxy",
-                           triggerThreadLocalStateProxy,
+                           triggerThreadLocalStateProxy2,
                            globalOperatorHandler,
                            executionCtx.getWorkerContext(),
                            executionCtx.getPipelineContext(),

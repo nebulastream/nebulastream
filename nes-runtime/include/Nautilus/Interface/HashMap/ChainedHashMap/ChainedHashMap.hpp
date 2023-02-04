@@ -18,7 +18,7 @@
 #include <memory_resource>
 
 namespace NES::Nautilus::Interface {
-
+class ChainedHashMapRef;
 class ChainedHashMap {
   public:
     using hash_t = uint64_t;
@@ -33,6 +33,7 @@ class ChainedHashMap {
         hash_t hash;
         // payload data follows this header
         explicit Entry(hash_t hash) : next(nullptr), hash(hash){};
+        constexpr int8_t* dataOffset() { return ((int8_t*) this) + sizeof(Entry); }
     };
 
     ChainedHashMap(uint64_t keySize,
@@ -52,10 +53,35 @@ class ChainedHashMap {
         insert(newEntry, hash);
         return newEntry;
     }
-    uint64_t getCurrentSize() const;
-    ~ChainedHashMap();
+    [[nodiscard]] uint64_t getCurrentSize() const;
+
+    /**
+     * @brief Inserts an entry to this hash table if the hash and key dose not exists yet.
+     * @param otherEntry
+     * @return
+     */
+    bool insertEntryIfNotExists(Entry* otherEntry) {
+        // check if an entry with the same payload exists in this hash map.
+        auto entry = findChain(otherEntry->hash);
+        for (; entry != nullptr; entry = entry->next) {
+            // use memcmp to check if the keys of both entries are equal.
+            // if they are equal return false if no new entry was inserted.
+            if (memcmp(otherEntry->dataOffset(), entry->dataOffset(), this->keySize) == 0) {
+                return false;
+            }
+        }
+        // insert new entry to hash map and copy data (keys + values) from old entry.
+        auto newEntry = insertEntry(otherEntry->hash);
+        memcpy(newEntry->dataOffset(), otherEntry->dataOffset(), keySize + valueSize);
+        return true;
+    };
+
+    virtual ~ChainedHashMap();
+
+    int8_t* getPage(uint64_t pageIndex);
 
   private:
+    friend ChainedHashMapRef;
     const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t pageSize;
     [[maybe_unused]] const uint64_t keySize;

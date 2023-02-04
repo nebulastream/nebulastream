@@ -14,11 +14,14 @@
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <Nautilus/Backends/Executable.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::Runtime::Execution {

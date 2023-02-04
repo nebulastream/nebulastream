@@ -44,8 +44,11 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
     NES_DEBUG("stop GlobalSliceMergingHandler: " << queryTerminationType);
 }
 
-GlobalSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {
-    return std::make_unique<KeyedSlice>(entrySize, sliceMergeTask->startSlice, sliceMergeTask->endSlice, defaultState);
+KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys){
+    // allocate hash map
+    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
+    return std::make_unique<KeyedSlice>(std::move(hashMap), sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
 KeyedSliceMergingHandler::~KeyedSliceMergingHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingHandler::getSliceStagingPtr() { return sliceStaging; }
