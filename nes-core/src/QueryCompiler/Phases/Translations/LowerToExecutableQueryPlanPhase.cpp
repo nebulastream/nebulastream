@@ -402,6 +402,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                  kafkaSourceType->getAutoCommit()->getValue(),
                                                  kafkaSourceType->getConnectionTimeout()->getValue(),
                                                  kafkaSourceType->getOffsetMode()->getValue(),
+                                                 kafkaSourceType,
                                                  kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
                                                  kafkaSourceType->getBatchSize()->getValue());
         }

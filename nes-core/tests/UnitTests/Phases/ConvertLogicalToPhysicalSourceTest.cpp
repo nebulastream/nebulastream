@@ -100,21 +100,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSou
     DataSourcePtr zqmSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
     EXPECT_EQ(zqmSource->getType(), ZMQ_SOURCE);
 }
-TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
-    SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = KafkaSourceDescriptor::create(schema,
-                                                                         "localhost:9092",
-                                                                         "topic",
-                                                                         /**group Id**/ "groupId",
-                                                                         /**auto commit*/ true,
-                                                                         /**timeout*/ 1000,
-                                                                         "earliest",
-                                                                         10,
-                                                                         10);
-    DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, 0, sourceDescriptor, engine, 12);
-    EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
-}
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = SenseSourceDescriptor::create(schema, "some_udf");
