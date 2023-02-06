@@ -47,7 +47,7 @@ class TopologyControllerTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-        EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+        ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     }
 
     NesCoordinatorPtr coordinator;

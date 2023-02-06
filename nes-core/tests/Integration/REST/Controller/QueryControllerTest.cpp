@@ -46,6 +46,11 @@ class QueryControllerTest : public Testing::NESBaseTest {
         NES_INFO("QueryControllerTest: Coordinator started successfully");
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
 };
@@ -68,6 +73,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoUserQuery) {
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Incorrect or missing key word for user query, use 'userQuery'") != std::string::npos);
+    stopCoordinator();
 }
 
 //Check if submitting a POST request without defining 'placement' returns 400
@@ -89,6 +95,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("No placement strategy specified. Specify a placement strategy using 'placement'.")
                 != std::string::npos);
+    stopCoordinator();
 }
 
 //Check if submitting a POST request with an unsupported 'placement' strategy returns 400
@@ -110,6 +117,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     NES_DEBUG(res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Placement Strategy: ") != std::string::npos);
+    stopCoordinator();
 }
 
 //Check if submitting a POST request with an unsupported 'faultTolerance' type returns 400
@@ -132,6 +140,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     NES_DEBUG(res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid fault tolerance Type provided:") != std::string::npos);
+    stopCoordinator();
 }
 
 //Check if submitting a POST request with an unsupported 'lineage' type returns 400
@@ -155,6 +164,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     NES_DEBUG(res.dump());
     std::string errorMessage = res["message"].get<std::string>();
     EXPECT_TRUE(errorMessage.find("Invalid Lineage Mode Type provided:") != std::string::npos);
+    stopCoordinator();
 }
 
 //Check if submitting a proper query returns 200
@@ -189,6 +199,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["queryId"], 1);
+    stopCoordinator();
 }
 
 //Check if getting an execution-plan returns as expected
@@ -253,6 +264,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
     NES_DEBUG(response3.dump());
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
+    stopCoordinator();
 }
 
 //Check if getting an execution-plan with invalid query ID returns a 404
@@ -302,6 +314,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
+    stopCoordinator();
 }
 
 //Check if getting a query-plan returns as expected
@@ -356,6 +369,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     for (auto node : response2["nodes"]) {
         EXPECT_TRUE(node.contains("id") && node.contains("name") && node.contains("nodeType"));
     }
+    stopCoordinator();
 }
 
 //Check if getting a query-plan with invalid query ID returns a 404
@@ -404,5 +418,6 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
     NES_DEBUG(response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
+    stopCoordinator();
 }
 }// namespace NES

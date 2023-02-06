@@ -81,7 +81,6 @@ bool RestServer::start() {
 }
 
 bool RestServer::stop() {
-    //std::unique_lock lock(mutex);
     stopRequested.store(true);
     return stopRequested;
 }
@@ -163,8 +162,7 @@ void RestServer::run() {
 
     /* Run server */
     server.run([this]() -> bool {
-        //NES_DEBUG("checking if stop request has arrived for rest server listening on port " << port);
-        //std::unique_lock lock(mutex);
+        NES_DEBUG("checking if stop request has arrived for rest server listening on port " << port);
         return !stopRequested.load();
     });
     connectionProvider->stop();
