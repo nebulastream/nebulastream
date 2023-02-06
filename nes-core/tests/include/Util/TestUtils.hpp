@@ -656,7 +656,7 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         NES_INFO("check if NES REST interface is up");
-        auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"});
+        auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(restPort) + "/v1/nes/connectivity/check"}, cpr::Timeout{3000});
         future.wait();
         cpr::Response r = future.get();
         if (r.status_code == 200l) {
