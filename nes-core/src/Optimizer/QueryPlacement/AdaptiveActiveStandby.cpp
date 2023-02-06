@@ -80,19 +80,30 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
 
         // 3.3 execute local search if enabled
         if (placementStrategy == PlacementStrategy::ValueAAS::LocalSearch_AAS) {
-            // 3.3.1 save placement as current best
+            auto bestScoreChange = 0.0;
+            uint16_t unsuccessfulAttempts = 0;
+            auto rep = 0;
+
+            // 3.3.1 save the greedy algorithm's candidate as the initial maps
+            const OperatorToTopologyMap initialOperatorToTopologyMap = candidateOperatorToTopologyMap;
+            const TopologyToOperatorMap initialTopologyToOperatorMap = candidateTopologyToOperatorMap;
+
+            // 3.3.2 save placement as current best
             bestOperatorToTopologyMap = candidateOperatorToTopologyMap;
             bestTopologyToOperatorMap = candidateTopologyToOperatorMap;
-            auto bestScoreChange = 0.0;
 
-            // 3.3.2 repeated local search as long as there is time left
+            // 3.3.3 repeated local search as long as there is time left
             auto currentTime = std::chrono::steady_clock::now();
-            auto elapsedSeconds = duration_cast<std::chrono::seconds>(start - currentTime);
+            auto elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
 
-            while (elapsedSeconds < timeConstraint) {
-                NES_DEBUG("AdaptiveActiveStandby: Starting new Local Search, time left: "
-                          << (timeConstraint - elapsedSeconds).count() << "s.");
-                auto scoreChange = executeLocalSearch(timeConstraint - elapsedSeconds);
+            while (elapsedMilliseconds < timeConstraint) {
+                NES_DEBUG("AdaptiveActiveStandby: Starting new Local Search (rep " << ++rep << "), time left: "
+                          << (timeConstraint - elapsedMilliseconds).count() << "ms.");
+                auto scoreChange = executeLocalSearch(timeConstraint - elapsedMilliseconds);
+
+                currentTime = std::chrono::steady_clock::now();
+                elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
+
                 if (scoreChange < bestScoreChange) { // minimization
                     NES_DEBUG("AdaptiveActiveStandby: Local Search found a better placement with a score improvement of "
                               << scoreChange << ".");
@@ -100,11 +111,19 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
                     bestOperatorToTopologyMap = candidateOperatorToTopologyMap;
                     bestTopologyToOperatorMap = candidateTopologyToOperatorMap;
                     bestScoreChange = scoreChange;
+                    unsuccessfulAttempts = 0;
+                } else {
+                    unsuccessfulAttempts++;
+                    // NOTE: just an arbitrary breaking point in addition to the time constraint, could be changed to something else
+                    if (unsuccessfulAttempts >= secondaryOperatorMap.size()) {
+                        NES_DEBUG("AdaptiveActiveStandby: No improvements found for the last "
+                                  << secondaryOperatorMap.size() << " Local Search reps. Terminating.");
+                        break;
+                    }
                 }
-                currentTime = std::chrono::steady_clock::now();
-                elapsedSeconds = duration_cast<std::chrono::seconds>(currentTime - start);
-                // TODO: remove break
-                break;// test a single iteration
+                // restart from initial candidates
+                candidateOperatorToTopologyMap = initialOperatorToTopologyMap;
+                candidateTopologyToOperatorMap = initialTopologyToOperatorMap;
             }
             if (bestScoreChange < 0) {
                 candidateOperatorToTopologyMap = bestOperatorToTopologyMap;
@@ -121,8 +140,12 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
         NES_NOT_IMPLEMENTED();
     }
 
+    auto currentTime = std::chrono::steady_clock::now();
+    auto elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
+
     NES_DEBUG("AdaptiveActiveStandby: Placing the best candidate " << candidateOperatorPlacementsToString()
-                                                                   << "Total score with penalties: " << score);
+                                                                   << "Total score with penalties: " << score << "\n"
+                                                                   << "Time elapsed: " << elapsedMilliseconds.count() << "ms");
 
     // TODO: more tests to make sure that score changes reflect the actual score
     {
@@ -1039,23 +1062,33 @@ std::map<TopologyNodeId, double> AdaptiveActiveStandby::getCandidatePlacementsGr
     return evaluatedCandidates;
 }
 
-double AdaptiveActiveStandby::executeLocalSearch(std::chrono::seconds timeLeft) {
-    uint16_t unsuccessfulAttempts = 0;
+double AdaptiveActiveStandby::executeLocalSearch(std::chrono::milliseconds timeLeft) {
+    std::set<OperatorId> operatorsWithNoImprovementSinceLastChange;
     double totalScoreImprovement = 0.0;
     auto start = std::chrono::steady_clock::now();
-    std::chrono::seconds elapsedSeconds{0};
+    std::chrono::milliseconds elapsedMilliseconds{0};
 
     // loop while there is time left
-    while (elapsedSeconds < timeLeft) {
+    while (elapsedMilliseconds < timeLeft) {
         NES_DEBUG("AdaptiveActiveStandby: Starting new iteration in Local Search, time left: "
-                  << (timeLeft - elapsedSeconds).count() << "s.");
+                  << (timeLeft - elapsedMilliseconds).count() << "ms.");
 
-        // 1. get a random secondary operator
+        // 1. get a random secondary operator that has not been examined since the last change
         auto it = secondaryOperatorMap.begin();
         // NOTE: might be better to use C++11 random
         std::advance(it, rand() % secondaryOperatorMap.size());
         auto randomKey = it->first;
         auto currentSecondary = secondaryOperatorMap[randomKey];
+
+        // NOTE: could be smarter to first remove operatorsWithNoImprovementSinceLastChange from the secondaryOperatorMap,
+        // and then pick a random operator from that. Should not make a difference in smaller queries though
+        while (operatorsWithNoImprovementSinceLastChange.contains(currentSecondary->getId())) {
+            NES_DEBUG("AdaptiveActiveStandby: skipping " << currentSecondary->toString() << ", already examined");
+            it = secondaryOperatorMap.begin();
+            std::advance(it, rand() % secondaryOperatorMap.size());
+            randomKey = it->first;
+            currentSecondary = secondaryOperatorMap[randomKey];
+        }
 
         NES_DEBUG("AdaptiveActiveStandby: attempting to improve placement of " << currentSecondary->toString());
 
@@ -1137,17 +1170,17 @@ double AdaptiveActiveStandby::executeLocalSearch(std::chrono::seconds timeLeft) 
             }
 
             totalScoreImprovement += singleScoreImprovement;
-            unsuccessfulAttempts = 0;
+            operatorsWithNoImprovementSinceLastChange.clear();
         } else {
-            unsuccessfulAttempts++;
-            if (unsuccessfulAttempts >= secondaryOperatorMap.size()) {
-                NES_DEBUG("AdaptiveActiveStandby: No improvements found for the last "
-                          << secondaryOperatorMap.size() << " operators. Terminating current local search");
+            operatorsWithNoImprovementSinceLastChange.insert(currentSecondary->getId());
+            if (operatorsWithNoImprovementSinceLastChange.size() >= secondaryOperatorMap.size()) {
+                NES_DEBUG("AdaptiveActiveStandby: No more improvements found for any of the operators. " <<
+                          "Terminating current local search");
                 break;
             }
         }
         auto currentTime = std::chrono::steady_clock::now();
-        elapsedSeconds = duration_cast<std::chrono::seconds>(currentTime - start);
+        elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
     }
     return totalScoreImprovement;
 }

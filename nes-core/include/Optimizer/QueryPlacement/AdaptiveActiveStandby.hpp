@@ -111,7 +111,7 @@ class AdaptiveActiveStandby {
     uint16_t resources = 5;
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
     // constraints & weights
-    std::chrono::seconds timeConstraint{60};
+    std::chrono::milliseconds timeConstraint{5000};
     double overUtilizationPenaltyWeight = 0.2;
     double networkCostWeight = 0.8;
     bool excludeNodesConnectingPrimaries = true;    // false -> only exclude nodes that host the primary operators themselves
@@ -211,11 +211,11 @@ class AdaptiveActiveStandby {
      * Execute local search by looking for incremental changes on the currently stored candidate placement.
      * For Adaptive Active Standby the result of the Greedy algorithm serves as a baseline, therefore the candidate placement
      * should store the Greedy algorithm's solution when calling this function.
-     * @param timeLeft: time constraint in
+     * @param timeLeft: time constraint in milliseconds
      * @return the score improvement of the resulting candidate placement compared to the one that was stored when calling this
      * function
      */
-    double executeLocalSearch(std::chrono::seconds timeLeft);
+    double executeLocalSearch(std::chrono::milliseconds timeLeft);
 
     /**
      * Search for and evaluate topology nodes where a replica of the primary operator could be potentially placed.
