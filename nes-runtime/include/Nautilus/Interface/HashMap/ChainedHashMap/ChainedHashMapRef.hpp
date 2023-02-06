@@ -18,6 +18,7 @@ class ChainedHashMapRef {
         Value<MemRef> getKeyPtr() const;
         Value<MemRef> getValuePtr() const;
         bool operator!=(std::nullptr_t rhs);
+        bool operator==(std::nullptr_t rhs);
         Value<MemRef> getRef() const;
 
       private:
