@@ -52,11 +52,13 @@ class TopologyControllerTest : public Testing::NESBaseTest {
 
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
+    uint64_t sleeptime = 1;
 };
 
 TEST_F(TopologyControllerTest, testGetTopology) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -95,6 +97,7 @@ TEST_F(TopologyControllerTest, testGetTopology) {
 TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -130,6 +133,7 @@ TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
 TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -166,6 +170,7 @@ TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
 TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -203,6 +208,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
 TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -258,6 +264,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
 TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -295,6 +302,7 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
 TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
@@ -350,6 +358,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
 TEST_F(TopologyControllerTest, testRemoveParent) {
     startCoordinator();
     //ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    sleep(sleeptime);
     if (!TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5)) {
         bool stopCrd = coordinator->stopCoordinator(true);
         NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
