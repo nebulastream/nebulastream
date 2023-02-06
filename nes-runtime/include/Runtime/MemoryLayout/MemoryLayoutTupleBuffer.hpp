@@ -21,8 +21,6 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-using FIELD_SIZE = uint64_t;
-
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
  * As the base class, it has multiple methods or members that are useful for both derived classes.

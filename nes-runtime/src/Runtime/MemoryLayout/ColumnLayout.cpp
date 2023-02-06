@@ -16,7 +16,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -30,10 +29,6 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
 
 ColumnLayoutPtr ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize) {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
-}
-
-std::shared_ptr<ColumnLayoutTupleBuffer> ColumnLayout::bind(const TupleBuffer& tupleBuffer) {
-    return std::make_shared<ColumnLayoutTupleBuffer>(tupleBuffer, capacity, this->shared_from_this(), columnOffsets);
 }
 
 uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const {

@@ -139,12 +139,6 @@ using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 class RowLayout;
 using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
-class ColumnLayoutTupleBuffer;
-using ColumnLayoutBufferPtr = std::shared_ptr<ColumnLayoutTupleBuffer>;
-
-class RowLayoutTupleBuffer;
-using RowLayoutTupleBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
-
 }// namespace MemoryLayouts
 
 }// namespace Runtime
