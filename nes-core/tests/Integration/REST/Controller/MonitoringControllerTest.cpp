@@ -79,6 +79,9 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsonsStart);
     ASSERT_TRUE(check);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
+
 }
 
 TEST_F(MonitoringControllerTest, testStopMonitoring) {
@@ -97,6 +100,8 @@ TEST_F(MonitoringControllerTest, testStopMonitoring) {
     }
     cpr::Response r = cpr::Get(cpr::Url{"http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/monitoring/stop"});
     EXPECT_EQ(r.status_code, 200);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotEnabled) {
@@ -116,6 +121,8 @@ TEST_F(MonitoringControllerTest, testStartMonitoringFailsBecauseMonitoringIsNotE
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEnabled) {
@@ -135,6 +142,8 @@ TEST_F(MonitoringControllerTest, testStopMonitoringFailsBecauseMonitoringIsNotEn
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 500);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
@@ -168,6 +177,8 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     NES_INFO("Received Data for node 1: " << json.dump());
     ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     ASSERT_TRUE(MetricValidator::checkNodeIds(json, 1));
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
@@ -200,6 +211,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     NES_INFO("MonitoringControllerTest: Requesting monitoring data from node with ID " << std::to_string(1));
     ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     ASSERT_TRUE(MetricValidator::checkNodeIds(json, 1));
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
@@ -235,6 +248,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
                                                             jsonRegistration));
     ASSERT_EQ(jsonRegistration["NODE_ID"], 1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
@@ -266,6 +281,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 }//namespace NES

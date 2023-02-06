@@ -84,6 +84,11 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
         NES_INFO("UdfCatalogControllerTest: Coordinator started successfully");
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
 };
@@ -117,6 +122,7 @@ TEST_F(UdfCatalogControllerTest, getUdfDescriptorReturnsUdf) {
     ASSERT_EQ(javaUdfDescriptor->getMethodName(), descriptor.udf_method_name());
     verifySerializedInstance(javaUdfDescriptor->getSerializedInstance(), descriptor.serialized_instance());
     verifyByteCodeList(javaUdfDescriptor->getByteCodeList(), descriptor.classes());
+    stopCoordinator();
 }
 
 // Test behavior of GET for a UDF that doesn't exist
@@ -138,6 +144,7 @@ TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     // extract protobuf message from string response
     GetJavaUdfDescriptorResponse udfResponse = extractGetJavaUdfDescriptorResponse(response);
     ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
+    stopCoordinator();
 }
 
 //Test if Oatpp framework correctly returns 404 when endpoint isn't defined
@@ -154,6 +161,7 @@ TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
     auto response = future.get();
     // and see if the response code is 404
     ASSERT_EQ(response.status_code, Status::CODE_404.code);
+    stopCoordinator();
 }
 
 //Test if RegisterJavaUdf endpoint handles exceptions without returning a stack trace
@@ -174,6 +182,7 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterEndpointHandlesExceptionsWithoutR
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
     // make sure the response does not contain the stack trace
     ASSERT_TRUE(response.text.find("Stack trace") == std::string::npos);
+    stopCoordinator();
 }
 
 //Test if registerJavaUdf endpoint correctly adds java udf
@@ -207,6 +216,7 @@ TEST_F(UdfCatalogControllerTest, testIfRegisterUdfEndpointCorrectlyAddsUDF) {
     ASSERT_EQ(descriptorFromCoordinator->getMethodName(), descriptorFromPostRequest.udf_method_name());
     verifySerializedInstance(descriptorFromCoordinator->getSerializedInstance(), descriptorFromPostRequest.serialized_instance());
     verifyByteCodeList(descriptorFromCoordinator->getByteCodeList(), descriptorFromPostRequest.classes());
+    stopCoordinator();
 }
 
 //Test if deleting an Udf catalog entry works as expected
@@ -236,6 +246,7 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
     nlohmann::json json;
     json["removed"] = true;
     verifyResponseResult(response, json);
+    stopCoordinator();
 }
 
 //Test if removeUdf endpoint handles non-existent UDF correctly
@@ -253,6 +264,7 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointIfUdfDoesNotExist) {
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
+    stopCoordinator();
 }
 
 //Test if removeUdf endpoint handles missing query parameter correctly
@@ -265,6 +277,7 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpointHandlesMissingQueryParamet
     auto response = future.get();
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
+    stopCoordinator();
 }
 
 //Test if removeUdf endpoint handles extra query parameters correctly
@@ -283,6 +296,7 @@ TEST_F(UdfCatalogControllerTest, testIfRemoveUdfEndpointHandlesExtraQueryParamet
     nlohmann::json json;
     json["removed"] = false;
     verifyResponseResult(response, json);
+    stopCoordinator();
 }
 
 //Test if listUdfs endpoint handles missing query parameters correctly
@@ -295,6 +309,7 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParame
     auto response = future.get();
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
+    stopCoordinator();
 }
 
 //Test if listUdfs endpoint behaves as expected when all else is correct
@@ -320,6 +335,7 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {
     std::vector<std::string> udfs = udfCatalog->listUdfs();
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
+    stopCoordinator();
 }
 
 //Test if listUdfs endpoint behaves correctly when no UDFs are registered
@@ -339,5 +355,6 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsReturnsEmptyUdfList) {
     ;
     json["udfs"] = udfs;
     verifyResponseResult(response, json);
+    stopCoordinator();
 }
 }// namespace NES

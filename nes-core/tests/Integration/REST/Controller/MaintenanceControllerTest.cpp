@@ -43,6 +43,11 @@ class MaintenanceControllerTest : public Testing::NESBaseTest {
         NES_INFO("QueryControllerTest: Coordinator started successfully");
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
 };
@@ -64,6 +69,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'id' must be provided");
+    stopCoordinator();
 }
 
 // test behavior of POST request when request body doesn't contain 'migrationType'
@@ -85,6 +91,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'migrationType' must be provided");
+    stopCoordinator();
 }
 
 // test behavior of POST request when supplied 'migrationType' isn't supported/doesn't exist
@@ -110,6 +117,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
         " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
         "Buffering)";
     EXPECT_EQ(res["message"], message);
+    stopCoordinator();
 }
 
 // test behavior of POST request when supplied 'nodeId' doesn't exist
@@ -130,6 +138,7 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "No Topology Node with ID " + std::to_string(69));
+    stopCoordinator();
 }
 
 // test behavior of POST request when all required fields are provided and are valid
@@ -153,5 +162,6 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     EXPECT_EQ(res["Node Id"], nodeId);
     EXPECT_EQ(res["Migration Type"],
               Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
+    stopCoordinator();
 }
 }// namespace NES

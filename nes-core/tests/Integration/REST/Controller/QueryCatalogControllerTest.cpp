@@ -46,6 +46,11 @@ class QueryCatalogControllerTest : public Testing::NESBaseTest {
         NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
 };
@@ -81,6 +86,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(response2.text));
     ASSERT_TRUE(!jsonResponse2.empty());
+    stopCoordinator();
 }
 
 // Test queries endpoint: 400 if no status provided, otherwise 200. Depending on if a query is registered or not either an empty json body or non-empty
@@ -132,6 +138,7 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     nlohmann::json jsonResponse2;
     ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
     ASSERT_TRUE(!jsonResponse2.empty());
+    stopCoordinator();
 }
 
 //Test status endpoint correctly returns status of a query
@@ -178,6 +185,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r3.text));
     ASSERT_TRUE(jsonResponse["status"] == "REGISTERED");
     ASSERT_TRUE(jsonResponse["queryId"] == queryId);
+    stopCoordinator();
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQueryParameter) {
@@ -192,6 +200,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersProducedMissingQ
 
     // return 400 BAD REQUEST
     EXPECT_EQ(r1.status_code, 400l);
+    stopCoordinator();
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
@@ -210,6 +219,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
     ASSERT_NO_THROW(jsonResponse1 = nlohmann::json::parse(r2.text));
     std::string message1 = "no query found with ID: 1";
     ASSERT_TRUE(jsonResponse1["message"] == message1);
+    stopCoordinator();
 }
 
 TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStatistics) {
@@ -243,6 +253,7 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
     NES_DEBUG(jsonResponse2.dump());
     std::string message2 = "no statistics available for query with ID: " + std::to_string(queryId);
     ASSERT_TRUE(jsonResponse2["message"] == message2);
+    stopCoordinator();
 }
 
 }//namespace NES

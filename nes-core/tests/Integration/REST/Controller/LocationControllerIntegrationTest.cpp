@@ -57,6 +57,11 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
         ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
@@ -80,6 +85,7 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationMissingQueryParameters)
     ASSERT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
+    stopCoordinator();
 }
 
 TEST_F(LocationControllerIntegrationTest, testGetLocationNoSuchNodeId) {
@@ -99,6 +105,7 @@ TEST_F(LocationControllerIntegrationTest, testGetLocationNoSuchNodeId) {
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     ASSERT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
+    stopCoordinator();
 }
 
 TEST_F(LocationControllerIntegrationTest, testGetLocationNonNumericalNodeId) {
