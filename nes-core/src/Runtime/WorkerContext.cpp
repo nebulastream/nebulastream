@@ -39,10 +39,12 @@ WorkerContext::WorkerContext(uint32_t workerId,
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
-    storageFile.clear();
+    storageFile.flush();
+    storageFile.close();
+    propagationFile.flush();
+    propagationFile.close();
     statisticsFile.flush();
     statisticsFile.close();
-    storageFile.close();
 }
 
 size_t WorkerContext::getStorageSize() {
@@ -60,8 +62,8 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
-    propagationFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
