@@ -249,6 +249,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
             statisticsFile << "processedTuple,";
             statisticsFile << "processedBuffers,";
             statisticsFile << "processedWatermarks,";
+            statisticsFile << "storageSize,";
             statisticsFile << "latencyAVG,";
             statisticsFile << "queueSizeAVG,";
             statisticsFile << "availableGlobalBufferAVG,";

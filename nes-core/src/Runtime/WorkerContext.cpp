@@ -45,12 +45,12 @@ WorkerContext::~WorkerContext() {
     storageFile.close();
 }
 
-size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
-    auto iteratorPartitionId = this->storage.find(nesPartitionId);
-    if (iteratorPartitionId != this->storage.end()) {
-        return iteratorPartitionId->second.size();
+size_t WorkerContext::getStorageSize() {
+    auto size = 0;
+    for (auto iteratorPartitionId : this->storage) {
+        size += iteratorPartitionId.second.size();
     }
-    return 0;
+    return size;
 }
 
 void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {

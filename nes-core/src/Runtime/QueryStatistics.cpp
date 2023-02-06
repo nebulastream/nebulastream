@@ -33,6 +33,8 @@ uint64_t QueryStatistics::getAvailableFixedBufferSum() const { return availableF
 
 void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
+void QueryStatistics::setStorageSize(uint64_t storageSize) { this->storageSize = storageSize; }
+
 void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->processedTuple = processedTuple; }
 
 void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
@@ -60,6 +62,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << processedTuple.load() << ",";
     ss << processedBuffers.load() << ",";
     ss << processedWatermarks.load() << ",";
+    ss << storageSize.load() << ",";
     ss << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
     ss << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
     ss << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load())  << ",";
@@ -72,6 +75,7 @@ void QueryStatistics::clear() {
     processedTuple = 0;
     processedBuffers = 0;
     processedWatermarks = 0;
+    storageSize = 0;
     latencySum = 0;
     queueSizeSum = 0;
     availableGlobalBufferSum = 0;
@@ -86,6 +90,7 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     processedTuple = other.processedTuple.load();
     processedBuffers = other.processedBuffers.load();
     processedWatermarks = other.processedWatermarks.load();
+    storageSize = other.storageSize.load();
     latencySum = other.latencySum.load();
     queueSizeSum = other.queueSizeSum.load();
     availableGlobalBufferSum = other.availableGlobalBufferSum.load();
