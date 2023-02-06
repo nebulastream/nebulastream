@@ -35,12 +35,16 @@ limitations under the License.
 
 namespace NES::Optimizer {
 
-AdaptiveActiveStandbyPtr AdaptiveActiveStandby::create(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS) {
-    return std::make_unique<AdaptiveActiveStandby>(AdaptiveActiveStandby(std::move(topology), placementStrategyAAS));
+AdaptiveActiveStandbyPtr AdaptiveActiveStandby::create(TopologyPtr topology,
+                                                       PlacementStrategy::ValueAAS placementStrategyAAS,
+                                                       z3::ContextPtr z3Context) {
+    return std::make_unique<AdaptiveActiveStandby>(AdaptiveActiveStandby(std::move(topology), placementStrategyAAS, std::move(z3Context)));
 }
 
-AdaptiveActiveStandby::AdaptiveActiveStandby(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS)
-    : topology(std::move(topology)) {
+AdaptiveActiveStandby::AdaptiveActiveStandby(TopologyPtr topology,
+                                             PlacementStrategy::ValueAAS placementStrategyAAS,
+                                             z3::ContextPtr z3Context)
+    : topology(std::move(topology)), z3Context(std::move(z3Context)) {
     this->placementStrategy = placementStrategyAAS;
 }
 
@@ -136,8 +140,13 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             }
         }
     } else if (placementStrategy == PlacementStrategy::ValueAAS::ILP_AAS) {
+        if (z3Context == nullptr) {
+            NES_ERROR("AdaptiveActiveStandby: no z3Context for ILP strategy");
+            return false;
+        }
         // TODO
         NES_NOT_IMPLEMENTED();
+        score = executeILPStrategy();
     }
 
     auto currentTime = std::chrono::steady_clock::now();
@@ -317,8 +326,7 @@ bool AdaptiveActiveStandby::separatePathExists(const OperatorNodePtr& primaryOpe
     nodeIdsToExclude.erase(targetTopologyNode->getId());
 
     // check if there is a path from the start node to the sink that excludes all the nodes of the primary and its ancestors
-    return topology->findAllPathBetween(startTopologyNode, targetTopologyNode,
-                                        nodeIdsToExclude).has_value();
+    return topology->isPathBetweenExcluding(startTopologyNode, targetTopologyNode, nodeIdsToExclude);
 }
 
 std::set<TopologyNodeId> AdaptiveActiveStandby::getNodeIdsToExcludeToTarget(const OperatorNodePtr& primaryOperator,
@@ -1452,6 +1460,21 @@ std::string AdaptiveActiveStandby::localSearchStepToString(const LocalSearchStep
     }
 
     return stepString.str();
+}
+
+
+double AdaptiveActiveStandby::executeILPStrategy() {
+    z3::optimize opt(*z3Context);
+    std::map<std::string, z3::expr> placementVariables;
+    std::map<OperatorId, z3::expr> operatorPositionMap;
+    std::map<TopologyNodeId, z3::expr> nodeUtilizationMap;
+    // TODO
+    //    std::map<TopologyNodeId, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators); USE DISTANCES INSTEAD ?
+//    populateDistances();
+
+
+
+    return 0;
 }
 
 }// namespace NES::Optimizer

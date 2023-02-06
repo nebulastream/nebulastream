@@ -102,22 +102,21 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
 
 bool Topology::isPathBetweenExcluding(const TopologyNodePtr& sourceNode,
                                       const TopologyNodePtr& destinationNode,
-                                      const TopologyNodePtr& nodeToExclude) {
+                                      const std::set<uint64_t>& nodeIdsToExclude) {
     std::unique_lock lock(topologyLock);
 
+    auto sourceNodeId = sourceNode->getId();
     auto destinationNodeId = destinationNode->getId();
-    auto nodeToExcludeId = nodeToExclude->getId();
 
-    NES_INFO("Topology: Checking if a path exists between source (" << sourceNode->getId() <<
-             ") and destination node (" << destinationNodeId <<
-             "), without involving a certain node (" << nodeToExcludeId << ")");
+    NES_DEBUG("Topology: Checking if a path exists between source (" << sourceNodeId <<
+              ") and destination node (" << destinationNodeId << ")");
 
-    // no path if destination is to be excluded
-    if (destinationNodeId == nodeToExcludeId)
+    // check if source node is to be excluded
+    if (nodeIdsToExclude.contains(sourceNodeId))
         return false;
 
     // there is a path if the source is the same as the destination
-    if (sourceNode->getId() == destinationNodeId)
+    if (sourceNodeId == destinationNodeId)
         return true;
 
     // start iterating over the parents of the source
@@ -134,7 +133,7 @@ bool Topology::isPathBetweenExcluding(const TopologyNodePtr& sourceNode,
             return true;
 
         // check if current ancestor should be excluded
-        if (currentAncestor->getId() == nodeToExcludeId)
+        if (nodeIdsToExclude.contains(currentAncestor->getId()))
             continue;
 
         // if target is not yet found and node does not have to be excluded, then add its parents to the queue for processing

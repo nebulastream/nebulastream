@@ -780,12 +780,13 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
 }
 
 bool BasePlacementStrategy::executeAdaptiveActiveStandby(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                         PlacementStrategy::ValueAAS placementStrategyAAS) {
+                                                         PlacementStrategy::ValueAAS placementStrategyAAS,
+                                                         z3::ContextPtr z3Context) {
 
     if (placementStrategyAAS == PlacementStrategy::ValueAAS::None)
         return false;
 
-    auto adaptiveActiveStandby = AdaptiveActiveStandby::create(topology, placementStrategyAAS);
+    auto adaptiveActiveStandby = AdaptiveActiveStandby::create(topology, placementStrategyAAS, z3Context);
 
     auto success = adaptiveActiveStandby->execute(pinnedUpStreamOperators);
 

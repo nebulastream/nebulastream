@@ -28,6 +28,11 @@
 #include <unordered_map>
 #include <vector>
 
+namespace z3 {
+class context;
+using ContextPtr = std::shared_ptr<context>;
+}// namespace z3
+
 namespace NES {
 
 class NESExecutionPlan;
@@ -202,7 +207,8 @@ class BasePlacementStrategy {
     std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
 
     bool executeAdaptiveActiveStandby(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                      PlacementStrategy::ValueAAS placementStrategyAAS);
+                                      PlacementStrategy::ValueAAS placementStrategyAAS,
+                                      z3::ContextPtr z3Context = nullptr);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

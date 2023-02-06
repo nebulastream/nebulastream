@@ -26,6 +26,14 @@ limitations under the License.
 #include <unordered_map>
 #include <vector>
 #include <Topology/LinkProperty.hpp>
+#include <z3++.h>
+
+namespace z3 {
+class expr;
+class model;
+class context;
+using ContextPtr = std::shared_ptr<context>;
+}// namespace z3
 
 namespace NES {
 
@@ -80,7 +88,9 @@ class AdaptiveActiveStandby {
   public:
     ~AdaptiveActiveStandby() = default;
 
-    static AdaptiveActiveStandbyPtr create(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS);
+    static AdaptiveActiveStandbyPtr create(TopologyPtr topology,
+                                           PlacementStrategy::ValueAAS placementStrategyAAS,
+                                           z3::ContextPtr z3Context);
 
     bool execute(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
@@ -139,7 +149,13 @@ class AdaptiveActiveStandby {
     OperatorToTopologyMap candidateOperatorToTopologyMap;
     TopologyToOperatorMap candidateTopologyToOperatorMap;
 
-    explicit AdaptiveActiveStandby(TopologyPtr topology, PlacementStrategy::ValueAAS placementStrategyAAS);
+    // ILP solver
+    z3::ContextPtr z3Context;
+//    const char* const KEY_SEPARATOR = ",";
+
+    explicit AdaptiveActiveStandby(TopologyPtr topology,
+                                   PlacementStrategy::ValueAAS placementStrategyAAS,
+                                   z3::ContextPtr z3Context);
 
     /**
      * Deploy new topology nodes so that every operator can be replicated and have a secondary path
@@ -394,6 +410,10 @@ class AdaptiveActiveStandby {
      * @return string
      */
     static std::string localSearchStepToString(const LocalSearchStep& step);
+
+
+
+    double executeILPStrategy();
 };
 }// namespace NES::Optimizer
 

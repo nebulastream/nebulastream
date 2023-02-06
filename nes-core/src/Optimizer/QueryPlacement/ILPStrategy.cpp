@@ -240,7 +240,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     pinOperators(z3Model, placementVariables);
 
     // 9. Create and place secondary operators
-    executeAdaptiveActiveStandby(pinnedUpStreamOperators, placementStrategyAAS);
+    executeAdaptiveActiveStandby(pinnedUpStreamOperators, placementStrategyAAS, z3Context);
 
     // 10. Perform operator placement.
     placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);

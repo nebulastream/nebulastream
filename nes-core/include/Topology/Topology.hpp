@@ -216,15 +216,15 @@ class Topology {
     NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
 
     /**
-    * @brief Checks whether a path exists between a given source and destination node that does not include a specific node
+    * @brief Checks whether a path exists between a given source and destination node that does not include specific nodes
     * @param sourceNode : the source topology node
     * @param destinationNode : the destination topology node
-    * @param nodeToExclude : the topology node that must not be in the path
+    * @param nodeIdsToExclude : the Ids of the topology nodes that must not be in the path
     * @return true if there is a path, false if there is not
     */
     bool isPathBetweenExcluding(const TopologyNodePtr& sourceNode,
                                 const TopologyNodePtr& destinationNode,
-                                const TopologyNodePtr& nodeToExclude);
+                                const std::set<uint64_t>& nodeIdsToExclude);
 
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
