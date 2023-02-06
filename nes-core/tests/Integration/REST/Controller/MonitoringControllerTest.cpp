@@ -81,7 +81,6 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     ASSERT_TRUE(check);
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
-
 }
 
 TEST_F(MonitoringControllerTest, testStopMonitoring) {
