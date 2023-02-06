@@ -19,7 +19,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -33,8 +32,23 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
+
+class DynamicMemoryLayoutTest
+    : public Testing::TestWithErrorHandling<testing::Test> {
+  public:
+    // We are not creating the dynamic buffer here, since we want to use different schemas for each test.
+    BufferManagerPtr bufferManager;
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup DynamicMemoryLayoutTest test class.");
+    }
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        bufferManager = std::make_shared<BufferManager>(4096, 10);
+    }
+};
+
 class DynamicMemoryLayoutTestParameterized
-    //Todo could replace with NES base test, or is error handling required here, since we check for throws?
     : public Testing::TestWithErrorHandling<testing::Test>,
       public testing::WithParamInterface<Schema::MemoryLayoutType> {
   public:
@@ -70,23 +84,7 @@ class DynamicMemoryLayoutTestParameterized
     }
 };
 
-class DynamicMemoryLayoutTestUnParameterized
-    //Todo could replace with NES base test, or is error handling required here, since we check for throws?
-    : public Testing::TestWithErrorHandling<testing::Test> {
-  public:
-    // We are not creating the dynamic buffer here, since we want to use different schemas for each test.
-    BufferManagerPtr bufferManager;
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DynamicMemoryLayoutTest test class.");
-    }
-    void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
-    }
-};
-
-TEST_F(DynamicMemoryLayoutTestUnParameterized, accessDynamicBufferExceptionTest) {
+TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
@@ -132,7 +130,7 @@ TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
     }
 }
 
-TEST_F(DynamicMemoryLayoutTestUnParameterized, accessArrayDynamicBufferTest) {
+TEST_F(DynamicMemoryLayoutTest, accessArrayDynamicBufferTest) {
     SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
 
     ColumnLayoutPtr columnLayout;
@@ -152,7 +150,7 @@ TEST_F(DynamicMemoryLayoutTestUnParameterized, accessArrayDynamicBufferTest) {
     }
 }
 
-TEST_F(DynamicMemoryLayoutTestUnParameterized, accessArrayPointerDynamicBufferTest) {
+TEST_F(DynamicMemoryLayoutTest, accessArrayPointerDynamicBufferTest) {
     SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
 
     ColumnLayoutPtr columnLayout;
@@ -178,7 +176,7 @@ TEST_F(DynamicMemoryLayoutTestUnParameterized, accessArrayPointerDynamicBufferTe
     }
 }
 
-TEST_F(DynamicMemoryLayoutTestUnParameterized, accessFixedCharDynamicBufferTest) {
+TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
     SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createFixedChar(10));
 
     ColumnLayoutPtr columnLayout;

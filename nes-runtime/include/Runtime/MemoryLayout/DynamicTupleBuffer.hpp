@@ -19,6 +19,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
@@ -352,31 +353,31 @@ class DynamicTupleBuffer {
     //   return true;
     // }
 
-    // /**
-    //  * @brief Push a record to the underlying tuple buffer.
-    //  * 
-    //  */
-    // template <typename... Types>
-    // bool pushRecordToBuffer(std::tuple<Types...> record, uint64_t recordIndex, bool boundaryChecks = true) {
-    //   uint64_t numberOfRecords = buffer.getNumberOfTuples();
-    //   if (boundaryChecks && recordIndex >= memoryLayout->getCapacity()) {
-    //       NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position "
-    //                 << numberOfRecords << " and thus no write can happen!");
-    //       return false;
-    //   }
-    //   uint64_t fieldIndex = 0;
-    //   std::apply(
-    //       [&](auto&&... fieldValue) {
-    //           ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
-    //       },
-    //       record
-    //   );
-    //   // Increase number of records, if the current recordIndex is larger than the current numberOfRecords.
-    //   numberOfRecords = (recordIndex + 1 > numberOfRecords) ? recordIndex + 1 : numberOfRecords;
-    //   this->setNumberOfTuples(recordIndex + 1);
+    /**
+     * @brief Push a record to the underlying tuple buffer.
+     * 
+     */
+    template <typename... Types>
+    bool pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, bool boundaryChecks = true) {
+      uint64_t numberOfRecords = buffer.getNumberOfTuples();
+      if (boundaryChecks && recordIndex >= memoryLayout->getCapacity()) {
+          NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position "
+                    << numberOfRecords << " and thus no write can happen!");
+          return false;
+      }
+      uint64_t fieldIndex = 0;
+      std::apply(
+          [&](auto&&... fieldValue) {
+              ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
+          },
+          record
+      );
+      // Increase number of records, if the current recordIndex is larger than the current numberOfRecords.
+      numberOfRecords = (recordIndex + 1 > numberOfRecords) ? recordIndex + 1 : numberOfRecords;
+      this->setNumberOfTuples(recordIndex + 1);
       
-    //   return true;
-    // }
+      return true;
+    }
 
     // /**
     //  * @brief Push a record vector to the underlying tuple buffer.

@@ -16,8 +16,6 @@ add_source_files(nes-runtime
         MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp
         MemoryLayout.cpp
-        RowLayoutTupleBuffer.cpp
-        ColumnLayoutBuffer.cpp
         DynamicTupleBuffer.cpp
         BufferAccessException.cpp
 )

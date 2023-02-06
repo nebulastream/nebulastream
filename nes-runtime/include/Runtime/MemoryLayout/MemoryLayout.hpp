@@ -22,6 +22,7 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
+using FIELD_SIZE = uint64_t;
 class MemoryLayoutTupleBuffer;
 
 /**
