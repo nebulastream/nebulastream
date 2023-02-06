@@ -50,6 +50,9 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule:
             queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
             break;
+        case QueryMergerRule::Z3SignatureBasedContainmentIdentification:
+            queryMergerRule = Z3SignatureBasedPartialQueryMergerBottomUpRule::create(std::move(context));
+            break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
             queryMergerRule = SyntaxBasedPartialQueryMergerRule::create();
             break;

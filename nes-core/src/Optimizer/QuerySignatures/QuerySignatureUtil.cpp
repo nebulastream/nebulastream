@@ -373,6 +373,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
         filterExpressions.push_back(*updatedExpr);
     }
 
+    //disjunction needed in some cases, e.g. when two different maps are before a union and a filter is applied later
     auto filterConditions = z3::mk_or(filterExpressions);
 
     //Compute a CNF condition using the children and filter conditions

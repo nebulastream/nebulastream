@@ -417,6 +417,8 @@ add_nes_unit_test(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/
 ### Circular Buffer Tests ###
 add_nes_unit_test(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 
+### Z3 Signature Based Equal Query Merger Rule Test ###
+add_nes_unit_test(query-containment-identification-test "UnitTests/Optimizer/QueryMerger/QueryContainmentIdentificationTest.cpp")
 
 ### Z3 Signature Based Equal Query Merger Rule Test ###
 add_nes_unit_test(z3-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRuleTest.cpp")

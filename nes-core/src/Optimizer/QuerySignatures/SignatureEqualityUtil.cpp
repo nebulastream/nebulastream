@@ -23,9 +23,11 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(const z3::ContextPtr& con
     return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : counter(0) {
+SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context)
+    : counter(0) {
+    //need different context for two solvers
     this->context = context;
-    solver = std::make_unique<z3::solver>(*context);
+    this->solver = std::make_unique<z3::solver>(*context);
 }
 
 bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2) {
@@ -107,7 +109,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         z3::expr_vector allConditions(*context);
 
         //Convert window definitions from both signature into equality conditions
-        //If window key from one signature doesn't exists in other signature then they are not equal.
+        //If window key from one signature doesn't exist in other signature then they are not equal.
         for (const auto& windowExpression : windowsExpressions) {
             if (otherWindowExpressions.find(windowExpression.first) == otherWindowExpressions.end()) {
                 NES_WARNING("Window expression with key " << windowExpression.first
