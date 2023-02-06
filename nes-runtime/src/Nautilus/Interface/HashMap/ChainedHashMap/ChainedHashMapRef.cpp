@@ -44,6 +44,7 @@ Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
 }
 
 bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) { return ref != 0; }
+bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) { return ref == 0; }
 
 ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize, uint64_t valueSize)
     : hashTableRef(hashTableRef), keySize(keySize), valueSize(valueSize) {}
@@ -62,7 +63,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash
     auto entry = findChain(hash);
     for (; entry != nullptr; entry = entry.getNext()) {
         if (compareKeys(entry, keys)) {
-            return entry;
+            break;
         }
     }
     return entry;
@@ -73,11 +74,13 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
     for (; entry != nullptr; entry = entry.getNext()) {
         if (memEquals(entry.getKeyPtr(), entry.getValuePtr(), Value<UInt64>(keySize))) {
             update(entry);
-            return;
+            break;
         }
     }
-    auto newEntry = insert(otherEntry.getHash());
-    memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize + valueSize));
+    if (entry == nullptr) {
+        auto newEntry = insert(otherEntry.getHash());
+        memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize + valueSize));
+    }
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash,
@@ -86,20 +89,22 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
     auto entry = findChain(hash);
     for (; entry != nullptr; entry = entry.getNext()) {
         if (compareKeys(entry, keys)) {
-            return entry;
+            break;
         }
     }
-    // create new entry
-    auto newEntry = insert(hash);
-    auto keyPtr = newEntry.getKeyPtr();
-    for (auto& key : keys) {
-        keyPtr.store(key);
-        // todo fix types
-        keyPtr = keyPtr + (uint64_t) 8;
+    if (entry == nullptr) {
+        // create new entry
+        entry = insert(hash);
+        auto keyPtr = entry.getKeyPtr();
+        for (auto& key : keys) {
+            keyPtr.store(key);
+            // todo fix types
+            keyPtr = keyPtr + (uint64_t) 8;
+        }
+        // call on insert lambda function to insert default values
+        onInsert(entry);
     }
-    // call on insert lambda function to insert default values
-    onInsert(newEntry);
-    return newEntry;
+    return entry;
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
@@ -113,7 +118,7 @@ Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector
     auto ref = entry.getKeyPtr();
     for (auto& keyValue : keys) {
         // todo fix types
-        equals = equals && keyValue == ref.load<Int64>();
+        equals = equals && (keyValue == ref.load<Int64>());
         ref = ref + (uint64_t) 8;
     }
     return equals;
