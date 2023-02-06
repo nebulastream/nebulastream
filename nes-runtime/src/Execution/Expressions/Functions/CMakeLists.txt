@@ -41,4 +41,5 @@
          RandomExpression.cpp
          TruncExpression.cpp
          SignExpression.cpp
+         ExpExpression.cpp
          )
