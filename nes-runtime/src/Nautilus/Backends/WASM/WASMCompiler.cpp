@@ -24,6 +24,7 @@ namespace NES::Nautilus::Backends::WASM {
 WASMCompiler::WASMCompiler() = default;
 
 std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
+    NES_INFO("Starting WASM lowering")
     wasm = BinaryenModuleCreate();
     BinaryenSetColorsEnabled(true);
     BinaryenFeatures features = BinaryenFeatureAll();
@@ -35,10 +36,10 @@ std::pair<size_t, char*> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>&
 
     generateWASM(ir->getRootOperation());
 
-    BinaryenModuleAutoDrop(wasm);
+    BinaryenModuleAutoDrop(wasm);/*
     if (!BinaryenModuleValidate(wasm)) {
         NES_ERROR("Generated pre-optimized wasm is incorrect!");
-    }
+    }*/
     BinaryenModulePrintStackIR(wasm, false);
     std::cout << "------ Optimized WASM ------" << std::endl;
     BinaryenModuleOptimize(wasm);
@@ -275,8 +276,9 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperat
     auto loadOpId = loadOp->getIdentifier();
     auto addressId = loadOp->getAddress()->getIdentifier();
     auto ptr = expressions.getValue(addressId);
+    NES_INFO("ROFL: " + addressId)
 
-    auto loadExpression = BinaryenLoad(wasm, 0, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
+    auto loadExpression = BinaryenLoad(wasm, 8, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
     consumed.emplace(addressId, ptr);
     expressions.setValue(loadOpId, loadExpression);
 }
@@ -410,7 +412,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ProxyCallO
     auto proxyCallId = proxyCallOp->getIdentifier();
     auto proxyCallName = proxyCallOp->getFunctionSymbol();
     auto args = proxyCallOp->getInputArguments();
-
+    NES_INFO(proxyCallName)
     std::vector<BinaryenType> paramsAndReturnType;
     std::vector<BinaryenExpressionRef> paramExpressions;
     for (const auto& arg : args) {

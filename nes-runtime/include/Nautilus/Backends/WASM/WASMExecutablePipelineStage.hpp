@@ -11,21 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMEXECUTABLEPIPELINESTAGE_HPP_
+#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMEXECUTABLEPIPELINESTAGE_HPP_
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 
-#ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILATIONBACKEND_HPP_
-#define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILATIONBACKEND_HPP_
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 
-/**
- * @brief Compilation backend that uses WebAssembly.
- */
-class WASMCompilationBackend {
+class WASMExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+
   public:
-    std::unique_ptr<WAMRExecutionEngine> compile(const std::shared_ptr<IR::IRGraph>& ir);
+    WASMExecutablePipelineStage();
+
+
+
+
+  private:
+
+
 };
 
-}// namespace NES::Nautilus::Backends::WASM
-#endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILATIONBACKEND_HPP_
+}
+
+
+#endif

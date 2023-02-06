@@ -22,11 +22,11 @@
 
 namespace NES::Nautilus::Backends::WASM {
 
-class WAMRRuntime {
+class WAMRExecutionEngine {
   public:
-    WAMRRuntime();
-    void setup();
-    int32_t run(size_t binaryLength, char* queryBinary);
+    WAMRExecutionEngine();
+    void setup(size_t binaryLength, char* queryBinary);
+    int32_t run();
     /**
      * Gets passed a pointer to a WorkerContext and creates a TupleBuffer. We copy the TupleBuffer and it's buffer into WASM
      * linear memory. Otherwise, WASM's sandbox will not allow us to access the buffer from within WASM.
@@ -35,8 +35,17 @@ class WAMRRuntime {
      * @return WASM pointer to the TupleBuffer
      */
     static uint32_t native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer);
-  private:
+    static void
+    native_emitBufferProxy(wasm_exec_env_t execEnv, uintptr_t* workerCtx, uintptr_t* pipelineCtx, uint32_t tupleBuffer);
 
+  private:
+    std::string parseWATFile(const char* fileName);
+    void prepareCPython();
+    void registerNativeSymbols();
+    /**
+     * Names and signatures of proxy functions supported by the WASM backend
+     */
+    NativeSymbol nativeSymbols[2];
     const char* wat = "(module\n"
                       " (memory $memory 1)\n"
                       " (export \"memory\" (memory $memory))\n"
@@ -49,11 +58,21 @@ class WAMRRuntime {
                       " )\n"
                       ")";
 
+    /**
+     * Length of 128 is defined by WAMR
+     */
+    char errorBuffer[128];
+    /**
+     * TODO: Move to a context that we pass into to execution engine
+     */
+    const uint32_t stackSize = 4 * 8092, heapSize = 16 * 8092;
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-    std::string proxyFunctionModule = "ProxyFunction";
-
-    std::string parseWATFile(const char* fileName);
-    void prepareCPython();
+    const char* proxyFunctionModuleName = "ProxyFunction";
+    const char* functionName = "execute";
+    wasm_module_inst_t moduleInstance;
+    wasm_module_t module;
+    wasm_function_inst_t func;
+    wasm_exec_env_t execEnv;
 };
 
 }// namespace NES::Nautilus::Backends::WASM

@@ -12,22 +12,24 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/Backends/WASM/WAMRRuntime.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
+#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <utility>
-#include <Runtime/detail/TupleBufferImpl.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 
-WAMRRuntime::WAMRRuntime() {
+WAMRExecutionEngine::WAMRExecutionEngine() {
     //auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
 }
 
-void WAMRRuntime::setup() {
-}
+/*
+ * ------------- Selected Proxy Functions copied for ease of use
+ * ------------- TODO: Delete later!
+ */
 
 Runtime::TupleBuffer* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
@@ -38,6 +40,20 @@ Runtime::TupleBuffer* allocateBufferProxy(void* workerContextPtr) {
     auto* tb = new Runtime::TupleBuffer(buffer);
     return tb;
 }
+
+void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
+    auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
+    auto pipelineCtx = static_cast<Runtime::Execution::PipelineExecutionContext*>(pc);
+    auto workerCtx = static_cast<Runtime::WorkerContext*>(wc);
+    // check if buffer has values
+    if (tb->getNumberOfTuples() != 0) {
+        pipelineCtx->emitBuffer(*tb, *workerCtx);
+    }
+    // delete tuple buffer as it was allocated within the pipeline and is not required anymore
+    delete tb;
+}
+
+// -----------------------------------------
 
 uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
@@ -94,9 +110,18 @@ uint32_t allocaBuffer(wasm_exec_env_t execEnv) {
     return wasmTBPtr;
 }
 
-uint32_t WAMRRuntime::native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* pointer) {
+void WAMRExecutionEngine::native_emitBufferProxy(wasm_exec_env_t execEnv,
+                                          uintptr_t* workerCtx,
+                                          uintptr_t* pipelineCtx,
+                                          uint32_t tupleBuffer) {
     wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
-    auto ptr = (void*) pointer;
+    auto tb = wasm_runtime_addr_app_to_native(moduleInstance, tupleBuffer);
+    emitBufferProxy((void*) workerCtx, (void*) pipelineCtx, (void*) tb);
+}
+
+uint32_t WAMRExecutionEngine::native_allocateBufferProxy(wasm_exec_env_t execEnv, uintptr_t* workerContextPtr) {
+    wasm_module_inst_t moduleInstance = get_module_inst(execEnv);
+    auto ptr = (void*) workerContextPtr;
     auto tupleBuffer = allocateBufferProxy(ptr);
     auto buffer = tupleBuffer->getBuffer();
     // Copy TupleBuffer into WASM linear memory
@@ -151,29 +176,49 @@ uint64_t NES_Runtime_TupleBuffer_getBufferSize(wasm_exec_env_t execEnv, uintptr_
     return thisPtr_->getBufferSize();
 }
 
-int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary, ) {
-    std::cout << "Starting WAMR\n";
-    NativeSymbol nativeSymbols[] = {EXPORT_WASM_API_WITH_SIG(WAMRRuntime::native_allocateBufferProxy, "(i)r"),
-                                    EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBuffer, "(i)i"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getNumberOfTuples, "(r)I"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setNumberOfTuples, "(rI)"),
-                                    EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBufferSize, "(r)I")};
+void WAMRExecutionEngine::registerNativeSymbols() {
+    nativeSymbols[0] = EXPORT_WASM_API_WITH_SIG(WAMRExecutionEngine::native_allocateBufferProxy, "(i)r");
+    nativeSymbols[1] = EXPORT_WASM_API_WITH_SIG(WAMRExecutionEngine::native_emitBufferProxy, "(rri)");
+}
 
-
-    //auto wasmString = parseWATFile("/home/victor/add.wasm");
-    //auto length = wasmString.length();
-
+//TODO: Replace printf
+void WAMRExecutionEngine::setup(size_t binaryLength, char* queryBinary) {
     auto wasmBuffer = reinterpret_cast<uint8_t*>(queryBinary);
-
-    char errorBuffer[128];
-    uint32_t stackSize = 4 * 8092, heapSize = 16 * 8092;
-
     if (!wasm_runtime_init()) {
         printf("WAMR init failed\n");
     }
+    registerNativeSymbols();
+    int numNativeSymbols = sizeof(nativeSymbols) / sizeof(NativeSymbol);
+    if (!wasm_runtime_register_natives(proxyFunctionModuleName, nativeSymbols, numNativeSymbols)) {
+        printf("Host function registering failed\n");
+    }
+    module = wasm_runtime_load(wasmBuffer, binaryLength, errorBuffer, sizeof(errorBuffer));
+    if (module == nullptr) {
+        printf("Error loading module\n");
+    }
+    moduleInstance = wasm_runtime_instantiate(module, stackSize, heapSize, errorBuffer, sizeof(errorBuffer));
+    func = wasm_runtime_lookup_function(moduleInstance, functionName, nullptr);
+    execEnv = wasm_runtime_create_exec_env(moduleInstance, stackSize);
+}
+
+int32_t WAMRExecutionEngine::run() {
+    std::cout << "Starting WAMR\n";
+    /*
+    nativeSymbols = {EXPORT_WASM_API_WITH_SIG(WAMRExecutionEngine::native_allocateBufferProxy, "(i)r"),
+                                     EXPORT_WASM_API_WITH_SIG(allocaBuffer, "()i"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getWatermark, "(r)I"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setWatermark, "(rI)"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBuffer, "(i)i"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getNumberOfTuples, "(r)I"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_setNumberOfTuples, "(rI)"),
+                                     EXPORT_WASM_API_WITH_SIG(NES_Runtime_TupleBuffer_getBufferSize, "(r)I"),
+                                     EXPORT_WASM_API_WITH_SIG(WAMRExecutionEngine::native_emitBufferProxy, "(rri)")};
+
+    auto wasmString = parseWATFile("/home/victor/add.wasm");
+    auto length = wasmString.length();
+
+    auto wasmBuffer = reinterpret_cast<uint8_t*>(queryBinary);
+
     int numNativeSymbols = sizeof(nativeSymbols) / sizeof(NativeSymbol);
     if (!wasm_runtime_register_natives("ProxyFunctions", nativeSymbols, numNativeSymbols)) {
         printf("Host function registering failed\n");
@@ -183,12 +228,13 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary, ) {
     wasm_module_t module;
 
     module = wasm_runtime_load(wasmBuffer, binaryLength, errorBuffer, sizeof(errorBuffer));
-    if (module == nullptr) {
-        printf("Loading failed\n");
-    } else {
-        moduleInstance = wasm_runtime_instantiate(module, stackSize, heapSize, errorBuffer, sizeof(errorBuffer));
-        auto func = wasm_runtime_lookup_function(moduleInstance, "execute", nullptr);
-        auto execEnv = wasm_runtime_create_exec_env(moduleInstance, stackSize);
+    */
+    //if (module == nullptr) {
+    //    printf("Loading failed\n");
+    //} else {
+        //moduleInstance = wasm_runtime_instantiate(module, stackSize, heapSize, errorBuffer, sizeof(errorBuffer));
+        //auto func = wasm_runtime_lookup_function(moduleInstance, "execute", nullptr);
+        //auto execEnv = wasm_runtime_create_exec_env(moduleInstance, stackSize);
         wasm_val_t results[1];
         std::string s = std::to_string(results[0].of.i64);
         if (wasm_runtime_call_wasm_a(execEnv, func, 1, results, 0, nullptr)) {
@@ -196,14 +242,14 @@ int32_t WAMRRuntime::run(size_t binaryLength, char* queryBinary, ) {
         } else {
             printf("%s\n", wasm_runtime_get_exception(moduleInstance));
         }
-    }
+    //}
     return 0;
 }
 
-void WAMRRuntime::prepareCPython() {
+void WAMRExecutionEngine::prepareCPython() {
 }
 
-std::string WAMRRuntime::parseWATFile(const char* fileName) {
+std::string WAMRExecutionEngine::parseWATFile(const char* fileName) {
     std::ifstream watFile(fileName);
     std::stringstream strStream;
     strStream << watFile.rdbuf();
