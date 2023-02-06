@@ -42,17 +42,31 @@ class ReplacingRegexTest : public testing::Test {
 
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex) {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // TextValue
+    // Replace
     {
-        transformReturnValues(TextValue::create("abc"));
-
         auto resultValue = expression.eval(transformReturnValues(TextValue::create("abc")), transformReturnValues(TextValue::create("(b|c)")), transformReturnValues(TextValue::create("X")));
         ASSERT_EQ(resultValue, "aXc");
-        ASSERT_TRUE(transformReturnValues(TextValue::create("test")).value == resultValue.value );
+    }
+
+    // Replacement notation
+    {
+        auto resultValue = expression.eval(transformReturnValues(TextValue::create("abc")), transformReturnValues(TextValue::create("(b|c)")), transformReturnValues(TextValue::create("\1\1\1\1")));
+        ASSERT_EQ(resultValue, "abbbbc");
+    }
+
+    // Regex test
+    {
+        auto resultValue = expression.eval(transformReturnValues(TextValue::create("abc")), transformReturnValues(TextValue::create("(.*)c")), transformReturnValues(TextValue::create("\1e")));
+        ASSERT_EQ(resultValue, "abe");
+    }
+
+    // Regex test
+    {
+        auto resultValue = expression.eval(transformReturnValues(TextValue::create("abc")), transformReturnValues(TextValue::create("(a)(b)")), transformReturnValues(TextValue::create("\2\1")));
+        ASSERT_EQ(resultValue, "bac");
     }
 
 }
-
 
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.

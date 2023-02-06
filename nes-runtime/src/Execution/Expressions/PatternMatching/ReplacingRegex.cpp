@@ -33,22 +33,15 @@ ReplacingRegex::ReplacingRegex(const NES::Runtime::Execution::Expressions::Expre
  * @param replacement TextValue*
  * @return TextValue*
  */
-TextValue* regex_replace(TextValue* text, TextValue* reg, TextValue* replacement) {
+TextValue* regexReplace(TextValue* text, TextValue* reg, TextValue* replacement) {
 
-    std::shared_ptr<char> p(text->str(), &free);
-    std::string strText (p.get());
-
-    std::shared_ptr<char> q(reg->str(), &free);
-    std::string strRegex (q.get());
-    std::regex tempRegex (strRegex);
-
-    std::shared_ptr<char> r(replacement->str(), &free);
-    std::string strReplacement (r.get());
+    std::string strText = std::string(text->str(), text->length());
+    std::regex tempRegex (std::string(reg->str(), reg->length()));
+    std::string strReplacement = std::string(replacement->str(), replacement->length());
 
     std::string strReplaced = std::regex_replace(strText, tempRegex, strReplacement);
 
     return TextValue::create(strReplaced);
-
 }
 
 Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
@@ -62,7 +55,7 @@ Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the right sub expression and retrieve the value.
     Value<> rightValue = rightSubExpression->execute(record);
 
-    return FunctionCall<>("regex_replace", regex_replace, leftValue.as<Text>()->getReference(), midValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
+    return FunctionCall<>("regexReplace", regexReplace, leftValue.as<Text>()->getReference(), midValue.as<Text>()->getReference(), rightValue.as<Text>()->getReference());
 
 }
 

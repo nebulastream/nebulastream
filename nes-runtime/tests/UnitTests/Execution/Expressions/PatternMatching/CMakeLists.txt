@@ -10,6 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(runtime-replacing-regex-test "ReplacingRegexTest.cpp")
-target_link_libraries(runtime-replacing-regex-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-replacing-regex-test COMMAND runtime-replacing-regex-test)
+add_nes_runtime_test(runtime-replacing-regex-test "ReplacingRegexTest.cpp")
