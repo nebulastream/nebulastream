@@ -350,7 +350,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 statisticsFile << "processedTuple,";
                 statisticsFile << "processedBuffers,";
                 statisticsFile << "processedWatermarks,";
-                statisticsFile << "storageSize,";
                 statisticsFile << "latencyAVG,";
                 statisticsFile << "queueSizeAVG,";
                 statisticsFile << "availableGlobalBufferAVG,";

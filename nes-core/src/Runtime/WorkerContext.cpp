@@ -34,7 +34,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
     statisticsFile << "time,latency\n";
     propagationFile << "time,difference\n";
-    storageFile << "time,numberOfBuffers\n";
+    storageFile << "time,oldStorageSize,newStorageSize\n";
 }
 
 WorkerContext::~WorkerContext() {
@@ -128,7 +128,8 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
         NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
         NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
-        storageFile << oldStorageSize - pq.size() << "\n";
+        storageFile << oldStorageSize << ",";
+        storageFile << pq.size() << "\n";
         storageFile.flush();
     }
 }

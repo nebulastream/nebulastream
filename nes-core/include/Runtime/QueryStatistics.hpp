@@ -137,12 +137,6 @@ class QueryStatistics {
     void setProcessedBuffers(uint64_t processedBuffers);
 
     /**
-  * @brief setter for storageSize
-  * @return storageSize
-  */
-    void setStorageSize(uint64_t storageSize);
-
-    /**
      * @brief return the current statistics as a string
      * @return statistics as a string
      */
@@ -187,7 +181,6 @@ class QueryStatistics {
     std::atomic<uint64_t> queueSizeSum = 0;
     std::atomic<uint64_t> availableGlobalBufferSum = 0;
     std::atomic<uint64_t> availableFixedBufferSum = 0;
-    std::atomic<uint64_t> storageSize = 0;
 
   private:
     std::atomic<uint64_t> queryId = 0;

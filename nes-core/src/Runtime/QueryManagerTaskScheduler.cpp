@@ -281,7 +281,6 @@ void AbstractQueryManager::updateStatistics(const Task& task,
 
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
-        statistics->setStorageSize(workerContext.getStorageSize());
         auto creation = task.getBufferRef().getCreationTimestamp();
         auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
