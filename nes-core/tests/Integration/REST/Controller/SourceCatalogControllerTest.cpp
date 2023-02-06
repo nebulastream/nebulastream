@@ -85,7 +85,8 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    nlohmann::json response = nlohmann::json::parse(r.text);
+    nlohmann::json response;
+    ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     NES_DEBUG(r.text);
     bool found = false;
     for (auto& el : response.items()) {
@@ -120,7 +121,8 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    nlohmann::json response = nlohmann::json::parse(r.text);
+    nlohmann::json response;
+    ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     ASSERT_TRUE(response.contains("Physical Sources") && response["Physical Sources"].size() != 0);
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -166,7 +168,8 @@ TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     future.wait();
     cpr::Response response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    nlohmann::json success = nlohmann::json::parse(response.text);
+    nlohmann::json success;
+    ASSERT_NO_THROW(success = nlohmann::json::parse(response.text));
     ASSERT_TRUE(success["success"]);
     ASSERT_TRUE(!sourceCatalog->getAllLogicalSource().empty());
     SchemaPtr schemaFromCoordinator = sourceCatalog->getLogicalSource("car")->getSchema();
@@ -194,7 +197,8 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    nlohmann::json jsonResponse = nlohmann::json::parse(r.text);
+    nlohmann::json jsonResponse;
+    ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
     ASSERT_TRUE(jsonResponse["success"]);
     auto coordinatorSchema = sourceCatalog->getLogicalSource("car")->getSchema();
     //TODO: is it a bug that one has to define the field name with a '$' in the schema for it to be found using hasFieldName ?
@@ -215,7 +219,8 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    nlohmann::json success = nlohmann::json::parse(r.text);
+    nlohmann::json success;
+    ASSERT_NO_THROW(success = nlohmann::json::parse(r.text));
     ASSERT_TRUE(success["success"]);
     ASSERT_FALSE(sourceCatalog->containsLogicalSource("test_stream"));
 }

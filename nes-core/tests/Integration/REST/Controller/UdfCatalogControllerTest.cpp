@@ -45,7 +45,8 @@ class UdfCatalogControllerTest : public Testing::NESBaseTest {
 
     static void verifyResponseResult(const cpr::Response& response, const nlohmann::json expected) {
         NES_DEBUG(response.text);
-        auto responseJson = nlohmann::json::parse(response.text);
+        nlohmann::json responseJson;
+        ASSERT_NO_THROW(responseJson = nlohmann::json::parse(response.text));
         ASSERT_TRUE(responseJson == expected);
     }
 
@@ -234,7 +235,6 @@ TEST_F(UdfCatalogControllerTest, testRemoveUdfEndpoint) {
     // and the response shows that the UDF was removed
     nlohmann::json json;
     json["removed"] = true;
-    auto responseJson = nlohmann::json::parse(response.text);
     verifyResponseResult(response, json);
 }
 
