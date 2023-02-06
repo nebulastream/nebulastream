@@ -37,10 +37,10 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
         NES_INFO("Setup LocationControllerIntegrationTest test class.");
         std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
         remove(singleLocationPath.c_str());
-        writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
+        writeWaypointsToCsv(singleLocationPath, {{{52.5523, 13.3517}, 0}});
         std::string singleLocationPath2 = std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv";
         remove(singleLocationPath2.c_str());
-        writeWaypointsToCsv(singleLocationPath2, {{{53.55227464714949, -13.351743136322877}, 0}});
+        writeWaypointsToCsv(singleLocationPath2, {{{53.5523, -13.3517}, 0}});
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down LocationControllerIntegrationTest test class."); }
@@ -64,7 +64,7 @@ class LocationControllerIntegrationTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
 };
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationMissingQueryParameters) {
+TEST_F(LocationControllerIntegrationTest, testGetLocationMissingQueryParameters) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -74,14 +74,15 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationMissingQueryPa
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     ASSERT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNoSuchNodeId) {
+TEST_F(LocationControllerIntegrationTest, testGetLocationNoSuchNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -94,12 +95,13 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNoSuchNodeId) 
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     ASSERT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
 }
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNonNumericalNodeId) {
+TEST_F(LocationControllerIntegrationTest, testGetLocationNonNumericalNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -112,14 +114,15 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNonNumericalNo
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string errorMessage = res["message"].get<std::string>();
     ASSERT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocation) {
+TEST_F(LocationControllerIntegrationTest, testGetSingleLocation) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     std::string latitude = "13.4";
@@ -141,9 +144,9 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocation) {
                                 cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
     future.wait();
     auto response = future.get();
-    //todo: use assert everlywhere
     EXPECT_EQ(response.status_code, 200l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["id"], workerNodeId1);
     nlohmann::json::array_t locationData = res["location"];
     EXPECT_EQ(locationData[0].dump(), latitude);
@@ -154,7 +157,7 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocation) {
     ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocationWhenNoLocationDataIsProvided) {
+TEST_F(LocationControllerIntegrationTest, testGetSingleLocationWhenNoLocationDataIsProvided) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
@@ -172,7 +175,8 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocationWhenNoLo
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     ASSERT_TRUE(res["location"].is_null());
     bool stopwrk1 = wrk1->stop(true);
     ASSERT_TRUE(stopwrk1);
@@ -180,7 +184,7 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocationWhenNoLo
     ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) {
+TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationsNoMobileNodes) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -202,7 +206,8 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationsNoMo
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     //no mobile nodes added yet, response should be empty
     ASSERT_TRUE(res.empty());
     bool stopwrk1 = wrk1->stop(true);
@@ -212,7 +217,7 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationsNoMo
 }
 
 #ifdef S2DEF
-TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationMobileNodesExist) {
+TEST_F(LocationControllerIntegrationTest, testGetAllMobileLocationMobileNodesExist) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -262,22 +267,23 @@ TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationMobil
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res);
     ASSERT_TRUE(res.is_array());
     ASSERT_TRUE(res.size() == 2);
     auto locationData = std::vector<double>(2, 0);
     for (auto entry : res) {
         if (entry["id"] == workerNodeId2) {
-            locationData[0] = 52.55227464714949;
-            locationData[1] = 13.351743136322877;
+            locationData[0] = 52.5523;
+            locationData[1] = 13.3517;
         }
         if (entry["id"] == workerNodeId3) {
-            locationData[0] = 53.55227464714949;
-            locationData[1] = -13.351743136322877;
+            locationData[0] = 53.5523;
+            locationData[1] = -13.3517;
         }
         EXPECT_TRUE(entry.contains("location"));
-        EXPECT_EQ(entry["location"], locationData);
+        EXPECT_EQ(entry["location"], nlohmann::json(locationData));
     }
     bool stopwrk1 = wrk1->stop(true);
     ASSERT_TRUE(stopwrk1);

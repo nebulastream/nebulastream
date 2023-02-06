@@ -255,6 +255,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     ASSERT_TRUE(retConWrk4);
     NES_INFO("worker 4 started connected ");
 
+    ASSERT_TRUE(waitForNodes(5, 5, topology));
+
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
     TopologyNodePtr node3 = topology->findNodeWithId(wrk3->getWorkerId());
@@ -340,6 +342,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     bool retConWrk2 = wrk2->connect();
     ASSERT_TRUE(retConWrk2);
     NES_INFO("worker 2 started connected ");
+
+    ASSERT_TRUE(waitForNodes(5, 3, topology));
 
     ASSERT_EQ(wrk1->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     ASSERT_EQ(wrk2->getLocationProvider()->getSpatialType(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
@@ -436,6 +440,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     auto startTime = sourceCsv->getStartTime();
     TopologyPtr topology = crd->getTopology();
     auto wrk1id = wrk1->getWorkerId();
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
 
@@ -518,6 +523,7 @@ TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     auto wrk1id = wrk1->getWorkerId();
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
 
@@ -605,6 +611,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInFuture) {
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     auto wrk1id = wrk1->getWorkerId();
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
 
@@ -690,6 +697,7 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     auto startTime = locationProvider->getStartTime();
     TopologyPtr topology = crd->getTopology();
     auto wrk1id = wrk1->getWorkerId();
+    ASSERT_TRUE(waitForNodes(5, 2, topology));
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     std::shared_ptr<TopologyManagerService> topologyManagerService = crd->getTopologyManagerService();
     //Get the expected waypoints
@@ -897,6 +905,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(waitForNodes(5, locVec.size() + offPathVec.size() + 2, topology));
 
     uint64_t parentId = 0;
     std::vector<uint64_t> reconnectSequence({initialParentId, 10000, 10001, 10002, 10003, 10004, 10005});

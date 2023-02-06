@@ -60,8 +60,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     future1.wait();
     auto r = future1.get();
     EXPECT_EQ(r.status_code, 200l);
-    nlohmann::json jsonResponse = nlohmann::json::parse(r.text);
-    ASSERT_TRUE(jsonResponse.empty());
+    nlohmann::json jsonResponse;
+    ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
 
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -78,7 +78,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     future2.wait();
     auto response2 = future2.get();
     EXPECT_EQ(response2.status_code, 200l);
-    nlohmann::json jsonResponse2 = nlohmann::json::parse(response2.text);
+    nlohmann::json jsonResponse2;
+    ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(response2.text));
     ASSERT_TRUE(!jsonResponse2.empty());
 }
 
@@ -103,7 +104,8 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     // return 200 OK
     EXPECT_EQ(r2.status_code, 200l);
     // and an empty json
-    nlohmann::json jsonResponse = nlohmann::json::parse(r2.text);
+    nlohmann::json jsonResponse;
+    ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r2.text));
     ASSERT_TRUE(jsonResponse.empty());
 
     // create a query to add to query catalog service
@@ -127,7 +129,8 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     //return 200 OK
     EXPECT_EQ(r3.status_code, 200l);
     // and a non-empty json
-    nlohmann::json jsonResponse2 = nlohmann::json::parse(r3.text);
+    nlohmann::json jsonResponse2;
+    ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
     ASSERT_TRUE(!jsonResponse2.empty());
 }
 
@@ -171,7 +174,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     //return 200 OK
     EXPECT_EQ(r3.status_code, 200l);
     // and response body contains key: status and value: REGISTERED
-    nlohmann::json jsonResponse = nlohmann::json::parse(r3.text);
+    nlohmann::json jsonResponse;
+    ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r3.text));
     ASSERT_TRUE(jsonResponse["status"] == "REGISTERED");
     ASSERT_TRUE(jsonResponse["queryId"] == queryId);
 }
@@ -202,7 +206,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoSuchQuery) {
     auto r2 = f2.get();
     //return 404 NO CONTENT
     EXPECT_EQ(r2.status_code, 404l);
-    nlohmann::json jsonResponse1 = nlohmann::json::parse(r2.text);
+    nlohmann::json jsonResponse1;
+    ASSERT_NO_THROW(jsonResponse1 = nlohmann::json::parse(r2.text));
     std::string message1 = "no query found with ID: 1";
     ASSERT_TRUE(jsonResponse1["message"] == message1);
 }
@@ -233,7 +238,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
 
     // return 404 NO CONTENT
     EXPECT_EQ(r3.status_code, 404l);
-    nlohmann::json jsonResponse2 = nlohmann::json::parse(r3.text);
+    nlohmann::json jsonResponse2;
+    ASSERT_NO_THROW(jsonResponse2 = nlohmann::json::parse(r3.text));
     NES_DEBUG(jsonResponse2.dump());
     std::string message2 = "no statistics available for query with ID: " + std::to_string(queryId);
     ASSERT_TRUE(jsonResponse2["message"] == message2);

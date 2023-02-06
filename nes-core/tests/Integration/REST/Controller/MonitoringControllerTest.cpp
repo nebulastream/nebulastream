@@ -73,7 +73,8 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
 
     //check if content of r contains valid information
     std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
-    nlohmann::json jsonsStart = nlohmann::json::parse(r.text);
+    nlohmann::json jsonsStart;
+    ASSERT_NO_THROW(jsonsStart = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
     ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsonsStart);
@@ -156,7 +157,8 @@ TEST_F(MonitoringControllerTest, testRequestAllMetrics) {
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
 
-    nlohmann::json jsonsOfResponse = nlohmann::json::parse(r.text);
+    nlohmann::json jsonsOfResponse;
+    ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetAllMetrics request: " << jsonsOfResponse);
 
     //check if content of r contains valid information (right fields and valid queryIds):
@@ -188,7 +190,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerDataFromOneNode) {
     future.wait();
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
-    nlohmann::json jsonsOfResponse = nlohmann::json::parse(r.text);
+    nlohmann::json jsonsOfResponse;
+    ASSERT_NO_THROW(jsonsOfResponse = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetMetricsForOneNode request: " << jsonsOfResponse);
 
     //check if content of r contains valid information (right fields and valid queryIds):
@@ -221,7 +224,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStorage) {
     auto r = future.get();
     EXPECT_EQ(r.status_code, 200);
     //compare content of response to expected values
-    nlohmann::json jsons = nlohmann::json::parse(r.text);
+    nlohmann::json jsons;
+    ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     ASSERT_EQ(jsons.size(), 1);
     NES_INFO("MonitoringControllerTest - Received Data from Get-Storage request: " << jsons);
     auto json = jsons[std::to_string(1)];
@@ -256,7 +260,8 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     EXPECT_EQ(r.status_code, 200);
 
     //compare content of response to expected values
-    nlohmann::json jsons = nlohmann::json::parse(r.text);
+    nlohmann::json jsons;
+    ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
     std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
