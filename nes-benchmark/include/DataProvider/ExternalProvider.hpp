@@ -54,6 +54,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
 
     /**
+     * @brief returns a reference to bufferQueue
+     * @return bufferQueue
+     */
+    folly::MPMCQueue<TupleBufferHolder>& getBufferQueue();
+
+    /**
      * @brief returns a reference to generatorThread
      * @return generatorThread
      */

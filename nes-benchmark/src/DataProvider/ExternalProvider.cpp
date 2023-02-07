@@ -23,6 +23,8 @@ ExternalProvider::ExternalProvider(uint64_t id,
 
 std::vector<Runtime::TupleBuffer>& ExternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
 
+folly::MPMCQueue<TupleBufferHolder>& ExternalProvider::getBufferQueue() { return bufferQueue; }
+
 std::thread& ExternalProvider::getGeneratorThread() { return generatorThread; }
 
 void ExternalProvider::start() {
