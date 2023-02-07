@@ -12,31 +12,27 @@
     limitations under the License.
 */
 
-
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
-
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 PhysicalMapJavaUdfOperator::PhysicalMapJavaUdfOperator(OperatorId id,
                                                        SchemaPtr inputSchema,
                                                        SchemaPtr outputSchema,
                                                        Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor)
-            : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-            javaUdfDescriptor(std::move(javaUdfDescriptor)) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      javaUdfDescriptor(std::move(javaUdfDescriptor)) {}
 
-PhysicalOperatorPtr
-PhysicalMapJavaUdfOperator::create(SchemaPtr inputSchema,
-                                   SchemaPtr outputSchema,
-                                   Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor) {
+PhysicalOperatorPtr PhysicalMapJavaUdfOperator::create(SchemaPtr inputSchema,
+                                                       SchemaPtr outputSchema,
+                                                       Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor) {
     return create(Util::getNextOperatorId(), inputSchema, outputSchema, javaUdfDescriptor);
 }
 
-PhysicalOperatorPtr
-PhysicalMapJavaUdfOperator::create(OperatorId id,
-                                   const SchemaPtr& inputSchema,
-                                   const SchemaPtr& outputSchema,
-                                   const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor) {
+PhysicalOperatorPtr PhysicalMapJavaUdfOperator::create(OperatorId id,
+                                                       const SchemaPtr& inputSchema,
+                                                       const SchemaPtr& outputSchema,
+                                                       const Catalogs::UDF::JavaUdfDescriptorPtr& javaUdfDescriptor) {
     return std::make_shared<PhysicalMapJavaUdfOperator>(id, inputSchema, outputSchema, javaUdfDescriptor);
 }
 
@@ -44,7 +40,5 @@ std::string PhysicalMapJavaUdfOperator::toString() const { return "PhysicalMapJa
 
 OperatorNodePtr PhysicalMapJavaUdfOperator::copy() { return create(id, inputSchema, outputSchema, javaUdfDescriptor); }
 
-Catalogs::UDF::JavaUdfDescriptorPtr PhysicalMapJavaUdfOperator::getJavaUdfDescriptor() {
-    return javaUdfDescriptor;
-}
+Catalogs::UDF::JavaUdfDescriptorPtr PhysicalMapJavaUdfOperator::getJavaUdfDescriptor() { return javaUdfDescriptor; }
 }// namespace NES::QueryCompilation::PhysicalOperators

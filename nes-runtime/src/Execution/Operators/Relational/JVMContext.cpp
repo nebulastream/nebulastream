@@ -43,9 +43,9 @@ inline void jniErrorCheck(jint rc) {
     }
 }
 
-void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args) {
+void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs& args) {
     std::lock_guard<std::mutex> lock(mutex);
-    if(!created) {
+    if (!created) {
         jint rc = JNI_CreateJavaVM(&jvm, (void**) env, &args);
         jniErrorCheck(rc);
         created = true;
@@ -87,5 +87,5 @@ JVMContext::~JVMContext() {
         jniErrorCheck(rc);
     }
 }
-}; //NES::Runtime::Execution::Operators
-#endif //ENABLE_JNI
+};    // namespace NES::Runtime::Execution::Operators
+#endif//ENABLE_JNI

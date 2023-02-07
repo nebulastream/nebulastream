@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPJAVAUDFOPERATOR_HPP_
 
@@ -49,7 +48,7 @@ class PhysicalMapJavaUdfOperator : public PhysicalUnaryOperator {
      * @brief Returns the java udf descriptor of this map operator
      * @return FieldAssignmentExpressionNodePtr
      */
-     Catalogs::UDF::JavaUdfDescriptorPtr getJavaUdfDescriptor();
+    Catalogs::UDF::JavaUdfDescriptorPtr getJavaUdfDescriptor();
 
   protected:
     const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;

@@ -139,7 +139,6 @@ TEST_F(UdfCatalogControllerTest, testGetUdfDescriptorIfNoUdfExists) {
     ASSERT_TRUE(!udfResponse.found() && !udfResponse.has_java_udf_descriptor());
 }
 
-
 //Test if Oatpp framework correctly returns 404 when endpoint isn't defined
 TEST_F(UdfCatalogControllerTest, testErrorIfUnknownEndpointIsUsed) {
     startCoordinator();
@@ -297,7 +296,6 @@ TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointHandlesMissingQueryParame
     // then the response is BadRequest
     ASSERT_EQ(response.status_code, Status::CODE_400.code);
 }
-
 
 //Test if listUdfs endpoint behaves as expected when all else is correct
 TEST_F(UdfCatalogControllerTest, testIfListUdfsEndpointReturnsListAsExpected) {

@@ -17,11 +17,11 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Relational/JVMContext.hpp>
 #include <Execution/Operators/Relational/MapJavaUdf.hpp>
 #include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
-#include <Execution/Operators/Relational/JVMContext.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,32 +30,31 @@
 
 namespace NES::Runtime::Execution::Operators {
 class MapJavaUdfOperatorTest : public testing::Test {
-          public:
-            /* Will be called before any test in this class are executed. */
-            static void SetUpTestCase() {
-                NES::Logger::setupLogging("MapJavaUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-                std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
-            }
-
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MapJavaUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup MapJavaUdfOperatorTest test class." << std::endl;
+    }
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     explicit MockedPipelineExecutionContext(OperatorHandlerPtr handler)
         : PipelineExecutionContext(
-        -1,// mock pipeline id
-        0, // mock query id
-        nullptr,
-        1,
-        [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-          this->buffers.emplace_back(std::move(buffer));
-        },
-        [this](TupleBuffer& buffer) {
-          this->buffers.emplace_back(std::move(buffer));
-        },
-        {std::move(handler)}){
-        // nop
-    };
+            -1,// mock pipeline id
+            0, // mock query id
+            nullptr,
+            1,
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            [this](TupleBuffer& buffer) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            {std::move(handler)}){
+            // nop
+        };
 
     std::vector<TupleBuffer> buffers;
 };
@@ -79,7 +78,15 @@ TEST_F(MapJavaUdfOperatorTest, IntegerUDFTest) {
     outputClass = "java/lang/Integer";
 
     auto initialValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -102,7 +109,15 @@ TEST_F(MapJavaUdfOperatorTest, ShortUDFTest) {
     outputClass = "java/lang/Short";
 
     auto initialValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -125,7 +140,15 @@ TEST_F(MapJavaUdfOperatorTest, ByteUDFTest) {
     outputClass = "java/lang/Byte";
 
     auto initialValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -148,7 +171,15 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
     outputClass = "java/lang/Long";
 
     auto initialValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -171,7 +202,15 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
     outputClass = "java/lang/Double";
 
     double initialValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -194,7 +233,15 @@ TEST_F(MapJavaUdfOperatorTest, FloatUDFTest) {
     outputClass = "java/lang/Float";
 
     float initialValue = 42.0;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -217,7 +264,15 @@ TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     outputClass = "java/lang/Boolean";
 
     auto initialValue = true;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -241,7 +296,15 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
     inputClass = "java/lang/String";
     outputClass = "java/lang/String";
 
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -259,8 +322,24 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
 TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(-1, bm, 1024);
-    input = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
-    output = Schema::create()->addField("byteVariable", NES::INT8)->addField("shortVariable", NES::INT16)->addField("intVariable", NES::INT32)->addField("longVariable", NES::INT64)->addField("floatVariable", NES::FLOAT32)->addField("doubleVariable", NES::FLOAT64)->addField("stringVariable", NES::TEXT)->addField("booleanVariable", NES::BOOLEAN);
+    input = Schema::create()
+                ->addField("byteVariable", NES::INT8)
+                ->addField("shortVariable", NES::INT16)
+                ->addField("intVariable", NES::INT32)
+                ->addField("longVariable", NES::INT64)
+                ->addField("floatVariable", NES::FLOAT32)
+                ->addField("doubleVariable", NES::FLOAT64)
+                ->addField("stringVariable", NES::TEXT)
+                ->addField("booleanVariable", NES::BOOLEAN);
+    output = Schema::create()
+                 ->addField("byteVariable", NES::INT8)
+                 ->addField("shortVariable", NES::INT16)
+                 ->addField("intVariable", NES::INT32)
+                 ->addField("longVariable", NES::INT64)
+                 ->addField("floatVariable", NES::FLOAT32)
+                 ->addField("doubleVariable", NES::FLOAT64)
+                 ->addField("stringVariable", NES::TEXT)
+                 ->addField("booleanVariable", NES::BOOLEAN);
     clazz = "ComplexPojoMapFunction";
     inputClass = "ComplexPojo";
     outputClass = "ComplexPojo";
@@ -272,13 +351,28 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
     float initialFloat = 10.0;
     double initialDouble = 10.0;
     bool initialBool = true;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext(handler);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"byteVariable", Value<>(initialByte)}, {"shortVariable", Value<>(initialShort)}, {"intVariable", Value<>(initialInt)}, {"longVariable", Value<>(initialLong)}, {"floatVariable", Value<>(initialFloat)}, {"doubleVariable", Value<>(initialDouble)}, {"stringVariable", Value<Text>("testValue")}, {"booleanVariable", Value<>(initialBool)}});
+    auto record = Record({{"byteVariable", Value<>(initialByte)},
+                          {"shortVariable", Value<>(initialShort)},
+                          {"intVariable", Value<>(initialInt)},
+                          {"longVariable", Value<>(initialLong)},
+                          {"floatVariable", Value<>(initialFloat)},
+                          {"doubleVariable", Value<>(initialDouble)},
+                          {"stringVariable", Value<Text>("testValue")},
+                          {"booleanVariable", Value<>(initialBool)}});
     map.execute(ctx, record);
 
     EXPECT_EQ(record.read("byteVariable"), initialByte + 10);
@@ -302,7 +396,15 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
     outputClass = "java/lang/Integer";
 
     auto initalValue = 42;
-    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz, method, inputClass, outputClass, byteCodeList, serializedInstance, input, output, path);
+    auto handler = std::make_shared<MapJavaUdfOperatorHandler>(clazz,
+                                                               method,
+                                                               inputClass,
+                                                               outputClass,
+                                                               byteCodeList,
+                                                               serializedInstance,
+                                                               input,
+                                                               output,
+                                                               path);
     auto map = MapJavaUdf(0, input, output);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
@@ -314,4 +416,4 @@ TEST_F(MapJavaUdfOperatorTest, DependenciesUDFTest) {
 }
 
 }// namespace NES::Runtime::Execution::Operators
-#endif // ENABLE_JNI
+#endif// ENABLE_JNI

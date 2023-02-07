@@ -32,14 +32,14 @@ namespace NES::Runtime::Execution::Operators {
  */
 class MapJavaUdf : public ExecutableOperator {
   public:
-
     /**
      * @brief Creates a MapJavaUdf operator
      * @param operatorHandlerIndex The index to a valid MapJavaUdfOperatorHandler
      * @param inputSchema The input schema of the map tuples. Same as in the handler.
      * @param outputSchema The output schema of the map tuples Same as in the handler.
      */
-    MapJavaUdf(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema) : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema) {};
+    MapJavaUdf(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
+        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(ExecutionContext& ctx) const override;
 

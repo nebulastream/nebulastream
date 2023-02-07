@@ -501,7 +501,6 @@ TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
     EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
-
 TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
