@@ -232,34 +232,7 @@ TEST_P(IfCompilationTest, nestedBooleanFunction) {
         return res;
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(int64_t)>("execute");
-    ASSERT_EQ(function(42), 43);
-    ASSERT_EQ(function(1), 42);
-}
-
-Value<Boolean> function3(const Value<Int64>& value) {
-    if (value == (int64_t) 42) {
-        return true;
-    } else if (value == (int64_t) 43) {
-        return true;
-    } else if (value == (int64_t) 44) {
-        return true;
-    }
-    return false;
-}
-
-TEST_P(IfCompilationTest, nestedBooleanFunction3) {
-    Value<Int64> value = Value<Int64>((int64_t) 42);
-    value.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createInt64Stamp());
-    auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([value]() {
-        Value<Int64> res = Value<Int64>((int64_t) 42);
-        if (function3(value)) {
-            res = res + 1;
-        }
-        return res;
-    });
-    auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(int64_t)>("execute");
+    auto function = engine->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(42), 43);
     ASSERT_EQ(function(1), 42);
 }

@@ -31,7 +31,10 @@ class GlobalSliceMerging : public Operator {
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
     GlobalSliceMerging(uint64_t operatorHandlerIndex,
-                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                       const std::vector<std::string>& aggregationResultExpressions,
+                       const std::string& startTsFieldName,
+                       const std::string& endTsFieldName);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -54,6 +57,9 @@ class GlobalSliceMerging : public Operator {
     void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
+    const std::vector<std::string> aggregationResultExpressions;
+    const std::string startTsFieldName;
+    const std::string endTsFieldName;
 };
 
 }// namespace NES::Runtime::Execution::Operators

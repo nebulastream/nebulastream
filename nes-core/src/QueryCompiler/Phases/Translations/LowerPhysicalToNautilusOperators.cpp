@@ -16,6 +16,7 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -283,9 +284,23 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto handler =
         std::get<std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>(physicalGSMO->getWindowHandler());
     operatorHandlers.emplace_back(handler);
-    auto aggregationFunctions = lowerAggregations(physicalGSMO->getWindowDefinition()->getWindowAggregation());
-    auto sliceMergingOperator =
-        std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1, aggregationFunctions);
+    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    std::vector<std::string> aggregationFields;
+    std::transform(aggregations.cbegin(),
+                   aggregations.cend(),
+                   std::back_inserter(aggregationFields),
+                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
+                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
+                   });
+    // assume that the window start and end ts are at the start
+    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1,
+                                                                                                    aggregationFunctions,
+                                                                                                    aggregationFields,
+                                                                                                    startTs,
+                                                                                                    endTs);
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
@@ -298,9 +313,34 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto handler =
         std::get<std::shared_ptr<Runtime::Execution::Operators::KeyedSliceMergingHandler>>(physicalGSMO->getWindowHandler());
     operatorHandlers.emplace_back(handler);
-    auto aggregationFunctions = lowerAggregations(physicalGSMO->getWindowDefinition()->getWindowAggregation());
-    auto sliceMergingOperator =
-        std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1, aggregationFunctions);
+    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
+    std::vector<std::string> resultAggregationFields;
+    std::transform(aggregations.cbegin(),
+                   aggregations.cend(),
+                   std::back_inserter(resultAggregationFields),
+                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
+                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
+                   });
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    // assume that the window start and end ts are at the start
+    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
+    auto keys = physicalGSMO->getWindowDefinition()->getKeys();
+
+    std::vector<std::string> resultKeyFields;
+    auto df = DefaultPhysicalTypeFactory();
+    std::vector<PhysicalTypePtr> keyDataTypes;
+    for (const auto& key : keys) {
+        resultKeyFields.emplace_back(key->getFieldName());
+        keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
+    }
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                                                   aggregationFunctions,
+                                                                                                   resultAggregationFields,
+                                                                                                   keyDataTypes,
+                                                                                                   resultKeyFields,
+                                                                                                   startTs,
+                                                                                                   endTs);
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
@@ -356,18 +396,15 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
 
     auto keys = windowDefinition->getKeys();
     NES_ASSERT(!keys.empty(), "A keyed window should have keys");
-    std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyFields;
-    std::transform(keys.cbegin(),
-                   keys.cend(),
-                   std::back_inserter(keyFields),
-                   [&](auto& key) {
-                       return lowerExpression(key);
-                   });
+    std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
+    std::transform(keys.cbegin(), keys.cend(), std::back_inserter(keyReadExpressions), [&](auto& key) {
+        return lowerExpression(key);
+    });
     auto keyExpressions = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
         operatorHandlers.size() - 1,
         timeStampField,
-        keyFields,
+        keyReadExpressions,
         aggregationFields,
         aggregationFunctions,
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
