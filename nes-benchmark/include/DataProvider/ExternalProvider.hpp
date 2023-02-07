@@ -22,7 +22,7 @@ namespace NES::Benchmark::DataProvision {
 /**
  * @brief sets the time period in milliseconds in which the predefined amount of buffers is ingested
  */
-auto constexpr workingTimeDelta = 10;
+auto constexpr workingTimeDeltaInMillSeconds = 10;
 
 /**
  * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
@@ -105,6 +105,7 @@ private:
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
     bool started = false;
     std::thread generatorThread;
+    std::vector<uint64_t> predefinedIngestionRates;
 };
 }// namespace NES::Benchmark::DataProvision
 
