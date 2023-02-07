@@ -905,7 +905,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     ASSERT_TRUE(retStart1);
-    ASSERT_TRUE(waitForNodes(5, locVec.size() + offPathVec.size() + 2, topology));
+    ASSERT_TRUE(waitForNodes(5, locVec.size() + offPathVec.size() + 3, topology));
 
     uint64_t parentId = 0;
     std::vector<uint64_t> reconnectSequence({initialParentId, 10000, 10001, 10002, 10003, 10004, 10005});
