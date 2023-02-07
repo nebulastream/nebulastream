@@ -33,7 +33,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     propagationFile.open("propagation" + std::to_string(workerId) + ".csv", std::ios::out);
     storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
     statisticsFile << "time,latency\n";
-    propagationFile << "time,difference\n";
+    propagationFile << "time,propagationDelay,difference\n";
     storageFile << "time,oldStorageSize,newStorageSize\n";
 }
 
