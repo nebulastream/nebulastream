@@ -33,8 +33,7 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 class SignatureContainmentUtil;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 
-enum ContainmentOperator { PROJECTION, WINDOW, FILTER };
-enum ContainmentDetected { SQP_CONTAINED, NEW_QUERY_CONTAINED, EQUALITY };
+enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED, EQUALITY };
 
 /**
  * @brief This is a utility to compare two signatures
@@ -42,9 +41,9 @@ enum ContainmentDetected { SQP_CONTAINED, NEW_QUERY_CONTAINED, EQUALITY };
 class SignatureContainmentUtil {
 
   public:
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context, const z3::ContextPtr& contextSQPContainment);
+    static SignatureContainmentUtilPtr create(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
 
-    explicit SignatureContainmentUtil(const z3::ContextPtr& context, const z3::ContextPtr& contextSQPContainment);
+    explicit SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
 
     /**
      * @brief Check equality of the given signatures
@@ -52,7 +51,7 @@ class SignatureContainmentUtil {
      * @param signature2
      * @return true if tey are equal else false
      */
-    std::map<ContainmentOperator, ContainmentDetected> checkContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
+    ContainmentDetected checkContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
     /**
      * @brief Reset z3 solver
      * @return true if reset successful else false
@@ -60,11 +59,12 @@ class SignatureContainmentUtil {
     bool resetSolver();
 
   private:
-    z3::ContextPtr context;
-    z3::ContextPtr contextSQPContainment;
-    z3::SolverPtr solver;
-    z3::SolverPtr solverSQPContainment;
+    z3::ContextPtr contextSig1Contained;
+    z3::ContextPtr contextSig2Contained;
+    z3::SolverPtr solverSig1Contained;
+    z3::SolverPtr solverSig2Contained;
     uint64_t counter;
+    void createProjectionCondition(const QuerySignaturePtr& signature1, z3::expr_vector& left, z3::expr_vector& leftSQP);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

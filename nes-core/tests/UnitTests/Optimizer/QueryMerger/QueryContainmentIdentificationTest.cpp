@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedContainmentBasedQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedContainmentBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -119,7 +119,7 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification){
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedContainmentBasedQueryMergerRule::create(context, SQPcontext);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::create(context, SQPcontext);
         ASSERT_TRUE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
