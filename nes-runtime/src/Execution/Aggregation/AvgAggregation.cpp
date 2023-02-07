@@ -74,13 +74,12 @@ Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
     auto count = AggregationFunction::loadFromMemref(memref, inputType); // load the count as an inputType to allow Division
     auto sumMemref =  loadSumMemRef(memref);
     auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
-
     // calc the average
     auto finalVal = DivOp(sum, count);
     sumMemref.store(finalVal);
 
     // return the average
-    return loadFromMemref(sumMemref, finalType);
+    return finalVal;
 }
 
 void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {

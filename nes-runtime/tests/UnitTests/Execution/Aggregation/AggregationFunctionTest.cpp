@@ -72,28 +72,29 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
 TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto unsignedIntegerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
+    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType);
 
-    auto countValue = Aggregation::CountAggregationValue<int64_t>();
+    auto countValue = Aggregation::CountAggregationValue<uint64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
     countAgg.lift(memref, incomingValue);
-    ASSERT_EQ(countValue.count, 1);
+    ASSERT_EQ(countValue.count, 1UL);
 
     // test combine
     countAgg.combine(memref, memref);
-    ASSERT_EQ(countValue.count, 2);
+    ASSERT_EQ(countValue.count, 2UL);
 
     // test lower
     auto aggregationResult = countAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);
+    ASSERT_EQ(aggregationResult, 2UL);
 
     // test reset
     countAgg.reset(memref);
-    EXPECT_EQ(countValue.count, 0);
+    EXPECT_EQ(countValue.count, 0UL);
 }
 
 /**
