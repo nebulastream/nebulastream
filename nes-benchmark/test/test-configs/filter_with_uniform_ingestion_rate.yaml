@@ -13,10 +13,10 @@ logicalSources:
   - name: input1
 
 dataProvider:
-  - name: External
-  - ingestionRateDistribution:
-    - type: Uniform
-  - ingestionRateCnt: 1000
+  name: External
+  ingestionRateCnt: 1000
+  ingestionRateDistribution:
+    type: Uniform
 
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
