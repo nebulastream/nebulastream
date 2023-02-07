@@ -52,6 +52,82 @@ namespace NES::Benchmark::DataProvision {
         NES_NOT_IMPLEMENTED();
     }
 
+    TEST_F(ExternalProviderTest, startRowLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+
+        auto& generatorThread = externalProviderDefault->getGeneratorThread();
+        ASSERT_TRUE(generatorThread.joinable());
+    }
+
+    TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+
+        auto& generatorThread = externalProviderDefault->getGeneratorThread();
+        ASSERT_TRUE(generatorThread.joinable());
+    }
+
     TEST_F(ExternalProviderTest, stopRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
