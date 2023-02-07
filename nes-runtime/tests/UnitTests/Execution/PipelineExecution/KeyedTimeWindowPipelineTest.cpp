@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/Hash/MurMur3HashFunction.hpp"
-#include "Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp"
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
@@ -24,6 +24,8 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -98,6 +100,17 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
 
+    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/, aggregationFunctions);
+    auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    emitSchema->addField("test$sum", BasicType::INT64);
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    sliceMerging->setChild(emitOperator);
+    auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    sliceMergingPipeline->setRootOperator(sliceMerging);
+
+
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
 
@@ -119,10 +132,18 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
+    std::vector<OriginId> origins = {0};
+
     auto preAggExecutablePipeline = provider->create(preAggPipeline);
     auto sliceStaging = std::make_shared<Operators::KeyedSliceStaging>();
-    std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+
+
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>(sliceStaging);
+
+
+
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
@@ -130,10 +151,19 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
 
-    auto state = sliceStaging->erasePartition(10);
-    auto& map = state->partialStates[0];
-    EXPECT_EQ(map->getCurrentSize(), 3);
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    sliceMergingExecutablePipeline->setup(pipeline2Context);
+    sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
+    EXPECT_EQ(pipeline2Context.buffers.size(), 1);
 
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resultDynamicBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
+    EXPECT_EQ(resultDynamicBuffer[1][aggregationResultFieldName].read<int64_t>(), 20);
+    EXPECT_EQ(resultDynamicBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
+
+    preAggExecutablePipeline->stop(pipeline1Context);
+    sliceMergingExecutablePipeline->stop(pipeline2Context);
 
 }// namespace NES::Runtime::Execution
 

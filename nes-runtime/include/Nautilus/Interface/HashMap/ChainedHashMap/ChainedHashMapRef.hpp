@@ -36,9 +36,8 @@ class ChainedHashMapRef {
 
     class EntryIterator {
       public:
-        EntryIterator(ChainedHashMapRef& hashTableRef,
-                      const Value<UInt64>& entriesPerPage,
-                      const Value<UInt64>& currentIndex);
+        EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& entriesPerPage, const Value<UInt64>& currentIndex);
+        EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex);
         EntryIterator& operator++();
         bool operator==(const EntryIterator& other) const;
         EntryRef operator*();

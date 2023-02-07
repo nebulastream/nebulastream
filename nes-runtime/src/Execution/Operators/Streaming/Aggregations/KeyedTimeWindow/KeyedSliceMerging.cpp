@@ -104,15 +104,13 @@ Value<MemRef> KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalO
                                                           Value<>& endSliceTs) const {
     auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState2, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
+    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, 8, 8);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition2, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfPartitions", getNumberOfPartition2, partition);
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState2, partition, i);
-        for (const auto& function : aggregationFunctions) {
-            function->combine(globalSliceState, partitionState);
-            partitionState = partitionState + function->getSize();
-            globalSliceState = globalSliceState + function->getSize();
-        }
+        auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, 8, 8);
+        mergeHashTable(globalHashTable, partitionStateHashTable);
     }
     Nautilus::FunctionCall("deletePartition", deletePartition2, partition);
     return globalSlice;
@@ -138,16 +136,20 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowEnd,
                                    Value<MemRef>& globalSlice) const {
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
+    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, 8, 8);
 
-    Record resultWindow;
-    resultWindow.write("start_ts", windowStart);
-    resultWindow.write("end_ts", windowEnd);
-    for (const auto& function : aggregationFunctions) {
-        auto finalAggregationValue = function->lower(globalSliceState);
-        resultWindow.write("test$sum", finalAggregationValue);
-        globalSliceState = globalSliceState + function->getSize();
+    for (const auto& globalEntry : globalHashTable) {
+        Record resultWindow;
+        resultWindow.write("start_ts", windowStart);
+        resultWindow.write("end_ts", windowEnd);
+        auto sliceValue = globalEntry.getValuePtr();
+        for (const auto& function : aggregationFunctions) {
+            auto finalAggregationValue = function->lower(sliceValue);
+            resultWindow.write("test$sum", finalAggregationValue);
+            sliceValue = sliceValue + function->getSize();
+        }
+        child->execute(ctx, resultWindow);
     }
-    child->execute(ctx, resultWindow);
 }
 
 }// namespace NES::Runtime::Execution::Operators
