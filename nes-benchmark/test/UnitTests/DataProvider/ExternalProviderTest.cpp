@@ -80,10 +80,17 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-
         sleep(1);
 
-        folly::MPMCQueue<TupleBufferHolder> bufferQueue = ExternalProvider::getBufferQueue();
+        auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
+
+        auto& bufferQueue = externalProviderDefault->getBufferQueue();
+        TupleBufferHolder bufferHolder;
+        bufferQueue.read(bufferHolder);
+        auto expectedNextBuffer = bufferHolder.bufferToHold;
+
+        ASSERT_FALSE(createdBuffers.empty());
+        ASSERT_EQ(nextBufferDefault->getBufferSize(), 50000);
     }
 
     TEST_F(ExternalProviderTest, startRowLayoutTest) {
