@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.41](https://github.com/nebulastream/nebulastream/tree/v0.4.41) (2023-02-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.40...v0.4.41)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query compilation fails on ARM64 Macs [\#3268](https://github.com/nebulastream/nebulastream/issues/3268)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Java UDF Compiler Integration [\#3144](https://github.com/nebulastream/nebulastream/issues/3144)
+
 ## [v0.4.40](https://github.com/nebulastream/nebulastream/tree/v0.4.40) (2023-02-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.39...v0.4.40)
@@ -8,7 +20,6 @@
 
 - \[BUG\] Location service responses are inconsistent [\#3390](https://github.com/nebulastream/nebulastream/issues/3390)
 - \[BUG\] YSB Source Test e2e [\#3246](https://github.com/nebulastream/nebulastream/issues/3246)
-- \[BUG\] Error message from the network stack that a host is not reachable should be a warning [\#2741](https://github.com/nebulastream/nebulastream/issues/2741)
 - Memory leaks in NES [\#1655](https://github.com/nebulastream/nebulastream/issues/1655)
 
 ## [v0.4.39](https://github.com/nebulastream/nebulastream/tree/v0.4.39) (2023-02-02)
