@@ -374,7 +374,7 @@ class DynamicTupleBuffer {
         if(copyRecordFromBufferToTuple(retTuple, recordIndex)) {
             return retTuple;
         } else {
-            return nullptr;
+            return std::tuple<Types...>();
         }
     }
 
