@@ -130,6 +130,33 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
+    // TODO: add more nodes according to JSON
+    void setupICCSTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
+        topology = Topology::create();
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0], properties);
+        rootNode->addNodeProperty("tf_installed", true);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1], properties);
+        sourceNode1->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
+
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2], properties);
+        sourceNode2->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
+
+        // TODO: change schema to match ICCS
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+    }
+
     void setupComplexTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
         topology = Topology::create();
 
@@ -834,6 +861,34 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
             }
         }
     }
+}
+
+TEST_F(QueryPlacementTest, testICCSPlacement) {
+    setupICCSTopologyAndSourceCatalog({4, 4, 4});
+    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("newId") = 2).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
+                                                     {false, true, true, false, false},
+                                                     {false, false, false, true, true}};
+    NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 }
 
 // Test manual placement

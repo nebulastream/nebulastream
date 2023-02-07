@@ -1,0 +1,50 @@
+{
+      "placement": [
+            {
+                  "operator_id": "4",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "10",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "7",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "9",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "6",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "5",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            },
+            {
+                  "operator_id": "8",
+                  "device_id": "node_1-device_1",
+                  "node_id": "node_1",
+                  "device_type": "CPU"
+            }
+      ],
+      "objective": {
+            "time": "8.204462051391602",
+            "power": "735"
+      }
+}
