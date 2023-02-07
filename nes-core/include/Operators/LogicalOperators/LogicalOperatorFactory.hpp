@@ -76,9 +76,11 @@ class LogicalOperatorFactory {
                                                          OperatorId id = Util::getNextOperatorId());
 
     /**
-     * @brief a
-     * @param b
-     * @param c
+     * @brief Create a new infer model operator
+     * @param model path of the operator
+     * @param the intput fields of the model
+     * @param the output fields of the model
+     * @param the id of the operator
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
