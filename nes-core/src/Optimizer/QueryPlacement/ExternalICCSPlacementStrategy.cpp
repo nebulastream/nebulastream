@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/QueryPlacement/ExternalICCSPlacementStrategy.hpp>
 
 namespace NES::Optimizer {
@@ -35,7 +36,22 @@ bool ExternalICCSPlacementStrategy::updateGlobalExecutionPlan(
     LineageType::Value lineageType /*lineageType*/,
     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
-    return false; // TODO: add body
+
+    try {
+        // 1. Find the path where operators need to be placed
+        performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 2. Place the operators
+        placePinnedOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 3. add network source and sink operators
+        addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
+
+        // 4. Perform type inference on all updated query plans
+        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+    } catch (std::exception ex) {
+        throw QueryPlacementException(queryId, ex.what());
+    }
 }
 
 
