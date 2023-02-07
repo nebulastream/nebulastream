@@ -19,7 +19,12 @@ ExternalProvider::ExternalProvider(uint64_t id,
                                    DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
                                    IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(std::move(ingestionRateGenerator)) {}
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(std::move(ingestionRateGenerator)) {
+    predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();
+
+    uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
+    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
+}
 
 std::vector<Runtime::TupleBuffer>& ExternalProvider::getPreAllocatedBuffers() { return preAllocatedBuffers; }
 
@@ -43,14 +48,10 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
-    auto predefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
-    uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
-    bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
-
-    auto workingTimeDeltaInSec = workingTimeDelta / 1000;
+    auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
     auto buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
-    NES_ASSERT(buffersToProducePerWorkingTimeDelta != 0, "Ingestion rate is too small!");
+    NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
 
     auto lastSecond = 0L;
     auto runningOverAllCount = 0L;
@@ -96,7 +97,7 @@ void ExternalProvider::generateData() {
 
         auto currentTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        auto nextPeriodStartTime = periodStartTime + workingTimeDelta;
+        auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
 
         if (nextPeriodStartTime < currentTime) {
             NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
