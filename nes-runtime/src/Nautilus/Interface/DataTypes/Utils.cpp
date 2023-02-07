@@ -17,9 +17,12 @@
 #include <cstring>
 namespace NES::Nautilus {
 
+bool memeq(void* ptr1, void* ptr2, uint64_t size){
+    return memcmp(ptr1, ptr2, size) == 0;
+}
 
 bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size) {
-    return FunctionCall("memcmp", memcmp, ptr1, ptr2, size) == 0;
+    return FunctionCall("memeq", memeq, ptr1, ptr2, size);
 }
 void memCopy(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size) {
     FunctionCall("memcpy", memcpy, ptr1, ptr2, size);

@@ -72,7 +72,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash
 void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const std::function<void(EntryRef&)>& update) {
     auto entry = findChain(otherEntry.getHash());
     for (; entry != nullptr; entry = entry.getNext()) {
-        if (memEquals(entry.getKeyPtr(), entry.getValuePtr(), Value<UInt64>(keySize))) {
+        if (memEquals(entry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize))) {
             update(entry);
             break;
         }
@@ -125,14 +125,13 @@ Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
-    auto currentSize = getCurrentSize();
     auto entriesPerPage = getEntriesPerPage();
     return ChainedHashMapRef::EntryIterator(*this, entriesPerPage, (uint64_t) 0);
 }
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() {
     auto currentSize = getCurrentSize();
     auto entriesPerPage = getEntriesPerPage();
-    return ChainedHashMapRef::EntryIterator(*this, entriesPerPage, currentSize);
+    return ChainedHashMapRef::EntryIterator(*this, currentSize);
 }
 
 Value<UInt64> ChainedHashMapRef::getCurrentSize() {
@@ -156,14 +155,19 @@ ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef,
     : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex((uint64_t) 0),
       currentPage(hashTableRef.getPage((uint64_t) 0)), currentPageIndex((uint64_t) 0), currentIndex(currentIndex) {}
 
+ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex)
+    : hashTableRef(hashTableRef), entriesPerPage((uint64_t) 0), inPageIndex((uint64_t) 0),
+      currentPage(/*use hash table ref as a temp mem ref that is in this case never used*/ hashTableRef.hashTableRef),
+      currentPageIndex((uint64_t) 0), currentIndex(currentIndex) {}
+
 ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++() {
     inPageIndex = inPageIndex + (uint64_t) 1;
     if (entriesPerPage == inPageIndex) {
         inPageIndex = (uint64_t) 0;
-        currentIndex = currentIndex + entriesPerPage;
         currentPageIndex = currentPageIndex + (uint64_t) 1;
         currentPage = hashTableRef.getPage(currentPageIndex);
     }
+    currentIndex = currentIndex + (uint64_t) 1;
     return *this;
 }
 
