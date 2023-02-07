@@ -11,6 +11,8 @@ add_nes_unit_test(threshold-window-query-execution-test "ThresholdWindowQueryExe
 ### GlobalTumblingWindowQueryExecutionTest ###
 add_nes_unit_test(global-tumbling-window-query-execution-test "GlobalTumblingWindowQueryExecutionTest.cpp")
 
-# TODO #3339 this test has to be enabled once the integration of stream join has been finalized
+### KeyedTumblingWindowQueryExecutionTest ###
+add_nes_unit_test(keyed-tumbling-window-query-execution-test "KeyedTumblingWindowQueryExecutionTest.cpp")
+
 ### StreamJoinExecutionTest ###
 add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")

@@ -21,6 +21,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 namespace NES::Nautilus::Interface {
 class ChainedHashMap;

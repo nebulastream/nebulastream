@@ -16,10 +16,10 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDTHREADLOCALPREAGGREGATIONOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::Runtime::Execution::Operators {
+class KeyedSlicePreAggregationHandler;
+}
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief The keyed thread local pre aggregation operator, receives an input source and creates on each processing thread an local pre aggregate.
@@ -27,30 +27,33 @@ namespace PhysicalOperators {
  */
 class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
+    using WindowHandlerType = std::variant<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr,
+                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>;
     PhysicalKeyedThreadLocalPreAggregationOperator(
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler);
+        WindowHandlerType keyedEventTimeWindowHandler,
+        Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler);
+           WindowHandlerType keyedEventTimeWindowHandler,
+           Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr getWindowHandler() {
-        return keyedEventTimeWindowHandler;
-    }
+    WindowHandlerType getWindowHandler();
+
+    const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
 
   private:
-    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler;
+    WindowHandlerType keyedEventTimeWindowHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDTHREADLOCALPREAGGREGATIONOPERATOR_HPP_

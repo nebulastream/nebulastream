@@ -20,30 +20,38 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(
-    OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler)
+PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(OperatorId id,
+                                                                     SchemaPtr inputSchema,
+                                                                     SchemaPtr outputSchema,
+                                                                     WindowHandlerType operatorHandler,
+                                                                     Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
-      operatorHandler(operatorHandler) {}
+      operatorHandler(operatorHandler), windowDefinition(windowDefinition) {}
 std::string PhysicalKeyedSliceMergingOperator::toString() const { return "PhysicalKeyedSliceMergingOperator"; }
 
-std::shared_ptr<PhysicalKeyedSliceMergingOperator> PhysicalKeyedSliceMergingOperator::create(
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler) {
+std::shared_ptr<PhysicalKeyedSliceMergingOperator>
+PhysicalKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
+                                          SchemaPtr outputSchema,
+                                          WindowHandlerType keyedEventTimeWindowHandler,
+                                          Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalKeyedSliceMergingOperator>(Util::getNextOperatorId(),
                                                                inputSchema,
                                                                outputSchema,
-                                                               keyedEventTimeWindowHandler);
+                                                               keyedEventTimeWindowHandler,
+                                                               windowDefinition);
 }
 
-Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr PhysicalKeyedSliceMergingOperator::getWindowHandler() {
+PhysicalKeyedSliceMergingOperator::WindowHandlerType PhysicalKeyedSliceMergingOperator::getWindowHandler() {
     return operatorHandler;
 }
 
-OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() { return create(inputSchema, outputSchema, operatorHandler); }
+const Windowing::LogicalWindowDefinitionPtr& PhysicalKeyedSliceMergingOperator::getWindowDefinition() const {
+    return windowDefinition;
+}
+
+OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() {
+    return create(inputSchema, outputSchema, operatorHandler, windowDefinition);
+}
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES
