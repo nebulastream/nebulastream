@@ -18,6 +18,12 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+
+namespace NES {
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+}// namespace NES
+
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -31,6 +37,7 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
     KeyedSlicePreAggregation(uint64_t operatorHandlerIndex,
                              Expressions::ExpressionPtr timestampExpression,
                              const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+                             const std::vector<PhysicalTypePtr>& keyDataTypes,
                              const std::vector<Expressions::ExpressionPtr>& aggregationExpressions,
                              const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                              const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
@@ -43,9 +50,12 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const Expressions::ExpressionPtr timestampExpression;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
+    const std::vector<PhysicalTypePtr> keyDataTypes;
     const std::vector<Expressions::ExpressionPtr> aggregationExpressions;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
+    uint64_t keySize;
+    uint64_t valueSize;
 };
 
 }// namespace NES::Runtime::Execution::Operators

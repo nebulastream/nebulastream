@@ -41,8 +41,6 @@ Value<MemRef> ChainedHashMapRef::EntryRef::getKeyPtr() const { return (ref + key
 
 Value<MemRef> ChainedHashMapRef::EntryRef::getValuePtr() const { return (ref + valueOffset).as<MemRef>(); }
 
-Value<MemRef> ChainedHashMapRef::EntryRef::getRef() const { return ref; }
-
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
     // This assumes that the next ptr is stored as the first element in the entry.
     static_assert(offsetof(ChainedHashMap::Entry, next) == 0);
@@ -112,7 +110,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
         for (auto& key : keys) {
             keyPtr.store(key);
             // todo fix types
-            keyPtr = keyPtr + (uint64_t) 8;
+            keyPtr = keyPtr + key->getType().getSize();
         }
         // call on insert lambda function to insert default values
         onInsert(entry);
@@ -189,7 +187,7 @@ bool ChainedHashMapRef::EntryIterator::operator==(const EntryIterator& other) co
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryIterator::operator*() {
-    auto entry = currentPage + ((sizeof(ChainedHashMap::Entry) + (uint64_t) 16) * inPageIndex);
+    auto entry = currentPage + ((sizeof(ChainedHashMap::Entry) + hashTableRef.keySize + hashTableRef.valueSize) * inPageIndex);
     return {entry.as<MemRef>(), sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + hashTableRef.keySize};
 }
 

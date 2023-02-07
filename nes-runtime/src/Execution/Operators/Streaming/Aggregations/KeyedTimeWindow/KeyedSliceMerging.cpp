@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
@@ -60,27 +61,38 @@ void deletePartition2(void* p) {
     delete partition;
 }
 
-void setupSliceMergingHandler2(void* ss, void* ctx, uint64_t size) {
+void setupSliceMergingHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
     auto handler = static_cast<KeyedSliceMergingHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
-    handler->setup(*pipelineExecutionContext, size, 8);
+    handler->setup(*pipelineExecutionContext, keySize, valueSize);
 }
 
 KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
-                                     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
-
-void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
-    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> valueSize = (uint64_t) 0;
+                                     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                                     const std::vector<std::string>& aggregationResultExpressions,
+                                     const std::vector<PhysicalTypePtr>& keyDataTypes,
+                                     const std::vector<std::string>& resultKeyFields,
+                                     const std::string& startTsFieldName,
+                                     const std::string& endTsFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
+      aggregationResultExpressions(aggregationResultExpressions), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
+      startTsFieldName(startTsFieldName), endTsFieldName(endTsFieldName), keySize(0), valueSize(0) {
+    for (auto& keyType : keyDataTypes) {
+        keySize = keySize + keyType->size();
+    }
     for (auto& function : aggregationFunctions) {
         valueSize = valueSize + function->getSize();
     }
+}
+
+void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
+    auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall("setupSliceMergingHandler",
                            setupSliceMergingHandler2,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
-                           valueSize);
+                           Value<UInt64>(keySize),
+                           Value<UInt64>(valueSize));
     this->child->setup(executionCtx);
 }
 
@@ -104,12 +116,12 @@ Value<MemRef> KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalO
                                                           Value<>& endSliceTs) const {
     auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState2, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
-    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, 8, 8);
+    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keySize, valueSize);
     auto partition = Nautilus::FunctionCall("erasePartition", erasePartition2, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfPartitions", getNumberOfPartition2, partition);
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState2, partition, i);
-        auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, 8, 8);
+        auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keySize, valueSize);
         mergeHashTable(globalHashTable, partitionStateHashTable);
     }
     Nautilus::FunctionCall("deletePartition", deletePartition2, partition);
@@ -136,17 +148,26 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowEnd,
                                    Value<MemRef>& globalSlice) const {
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState2, globalSlice);
-    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, 8, 8);
+    auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keySize, valueSize);
 
     for (const auto& globalEntry : globalHashTable) {
         Record resultWindow;
-        resultWindow.write("start_ts", windowStart);
-        resultWindow.write("end_ts", windowEnd);
+        // write window start and end to result record
+        resultWindow.write(startTsFieldName, windowStart);
+        resultWindow.write(endTsFieldName, windowEnd);
+        // load keys and write them to result record
+        auto sliceKeys = globalEntry.getKeyPtr();
+        for (size_t i = 0; i < resultKeyFields.size(); ++i) {
+            Value<> value = sliceKeys.load<UInt64>();
+            resultWindow.write(resultKeyFields[i], value);
+            sliceKeys  = sliceKeys + keyDataTypes[i]->size();
+        }
+        // load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
-        for (const auto& function : aggregationFunctions) {
-            auto finalAggregationValue = function->lower(sliceValue);
-            resultWindow.write("test$sum", finalAggregationValue);
-            sliceValue = sliceValue + function->getSize();
+        for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+            auto finalAggregationValue = aggregationFunctions[i]->lower(sliceValue);
+            resultWindow.write(aggregationResultExpressions[i], finalAggregationValue);
+            sliceValue = sliceValue + aggregationFunctions[i]->getSize();
         }
         child->execute(ctx, resultWindow);
     }

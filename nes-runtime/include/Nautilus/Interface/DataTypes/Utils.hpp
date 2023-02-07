@@ -24,5 +24,5 @@ void memCopy(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size);
 
 #define getMember(ref, t, d) (ref + __builtin_offsetof(t, d)).as<MemRef>()
 
-}
+}// namespace NES::Nautilus
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_UTILS_HPP_

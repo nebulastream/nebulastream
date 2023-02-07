@@ -29,14 +29,13 @@ class ChainedHashMapRef {
         Value<MemRef> getValuePtr() const;
         bool operator!=(std::nullptr_t rhs);
         bool operator==(std::nullptr_t rhs);
-        Value<MemRef> getRef() const;
 
       private:
         mutable Value<MemRef> ref;
         mutable uint64_t keyOffset;
         mutable uint64_t valueOffset;
     };
-    ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize, uint64_t valueSize);
+    ChainedHashMapRef(const Value<MemRef>& hashTableRef, const std::vector<PhysicalTypePtr> keyDataTypes, uint64_t keySize, uint64_t valueSize);
 
     EntryRef findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys);
     EntryRef
@@ -73,6 +72,7 @@ class ChainedHashMapRef {
     EntryRef insert(const Value<UInt64>& hash);
     Value<Boolean> compareKeys(EntryRef& entry, const std::vector<Value<>>& keys);
     Value<MemRef> hashTableRef;
+    std::vector keySize;
     uint64_t keySize;
     uint64_t valueSize;
 };

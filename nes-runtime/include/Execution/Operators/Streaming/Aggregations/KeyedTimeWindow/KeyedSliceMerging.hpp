@@ -18,6 +18,10 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+namespace NES{
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+}
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -27,12 +31,17 @@ namespace NES::Runtime::Execution::Operators {
 class KeyedSliceMerging : public Operator {
   public:
     /**
-     * @brief Creates a GlobalSliceMerging operator
+     * @brief Creates a KeyedSliceMerging operator
      * @param operatorHandlerIndex the index of the GlobalSliceMerging operator handler
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
     KeyedSliceMerging(uint64_t operatorHandlerIndex,
-                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+                      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                      const std::vector<std::string>& aggregationResultExpressions,
+                      const std::vector<PhysicalTypePtr>& keyDataTypes,
+                      const std::vector<std::string>& resultKeyFields,
+                      const std::string& startTsFieldName,
+                      const std::string& endTsFieldName);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -56,6 +65,13 @@ class KeyedSliceMerging : public Operator {
     void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
+    const std::vector<std::string> aggregationResultExpressions;
+    const std::vector<std::string> resultKeyFields;
+    const std::vector<PhysicalTypePtr> keyDataTypes;
+    const std::string startTsFieldName;
+    const std::string endTsFieldName;
+    uint64_t keySize;
+    uint64_t valueSize;
 };
 
 }// namespace NES::Runtime::Execution::Operators

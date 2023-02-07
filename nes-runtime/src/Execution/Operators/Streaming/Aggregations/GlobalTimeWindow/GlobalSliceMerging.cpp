@@ -71,8 +71,13 @@ void* getDefaultMergingState(void* ss) {
 }
 
 GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
-                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
+                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                                       const std::vector<std::string>& aggregationResultExpressions,
+                                       const std::string& startTsFieldName,
+                                       const std::string& endTsFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
+      aggregationResultExpressions(aggregationResultExpressions), startTsFieldName(startTsFieldName),
+      endTsFieldName(endTsFieldName) {}
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -134,8 +139,8 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
     auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
 
     Record resultWindow;
-    resultWindow.write("start_ts", windowStart);
-    resultWindow.write("end_ts", windowEnd);
+    resultWindow.write(startTsFieldName, windowStart);
+    resultWindow.write(endTsFieldName, windowEnd);
     for (const auto& function : aggregationFunctions) {
         auto finalAggregationValue = function->lower(globalSliceState);
         resultWindow.write("test$sum", finalAggregationValue);
