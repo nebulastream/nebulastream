@@ -116,8 +116,10 @@ class LowerPhysicalToNautilusOperators {
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
 #ifdef ENABLE_JNI
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& sharedPtr, uint64_t handlerIndex);
-#endif // ENABLE_JIN
+    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                    const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
+                    uint64_t handlerIndex);
+#endif// ENABLE_JIN
 };
 }// namespace QueryCompilation
 }// namespace NES

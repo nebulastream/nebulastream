@@ -17,8 +17,8 @@
 
 #ifdef ENABLE_JNI
 
-#include <mutex>
 #include <jni.h>
+#include <mutex>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -39,7 +39,7 @@ class JVMContext {
      * @param env JNI environment to use for the thread
      * @param args initialization arguments needed when calling for the first time.
      */
-    void createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs &args);
+    void createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs& args);
 
     /*
      * @brief A thread attached to the VM must detach itself before exiting.
@@ -52,12 +52,12 @@ class JVMContext {
     void destroyJVM();
 
   private:
-    JVMContext() {};
+    JVMContext(){};
     ~JVMContext();
-    JVMContext(JVMContext const&)      = delete;
-    void operator=(JVMContext const&)  = delete;
-    JVMContext(JVMContext const&&)      = delete;
-    void operator=(JVMContext const&&)  = delete;
+    JVMContext(JVMContext const&) = delete;
+    void operator=(JVMContext const&) = delete;
+    JVMContext(JVMContext const&&) = delete;
+    void operator=(JVMContext const&&) = delete;
 
     bool attached = false;
     bool created = false;
@@ -66,6 +66,6 @@ class JVMContext {
     JavaVM* jvm;
 };
 
-};// NES::Runtime::Execution::Operators
+};    // namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
 #endif// NES_EXECUTION_OPERATORS_RELATIONAL_JVMCONTEXT_HPP

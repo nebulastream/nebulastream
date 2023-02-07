@@ -20,9 +20,9 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
-#include <vector>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -51,15 +51,10 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
                                        const std::vector<char>& serializedInstance,
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,
-                                       const std::optional<std::string>& javaPath) : className(className),
-                                                                      methodName(methodName),
-                                                                      inputClassName(inputClassName),
-                                                                      outputClassName(outputClassName),
-                                                                      byteCodeList(byteCodeList),
-                                                                      serializedInstance(serializedInstance),
-                                                                      inputSchema(inputSchema),
-                                                                      outputSchema(outputSchema),
-                                                                      javaPath(javaPath) {}
+                                       const std::optional<std::string>& javaPath)
+        : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
+          byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
+          outputSchema(outputSchema), javaPath(javaPath) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
@@ -139,10 +134,10 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
     const std::vector<char> serializedInstance;
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
-    JNIEnv *env;
+    JNIEnv* env;
     const std::optional<std::string> javaPath;
 };
 
 }// namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
-#endif //NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAPJAVAUDFOPERATORHANDLER_HPP_

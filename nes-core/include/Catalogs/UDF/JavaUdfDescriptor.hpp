@@ -15,7 +15,6 @@
 #ifndef NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
 
-
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <memory>
@@ -129,7 +128,6 @@ class JavaUdfDescriptor : public UdfDescriptor {
      */
     const SchemaPtr& getInputSchema() const { return inputSchema; }
 
-
     /**
      * @brief Set the input schema of the map UDF operation.
      *
@@ -138,7 +136,6 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @param inputSchema A SchemaPtr instance describing the input schema of the UDF method.
      */
     void setInputSchema(const SchemaPtr& inputSchema);
-
 
     /**
      * @brief Return the fully-qualified class name of the input type of the UDF method.

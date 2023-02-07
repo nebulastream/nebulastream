@@ -13,17 +13,17 @@
 */
 #ifdef ENABLE_JNI
 
-#include <Execution/Operators/Relational/MapJavaUdf.hpp>
-#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JVMContext.hpp>
+#include <Execution/Operators/Relational/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <jni.h>
-#include <utility>
 #include <cstring>
 #include <filesystem>
+#include <jni.h>
+#include <utility>
 #if not(defined(__APPLE__))
 #include <experimental/source_location>
 #endif
@@ -35,7 +35,7 @@ namespace NES::Runtime::Execution::Operators {
  * @param env jni environment
  * @param location location of the error. Leave default to use the location of the caller.
  */
-inline void jniErrorCheck(JNIEnv *env, const std::source_location& location = std::source_location::current()) {
+inline void jniErrorCheck(JNIEnv* env, const std::source_location& location = std::source_location::current()) {
     auto exception = env->ExceptionOccurred();
     if (exception) {
         // print exception
@@ -44,7 +44,8 @@ inline void jniErrorCheck(JNIEnv *env, const std::source_location& location = st
         auto toString = env->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
         auto string = (jstring) env->CallObjectMethod(exception, toString);
         const char* utf = env->GetStringUTFChars(string, &isCopy);
-        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function " << location.function_name() << " at line " << location.line() << ": " << utf);
+        NES_THROW_RUNTIME_ERROR("An error occurred during a map java UDF execution in function "
+                                << location.function_name() << " at line " << location.line() << ": " << utf);
     }
 }
 
@@ -80,7 +81,7 @@ extern "C" jobject deserializeInstance(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     // use deserializer given in java utils file
-    void *object = (void *)handler->getSerializedInstance().data();
+    void* object = (void*) handler->getSerializedInstance().data();
     auto clazz = handler->getEnvironment()->FindClass("MapJavaUdfUtils");
     jniErrorCheck(handler->getEnvironment());
     // TODO: we can probably cache the method id for all functions in e.g. the operator handler to improve performance
@@ -95,7 +96,7 @@ extern "C" jobject deserializeInstance(void* state) {
  * Start the java vm and load the classes given in the javaPath
  * @param state operator handler state
  */
-extern "C" void startOrAttachVMWithJarFile(void *state) {
+extern "C" void startOrAttachVMWithJarFile(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -115,7 +116,7 @@ extern "C" void startOrAttachVMWithJarFile(void *state) {
     vmArgs.nOptions = 3;
     vmArgs.options = options;
     vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = false; // invalid options make the JVM init fail
+    vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
 
     auto env = handler->getEnvironment();
     JVMContext::instance().createOrAttachToJVM(&env, vmArgs);
@@ -126,15 +127,15 @@ extern "C" void startOrAttachVMWithJarFile(void *state) {
  * Start the java vm and load the classes given in the byteCodeList
  * @param state operator handler state
  */
-extern "C" void startOrAttachVMWithByteList(void *state){
+extern "C" void startOrAttachVMWithByteList(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     JavaVMInitArgs vmArgs;
     vmArgs.version = JNI_VERSION_1_2;
-    vmArgs.ignoreUnrecognized = false; // invalid options make the JVM init fail
+    vmArgs.ignoreUnrecognized = false;// invalid options make the JVM init fail
 
-    JVMContext &context = JVMContext::instance();
+    JVMContext& context = JVMContext::instance();
     auto env = handler->getEnvironment();
     context.createOrAttachToJVM(&env, vmArgs);
     handler->setEnvironment(env);
@@ -147,7 +148,7 @@ extern "C" void startOrAttachVMWithByteList(void *state){
  * When no java path is given, the byte code list is used.
  * @param state operator handler state
  */
-extern "C" void startOrAttachVM(void *state) {
+extern "C" void startOrAttachVM(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -164,17 +165,13 @@ extern "C" void startOrAttachVM(void *state) {
  * Detach the current thread from the JVM.
  * This is needed to avoid memory leaks.
  */
-extern "C" void detachVM(){
-    JVMContext::instance().detachFromJVM();
-}
+extern "C" void detachVM() { JVMContext::instance().detachFromJVM(); }
 
 /**
  * Unloads the java VM.
  * This is needed to avoid memory leaks.
  */
-extern "C" void destroyVM(){
-    JVMContext::instance().destroyJVM();
-}
+extern "C" void destroyVM() { JVMContext::instance().destroyJVM(); }
 
 /**
  * Finds the input class in the JVM and returns a jclass object pointer.
@@ -230,8 +227,8 @@ extern "C" void* allocateObject(void* state, void* classPtr) {
  * @param constructorSignature signature of the constructor
  * @return jobject instance of the given class
  */
-template <typename T>
-void *createObjectType(void *state, T value, std::string className, std::string constructorSignature){
+template<typename T>
+void* createObjectType(void* state, T value, std::string className, std::string constructorSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -249,7 +246,7 @@ void *createObjectType(void *state, T value, std::string className, std::string 
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createBooleanObject(void* state, bool value) {
+extern "C" void* createBooleanObject(void* state, bool value) {
     return createObjectType(state, value, "java/lang/Boolean", "(Z)V");
 }
 
@@ -258,16 +255,14 @@ extern "C" void *createBooleanObject(void* state, bool value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createFloatObject(void* state, float value) {
-    return createObjectType(state, value, "java/lang/Float", "(F)V");
-}
+extern "C" void* createFloatObject(void* state, float value) { return createObjectType(state, value, "java/lang/Float", "(F)V"); }
 
 /**
  * Creates a new double object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createDoubleObject(void* state, double value) {
+extern "C" void* createDoubleObject(void* state, double value) {
     return createObjectType(state, value, "java/lang/Double", "(D)V");
 }
 
@@ -276,7 +271,7 @@ extern "C" void *createDoubleObject(void* state, double value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createIntegerObject(void* state, int32_t value) {
+extern "C" void* createIntegerObject(void* state, int32_t value) {
     return createObjectType(state, value, "java/lang/Integer", "(I)V");
 }
 
@@ -285,16 +280,14 @@ extern "C" void *createIntegerObject(void* state, int32_t value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createLongObject(void* state, int64_t value) {
-    return createObjectType(state, value, "java/lang/Long", "(J)V");
-}
+extern "C" void* createLongObject(void* state, int64_t value) { return createObjectType(state, value, "java/lang/Long", "(J)V"); }
 
 /**
  * Creates a new short object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createShortObject(void* state, int16_t value) {
+extern "C" void* createShortObject(void* state, int16_t value) {
     return createObjectType(state, value, "java/lang/Short", "(S)V");
 }
 
@@ -303,16 +296,14 @@ extern "C" void *createShortObject(void* state, int16_t value) {
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createByteObject(void* state, int8_t value) {
-    return createObjectType(state, value, "java/lang/Byte", "(B)V");
-}
+extern "C" void* createByteObject(void* state, int8_t value) { return createObjectType(state, value, "java/lang/Byte", "(B)V"); }
 
 /**
  * Creates a new string object and sets its value in the constructor.
  * @param state operator handler state
  * @param value value to set
  */
-extern "C" void *createStringObject(void* state, TextValue *value) {
+extern "C" void* createStringObject(void* state, TextValue* value) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
     return handler->getEnvironment()->NewStringUTF(value->c_str());
 }
@@ -327,8 +318,8 @@ extern "C" void *createStringObject(void* state, TextValue *value) {
  * @param getterSignature getter function signature of the value
  * @return T value of the field
  */
-template <typename T>
-T getObjectTypeValue(void *state, void *object, std::string className, std::string getterName, std::string getterSignature) {
+template<typename T>
+T getObjectTypeValue(void* state, void* object, std::string className, std::string getterName, std::string getterSignature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -337,19 +328,19 @@ T getObjectTypeValue(void *state, void *object, std::string className, std::stri
     auto mid = handler->getEnvironment()->GetMethodID(clazz, getterName.c_str(), getterSignature.c_str());
     jniErrorCheck(handler->getEnvironment());
     T value;
-     if constexpr(std::is_same<T, bool>::value){
+    if constexpr (std::is_same<T, bool>::value) {
         value = handler->getEnvironment()->CallBooleanMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, float>::value){
+    } else if constexpr (std::is_same<T, float>::value) {
         value = handler->getEnvironment()->CallFloatMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, double>::value) {
+    } else if constexpr (std::is_same<T, double>::value) {
         value = handler->getEnvironment()->CallDoubleMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, int32_t>::value) {
+    } else if constexpr (std::is_same<T, int32_t>::value) {
         value = handler->getEnvironment()->CallIntMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, int64_t>::value) {
-         value = handler->getEnvironment()->CallLongMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, int16_t>::value) {
-         value = handler->getEnvironment()->CallShortMethod((jobject) object, mid);
-    } else if constexpr(std::is_same<T, int8_t>::value) {
+    } else if constexpr (std::is_same<T, int64_t>::value) {
+        value = handler->getEnvironment()->CallLongMethod((jobject) object, mid);
+    } else if constexpr (std::is_same<T, int16_t>::value) {
+        value = handler->getEnvironment()->CallShortMethod((jobject) object, mid);
+    } else if constexpr (std::is_same<T, int8_t>::value) {
         value = handler->getEnvironment()->CallByteMethod((jobject) object, mid);
     } else {
         NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(typeid(T).name()));
@@ -364,7 +355,7 @@ T getObjectTypeValue(void *state, void *object, std::string className, std::stri
  * @param object object to get the field from
  * @return bool value of the field
  */
-extern "C" bool getBooleanObjectValue(void* state, void *object) {
+extern "C" bool getBooleanObjectValue(void* state, void* object) {
     return getObjectTypeValue<bool>(state, object, "java/lang/Boolean", "booleanValue", "()Z");
 }
 
@@ -374,7 +365,7 @@ extern "C" bool getBooleanObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return float value of the field
  */
-extern "C" float getFloatObjectValue(void* state, void *object) {
+extern "C" float getFloatObjectValue(void* state, void* object) {
     return getObjectTypeValue<float>(state, object, "java/lang/Float", "floatValue", "()F");
 }
 
@@ -384,7 +375,7 @@ extern "C" float getFloatObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return double value of the field
  */
-extern "C" double getDoubleObjectValue(void* state, void *object) {
+extern "C" double getDoubleObjectValue(void* state, void* object) {
     return getObjectTypeValue<double>(state, object, "java/lang/Double", "doubleValue", "()D");
 }
 
@@ -394,7 +385,7 @@ extern "C" double getDoubleObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return int value of the field
  */
-extern "C" int32_t getIntegerObjectValue(void* state, void *object) {
+extern "C" int32_t getIntegerObjectValue(void* state, void* object) {
     return getObjectTypeValue<int32_t>(state, object, "java/lang/Integer", "intValue", "()I");
 }
 
@@ -404,7 +395,7 @@ extern "C" int32_t getIntegerObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return long value of the field
  */
-extern "C" int64_t getLongObjectValue(void* state, void *object) {
+extern "C" int64_t getLongObjectValue(void* state, void* object) {
     return getObjectTypeValue<int64_t>(state, object, "java/lang/Long", "longValue", "()J");
 }
 
@@ -414,7 +405,7 @@ extern "C" int64_t getLongObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return short value of the field
  */
-extern "C" int16_t getShortObjectValue(void* state, void *object) {
+extern "C" int16_t getShortObjectValue(void* state, void* object) {
     return getObjectTypeValue<int16_t>(state, object, "java/lang/Short", "shortValue", "()S");
 }
 
@@ -424,7 +415,7 @@ extern "C" int16_t getShortObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return byte value of the field
  */
-extern "C" int8_t getByteObjectValue(void* state, void *object) {
+extern "C" int8_t getByteObjectValue(void* state, void* object) {
     return getObjectTypeValue<int16_t>(state, object, "java/lang/Byte", "byteValue", "()B");
 }
 
@@ -434,7 +425,7 @@ extern "C" int8_t getByteObjectValue(void* state, void *object) {
  * @param object object to get the field from
  * @return TextValue value of the field
  */
-extern "C" TextValue *getStringObjectValue(void* state, void *object) {
+extern "C" TextValue* getStringObjectValue(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(object != nullptr, "object should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
@@ -456,8 +447,8 @@ extern "C" TextValue *getStringObjectValue(void* state, void *object) {
  * @param signature signature of the field
  * @return T value of the field
  */
-template <typename T>
-T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::string signature){
+template<typename T>
+T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::string signature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
     NES_ASSERT2_FMT(objectPtr != nullptr, "objectPtr should not be null");
@@ -469,21 +460,21 @@ T getField(void *state, void *classPtr, void *objectPtr, int fieldIndex, std::st
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler->getEnvironment());
     T value;
-    if constexpr(std::is_same<T, bool>::value){
+    if constexpr (std::is_same<T, bool>::value) {
         value = (T) handler->getEnvironment()->GetBooleanField(pojo, id);
-    } else if constexpr(std::is_same<T, float>::value){
+    } else if constexpr (std::is_same<T, float>::value) {
         value = (T) handler->getEnvironment()->GetFloatField(pojo, id);
-    } else if constexpr(std::is_same<T, double>::value) {
+    } else if constexpr (std::is_same<T, double>::value) {
         value = (T) handler->getEnvironment()->GetDoubleField(pojo, id);
-    } else if constexpr(std::is_same<T, int32_t>::value) {
+    } else if constexpr (std::is_same<T, int32_t>::value) {
         value = (T) handler->getEnvironment()->GetIntField(pojo, id);
-    } else if constexpr(std::is_same<T, int64_t>::value) {
+    } else if constexpr (std::is_same<T, int64_t>::value) {
         value = (T) handler->getEnvironment()->GetLongField(pojo, id);
-    } else if constexpr(std::is_same<T, int16_t>::value) {
+    } else if constexpr (std::is_same<T, int16_t>::value) {
         value = (T) handler->getEnvironment()->GetShortField(pojo, id);
-    } else if constexpr(std::is_same<T, int8_t>::value) {
+    } else if constexpr (std::is_same<T, int8_t>::value) {
         value = (T) handler->getEnvironment()->GetByteField(pojo, id);
-    } else if constexpr(std::is_same<T, TextValue*>::value) {
+    } else if constexpr (std::is_same<T, TextValue*>::value) {
         auto jstr = (jstring) handler->getEnvironment()->GetObjectField(pojo, id);
         auto size = handler->getEnvironment()->GetStringUTFLength((jstring) jstr);
         value = TextValue::create(size);
@@ -588,7 +579,7 @@ extern "C" int8_t getByteField(void* state, void* classPtr, void* objectPtr, int
  * @param fieldIndex index of the field
  * @return TextValue* value of the field
  */
-extern "C" TextValue *getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
+extern "C" TextValue* getStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex) {
     return getField<TextValue*>(state, classPtr, objectPtr, fieldIndex, "Ljava/lang/String;");
 }
 
@@ -602,7 +593,7 @@ extern "C" TextValue *getStringField(void* state, void* classPtr, void* objectPt
  * @param value value to set the field to
  * @param signature signature of the field
  */
-template <typename T>
+template<typename T>
 void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(classPtr != nullptr, "classPtr should not be null");
@@ -614,22 +605,22 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     std::string fieldName = handler->getInputSchema()->fields[fieldIndex]->getName();
     jfieldID id = handler->getEnvironment()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jniErrorCheck(handler->getEnvironment());
-    if constexpr(std::is_same<T, bool>::value){
+    if constexpr (std::is_same<T, bool>::value) {
         handler->getEnvironment()->SetBooleanField(pojo, id, (jboolean) value);
-    } else if constexpr(std::is_same<T, float>::value){
+    } else if constexpr (std::is_same<T, float>::value) {
         handler->getEnvironment()->SetFloatField(pojo, id, (jfloat) value);
-    } else if constexpr(std::is_same<T, double>::value) {
+    } else if constexpr (std::is_same<T, double>::value) {
         handler->getEnvironment()->SetDoubleField(pojo, id, (jdouble) value);
-    } else if constexpr(std::is_same<T, int32_t>::value) {
+    } else if constexpr (std::is_same<T, int32_t>::value) {
         handler->getEnvironment()->SetIntField(pojo, id, (jint) value);
-    } else if constexpr(std::is_same<T, int64_t>::value) {
+    } else if constexpr (std::is_same<T, int64_t>::value) {
         handler->getEnvironment()->SetLongField(pojo, id, (jlong) value);
-    } else if constexpr(std::is_same<T, int16_t>::value) {
+    } else if constexpr (std::is_same<T, int16_t>::value) {
         handler->getEnvironment()->SetShortField(pojo, id, (jshort) value);
-    } else if constexpr(std::is_same<T, int8_t>::value) {
+    } else if constexpr (std::is_same<T, int8_t>::value) {
         handler->getEnvironment()->SetByteField(pojo, id, (jbyte) value);
-    } else if constexpr(std::is_same<T, const TextValue*>::value) {
-        const TextValue *sourceString = value;
+    } else if constexpr (std::is_same<T, const TextValue*>::value) {
+        const TextValue* sourceString = value;
         jstring string = handler->getEnvironment()->NewStringUTF(sourceString->c_str());
         handler->getEnvironment()->SetObjectField(pojo, id, (jstring) string);
     } else {
@@ -730,7 +721,7 @@ extern "C" void setByteField(void* state, void* classPtr, void* objectPtr, int f
  * @param fieldIndex index of the field
  * @param value value to set the field to
  */
-extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue *value) {
+extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const TextValue* value) {
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
@@ -739,7 +730,7 @@ extern "C" void setStringField(void* state, void* classPtr, void* objectPtr, int
  * @param state operator handler state
  * @param object object to free
  */
-extern "C" void freeObject(void* state, void* object){
+extern "C" void freeObject(void* state, void* object) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
@@ -779,7 +770,7 @@ extern "C" void* executeUdf(void* state, void* pojoObjectPtr) {
         jniErrorCheck(handler->getEnvironment());
 
         // Here we assume the default constructor is available
-        auto constr = handler->getEnvironment()->GetMethodID(clazz,"<init>", "()V");
+        auto constr = handler->getEnvironment()->GetMethodID(clazz, "<init>", "()V");
         instance = handler->getEnvironment()->NewObject(clazz, constr);
         jniErrorCheck(handler->getEnvironment());
     }
@@ -816,13 +807,15 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         auto fieldName = field->getName();
 
         if (field->getDataType()->isEquals(DataTypeFactory::createBoolean())) {
-            inputPojoPtr = FunctionCall<>("createBooleanObject", createBooleanObject, handler, record.read(fieldName).as<Boolean>());
+            inputPojoPtr =
+                FunctionCall<>("createBooleanObject", createBooleanObject, handler, record.read(fieldName).as<Boolean>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createFloat())) {
             inputPojoPtr = FunctionCall<>("createFloatObject", createFloatObject, handler, record.read(fieldName).as<Float>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createDouble())) {
             inputPojoPtr = FunctionCall<>("createDoubleObject", createDoubleObject, handler, record.read(fieldName).as<Double>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
-            inputPojoPtr = FunctionCall<>("createIntegerObject", createIntegerObject, handler, record.read(fieldName).as<Int32>());
+            inputPojoPtr =
+                FunctionCall<>("createIntegerObject", createIntegerObject, handler, record.read(fieldName).as<Int32>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
             inputPojoPtr = FunctionCall<>("createLongObject", createLongObject, handler, record.read(fieldName).as<Int64>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
@@ -830,7 +823,10 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt8())) {
             inputPojoPtr = FunctionCall<>("createByteObject", createByteObject, handler, record.read(fieldName).as<Int8>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createText())) {
-            inputPojoPtr = FunctionCall<>("createStringObject", createStringObject, handler, record.read(fieldName).as<Text>()->getReference());
+            inputPojoPtr = FunctionCall<>("createStringObject",
+                                          createStringObject,
+                                          handler,
+                                          record.read(fieldName).as<Text>()->getReference());
         } else {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
@@ -1008,9 +1004,7 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
  * Terminate operator
  * @param ctx execution context
  */
-void MapJavaUdf::terminate(ExecutionContext&) const {
-    FunctionCall<>("destroyVM", destroyVM);
-}
+void MapJavaUdf::terminate(ExecutionContext&) const { FunctionCall<>("destroyVM", destroyVM); }
 
 }// namespace NES::Runtime::Execution::Operators
-#endif // ENABLE_JIN
+#endif// ENABLE_JIN
