@@ -294,104 +294,120 @@ class DynamicTupleBuffer {
     std::string toString(const SchemaPtr& schema);
 
     /**
-     * @brief Push a record to the underlying tuple buffer.
+     * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
+             Boundary checks are performed by the write function of the DynamicTupleBuffer.
      * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
      *       Thus, a record with more than 1024 fields might not be supported.
+     * @param record: The record to be pushed to the buffer.
+     * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
     bool pushRecordToBuffer(std::tuple<Types...> record) {
-      uint64_t numberOfRecords = buffer.getNumberOfTuples();
-      uint64_t fieldIndex = 0;
-      std::apply(
-          [&](auto&&... fieldValue) {
-              ((*this)[numberOfRecords][fieldIndex++].write(fieldValue), ...);
-          },
-          record
-      );
-      this->setNumberOfTuples(numberOfRecords + 1);
-      return true;
+        uint64_t numberOfRecords = buffer.getNumberOfTuples();
+        uint64_t fieldIndex = 0;
+        // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
+        // On each iteration, the lambda function is called with the current field value, and the field index is increased.
+        try {
+            std::apply(
+                [&](auto&&... fieldValue) {
+                    ((*this)[numberOfRecords][fieldIndex++].write(fieldValue), ...);
+                },
+                record
+            );
+        } catch (BufferAccessException& e) {
+            NES_ERROR("DynamicTupleBuffer:pushRecordToBuffer: Unable to push record to TupleBuffer." << 
+                        "Full error message:" << e.what());
+            return false;
+        }
+        this->setNumberOfTuples(numberOfRecords + 1);
+        return true;
     }
 
-    template <size_t I = 0, typename... Types>
-    constexpr void copyRecordFromBufferToTuple(std::tuple<Types...> &tuple, uint64_t recordIndex)
-    {
-        // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
-        if constexpr(I == sizeof...(Types))
-        {
-            // We recursively iterated over all fields of the record.
-            return;
+    /**
+     * @brief Push a record to the underlying tuple buffer at given recordIndex. Boundary checks are performed by the 
+                write function of the DynamicTupleBuffer.
+     * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
+     *       Thus, a record with more than 1024 fields might not be supported.
+     *
+     * @param record: The record to be pushed to the buffer.
+     * @param recordIndex: The index at which the record should be pushed to the buffer.
+     * @return true if the record was pushed successfully, false otherwise.
+     */
+    template <typename... Types>
+    bool pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex) {
+        uint64_t numberOfRecords = buffer.getNumberOfTuples();
+        uint64_t fieldIndex = 0;
+        // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
+        // On each iteration, the lambda function is called with the current field value, and the field index is increased.
+        try {
+            std::apply(
+                [&](auto&&... fieldValue) {
+                    ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
+                },
+                record
+            );
+        } catch (BufferAccessException& e) {
+            NES_ERROR("DynamicTupleBuffer:pushRecordToBuffer: Record index " << std::to_string(recordIndex) << 
+                            " is probably out of bounds." << "Full error message:" << e.what());
+            return false;
         }
-        else {
-            // Get type of current tuple element and cast field value to this type. Add value to return tuple.
-            std::get<I>(tuple) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
-            copyRecordFromBufferToTuple<I + 1>(tuple, recordIndex);
-        }
+        // Increase number of records, if the current recordIndex is larger than the current numberOfRecords.
+        numberOfRecords = (recordIndex + 1 > numberOfRecords) ? recordIndex + 1 : numberOfRecords;
+        this->setNumberOfTuples(recordIndex + 1);      
+        return true;
     }
+
+    /**
+     * @brief Copy a record from the underlying tuple buffer to a tuple. Boundary checks are performed by the 
+                read function of the DynamicTupleBuffer.
+     * 
+     * @param recordIndex: The index of the record to be copied.
+     * @return std::tuple<Types...> The indexed record represented as a std:tuple.
+     * @return true if the record was read from the TupleBuffer successfully, false otherwise.
+     */
     template<typename... Types>
     std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex) {
         NES_ASSERT((sizeof...(Types)) == memoryLayout->getFieldSizes().size(), 
             "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: " 
             << memoryLayout->getFieldSizes().size() << '\n');
         std::tuple<Types...> retTuple;
-        copyRecordFromBufferToTuple(retTuple, recordIndex);
-        return retTuple;
+        if(copyRecordFromBufferToTuple(retTuple, recordIndex)) {
+            return retTuple;
+        } else {
+            return nullptr;
+        }
     }
 
-    // template<size_t I, typename... Ts>
-    // typename std::enable_if<(I < sizeof...(Ts)), void>::type getTupleFromBuffer(uint64_t index) {
-    //     // Get current type of tuple and cast address to this type pointer
-    //     std::tuple<Ts...> retTuple;
-    //     std::get<I>(retTuple) = *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (buffer.getBuffer()));
-
-    // }
-
-    // template <typename... Types>
-    // bool fillBuffer(std::tuple<Types...> record, uint64_t numberOfTuplesToInsert) {
-    //   for(uint64_t i = 0; i < numberOfTuplesToInsert; ++i) {
-    //     pushRecordToBuffer(record);
-    //   }
-    //   return true;
-    // }
-
+  private: 
     /**
-     * @brief Push a record to the underlying tuple buffer.
-     * 
+     * @brief Takes a tuple as a reference and a recordIndex. Copies the record in the TupleBuffer at the given 
+                recordIndex to the tuple.
+     * @note Recursive templates have a limited depth. The recommended (C++ standard) depth is 1024.
+     *       Thus, a record with more than 1024 fields might not be supported.
+     *
+     * @param record: The record to be pushed to the buffer.
+     * @param recordIndex: The index at which the record should be pushed to the buffer.
+     * @return true if the record was read from the TupleBuffer successfully, false otherwise.
      */
-    template <typename... Types>
-    bool pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, bool boundaryChecks = true) {
-      uint64_t numberOfRecords = buffer.getNumberOfTuples();
-      if (boundaryChecks && recordIndex >= memoryLayout->getCapacity()) {
-          NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position "
-                    << numberOfRecords << " and thus no write can happen!");
-          return false;
-      }
-      uint64_t fieldIndex = 0;
-      std::apply(
-          [&](auto&&... fieldValue) {
-              ((*this)[recordIndex][fieldIndex++].write(fieldValue), ...);
-          },
-          record
-      );
-      // Increase number of records, if the current recordIndex is larger than the current numberOfRecords.
-      numberOfRecords = (recordIndex + 1 > numberOfRecords) ? recordIndex + 1 : numberOfRecords;
-      this->setNumberOfTuples(recordIndex + 1);
-      
-      return true;
+    template <size_t I = 0, typename... Types>
+    constexpr bool copyRecordFromBufferToTuple(std::tuple<Types...> &record, uint64_t recordIndex)
+    {
+        // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
+        if constexpr(I != sizeof...(Types)) {
+            // Get type of current tuple element and cast field value to this type. Add value to return tuple.
+            try {
+                std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
+            } catch(BufferAccessException bufferAccessException) {
+                // Cannot use NES_ERROR, because we are in a constexpr function.
+                std::cout << "BufferAccessException: " << bufferAccessException.what() << '\n';
+                return false;
+            }
+            // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
+            copyRecordFromBufferToTuple<I + 1>(record, recordIndex);
+        }
+        // We recursively iterated over all fields of the record, and can thus return.
+        return true;
     }
-
-    // /**
-    //  * @brief Push a record vector to the underlying tuple buffer.
-    //  * 
-    //  */
-    // template <typename... Types>
-    // bool pushRecordVectorToBuffer(std::vector<std::tuple<Types...>> tuples, bool boundaryChecks = true) {
-    //   uint64_t tupleIndex = buffer.getNumberOfTuples();
-    //   // Iterate over tuples and add them to the TupleBuffer.
-    //   for(const auto& tuple : tuples) {
-    //       fillBuffer(tuple, tupleIndex++, boundaryChecks);
-    //   }
-    //   return true;
-    // }
 
   private:
     const MemoryLayoutPtr memoryLayout;
