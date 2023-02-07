@@ -1,0 +1,98 @@
+{
+    "operatorGraph": [
+        {
+            "operatorId": "4",
+            "children": [
+                "7", "10"
+            ],
+            "inputData": 2048
+        },
+        {
+            "operatorId": "7",
+            "children": [
+                "6"
+            ],
+            "inputData": 2048
+        },
+        {
+            "operatorId": "6",
+            "children": [
+                "5"
+            ],
+            "inputData": 2048
+        },
+        {
+            "operatorId": "5",
+            "inputData": 2048
+        },
+        {
+            "operatorId": "10",
+            "children": [
+                "9"
+            ],
+            "inputData": 2048
+        },
+        {
+            "operatorId": "9",
+            "children": [
+                "8"
+            ],
+            "inputData": 2048
+        },
+        {
+            "operatorId": "8",
+            "inputData": 2048
+        }
+    ],
+    "availNodes": [
+        {
+            "nodeId": 1,
+            "devices": [
+                {
+                    "deviceId": 1,
+                    "deviceType": "cpu"
+                }
+            ],
+            "nodeType": "stationary"
+        },
+        {
+            "nodeId": 2,
+            "devices": [
+                {
+                    "deviceId": 1,
+                    "deviceType": "cpu"
+                }
+            ],
+            "nodeType": "stationary"
+        },
+        {
+            "nodeId": 3,
+            "devices": [
+                {
+                    "deviceId": 1,
+                    "deviceType": "cpu"
+                }
+            ],
+            "nodeType": "stationary"
+        }
+    ],
+    "networkDelays": [
+        {
+            "linkID": "n1-n2",
+            "transferRate": 1000
+        },
+        {
+            "linkID": "n2-n1",
+            "transferRate": 500
+        },
+        {
+            "linkID": "n1-n3",
+            "transferRate": 1000
+        },
+        {
+            "linkID": "n3-n1",
+            "transferRate": 500
+        }
+    ],
+    "optimObjectives": "performance"
+}
