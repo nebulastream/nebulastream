@@ -89,4 +89,34 @@ TEST_F(ListTypeTest, concatTest) {
     result->~ListValue<int32_t>();
 }
 
+TEST_F(ListTypeTest, appendTest) {
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+    int32_t element = 6;
+
+
+    auto result = list1->append(element);
+    ASSERT_EQ(result->length(), 7);
+    for (int32_t i = 0; i < 7; i++) {
+        ASSERT_EQ(result->data()[i], i % 6);
+    }
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+    result->~ListValue<int32_t>();
+}
+
+TEST_F(ListTypeTest, containsTest) {
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+    int32_t element = 3;
+    ASSERT_EQ(list1->contains(3), true);
+    for (int32_t i = 0; i < 6; i++) {
+        ASSERT_EQ(list1->data()[i], 3 );
+    }
+
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+
+}
+
 }// namespace NES::Nautilus

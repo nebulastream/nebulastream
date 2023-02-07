@@ -104,6 +104,15 @@ ListValue<T>* ListValue<T>::append(T element) const {
     // create result list
     auto resultList = ListValue<T>::create(length() + 1);
     // TODO copy list and append on element to the result list
+    auto resultDataPtr = resultList->data();
+    for(uint32_t i = 0; i < length(); i++){
+        if(length()==1){
+            resultDataPtr[i] = element;
+        }
+        if(length()>1){
+            resultDataPtr[length()-1] = element;
+        }
+    }
     return resultList;
 }
 
@@ -117,7 +126,16 @@ ListValue<T>* ListValue<T>::prepend(T element) const {
 
 template<class T>
 bool ListValue<T>::contains(T element) const {
+
     // TODO check if the element is contained in the list and return true in this case
+
+    for (uint32_t i = 0; i < length(); i++)   {
+        if(c_data()[i] == element){
+            return true;
+        }
+    }
+
+
     return false;
 }
 
@@ -134,6 +152,11 @@ ListValue<T>* ListValue<T>::sort() const {
     // TODO sort content of list (resultList->data()): look at the following links for inspiration
     // https://stackoverflow.com/questions/56115960/can-i-use-stdsort-on-heap-allocated-raw-arrays
     // https://en.cppreference.com/w/cpp/algorithm/sort
+    for (uint32_t i = 0; i < length(); i++) {
+       if(c_data()[i+1]<c_data()[i]){
+           resultList->data()[i] = c_data()[i+1];
+       }
+    }
     return resultList;
 }
 template<class T>
