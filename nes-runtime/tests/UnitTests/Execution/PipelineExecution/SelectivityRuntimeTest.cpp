@@ -64,9 +64,9 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantIntegerExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
+    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(5);
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(constantInt, readF1);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
@@ -81,9 +81,8 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     auto scanMemoryProviderPtr2 = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator2 = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr2));
 
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readField2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1,readField2);
+    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1,constantInt2);
     auto selectionOperator2 = std::make_shared<Operators::Selection>(greaterThanExpression);
     scanOperator2->setChild(selectionOperator2);
 
@@ -156,9 +155,9 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantIntegerExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
+    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(5);
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(constantInt, readF1);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
@@ -237,9 +236,9 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
 }
 
 /**
- * @brief 2 pipelines with different runtimes
+ * @brief 2 pipelines with different runtimes and random buffer sorting
  */
-TEST_P(SelectivityRuntimeTest, runtimesTest2) {
+TEST_P(SelectivityRuntimeTest, runtimesTestRandomBuffer) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -248,9 +247,9 @@ TEST_P(SelectivityRuntimeTest, runtimesTest2) {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantIntegerExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
+    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(5);
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(constantInt, readF1);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
@@ -431,6 +430,67 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     for(uint64_t i = 0; i < 100; i++){
         ASSERT_EQ(resultDynamicBuffer2[i]["f1"].read<int64_t>(), 5);
         ASSERT_EQ(resultDynamicBuffer2[i]["f2"].read<int64_t>(), 1);
+    }
+}
+
+/**
+ * @brief test multiple selectivities with multiple buffers
+ */
+TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    std::vector<TupleBuffer> bufferVector;
+
+    for (int j = 0; j < 3; ++j){
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t i = 0; i < 512; i++) {
+            dynamicBuffer[i]["f1"].write((int64_t) i % 20);
+            dynamicBuffer[i]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+    }
+
+    for (int i = 1; i < 21; ++i) {
+        auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(i);
+        auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+        auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
+        auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
+        scanOperator->setChild(selectionOperator);
+
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+        auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+        selectionOperator->setChild(emitOperator);
+
+        auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+        pipeline->setRootOperator(scanOperator);
+
+        auto executablePipeline = provider->create(pipeline);
+
+        auto pipelineContext = MockedPipelineExecutionContext();
+        executablePipeline->setup(pipelineContext);
+        for (TupleBuffer buffer : bufferVector) {
+            executablePipeline->execute(buffer, pipelineContext, *wc);
+        }
+        executablePipeline->stop(pipelineContext);
+
+        ASSERT_EQ(pipelineContext.buffers.size(), 3);
+        auto resultBuffer = pipelineContext.buffers[0];
+        auto numResultTuples = resultBuffer.getNumberOfTuples();
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
+
+        auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+        for (uint64_t k = 0; k < numResultTuples; k++) {
+            ASSERT_LT(resultDynamicBuffer[k]["f1"].read<int64_t>(), i);
+            ASSERT_EQ(resultDynamicBuffer[k]["f2"].read<int64_t>(), 1);
+        }
     }
 }
 
