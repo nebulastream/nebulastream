@@ -16,9 +16,11 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::Runtime::Execution::Operators {
+class KeyedSliceMergingHandler;
+}
+
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief The slice merging operator receives pre aggregated keyed slices and merges them together.
@@ -26,27 +28,30 @@ namespace PhysicalOperators {
  */
 class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
+    using WindowHandlerType = std::variant<Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr,
+                                           std::shared_ptr<Runtime::Execution::Operators::KeyedSliceMergingHandler>>;
     PhysicalKeyedSliceMergingOperator(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
-                                      Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler);
+                                      WindowHandlerType operatorHandler,
+                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalKeyedSliceMergingOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler);
+           WindowHandlerType operatorHandler,
+           Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr getWindowHandler();
-
+    WindowHandlerType getWindowHandler();
+    const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler;
+    WindowHandlerType operatorHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDSLICEMERGINGOPERATOR_HPP_

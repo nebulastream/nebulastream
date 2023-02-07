@@ -98,10 +98,18 @@ class LowerPhysicalToNautilusOperators {
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerKeyedThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,

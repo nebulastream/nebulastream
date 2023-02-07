@@ -138,12 +138,8 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto sliceStaging = std::make_shared<Operators::KeyedSliceStaging>();
     auto preAggregationHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
-
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>(sliceStaging);
-
-
-
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);

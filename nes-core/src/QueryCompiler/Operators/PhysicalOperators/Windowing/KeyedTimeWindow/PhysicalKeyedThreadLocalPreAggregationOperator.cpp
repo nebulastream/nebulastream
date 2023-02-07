@@ -16,6 +16,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
+#include <utility>
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -24,25 +25,38 @@ PhysicalKeyedThreadLocalPreAggregationOperator::PhysicalKeyedThreadLocalPreAggre
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+    WindowHandlerType keyedEventTimeWindowHandler,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
+      keyedEventTimeWindowHandler(std::move(keyedEventTimeWindowHandler)), windowDefinition(windowDefinition) {}
+
 std::string PhysicalKeyedThreadLocalPreAggregationOperator::toString() const {
     return "PhysicalKeyedThreadLocalPreAggregationOperator";
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalKeyedThreadLocalPreAggregationOperator::create(
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler) {
+std::shared_ptr<PhysicalOperator>
+PhysicalKeyedThreadLocalPreAggregationOperator::create(SchemaPtr inputSchema,
+                                                       SchemaPtr outputSchema,
+                                                       WindowHandlerType keyedEventTimeWindowHandler,
+                                                       Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
                                                                             inputSchema,
                                                                             outputSchema,
-                                                                            keyedEventTimeWindowHandler);
+                                                                            keyedEventTimeWindowHandler,
+                                                                            windowDefinition);
+}
+
+const Windowing::LogicalWindowDefinitionPtr& PhysicalKeyedThreadLocalPreAggregationOperator::getWindowDefinition() const {
+    return windowDefinition;
+}
+
+PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType
+PhysicalKeyedThreadLocalPreAggregationOperator::getWindowHandler() {
+    return keyedEventTimeWindowHandler;
 }
 
 OperatorNodePtr PhysicalKeyedThreadLocalPreAggregationOperator::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
+    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler, windowDefinition);
 }
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
