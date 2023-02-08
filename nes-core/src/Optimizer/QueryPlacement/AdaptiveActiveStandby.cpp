@@ -109,8 +109,10 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
                 elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
 
                 if (scoreChange < bestScoreChange) { // minimization
-                    NES_DEBUG("AdaptiveActiveStandby: Local Search found a better placement with a score improvement of "
-                              << scoreChange << ".");
+                    NES_DEBUG("AdaptiveActiveStandby: Local Search found a better placement \n"
+                              << candidateOperatorPlacementsToString()
+                              << "Score improvement : "
+                              << -scoreChange);
                     // update current best placement
                     bestOperatorToTopologyMap = candidateOperatorToTopologyMap;
                     bestTopologyToOperatorMap = candidateTopologyToOperatorMap;
@@ -152,9 +154,10 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
     auto currentTime = std::chrono::steady_clock::now();
     auto elapsedMilliseconds = duration_cast<std::chrono::milliseconds>(currentTime - start);
 
-    NES_DEBUG("AdaptiveActiveStandby: Placing the best candidate " << candidateOperatorPlacementsToString()
-                                                                   << "Total score with penalties: " << score << "\n"
-                                                                   << "Time elapsed: " << elapsedMilliseconds.count() << "ms");
+    NES_DEBUG("AdaptiveActiveStandby: Placing the best candidate \n"
+              << candidateOperatorPlacementsToString()
+              << "Total score with penalties: " << score << "\n"
+              << "Time elapsed: " << elapsedMilliseconds.count() << "ms");
 
     // TODO: more tests to make sure that score changes reflect the actual score
     {
@@ -446,7 +449,7 @@ double AdaptiveActiveStandby::evaluateEntireCandidatePlacement() {
     NES_DEBUG("AdaptiveActiveStandby: evaluating the candidate placement");
 
     // iterate over all topology nodes that have to be evaluated
-    for (auto [topologyNodeId, val] : candidateTopologyToOperatorMap) {
+    for (const auto& [topologyNodeId, val] : candidateTopologyToOperatorMap) {
         auto currentNode = topology->findNodeWithId(topologyNodeId);
         auto operatorsOnCurrentNode = val.first;
         // iterate over all replicas that are placed on the current topology node
@@ -471,7 +474,7 @@ double AdaptiveActiveStandby::evaluateEntireCandidatePlacement() {
 
 std::vector<NodePtr> AdaptiveActiveStandby::getAllParents(const std::vector<OperatorNodePtr>& operators) {
     std::vector<NodePtr> allParents;
-    for (auto& currentOperator : operators) {
+    for (const auto& currentOperator : operators) {
         std::vector<NodePtr> currentParents = currentOperator->getParents();
         allParents.insert(allParents.end(), currentParents.begin(), currentParents.end());
     }
@@ -480,7 +483,7 @@ std::vector<NodePtr> AdaptiveActiveStandby::getAllParents(const std::vector<Oper
 
 std::vector<NodePtr> AdaptiveActiveStandby::getAllParents(const std::vector<NodePtr>& operators) {
     std::vector<NodePtr> allParents;
-    for (auto& currentOperator : operators) {
+    for (const auto& currentOperator : operators) {
         std::vector<NodePtr> currentParents = currentOperator->getParents();
         allParents.insert(allParents.end(), currentParents.begin(), currentParents.end());
     }
@@ -674,6 +677,13 @@ OperatorNodePtr AdaptiveActiveStandby::createReplica(const OperatorNodePtr& prim
     return replica;
 }
 
+void AdaptiveActiveStandby::deleteReplicas() {
+    for (const auto& [secondaryId, secondaryOperator]: secondaryOperatorMap) {
+        secondaryOperator->removeAllParent();
+        secondaryOperator->removeChildren();
+    }
+}
+
 double AdaptiveActiveStandby::evaluateSinglePlacement(const OperatorNodePtr& secondaryOperator,
                                                       const TopologyNodePtr& topologyNode) {
     // NOTE: (currently) compare to all children and parent operators
@@ -794,7 +804,7 @@ std::set<TopologyNodeId> AdaptiveActiveStandby::getAllTopologyNodesByIdWherePinn
         auto currentOperatorId = currentOperator->getId();
         TopologyNodeId currentTopologyNodeId;
         // check if it is a secondary operator
-        if (currentOperator->hasProperty(SECONDARY))
+        if (isSecondary(currentOperator))
             currentTopologyNodeId = candidateOperatorToTopologyMap[currentOperatorId].first;
         else    // primary
             currentTopologyNodeId = std::any_cast<uint64_t>(currentOperator->getProperty(PINNED_NODE_ID));
@@ -827,13 +837,17 @@ double AdaptiveActiveStandby::evaluateBestPath(const TopologyNodePtr& startNode,
     return bestScore;
 }
 
+bool AdaptiveActiveStandby::isSecondary(const OperatorNodePtr& operatorNode) {
+    return operatorNode->hasProperty(SECONDARY) && std::any_cast<bool>(operatorNode->getProperty(SECONDARY));
+}
+
 TopologyNodePtr AdaptiveActiveStandby::findNodeWherePinned(const NodePtr& operatorNode) {
     return findNodeWherePinned(operatorNode->as<OperatorNode>());
 }
 
 TopologyNodePtr AdaptiveActiveStandby::findNodeWherePinned(const OperatorNodePtr& operatorNode) {
     // secondary
-    if (operatorNode->hasProperty(SECONDARY) && std::any_cast<bool>(operatorNode->getProperty(SECONDARY)))
+    if (isSecondary(operatorNode))
         return topology->findNodeWithId(candidateOperatorToTopologyMap[operatorNode->getId()].first);
     // primary
     else
@@ -846,7 +860,7 @@ OperatorNodePtr AdaptiveActiveStandby::getPrimaryOperatorOfSecondary(const Opera
 
 bool AdaptiveActiveStandby::pinOperators() {
 
-    for (auto [operatorId, val]: candidateOperatorToTopologyMap) {
+    for (const auto& [operatorId, val]: candidateOperatorToTopologyMap) {
         auto operatorNode = secondaryOperatorMap[operatorId];
         auto topologyNodeId = val.first;
         operatorNode->addProperty(PINNED_NODE_ID, topologyNodeId);
@@ -927,15 +941,25 @@ bool AdaptiveActiveStandby::executeGreedyPlacement(const std::vector<OperatorNod
 
         // 2.8 add parents as new target operators in the sorted list if all necessary children have already been replicated
         for (const auto& parentNode: currentPrimary->getParents()) {
+            // skip operators that are pinned to the sink
+            if (findNodeWherePinned(parentNode)->getId() == topology->getRoot()->getId())
+                continue;
+
             // only add if all secondary children are created OR primary children are on source nodes
             bool ready = true;
 
             for (const auto& childNode: parentNode->getChildren()) {
-                if (sourceNodes.contains(findNodeWherePinned(childNode)->getId()))
-                    continue;
-                if (!childNode->as<OperatorNode>()->hasProperty(SECONDARY_OPERATOR_ID)) {
+                auto childOperator = childNode->as<OperatorNode>();
+
+                if (isSecondary(childOperator))
+                    continue; // not a primary -> no replica needed
+
+                if (sourceNodes.contains(findNodeWherePinned(childOperator)->getId()))
+                    continue; // primary on a source node -> no replica needed
+
+                if (!childOperator->hasProperty(SECONDARY_OPERATOR_ID)) {
                     ready = false;
-                    NES_DEBUG("AdaptiveActiveStandby: " << childNode->toString() << " has no secondary operator property");
+                    NES_DEBUG("AdaptiveActiveStandby: " << childOperator->toString() << " has no secondary operator property");
                     break;
                 }
             }
@@ -1173,7 +1197,7 @@ double AdaptiveActiveStandby::executeLocalSearch(std::chrono::milliseconds timeL
             }
 
             // 2.2.3 parents & children of moved operator nodes
-            for (auto [operatorId, operatorNode]: parentsAndChildren) {
+            for (const auto& [operatorId, operatorNode]: parentsAndChildren) {
                 evaluateSinglePlacement(operatorNode);
             }
 
@@ -1356,8 +1380,7 @@ std::pair<LocalSearchStep, double> AdaptiveActiveStandby::getBestStepLocalSearch
                         auto childOperator = childNode->as<OperatorNode>();
                         auto childOperatorsLocation = findNodeWherePinned(childOperator);
                         // if the child is a secondary -> check for separate path
-                        if (childOperator->as<OperatorNode>()->hasProperty(SECONDARY) &&
-                            std::any_cast<bool>(childOperator->as<OperatorNode>()->getProperty(SECONDARY))) {
+                        if (isSecondary(childOperator)) {
                             if (!separatePathExists(getPrimaryOperatorOfSecondary(childOperator),
                                                     childOperatorsLocation,
                                                     currentNode)) {

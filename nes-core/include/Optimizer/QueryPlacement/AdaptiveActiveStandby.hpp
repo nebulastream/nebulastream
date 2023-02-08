@@ -281,6 +281,11 @@ class AdaptiveActiveStandby {
     OperatorNodePtr createReplica(const OperatorNodePtr& primaryOperator);
 
     /**
+     * Deletes all of the replicas that are stored in secondaryOperatorMap
+     */
+    void deleteReplicas();
+
+    /**
      * Evaluates the placement of a single secondary operator on a specific topology node by evaluating all the links to its
      * parents and children.
      * @param secondaryOperator: secondary operator that is to be evaluated
@@ -313,6 +318,13 @@ class AdaptiveActiveStandby {
      * @return score of the best path
      */
     double evaluateBestPath(const TopologyNodePtr& startNode, TopologyNodeId nodeIdToExclude);
+
+    /**
+     * Determine whether an operator is a secondary or not
+     * @param operatorNode: for which it should be determined
+     * @return true if it is a secondary, false otherwise
+     */
+    static bool isSecondary(const OperatorNodePtr& operatorNode);
 
     /**
      * Find to which topology node an operator is pinned. Only works for primary operators.
