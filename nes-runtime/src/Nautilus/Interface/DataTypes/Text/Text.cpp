@@ -14,6 +14,9 @@
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Execution/Expressions/PatternMatching/MatchingRegex.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <memory>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -327,6 +330,7 @@ TextValue* rightTrim(const TextValue* text, const TextValue* target) {
 const Value<Text> Text::rtrim(Value<Text>& other) const {
     return FunctionCall<>("rightTrim", rightTrim, rawReference, other.value->rawReference);
 }
+
 TextValue* lrTrim(const TextValue* text) {
     if (text->length() <= 1) {
         NES_THROW_RUNTIME_ERROR("Text was not long enough");
@@ -351,6 +355,45 @@ TextValue* lrTrim(const TextValue* text) {
     }
 
     return resultText;
+}
+
+bool textSimilarTo(const TextValue* text,  TextValue* pattern) {
+    auto leftExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("left");
+    auto midExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("mid");
+    auto rightExpression= std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("right");
+
+    auto record = Record({{"left", text},{"mid", pattern}, {"right", (Boolean) false}});
+    return std::make_shared<Runtime::Execution::Expressions::MatchingRegex>
+        (leftExpression, midExpression, rightExpression)
+            ->execute(record);
+}
+
+const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
+    return FunctionCall<>("textSimilarTo", textSimilarTo, rawReference, pattern.value->rawReference);
+}
+
+bool textLike(const TextValue* text,  TextValue* pattern, Boolean iCase) {
+    auto leftExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("left");
+    auto midExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("mid");
+    auto rightExpression= std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("right");
+
+    auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
+    auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
+    auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
+    auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
+
+    auto record = Record({{"left", text}, {"mid", likeRegex}, {"right", iCase}});
+    return std::make_shared<Runtime::Execution::Expressions::MatchingRegex>
+        (leftExpression, midExpression, rightExpression)
+            ->execute(record);
+}
+
+const Value<Boolean> Text::like(Value<Text>& pattern) const {
+    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, Value<Boolean>(false));
+}
+
+const Value<Boolean> Text::iLike(Value<Text>& pattern) const {
+    return FunctionCall<>("textLike", textLike, rawReference, pattern.value->rawReference, Value<Boolean>(true));
 }
 
 const Value<Text> Text::trim() const { return FunctionCall<>("lrTrim", lrTrim, rawReference); }
