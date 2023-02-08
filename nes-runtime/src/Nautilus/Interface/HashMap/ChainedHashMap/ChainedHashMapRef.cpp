@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/Interface/DataTypes/Utils.hpp>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -38,9 +38,8 @@ Value<MemRef> ChainedHashMapRef::EntryRef::getValuePtr() const { return (ref + v
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
     // This assumes that the next ptr is stored as the first element in the entry.
-    static_assert(offsetof(ChainedHashMap::Entry, next) == 0);
     // perform a load to load the next value
-    auto next = ref.load<MemRef>();
+    auto next = getMember(ref, ChainedHashMap::Entry, next).load<MemRef>();
     return {next, keyOffset, valueOffset};
 }
 
@@ -69,7 +68,9 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash)
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+    // find chain
     auto entry = findChain(hash);
+    // iterate chain and search for the correct entry
     for (; entry != nullptr; entry = entry.getNext()) {
         if (compareKeys(entry, keys)) {
             break;
@@ -78,29 +79,18 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOne(const Value<UInt64>& hash
     return entry;
 }
 
-void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const std::function<void(EntryRef&)>& update) {
-    auto entry = findChain(otherEntry.getHash());
-    for (; entry != nullptr; entry = entry.getNext()) {
-        if (memEquals(entry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize))) {
-            update(entry);
-            break;
-        }
-    }
-    if (entry == nullptr) {
-        auto newEntry = insert(otherEntry.getHash());
-        memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize + valueSize));
-    }
+ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+    return findOrCreate(hash, keys, [](const EntryRef&) {
+        // nop
+    });
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash,
                                                             const std::vector<Value<>>& keys,
                                                             const std::function<void(EntryRef&)>& onInsert) {
-    auto entry = findChain(hash);
-    for (; entry != nullptr; entry = entry.getNext()) {
-        if (compareKeys(entry, keys)) {
-            break;
-        }
-    }
+    // find entry
+    auto entry = findOne(hash, keys);
+    // if the entry is null, insert a new entry.
     if (entry == nullptr) {
         // create new entry
         entry = insert(hash);
@@ -116,10 +106,18 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
     return entry;
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
-    return findOrCreate(hash, keys, [](const EntryRef&) {
-        // nop
-    });
+void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const std::function<void(EntryRef&)>& update) {
+    auto entry = findChain(otherEntry.getHash());
+    for (; entry != nullptr; entry = entry.getNext()) {
+        if (MemRefUtils::memEquals(entry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize))) {
+            update(entry);
+            break;
+        }
+    }
+    if (entry == nullptr) {
+        auto newEntry = insert(otherEntry.getHash());
+        MemRefUtils::memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize + valueSize));
+    }
 }
 
 Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
@@ -127,7 +125,7 @@ Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
         auto& key = keys[i];
-        auto keyFromEntry = loadValue(keyPtr, keyDataTypes[i]);
+        auto keyFromEntry = MemRefUtils::loadValue(keyPtr, keyDataTypes[i]);
         equals = equals && (key == keyFromEntry);
         keyPtr = keyPtr + keyDataTypes[i]->size();
     }
@@ -136,12 +134,12 @@ Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
     auto entriesPerPage = getEntriesPerPage();
-    return ChainedHashMapRef::EntryIterator(*this, entriesPerPage, (uint64_t) 0);
+    return {*this, entriesPerPage, (uint64_t) 0};
 }
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() {
     auto currentSize = getCurrentSize();
     auto entriesPerPage = getEntriesPerPage();
-    return ChainedHashMapRef::EntryIterator(*this, currentSize);
+    return {*this, currentSize};
 }
 
 Value<UInt64> ChainedHashMapRef::getCurrentSize() {
