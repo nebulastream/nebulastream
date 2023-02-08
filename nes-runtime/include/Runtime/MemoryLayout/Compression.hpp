@@ -1,7 +1,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COMPRESSIONALGORITHMS_HPP
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COMPRESSIONALGORITHMS_HPP
 
-#include "DynamicTupleBuffer.hpp"
+#include "CompressedDynamicTupleBuffer.hpp"
 #include <cstring>
 #include <lz4.h>
 #include <snappy.h>
@@ -14,13 +14,14 @@ enum class CompressionAlgorithm { NONE, LZ4, SNAPPY, RLE };// TODO? set first to
 class Compress {
   public:
     // RowLayout
-    static int LZ4(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf) {
+    static int LZ4(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
         std::vector<uint64_t> offsets{0};
         auto compressedSizes = LZ4(inBuf, outBuf, offsets);
         return compressedSizes[0];
     }
     // ColumnLayout
-    static std::vector<int> LZ4(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
+    static std::vector<int>
+    LZ4(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
         uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
         uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
         std::vector<int> compressedSizes;
@@ -41,6 +42,7 @@ class Compress {
         }
         return compressedSizes;
     }
+    /*
     static void Snappy(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf) {// TODO
         TupleBuffer inTupleBuffer = inBuf.getBuffer();
         const char* in = reinterpret_cast<const char*>(inTupleBuffer.getBuffer());
@@ -51,13 +53,15 @@ class Compress {
         uint8_t* out = outTupleBuffer.getBuffer();
         memcpy(out, compressed.c_str(), compressed.size());
     }
+    */
     // RowLayout
-    static void RLE(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf) {
+    static void RLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
         std::vector<uint64_t> offsets{0};
         RLE(inBuf, outBuf, offsets);
     }
     // ColumnLayout
-    static void RLE(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
+    static void
+    RLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
         uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
         uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
         for (auto offset : offsets) {
@@ -85,14 +89,14 @@ class Compress {
 class Decompress {
   public:
     // RowLayout
-    static void LZ4(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf, const int& compressedSize) {
+    static void LZ4(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf, const int& compressedSize) {
         std::vector<uint64_t> offsets{0};
         std::vector<int> compressedSizes{compressedSize};
         LZ4(inBuf, outBuf, offsets, compressedSizes);
     }
     // ColumnLayout
-    static void LZ4(DynamicTupleBuffer& inBuf,
-                    DynamicTupleBuffer& outBuf,
+    static void LZ4(CompressedDynamicTupleBuffer& inBuf,
+                    CompressedDynamicTupleBuffer& outBuf,
                     const std::vector<uint64_t>& offsets,
                     const std::vector<int>& compressedSizes) {
         uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
@@ -113,12 +117,13 @@ class Decompress {
     }
     static void Snappy() { throw std::logic_error("not implemented"); }
     // RowLayout
-    static void RLE(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf) {
+    static void RLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf) {
         std::vector<uint64_t> offsets{0};
         RLE(inBuf, outBuf, offsets);
     }
     // ColumnLayout
-    static void RLE(DynamicTupleBuffer& inBuf, DynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
+    static void
+    RLE(CompressedDynamicTupleBuffer& inBuf, CompressedDynamicTupleBuffer& outBuf, const std::vector<uint64_t>& offsets) {
         uint8_t* baseSrcPointer = inBuf.getBuffer().getBuffer();
         uint8_t* baseDstPointer = outBuf.getBuffer().getBuffer();
         for (auto offset : offsets) {
@@ -149,11 +154,6 @@ class Decompress {
   private:
     static bool alphaOrSpace(const char c) { return isalpha(c) || c == ' '; }
 };
-
-//===--------------------------------------------------------------------===//
-// OLD Snappy
-//===--------------------------------------------------------------------===//
-//void CompressSnapp(std::string inp, std::string outp) { snappy::Compress(inp.c_str(), inp.size(), &outp); }
 
 }// namespace NES::Runtime::MemoryLayouts
 #endif//NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COMPRESSIONALGORITHMS_HPP

@@ -19,7 +19,7 @@ limitations under the License.
 #include "Runtime/BufferManager.hpp"
 #include "Runtime/MemoryLayout/ColumnLayout.hpp"
 #include "Runtime/MemoryLayout/ColumnLayoutField.hpp"
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include "Runtime/MemoryLayout/CompressedDynamicTupleBuffer.hpp"
 #include "Runtime/MemoryLayout/MemoryLayout.hpp"
 #include "Runtime/MemoryLayout/RowLayout.hpp"
 #include <gtest/gtest.h>
@@ -47,44 +47,6 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
 // ====================================================================================================
 TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayout) {// TODO
     GTEST_SKIP();
-    SchemaPtr schema = Schema::create()->addField("t1", UINT8);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    // generate data
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, tupleBuffer);
-    int i = 0;
-    for (; i < 3; i++) {
-        bufferOrig[i][0].write<uint8_t>(70);
-    }
-    for (; i < 6; i++) {
-        bufferOrig[i][0].write<uint8_t>(71);
-    }
-    for (; i < 10; i++) {
-        bufferOrig[i][0].write<uint8_t>(70);
-    }
-
-    // compress
-    tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
-    Compress::Snappy(bufferOrig, bufferCompressed);
-
-    /*
-    // decompress
-    tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
-    Decompress::RLE(bufferCompressed, bufferDecompressed);
-
-    // evaluate
-    const char* contentOrig = reinterpret_cast<const char*>(bufferOrig.getBuffer().getBuffer());
-    const char* contentDecompressed = reinterpret_cast<const char*>(bufferDecompressed.getBuffer().getBuffer());
-    bool valuesAreEqual = strcmp(contentOrig, contentDecompressed) == 0;
-    ASSERT_TRUE(valuesAreEqual);
-    */
-    ASSERT_TRUE(false);
 }
 
 // ====================================================================================================
@@ -100,7 +62,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
 
     // generate data
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     int i = 0;
     for (; i < 3; i++) {
@@ -115,13 +77,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     int compressedSize = Compress::LZ4(bufferOrig, bufferCompressed);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::LZ4(bufferCompressed, bufferDecompressed, compressedSize);
 
@@ -148,7 +110,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
 
     // generate data
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     int i = 0;
     for (; i < 3; i++) {
@@ -163,13 +125,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     auto compressedSizes = Compress::LZ4(bufferOrig, bufferCompressed, offsets);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::LZ4(bufferCompressed, bufferDecompressed, offsets, compressedSizes);
 
@@ -194,7 +156,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
 
     const int offset = 65;// == 'A'
@@ -217,13 +179,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutMultiColumnUint8
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     int compressedSize = Compress::LZ4(bufferOrig, bufferCompressed);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::LZ4(bufferCompressed, bufferDecompressed, compressedSize);
 
@@ -251,7 +213,7 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUi
     auto offsets = columnLayout->getColumnOffsets();
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
 
     const int offset = 65;// == 'A'
@@ -263,13 +225,13 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutMultiColumnUi
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     auto compressedSizes = Compress::LZ4(bufferOrig, bufferCompressed, offsets);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::LZ4(bufferCompressed, bufferDecompressed, offsets, compressedSizes);
 
@@ -300,7 +262,7 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferRowLayoutSingleColumnUint
 
     // generate data
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     int i = 0;
     for (; i < 3; i++) {
@@ -315,14 +277,13 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferRowLayoutSingleColumnUint
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     Compress::RLE(bufferOrig, bufferCompressed);
-    //std::cout << bufferCompressed.toString(schema) << std::endl;
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::RLE(bufferCompressed, bufferDecompressed);
 
@@ -349,7 +310,7 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferColumnLayoutSingleColumnU
 
     // generate data
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     int i = 0;
     for (; i < 3; i++) {
@@ -364,14 +325,14 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferColumnLayoutSingleColumnU
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     Compress::RLE(bufferOrig, bufferCompressed, offsets);
     //std::cout << bufferCompressed.toString(schema) << std::endl;
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::RLE(bufferCompressed, bufferDecompressed, offsets);
 
@@ -396,7 +357,7 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferRowLayoutMultiColumnUint8
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
 
     const int offset = 65;// == 'A'
@@ -419,13 +380,13 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferRowLayoutMultiColumnUint8
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     Compress::RLE(bufferOrig, bufferCompressed);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(rowLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::RLE(bufferCompressed, bufferDecompressed);
 
@@ -453,7 +414,7 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferColumnLayoutMultiColumnUi
     auto offsets = columnLayout->getColumnOffsets();
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferOrig = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferOrig = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferOrig.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
 
     const int offset = 65;// == 'A'
@@ -465,13 +426,13 @@ TEST_F(CompressionTest, compressDecompressRLEFullBufferColumnLayoutMultiColumnUi
 
     // compress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferCompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     Compress::RLE(bufferOrig, bufferCompressed, offsets);
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
-    auto bufferDecompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
+    auto bufferDecompressed = CompressedDynamicTupleBuffer(columnLayout, tupleBuffer);
     bufferDecompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
     Decompress::RLE(bufferCompressed, bufferDecompressed, offsets);
 
