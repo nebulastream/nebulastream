@@ -208,6 +208,10 @@ add_nes_unit_test(columnar-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/
 add_nes_unit_test(dynamic-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/DynamicMemoryLayoutTest.cpp")
 
 
+### Compression Tests ###
+add_nes_unit_test(compression-tests "UnitTests/Runtime/MemoryLayouts/CompressionTest.cpp")
+
+
 ### Source Catalog Tests ###
 add_nes_unit_test(source-catalog-test "UnitTests/Catalogs/SourceCatalogTest.cpp")
 
