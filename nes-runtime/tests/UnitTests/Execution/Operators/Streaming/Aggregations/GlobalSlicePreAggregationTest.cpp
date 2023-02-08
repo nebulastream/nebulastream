@@ -89,11 +89,12 @@ TEST_F(GlobalSlicePreAggregationTest, createNewFieldTest) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
     auto slicePreAggregation =
         GlobalSlicePreAggregation(0 /*handler index*/,
                                   readTs,
                                   {readF2},
-                                  {std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType)});
+                                  {std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType)});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
