@@ -132,7 +132,8 @@ class RestServer {
     MonitoringServicePtr monitoringService;
     Runtime::BufferManagerPtr bufferManager;
     std::condition_variable cvar;
-    std::atomic<bool> stopRequested{false};
+    std::mutex mutex;
+    bool stopRequested{false};
 };
 }// namespace NES
 

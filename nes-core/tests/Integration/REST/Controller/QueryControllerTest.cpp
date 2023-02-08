@@ -199,6 +199,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     nlohmann::json res;
     ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["queryId"], 1);
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(1, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -264,6 +265,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_NO_THROW(response3 = nlohmann::json::parse(r3.text));
     NES_DEBUG(response3.dump());
     EXPECT_EQ(response3["message"], "No query with given ID: 0");
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -314,6 +316,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     nlohmann::json response2;
     ASSERT_NO_THROW(response2 = nlohmann::json::parse(r2.text));
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -369,6 +372,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     for (auto node : response2["nodes"]) {
         EXPECT_TRUE(node.contains("id") && node.contains("name") && node.contains("nodeType"));
     }
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 
@@ -418,6 +422,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
     nlohmann::json response2 = nlohmann::json::parse(r2.text);
     NES_DEBUG(response2.dump());
     EXPECT_EQ(response2["message"], "No query with given ID: 0");
+    ASSERT_TRUE(TestUtils::checkRunningOrTimeout(queryId, std::to_string(coordinatorConfig->restPort.getValue())));
     stopCoordinator();
 }
 }// namespace NES
