@@ -22,7 +22,6 @@ limitations under the License.
 #include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
 #include "Runtime/MemoryLayout/MemoryLayout.hpp"
 #include "Runtime/MemoryLayout/RowLayout.hpp"
-#include <cstdlib>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <lz4.h>
@@ -41,18 +40,12 @@ class CompressionTest : public Testing::TestWithErrorHandling<testing::Test> {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
-
-  protected:
-    static void run_screaming(const char* message, const int code) {
-        printf("%s \n", message);
-        exit(code);
-    }
 };
 
 // ====================================================================================================
 // Snappy
 // ====================================================================================================
-TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayout) { // TODO
+TEST_F(CompressionTest, compressDecompressSnappyFullBufferColumnLayout) {// TODO
     GTEST_SKIP();
     SchemaPtr schema = Schema::create()->addField("t1", UINT8);
 
@@ -125,7 +118,6 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferRowLayoutSingleColumnUint
     auto bufferCompressed = DynamicTupleBuffer(rowLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     int compressedSize = Compress::LZ4(bufferOrig, bufferCompressed);
-    //std::cout << bufferCompressed.toString(schema) << std::endl;
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
@@ -174,7 +166,6 @@ TEST_F(CompressionTest, compressDecompressLZ4FullBufferColumnLayoutSingleColumnU
     auto bufferCompressed = DynamicTupleBuffer(columnLayout, tupleBuffer);
     // bufferCompressed.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);// TODO?
     auto compressedSizes = Compress::LZ4(bufferOrig, bufferCompressed, offsets);
-    //std::cout << bufferCompressed.toString(schema) << std::endl;
 
     // decompress
     tupleBuffer = bufferManager->getBufferBlocking();
