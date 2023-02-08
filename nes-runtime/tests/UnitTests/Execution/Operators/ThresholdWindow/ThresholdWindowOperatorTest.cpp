@@ -332,15 +332,16 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
 
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto unsignedIntegerType =physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType);
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType);
     auto thresholdWindowOperator =
         std::make_shared<ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, countAgg, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
 
-    auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
+    auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<uint64_t>>();
     auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(countAggregationValue));
     auto pipelineContext = MockedPipelineExecutionContext(handler);
 
@@ -360,7 +361,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2UL);
 
     thresholdWindowOperator->terminate(ctx);
 }
