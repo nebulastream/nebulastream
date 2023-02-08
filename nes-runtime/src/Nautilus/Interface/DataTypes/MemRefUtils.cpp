@@ -14,10 +14,10 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/Interface/DataTypes/Utils.hpp>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cstring>
-namespace NES::Nautilus {
+namespace NES::Nautilus::MemRefUtils {
 
 Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType) {
     if (dataType->isBasicType()) {

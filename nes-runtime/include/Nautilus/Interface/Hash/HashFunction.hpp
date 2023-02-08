@@ -17,11 +17,27 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus::Interface {
+
+/**
+ * @brief Interface for hash function on Nautilus values.
+ * Sub classes can provide specific hash algorithms.
+ */
 class HashFunction {
   public:
     using HashValue = Value<UInt64>;
 
+    /**
+     * @brief Calculates the hash of one value.
+     * @param value a nautilus value
+     * @return the hash
+     */
     HashValue calculate(Value<> value);
+
+    /**
+     * @brief Calculates the hash across a set of values.
+     * @param values vector of nautilus values.
+     * @return the hash
+     */
     HashValue calculate(std::vector<Value<>>& values);
     virtual ~HashFunction() = default;
   protected:
