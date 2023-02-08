@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -23,15 +22,17 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -43,14 +44,15 @@
 namespace NES::Runtime::Execution {
 class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
   public:
+    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup GlobalTimeWindowPipelineTest test class." << std::endl;
+        NES::Logger::setupLogging("KeyedTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup KeyedTimeWindowPipelineTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
@@ -90,17 +92,28 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    auto slicePreAggregation = std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
-                                                                                     readTsField,
-                                                                                     keyFields,
-                                                                                     aggregationFields,
-                                                                                     aggregationFunctions,
-                                                                                     std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    std::vector<PhysicalTypePtr> types = {physicalType};
+    auto slicePreAggregation =
+        std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
+                                                              readTsField,
+                                                              keyFields,
+                                                              types,
+                                                              aggregationFields,
+                                                              aggregationFunctions,
+                                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-
-    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/, aggregationFunctions);
+    std::vector<std::string> aggregationResultExpressions = {aggregationResultFieldName};
+    std::vector<std::string> resultKeyFields = {"k1"};
+    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
+                                                                       aggregationFunctions,
+                                                                       aggregationResultExpressions,
+                                                                       types,
+                                                                       resultKeyFields,
+                                                                       "start",
+                                                                       "end");
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -109,7 +122,6 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
     sliceMergingPipeline->setRootOperator(sliceMerging);
-
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);

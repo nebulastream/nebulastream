@@ -13,6 +13,7 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
@@ -48,6 +49,8 @@ class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
+    DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("KeyedSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG); }
 
@@ -84,10 +87,13 @@ TEST_F(KeyedSlicePreAggregationTest, createNewFieldTest) {
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto readV1 = std::make_shared<Expressions::ReadFieldExpression>("v1");
     auto integer = DataTypeFactory::createInt64();
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto slicePreAggregation =
         KeyedSlicePreAggregation(0 /*handler index*/,
                                  readTs,
                                  {readKey},
+                                 {integerType},
                                  {readV1},
                                  {std::make_shared<Aggregation::SumAggregationFunction>(integer, integer)},
                                  std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
