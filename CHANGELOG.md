@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.4.43](https://github.com/nebulastream/nebulastream/tree/v0.4.43) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.42...v0.4.43)
+
+### Bug Fixes 🐛
+
+- \[BUG\] MapJavaUdfLogicalOperatorNode should not copy children and parent fields [\#3484](https://github.com/nebulastream/nebulastream/issues/3484)
+- \[BUG\] numberOfBuffersToProduce=0 causes exception and prevents the query from stopping [\#3469](https://github.com/nebulastream/nebulastream/issues/3469)
+- Investigate failure on disk statistics  [\#2336](https://github.com/nebulastream/nebulastream/issues/2336)
+
 ## [v0.4.42](https://github.com/nebulastream/nebulastream/tree/v0.4.42) (2023-02-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.41...v0.4.42)
