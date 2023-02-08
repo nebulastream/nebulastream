@@ -27,7 +27,8 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 namespace NES::Runtime::Execution::Operators {
 
 /**
-* @brief KeyedSlicePreAggregation operator that performs the pre-aggregation step for a keyed window aggregation.
+ * @brief KeyedSlicePreAggregation operator that performs the pre-aggregation step for a keyed window aggregation.
+ * This window operator currently only supports tumbling time-based windows.
 */
 class KeyedSlicePreAggregation : public ExecutableOperator {
   public:

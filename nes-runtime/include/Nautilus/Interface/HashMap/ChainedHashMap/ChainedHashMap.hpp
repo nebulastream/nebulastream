@@ -19,6 +19,25 @@
 
 namespace NES::Nautilus::Interface {
 class ChainedHashMapRef;
+
+/**
+ * @brief Implementation of a single thread chained HashMap.
+ * To operate on the hash-map, {@refitem ChainedHashMapRef.hpp} provides a Nautilus wrapper.
+ * The implementation origins from Kersten et.al. https://github.com/TimoKersten/db-engine-paradigms and Leis et.al
+ * https://db.in.tum.de/~leis/papers/morsels.pdf.
+ *
+ * The HashMap is distinguishes two memory areas:
+ *
+ * Entry Space:
+ * The entry space is fixed size and contains pointers into the storage space.
+ *
+ * Storage Space:
+ * The storage space contains individual key-value pairs.
+ *
+ * @attention
+ * 1. This hash map is *not* thread save and allows for no concurrent accesses
+ * 2. This hash map dose not clears the content of the entry. So its up to the user to initialize values correctly.
+ */
 class ChainedHashMap {
   public:
     using hash_t = uint64_t;
@@ -26,6 +45,9 @@ class ChainedHashMap {
     /**
      * @brief HashTable Entry
      * Each entry contains a ptr to the next element, the hash of the current value and the keys and values.
+     * The physical layout is the following
+     * | --- Entry* --- | --- hash_t --- | --- keys ---     | --- values ---    |
+     * | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | --- valueSize ---  |
      */
     class Entry {
       public:
@@ -36,64 +58,69 @@ class ChainedHashMap {
         constexpr int8_t* dataOffset() { return ((int8_t*) this) + sizeof(Entry); }
     };
 
+    /**
+     * @brief Constructor for a the chained hash map.
+     * @param keySize size of the keys in bytes.
+     * @param valueSize size of the values in bytes.
+     * @param nrOfKeys a number of keys, which are assumed to be stored in the hash map.
+     * This is used to size the entry area. A too small number of keys will increase coalitions. A too large number of keys will increase space requirements.
+     * @param allocator the memory allocator, which is used to allocate space for entries.
+     * @param pageSize the page size with DEFAULT_PAGE_SIZE as default.
+     */
     ChainedHashMap(uint64_t keySize,
                    uint64_t valueSize,
                    uint64_t nrOfKeys,
                    std::unique_ptr<std::pmr::memory_resource> allocator,
                    size_t pageSize = DEFAULT_PAGE_SIZE);
 
+    /**
+     * @brief Inline implementation to find the start of a chain from the hash map.
+     * @param hash the hash for the key.
+     * @return Entry* to the start of the chain.
+     */
     [[nodiscard]] inline Entry* findChain(hash_t hash) const {
         auto pos = hash & mask;
         return entries[pos];
     }
 
+    /**
+     * @brief Inline implementation to insert a new entry in the hash map for a specific hash.
+     * This allocates a new entry, and inserts it to the hash map.
+     * @param hash the hash for the key.
+     * @return Entry* to the new entry.
+     */
     inline Entry* insertEntry(hash_t hash) {
         auto newEntry = allocateNewEntry();
         newEntry = std::construct_at(newEntry, hash);
         insert(newEntry, hash);
         return newEntry;
     }
+
+    /**
+     * @brief Returns the current size in number of entries of the hash map.
+     * @return number of entries.
+     */
     [[nodiscard]] uint64_t getCurrentSize() const;
 
     /**
-     * @brief Inserts an entry to this hash table if the hash and key dose not exists yet.
-     * @param otherEntry
-     * @return
+     * @brief Returns a page of entries.
+     * @param pageIndex page index
+     * @return int8_t*
      */
-    bool insertEntryIfNotExists(Entry* otherEntry) {
-        // check if an entry with the same payload exists in this hash map.
-        auto entry = findChain(otherEntry->hash);
-        for (; entry != nullptr; entry = entry->next) {
-            // use memcmp to check if the keys of both entries are equal.
-            // if they are equal return false if no new entry was inserted.
-            if (memcmp(otherEntry->dataOffset(), entry->dataOffset(), this->keySize) == 0) {
-                return false;
-            }
-        }
-        // insert new entry to hash map and copy data (keys + values) from old entry.
-        auto newEntry = insertEntry(otherEntry->hash);
-        memcpy(newEntry->dataOffset(), otherEntry->dataOffset(), keySize + valueSize);
-        return true;
-    };
-
-    virtual ~ChainedHashMap();
-
     int8_t* getPage(uint64_t pageIndex);
 
-  private:
-    friend ChainedHashMapRef;
-    const std::unique_ptr<std::pmr::memory_resource> allocator;
-    const uint64_t pageSize;
-    [[maybe_unused]] const uint64_t keySize;
-    [[maybe_unused]] const uint64_t valueSize;
-    const uint64_t entrySize;
-    const uint64_t entriesPerPage;
-    const size_t capacity;
-    const hash_t mask;
-    uint64_t currentSize = 0;
-    Entry** entries;
-    std::vector<int8_t*> pages;
+    /**
+     * @brief Destructs the hash map and releases all associated resources.
+     * All pointers to entries of the hash map become invalid and accesses are undefined.
+     */
+    virtual ~ChainedHashMap();
 
+  private:
+    /**
+     * @brief Inserts a new entry to the hash map. Each new entry will be stored as the first element in the bucket chain.
+     * @param entry pointer to the new entry
+     * @param hash of the new entry
+     */
     inline void insert(Entry* entry, hash_t hash) {
         const size_t pos = hash & mask;
         assert(pos <= mask);
@@ -103,8 +130,36 @@ class ChainedHashMap {
         entries[pos] = entry;
         this->currentSize++;
     }
+
+    /**
+     * @brief Allocates a new entry.
+     * If the current page has enough space the new entry will be placed in the current page.
+     * If the page is full, we will allocate a new page.
+     * @return Entry*
+     */
     Entry* allocateNewEntry();
+
+    /**
+     * @brief Function to determine the pointer to an entry at a specific index.
+     * @param entryIndex
+     * @return Entry*
+     */
     Entry* entryIndexToAddress(uint64_t entryIndex);
+
+  private:
+    // ChainedHashMapRef is a fiend to access private members and functions
+    friend ChainedHashMapRef;
+    const std::unique_ptr<std::pmr::memory_resource> allocator;
+    const uint64_t pageSize;
+    const uint64_t keySize;
+    const uint64_t valueSize;
+    const uint64_t entrySize;
+    const uint64_t entriesPerPage;
+    const size_t capacity;
+    const hash_t mask;
+    uint64_t currentSize = 0;
+    Entry** entries;
+    std::vector<int8_t*> pages;
 };
 }// namespace NES::Nautilus::Interface
 

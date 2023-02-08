@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/DataTypes/Utils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -26,12 +27,6 @@ extern "C" void* findChainProxy(void* state, uint64_t hash) {
 extern "C" void* insetProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->insertEntry(hash);
-}
-
-extern "C" bool insertEntryIfNewProxy(void* state, void* e) {
-    auto hashMap = (ChainedHashMap*) state;
-    auto entry = (ChainedHashMap::Entry*) e;
-    return hashMap->insertEntryIfNotExists(entry);
 }
 
 ChainedHashMapRef::EntryRef::EntryRef(const Value<MemRef>& ref, uint64_t keyOffset, uint64_t valueOffset)
@@ -57,8 +52,11 @@ Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
 bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) { return ref != 0; }
 bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) { return ref == 0; }
 
-ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef, uint64_t keySize, uint64_t valueSize)
-    : hashTableRef(hashTableRef), keySize(keySize), valueSize(valueSize) {}
+ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef,
+                                     const std::vector<PhysicalTypePtr>& keyDataTypes,
+                                     uint64_t keySize,
+                                     uint64_t valueSize)
+    : hashTableRef(hashTableRef), keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize) {}
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const Value<UInt64>& hash) {
     auto entry = FunctionCall<>("findChainProxy", findChainProxy, hashTableRef, hash);
@@ -107,10 +105,10 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
         // create new entry
         entry = insert(hash);
         auto keyPtr = entry.getKeyPtr();
-        for (auto& key : keys) {
+        for (size_t i = 0; i < keys.size(); i++) {
+            auto& key = keys[i];
             keyPtr.store(key);
-            // todo fix types
-            keyPtr = keyPtr + key->getType().getSize();
+            keyPtr = keyPtr + keyDataTypes[i]->size();
         }
         // call on insert lambda function to insert default values
         onInsert(entry);
@@ -126,11 +124,12 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
 
 Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
     Value<Boolean> equals = true;
-    auto ref = entry.getKeyPtr();
-    for (auto& keyValue : keys) {
-        // todo fix types
-        equals = equals && (keyValue == ref.load<Int64>());
-        ref = ref + (uint64_t) 8;
+    auto keyPtr = entry.getKeyPtr();
+    for (size_t i = 0; i < keys.size(); i++) {
+        auto& key = keys[i];
+        auto keyFromEntry = loadValue(keyPtr, keyDataTypes[i]);
+        equals = equals && (key == keyFromEntry);
+        keyPtr = keyPtr + keyDataTypes[i]->size();
     }
     return equals;
 }
@@ -156,7 +155,7 @@ void* getPageProxy(void* hmPtr, uint64_t pageIndex) {
     return hashMap->getPage(pageIndex);
 }
 
-Value<MemRef> ChainedHashMapRef::getPage(Value<UInt64> pageIndex) {
+Value<MemRef> ChainedHashMapRef::getPage(const Value<UInt64>& pageIndex) {
     return FunctionCall("getPageProxy", getPageProxy, hashTableRef, pageIndex);
 }
 
