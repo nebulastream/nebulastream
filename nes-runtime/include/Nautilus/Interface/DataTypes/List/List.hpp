@@ -31,6 +31,21 @@ namespace NES::Nautilus {
 class List : public Nautilus::Any {
   public:
     static const inline auto type = TypeIdentifier::create<List>();
+
+    /**
+     * @brief Iterator over all entries in the list.
+     */
+    class ListValueIterator {
+      public:
+        ListValueIterator(List& listRef, Value<UInt32>& currentIndex);
+        ListValueIterator& operator++();
+        bool operator==(const ListValueIterator& other) const;
+        Value<> operator*();
+      private:
+        List& list;
+        Value<UInt32> currentIndex;
+    };
+
     List(const TypeIdentifier* childType) : Any(childType){};
 
     /**
@@ -60,6 +75,9 @@ class List : public Nautilus::Any {
      * @param value as Value<>
      */
     virtual void write(Value<UInt32>& index, const Value<>& value) = 0;
+
+    ListValueIterator begin();
+    ListValueIterator end();
 
     virtual ~List() override;
 };

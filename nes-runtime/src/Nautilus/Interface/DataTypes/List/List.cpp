@@ -33,6 +33,28 @@ auto createDefault() {
 
 List::~List() { NES_DEBUG("~List"); }
 
+List::ListValueIterator List::begin() {
+    auto startIndex = Value<UInt32>((std::uint32_t) 0);
+    return List::ListValueIterator(*this, startIndex);
+}
+
+List::ListValueIterator List::end() {
+    auto startIndex = length();
+    return List::ListValueIterator(*this, startIndex);
+}
+
+List::ListValueIterator::ListValueIterator(List& listRef, Value<UInt32>& currentIndex)
+    : list(listRef), currentIndex(currentIndex) {}
+
+Value<> List::ListValueIterator::operator*() { return list.read(currentIndex); }
+
+bool List::ListValueIterator::operator==(const ListValueIterator& other) const { return currentIndex == other.currentIndex; }
+
+List::ListValueIterator& List::ListValueIterator::operator++() {
+    currentIndex = currentIndex + (uint32_t) 1;
+    return *this;
+}
+
 template<IsListComponentType BaseType>
 TypedList<BaseType>::TypedList(TypedRef<RawType> ref) : List(&type), rawReference(ref) {}
 

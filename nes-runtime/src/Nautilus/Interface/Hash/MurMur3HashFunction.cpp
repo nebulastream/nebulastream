@@ -131,6 +131,12 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
         return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>());
     } else if (value->isType<Text>()) {
         return FunctionCall("hashTextValue", hashTextValue, hash, value.as<Text>()->getReference());
+    } else if (value->isType<List>()) {
+        auto list = value.as<List>();
+        for(auto listValue : list.getValue()){
+            calculate(hash, listValue);
+        }
+        return hash;
     }
     NES_NOT_IMPLEMENTED();
 }
