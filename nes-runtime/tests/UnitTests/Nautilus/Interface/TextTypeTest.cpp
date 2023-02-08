@@ -191,4 +191,37 @@ TEST_F(TextTypeTest, stringconcatTest) {
     auto concatTest5 = concatTest1->concat(concatTest2);
     ASSERT_EQ(concatTest5, concatTest3);
 }
+
+TEST_F(TextTypeTest, similarToTest) {
+    auto similarToTest1 = Value<Text>("NebulaStream");
+    auto similarToTest2 = Value<Text>("NebulaStream");
+    auto similarToResult = similarToTest1->similarTo(similarToTest2);
+    ASSERT_EQ(similarToResult, (Boolean) true);
+    ASSERT_TRUE(similarToResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, similarToTestFail) {
+    auto similarToTest1 = Value<Text>("NebulaStream");
+    auto similarToTest2 = Value<Text>("Nebula");
+    auto similarToResult = similarToTest1->similarTo(similarToTest2);
+    ASSERT_EQ(similarToResult, (Boolean) false);
+    ASSERT_TRUE(similarToResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, likeTest) {
+    auto likeTest1 = Value<Text>("abcde");
+    auto likeTest2 = Value<Text>("%bcd%");
+    auto likeResult = likeTest1->like(likeTest2);
+    ASSERT_EQ(likeResult, (Boolean) true);
+    ASSERT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+}
+
+TEST_F(TextTypeTest, likeTestFail) {
+    auto likeTest1 = Value<Text>("abcde");
+    auto likeTest2 = Value<Text>("_bc_");
+    auto likeResult = likeTest1->like(likeTest2);
+    ASSERT_EQ(likeResult, (Boolean) false);
+    ASSERT_TRUE(likeResult->getTypeIdentifier()->isType<Boolean>());
+}
+
 }// namespace NES::Nautilus
