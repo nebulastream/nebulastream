@@ -161,8 +161,10 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     DataTypePtr integerType = DataTypeFactory::createInt64();
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+    auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, integerPhysicalType);
+
+    auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, unsignedIntegerType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, countAgg, 0);
     scanOperator->setChild(thresholdWindowOperator);
