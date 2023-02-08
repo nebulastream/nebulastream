@@ -14,13 +14,18 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_UTILS_HPP_
 #define NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_UTILS_HPP_
-
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <memory>
+namespace NES {
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+}// namespace NES
+
 namespace NES::Nautilus {
 
+Value<> loadValue(Value<MemRef>& ptr1, const PhysicalTypePtr& dataType);
 bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size);
 void memCopy(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size);
-
 
 #define getMember(ref, t, d) (ref + __builtin_offsetof(t, d)).as<MemRef>()
 

@@ -18,10 +18,10 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-namespace NES{
+namespace NES {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}
+}// namespace NES
 namespace NES::Runtime::Execution::Operators {
 
 /**
@@ -40,8 +40,8 @@ class KeyedSliceMerging : public Operator {
                       const std::vector<std::string>& aggregationResultExpressions,
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       const std::vector<std::string>& resultKeyFields,
-                      const std::string& startTsFieldName,
-                      const std::string& endTsFieldName);
+                      std::string  startTsFieldName,
+                      std::string  endTsFieldName);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -53,16 +53,17 @@ class KeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    Value<MemRef>
-    combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask, Value<>& endSliceTs) const;
-    void mergeHashTable(Interface::ChainedHashMapRef& globalHashTable, Interface::ChainedHashMapRef& threadLocalHashTable) const;
+    void combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
+                                           Nautilus::Interface::ChainedHashMapRef& globalHashTable,
+                                           Value<>& endSliceTs) const;
+    void mergeHashTable(Interface::ChainedHashMapRef& globalSliceHashMap, Interface::ChainedHashMapRef& threadLocalSliceHashMap) const;
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context
      * @param windowStart start of the window
      * @param windowEnd end of the window
      */
-    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Value<MemRef>&) const;
+    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Interface::ChainedHashMapRef& globalSliceHashMap) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::vector<std::string> aggregationResultExpressions;

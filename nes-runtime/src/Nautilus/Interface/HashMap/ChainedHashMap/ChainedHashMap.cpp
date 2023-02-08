@@ -16,18 +16,23 @@
 
 namespace NES::Nautilus::Interface {
 
-size_t getCapacity(uint64_t nrEntries) {
+/**
+ * @brief Function to calculate the capacity of the hash map
+ * @param nrOfKeys that are expected to be inserted in the hash map
+ * @return
+ */
+size_t getCapacity(uint64_t nrOfKeys) {
+    // this is taken from https://github.com/TimoKersten/db-engine-paradigms/blob/ae3286b279ad26ab294224d630d650bc2f2f3519/include/common/runtime/Hashmap.hpp#L193
     const auto loadFactor = 0.7;
-    size_t exp = 64 - __builtin_clzll(nrEntries);
+    // __builtin_clzll Returns the number of leading 0-bits in x,
+    // starting at the most significant bit position.
+    // If x is 0, the result is undefined.
+    size_t exp = 64 - __builtin_clzll(nrOfKeys);
     NES_ASSERT(exp < sizeof(size_t) * 8, "invalid exp");
-    if (((size_t) 1 << exp) < nrEntries / loadFactor) {
+    if (((size_t) 1 << exp) < (nrOfKeys / loadFactor)) {
         exp++;
     }
     return ((size_t) 1) << exp;
-}
-
-int8_t* ChainedHashMap::getPage(uint64_t pageIndex) {
-    return pages[pageIndex];
 }
 
 ChainedHashMap::ChainedHashMap(uint64_t keySize,
@@ -45,6 +50,7 @@ ChainedHashMap::ChainedHashMap(uint64_t keySize,
 
     // allocate entries
     entries = reinterpret_cast<Entry**>(this->allocator->allocate(capacity * sizeof(Entry*)));
+    // clear entry space.
     std::memset(entries, 0, capacity * sizeof(Entry*));
 
     // allocate initial page
@@ -76,6 +82,10 @@ ChainedHashMap::~ChainedHashMap() {
         allocator->deallocate(page, pageSize);
     }
     allocator->deallocate(entries, capacity * sizeof(Entry*));
+}
+
+int8_t* ChainedHashMap::getPage(uint64_t pageIndex) {
+    return pages[pageIndex];
 }
 
 }// namespace NES::Nautilus::Interface

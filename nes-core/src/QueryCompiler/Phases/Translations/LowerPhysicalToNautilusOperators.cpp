@@ -397,14 +397,19 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
     auto keys = windowDefinition->getKeys();
     NES_ASSERT(!keys.empty(), "A keyed window should have keys");
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
-    std::transform(keys.cbegin(), keys.cend(), std::back_inserter(keyReadExpressions), [&](auto& key) {
-        return lowerExpression(key);
-    });
+    auto df = DefaultPhysicalTypeFactory();
+    std::vector<PhysicalTypePtr> keyDataTypes;
+    for (const auto& key : keys) {
+        keyReadExpressions.emplace_back(lowerExpression(key));
+        keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
+    }
+
     auto keyExpressions = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
         operatorHandlers.size() - 1,
         timeStampField,
         keyReadExpressions,
+        keyDataTypes,
         aggregationFields,
         aggregationFunctions,
         std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
