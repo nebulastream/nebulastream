@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.4.42](https://github.com/nebulastream/nebulastream/tree/v0.4.42) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.41...v0.4.42)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Hotfix remove TFDEF [\#3482](https://github.com/nebulastream/nebulastream/issues/3482)
+
+#### User Defined Functions
+
+- Implement logical/physical operator for Map UDFs [\#2337](https://github.com/nebulastream/nebulastream/issues/2337)
+
 ## [v0.4.41](https://github.com/nebulastream/nebulastream/tree/v0.4.41) (2023-02-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.40...v0.4.41)
