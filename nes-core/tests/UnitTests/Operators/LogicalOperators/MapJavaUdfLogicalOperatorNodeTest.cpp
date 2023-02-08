@@ -17,11 +17,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
@@ -84,7 +84,8 @@ TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferStringSignature) {
 // Cause: n2 is a shallow copy of n1, so it retains the list of parents of n1 with the same IDs.
 TEST_F(MapJavaUdfLogicalOperatorNodeTest, AddParentToCopy) {
     // given: Create MapJavaUdfLogicalOperatorNode with a parent.
-    auto n1 = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor());
+    auto n1 = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(
+        Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor());
     auto p1 = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
     n1->addParent(p1);
     // when: Create copies of n1 and p1 and add p2 as parent of n2. They should not be in a parent-child relationship.
