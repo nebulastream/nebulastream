@@ -21,6 +21,7 @@
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
@@ -73,6 +74,29 @@ TEST_F(MapJavaUdfLogicalOperatorNodeTest, InferStringSignature) {
     auto& childSignature = *child->getHashBasedSignature().begin()->second.begin();
     NES_DEBUG(signature);
     ASSERT_TRUE(signature.ends_with("." + childSignature));
+}
+
+// Regression test for https://github.com/nebulastream/nebulastream/issues/3484
+// Setup: A MapJavaUdfLogicalOperatorNode n1 has a parent p1 (e.g., a sink).
+// We create a copies p2 of p1 and n2 of n1.
+// The bug: When we try to add p2 as a parent to n2, the parent is not added because there already exists a parent with the same
+// operator ID.
+// Cause: n2 is a shallow copy of n1, so it retains the list of parents of n1 with the same IDs.
+TEST_F(MapJavaUdfLogicalOperatorNodeTest, AddParentToCopy) {
+    // given: Create MapJavaUdfLogicalOperatorNode with a parent.
+    auto n1 = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor());
+    auto p1 = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
+    n1->addParent(p1);
+    // when: Create copies of n1 and p1 and add p2 as parent of n2. They should not be in a parent-child relationship.
+    auto n2 = n1->copy();
+    auto p2 = p1->copy();
+    EXPECT_TRUE(p2->getChildren().empty());
+    EXPECT_TRUE(n2->getParents().empty());
+    // Check that we can add p2 as a parent of n2.
+    n2->addParent(p2);
+    EXPECT_TRUE(p2->getChildWithOperatorId(n1->getId()) == n2);
+    EXPECT_FALSE(n2->getParents().empty());
+    EXPECT_TRUE(n2->getParents()[0] == p2);
 }
 
 }// namespace NES
