@@ -50,6 +50,56 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
         NES_INFO("Setup MonitoringControllerTest test class.");
     }
 
+    bool waitForMonitoringQuery(NesCoordinatorPtr coordinator, ::uint64_t restPort, ::uint64_t timeout) {
+        std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout);
+        nlohmann::json monitoringQueries = coordinator->getMonitoringService()->getMonitoringStreams();
+        if (!monitoringQueries.is_array()) {
+            return false;
+        }
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            monitoringQueries = coordinator->getMonitoringService()->getMonitoringStreams();
+            if (!monitoringQueries.is_array()) {
+                return false;
+            }
+            if (monitoringQueries.size() >= 1) {
+                break;
+            }
+        }
+        start_timestamp = std::chrono::system_clock::now();
+        bool succes = false;
+        while (!succes && std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            succes = true;
+            for (auto& query : monitoringQueries) {
+                auto id = query["query_ID"].get<uint>();
+                NES_DEBUG("checking status of query " << id);
+                if (!TestUtils::checkRunningOrTimeout(id, std::to_string(restPort))) {
+                    succes = false;
+                    }
+            }
+        }
+        return succes;
+    }
+
+    bool waitForMonitoringQueryEnd(NesCoordinatorPtr coordinator, ::uint64_t timeout) {
+        std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout);
+        nlohmann::json monitoringQueries = coordinator->getMonitoringService()->getMonitoringStreams();
+        if (!monitoringQueries.is_array()) {
+            return false;
+        }
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            monitoringQueries = coordinator->getMonitoringService()->getMonitoringStreams();
+            if (!monitoringQueries.is_array()) {
+                return false;
+            }
+            if (monitoringQueries.size() == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static void TearDownTestCase() { NES_INFO("Tear down MonitoringControllerTest test class."); }
 };
 
@@ -79,6 +129,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     ASSERT_EQ(jsonsStart.size(), expectedMonitoringStreams.size());
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsonsStart);
     ASSERT_TRUE(check);
+    ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
@@ -280,6 +331,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
+    ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));
     bool stopCrd = coordinator->stopCoordinator(true);
     ASSERT_TRUE(stopCrd);
 }
