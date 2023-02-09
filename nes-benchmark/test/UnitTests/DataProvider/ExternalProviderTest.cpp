@@ -47,9 +47,10 @@ namespace NES::Benchmark::DataProvision {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
-    TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
+    TEST_F(ExternalProviderTest, ingestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
+        configOverAllRuns.ingestionRateInBuffers->setValue(20000);
         size_t sourceId = 0;
         size_t numberOfBuffers = 2;
 
@@ -82,6 +83,50 @@ namespace NES::Benchmark::DataProvision {
         externalProviderDefault->start();
         sleep(1);
 
+        auto& bufferQueue = externalProviderDefault->getBufferQueue();
+        auto queueSize = bufferQueue.size();
+
+        // with workingTimeDeltaInMillSeconds = 10 there are 20200 buffers in the queue after 1s and 10ms
+        ASSERT_EQ(queueSize, 20200);
+    }
+
+    TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        ASSERT_FALSE(createdBuffers.empty());
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+        sleep(1);
+
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
@@ -89,8 +134,62 @@ namespace NES::Benchmark::DataProvision {
         bufferQueue.read(bufferHolder);
         auto expectedNextBuffer = bufferHolder.bufferToHold;
 
+        ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
+
+        auto defaultBuffer = nextBufferDefault->getBuffer();
+        auto expectedBuffer = expectedNextBuffer.getBuffer();
+        ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
+    }
+
+    TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::COLUMNAR_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
         ASSERT_FALSE(createdBuffers.empty());
-        ASSERT_EQ(nextBufferDefault->getBufferSize(), 50000);
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+        sleep(1);
+
+        auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
+
+        auto& bufferQueue = externalProviderDefault->getBufferQueue();
+        TupleBufferHolder bufferHolder;
+        bufferQueue.read(bufferHolder);
+        auto expectedNextBuffer = bufferHolder.bufferToHold;
+
+        ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
+
+        auto defaultBuffer = nextBufferDefault->getBuffer();
+        auto expectedBuffer = expectedNextBuffer.getBuffer();
+        ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
     TEST_F(ExternalProviderTest, startRowLayoutTest) {
@@ -126,9 +225,13 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        sleep(1);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
+
+        auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
+        ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
     TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
@@ -164,9 +267,13 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        sleep(1);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
+
+        auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
+        ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
     TEST_F(ExternalProviderTest, stopRowLayoutTest) {
@@ -207,7 +314,7 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(!generatorThread.joinable());
 
         auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
-        ASSERT_EQ(preAllocatedBuffers.size(), 0);
+        ASSERT_TRUE(preAllocatedBuffers.empty());
     }
 
     TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
@@ -248,6 +355,6 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(!generatorThread.joinable());
 
         auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
-        ASSERT_EQ(preAllocatedBuffers.size(), 0);
+        ASSERT_TRUE(preAllocatedBuffers.empty());
     }
 }//namespace NES::Benchmark::DataProvision
