@@ -27,14 +27,13 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -94,8 +93,9 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     scanOperator->setChild(slicePreAggregation);
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
-
-    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions);
+    std::vector<std::string> resultFields = {aggregationResultFieldName};
+    auto sliceMerging =
+        std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions, resultFields, "start", "end");
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());

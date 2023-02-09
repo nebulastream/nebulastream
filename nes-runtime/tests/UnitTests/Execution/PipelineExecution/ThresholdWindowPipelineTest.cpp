@@ -34,6 +34,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>

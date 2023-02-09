@@ -90,8 +90,9 @@ class ChainedHashMap {
      * @return Entry* to the new entry.
      */
     inline Entry* insertEntry(hash_t hash) {
-        auto newEntry = allocateNewEntry();
-        newEntry = std::construct_at(newEntry, hash);
+        auto* newEntry = allocateNewEntry();
+        // call the constructor of Entry at the address of new Entry to initialize the object.
+        new(newEntry) Entry(hash);
         insert(newEntry, hash);
         return newEntry;
     }
