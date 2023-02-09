@@ -97,9 +97,7 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
 }
 std::string ZipfianDataGenerator::toString() {
     std::ostringstream oss;
-
     oss << getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
-
     return oss.str();
 }
 

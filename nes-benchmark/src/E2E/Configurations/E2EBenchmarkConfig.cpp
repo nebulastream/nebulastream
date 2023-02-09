@@ -14,6 +14,7 @@
 
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <vector>
 
 namespace NES::Benchmark {
 
@@ -52,13 +53,10 @@ Benchmark::E2EBenchmarkConfig Benchmark::E2EBenchmarkConfig::createBenchmarks(co
         Yaml::Parse(configFile, yamlConfigFile.c_str());
 
         NES_INFO("Generating configOverAllRuns...");
-        auto configOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(configFile);
+        e2EBenchmarkConfig.configOverAllRuns = E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(configFile);
 
         NES_INFO("Generating configsPerRun...");
-        auto allConfigPerRuns = E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(configFile);
-
-        e2EBenchmarkConfig.configOverAllRuns = configOverAllRuns;
-        e2EBenchmarkConfig.allConfigPerRuns = allConfigPerRuns;
+        e2EBenchmarkConfig.allConfigPerRuns = E2EBenchmarkConfigPerRun::generateAllConfigsPerRun(configFile);
 
     } catch (std::exception& e) {
         std::cerr << "Error while trying to create the benchmarks" << std::endl;

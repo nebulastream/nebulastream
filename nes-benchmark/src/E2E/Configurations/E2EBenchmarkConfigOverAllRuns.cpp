@@ -40,7 +40,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
-    sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
+    sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
     ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 1, "Number of buffers ingested per time interval");
     ingestionRateCnt = ConfigurationOption<uint32_t>::create("ingestionRateCnt", 100000, "Number of potentially different ingestion rates");
     numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
@@ -105,8 +105,8 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
-            auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
-            configOverAllRuns.sourceNameToDataGenerator[sourceName] = dataGenerator;
+            configOverAllRuns.sourceNameToDataGenerator[sourceName] =
+                    DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);;
         }
         NES_DEBUG("No additional sources have been added!");
     }
@@ -128,7 +128,8 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
 
 size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
     size_t size = 0;
-    for (auto [logicalSource, dataGenerator] : sourceNameToDataGenerator) {
+    for (auto&& item : sourceNameToDataGenerator) {
+        auto dataGenerator = item.second.get();
         size += dataGenerator->getSchema()->getSchemaSizeInBytes();
     }
 

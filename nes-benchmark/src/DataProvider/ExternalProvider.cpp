@@ -18,8 +18,8 @@ namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(ingestionRateGenerator) {}
+                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(std::move(ingestionRateGenerator)) {}
 
 void ExternalProvider::start() {
     if (!started) {
@@ -39,7 +39,7 @@ void ExternalProvider::stop() {
 void ExternalProvider::generateData() {
     sleep(5);   // TODO why is this sleep necessary?
 
-    auto predefinedIngestionRates = ingestionRateGenerator.generateIngestionRates();
+    auto predefinedIngestionRates = ingestionRateGenerator->generateIngestionRates();
 
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
     bufferQueue = folly::MPMCQueue<TupleBufferHolder>(maxIngestionRateValue == 0 ? 1 : maxIngestionRateValue * 1000);
@@ -116,4 +116,13 @@ void ExternalProvider::generateData() {
         }
     }// while (started)
 }
+
+std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t sourceId) {
+    // For now, we only have a single source
+    ((void) sourceId);
+    NES_NOT_IMPLEMENTED();
+}
+
+void ExternalProvider::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
+void ExternalProvider::recycleUnpooledBuffer(Runtime::detail::MemorySegment*) {}
 }// namespace NES::Benchmark::DateProviding

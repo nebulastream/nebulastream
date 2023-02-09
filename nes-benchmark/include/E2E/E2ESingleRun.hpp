@@ -120,7 +120,6 @@ class E2ESingleRun {
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
     std::vector<DataProvision::DataProviderPtr> allDataProviders;
-    std::vector<DataGeneration::DataGeneratorPtr> allDataGenerators;
     std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
     Measurements::Measurements measurements;
     std::vector<QueryId> submittedIds;

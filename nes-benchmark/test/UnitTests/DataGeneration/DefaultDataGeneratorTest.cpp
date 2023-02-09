@@ -52,7 +52,7 @@ namespace NES::Benchmark::DataGeneration {
         auto minValue = 0;
         auto maxValue = 1000;
 
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+        auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto schemaDefault = defaultDataGenerator->getSchema();
 
         auto expectedSchema = NES::Schema::create()
@@ -68,7 +68,7 @@ namespace NES::Benchmark::DataGeneration {
         auto minValue = 0;
         auto maxValue = 1000;
 
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+        auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto nameDefault = defaultDataGenerator->getName();
 
         auto expectedName = "Uniform";
@@ -81,7 +81,7 @@ namespace NES::Benchmark::DataGeneration {
         auto maxValue = 1000;
         std::ostringstream oss;
 
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+        auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto stringDefault = defaultDataGenerator->toString();
 
         oss << defaultDataGenerator->getName() << " (" << minValue << ", " << maxValue << ")";
@@ -95,7 +95,7 @@ namespace NES::Benchmark::DataGeneration {
         auto maxValue = 1000;
         size_t numberOfBuffers = 10;
 
-        auto defaultDataGenerator = std::make_shared<DefaultDataGenerator>(minValue, maxValue);
+        auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
         auto bufferManager =  std::make_shared<Runtime::BufferManager>();
         defaultDataGenerator->setBufferManager(bufferManager);
         auto dataDefault = defaultDataGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());

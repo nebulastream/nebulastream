@@ -21,14 +21,14 @@
 namespace NES::Benchmark::DataGeneration {
 
 class DataGenerator;
-using DataGeneratorPtr = std::shared_ptr<DataGenerator>;
+using DataGeneratorPtr = std::unique_ptr<DataGenerator>;
 
 class DataGenerator {
   public:
     /**
      * @brief constructor for a data generator
      */
-    DataGenerator();
+    explicit DataGenerator() = default;
 
     /**
      * @brief destructor for a data generator

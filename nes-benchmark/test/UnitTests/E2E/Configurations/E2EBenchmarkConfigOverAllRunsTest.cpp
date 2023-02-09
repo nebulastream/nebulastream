@@ -110,15 +110,15 @@ namespace NES::Benchmark {
         size_t expectedSize = 0;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = defaultDataGenerator;
-        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = zipfianDataGenerator;
-
-        auto defaultSize = defaultConfigOverAllRuns.getTotalSchemaSize();
-
+        auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         expectedSize += defaultDataGenerator->getSchema()->getSchemaSizeInBytes();
         expectedSize += zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
+
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = std::move(defaultDataGenerator);
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = std::move(zipfianDataGenerator);
+
+        auto defaultSize = defaultConfigOverAllRuns.getTotalSchemaSize();
 
         ASSERT_EQ(defaultSize, expectedSize);
     }
@@ -127,8 +127,8 @@ namespace NES::Benchmark {
         std::stringstream expectedString;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
 
-        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+        defaultConfigOverAllRuns.sourceNameToDataGenerator["input2"] = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
 
         auto defaultString = defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators();
 
