@@ -55,9 +55,9 @@ void setupWindowHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSi
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
 }
 
-class LocalSliceStoreState : public Operators::OperatorState {
+class LocalKeyedSliceStoreState : public Operators::OperatorState {
   public:
-    explicit LocalSliceStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
+    explicit LocalKeyedSliceStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
                                   uint64_t keySize,
                                   uint64_t valueSize,
                                   const Value<MemRef>& sliceStoreState)
@@ -113,7 +113,7 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const 
     // 2. load the thread local slice store according to the worker id.
     auto sliceStore = Nautilus::FunctionCall("getKeyedSliceStoreProxy", getKeyedSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
     // 3. store the reference to the slice store in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
+    auto sliceStoreState = std::make_unique<LocalKeyedSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
@@ -130,7 +130,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     }
 
     // 3. load the reference to the slice store and find the correct slice.
-    auto sliceStore = reinterpret_cast<LocalSliceStoreState*>(ctx.getLocalState(this));
+    auto sliceStore = reinterpret_cast<LocalKeyedSliceStoreState*>(ctx.getLocalState(this));
     auto sliceState = sliceStore->findSliceStateByTs(timestampValue);
 
     // 4. calculate hash
@@ -155,7 +155,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    auto sliceStore = reinterpret_cast<LocalSliceStoreState*>(ctx.getLocalState(this));
+    auto sliceStore = reinterpret_cast<LocalKeyedSliceStoreState*>(ctx.getLocalState(this));
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // After we processed all records in the record buffer we call triggerKeyedThreadLocalWindow
