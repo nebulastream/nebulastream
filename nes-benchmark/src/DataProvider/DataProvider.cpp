@@ -16,12 +16,13 @@
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstring>
+#include <memory>
+
 
 namespace NES::Benchmark::DataProvision {
 DataProviderPtr DataProvider::createProvider(uint64_t providerId,
-                                             NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
+                                             NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                                              std::vector<Runtime::TupleBuffer> buffers) {
     DataProviderMode dataProviderMode;
     if (configOverAllRuns.dataProviderMode->getValue() == "ZeroCopy") {
@@ -33,12 +34,10 @@ DataProviderPtr DataProvider::createProvider(uint64_t providerId,
     }
 
     if (configOverAllRuns.dataProvider->getValue() == "Internal") {
-        auto internalProvider = std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
-        return internalProvider;
+        return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
     } else if (configOverAllRuns.dataProvider->getValue() == "External") {
-        IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
-        auto externalProvider = std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, ingestionRateGenerator);
-        return externalProvider;
+        auto ingestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
+        return std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, std::move(ingestionRateGenerator));
     } else {
         NES_THROW_RUNTIME_ERROR("Could not parse dataProvider = " << configOverAllRuns.dataProvider->getValue() << "!");
     }

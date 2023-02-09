@@ -36,7 +36,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     ExternalProvider(uint64_t id,
                      DataProviderMode providerMode,
                      std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator);
+                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator);
 
     /**
      * @brief overrides the start function and generates the data
@@ -48,14 +48,20 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void stop() override;
 
-  private:
+    std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
+
+    void recyclePooledBuffer(Runtime::detail::MemorySegment *buffer) override;
+
+    void recycleUnpooledBuffer(Runtime::detail::MemorySegment *buffer) override;
+
+private:
     /**
      * @brief generates data based on predefinedIngestionRates
      */
     void generateData();
 
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
-    IngestionRateGeneration::IngestionRateGenerator ingestionRateGenerator;
+    IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
     bool started = false;
     std::thread generatorThread;

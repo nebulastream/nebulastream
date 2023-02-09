@@ -13,22 +13,27 @@
 */
 
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/MDIngestionRateGenerator.hpp>
+#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
-IngestionRateGenerator::IngestionRateGenerator() {}
 
-IngestionRateGenerator IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns configOverAllRuns) {
+IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
     auto ingestionRateDistribution = getDistributionFromString(configOverAllRuns.ingestionRateDistribution->getValue());
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
     auto ingestionRateCnt = configOverAllRuns.ingestionRateCnt->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
 
     if (ingestionRateDistribution == UNIFORM) {
-        return UniformIngestionRateGenerator(ingestionRateInBuffers, ingestionRateCnt);
+        return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCnt);
     } else if (ingestionRateDistribution == SINUS || ingestionRateDistribution == COSINUS) {
-        return TrigonometricIngestionRateGenerator(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCnt, numberOfPeriods);
+        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCnt, numberOfPeriods);
+    } else if ( ingestionRateDistribution == M1 || ingestionRateDistribution == M2 ||
+                ingestionRateDistribution == D1 || ingestionRateDistribution == D2) {
+        return std::make_unique<MDIngestionRateGenerator>(ingestionRateDistribution, ingestionRateCnt);
     } else {
-        return MDIngestionRateGenerator(ingestionRateDistribution, ingestionRateCnt);
+        NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported. Could not create IngestionRateGenerator");
     }
 }
 

@@ -53,7 +53,7 @@ namespace NES::Benchmark::DataGeneration {
         auto minValue = 0;
         auto maxValue = 1000;
 
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        auto zipfianDataGenerator = std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
         auto schemaDefault = zipfianDataGenerator->getSchema();
 
         auto expectedSchema = NES::Schema::create()
@@ -70,7 +70,7 @@ namespace NES::Benchmark::DataGeneration {
         auto minValue = 0;
         auto maxValue = 1000;
 
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        auto zipfianDataGenerator = std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
         auto nameDefault = zipfianDataGenerator->getName();
 
         auto expectedName = "Zipfian";
@@ -83,7 +83,7 @@ namespace NES::Benchmark::DataGeneration {
         auto maxValue = 1000;
         std::ostringstream oss;
 
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        auto zipfianDataGenerator = std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
         auto stringDefault = zipfianDataGenerator->toString();
 
         oss << zipfianDataGenerator->getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
@@ -98,8 +98,8 @@ namespace NES::Benchmark::DataGeneration {
         auto maxValue = 1000;
         size_t numberOfBuffers = 10;
 
-        auto zipfianDataGenerator = std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
-        auto bufferManager =  std::make_shared<Runtime::BufferManager>();
+        auto zipfianDataGenerator = std::make_unique<ZipfianDataGenerator>(alpha, minValue, maxValue);
+        auto bufferManager = std::make_shared<Runtime::BufferManager>();
         zipfianDataGenerator->setBufferManager(bufferManager);
         auto dataDefault = zipfianDataGenerator->createData(numberOfBuffers, bufferManager->getBufferSize());
 

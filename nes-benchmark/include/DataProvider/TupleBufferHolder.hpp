@@ -16,6 +16,7 @@
 #define NES_TUPLEBUFFERHOLDER_HPP
 
 #include <Runtime/TupleBuffer.hpp>
+#include <memory>
 
 namespace NES::Benchmark::DataProvision {
 class TupleBufferHolder {

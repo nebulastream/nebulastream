@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <cstdint>
+#include <memory>
 
 namespace NES::Benchmark::DataProvision {
 
@@ -61,9 +62,8 @@ class DataProvider {
          * @brief creates a data provider
          * @return
          */
-    static std::shared_ptr<DataProvider> createProvider(uint64_t id,
-                                                        NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
-                                                        std::vector<Runtime::TupleBuffer> buffers);
+    static DataProviderPtr createProvider(uint64_t id, NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                                          std::vector<Runtime::TupleBuffer> buffers);
 
     /**
          * @brief starts this provider

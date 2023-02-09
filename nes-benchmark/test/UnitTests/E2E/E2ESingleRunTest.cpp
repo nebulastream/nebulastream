@@ -72,16 +72,19 @@ namespace NES::Benchmark {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
 
-        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
-        configOverAllRuns.sourceNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
-                                                       {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        const auto defaultDataGeneratorName = defaultDataGenerator->getName();
+        const auto zipfianDataGeneratorName = zipfianDataGenerator->getName();
+
+        configOverAllRuns.sourceNameToDataGenerator[defaultDataGeneratorName] = std::move(defaultDataGenerator);
+        configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
         configOverAllRuns.numberOfPreAllocatedBuffer->setValue(10);
 
         for (auto i = 0; i < 3; ++i) {
             E2EBenchmarkConfigPerRun configPerRun;
-            configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), i + 1},
-                                                      {zipfianDataGenerator->getName(), i + 2}};
+            configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGeneratorName, i + 1},
+                                                      {zipfianDataGeneratorName, i + 2}};
             configPerRun.bufferSizeInBytes->setValue(512);
             allConfigPerRuns.emplace_back(configPerRun);
         }
@@ -94,25 +97,25 @@ namespace NES::Benchmark {
             auto coordinatorConf = singleRun.getCoordinatorConf();
             EXPECT_EQ(coordinatorConf->logicalSources.size(), 2);
 
-            EXPECT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), defaultDataGenerator->getName());
-            EXPECT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), zipfianDataGenerator->getName());
+            EXPECT_EQ(coordinatorConf->logicalSources[0].getValue()->getLogicalSourceName(), defaultDataGeneratorName);
+            EXPECT_EQ(coordinatorConf->logicalSources[1].getValue()->getLogicalSourceName(), zipfianDataGeneratorName);
             EXPECT_EQ(coordinatorConf->worker.physicalSources.size(), cnt + 1 + cnt + 2);
 
-            std::map<std::string, uint64_t> tmpMap{{defaultDataGenerator->getName(), 0},
-                                                   {zipfianDataGenerator->getName(), 0}};
+            std::map<std::string, uint64_t> tmpMap{{defaultDataGeneratorName, 0},
+                                                   {zipfianDataGeneratorName, 0}};
             for (auto i = 0UL; i < coordinatorConf->worker.physicalSources.size(); ++i) {
                 auto physicalSource = coordinatorConf->worker.physicalSources[i];
                 tmpMap[physicalSource.getValue()->getLogicalSourceName()] += 1;
             }
 
-            EXPECT_EQ(tmpMap[defaultDataGenerator->getName()], cnt + 1);
-            EXPECT_EQ(tmpMap[zipfianDataGenerator->getName()], cnt + 2);
+            EXPECT_EQ(tmpMap[defaultDataGeneratorName], cnt + 1);
+            EXPECT_EQ(tmpMap[zipfianDataGeneratorName], cnt + 2);
         }
     }
 
     TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources) {
-        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
         E2EBenchmarkConfigPerRun configPerRun;
         configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), 123},
                                                   {zipfianDataGenerator->getName(), 456}};
@@ -132,23 +135,26 @@ namespace NES::Benchmark {
         auto bmName = "Some awesome BM Name", inputType = "Auto", dataProviderMode = "ZeroCopy";
         auto queryString = "Query::from(source)", csvFile = "tmp.csv";
         auto numberOfWorkerThreads = 12, numberOfQueriesToDeploy = 123, bufferSizeInBytes = 8* 1024;
-        auto defaultDataGenerator = std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000);
-        auto zipfianDataGenerator = std::make_shared<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+        auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
+        const auto defaultDataGeneratorName = defaultDataGenerator->getName();
+        const auto zipfianDataGeneratorName = zipfianDataGenerator->getName();
+
 
         auto schemaSizeInB = defaultDataGenerator->getSchema()->getSchemaSizeInBytes() +
                              zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
 
         E2EBenchmarkConfigPerRun configPerRun;
-        configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGenerator->getName(), 2},
-                                                  {zipfianDataGenerator->getName(), 23}};
+        configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGeneratorName, 2},
+                                                  {zipfianDataGeneratorName, 23}};
         configPerRun.numberOfWorkerThreads->setValue(numberOfWorkerThreads);
         configPerRun.numberOfQueriesToDeploy->setValue(numberOfQueriesToDeploy);
         configPerRun.bufferSizeInBytes->setValue(bufferSizeInBytes);
 
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.benchmarkName->setValue(bmName);
-        configOverAllRuns.sourceNameToDataGenerator = {{defaultDataGenerator->getName(), defaultDataGenerator},
-                                                       {zipfianDataGenerator->getName(), zipfianDataGenerator}};
+        configOverAllRuns.sourceNameToDataGenerator[defaultDataGeneratorName] = std::move(defaultDataGenerator);
+        configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
         configOverAllRuns.inputType->setValue(inputType);
         configOverAllRuns.dataProviderMode->setValue(dataProviderMode);
         configOverAllRuns.query->setValue(queryString);

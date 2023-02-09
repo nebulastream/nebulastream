@@ -18,6 +18,7 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <unordered_map>
 
 namespace NES::Benchmark {
 class E2EBenchmarkConfigOverAllRuns {
@@ -75,7 +76,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption sourceSharing;
     Configurations::StringConfigOption query;
     Configurations::StringConfigOption dataProviderMode;
-    std::map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
+    std::unordered_map<std::string, DataGeneration::DataGeneratorPtr> sourceNameToDataGenerator;
     Configurations::StringConfigOption connectionString;
 };
 }// namespace NES::Benchmark

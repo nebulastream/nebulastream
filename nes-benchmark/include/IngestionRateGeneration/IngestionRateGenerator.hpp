@@ -15,9 +15,6 @@
 #ifndef NES_INGESTIONRATEGENERATOR_HPP
 #define NES_INGESTIONRATEGENERATOR_HPP
 
-#include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
-#include <IngestionRateGeneration/MDIngestionRateGenerator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <cstdint>
@@ -33,15 +30,24 @@ enum IngestionRateDistribution {
     M1,
     M2,
     D1,
-    D2
+    D2,
+    NOT_SUPPORTED
 };
+
+class IngestionRateGenerator;
+using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
 
 class IngestionRateGenerator {
   public:
     /**
      * @brief constructor for an ingestion rate generator
      */
-    IngestionRateGenerator();
+    explicit IngestionRateGenerator() = default;
+
+    /**
+     * @brief virtual destructor
+     */
+    virtual ~IngestionRateGenerator() = default;
 
     /**
      * @brief creates a vector of ingestion rates
@@ -53,7 +59,7 @@ class IngestionRateGenerator {
      * @brief
      * @return
      */
-    static IngestionRateGenerator createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns configOverAllRuns);
+    static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
     /**
      * @brief determines whether the given ingestion rate distribution is supported
