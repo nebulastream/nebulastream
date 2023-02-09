@@ -55,7 +55,7 @@ void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&
  * @param classType type of a class or struct
  * @param member a member that is part of the classType
  */
-#define getMember(objectReference, classType, member) (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<MemRef>()
+#define getMember(objectReference, classType, member) (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<NES::Nautilus::MemRef>()
 
 }// namespace NES::Nautilus::MemRefUtils
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_

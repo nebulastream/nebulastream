@@ -17,11 +17,10 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <utility>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -105,8 +104,8 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    Value<> startSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
-    Value<> endSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
+    Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
+    Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
     // emit global slice when we have a tumbling window.
