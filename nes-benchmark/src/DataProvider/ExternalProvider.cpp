@@ -72,7 +72,7 @@ void ExternalProvider::generateData() {
             auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
             wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
             wrapBuffer.setCreationTimestamp(
-                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
             TupleBufferHolder bufferHolder;
             bufferHolder.bufferToHold = wrapBuffer;
