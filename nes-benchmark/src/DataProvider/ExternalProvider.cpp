@@ -48,7 +48,6 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
-
     auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
     auto buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
     NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
@@ -61,7 +60,7 @@ void ExternalProvider::generateData() {
     while (started) {
         auto periodStartTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        auto buffersProcessedCount = 0UL;
+        auto buffersProcessedCount = 0;
 
         while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
             auto currentSecond =
