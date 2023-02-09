@@ -309,7 +309,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax) {
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "max";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto maxAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+    auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType);
 
     // create an aggregation value based on the aggregation function type and data type
     auto maxValue = getAggregationValue(aggFunctionType, testParam);
@@ -332,12 +332,14 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto ui64 = "ui64";
     std::string aggFunctionType = "count";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto countAgg = Aggregation::MinAggregationFunction(dataType, dataType);
+    PhysicalTypePtr unsignedIntegerType = this->getDataType(ui64, physicalDataTypeFactory);
+    auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType);
 
     // create an aggregation value based on the aggregation function type and data type
-    auto countValue = getAggregationValue(aggFunctionType, testParam);
+    auto countValue = getAggregationValue(aggFunctionType, ui64);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) countValue.get());
 
     // create an incoming value using the selected data type
@@ -347,9 +349,11 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
     countAgg.combine(memref, memref);
     auto aggregationResult = countAgg.lower(memref);
 
-    EXPECT_EQ(aggregationResult->getType()->toString(), testParam);// Check if the type corresponds to the input type
+    // Check if the type count agg is of ui64 type irrespective of the input type
+    EXPECT_EQ(aggregationResult->getType()->toString(), ui64);
 }
 
+// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(scanEmitPipelineAgg,
                         AggregationFunctionDataTypeTest,
                         ::testing::Values("i8", "i16", "i32", "i64", "ui8", "ui16", "ui32", "ui64", "f32", "f64"),

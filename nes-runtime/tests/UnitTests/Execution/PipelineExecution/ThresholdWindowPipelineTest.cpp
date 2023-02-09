@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -163,7 +163,6 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, unsignedIntegerType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, countAgg, 0);
@@ -230,11 +229,11 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Min";
-    
+
     DataTypePtr integerType = DataTypeFactory::createInt64();
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
-    
+
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, minAgg, 0);
@@ -301,11 +300,11 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Max";
-    
+
     DataTypePtr integerType = DataTypeFactory::createInt64();
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
-    
+
     auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType, integerPhysicalType);
     auto thresholdWindowOperator =
         std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, maxAgg, 0);
@@ -426,6 +425,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 25);
 }
 
+// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
                         ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),

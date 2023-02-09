@@ -144,22 +144,38 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
 
-    // lift value in minAgg
+    // lift value in minAgg with an initial value of 5, thus the current min should be 5
     minAgg.lift(memref, incomingValueFive);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
+    // lift value in minAgg with a higher value of 10, thus the current min should still be 5
     minAgg.lift(memref, incomingValueTen);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
+    // lift value in minAgg with a lower value of 1, thus the current min should change to 1
     minAgg.lift(memref, incomingValueOne);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
+    // lift value in minAgg with a higher value of 2, thus the current min should still be 1
     minAgg.lift(memref, incomingValueTwo);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
     // combine memrefs in minAgg
-    minAgg.combine(memref, memref);
-    ASSERT_EQ(minValue.min, 1);
+    auto anotherMinValue = Aggregation::MinAggregationValue<int64_t>();
+    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMinValue);
+    minAgg.lift(anotherMemref, incomingValueTen);
+
+    // test if memref1 < memref2
+    minAgg.combine(memref, anotherMemref);
+    ASSERT_EQ(minValue.min, incomingValueOne);
+
+    // test if memref1 > memref2
+    minAgg.combine(anotherMemref, memref);
+    ASSERT_EQ(anotherMinValue.min, incomingValueOne);
+
+    // test if memref1 = memref2
+    minAgg.lift(anotherMemref, incomingValueOne);
+    ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
     // lower value in minAgg
     auto aggregationResult = minAgg.lower(memref);
@@ -185,19 +201,39 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
 
-    // lift value in minAgg
+    // lift value in maxAgg with an initial value of 5, thus the current min should be 5
     maxAgg.lift(memref, incomingValueFive);
     ASSERT_EQ(maxValue.max, incomingValueFive);
+
+    // lift value in maxAgg with a higher value of 10, thus the current min should change to 10
     maxAgg.lift(memref, incomingValueTen);
     ASSERT_EQ(maxValue.max, incomingValueTen);
+
+    // lift value in maxAgg with a lower value of 1, thus the current min should still be 10
     maxAgg.lift(memref, incomingValueOne);
     ASSERT_EQ(maxValue.max, incomingValueTen);
+
+    // lift value in maxAgg with a higher value of 15, thus the current min should change to 15
     maxAgg.lift(memref, incomingValueFifteen);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
     // combine memrefs in minAgg
-    maxAgg.combine(memref, memref);
+    auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
+    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMaxValue);
+    maxAgg.lift(anotherMemref, incomingValueOne);
+
+    // test if memref1 > memref2
+    maxAgg.combine(memref, anotherMemref);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
+
+    // test if memref1 < memref2
+    maxAgg.combine(anotherMemref,memref);
+    ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
+
+    // test if memref1 = memref2
+    maxAgg.lift(anotherMemref, incomingValueFifteen);
+    maxAgg.combine(memref, anotherMemref);
+    ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // lower value in minAgg
     auto aggregationResult = maxAgg.lower(memref);

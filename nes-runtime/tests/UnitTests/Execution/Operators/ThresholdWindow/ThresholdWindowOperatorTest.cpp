@@ -36,6 +36,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
@@ -320,7 +321,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
 }
 
 /**
- * @brief Tests the threshold window operator with a Max aggregation.
+ * @brief Tests the threshold window operator with a Count aggregation.
  */
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");

@@ -14,8 +14,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -194,7 +194,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                        ->getWindowDefinition()
                        ->getWindowAggregation()[0];
         auto aggregationType = agg->getType();
-//        auto aggregationValue = std::make_unique<Runtime::Execution::Aggregation::AggregationValue>();
 
         auto aggregationValue = getAggregationValueForThresholdWindow(aggregationType, agg->getInputStamp());
 
@@ -387,7 +386,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         auto aggregationResultFieldName =
-            thresholdWindowResultSchema->getSourceNameQualifier() + "$" + aggregation->getTypeAsString();
+            thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + aggregation->getTypeAsString();
 
         if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
             aggregatedFieldAccess = lowerExpression(aggregation->on());
@@ -645,7 +644,6 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
             }
         default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
     }
-    NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
 }
 
 }// namespace NES::QueryCompilation
