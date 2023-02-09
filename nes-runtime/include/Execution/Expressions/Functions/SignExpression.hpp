@@ -21,8 +21,8 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-    * @brief This expression computes the sign value of the subExpression.
-    */
+* @brief This expression computes the sign value of the subExpression.
+*/
 class SignExpression : public Expression {
   public:
     SignExpression(const ExpressionPtr& subExpression);
@@ -31,7 +31,7 @@ class SignExpression : public Expression {
   private:
     const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
 
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SIGNEXPRESSION_HPP_

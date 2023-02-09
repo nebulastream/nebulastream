@@ -20,18 +20,18 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-        /**
-    * @brief This expression computes returns the exponential (Euler's number) e raised to the given subExpression.
-    */
-        class ExpExpression : public Expression {
-          public:
-            ExpExpression(const ExpressionPtr& subExpression);
-            Value<> execute(Record& record) const override;
+/**
+* @brief This expression computes returns the exponential (Euler's number) e raised to the given subExpression.
+*/
+class ExpExpression : public Expression {
+  public:
+    ExpExpression(const ExpressionPtr& subExpression);
+    Value<> execute(Record& record) const override;
 
-          private:
-            const ExpressionPtr subExpression;
-        };
-    }// namespace NES::Runtime::Execution::Expressions
+  private:
+    const ExpressionPtr subExpression;
+};
 
+}// namespace NES::Runtime::Execution::Expressions
 
 #endif//NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXPEXPRESSION_HPP_
