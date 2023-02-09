@@ -38,3 +38,6 @@ add_nes_runtime_test(runtime-tan-expression-test "TanExpressionTest.cpp")
 add_nes_runtime_test(runtime-floor-expression-test "FloorExpressionTest.cpp")
 add_nes_runtime_test(runtime-ceil-expression-test "CeilExpressionTest.cpp")
 add_nes_runtime_test(runtime-random-expression-test "RandomExpressionTest.cpp")
+add_nes_runtime_test(runtime-trunc-expression-test "TruncExpressionTest.cpp")
+add_nes_runtime_test(runtime-exp-expression-test "ExpExpressionTest.cpp")
+
