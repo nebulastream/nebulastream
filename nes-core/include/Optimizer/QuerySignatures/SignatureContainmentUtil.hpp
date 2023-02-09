@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTUTIL_HPP_
 
 #include <memory>
+#include <z3++.h>
 
 namespace z3 {
 class solver;
@@ -41,9 +42,9 @@ enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED,
 class SignatureContainmentUtil {
 
   public:
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
+    static SignatureContainmentUtilPtr create(const z3::ContextPtr& contextSig1Contained);
 
-    explicit SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
+    explicit SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained);
 
     /**
      * @brief Check equality of the given signatures
@@ -59,12 +60,11 @@ class SignatureContainmentUtil {
     bool resetSolver();
 
   private:
-    z3::ContextPtr contextSig1Contained;
-    z3::ContextPtr contextSig2Contained;
-    z3::SolverPtr solverSig1Contained;
-    z3::SolverPtr solverSig2Contained;
+    z3::ContextPtr context;
+    z3::SolverPtr solver;
     uint64_t counter;
-    void createProjectionCondition(const QuerySignaturePtr& signature1, z3::expr_vector& left, z3::expr_vector& leftSQP);
+    void createProjectionCondition(const QuerySignaturePtr& signature1, z3::expr_vector& projectionCondition);
+    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

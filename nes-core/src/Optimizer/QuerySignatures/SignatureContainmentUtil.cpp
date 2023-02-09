@@ -19,22 +19,18 @@
 
 namespace NES::Optimizer {
 
-SignatureContainmentUtilPtr SignatureContainmentUtil::create(const z3::ContextPtr& contextSig1Contained,
-                                                       const z3::ContextPtr& contextSig2Containment) {
-    return std::make_shared<SignatureContainmentUtil>(contextSig1Contained, contextSig2Containment);
+SignatureContainmentUtilPtr SignatureContainmentUtil::create(const z3::ContextPtr& contextSig1Contained) {
+    return std::make_shared<SignatureContainmentUtil>(contextSig1Contained);
 }
 
-SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment)
-    : counter(0) {
+SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained) : counter(0) {
     //need different context for two solvers
-    this->contextSig1Contained = contextSig1Contained;
-    this->contextSig2Contained = contextSig2Containment;
-    this->solverSig1Contained = std::make_unique<z3::solver>(*contextSig1Contained);
-    this->solverSig2Contained = std::make_unique<z3::solver>(*contextSig2Containment);
+    this->context = contextSig1Contained;
+    this->solver = std::make_unique<z3::solver>(*contextSig1Contained);
 }
 
 ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& signature1,
-                                                                                           const QuerySignaturePtr& signature2) {
+                                                               const QuerySignaturePtr& signature2) {
     NES_TRACE("SignatureContainmentUtil::checkContainment: Checking for containment.");
     try {
         auto otherConditions = signature2->getConditions();
@@ -44,67 +40,65 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
             return NO_CONTAINMENT;
         }
 
-        z3::expr_vector leftSig1Contained(*contextSig1Contained);
-        z3::expr_vector rightSig1Contained(*contextSig1Contained);
-        z3::expr_vector leftSig2Contained(*contextSig2Contained);
-        z3::expr_vector rightSig2Contained(*contextSig2Contained);
+        z3::expr_vector firstQueryProjectionConditions(*context);
+        z3::expr_vector secondQueryProjectionConditions(*context);
         //create conditions for projection containment
-        createProjectionCondition(signature1, leftSig1Contained, leftSig2Contained);
-        NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 1 expression vectors: " << leftSig1Contained.to_string());
-        createProjectionCondition(signature1, rightSig1Contained, rightSig2Contained);
-        NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: " << rightSig1Contained.to_string());
+        createProjectionCondition(signature1, firstQueryProjectionConditions);
+        createProjectionCondition(signature2, secondQueryProjectionConditions);
 
-        solverSig1Contained->push();
-        solverSig1Contained->add(!z3::mk_and(leftSig1Contained).simplify());
-        solverSig1Contained->add(z3::mk_and(rightSig1Contained).simplify());
-        solverSig2Contained->push();
-        solverSig2Contained->add(z3::mk_and(rightSig2Contained).simplify());
-        solverSig2Contained->add(!z3::mk_and(leftSig2Contained).simplify());
+        NES_TRACE("SignatureContainmentUtil::checkContainment: Add map conditions and check.");
+        NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
+                  << firstQueryProjectionConditions.to_string());
+        NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
+                  << secondQueryProjectionConditions.to_string());
+        NES_TRACE("SignatureContainmentUtil::checkContainment: Add projection sig1 conditions.");
+        solver->push();
+        //for projection containment, Q1 contains Q2
+        solver->add(z3::mk_and(firstQueryProjectionConditions).simplify());
+        solver->push();
+        solver->add(!z3::mk_and(secondQueryProjectionConditions).simplify());
+        NES_TRACE("SignatureContainmentUtil::checkContainment: Check unsat for projection: " << solver->check());
         //check if Sig2 contained by Sig1 for projection
-        if (solverSig1Contained->check() == z3::unsat) {
+        if (solver->check() == z3::unsat) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2.");
             //check for equality in projection
-            if (solverSig2Contained->check() == z3::unsat) {
+            solver->pop(2);
+            counter++;
+            if (counter >= 20050) {
+                resetSolver();
+            }
+            solver->push();
+            solver->add(!z3::mk_and(firstQueryProjectionConditions).simplify());
+            solver->push();
+            solver->add(z3::mk_and(secondQueryProjectionConditions).simplify());
+            if (solver->check() == z3::unsat) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Equal sources, equal projection.");
-                solverSig1Contained->pop();
-                solverSig2Contained->pop();
+                solver->pop(2);
                 counter++;
                 if (counter >= 20050) {
                     resetSolver();
                 }
                 //todo: add window containment
                 //check for filter containment
-                leftSig1Contained.empty();
-                rightSig1Contained.empty();
-                leftSig2Contained.empty();
-                rightSig2Contained.empty();
-                leftSig1Contained.push_back(to_expr(*contextSig1Contained, signature1->getConditions()->operator Z3_ast()));
-                rightSig1Contained.push_back(to_expr(*contextSig1Contained, signature2->getConditions()->operator Z3_ast()));
-                leftSig2Contained.push_back(to_expr(*contextSig2Contained, signature1->getConditions()->operator Z3_ast()));
-                rightSig2Contained.push_back(to_expr(*contextSig2Contained, signature2->getConditions()->operator Z3_ast()));
-                solverSig1Contained->push();
-                solverSig1Contained->add(z3::mk_and(leftSig1Contained).simplify());
-                solverSig1Contained->add(!z3::mk_and(rightSig1Contained).simplify());
-                solverSig2Contained->push();
-                solverSig2Contained->add(!z3::mk_and(rightSig2Contained).simplify());
-                solverSig2Contained->add(z3::mk_and(leftSig2Contained).simplify());
-                if (solverSig2Contained->check() == z3::unsat) {
-                    if (solverSig1Contained->check() == z3::unsat){
-                        NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
-                        return EQUALITY;
-                    }
-                    NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2 for filters.");
-                    return SIG_TWO_CONTAINED;
-                } else if (solverSig1Contained->check() == z3::unsat) {
-                    NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
-                    return SIG_ONE_CONTAINED;
-                }
+                return checkFilterContainment(signature1, signature2);
             }
             return SIG_TWO_CONTAINED;
             //check if new query contained by new query
-        } else if (solverSig2Contained->check() == z3::unsat) {
-            NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1.");
-            return SIG_ONE_CONTAINED;
+        } else {
+            solver->pop(2);
+            counter++;
+            if (counter >= 20050) {
+                resetSolver();
+            }
+            solver->push();
+            solver->add(!z3::mk_and(firstQueryProjectionConditions).simplify());
+            solver->push();
+            solver->add(z3::mk_and(secondQueryProjectionConditions).simplify());
+            NES_TRACE("SignatureContainmentUtil::checkContainment: Check unsat for projection: " << solver->check());
+            if (solver->check() == z3::unsat) {
+                NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1.");
+                return SIG_ONE_CONTAINED;
+            }
         }
     } catch (...) {
         auto exception = std::current_exception();
@@ -117,40 +111,86 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
     }
     return NO_CONTAINMENT;
 }
-//todo: This should be a part of signature creation
+ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& signature1,
+                                                                     const QuerySignaturePtr& signature2) {
+    NES_TRACE("SignatureContainmentUtil::checkContainment: Remove previous conditions.");
+    z3::expr_vector firstQueryFilterConditions(*context);
+    z3::expr_vector secondQueryFilterConditions(*context);
+    NES_TRACE("SignatureContainmentUtil::checkContainment: Add filter conditions.");
+    firstQueryFilterConditions.push_back(to_expr(*context, *signature1->getConditions()));
+    secondQueryFilterConditions.push_back(to_expr(*context, *signature2->getConditions()));
+    NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
+              << firstQueryFilterConditions.to_string());
+    NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
+              << secondQueryFilterConditions.to_string());
+    solver->push();
+    solver->add(!z3::mk_and(firstQueryFilterConditions).simplify());
+    solver->push();
+    solver->add(z3::mk_and(secondQueryFilterConditions).simplify());
+    NES_TRACE("SignatureContainmentUtil::checkContainment: Check unsat: " << solver->check());
+    if (solver->check() == z3::unsat) {
+        solver->pop(2);
+        counter++;
+        if (counter >= 20050) {
+            resetSolver();
+        }
+        solver->push();
+        solver->add(z3::mk_and(firstQueryFilterConditions).simplify());
+        solver->push();
+        solver->add(!z3::mk_and(secondQueryFilterConditions).simplify());
+        if (solver->check() == z3::unsat) {
+            NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
+            return EQUALITY;
+        }
+        NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2 for filters.");
+        return SIG_TWO_CONTAINED;
+    } else {
+        solver->pop(2);
+        counter++;
+        if (counter >= 20050) {
+            resetSolver();
+        }
+        solver->push();
+        solver->add(z3::mk_and(firstQueryFilterConditions).simplify());
+        solver->push();
+        solver->add(!z3::mk_and(secondQueryFilterConditions).simplify());
+        if (solver->check() == z3::unsat) {
+            NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1 for filters.");
+            return SIG_ONE_CONTAINED;
+        }
+    }
+    return NO_CONTAINMENT;
+}
+
 void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature1,
-                                                         z3::expr_vector& left,
-                                                         z3::expr_vector& leftSQP) {
-    uint16_t order = 0;
+                                                         z3::expr_vector& projectionCondition) {
+    //todo:: think about order for projection
     //check projection containment
     for (auto exp : signature1->getSchemaFieldToExprMaps()) {
         for (auto entry : exp) {
-            z3::ExprPtr expr = std::make_shared<z3::expr>(contextSig1Contained->int_const(entry.first.c_str()));
-            if (entry.second->is_int()) {
-                std::string val = "1" + std::to_string(order);
-                left.push_back(to_expr(*contextSig1Contained, Z3_mk_eq(*contextSig1Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
-                leftSQP.push_back(to_expr(*contextSig2Contained, Z3_mk_eq(*contextSig2Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
-            } else if (entry.second->is_fpa()) {
-                std::string val = "2" + std::to_string(order);
-                left.push_back(to_expr(*contextSig1Contained, Z3_mk_eq(*contextSig1Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
-                leftSQP.push_back(to_expr(*contextSig2Contained, Z3_mk_eq(*contextSig2Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
-            } else if (entry.second->is_string_value()) {
-                std::string val = "3" + std::to_string(order);
-                left.push_back(to_expr(*contextSig1Contained, Z3_mk_eq(*contextSig1Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
-                leftSQP.push_back(to_expr(*contextSig2Contained, Z3_mk_eq(*contextSig2Contained, *expr, contextSig1Contained->int_val(std::stoi(val)))));
+            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: strings: " << entry.first);
+            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: z3 expressions: " << entry.second->to_string());
+            //z3::ExprPtr orderExpr = std::make_shared<z3::expr>(context->int_const((entry.first+"_").c_str()));
+            z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((entry.first.c_str())));
+            if (entry.second->to_string() != entry.first) {
+                if (entry.second->is_int()) {
+                    expr = std::make_shared<z3::expr>(context->int_const(entry.first.c_str()));
+                } else if (entry.second->is_fpa()) {
+                    expr = std::make_shared<z3::expr>(context->fpa_const<64>(entry.first.c_str()));
+                } else if (entry.second->is_string_value()) {
+                    expr = std::make_shared<z3::expr>(context->string_const(entry.first.c_str()));
+                }
+                projectionCondition.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *entry.second)));
+            } else {
+                z3::ExprPtr columnIsUsed = std::make_shared<z3::expr>(context->bool_val(true));
+                projectionCondition.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *columnIsUsed)));
             }
-            counter++;
         }
     }
 }
 
 bool SignatureContainmentUtil::resetSolver() {
-    //    this->context->set("solver2_unknown", true);
-    //    this->context->set("ignore_solver1", true);
-    //    this->context->set("timeout", 1);
-    //    solver = std::make_unique<z3::solver>(*context);
-    solverSig1Contained->reset();
-    solverSig2Contained->reset();
+    solver->reset();
     counter = 0;
     return true;
 }
