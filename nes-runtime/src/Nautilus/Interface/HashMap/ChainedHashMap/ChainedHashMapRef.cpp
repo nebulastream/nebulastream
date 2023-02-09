@@ -44,8 +44,8 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
 }
 
 Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
-    // This assumes that the hash ptr is stored as the first element in the entry.
-    return (ref + offsetof(ChainedHashMap::Entry, hash)).as<MemRef>().load<UInt64>();
+    // load the has value from the entry
+    return getMember(ref,ChainedHashMap::Entry, hash).load<UInt64>();
 }
 
 bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) { return ref != 0; }

@@ -48,7 +48,14 @@ bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size)
  */
 void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&& size);
 
-#define getMember(ref, t, d) (ref + ((uint64_t) __builtin_offsetof(t, d))).as<MemRef>()
+/**
+ * @brief Get member returns the MemRef to a specific class member as an offset to a objectReference.
+ * @note This assumes the offsetof works for the classType.
+ * @param objectReference reference to the object that contains the member.
+ * @param classType type of a class or struct
+ * @param member a member that is part of the classType
+ */
+#define getMember(objectReference, classType, member) (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<MemRef>()
 
 }// namespace NES::Nautilus::MemRefUtils
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
