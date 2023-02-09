@@ -199,6 +199,7 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
+    // 5
     // 4
     // 3 -\
     // |   2
@@ -206,35 +207,42 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
     void setupTopologyAndSourceCatalogTriangle() {
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(4, "localhost", 123, 124, 1);
+        TopologyNodePtr rootNode = TopologyNode::create(5, "localhost", 123, 124, 1);
         rootNode->addNodeProperty("slots", 1);  // so that map operator is not placed here
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr middleNode1 = TopologyNode::create(3, "localhost", 123, 124, 10);
-        middleNode1->addNodeProperty("slots", 10);
-        topology->addNewTopologyNodeAsChild(rootNode, middleNode1);
+        TopologyNodePtr middleNode4 = TopologyNode::create(4, "localhost", 123, 124, 10);
+        middleNode4->addNodeProperty("slots", 10);
+        topology->addNewTopologyNodeAsChild(rootNode, middleNode4);
+
+        TopologyNodePtr middleNode3 = TopologyNode::create(3, "localhost", 123, 124, 10);
+        middleNode3->addNodeProperty("slots", 10);
+        topology->addNewTopologyNodeAsChild(middleNode4, middleNode3);
 
         TopologyNodePtr middleNode2 = TopologyNode::create(2, "localhost", 123, 124, 10);
         middleNode2->addNodeProperty("slots", 10);
-        topology->addNewTopologyNodeAsChild(middleNode1, middleNode2);
+        topology->addNewTopologyNodeAsChild(middleNode3, middleNode2);
 
         TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 0);
         sourceNode->addNodeProperty("slots", 0);
-        topology->addNewTopologyNodeAsChild(middleNode1, sourceNode);
         topology->addNewTopologyNodeAsChild(middleNode2, sourceNode);
+        topology->addNewTopologyNodeAsChild(middleNode3, sourceNode);
 
         LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
-        sourceNode->addLinkProperty(middleNode1, linkProperty);
         sourceNode->addLinkProperty(middleNode2, linkProperty);
+        sourceNode->addLinkProperty(middleNode3, linkProperty);
 
-        middleNode1->addLinkProperty(sourceNode, linkProperty);
-        middleNode1->addLinkProperty(rootNode, linkProperty);
+        middleNode2->addLinkProperty(sourceNode, linkProperty);
+        middleNode2->addLinkProperty(middleNode3, linkProperty);
 
-        middleNode2->addLinkProperty(middleNode1, linkProperty);
-        middleNode2->addLinkProperty(rootNode, linkProperty);
+        middleNode3->addLinkProperty(sourceNode, linkProperty);
+        middleNode3->addLinkProperty(middleNode4, linkProperty);
 
-        rootNode->addLinkProperty(middleNode1, linkProperty);
+        middleNode4->addLinkProperty(middleNode3, linkProperty);
+        middleNode4->addLinkProperty(rootNode, linkProperty);
+
+        rootNode->addLinkProperty(middleNode4, linkProperty);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
@@ -358,8 +366,8 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
     void setupTopologyAndSourceCatalog2PhysicalSourcesSeparatePath() {
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(5, "localhost", 123, 124, 100);
-        rootNode->addNodeProperty("slots", 100);
+        TopologyNodePtr rootNode = TopologyNode::create(5, "localhost", 123, 124, 1);
+        rootNode->addNodeProperty("slots", 1);
         topology->setAsRoot(rootNode);
 
         TopologyNodePtr middleNode1 = TopologyNode::create(2, "localhost", 123, 124, 10);
@@ -409,6 +417,69 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource2, logicalSource, sourceNode2);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    }
+
+    /*
+     *  2*(n-1)+3
+     * /   |     \
+     * 2   4 ..  2*(n-1)+2
+     * 1   3 ..  2*(n-1)+1
+     */
+    void setupTopologyAndSourceCatalogNPhysicalSourcesSeparatePath(int n) {
+        topology = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(2*(n-1)+3, "localhost", 123, 124, 1);
+        rootNode->addNodeProperty("slots", 1);
+        topology->setAsRoot(rootNode);
+
+        std::map<int, TopologyNodePtr> middleNodes;
+        for (int i = 0; i < n; ++i) {
+            TopologyNodePtr middleNode = TopologyNode::create(2*i+2, "localhost", 123, 124, 10);
+            middleNode->addNodeProperty("slots", 10);
+            topology->addNewTopologyNodeAsChild(rootNode, middleNode);
+
+            middleNodes[i] = middleNode;
+        }
+
+        std::map<int, TopologyNodePtr> sourceNodes;
+        for (int i = 0; i < n; ++i) {
+            TopologyNodePtr sourceNode = TopologyNode::create(2*i+1, "localhost", 123, 124, 0);
+            sourceNode->addNodeProperty("slots", 0);
+            topology->addNewTopologyNodeAsChild(middleNodes[i], sourceNode);
+
+            sourceNodes[i] = sourceNode;
+        }
+
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+
+        for (int i = 0; i < n; ++i) {
+            sourceNodes[i]->addLinkProperty(middleNodes[i], linkProperty);
+            middleNodes[i]->addLinkProperty(sourceNodes[i], linkProperty);
+
+            middleNodes[i]->addLinkProperty(rootNode, linkProperty);
+            rootNode->addLinkProperty(middleNodes[i], linkProperty);
+        }
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+
+        for (int i = 0; i < n; ++i) {
+            std::stringstream name;
+            name << "test" << 2*i+1;
+
+            auto physicalSource = PhysicalSource::create(sourceName, name.str(), csvSourceType);
+            Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNodes[i]);
+            sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+        }
     }
 
     /*
@@ -464,6 +535,64 @@ class AdaptiveActiveStandbyTest : public Testing::TestWithErrorHandling<testing:
             std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource2, logicalSource, sourceNode2);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
+    }
+
+    /*
+     *   (n-1)+3
+     *   (n-1)+2
+     * /   |    \
+     * 1   2 .. (n-1)+1
+     */
+    void setupTopologyAndSourceCatalogNPhysicalSourcesSamePath(int n) {
+        topology = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create((n-1)+3, "localhost", 123, 124, 100);
+        rootNode->addNodeProperty("slots", 100);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr middleNode = TopologyNode::create((n-1)+2, "localhost", 123, 124, 10);
+        middleNode->addNodeProperty("slots", 10);
+        topology->addNewTopologyNodeAsChild(rootNode, middleNode);
+
+        std::map<int, TopologyNodePtr> sourceNodes;
+        for (int i = 0; i < n; ++i) {
+            TopologyNodePtr sourceNode = TopologyNode::create(i+1, "localhost", 123, 124, 0);
+            sourceNode->addNodeProperty("slots", 0);
+            topology->addNewTopologyNodeAsChild(middleNode, sourceNode);
+
+            sourceNodes[i] = sourceNode;
+        }
+
+        LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
+
+        middleNode->addLinkProperty(rootNode, linkProperty);
+        rootNode->addLinkProperty(middleNode, linkProperty);
+
+        for (int i = 0; i < n; ++i) {
+            sourceNodes[i]->addLinkProperty(middleNode, linkProperty);
+            middleNode->addLinkProperty(sourceNodes[i], linkProperty);
+        }
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+
+        sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+
+        for (int i = 0; i < n; ++i) {
+            std::stringstream name;
+            name << "test" << i+1;
+
+            auto physicalSource = PhysicalSource::create(sourceName, name.str(), csvSourceType);
+            Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry =
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, sourceNodes[i]);
+            sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+        }
     }
 
     void assignOperatorPropertiesRecursive(const LogicalOperatorNodePtr& operatorNode) {
@@ -776,6 +905,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedySimpleShortDiamond) {
 }
 
 /* Test replica placements on a simple query */
+// 5
 // 4
 // 3 -\
 // |   2
@@ -1282,6 +1412,226 @@ TEST_F(AdaptiveActiveStandbyTest, testAASGreedy2PhysicalSourcesSamePath) {
     }
 }
 
+/* Test replica placements on a simple query, in case of N physical sources
+ *    2n+3
+ * /   |     \
+ * 2   4 ..  2*n+2
+ * 1   3 ..  2*n+1
+ */
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedyNPhysicalSourcesSeparatePath) {
+    setupTopologyAndSourceCatalogNPhysicalSourcesSeparatePath(3);
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topology,
+                                                                      typeInferencePhase,
+                                                                      z3Context,
+                                                                      false /*query reconfiguration*/);
+
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    std::cout << "topology " + topology->toString() << std::endl;
+    std::cout << "query plan " + queryPlan->toString() << std::endl;
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 7U);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1 || executionNode->getId() == 3) {
+            // filter should NOT be placed on source node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 2U);
+            EXPECT_TRUE(actualRootOperators[0]->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperators[0]->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+
+            EXPECT_TRUE(actualRootOperators[1]->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperators[1]->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperators[1]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 5) {
+            // maps should be placed on cloud node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[1]->instanceOf<MapLogicalOperatorNode>());
+            // maps should have 2 sources
+            ASSERT_EQ(actualRootOperator->getChildren()[0]->getChildren().size(), 2U);
+            ASSERT_EQ(actualRootOperator->getChildren()[1]->getChildren().size(), 2U);
+        } else if (executionNode->getId() == 2 || executionNode->getId() == 4) {
+            // primary filters should be placed on node 2,4
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 2U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else {
+            // secondary filters should be placed on new nodes
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        }
+    }
+}
+
+
+/* Test replica placements on a simple query, in case of 2 physical sources
+ *   (n-1)+3
+ *   (n-1)+2
+ * /   |    \
+ * 1   2 .. (n-1)+1
+ */
+TEST_F(AdaptiveActiveStandbyTest, testAASGreedyNPhysicalSourcesSamePath) {
+    setupTopologyAndSourceCatalogNPhysicalSourcesSamePath(3);
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topology,
+                                                                      typeInferencePhase,
+                                                                      z3Context,
+                                                                      false /*query reconfiguration*/);
+
+    Query query = Query::from("car")
+                      .filter(Attribute("id") < 45)
+                      .map(Attribute("c") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    for (const auto& sink : queryPlan->getSinkOperators()) {
+        assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
+    }
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(topology,
+                                                             sourceCatalog,
+                                                             Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    queryPlacementPhase->execute(NES::PlacementStrategy::ILP, sharedQueryPlan,
+                                 PlacementStrategy::Greedy_AAS);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    std::cout << "topology " + topology->toString() << std::endl;
+    std::cout << "query plan " + queryPlan->toString() << std::endl;
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 6U);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1 || executionNode->getId() == 3) {
+            // filter should NOT be placed on source node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 2U);
+            EXPECT_TRUE(actualRootOperators[0]->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperators[0]->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+
+            EXPECT_TRUE(actualRootOperators[1]->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperators[1]->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperators[1]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 4) {
+            // maps should be placed on cloud node
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<MapLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[1]->instanceOf<MapLogicalOperatorNode>());
+            // maps should have 2 sources
+            ASSERT_EQ(actualRootOperator->getChildren()[0]->getChildren().size(), 2U);
+            ASSERT_EQ(actualRootOperator->getChildren()[1]->getChildren().size(), 2U);
+        } else if (executionNode->getId() == 2) {
+            // primary filters should be placed on node 2
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 2U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else if (executionNode->getId() == 1000) {
+            // secondary filters should be placed on new nodes
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 2U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        } else { // 1001
+            // secondary filters should be placed on new nodes
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1U);
+            auto querySubPlan = querySubPlans[0U];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1U);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
+        }
+    }
+}
+
 /// ------------------------------------------ LOCAL SEARCH TESTS --------------------------------------------------------------
 
 /* Test replica placements on a simple query, on a sequential topology of 4 nodes
@@ -1439,6 +1789,7 @@ TEST_F(AdaptiveActiveStandbyTest, testAASLocalSearchSimpleShortDiamond) {
 }
 
 /* Test replica placements on a simple query */
+// 5
 // 4
 // 3 -\
 // |   2
