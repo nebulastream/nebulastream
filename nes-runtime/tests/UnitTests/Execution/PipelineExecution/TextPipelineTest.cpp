@@ -51,6 +51,9 @@ class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup TextPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -117,7 +120,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TextPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) {
                             return info.param;
                         });

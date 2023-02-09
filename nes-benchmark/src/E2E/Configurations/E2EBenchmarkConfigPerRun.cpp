@@ -126,7 +126,7 @@ E2EBenchmarkConfigPerRun::generateMapsLogicalSrcToNumberOfPhysicalSources(Yaml::
     std::vector<std::map<std::string, uint64_t>> retVectorOfMaps;
 
     auto logicalSourceNode = yamlConfig["logicalSources"];
-    auto maxNumberOfExperiments = 0UL;
+    auto maxNumberOfExperiments = 1UL;
 
     // Iterating through all numberOfPhysicalSources and getting the maximum number of experiments (most comma separated values)
     for (auto entry = logicalSourceNode.Begin(); entry != logicalSourceNode.End(); entry++) {

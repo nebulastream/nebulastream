@@ -1625,4 +1625,5 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("logicalSource1$outputAttribute1"));
 }
+
 }// namespace NES

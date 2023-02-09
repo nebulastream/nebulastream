@@ -29,16 +29,16 @@ namespace NES {
  */
 class TestQuery : public Query {
   public:
-    static Query from(SourceDescriptorPtr descriptor) {
-        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::move(std::move(descriptor)));
+    static Query from(const SourceDescriptorPtr& descriptor) {
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
         auto queryPlan = QueryPlan::create(sourceOperator);
-        return Query(queryPlan);
+        return {queryPlan};
     }
-    static Query from(SchemaPtr inputSchme) {
+    static Query from(const SchemaPtr& inputSchema) {
         auto sourceOperator =
-            LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(std::move(inputSchme))));
+            LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(inputSchema)));
         auto queryPlan = QueryPlan::create(sourceOperator);
-        return Query(queryPlan);
+        return {queryPlan};
     }
 };
 

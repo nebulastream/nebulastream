@@ -343,7 +343,7 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
                                   PipelineContextPtr context,
                                   Join::JoinOperatorHandlerPtr joinOperatorHandler,
-                                  QueryCompilation::JoinBuildSide buildSide) override;
+                                  QueryCompilation::JoinBuildSideType buildSide) override;
 
     /**
     * @brief Code generation for a batch join build operator, which depends on a particular join definition

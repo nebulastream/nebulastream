@@ -105,10 +105,10 @@ class LocationIndex {
 
     /**
      * Experimental
-     * @brief get the locations of all the nodes in the mobileNodes map
+     * @brief get the locations of all the nodes with a known location
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> getAllMobileNodeLocations() const;
+    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>> getAllNodeLocations() const;
 
     /**
      * Get geolocation of a node

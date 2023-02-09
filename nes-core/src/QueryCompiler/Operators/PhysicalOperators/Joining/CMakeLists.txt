@@ -18,5 +18,8 @@ add_source_files(nes-core
         PhysicalJoinOperator.cpp
         PhysicalJoinBuildOperator.cpp
         PhysicalJoinSinkOperator.cpp
+        PhysicalStreamJoinOperator.cpp
+        PhysicalStreamJoinBuildOperator.cpp
+        PhysicalStreamJoinSinkOperator.cpp
 )
 

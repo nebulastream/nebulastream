@@ -12,5 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        UDFCallExpression.cpp
+        BCInterpreterPipelineProvider.cpp
+        BCInterpreterBackend.cpp
+        BCInterpreter.cpp
+        BCLoweringProvider.cpp
         )

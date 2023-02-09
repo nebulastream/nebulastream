@@ -1,5 +1,108 @@
 # Changelog
 
+## [v0.4.43](https://github.com/nebulastream/nebulastream/tree/v0.4.43) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.42...v0.4.43)
+
+### Bug Fixes 🐛
+
+- \[BUG\] MapJavaUdfLogicalOperatorNode should not copy children and parent fields [\#3484](https://github.com/nebulastream/nebulastream/issues/3484)
+- \[BUG\] numberOfBuffersToProduce=0 causes exception and prevents the query from stopping [\#3469](https://github.com/nebulastream/nebulastream/issues/3469)
+- Investigate failure on disk statistics  [\#2336](https://github.com/nebulastream/nebulastream/issues/2336)
+
+## [v0.4.42](https://github.com/nebulastream/nebulastream/tree/v0.4.42) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.41...v0.4.42)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Hotfix remove TFDEF [\#3482](https://github.com/nebulastream/nebulastream/issues/3482)
+
+#### User Defined Functions
+
+- Implement logical/physical operator for Map UDFs [\#2337](https://github.com/nebulastream/nebulastream/issues/2337)
+
+## [v0.4.41](https://github.com/nebulastream/nebulastream/tree/v0.4.41) (2023-02-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.40...v0.4.41)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query compilation fails on ARM64 Macs [\#3268](https://github.com/nebulastream/nebulastream/issues/3268)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Java UDF Compiler Integration [\#3144](https://github.com/nebulastream/nebulastream/issues/3144)
+
+## [v0.4.40](https://github.com/nebulastream/nebulastream/tree/v0.4.40) (2023-02-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.39...v0.4.40)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Location service responses are inconsistent [\#3390](https://github.com/nebulastream/nebulastream/issues/3390)
+- \[BUG\] YSB Source Test e2e [\#3246](https://github.com/nebulastream/nebulastream/issues/3246)
+- Memory leaks in NES [\#1655](https://github.com/nebulastream/nebulastream/issues/1655)
+
+## [v0.4.39](https://github.com/nebulastream/nebulastream/tree/v0.4.39) (2023-02-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.38...v0.4.39)
+
+### Bug Fixes 🐛
+
+- \[BUG\] E2EBenchmarkMain broken [\#3464](https://github.com/nebulastream/nebulastream/issues/3464)
+
+## [v0.4.38](https://github.com/nebulastream/nebulastream/tree/v0.4.38) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.37...v0.4.38)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Simple Bytecode interpreter for Nautilus [\#3416](https://github.com/nebulastream/nebulastream/issues/3416)
+
+## [v0.4.37](https://github.com/nebulastream/nebulastream/tree/v0.4.37) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.36...v0.4.37)
+
+#### Build Management
+
+- \[Feature\] Cleanup VCPKG dependencies [\#3411](https://github.com/nebulastream/nebulastream/issues/3411)
+
+## [v0.4.36](https://github.com/nebulastream/nebulastream/tree/v0.4.36) (2023-01-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.35...v0.4.36)
+
+#### Runtime 
+
+- \[Feature\] Integrate StreamJoin into Nautilus and the QueryPlan [\#3339](https://github.com/nebulastream/nebulastream/issues/3339)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Call CPython.wasm via Host-Function [\#3334](https://github.com/nebulastream/nebulastream/issues/3334)
+- Update documentation of REST API [\#2961](https://github.com/nebulastream/nebulastream/issues/2961)
+- Complete Oatpp testing: Comparing Content of response [\#2960](https://github.com/nebulastream/nebulastream/issues/2960)
+
+## [v0.4.35](https://github.com/nebulastream/nebulastream/tree/v0.4.35) (2023-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.34...v0.4.35)
+
+**Implemented enhancements:**
+
+- \[TASK\] Removing Quotations in Query Definition of Tests [\#3448](https://github.com/nebulastream/nebulastream/issues/3448)
+
+### Bug Fixes 🐛
+
+- Parsing Oatpp String into nlohmann::json throws error [\#2967](https://github.com/nebulastream/nebulastream/issues/2967)
+
+#### REST API 
+
+- Find and Add Json library [\#2950](https://github.com/nebulastream/nebulastream/issues/2950)
+- Make host and port of REST Server configuratble when using Oatpp framework [\#2905](https://github.com/nebulastream/nebulastream/issues/2905)
+- Refactor MaintenanceController and SourceCatalogController, revisit response codes  [\#2719](https://github.com/nebulastream/nebulastream/issues/2719)
+- Refactor TopologyController, revisit response codes [\#2718](https://github.com/nebulastream/nebulastream/issues/2718)
+- Refactor QueryCatalogController, revisit response codes [\#2717](https://github.com/nebulastream/nebulastream/issues/2717)
+- Refactor BaseController [\#2716](https://github.com/nebulastream/nebulastream/issues/2716)
+
 ## [v0.4.34](https://github.com/nebulastream/nebulastream/tree/v0.4.34) (2023-01-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.33...v0.4.34)

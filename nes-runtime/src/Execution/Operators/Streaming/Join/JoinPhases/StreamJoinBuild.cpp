@@ -36,7 +36,9 @@ void* getLocalHashTableFunctionCall(void* ptrOpHandler, size_t index, bool isLef
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
     StreamJoinOperatorHandler* opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
 
-    return static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    auto localHashTablePointer =
+        static_cast<void*>(opHandler->getWindowToBeFilled(isLeftSide).getLocalHashTable(index, isLeftSide));
+    return localHashTablePointer;
 }
 
 void* insertFunctionCall(void* ptrLocalHashTable, uint64_t key) {
@@ -71,9 +73,9 @@ void triggerJoinSink(void* ptrOpHandler, void* ptrPipelineCtx, void* ptrWorkerCt
             auto bufferAs = buffer.getBuffer<JoinPartitionIdTumpleStamp>();
 
             bufferAs->partitionId = i;
-            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getLastTupleTimeStamp();
-
-            pipelineCtx->emitBuffer(buffer, reinterpret_cast<WorkerContext&>(workerCtx));
+            bufferAs->lastTupleTimeStamp = opHandler->getWindowToBeFilled(isLeftSide).getWindowEnd();
+            buffer.setNumberOfTuples(1);
+            pipelineCtx->emitBuffer(buffer, *workerCtx);
         }
     }
 
@@ -86,6 +88,16 @@ uint64_t getLastTupleWindow(void* ptrOpHandler, bool isLeftSide) {
 
     auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
     return opHandler->getLastTupleTimeStamp(isLeftSide);
+}
+
+void setupOperatorHandler(void* ptrOpHandler, void* ptrPipelineCtx) {
+    NES_ASSERT2_FMT(ptrOpHandler != nullptr, "op handler context should not be null");
+    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto opHandler = static_cast<StreamJoinOperatorHandler*>(ptrOpHandler);
+    auto pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+
+    opHandler->setup(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
@@ -122,6 +134,11 @@ void StreamJoinBuild::execute(ExecutionContext& ctx, Record& record) const {
         entryMemRef.store(record.read(fieldName));
         entryMemRef = entryMemRef + fieldType->size();
     }
+}
+
+void StreamJoinBuild::setup(ExecutionContext& ctx) const {
+    auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(handlerIndex);
+    Nautilus::FunctionCall("setupOperatorHandler", setupOperatorHandler, operatorHandlerMemRef, ctx.getPipelineContext());
 }
 
 StreamJoinBuild::StreamJoinBuild(uint64_t handlerIndex,

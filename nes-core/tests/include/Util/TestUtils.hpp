@@ -928,63 +928,20 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
 }
 
 /**
- * @brief compare the movement of a device with data from csv
- * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
- * @param startTime the real or simulated start time of the LocationProvider
- * @param timesToCheckEndLocation how often to check that the device actually remains motionless after arriving at its final position
- * @param getLocation function to get the devices location (eg. wrapper around LocationProvider or TopologyNode object)
- * @param functionParameters parameter to be passed to the getWaypoint function (eg. the LocationProvider object from which the wrapper obtains the location)
- *//*
-void checkDeviceMovement(std::string csvPath,
-                         Timestamp startTime,
-                         size_t timesToCheckEndLocation,
-                         NES::Spatial::DataTypes::Experimental::Waypoint (*getLocation)(std::shared_ptr<void>),
-                         std::shared_ptr<void> functionParameters) {
-    std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, startTime);
-    NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
-
-    //set the end time
-    auto endTime = waypoints.back().second;
-    auto currentLocTime = getLocation(functionParameters);
-    auto iter = waypoints.cbegin();
-    while (currentLocTime.getTimestamp().value() < endTime) {
-        currentLocTime = getLocation(functionParameters);
-        NES_TRACE("Device is at location: " << currentLocTime.getLocation().toString());
-        EXPECT_TRUE(currentLocTime.getLocation().isValid());
-        EXPECT_TRUE(currentLocTime.getTimestamp().has_value());
-        while (std::next(iter) != waypoints.cend() && currentLocTime.getTimestamp().value() >= std::next(iter)->second) {
-            iter++;
-        }
-        if (iter == waypoints.cend()) {
-            break;
-        }
-        NES_TRACE("checking position " << (iter - waypoints.cbegin()) << " out of " << waypoints.size());
-        EXPECT_EQ(currentLocTime.getLocation(), iter->first);
+ * @brief write mobile device path waypoints to a csv file to use as input for the LocationProviderCSV class
+ * @param csvPath path to the output file
+ * @param waypoints a vector of waypoints to be written to the file
+ */
+void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints) {
+    remove(csvPath.c_str());
+    std::ofstream outFile(csvPath);
+    for (auto& point : waypoints) {
+        ASSERT_TRUE(point.getTimestamp().has_value());
+        outFile << point.getLocation().toString() << "," << std::to_string(point.getTimestamp().value()) << std::endl;
     }
-
-    currentLocTime = getLocation(functionParameters);
-    auto endPosition = waypoints.back().first;
-    for (size_t i = 0; i < timesToCheckEndLocation; ++i) {
-        NES_DEBUG("checking if device remains in end position, check " << i + 1 << " out of " << timesToCheckEndLocation);
-        EXPECT_EQ(currentLocTime.getLocation(), endPosition);
-        currentLocTime = getLocation(functionParameters);
-    }
+    outFile.close();
+    ASSERT_FALSE(outFile.fail());
 }
 
-void checkDeviceMovement(std::string csvPath,
-                         std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation> (*getLocation)(std::shared_ptr<void>),
-                         std::shared_ptr<void> functionParameters) {
-    std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, 0);
-    NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
-
-    while (waypoints.size() > 1) {
-        auto currentLocation = getLocation(functionParameters);
-        while (!waypoints.empty() && currentLocation != waypoints.front().first) {
-            waypoints.erase(waypoints.begin());
-        }
-        NES_DEBUG("checking location " << currentLocation->toString() << ": " << waypoints.size() << " waypoints remaining");
-    }
-    EXPECT_EQ(waypoints.size(), 1);
-}*/
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

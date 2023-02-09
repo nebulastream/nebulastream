@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -52,7 +53,7 @@ TEST_P(FunctionCompilationTest, addIntFunctionTest) {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -66,7 +67,7 @@ TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 42);
 }
 
@@ -80,7 +81,7 @@ TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_ANY_THROW(function());
 }
 
@@ -98,7 +99,7 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)(int64_t)>("execute");
+    auto function = result->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }

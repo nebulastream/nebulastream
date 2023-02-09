@@ -9,7 +9,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
+    add_subdirectory(BCInterpreter)
+endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     add_subdirectory(MLIR)
-endif()
+endif ()

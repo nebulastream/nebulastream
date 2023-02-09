@@ -44,6 +44,8 @@ class StreamJoinBuild : public ExecutableOperator {
                     const std::string& timeStampField,
                     SchemaPtr schema);
 
+    void setup(ExecutionContext& executionCtx) const override;
+
     /**
      * @brief builds a hash table with the record
      * @param ctx

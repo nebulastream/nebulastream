@@ -11,16 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelOperatorHandler.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -40,10 +43,13 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -77,6 +83,8 @@
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
@@ -180,6 +188,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<MapJavaUdfLogicalOperatorNode>()) {
+        lowerJavaUdfMapOperator(queryPlan, operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -241,6 +251,14 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, cons
     operatorNode->replace(physicalMapOperator);
 }
 
+void DefaultPhysicalOperatorProvider::lowerJavaUdfMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
+    auto mapJavaUdfOperator = operatorNode->as<MapJavaUdfLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapJavaUdfOperator::create(mapJavaUdfOperator->getInputSchema(),
+                                                                                     mapJavaUdfOperator->getOutputSchema(),
+                                                                                     mapJavaUdfOperator->getJavaUdfDescriptor());
+    operatorNode->replace(physicalMapOperator);
+}
+
 void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanPtr, const LogicalOperatorNodePtr operatorNode) {
     auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
     auto physicalCEpIterationOperator =
@@ -273,31 +291,120 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    // create join operator handler, to establish a common Runtime object for build and prob.
-    auto joinOperatorHandler =
-        Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto leftInputOperator =// the child or child group on the left input side of the join
-        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-    auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
-                                                                                      joinOperator->getOutputSchema(),
-                                                                                      joinOperatorHandler,
-                                                                                      JoinBuildSide::Left);
-    leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+        // create join operator handler, to establish a common Runtime object for build and prob.
+        auto joinOperatorHandler =
+            Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto rightInputOperator =// the child or child group on the right input side of the join
-        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
-                                                                                       joinOperator->getOutputSchema(),
-                                                                                       joinOperatorHandler,
-                                                                                       JoinBuildSide::Right);
-    rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+        auto leftInputOperator =// the child or child group on the left input side of the join
+            getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+        auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                          joinOperator->getOutputSchema(),
+                                                                                          joinOperatorHandler,
+                                                                                          JoinBuildSideType::Left);
+        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
-    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
-                                                                        joinOperator->getRightInputSchema(),
-                                                                        joinOperator->getOutputSchema(),
-                                                                        joinOperatorHandler);
-    operatorNode->replace(joinSink);
+        auto rightInputOperator =// the child or child group on the right input side of the join
+            getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
+        auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                                           joinOperator->getOutputSchema(),
+                                                                                           joinOperatorHandler,
+                                                                                           JoinBuildSideType::Right);
+        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+
+        auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                            joinOperator->getRightInputSchema(),
+                                                                            joinOperator->getOutputSchema(),
+                                                                            joinOperatorHandler);
+        operatorNode->replace(joinSink);
+    } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+        using namespace Runtime::Execution::Operators;
+
+        auto joinDefinition = joinOperator->getJoinDefinition();
+        auto joinFieldNameLeft = joinDefinition->getLeftJoinKey()->getFieldName();
+        auto joinFieldNameRight = joinDefinition->getRightJoinKey()->getFieldName();
+
+        auto windowType = Windowing::WindowType::asTimeBasedWindowType(joinDefinition->getWindowType());
+        //FIXME Once #3353 is merged, sliding window can be added
+        NES_ASSERT(windowType->isTumblingWindow(), "Only a tumbling window is currently supported for StreamJoin");
+
+        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+
+        std::string timeStampFieldNameLeft = "";
+        std::string timeStampFieldNameRight = "";
+        auto timeStampFieldNameWithoutSourceName =
+            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        // Extracting here the left timestamp field name
+        auto leftSchema = joinOperator->getLeftInputSchema();
+        auto leftSourceNameQualifier = leftSchema->getSourceNameQualifier();
+        for (auto& field : leftSchema->fields) {
+            auto fieldName = field->getName();
+            auto fieldNameWithoutSourceName = fieldName.substr(leftSourceNameQualifier.size());
+            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
+                timeStampFieldNameLeft = fieldName;
+                break;
+            }
+        }
+
+        // Extracting here the right timestamp field name
+        auto rightSchema = joinOperator->getRightInputSchema();
+        auto rightSourceNameQualifier = rightSchema->getSourceNameQualifier();
+        for (auto& field : rightSchema->fields) {
+            auto fieldName = field->getName();
+            auto fieldNameWithoutSourceName = fieldName.substr(rightSourceNameQualifier.size());
+            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
+                timeStampFieldNameRight = fieldName;
+                break;
+            }
+        }
+
+        NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+
+        auto windowSize = windowType->getSize().getTime();
+        auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
+        auto numSourcesRight = joinOperator->getRightInputOriginIds().size();
+
+        auto joinOperatorHandler = StreamJoinOperatorHandler::create(joinOperator->getLeftInputSchema(),
+                                                                     joinOperator->getRightInputSchema(),
+                                                                     joinFieldNameLeft,
+                                                                     joinFieldNameRight,
+                                                                     numSourcesLeft + numSourcesRight,
+                                                                     windowSize);
+
+        auto leftInputOperator =
+            getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+        auto rightInputOperator =
+            getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
+
+        auto leftJoinBuildOperator =
+            PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                       joinOperator->getOutputSchema(),
+                                                                       joinOperatorHandler,
+                                                                       JoinBuildSideType::Left,
+                                                                       timeStampFieldNameLeft);
+        auto rightJoinBuildOperator =
+            PhysicalOperators::PhysicalStreamJoinBuildOperator::create(joinOperator->getRightInputSchema(),
+                                                                       joinOperator->getOutputSchema(),
+                                                                       joinOperatorHandler,
+                                                                       JoinBuildSideType::Right,
+                                                                       timeStampFieldNameRight);
+
+        auto joinSinkOperator = PhysicalOperators::PhysicalStreamJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                                          joinOperator->getRightInputSchema(),
+                                                                                          joinOperator->getOutputSchema(),
+                                                                                          joinOperatorHandler);
+
+        leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+        rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+        operatorNode->replace(joinSinkOperator);
+
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(

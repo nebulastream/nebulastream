@@ -17,6 +17,7 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -62,6 +63,18 @@ class LowerPhysicalToNautilusOperators {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
   private:
+    /**
+     * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist
+     * @param operatorHandlers
+     * @param operatorId
+     * @param streamJoinOperatorHandler
+     * @return handlerIndex of the streamJoinOperatorHandler
+     */
+    uint64_t insertStreamJoinOperatorHandlerIfNeeded(
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
+        OperatorId operatorId,
+        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& streamJoinOperatorHandler);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lower(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
           std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
@@ -101,6 +114,12 @@ class LowerPhysicalToNautilusOperators {
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
+#ifdef ENABLE_JNI
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                    const PhysicalOperators::PhysicalOperatorPtr& sharedPtr,
+                    uint64_t handlerIndex);
+#endif// ENABLE_JIN
 };
 }// namespace QueryCompilation
 }// namespace NES

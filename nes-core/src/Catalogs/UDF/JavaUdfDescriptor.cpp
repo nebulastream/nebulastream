@@ -69,4 +69,6 @@ bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
         && inputClassName == other.inputClassName && outputClassName == other.outputClassName;
 }
 
+void JavaUdfDescriptor::setInputSchema(const SchemaPtr& inputSchema) { JavaUdfDescriptor::inputSchema = inputSchema; }
+
 }// namespace NES::Catalogs::UDF

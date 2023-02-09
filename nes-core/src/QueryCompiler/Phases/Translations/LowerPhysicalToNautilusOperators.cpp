@@ -13,7 +13,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -36,6 +36,8 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/MapJavaUdf.hpp>
+#include <Execution/Operators/Relational/MapJavaUdfOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
@@ -44,6 +46,8 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/JoinPhases/StreamJoinSink.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -60,12 +64,14 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapJavaUdfOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -83,7 +89,6 @@
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
@@ -116,6 +121,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
 
     for (const auto& node : nodes) {
+        NES_INFO("Node: " << node->toString());
         parentOperator =
             lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
     }
@@ -148,6 +154,38 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
+#ifdef ENABLE_JNI
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapJavaUdfOperator>()) {
+        auto mapOperator = operatorNode->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+        // We can't copy the descriptor because it is in nes-core and the MapJavaUdfOperatorHandler is in nes-runtime
+        // Thus, to resolve a circular dependency, we need this workaround by coping descriptor elements
+        auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
+        auto className = mapJavaUdfDescriptor->getClassName();
+        auto methodName = mapJavaUdfDescriptor->getMethodName();
+        auto byteCodeList = mapJavaUdfDescriptor->getByteCodeList();
+        auto inputClassName = mapJavaUdfDescriptor->getInputClassName();
+        auto outputClassName = mapJavaUdfDescriptor->getOutputClassName();
+        auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
+        auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+        auto serializedInstance = mapJavaUdfDescriptor->getSerializedInstance();
+        auto returnType = mapJavaUdfDescriptor->getReturnType();
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::MapJavaUdfOperatorHandler>(className,
+                                                                                                  methodName,
+                                                                                                  inputClassName,
+                                                                                                  outputClassName,
+                                                                                                  byteCodeList,
+                                                                                                  serializedInstance,
+                                                                                                  inputSchema,
+                                                                                                  outputSchema,
+                                                                                                  std::nullopt);
+        operatorHandlers.push_back(handler);
+        auto indexForThisHandler = operatorHandlers.size() - 1;
+
+        auto mapJavaUdf = lowerMapJavaUdf(pipeline, operatorNode, indexForThisHandler);
+        parentOperator->setChild(mapJavaUdf);
+        return mapJavaUdf;
+#endif// ENABLE_JNI
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
         // TODO 3280 change with a factory for different aggregation values
         auto sumAggregationValue = std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue>();
@@ -176,6 +214,39 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
         // we can ignore this operator for now.
         return parentOperator;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinSinkOperator>()) {
+        auto sinkOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinSinkOperator>();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(sinkOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto joinSinkNautilus = std::make_shared<Runtime::Execution::Operators::StreamJoinSink>(handlerIndex);
+        pipeline.setRootOperator(joinSinkNautilus);
+        return joinSinkNautilus;
+
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()) {
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto isLeftSide = buildOperator->getBuildSide() == JoinBuildSideType::Left;
+        auto joinFieldName = isLeftSide ? buildOperator->getOperatorHandler()->getJoinFieldNameLeft()
+                                        : buildOperator->getOperatorHandler()->getJoinFieldNameRight();
+        auto joinSchema = isLeftSide ? buildOperator->getOperatorHandler()->getJoinSchemaLeft()
+                                     : buildOperator->getOperatorHandler()->getJoinSchemaRight();
+
+        auto joinBuildNautilus =
+            std::make_shared<Runtime::Execution::Operators::StreamJoinBuild>(handlerIndex,
+                                                                             isLeftSide,
+                                                                             joinFieldName,
+                                                                             buildOperator->getTimeStampFieldName(),
+                                                                             joinSchema);
+
+        parentOperator->setChild(std::dynamic_pointer_cast<Runtime::Execution::Operators::ExecutableOperator>(joinBuildNautilus));
+        return joinBuildNautilus;
     }
     NES_NOT_IMPLEMENTED();
 }
@@ -314,6 +385,20 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
                                                                             aggregationFunction,
                                                                             handlerIndex);
 }
+
+#ifdef ENABLE_JNI
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                  uint64_t handlerIndex) {
+    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapJavaUdfOperator>();
+    auto mapJavaUdfDescriptor = mapOperator->getJavaUdfDescriptor();
+    auto inputSchema = mapJavaUdfDescriptor->getInputSchema();
+    auto outputSchema = mapJavaUdfDescriptor->getOutputSchema();
+
+    return std::make_shared<Runtime::Execution::Operators::MapJavaUdf>(handlerIndex, inputSchema, outputSchema);
+}
+#endif// ENABLE_JNI
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>
 LowerPhysicalToNautilusOperators::lowerExpression(const ExpressionNodePtr& expressionNode) {

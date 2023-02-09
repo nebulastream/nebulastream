@@ -23,25 +23,21 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(SchemaPtr joinSchemaLeft,
                                                      SchemaPtr joinSchemaRight,
                                                      std::string joinFieldNameLeft,
                                                      std::string joinFieldNameRight,
-                                                     size_t maxNoWorkerThreads,
                                                      uint64_t counterFinishedBuildingStart,
-                                                     size_t totalSizeForDataStructures,
                                                      size_t windowSize,
+                                                     size_t totalSizeForDataStructures,
                                                      size_t pageSize,
                                                      size_t numPartitions)
     : joinSchemaLeft(joinSchemaLeft), joinSchemaRight(joinSchemaRight), joinFieldNameLeft(joinFieldNameLeft),
-      joinFieldNameRight(joinFieldNameRight), maxNoWorkerThreads(maxNoWorkerThreads),
-      counterFinishedBuildingStart(counterFinishedBuildingStart), counterFinishedSinkStart(numPartitions),
-      totalSizeForDataStructures(totalSizeForDataStructures), lastTupleTimeStampLeft(windowSize - 1),
-      lastTupleTimeStampRight(windowSize - 1), windowSize(windowSize), pageSize(pageSize), numPartitions(numPartitions) {
+      joinFieldNameRight(joinFieldNameRight), counterFinishedBuildingStart(counterFinishedBuildingStart),
+      counterFinishedSinkStart(numPartitions), totalSizeForDataStructures(totalSizeForDataStructures),
+      lastTupleTimeStampLeft(windowSize - 1), lastTupleTimeStampRight(windowSize - 1), windowSize(windowSize), pageSize(pageSize),
+      numPartitions(numPartitions) {
 
-    NES_ASSERT2_FMT(0 != numPartitions, "NumPartitions is 0: " << numPartitions);
+    NES_ASSERT2_FMT(0 < numPartitions, "NumPartitions is 0: " << numPartitions);
     size_t minRequiredSize = numPartitions * PREALLOCATED_SIZE;
     NES_ASSERT2_FMT(minRequiredSize < totalSizeForDataStructures,
                     "Invalid size " << minRequiredSize << " < " << totalSizeForDataStructures);
-
-    // It does not matter here if we put true or false as a parameter
-    createNewWindow(/* isLeftSide*/ true);
 }
 
 void StreamJoinOperatorHandler::recyclePooledBuffer(Runtime::detail::MemorySegment*) {}
@@ -60,7 +56,19 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr, StateManagerP
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr) {
     NES_DEBUG("stop StreamJoinOperatorHandler");
-    // TODO ask Philipp, if I should delete here all windows
+}
+
+void StreamJoinOperatorHandler::setup(uint64_t newNumberOfWorkerThreads) {
+    if (alreadySetup) {
+        NES_DEBUG("StreamJoinOperatorHandler::setup was called already!");
+        return;
+    }
+    alreadySetup = true;
+
+    NES_DEBUG("StreamJoinOperatorHandler::setup was called!");
+    // It does not matter here if we put true or false as a parameter
+    this->numberOfWorkerThreads = newNumberOfWorkerThreads;
+    createNewWindow(/**isLeftSide**/ true);
 }
 
 void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
@@ -70,21 +78,25 @@ void StreamJoinOperatorHandler::createNewWindow(bool isLeftSide) {
         return;
     }
 
-    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the lazyjoin");
-    streamJoinWindows.emplace_back(maxNoWorkerThreads,
+    NES_DEBUG("StreamJoinOperatorHandler: create a new window for the stream join");
+    auto windowStart = streamJoinWindows.size() * windowSize;
+    auto windowEnd = windowStart + windowSize - 1;
+
+    streamJoinWindows.emplace_back(numberOfWorkerThreads,
                                    counterFinishedBuildingStart,
                                    counterFinishedSinkStart,
                                    totalSizeForDataStructures,
                                    joinSchemaLeft->getSchemaSizeInBytes(),
                                    joinSchemaRight->getSchemaSizeInBytes(),
-                                   lastTupleTimeStamp,
+                                   windowStart,
+                                   windowEnd,
                                    pageSize,
                                    numPartitions);
 }
 
 void StreamJoinOperatorHandler::deleteWindow(uint64_t timeStamp) {
     for (auto it = streamJoinWindows.begin(); it != streamJoinWindows.end(); ++it) {
-        if (timeStamp <= it->getLastTupleTimeStamp()) {
+        if (timeStamp <= it->getWindowEnd()) {
             streamJoinWindows.erase(it);
             break;
         }
@@ -93,7 +105,7 @@ void StreamJoinOperatorHandler::deleteWindow(uint64_t timeStamp) {
 
 bool StreamJoinOperatorHandler::checkWindowExists(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
-        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
+        if (timeStamp <= streamJoinWindow.getWindowEnd()) {
             return true;
         }
     }
@@ -103,7 +115,7 @@ bool StreamJoinOperatorHandler::checkWindowExists(uint64_t timeStamp) {
 
 StreamJoinWindow& StreamJoinOperatorHandler::getWindow(uint64_t timeStamp) {
     for (auto& streamJoinWindow : streamJoinWindows) {
-        if (timeStamp <= streamJoinWindow.getLastTupleTimeStamp()) {
+        if (timeStamp <= streamJoinWindow.getWindowEnd()) {
             return streamJoinWindow;
         }
     }
@@ -136,8 +148,34 @@ void StreamJoinOperatorHandler::incLastTupleTimeStamp(uint64_t increment, bool i
 }
 
 size_t StreamJoinOperatorHandler::getWindowSize() const { return windowSize; }
+
 size_t StreamJoinOperatorHandler::getNumPartitions() const { return numPartitions; }
 
 size_t StreamJoinOperatorHandler::getNumActiveWindows() { return streamJoinWindows.size(); }
+
+StreamJoinOperatorHandlerPtr StreamJoinOperatorHandler::create(const SchemaPtr& joinSchemaLeft,
+                                                               const SchemaPtr& joinSchemaRight,
+                                                               const std::string& joinFieldNameLeft,
+                                                               const std::string& joinFieldNameRight,
+                                                               uint64_t counterFinishedBuildingStart,
+                                                               size_t windowSize,
+                                                               size_t totalSizeForDataStructures,
+                                                               size_t pageSize,
+                                                               size_t numPartitions) {
+
+    return std::make_shared<StreamJoinOperatorHandler>(joinSchemaLeft,
+                                                       joinSchemaRight,
+                                                       joinFieldNameLeft,
+                                                       joinFieldNameRight,
+                                                       counterFinishedBuildingStart,
+                                                       windowSize,
+                                                       totalSizeForDataStructures,
+                                                       pageSize,
+                                                       numPartitions);
+}
+
+const std::vector<OperatorId>& StreamJoinOperatorHandler::getJoinOperatorsId() const { return joinOperatorsId; }
+
+void StreamJoinOperatorHandler::addOperatorId(OperatorId id) { joinOperatorsId.emplace_back(id); }
 
 }// namespace NES::Runtime::Execution::Operators

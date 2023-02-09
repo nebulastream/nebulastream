@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/StreamJoinWindow.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <cstddef>
 #include <list>
 #include <queue>
@@ -39,6 +40,8 @@ namespace NES::Runtime::Execution::Operators {
  * thus, the StreamJoin only has to allocate memory once.
  * @brief This class is the operator to a StreamJoin operator. It stores all data structures necessary for the two phases: build and sink
  */
+class StreamJoinOperatorHandler;
+using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
 class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::BufferRecycler {
 
   public:
@@ -48,7 +51,6 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      * @param joinSchemaRight
      * @param joinFieldNameLeft
      * @param joinFieldNameRight
-     * @param maxNoWorkerThreads
      * @param counterFinishedBuildingStart
      * @param totalSizeForDataStructures
      * @param windowSize
@@ -59,12 +61,34 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
                                        SchemaPtr joinSchemaRight,
                                        std::string joinFieldNameLeft,
                                        std::string joinFieldNameRight,
-                                       size_t maxNoWorkerThreads,
                                        uint64_t counterFinishedBuildingStart,
-                                       size_t totalSizeForDataStructures,
                                        size_t windowSize,
-                                       size_t pageSize = CHUNK_SIZE,
-                                       size_t numPartitions = NUM_PARTITIONS);
+                                       size_t totalSizeForDataStructures,
+                                       size_t pageSize,
+                                       size_t numPartitions);
+
+    /**
+     * @brief Creates a StreamJoinOperatorHandlerPtr object
+     * @param joinSchemaLeft
+     * @param joinSchemaRight
+     * @param joinFieldNameLeft
+     * @param joinFieldNameRight
+     * @param counterFinishedBuildingStart
+     * @param totalSizeForDataStructures
+     * @param windowSize
+     * @param pageSize
+     * @param numPartitions
+     * @return StreamJoinOperatorHandlerPtr
+     */
+    static StreamJoinOperatorHandlerPtr create(const SchemaPtr& joinSchemaLeft,
+                                               const SchemaPtr& joinSchemaRight,
+                                               const std::string& joinFieldNameLeft,
+                                               const std::string& joinFieldNameRight,
+                                               uint64_t counterFinishedBuildingStart,
+                                               size_t windowSize,
+                                               size_t totalSizeForDataStructures = DEFAULT_MEM_SIZE_JOIN,
+                                               size_t pageSize = CHUNK_SIZE,
+                                               size_t numPartitions = NUM_PARTITIONS);
 
     /**
      * @brief Getter for the left join schema
@@ -99,6 +123,12 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     void start(PipelineExecutionContextPtr pipelineExecutionContext,
                StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
+
+    /**
+     * @brief sets the operator handler up
+     * @param newNumberOfWorkerThreads
+     */
+    void setup(uint64_t newNumberOfWorkerThreads);
 
     /**
      * @brief Stops the operator handler.
@@ -181,13 +211,25 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
      */
     bool checkWindowExists(uint64_t timeStamp);
 
+    /**
+     * @brief Adds an operatorId
+     * @param id
+     */
+    void addOperatorId(OperatorId id);
+
+    /**
+     * @brief Getter for the operatorIds belonging to this operator handler
+     * @return Vector of operatorIds
+     */
+    const std::vector<OperatorId>& getJoinOperatorsId() const;
+
   private:
     SchemaPtr joinSchemaLeft;
     SchemaPtr joinSchemaRight;
     std::string joinFieldNameLeft;
     std::string joinFieldNameRight;
     std::list<StreamJoinWindow> streamJoinWindows;
-    size_t maxNoWorkerThreads;
+    size_t numberOfWorkerThreads;
     uint64_t counterFinishedBuildingStart;
     uint64_t counterFinishedSinkStart;
     size_t totalSizeForDataStructures;
@@ -195,6 +237,8 @@ class StreamJoinOperatorHandler : public OperatorHandler, public Runtime::Buffer
     size_t windowSize;
     size_t pageSize;
     size_t numPartitions;
+    std::atomic<bool> alreadySetup{false};
+    std::vector<OperatorId> joinOperatorsId;
 };
 
 }// namespace NES::Runtime::Execution::Operators

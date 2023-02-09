@@ -16,15 +16,11 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema,
-                                                     SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema,
-                                                     Join::JoinOperatorHandlerPtr joinOperatorHandler) {
-    return create(Util::getNextOperatorId(),
-                  std::move(leftInputSchema),
-                  std::move(rightInputSchema),
-                  std::move(outputSchema),
-                  std::move(joinOperatorHandler));
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(const SchemaPtr& leftInputSchema,
+                                                     const SchemaPtr& rightInputSchema,
+                                                     const SchemaPtr& outputSchema,
+                                                     const Join::JoinOperatorHandlerPtr& joinOperatorHandler) {
+    return create(Util::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,

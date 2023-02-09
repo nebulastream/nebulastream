@@ -36,7 +36,8 @@ class StreamJoinWindow {
      * @param totalSizeForDataStructures
      * @param sizeOfRecordLeft
      * @param sizeOfRecordRight
-     * @param lastTupleTimeStamp
+     * @param windowStart
+     * @param windowEnd
      * @param pageSize
      * @param numPartitions
      */
@@ -46,7 +47,8 @@ class StreamJoinWindow {
                               size_t totalSizeForDataStructures,
                               size_t sizeOfRecordLeft,
                               size_t sizeOfRecordRight,
-                              uint64_t lastTupleTimeStamp,
+                              uint64_t windowStart,
+                              uint64_t windowEnd,
                               size_t pageSize,
                               size_t numPartitions);
 
@@ -80,10 +82,22 @@ class StreamJoinWindow {
     uint64_t fetchSubSink(uint64_t sub);
 
     /**
-     * @brief Returns the last tuple that can be inserted into this window
-     * @return lastTupleTimeStamp
+     * @brief Returns the last tuple timestamp (end of the window) that can be inserted into this window
+     * @return windowEnd
      */
-    uint64_t getLastTupleTimeStamp() const;
+    uint64_t getWindowEnd() const;
+
+    /**
+     * @brief Returns the first tuple timestamp (start of the window) that can be inserted into this window
+     * @return windowStart
+     */
+    uint64_t getWindowStart() const;
+
+    /**
+     * @brief Getter for the map that stores the current TupleBuffer for each worker Id
+     * @return map
+     */
+    std::map<uint64_t, TupleBuffer>& getMapEmittableBuffers();
 
   private:
     std::vector<std::unique_ptr<Operators::LocalHashTable>> localHashTableLeftSide;
@@ -92,8 +106,10 @@ class StreamJoinWindow {
     Operators::SharedJoinHashTable rightSideHashTable;
     std::atomic<uint64_t> counterFinishedBuilding;
     std::atomic<uint64_t> counterFinishedSink;
-    uint64_t lastTupleTimeStamp;
+    uint64_t windowStart;
+    uint64_t windowEnd;
     Runtime::FixedPagesAllocator fixedPagesAllocator;
+    std::map<uint64_t, TupleBuffer> workerIdToEmittableBuffer;
 };
 
 }// namespace NES::Runtime::Execution

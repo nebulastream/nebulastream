@@ -3,8 +3,8 @@ ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  \
-    libstdc++-9-dev \
-    libobjc-9-dev \
+    libstdc++-11-dev \
+    libobjc-11-dev \
     libstdc++6  \
     libgcc-s1 \
     libc6  \

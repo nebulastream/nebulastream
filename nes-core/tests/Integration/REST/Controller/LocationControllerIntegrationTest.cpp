@@ -30,24 +30,31 @@
 #include <nlohmann/json.hpp>
 
 namespace NES {
-class LocationControllerTest : public Testing::NESBaseTest {
+class LocationControllerIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("LocationControllerTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LocationControllerTest test class.");
+        NES::Logger::setupLogging("LocationControllerIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup LocationControllerIntegrationTest test class.");
+        std::string singleLocationPath = std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv";
+        remove(singleLocationPath.c_str());
+        writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
+        std::string singleLocationPath2 = std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv";
+        remove(singleLocationPath2.c_str());
+        writeWaypointsToCsv(singleLocationPath2, {{{53.55227464714949, -13.351743136322877}, 0}});
     }
 
-    static void TearDownTestCase() { NES_INFO("Tear down LocationControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down LocationControllerIntegrationTest test class."); }
 
     void startCoordinator() {
-        NES_INFO("LocationControllerTest: Start coordinator");
+        NES_INFO("LocationControllerIntegrationTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
 
         coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
-        NES_INFO("LocationControllerTest: Coordinator started successfully");
+        NES_INFO("LocationControllerIntegrationTest: Coordinator started successfully");
+        ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
     }
 
     std::string location2 = "52.53736960143897, 13.299134894776092";
@@ -57,7 +64,7 @@ class LocationControllerTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
 };
 
-TEST_F(LocationControllerTest, DISABLED_testGetLocationMissingQueryParameters) {
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationMissingQueryParameters) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -69,10 +76,12 @@ TEST_F(LocationControllerTest, DISABLED_testGetLocationMissingQueryParameters) {
     EXPECT_EQ(response.status_code, 400l);
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
-    EXPECT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
+    ASSERT_EQ(errorMessage, "Missing QUERY parameter 'nodeId'");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerTest, DISABLED_testGetLocationNoSuchNodeId) {
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNoSuchNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -84,13 +93,13 @@ TEST_F(LocationControllerTest, DISABLED_testGetLocationNoSuchNodeId) {
                                 cpr::Parameters{{"nodeId", std::to_string(nodeId)}});
     future.wait();
     auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
+    EXPECT_EQ(response.status_code, 404l);
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
-    EXPECT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
+    ASSERT_EQ(errorMessage, "No node with Id: " + std::to_string(nodeId));
 }
 
-TEST_F(LocationControllerTest, DISABLED_testGetLocationNonNumericalNodeId) {
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetLocationNonNumericalNodeId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -105,10 +114,12 @@ TEST_F(LocationControllerTest, DISABLED_testGetLocationNonNumericalNodeId) {
     EXPECT_EQ(response.status_code, 400l);
     auto res = nlohmann::json::parse(response.text);
     std::string errorMessage = res["message"].get<std::string>();
-    EXPECT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
+    ASSERT_EQ(errorMessage, "Invalid QUERY parameter 'nodeId'. Expected type is 'UInt64'");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
-TEST_F(LocationControllerTest, DISABLED_testGetSingleLocation) {
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocation) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     std::string latitude = "13.4";
@@ -120,7 +131,38 @@ TEST_F(LocationControllerTest, DISABLED_testGetSingleLocation) {
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(coordinateString));
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
+    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
+
+    //test request of node location
+    nlohmann::json request;
+    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
+                                cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
+    future.wait();
+    auto response = future.get();
+    //todo: use assert everlywhere
+    EXPECT_EQ(response.status_code, 200l);
+    auto res = nlohmann::json::parse(response.text);
+    EXPECT_EQ(res["id"], workerNodeId1);
+    nlohmann::json::array_t locationData = res["location"];
+    EXPECT_EQ(locationData[0].dump(), latitude);
+    ASSERT_EQ(locationData[1].dump(), longitude);
+    bool stopwrk1 = wrk1->stop(true);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
+}
+
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetSingleLocationWhenNoLocationDataIsProvided) {
+    startCoordinator();
+    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort = *rpcCoordinatorPort;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
     uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
 
     //test request of node location
@@ -131,36 +173,14 @@ TEST_F(LocationControllerTest, DISABLED_testGetSingleLocation) {
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
     auto res = nlohmann::json::parse(response.text);
-    EXPECT_EQ(res["id"], workerNodeId1);
-    nlohmann::json::array_t locationData = res["location"];
-    EXPECT_EQ(locationData[0].dump(), latitude);
-    EXPECT_EQ(locationData[1].dump(), longitude);
+    ASSERT_TRUE(res["location"].is_null());
+    bool stopwrk1 = wrk1->stop(true);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
-//TODO #3390: do not return 400?
-TEST_F(LocationControllerTest, DISABLED_testGetSingleLocationWhenNoLocationDataIsProvided) {
-    startCoordinator();
-    ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    wrkConf1->coordinatorPort = *rpcCoordinatorPort;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    uint64_t workerNodeId1 = wrk1->getTopologyNodeId();
-
-    //test request of node location
-    nlohmann::json request;
-    auto future = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/location"},
-                                cpr::Parameters{{"nodeId", std::to_string(workerNodeId1)}});
-    future.wait();
-    auto response = future.get();
-    EXPECT_EQ(response.status_code, 400l);
-    auto res = nlohmann::json::parse(response.text);
-    EXPECT_TRUE(res["location"].is_null());
-}
-
-TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) {
-    uint64_t rpcPortWrk1 = 6000;
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -169,14 +189,12 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) 
     std::string coordinateString = latitude + "," + longitude;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf1->rpcPort.setValue(rpcPortWrk1);
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(coordinateString));
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-
-    //no mobile nodes added yet, response should be null
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
 
     //test request of node location
     nlohmann::json request;
@@ -185,14 +203,16 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationsNoMobileNodes) 
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
     auto res = nlohmann::json::parse(response.text);
-    EXPECT_TRUE(res.empty());
+    //no mobile nodes added yet, response should be empty
+    ASSERT_TRUE(res.empty());
+    bool stopwrk1 = wrk1->stop(true);
+    ASSERT_TRUE(stopwrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 
 #ifdef S2DEF
-TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist) {
-    uint64_t rpcPortWrk1 = 6000;
-    uint64_t rpcPortWrk2 = 6001;
-    uint64_t rpcPortWrk3 = 6002;
+TEST_F(LocationControllerIntegrationTest, DISABLED_testGetAllMobileLocationMobileNodesExist) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -203,17 +223,16 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
     std::string coordinateString = latitude + "," + longitude;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf1->rpcPort.setValue(rpcPortWrk1);
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
     wrkConf1->locationCoordinates.setValue(NES::Spatial::DataTypes::Experimental::GeoLocation::fromString(coordinateString));
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
 
     //create mobile worker nodes
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf2->rpcPort.setValue(rpcPortWrk2);
     wrkConf2->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf2->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
@@ -221,18 +240,19 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
     wrkConf2->mobilityConfiguration.pushDeviceLocationUpdates.setValue(false);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 2));
 
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->coordinatorPort = *rpcCoordinatorPort;
-    wrkConf3->rpcPort.setValue(rpcPortWrk3);
     wrkConf3->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
     wrkConf3->mobilityConfiguration.locationProviderType.setValue(
         NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     wrkConf3->mobilityConfiguration.locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
+    ASSERT_TRUE(retStart3);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 3));
 
     uint64_t workerNodeId2 = wrk2->getTopologyNodeId();
     uint64_t workerNodeId3 = wrk3->getTopologyNodeId();
@@ -245,7 +265,7 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
     auto res = nlohmann::json::parse(response.text);
     NES_DEBUG(res);
     ASSERT_TRUE(res.is_array());
-    EXPECT_TRUE(res.size() == 2);
+    ASSERT_TRUE(res.size() == 2);
     auto locationData = std::vector<double>(2, 0);
     for (auto entry : res) {
         if (entry["id"] == workerNodeId2) {
@@ -259,6 +279,14 @@ TEST_F(LocationControllerTest, DISABLED_testGetAllMobileLocationMobileNodesExist
         EXPECT_TRUE(entry.contains("location"));
         EXPECT_EQ(entry["location"], locationData);
     }
+    bool stopwrk1 = wrk1->stop(true);
+    ASSERT_TRUE(stopwrk1);
+    bool stopwrk2 = wrk2->stop(true);
+    ASSERT_TRUE(stopwrk2);
+    bool stopwrk3 = wrk3->stop(true);
+    ASSERT_TRUE(stopwrk3);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    ASSERT_TRUE(stopCrd);
 }
 #endif
 }// namespace NES

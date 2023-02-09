@@ -84,5 +84,4 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
 };
 using MapJavaUdfLogicalOperatorNodePtr = std::shared_ptr<MapJavaUdfLogicalOperatorNode>;
 }// namespace NES
-
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_

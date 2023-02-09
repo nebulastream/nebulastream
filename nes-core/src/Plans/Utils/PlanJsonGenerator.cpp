@@ -31,7 +31,6 @@
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cpprest/json.h>
 
 namespace NES {
 

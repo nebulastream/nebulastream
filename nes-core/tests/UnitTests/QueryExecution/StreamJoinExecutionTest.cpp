@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <NesBaseTest.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -86,22 +86,60 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     return buffer;
 }
 
-// TODO: Enable this test in issue #3339
-TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) {
+/**
+ * @brief checks if the buffers contain the same tuples
+ * @param buffer1
+ * @param buffer2
+ * @param schema
+ * @return boolean if the buffers contain the same tuples
+ */
+bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, const uint64_t schemaSizeInByte) {
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples");
+    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        return false;
+    }
+
+    std::set<size_t> sameTupleIndices;
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
+        bool idxFoundInBuffer2 = false;
+        for (auto idxBuffer2 = 0UL; buffer2.getNumberOfTuples(); ++idxBuffer2) {
+            if (sameTupleIndices.contains(idxBuffer2)) {
+                continue;
+            }
+            auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
+            auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
+            auto equalTuple = (memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0);
+            if (equalTuple) {
+                sameTupleIndices.insert(idxBuffer2);
+                idxFoundInBuffer2 = true;
+                break;
+            }
+        }
+
+        if (!idxFoundInBuffer2) {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers!");
+            return false;
+        }
+    }
+
+    return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
+}
+
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("f1_left", BasicType::UINT64)
-                                ->addField("f2_left", BasicType::UINT64)
-                                ->addField("timestamp", BasicType::UINT64);
+                                ->addField("test1$f1_left", BasicType::UINT64)
+                                ->addField("test1$f2_left", BasicType::UINT64)
+                                ->addField("test1$timestamp", BasicType::UINT64);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("f1_right", BasicType::UINT64)
-                                 ->addField("f2_right", BasicType::UINT64)
-                                 ->addField("timestamp", BasicType::UINT64);
+                                 ->addField("test2$f1_right", BasicType::UINT64)
+                                 ->addField("test2$f2_right", BasicType::UINT64)
+                                 ->addField("test2$timestamp", BasicType::UINT64);
 
-    const auto joinFieldNameLeft = leftSchema->get(1)->getName();
-    const auto joinFieldNameRight = rightSchema->get(1)->getName();
-    const auto timeStampField = leftSchema->get(2)->getName();
-    EXPECT_EQ(leftSchema->get(2)->getName(), rightSchema->get(2)->getName());
+    const auto joinFieldNameLeft = "test1$f2_left";
+    const auto joinFieldNameRight = "test2$f2_right";
+    const auto timeStampField = "timestamp";
 
     const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
 
@@ -116,7 +154,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
     auto expectedSinkBuffer = fillBuffer(fileNameBuffersSink, executionEngine->getBuffer(joinSchema), joinSchema, bufferManager);
 
-    auto testSink = executionEngine->createDateSink(joinSchema);
+    auto testSink = executionEngine->createDataSink(joinSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
@@ -129,11 +167,12 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .sink(testSinkDescriptor);
 
+    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
     auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
-    EXPECT_TRUE(!!sourceLeft);
-    EXPECT_TRUE(!!sourceRight);
+    ASSERT_TRUE(!!sourceLeft);
+    ASSERT_TRUE(!!sourceRight);
 
     sourceLeft->emitBuffer(leftBuffer);
     sourceRight->emitBuffer(rightBuffer);
@@ -142,11 +181,12 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_streamJoinExecutiontTestCsvFiles) 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
     auto resultBuffer = testSink->getResultBuffer(0);
 
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
-    EXPECT_TRUE(memcmp(resultBuffer.getBuffer().getBuffer(),
-                       expectedSinkBuffer.getBuffer().getBuffer(),
-                       expectedSinkBuffer.getNumberOfTuples() * joinSchema->getSchemaSizeInBytes())
-                == 0);
+    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+    NES_DEBUG("expectedSinkBuffer: " << NES::Util::printTupleBufferAsCSV(expectedSinkBuffer.getBuffer(), joinSchema));
+
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), expectedSinkBuffer.getNumberOfTuples());
+    ASSERT_TRUE(
+        checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,

@@ -25,9 +25,9 @@ TextValue::TextValue(uint32_t size) : size(size) {}
 
 uint32_t TextValue::length() const { return size; }
 
-char* TextValue::str() { return reinterpret_cast<char*>(this + DATA_FIELD_OFFSET); }
+char* TextValue::str() { return reinterpret_cast<char*>(this) + DATA_FIELD_OFFSET; }
 
-const char* TextValue::c_str() const { return reinterpret_cast<const char*>(this + DATA_FIELD_OFFSET); }
+const char* TextValue::c_str() const { return reinterpret_cast<const char*>(this) + DATA_FIELD_OFFSET; }
 
 TextValue* TextValue::create(Runtime::TupleBuffer& buffer, uint32_t size) {
     buffer.retain();

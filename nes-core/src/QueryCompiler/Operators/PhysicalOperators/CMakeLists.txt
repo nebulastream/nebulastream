@@ -21,6 +21,7 @@ add_source_files(nes-core
         PhysicalProjectOperator.cpp
         PhysicalInferModelOperator.cpp
         PhysicalMapOperator.cpp
+        PhysicalMapJavaUdfOperator.cpp
         PhysicalMultiplexOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp

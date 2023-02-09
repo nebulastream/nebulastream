@@ -75,6 +75,9 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     void SetUp() override {
         NESBaseTest::SetUp();
         NES_INFO("Setup StreamJoinPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         workerContext = std::make_shared<WorkerContext>(0, bufferManager, 100);
@@ -189,15 +192,18 @@ void performNLJ(std::vector<TupleBuffer>& nljBuffers,
                     if (leftKey == rightKey) {
                         auto dynamicBufJoined = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayoutJoined, bufferJoined);
                         auto posNewTuple = dynamicBufJoined.getNumberOfTuples();
-                        dynamicBufJoined[posNewTuple][0].write<uint64_t>(leftKey);
+                        dynamicBufJoined[posNewTuple][0].write<uint64_t>(firstTupleTimeStampWindow);
+                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(lastTupleTimeStampWindow + 1);
 
-                        dynamicBufJoined[posNewTuple][1].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][0].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][2].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][1].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][3].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][2].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][2].write<uint64_t>(leftKey);
 
-                        dynamicBufJoined[posNewTuple][4].write<uint64_t>(dynamicBufRight[tupleRightCnt][0].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][5].write<uint64_t>(dynamicBufRight[tupleRightCnt][1].read<uint64_t>());
-                        dynamicBufJoined[posNewTuple][6].write<uint64_t>(dynamicBufRight[tupleRightCnt][2].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][3].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][0].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][4].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][1].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][5].write<uint64_t>(dynamicBufLeft[tupleLeftCnt][2].read<uint64_t>());
+
+                        dynamicBufJoined[posNewTuple][6].write<uint64_t>(dynamicBufRight[tupleRightCnt][0].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][7].write<uint64_t>(dynamicBufRight[tupleRightCnt][1].read<uint64_t>());
+                        dynamicBufJoined[posNewTuple][8].write<uint64_t>(dynamicBufRight[tupleRightCnt][2].read<uint64_t>());
 
                         dynamicBufJoined.setNumberOfTuples(posNewTuple + 1);
                         if (dynamicBufJoined.getNumberOfTuples() >= dynamicBufJoined.getCapacity()) {
@@ -262,14 +268,13 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
                                                                        timeStampField,
                                                                        rightSchema);
     auto joinSink = std::make_shared<Operators::StreamJoinSink>(handlerIndex);
-    auto streamJoinOpHandler = std::make_shared<Operators::StreamJoinOperatorHandler>(leftSchema,
-                                                                                      rightSchema,
-                                                                                      joinFieldNameLeft,
-                                                                                      joinFieldNameRight,
-                                                                                      noWorkerThreads * 2,
-                                                                                      numSourcesLeft + numSourcesRight,
-                                                                                      joinSizeInByte,
-                                                                                      windowSize);
+    auto streamJoinOpHandler = Operators::StreamJoinOperatorHandler::create(leftSchema,
+                                                                            rightSchema,
+                                                                            joinFieldNameLeft,
+                                                                            joinFieldNameRight,
+                                                                            numSourcesLeft + numSourcesRight,
+                                                                            windowSize,
+                                                                            joinSizeInByte);
 
     scanOperatorLeft->setChild(joinBuildLeft);
     scanOperatorRight->setChild(joinBuildRight);
@@ -374,7 +379,7 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         StreamJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<StreamJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

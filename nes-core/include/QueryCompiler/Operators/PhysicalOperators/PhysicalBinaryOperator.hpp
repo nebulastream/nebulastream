@@ -16,9 +16,7 @@
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical Binary operator combines the PhysicalOperator and BinaryOperatorNode interfaces.
@@ -29,8 +27,6 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperatorNod
     PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_

@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v28)
+set(VCPKG_BINARY_VERSION v29)
 set(LLVM_BINARY_VERSION v1)
 set(LLVM_VERSION 15)
 # Activate self hosting, such that the compiler from the dependencies is taken
@@ -44,6 +44,7 @@ option(NES_USE_LLD "Use LLD" OFF)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER "Enables the bytecode interpreter backend." OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
@@ -278,7 +279,7 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-# folly and cpprestsdk relies on boost so we set the right configuration flag
+# folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
 # spdlog
@@ -419,17 +420,21 @@ endif ()
 if (NES_USE_KAFKA)
     # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
+        find_package(RdKafka CONFIG REQUIRED)
+        set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka RdKafka::rdkafka++)
+
         include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
         add_compile_definitions(ENABLE_KAFKA_BUILD)
         add_library(cppkafka::cppkafka SHARED IMPORTED)
         set_target_properties(cppkafka::cppkafka
                 PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
                 INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
                 )
-        install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    else()
+        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()
 endif ()
 
@@ -536,6 +541,20 @@ if (Clang_FOUND)
 else ()
     message(FATAL_ERROR "Cannot find clang.")
 endif ()
+
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    find_package(JNI)
+    if (JNI_FOUND)
+        message(STATUS "JNI found")
+        message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+        message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+        set(LIBRARIES ${LIBRARIES} ${JNI_LIBRARIES})
+        include_directories(${JNI_INCLUDE_DIRS})
+        add_compile_definitions(ENABLE_JNI)
+    else()
+        message(STATUS "JNI not found")
+    endif()
+endif()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
