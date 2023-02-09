@@ -229,7 +229,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         }
     }
 
-    NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
+    NES_TRACE("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
                                                        << serializedOperator.details().type_url());
     return serializedOperator;
 }
