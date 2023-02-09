@@ -48,7 +48,7 @@ bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size)
  */
 void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&& size);
 
-#define getMember(ref, t, d) (ref + __builtin_offsetof(t, d)).as<MemRef>()
+#define getMember(ref, t, d) (ref + ((uint64_t) __builtin_offsetof(t, d))).as<MemRef>()
 
-}// namespace NES::Nautilus
+}// namespace NES::Nautilus::MemRefUtils
 #endif//NES_NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
