@@ -73,8 +73,8 @@ const std::string PRIMARY_OPERATOR_ID = "PRIMARY_OPERATOR_ID";
 
 /**\brief:
  *          This class implements Adaptive Active Standby. It analyzes the topology and the placement of primary operators,
- *          deploys new topology nodes if necessary to ensure distinct path for secondary operators and determines heuristically
- *          an efficient placement for them.
+ *          deploys new topology nodes if necessary to ensure distinct paths for secondary operators and offers different methods
+ *          to determine efficient placements for them.
  *          Current assumptions:
  *              1. Sources and sinks will not be replicated.
  *              2. Operators are not placed on sensors.
@@ -210,7 +210,7 @@ class AdaptiveActiveStandby {
 
     /**
      * Execute Adaptive Active Standby by creating secondary operators and finding an efficient valid placement for them,
-     * if such a placement exists, using a greedy algorithm. It populates the operatorMap and saves placement in
+     * if such a placement exists, using a greedy algorithm. It populates the operator maps and saves placement in
      * candidateOperatorToTopologyMap and candidateTopologyToOperatorMap
      * @param pinnedUpStreamOperators: vector of the pinned upstream operators
      * @return true if at least one replica was created and placed, otherwise false

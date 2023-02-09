@@ -195,7 +195,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
             if (exists) {
                 NES_DEBUG("AdaptiveActiveStandby: Separate path found");
             } else {
-                NES_DEBUG("AdaptiveActiveStandby: No separate path. New topology node has to be deployed");
+                NES_DEBUG("AdaptiveActiveStandby: No separate path. New topology nodes have to be deployed");
 
                 // get length of shortest path between current node and sink
                 auto startNodes =
@@ -212,9 +212,10 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                 auto nodeIdsToExclude =
                     getNodeIdsToExcludeToTarget(currentParent->as<OperatorNode>(),topology->getRoot());
 
-                int currentLength = 0;
+                // a new node has to be deployed in any case, it will add 2 hops (see: at the end of this branch)
+                int currentLength = 2;
 
-                // try reaching as far from start node as possible
+                // try reaching as far from start node as possible or until length reached
                 TopologyNodePtr farthestParentFromStart = pinnedOperatorsTopologyNode;
                 std::vector<TopologyNodePtr> nextLevel;
                 // initialize next level with parents of the start node without nodes to exclude
@@ -223,7 +224,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                     if (!nodeIdsToExclude.contains(parentNode->getId()))
                         nextLevel.push_back(parentNode);
                 }
-                while (!nextLevel.empty()) {
+                while (!nextLevel.empty() && currentLength < shortestLength) {
                     // keep track of farthest parent
                     farthestParentFromStart = nextLevel.front()->as<TopologyNode>();
                     ++currentLength;
@@ -239,7 +240,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                     }
                 }
 
-                // try reaching as far from root node as possible
+                // try reaching as far from root node as possible or until length reached
                 TopologyNodePtr farthestChildFromRoot = topology->getRoot();
                 nextLevel.clear();
                 // initialize next level with parents of the start node without nodes to exclude
@@ -248,7 +249,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                     if (!nodeIdsToExclude.contains(childNode->getId()))
                         nextLevel.push_back(childNode);
                 }
-                while (!nextLevel.empty()) {
+                while (!nextLevel.empty() && currentLength < shortestLength) {
                     // keep track of farthest parent
                     farthestChildFromRoot = nextLevel.front()->as<TopologyNode>();
                     ++currentLength;
@@ -265,7 +266,7 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                 }
 
                 // add new nodes so that the new path is at least as long as the shortest path
-                NES_DEBUG("AdaptiveActiveStandby: Deploying " << shortestLength-currentLength-1 << " node(s) between "
+                NES_DEBUG("AdaptiveActiveStandby: Deploying " << shortestLength - currentLength + 1 << " node(s) between "
                           << farthestParentFromStart->toString() << " and " << farthestChildFromRoot->toString());
 
                 // start adding new nodes from top to bottom (direction of sink to source)
@@ -276,7 +277,8 @@ void AdaptiveActiveStandby::deployNewNodes(const std::vector<OperatorNodePtr>& p
                                                       ipAddress, grpcPort, dataPort, resources);
                 currentNewNode->addNodeProperty("slots", resources);
 
-                currentLength += 2;             // first new node created => 2 hops (one hop here, another one after the loop)
+                // first new node created => 2 hops (hence the initial value of currentLength)
+                // one hop here, another one after the loop
                 ++nNewTopologyNodes;
                 newNodes.push_back(currentNewNode);
 
