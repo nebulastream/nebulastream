@@ -43,6 +43,8 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @param methodName The method name of the UDF function.
      * @param serializedInstance A serialized instance of the UDF class which stores captured free variables.
      * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
+     * @param inputSchema The schema of the input stream on which the UDF is applied. The input schema must
+     *                    correspond to the structure of the POJO which is passed to the UDF. Can be empty or nullptr.
      * @param outputSchema The schema after the application of the UDF to an input stream. The output schema must
      *                     correspond to the structure of the POJO returned by the UDF.
      * @param inputClassName The fully-qualified class name of the input type of the UDF method.
@@ -56,6 +58,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
                       const JavaUdfByteCodeList& byteCodeList,
+                      const SchemaPtr inputSchema,
                       const SchemaPtr outputSchema,
                       const std::string& inputClassName,
                       const std::string& outputClassName);
@@ -66,6 +69,8 @@ class JavaUdfDescriptor : public UdfDescriptor {
      * @param methodName The method name of the UDF function.
      * @param serializedInstance A serialized instance of the UDF class which stores captured free variables.
      * @param byteCodeList A list of fully-qualified class names and their bytecode required to execute the UDF.
+     * @param inputSchema The schema of the input stream on which the UDF is applied. The input schema must
+     *                    correspond to the structure of the POJO which is passed to the UDF. Can be empty or nullptr.
      * @param outputSchema The schema after the application of the UDF to an input stream. The output schema must
      *                     correspond to the structure of the POJO returned by the UDF.
      * @param inputClassName The fully-qualified class name of the input type of the UDF method.
@@ -80,6 +85,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                        const std::string& methodName,
                                        const JavaSerializedInstance& serializedInstance,
                                        const JavaUdfByteCodeList& byteCodeList,
+                                       const SchemaPtr inputSchema,
                                        const SchemaPtr outputSchema,
                                        const std::string& inputClassName,
                                        const std::string& outputClassName) {
@@ -87,6 +93,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                                    methodName,
                                                    serializedInstance,
                                                    byteCodeList,
+                                                   inputSchema,
                                                    outputSchema,
                                                    inputClassName,
                                                    outputClassName);
@@ -151,8 +158,6 @@ class JavaUdfDescriptor : public UdfDescriptor {
 
     /**
      * Compare to Java UDF descriptors.
-     *
-     * This comparison ignores the outputSchema because it can be derived from the method signature of the Java UDF.
      *
      * @param other The other JavaUdfDescriptor in the comparison.
      * @return True, if both JavaUdfDescriptors are the same, i.e., same UDF class and method name,
