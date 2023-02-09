@@ -56,9 +56,9 @@ void* getDefaultState(void* ss) {
     return handler->getDefaultState()->ptr;
 }
 
-class LocalSliceStoreState : public Operators::OperatorState {
+class LocalGlobalPreAggregationState : public Operators::OperatorState {
   public:
-    explicit LocalSliceStoreState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
+    explicit LocalGlobalPreAggregationState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
     const Value<MemRef> sliceStoreState;
 };
 
@@ -99,7 +99,7 @@ void GlobalSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const
     // 2. load the thread local slice store according to the worker id.
     auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
     // 3. store the reference to the slice store in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalSliceStoreState>(sliceStore);
+    auto sliceStoreState = std::make_unique<LocalGlobalPreAggregationState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
@@ -109,7 +109,7 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     // Depending on the timestamp expression this is derived by a record field (event-time).
     auto timestampValue = timestampExpression->execute(record).as<UInt64>();
     // 2. load the reference to the slice store and find the correct slice.
-    auto sliceStore = static_cast<LocalSliceStoreState*>(ctx.getLocalState(this));
+    auto sliceStore = static_cast<LocalGlobalPreAggregationState*>(ctx.getLocalState(this));
     auto sliceState =
         Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
     // 3. manipulate the current aggregate values
