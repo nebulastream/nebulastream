@@ -42,13 +42,13 @@ class AggregationFunctionTest : public Testing::NESBaseTest {
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>( (int64_t) 1);
+    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
     sumAgg.lift(memref, incomingValue);
     ASSERT_EQ(sumValue.sum, 1);
@@ -71,8 +71,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    auto unsignedIntegerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto unsignedIntegerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
     auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType);
 
@@ -82,19 +82,19 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
     countAgg.lift(memref, incomingValue);
-    ASSERT_EQ(countValue.count, 1UL);
+    ASSERT_EQ(countValue.count, (uint64_t) 1);
 
     // test combine
     countAgg.combine(memref, memref);
-    ASSERT_EQ(countValue.count, 2UL);
+    ASSERT_EQ(countValue.count, (uint64_t) 2);
 
     // test lower
     auto aggregationResult = countAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2UL);
+    ASSERT_EQ(aggregationResult, (uint64_t) 2);
 
     // test reset
     countAgg.reset(memref);
-    EXPECT_EQ(countValue.count, 0UL);
+    EXPECT_EQ(countValue.count, (uint64_t) 0);
 }
 
 /**
@@ -102,8 +102,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    PhysicalTypePtr integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    PhysicalTypePtr doubleType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
     auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
@@ -134,7 +134,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
@@ -191,7 +191,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto integerType =physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
@@ -227,7 +227,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
     // test if memref1 < memref2
-    maxAgg.combine(anotherMemref,memref);
+    maxAgg.combine(anotherMemref, memref);
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // test if memref1 = memref2
