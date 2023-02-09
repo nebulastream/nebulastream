@@ -362,7 +362,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
-    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2UL);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), (uint64_t) 2);
 
     thresholdWindowOperator->terminate(ctx);
 }
