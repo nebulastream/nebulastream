@@ -231,7 +231,6 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
         }
     }
 
-    NES_INFO("Solver found solution with cost: " << z3Model.eval(cost_net).get_decimal_string(4));
     for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
         NES_INFO("Operator " << operatorNode->toString() << " is executed on Topology Node " << topologyNode->toString());
     }

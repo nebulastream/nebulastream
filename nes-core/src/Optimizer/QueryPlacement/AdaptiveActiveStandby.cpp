@@ -342,11 +342,17 @@ std::set<TopologyNodeId> AdaptiveActiveStandby::getNodeIdsToExcludeToTarget(cons
         // NOTE: this does exclude intermediate topology nodes that are used for transmitting data between the primaries,
         // works under the assumption that there is either only one path or the first path is used for connecting nodes
         auto nodeOfPrimary = findNodeWherePinned(primaryOperator);
-        auto nodes = topology->findNodesBetween(nodeOfPrimary, targetTopologyNode);
+        auto startNodes = topology->findPathBetween({nodeOfPrimary}, {targetTopologyNode});
 
-        for (const auto& node: nodes) {
+        if (startNodes.empty())
+            return nodeIds;
+
+        TopologyNodePtr node = startNodes[0];
+        while (!node->getParents().empty()) {
             nodeIds.insert(node->getId());
+            node = node->getParents()[0]->as<TopologyNode>();
         }
+        nodeIds.insert(node->getId());
     } else {
         // NOTE: this does not exclude intermediate topology nodes that are used for transmitting data between the primaries,
         // only nodes where operators are actually placed
