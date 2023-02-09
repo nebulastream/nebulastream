@@ -72,15 +72,18 @@ using Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr = std::shared_p
 class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr create(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
+    static Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr create(const z3::ContextPtr& contextSig1Contained);
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
     ~Z3SignatureBasedContainmentBasedCompleteQueryMergerRule() noexcept final = default;
 
+    const SignatureContainmentUtilPtr& getSignatureContainmentUtil() const;
+
   private:
-    explicit Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(const z3::ContextPtr& contextSig1Contained, const z3::ContextPtr& contextSig2Containment);
-    SignatureContainmentUtilPtr signatureEqualityUtil;
+    explicit Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(const z3::ContextPtr& contextSig1Contained);
+    SignatureContainmentUtilPtr signatureContainmentUtil;
+
 };
 }// namespace NES::Optimizer
 

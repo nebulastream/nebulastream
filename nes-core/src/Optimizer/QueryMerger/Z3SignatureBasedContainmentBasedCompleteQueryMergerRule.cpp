@@ -27,35 +27,34 @@
 namespace NES::Optimizer {
 
 Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(
-    const z3::ContextPtr& contextSig1Contained,
-    const z3::ContextPtr& contextSig2Containment)
+    const z3::ContextPtr& contextSig1Contained)
     : BaseQueryMergerRule() {
-    signatureEqualityUtil = SignatureContainmentUtil::create(std::move(contextSig1Contained), std::move(contextSig2Containment));
+    signatureContainmentUtil = SignatureContainmentUtil::create(std::move(contextSig1Contained));
 }
 
 Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr
-Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::create(const z3::ContextPtr& contextSig1Contained,
-                                                                const z3::ContextPtr& contextSig2Containment) {
+Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::create(const z3::ContextPtr& contextSig1Contained) {
     return std::make_shared<Z3SignatureBasedContainmentBasedCompleteQueryMergerRule>(
-        Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(std::move(contextSig1Contained),
-                                                                std::move(contextSig2Containment)));
+        Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(std::move(contextSig1Contained)));
 }
 
 bool Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO(
-        "Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the "
+             "Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
-                    " Skipping the Signature Based Equal Query Merger Rule.");
+        NES_WARNING(
+            "Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Found no new query plan to add in the global query plan."
+            " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global "
+              "Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
+    bool foundMatch = false;
     for (const auto& targetQueryPlan : queryPlansToAdd) {
-
         bool matched = false;
         auto hostSharedQueryPlans = globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
         for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
@@ -65,55 +64,25 @@ bool Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::apply(GlobalQueryP
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             auto targetSink = targetQueryPlan->getSinkOperators()[0];
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
-            bool foundMatch = false;
 
             //Check if the host and target sink operator signatures match each other
-            if (signatureEqualityUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
+            auto containment = signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
+            NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
+            if (containment != NO_CONTAINMENT) {
                 targetToHostSinkOperatorMap[targetSink] = hostSink;
                 foundMatch = true;
-            }
-
-            //Not all sinks found an equivalent entry in the target shared query metadata
-            if (foundMatch) {
-                NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
-
-                hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
-                //Iterate over all matched pairs of sink operators and merge the query plan
-                for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
-                    //Get children of target and host sink operators
-                    auto targetSinkChildren = targetSinkOperator->getChildren();
-                    auto hostSinkChildren = hostSinkOperator->getChildren();
-                    //Iterate over target children operators and migrate their parents to the host children operators.
-                    // Once done, remove the target parent from the target children.
-                    for (auto& targetSinkChild : targetSinkChildren) {
-                        for (auto& hostChild : hostSinkChildren) {
-                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
-                            if (!addedNewParent) {
-                                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
-                            }
-                            hostSharedQueryPlan->addAdditionToChangeLog(hostChild->as<OperatorNode>(), targetSinkOperator);
-                        }
-                        targetSinkChild->removeParent(targetSinkOperator);
-                    }
-                    //Add target sink operator as root to the host query plan.
-                    hostQueryPlan->addRootOperator(targetSinkOperator);
-                }
-                //Update the shared query metadata
-                globalQueryPlan->updateSharedQueryPlan(hostSharedQueryPlan);
-                // exit the for loop as we found a matching address shared query metadata
                 matched = true;
-                break;
             }
         }
-
         if (!matched) {
-            NES_DEBUG("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
+            NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
             globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
         }
     }
-    //Remove all empty shared query metadata
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
-    return globalQueryPlan->clearQueryPlansToAdd();
+    return foundMatch;
 }
-
+const SignatureContainmentUtilPtr& Z3SignatureBasedContainmentBasedCompleteQueryMergerRule::getSignatureContainmentUtil() const {
+    return signatureContainmentUtil;
+}
 }// namespace NES::Optimizer
