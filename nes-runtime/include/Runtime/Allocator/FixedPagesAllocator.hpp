@@ -15,10 +15,9 @@
 #ifndef NES_FIXEDPAGESALLOCATOR_HPP
 #define NES_FIXEDPAGESALLOCATOR_HPP
 
-#include <cstddef>
-
 #include <Util/Logger/Logger.hpp>
 #include <atomic>
+#include <cstddef>
 #include <cstring>
 #include <sys/mman.h>
 

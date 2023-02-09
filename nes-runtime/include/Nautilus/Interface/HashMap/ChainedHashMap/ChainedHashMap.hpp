@@ -15,7 +15,7 @@
 #define NES_RUNTIME_INCLUDE_EXPERIMENTAL_INTERPRETER_UTIL_HASHMAP_HPP_
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <memory_resource>
+#include <Runtime/Allocator/MemoryResource.hpp>
 
 namespace NES::Nautilus::Interface {
 class ChainedHashMapRef;
@@ -92,7 +92,7 @@ class ChainedHashMap {
     inline Entry* insertEntry(hash_t hash) {
         auto* newEntry = allocateNewEntry();
         // call the constructor of Entry at the address of new Entry to initialize the object.
-        new(newEntry) Entry(hash);
+        new (newEntry) Entry(hash);
         insert(newEntry, hash);
         return newEntry;
     }

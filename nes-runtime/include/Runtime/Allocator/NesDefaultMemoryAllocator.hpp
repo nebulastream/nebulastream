@@ -15,19 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 
+#include <Runtime/Allocator/MemoryResource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
-#ifdef __linux__
-#include <memory_resource>
-#elif defined(__APPLE__)
-// TODO move non experimental when upgrading clang dep
-#include <experimental/memory_resource>
-namespace std {
-namespace pmr {
-using memory_resource = std::experimental::pmr::memory_resource;
-}
-}// namespace std
-#endif
 namespace NES::Runtime {
 /**
  * @brief The default memory resource of nes that use posix_memalign
