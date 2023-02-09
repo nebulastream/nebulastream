@@ -235,8 +235,16 @@ class SimpleOpenCLPipelineStage : public Runtime::Execution::ExecutablePipelineS
         size_t globalSize = numberOfTuples;
         status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &globalSize, nullptr, 0, nullptr, &executionEvent);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not enqueue kernel execution");
-//        status = clWaitForEvents(1, &executionEvent);
-//        ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
+        status = clWaitForEvents(1, &executionEvent);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Waiting for execution event failed");
+        cl_ulong start;
+        cl_ulong end;
+        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_START, sizeof(ulong), &start, nullptr);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution start time");
+        status = clGetEventProfilingInfo(executionEvent, CL_PROFILING_COMMAND_END, sizeof(ulong), &end, nullptr);
+        ASSERT_OPENCL_SUCCESS_OK(status, "Could not read kernel execution end time");
+        // Profiling information is in nanoseconds = 1e-9 seconds.
+        NES_DEBUG("Kernel execution time = " << (end - start) / (1000 * 1000.0) << " ms");
         status = clFinish(commandQueue);
         ASSERT_OPENCL_SUCCESS_OK(status, "Could not finish command queue after executing kernel");
 
