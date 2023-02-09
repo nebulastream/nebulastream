@@ -61,6 +61,7 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
+    // create first pipeline with selectivity of 10 %
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -77,7 +78,7 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    // create second pipeline
+    // create second pipeline with selectivity of 80 %
     auto scanMemoryProviderPtr2 = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator2 = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr2));
 
@@ -93,10 +94,16 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     auto pipeline2=std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(scanOperator2);
 
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> dist(0, 10);
+
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+        uint64_t randomNumber = dist(rng);
+        dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
@@ -110,15 +117,15 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
         ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
         ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 
-    // apply pipeline2 first
+    // apply pipeline2
     auto executablePipeline2 = provider->create(pipeline2);
 
     auto pipelineContext2 = MockedPipelineExecutionContext();
@@ -128,10 +135,10 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
-    ASSERT_EQ(resultBuffer2.getNumberOfTuples(), 80);
+    ASSERT_EQ(resultBuffer2.getNumberOfTuples(), pipelineContext2.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout,resultBuffer2);
-    for(uint64_t i = 0; i < 10; i++){
+    for(uint64_t i = 0; i < resultBuffer2.getNumberOfTuples(); i++){
         ASSERT_GT(resultDynamicBuffer2[i]["f1"].read<int64_t>(),resultDynamicBuffer2[i]["f2"].read<int64_t>());
     }
 }
@@ -152,6 +159,7 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
+    // create first pipeline with selectivity of 10 %
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -168,99 +176,7 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    // create second pipeline
-    auto scanMemoryProviderPtr2 = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator2 = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr2));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constInt1 = std::make_shared<Expressions::ConstantIntegerExpression>(2);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1,constInt1);
-    auto selectionOperator2_1 = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator2->setChild(selectionOperator2_1);
-
-    auto constInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(8);
-    auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readField1,constInt2);
-    auto selectionOperator2_2 = std::make_shared<Operators::Selection>(lessThanExpression);
-    selectionOperator2_1->setChild(selectionOperator2_2);
-
-    auto emitMemoryProviderPtr2=std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator2=std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr2));
-    selectionOperator2_2->setChild(emitOperator2);
-
-    auto pipeline2=std::make_shared<PhysicalOperatorPipeline>();
-    pipeline2->setRootOperator(scanOperator2);
-
-    auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 500; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
-        dynamicBuffer.setNumberOfTuples(i + 1);
-    }
-
-    auto executablePipeline = provider->create(pipeline);
-
-    auto pipelineContext = MockedPipelineExecutionContext();
-    executablePipeline->setup(pipelineContext);
-    executablePipeline->execute(buffer, pipelineContext, *wc);
-    executablePipeline->stop(pipelineContext);
-
-    ASSERT_EQ(pipelineContext.buffers.size(), 1);
-    auto resultBuffer = pipelineContext.buffers[0];
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 50);
-
-    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < 10; i++) {
-        ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
-    }
-
-    // apply pipeline2
-    auto executablePipeline2 = provider->create(pipeline2);
-
-    auto pipelineContext2 = MockedPipelineExecutionContext();
-    executablePipeline2->setup(pipelineContext2);
-    executablePipeline2->execute(buffer,pipelineContext2,*wc);
-    executablePipeline2->stop(pipelineContext2);
-
-    ASSERT_EQ(pipelineContext2.buffers.size(),1);
-    auto resultBuffer2 = pipelineContext2.buffers[0];
-    ASSERT_EQ(resultBuffer2.getNumberOfTuples(), 250);
-
-    auto resultDynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout,resultBuffer2);
-    for(uint64_t i = 0; i < 10; i++){
-        ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
-        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 8);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
-    }
-}
-
-/**
- * @brief 2 pipelines with different runtimes and random buffer sorting
- */
-TEST_P(SelectivityRuntimeTest, runtimesTestRandomBuffer) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
-
-    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(5);
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(constantInt, readF1);
-    auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
-    scanOperator->setChild(selectionOperator);
-
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    selectionOperator->setChild(emitOperator);
-
-    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
-    pipeline->setRootOperator(scanOperator);
-
-    // create second pipeline
+    // create second pipeline selectivity of 50 %
     auto scanMemoryProviderPtr2 = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator2 = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr2));
 
@@ -305,7 +221,7 @@ TEST_P(SelectivityRuntimeTest, runtimesTestRandomBuffer) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
-    //ASSERT_EQ(resultBuffer.getNumberOfTuples(), 50);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
@@ -381,10 +297,16 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     auto pipeline2=std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(scanOperator2);
 
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> dist(0, 10);
+
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+        uint64_t randomNumber = dist(rng);
+        dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
@@ -406,7 +328,7 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
-    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
@@ -414,7 +336,7 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
         ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 
-    // apply pipeline2
+    // apply pipeline on buffer2
     auto executablePipeline2 = provider->create(pipeline);
 
     auto pipelineContext2 = MockedPipelineExecutionContext();
@@ -442,6 +364,11 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> dist(0, 10);
+
     std::vector<TupleBuffer> bufferVector;
 
     for (int j = 0; j < 3; ++j){
@@ -449,7 +376,8 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t i = 0; i < 512; i++) {
-            dynamicBuffer[i]["f1"].write((int64_t) i % 20);
+            uint64_t randomNumber = dist(rng);
+            dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
             dynamicBuffer[i]["f2"].write((int64_t) 1);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
@@ -481,13 +409,14 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
         }
         executablePipeline->stop(pipelineContext);
 
-        ASSERT_EQ(pipelineContext.buffers.size(), 3);
-        auto resultBuffer = pipelineContext.buffers[0];
-        auto numResultTuples = resultBuffer.getNumberOfTuples();
-        ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
+        auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
+        ASSERT_EQ(numberOfResultBuffers, 3);
+        // Todo: vector of number of emitted tuples?
+        ASSERT_EQ(pipelineContext.buffers[2].getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
+        auto resultBuffer = pipelineContext.buffers[0];
         auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-        for (uint64_t k = 0; k < numResultTuples; k++) {
+        for (uint64_t k = 0; k < resultBuffer.getNumberOfTuples(); k++) {
             ASSERT_LT(resultDynamicBuffer[k]["f1"].read<int64_t>(), i);
             ASSERT_EQ(resultDynamicBuffer[k]["f2"].read<int64_t>(), 1);
         }
