@@ -49,8 +49,8 @@ AdaptiveActiveStandby::AdaptiveActiveStandby(TopologyPtr topology,
 }
 
 bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
-    bool success;
-    double score;
+    bool success = false;
+    double score = 0;
     auto start = std::chrono::steady_clock::now();
 
     NES_DEBUG("AdaptiveActiveStandby: Started. Current topology: " << topology->toString());
@@ -161,9 +161,12 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
 
     // TODO: more tests to make sure that score changes reflect the actual score
     {
-        score = evaluateEntireCandidatePlacement();
+        auto expectedScore = evaluateEntireCandidatePlacement();
 
-        NES_DEBUG("ASD: \n" << candidateOperatorPlacementsToString() << "Total score with penalties: " << score);
+        NES_DEBUG("ASD: \n" << candidateOperatorPlacementsToString() << "Expected score: " << expectedScore);
+
+        if (score != expectedScore)
+            NES_THROW_RUNTIME_ERROR("AAS: incorrect score");
     }
 
     // 7. Pin the operators based on the best candidate
@@ -761,8 +764,9 @@ double AdaptiveActiveStandby::evaluateSinglePlacement(const OperatorNodePtr& sec
     NES_DEBUG("AdaptiveActiveStandby: Evaluating placement of replica "
               << secondaryOperator->toString() << " on its current node " << topologyNode->toString());
 
-    double scoreToParents = 0.0;
-    double scoreToChildren = 0.0;
+    double scoreToParents = 0.0;    // to save
+    double scoreToChildren = 0.0;   // to save
+    double totalScore = 0.0;    // to return
 
     auto outputSecondary = getOperatorOutput(secondaryOperator);
 
@@ -772,10 +776,11 @@ double AdaptiveActiveStandby::evaluateSinglePlacement(const OperatorNodePtr& sec
         auto parentOperatorsNode = findNodeWherePinned(parentOperator);
         // network cost = output * distance of nodes
         auto distance = getDistance(topologyNode, parentOperatorsNode);
+        scoreToParents += outputSecondary * distance;
         if (!secondaryOperatorMap.contains(parentOperator->getId()))
-            scoreToParents += outputSecondary * distance;
+            totalScore += outputSecondary * distance;
         else
-            scoreToParents += outputSecondary * distance / 2.0;     // will be counted twice
+            totalScore += outputSecondary * distance / 2.0;     // will be counted twice for total evaluation of placement
     }
 
     // 2. iterate over all children
@@ -785,23 +790,23 @@ double AdaptiveActiveStandby::evaluateSinglePlacement(const OperatorNodePtr& sec
         // network cost = output * distance of nodes
         auto output = getOperatorOutput(childOperator);
         auto distance = getDistance(childOperatorsNode, topologyNode);
+        scoreToChildren += output * distance;
         if (!secondaryOperatorMap.contains(childOperator->getId()))
-            scoreToChildren += output * distance;
+            totalScore += output * distance;
         else
-            scoreToChildren += output * distance / 2.0;         // will be counted twice
+            totalScore += output * distance / 2.0;         // will be counted twice for total evaluation of placement
     }
 
-    auto score = networkCostWeight * (scoreToParents + scoreToChildren);
-
-    candidateOperatorToTopologyMap[secondaryOperator->getId()].second = score;
+    // NOTE: score of total evaluation != sum of individual saved operator scores
+    candidateOperatorToTopologyMap[secondaryOperator->getId()].second = networkCostWeight * (scoreToParents + scoreToChildren);
 
     NES_DEBUG("AdaptiveActiveStandby: Evaluated single placement of secondary operator "
               << secondaryOperator->toString() << " to topology node "
-              << topologyNode->toString() << ". Score: " << score
+              << topologyNode->toString() << ". Score: " << networkCostWeight * (scoreToParents + scoreToChildren)
               << " (to parents: " << networkCostWeight * scoreToParents
               << ", to children: " << networkCostWeight * scoreToChildren << ")");
 
-    return score;
+    return networkCostWeight * totalScore;
 }
 
 std::set<TopologyNodeId> AdaptiveActiveStandby::getAllTopologyNodesByIdWherePinned(const std::vector<NodePtr>& operatorNodes) {

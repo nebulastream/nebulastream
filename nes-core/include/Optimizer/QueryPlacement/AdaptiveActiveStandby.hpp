@@ -296,9 +296,12 @@ class AdaptiveActiveStandby {
 
     /**
      * Evaluates the placement of a single secondary operator on its current topology node by evaluating all the links to its
-     * parents and children. For the final evaluation, every link between replicas is counted twice, therefore these scores are
-     * halved for each replica. The connections to primary operators (e.g. sources, sinks) are only counted once.
-     * Also updates the corresponding score in the candidateOperatorToTopologyMap.
+     * parents and children. For the final evaluation of the entire placement, every link between replicas is counted twice,
+     * therefore these scores are halved for each replica for the returned value. The connections to primary operators
+     * (e.g. sources, sinks) are only counted once.
+     * Also updates the corresponding score in the candidateOperatorToTopologyMap, without halving any scores, however. That makes
+     * the scores in candidateOperatorToTopologyMap very useful for evaluations of placement changes, but unusable for the
+     * evaluation of the entire placement.
      * @param secondaryOperator: secondary operator that is to be evaluated
      * @return score of the placement of the secondary operator on its current node
      */
