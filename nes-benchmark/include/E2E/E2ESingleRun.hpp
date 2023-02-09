@@ -46,10 +46,12 @@ class E2ESingleRun {
      * @param configPerRun
      * @param configOverAllRuns
      * @param portOffSet
+     * @param restPort
      */
-    explicit E2ESingleRun(const E2EBenchmarkConfigPerRun& configPerRun,
-                          const E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
-                          int portOffSet);
+    explicit E2ESingleRun(E2EBenchmarkConfigPerRun& configPerRun,
+                          E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                          uint16_t rpcPort,
+                          uint16_t restPort);
 
     /**
      * @brief destroying this object and taking care of
@@ -62,7 +64,12 @@ class E2ESingleRun {
      */
     void run();
 
-  private:
+    /**
+     * @brief Getter for the coordinator config
+     * @return Returns the coordinatorconfig
+     */
+    [[nodiscard]] const CoordinatorConfigurationPtr& getCoordinatorConf() const;
+
     /**
      * @brief sets up the coordinator config and worker config
      */
@@ -89,6 +96,12 @@ class E2ESingleRun {
     void writeMeasurementsToCsv();
 
     /**
+     * @brief Getter for the Measurements of this run
+     * @return Reference to the Measurements
+     */
+    Measurements::Measurements& getMeasurements();
+
+    /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
      * @param queryCatalogService: the catalog to look into for status change
@@ -100,9 +113,10 @@ class E2ESingleRun {
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
   private:
-    E2EBenchmarkConfigPerRun configPerRun;
-    E2EBenchmarkConfigOverAllRuns configOverAllRuns;
-    int portOffSet;
+    E2EBenchmarkConfigPerRun& configPerRun;
+    E2EBenchmarkConfigOverAllRuns& configOverAllRuns;
+    int rpcPortSingleRun;
+    int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
     std::vector<DataProviding::DataProviderPtr> allDataProviders;

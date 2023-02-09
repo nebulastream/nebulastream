@@ -31,7 +31,7 @@ get_source(nes-benchmark NES_BENCHMARK_SOURCE_FILES)
 # Add nes-benchmark library
 add_library(nes-benchmark SHARED ${NES_BENCHMARK_SOURCE_FILES})
 target_link_libraries(nes-benchmark PUBLIC nes nes-common ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
-add_nes_benchmarks(e2e-benchmark-runner "src/E2E/E2ERunner.cpp")
+add_nes_benchmarks(e2e-benchmark-main "src/E2E/E2EBenchmarkMain.cpp")
 
 
 #-------------------------------##################------------------------------
@@ -53,5 +53,3 @@ add_nes_benchmarks(ysb-kafka-data-generator "src/DataGeneration/YSBKafkaDataGene
 
 # Adding benchmark tests
 add_subdirectory(test)
-
-message(STATUS "Done building benchmarks")

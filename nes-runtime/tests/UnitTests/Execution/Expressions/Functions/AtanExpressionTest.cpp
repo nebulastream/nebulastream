@@ -13,29 +13,23 @@
 */
 
 #include <Execution/Expressions/Functions/AtanExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
 namespace NES::Runtime::Execution::Expressions {
 
-class AtanExpressionTest : public testing::Test {
+class AtanExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup AtanExpressionTest test class." << std::endl;
+        NES_INFO("Setup AtanExpressionTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down AtanExpressionTest test class."); }
 };
 
 TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
@@ -43,7 +37,7 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
     // Double
     {
         auto resultValue = expression.eval(Value<Double>(0.5));
-        ASSERT_EQ(resultValue, (double) 0.4636476090008061);
+        ASSERT_EQ(resultValue, std::atan(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -53,7 +47,7 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, (float) 0.4636476090008061);
+        ASSERT_EQ(resultValue, std::atan((float) 0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

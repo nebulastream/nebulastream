@@ -60,6 +60,9 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              uint64_t sourceAffinity,
                              uint64_t taskQueueId,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+
+    ~BenchmarkSource();
+
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -83,13 +86,13 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     virtual void runningRoutine() override;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override;
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override;
 
     /**
      * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
@@ -107,6 +110,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
     SourceMode::Value sourceMode;
     uint64_t schemaSize;
     uint64_t bufferSize;
+    std::atomic<uint64_t> memoryAreaRefCnt{0};
 };
 
 using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;

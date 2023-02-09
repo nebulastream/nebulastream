@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -40,6 +41,7 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
+            || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()

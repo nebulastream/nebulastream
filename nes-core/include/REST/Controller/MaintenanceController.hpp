@@ -22,11 +22,10 @@
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-namespace NES {
-namespace REST {
-namespace Controller {
+namespace NES::REST::Controller {
 
 class MaintenanceController : public oatpp::web::server::api::ApiController {
 
@@ -38,10 +37,10 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
      */
     MaintenanceController(const std::shared_ptr<ObjectMapper>& objectMapper,
                           Experimental::MaintenanceServicePtr maintenanceService,
-                          oatpp::String completeRouterPrefix,
+                          const oatpp::String& completeRouterPrefix,
                           ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), maintenanceService(maintenanceService),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
+          maintenanceService(std::move(maintenanceService)), errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller
@@ -90,9 +89,7 @@ class MaintenanceController : public oatpp::web::server::api::ApiController {
     Experimental::MaintenanceServicePtr maintenanceService;
     ErrorHandlerPtr errorHandler;
 };
-}//namespace Controller
-}// namespace REST
-}// namespace NES
+}// namespace NES::REST::Controller
 
 #include OATPP_CODEGEN_END(ApiController)
 

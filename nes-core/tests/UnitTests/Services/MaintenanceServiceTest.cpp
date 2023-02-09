@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Phases/MigrationType.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -45,7 +46,10 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup MaintenanceService test case.");
         topology = Topology::create();
-        TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
+        TopologyNodePtr root = TopologyNode::create(id, ip, grpcPort, dataPort, resources, properties);
         topology->setAsRoot(root);
         nesRequestQueue = std::make_shared<RequestQueue>(1);
         maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology, nesRequestQueue);

@@ -111,7 +111,7 @@ bool OperatorNode::addChild(NodePtr newNode) {
     });
 
     if (found == currentChildren.end()) {
-        NES_DEBUG("OperatorNode: Adding node to the children.");
+        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the children.");
         children.push_back(newNode);
         newNode->addParent(shared_from_this());
         return true;
@@ -138,7 +138,7 @@ bool OperatorNode::addParent(NodePtr newNode) {
     });
 
     if (found == currentParents.end()) {
-        NES_DEBUG("OperatorNode: Adding node to the Parents.");
+        NES_DEBUG("OperatorNode: Adding node " << newNode->toString() << " to the Parents.");
         parents.push_back(newNode);
         newNode->addChild(shared_from_this());
         return true;

@@ -16,9 +16,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <memory>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalGlobalSlidingWindowSink::PhysicalGlobalSlidingWindowSink(
     OperatorId id,
@@ -42,6 +40,4 @@ std::string PhysicalGlobalSlidingWindowSink::toString() const { return "Physical
 
 OperatorNodePtr PhysicalGlobalSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

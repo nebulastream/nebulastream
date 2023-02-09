@@ -66,8 +66,6 @@ jobs:
         exclude:
           - arch: arm64
             osversion: ubuntu-18_04
-          - arch: arm64
-            osversion: ubuntu-22_04
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
@@ -122,6 +120,7 @@ jobs:
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+      UBUNTU_VERSION: 22_04
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -132,8 +131,8 @@ jobs:
           nes_version=${GITHUB_REF_NAME:1}
           echo "Preparing and Releasing new executable image with version $nes_version and latest"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-20_04-Linux.X64.deb
-          wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-20_04-Linux.arm64.deb
+          wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.X64.deb
+          wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.arm64.deb
           docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
           rm -rf nes-amd64.deb nes-arm64.deb
           echo "Pushed the execution image"

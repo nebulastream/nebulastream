@@ -23,7 +23,7 @@
 #include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryCatalogService.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
@@ -889,16 +889,15 @@ class DummyQueryListener : public AbstractQueryStatusListener {
     bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
 };
 
-using Waypoint = std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>;
-
 /**
  * @brief read mobile device path waypoints from csv
  * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
  * @param startTime the real or simulated start time of the LocationProvider
  * @return a vector of waypoints with timestamps calculated by adding startTime to the offset obtained from csv
  */
-std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp startTime) {
-    std::vector<Waypoint> waypoints;
+std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv(const std::string& csvPath,
+                                                                                 Timestamp startTime) {
+    std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints;
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string latitudeString;
@@ -920,58 +919,29 @@ std::vector<Waypoint> getWaypointsFromCsv(const std::string& csvPath, Timestamp 
         time += startTime;
 
         //construct a pair containing a location and the time at which the device is at exactly that point
-        // and sve it to a vector containing all waypoints
-        std::pair waypoint(
-            std::make_shared<NES::Spatial::Index::Experimental::Location>(
-                NES::Spatial::Index::Experimental::Location(std::stod(latitudeString), std::stod(longitudeString))),
-            time);
-        waypoints.push_back(waypoint);
+        // and save it to a vector containing all waypoints
+        waypoints.push_back(NES::Spatial::DataTypes::Experimental::Waypoint(
+            NES::Spatial::DataTypes::Experimental::GeoLocation(std::stod(latitudeString), std::stod(longitudeString)),
+            time));
     }
     return waypoints;
 }
 
 /**
- * @brief compare the movement of a device with data from csv
- * @param csvPath path to the csv with lines in the format <latitude, longitude, offsetFromStartTime>
- * @param startTime the real or simulated start time of the LocationProvider
- * @param timesToCheckEndLocation how often to check that the device actually remains motionless after arriving at its final position
- * @param getLocation function to get the devices location (eg. wrapper around LocationProvider or TopologyNode object)
- * @param functionParameters parameter to be passed to the getWaypoint function (eg. the LocationProvider object from which the wrapper obtains the location)
+ * @brief write mobile device path waypoints to a csv file to use as input for the LocationProviderCSV class
+ * @param csvPath path to the output file
+ * @param waypoints a vector of waypoints to be written to the file
  */
-void checkDeviceMovement(std::string csvPath,
-                         Timestamp startTime,
-                         size_t timesToCheckEndLocation,
-                         std::shared_ptr<NES::Spatial::Index::Experimental::Waypoint> (*getLocation)(std::shared_ptr<void>),
-                         std::shared_ptr<void> functionParameters) {
-    std::vector<Waypoint> waypoints = getWaypointsFromCsv(csvPath, startTime);
-    NES_DEBUG("Read " << waypoints.size() << " waypoints from csv");
-
-    //set the end time
-    auto endTime = waypoints.back().second;
-    auto currentLocTime = getLocation(functionParameters);
-    auto iter = waypoints.cbegin();
-    while (currentLocTime->getTimestamp().value() < endTime) {
-        currentLocTime = getLocation(functionParameters);
-        NES_TRACE("Device is at location: " << currentLocTime->getLocation()->toString());
-        EXPECT_TRUE(currentLocTime->getLocation()->isValid());
-        EXPECT_TRUE(currentLocTime->getTimestamp().has_value());
-        while (std::next(iter) != waypoints.cend() && currentLocTime->getTimestamp().value() >= std::next(iter)->second) {
-            iter++;
-        }
-        if (iter == waypoints.cend()) {
-            break;
-        }
-        NES_TRACE("checking position " << (iter - waypoints.cbegin()) << " out of " << waypoints.size());
-        EXPECT_EQ(*currentLocTime->getLocation(), *iter->first);
+void writeWaypointsToCsv(const std::string& csvPath, std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypoints) {
+    remove(csvPath.c_str());
+    std::ofstream outFile(csvPath);
+    for (auto& point : waypoints) {
+        ASSERT_TRUE(point.getTimestamp().has_value());
+        outFile << point.getLocation().toString() << "," << std::to_string(point.getTimestamp().value()) << std::endl;
     }
-
-    currentLocTime = getLocation(functionParameters);
-    auto endPosition = waypoints.back().first;
-    for (size_t i = 0; i < timesToCheckEndLocation; ++i) {
-        NES_DEBUG("checking if device remains in end position, check " << i + 1 << " out of " << timesToCheckEndLocation);
-        EXPECT_EQ(*currentLocTime->getLocation(), *endPosition);
-        currentLocTime = getLocation(functionParameters);
-    }
+    outFile.close();
+    ASSERT_FALSE(outFile.fail());
 }
+
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

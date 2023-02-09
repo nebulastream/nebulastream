@@ -29,24 +29,26 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler,
-                                      JoinBuildSide buildSide);
-    static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+                                      JoinBuildSideType buildSide);
+    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Join::JoinOperatorHandlerPtr& operatorHandler,
+                                      JoinBuildSideType buildSide);
     PhysicalJoinBuildOperator(OperatorId id,
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
                               Join::JoinOperatorHandlerPtr operatorHandler,
-                              JoinBuildSide buildSide);
+                              JoinBuildSideType buildSide);
 
     ~PhysicalJoinBuildOperator() noexcept override = default;
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    JoinBuildSide getBuildSide();
+    JoinBuildSideType getBuildSide();
 
   private:
-    JoinBuildSide joinBuildSide;
+    JoinBuildSideType joinBuildSide;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

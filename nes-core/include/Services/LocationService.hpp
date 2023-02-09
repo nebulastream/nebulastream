@@ -14,7 +14,6 @@
 #ifndef NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 #define NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_
 
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -22,18 +21,23 @@
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-}// namespace NES
 
-namespace NES::Spatial::Index::Experimental {
+namespace Spatial::DataTypes::Experimental {
+class GeoLocation;
+}// namespace Spatial::DataTypes::Experimental
+
+namespace Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
+}// namespace Spatial::Index::Experimental
 
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+namespace Spatial::Mobility::Experimental {
+struct ReconnectPoint;
+}
 
 class LocationService {
   public:
-    explicit LocationService(TopologyPtr topology);
+    explicit LocationService(TopologyPtr topology, NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex);
 
     /**
      * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
@@ -106,24 +110,25 @@ class LocationService {
      * @param time : The expected time at which the device will reconnect
      * @return true if the information was processed correctly
      */
-    bool updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction);
+    bool updatePredictedReconnect(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+                                  const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
 
   private:
     /**
      * @brief convert a Location to a json representing the same coordinates
-     * @param location : The location object to convert
+     * @param geoLocation : The location object to convert
      * @return a json array in the format:
      * [
      *   <latitude>,
      *   <longitude>,
      * ]
      */
-    static nlohmann::json convertLocationToJson(Location location);
+    static nlohmann::json convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * Use a node id and a Location to construct a Json representation containing these values.
      * @param id : the nodes id
-     * @param loc : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
+     * @param geoLocation : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
      * @return a json in the format:
         {
             "id": <node id>,
@@ -133,11 +138,12 @@ class LocationService {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id, Location loc);
+    static nlohmann::json convertNodeLocationInfoToJson(uint64_t id,
+                                                        NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
-    LocationIndexPtr locationIndex;
+    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
     TopologyPtr topology;
 };
-}// namespace NES::Spatial::Index::Experimental
+}// namespace NES
 
 #endif// NES_CORE_INCLUDE_SERVICES_LOCATIONSERVICE_HPP_

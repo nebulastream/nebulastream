@@ -34,6 +34,10 @@ target_include_directories(nes-runtime PUBLIC
 
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical" "-fPIC")
 
+if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
+    message(STATUS "Enable bytecode interpreter")
+endif ()
+
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     # include MLIR. This is currently required
     find_package(MLIR REQUIRED CONFIG)
@@ -48,6 +52,8 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
         get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
         message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
         message(STATUS "mlir_libs: ${mlir_libs}")
+        message(STATUS "dialect_libs: ${dialect_libs}")
+        message(STATUS "conversion_libs: ${MLIR_INCLUDE_DIRS}")
         target_link_libraries(nes-runtime PRIVATE ${mlir_libs} ${dialect_libs}
                 ${conversion_libs}
                 MLIRReconcileUnrealizedCasts
@@ -55,7 +61,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 MLIRExecutionEngine)
 
         # Include necessary mlir library in the deb package and install it in the lib folder
-        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime  DESTINATION lib)
+        install(IMPORTED_RUNTIME_ARTIFACTS mlir_runner_utils mlir_c_runner_utils mlir_async_runtime DESTINATION lib)
 
     else ()
         message(FATAL_ERROR "Cannot find mlir")
@@ -108,21 +114,6 @@ endif ()
 
 if ((NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI) AND (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH))
     message(FATAL_ERROR "You cant activate JNI and BABELFISH at the same time")
-elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    target_compile_definitions(nes-runtime PUBLIC USE_JNI)
-    find_package(JNI)
-    if (JNI_FOUND)
-        message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-        message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-        message(STATUS "JAVA_INCLUDE_PATH=${JAVA_INCLUDE_PATH}")
-        message(STATUS "JAVA_INCLUDE_PATH2=${JAVA_INCLUDE_PATH2}")
-        target_link_libraries(nes-runtime PRIVATE ${JNI_LIBRARIES})
-        target_include_directories(nes-runtime PUBLIC
-                ${JNI_INCLUDE_DIRS}
-                ${JNI_INCLUDE_DIRS})
-    else ()
-        message(FATAL_ERROR "Cannot find jni")
-    endif (JNI_FOUND)
 elseif (NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH)
     target_compile_definitions(nes-runtime PUBLIC USE_BABELFISH)
     add_library(babelfish STATIC IMPORTED)

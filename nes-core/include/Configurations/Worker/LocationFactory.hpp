@@ -13,15 +13,15 @@
 */
 #ifndef NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_
 #define NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_
+
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
-namespace NES::Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
-}// namespace NES::Spatial::Index::Experimental
+namespace NES::Spatial::DataTypes::Experimental {
+class GeoLocation;
+}// namespace NES::Spatial::DataTypes::Experimental
 
 namespace NES::Configurations::Spatial::Index::Experimental {
 
@@ -34,9 +34,8 @@ class LocationFactory {
      * @return A geographical location with the coordinates from the string, or <200, 200> (representing invalid Coordinates)
      * if the string was empty
      */
-
-    static ::NES::Spatial::Index::Experimental::Location createFromString(std::string,
-                                                                          std::map<std::string, std::string>& commandLineParams);
+    static NES::Spatial::DataTypes::Experimental::GeoLocation
+    createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -44,7 +43,7 @@ class LocationFactory {
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */
-    static ::NES::Spatial::Index::Experimental::Location createFromYaml(Yaml::Node& yamlConfig);
+    static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Spatial::Index::Experimental
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP_

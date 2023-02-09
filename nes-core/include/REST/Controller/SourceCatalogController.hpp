@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 #define NES_CORE_INCLUDE_REST_CONTROLLER_SOURCECATALOGCONTROLLER_HPP_
 
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/MapEntryNotFoundException.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -30,15 +31,7 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-namespace NES {
-namespace Catalogs::Source {
-class SourceCatalog;
-using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-class ErrorHandler;
-using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
-namespace REST {
-namespace Controller {
+namespace NES::REST::Controller {
 class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -47,11 +40,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      */
     SourceCatalogController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                            Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                            SourceCatalogServicePtr sourceCatalogService,
                             ErrorHandlerPtr eHandler,
-                            oatpp::String completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), sourceCatalog(sourceCatalog),
-          errorHandler(eHandler) {}
+                            const oatpp::String& completeRouterPrefix)
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
+          sourceCatalogService(std::move(sourceCatalogService)), errorHandler(std::move(eHandler)) {}
 
     /**
      * Create a shared object of the API controller
@@ -59,17 +52,17 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
      * @return
      */
     static std::shared_ptr<SourceCatalogController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                           SourceCatalogServicePtr sourceCatalogService,
                                                            ErrorHandlerPtr errorHandler,
                                                            std::string routerPrefixAddition) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog, errorHandler, completeRouterPrefix);
+        return std::make_shared<SourceCatalogController>(objectMapper, sourceCatalogService, errorHandler, completeRouterPrefix);
     }
 
     ENDPOINT("GET", "/allLogicalSource", getAllLogicalSource) {
         try {
             nlohmann::json logicalSources;
-            const std::map<std::string, std::string>& allLogicalSourceAsString = sourceCatalog->getAllLogicalSourceAsString();
+            const auto& allLogicalSourceAsString = sourceCatalogService->getAllLogicalSourceAsString();
             if (allLogicalSourceAsString.empty()) {
                 NES_DEBUG("No Logical Source Found");
                 return errorHandler->handleError(Status::CODE_404, "Resource not found.");
@@ -89,7 +82,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/allPhysicalSource", getPhysicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
             const std::vector<Catalogs::Source::SourceCatalogEntryPtr>& allPhysicalSource =
-                sourceCatalog->getPhysicalSources(logicalSourceName);
+                sourceCatalogService->getPhysicalSources(logicalSourceName);
 
             nlohmann::json result;
             nlohmann::json::array_t allSource = {};
@@ -114,8 +107,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ADD_CORS(getSchema)
     ENDPOINT("GET", "/schema", getSchema, QUERY(String, logicalSourceName, "logicalSourceName")) {
         try {
-            SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
-            SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+            auto schema = sourceCatalogService->getLogicalSource(logicalSourceName)->getSchema();
+            auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
             return createResponse(Status::CODE_200, serializableSchema->SerializeAsString());
         } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
@@ -150,7 +143,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             std::string schema = reqJson["schema"];
             NES_DEBUG("SourceCatalogController: addLogicalSource: Try to add new Logical Source " << logicalSourceName << " and "
                                                                                                   << schema);
-            bool added = sourceCatalog->addLogicalSource(logicalSourceName, schema);
+            bool added = sourceCatalogService->registerLogicalSource(logicalSourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?" << added);
             //Prepare the response
             if (added) {
@@ -176,7 +169,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         NES_DEBUG("SourceCatalogController: addLogicalSource: REST received request to add new Logical Source.");
         try {
             std::string req = request.getValue("");
-            std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+            auto protobufMessage = std::make_shared<SerializableNamedSchema>();
 
             if (!protobufMessage->ParseFromArray(req.data(), req.size())) {
                 NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: invalid Protobuf message");
@@ -187,11 +180,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
             // decode protobuf message into c++ obj repr
-            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
+            auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
+            bool added = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
             NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?" << added);
 
             if (!added) {
@@ -233,10 +226,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                 return errorHandler->handleError(Status::CODE_400, "Request body must contain 'schema'");
             }
             std::string sourceName = reqJson["logicalSourceName"];
-            std::string schemaName = reqJson["schema"];
-            NES_DEBUG("SourceCatalogController: updateLogicalSource: Try to update  Logical Source " << sourceName << " and"
-                                                                                                     << schemaName);
-            bool updated = sourceCatalog->updatedLogicalSource(sourceName, schemaName);
+            std::string schema = reqJson["schema"];
+            NES_DEBUG2("SourceCatalogController: updateLogicalSource: Try to update  Logical Source {} with schema {}",
+                       sourceName,
+                       schema);
+            bool updated = sourceCatalogService->updateLogicalSource(sourceName, schema);
             NES_DEBUG("SourceCatalogController: addLogicalSource: Successfully added new logical Source ?" << updated);
             // Prepare the response
             if (updated) {
@@ -267,7 +261,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             if (!nlohmann::json::accept(req)) {
                 return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
             }
-            std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+            auto protobufMessage = std::make_shared<SerializableNamedSchema>();
 
             if (!protobufMessage->ParseFromArray(req.data(), req.size())) {
                 NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource-ex: invalid Protobuf message");
@@ -278,11 +272,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
             // decode protobuf message into c++ obj repr
-            SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
+            auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(protobufMessage->schema());
             std::string sourceName = protobufMessage->sourcename();
 
             // try to add the user supplied source
-            bool updated = sourceCatalog->updatedLogicalSource(sourceName, deserializedSchema);
+            bool updated = sourceCatalogService->updateLogicalSource(sourceName, deserializedSchema);
 
             if (updated) {
                 //Prepare the response
@@ -308,7 +302,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     ENDPOINT("DELETE", "/deleteLogicalSource", deleteLogicalSource, QUERY(String, logicalSourceName, "logicalSourceName")) {
         NES_DEBUG("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
-            bool deleted = sourceCatalog->removeLogicalSource(logicalSourceName);
+            bool deleted = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
             NES_DEBUG("SourceCatalogController: deleteLogicalSource: Successfully deleted the given logical Source: " << deleted);
             // Prepare the response
             if (deleted) {
@@ -331,13 +325,11 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
     }
 
   private:
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    SourceCatalogServicePtr sourceCatalogService;
     ErrorHandlerPtr errorHandler;
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalogController>;
-}// namespace Controller
-}// namespace REST
-}// namespace NES
+}// namespace NES::REST::Controller
 
 #include OATPP_CODEGEN_END(ApiController)
 

@@ -16,21 +16,19 @@ include(ExternalProject)
 add_library(nes-runtime-benchmark INTERFACE)
 target_include_directories(nes-runtime-benchmark INTERFACE "../tests/include/")
 target_link_libraries(nes-runtime-benchmark INTERFACE nes-runtime)
+
+find_package(benchmark CONFIG REQUIRED)
+if (NOT ${benchmark_FOUND})
+    message(FATAL_ERROR "Unable to find google benchmark")
+endif ()
+
 target_link_libraries(nes-runtime-benchmark INTERFACE benchmark::benchmark)
 
-
-set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
-set(BENCHMARK_ENABLE_TESTING OFF)
-FetchContent_Declare(googlebenchmark
-        GIT_REPOSITORY https://github.com/google/benchmark.git
-        GIT_TAG main) # need master for benchmark::benchmark
-
-FetchContent_MakeAvailable(
-        googlebenchmark)
+find_package(benchmark)
 
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
-    target_link_libraries(${TARGET_NAME} nes-runtime-benchmark)
+    target_link_libraries(${TARGET_NAME} nes-runtime-benchmark benchmark::benchmark)
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
 

@@ -1,5 +1,288 @@
 # Changelog
 
+## [v0.4.43](https://github.com/nebulastream/nebulastream/tree/v0.4.43) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.42...v0.4.43)
+
+### Bug Fixes 🐛
+
+- \[BUG\] MapJavaUdfLogicalOperatorNode should not copy children and parent fields [\#3484](https://github.com/nebulastream/nebulastream/issues/3484)
+- \[BUG\] numberOfBuffersToProduce=0 causes exception and prevents the query from stopping [\#3469](https://github.com/nebulastream/nebulastream/issues/3469)
+- Investigate failure on disk statistics  [\#2336](https://github.com/nebulastream/nebulastream/issues/2336)
+
+## [v0.4.42](https://github.com/nebulastream/nebulastream/tree/v0.4.42) (2023-02-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.41...v0.4.42)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Hotfix remove TFDEF [\#3482](https://github.com/nebulastream/nebulastream/issues/3482)
+
+#### User Defined Functions
+
+- Implement logical/physical operator for Map UDFs [\#2337](https://github.com/nebulastream/nebulastream/issues/2337)
+
+## [v0.4.41](https://github.com/nebulastream/nebulastream/tree/v0.4.41) (2023-02-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.40...v0.4.41)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query compilation fails on ARM64 Macs [\#3268](https://github.com/nebulastream/nebulastream/issues/3268)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Java UDF Compiler Integration [\#3144](https://github.com/nebulastream/nebulastream/issues/3144)
+
+## [v0.4.40](https://github.com/nebulastream/nebulastream/tree/v0.4.40) (2023-02-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.39...v0.4.40)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Location service responses are inconsistent [\#3390](https://github.com/nebulastream/nebulastream/issues/3390)
+- \[BUG\] YSB Source Test e2e [\#3246](https://github.com/nebulastream/nebulastream/issues/3246)
+- Memory leaks in NES [\#1655](https://github.com/nebulastream/nebulastream/issues/1655)
+
+## [v0.4.39](https://github.com/nebulastream/nebulastream/tree/v0.4.39) (2023-02-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.38...v0.4.39)
+
+### Bug Fixes 🐛
+
+- \[BUG\] E2EBenchmarkMain broken [\#3464](https://github.com/nebulastream/nebulastream/issues/3464)
+
+## [v0.4.38](https://github.com/nebulastream/nebulastream/tree/v0.4.38) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.37...v0.4.38)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Simple Bytecode interpreter for Nautilus [\#3416](https://github.com/nebulastream/nebulastream/issues/3416)
+
+## [v0.4.37](https://github.com/nebulastream/nebulastream/tree/v0.4.37) (2023-02-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.36...v0.4.37)
+
+#### Build Management
+
+- \[Feature\] Cleanup VCPKG dependencies [\#3411](https://github.com/nebulastream/nebulastream/issues/3411)
+
+## [v0.4.36](https://github.com/nebulastream/nebulastream/tree/v0.4.36) (2023-01-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.35...v0.4.36)
+
+#### Runtime 
+
+- \[Feature\] Integrate StreamJoin into Nautilus and the QueryPlan [\#3339](https://github.com/nebulastream/nebulastream/issues/3339)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Call CPython.wasm via Host-Function [\#3334](https://github.com/nebulastream/nebulastream/issues/3334)
+- Update documentation of REST API [\#2961](https://github.com/nebulastream/nebulastream/issues/2961)
+- Complete Oatpp testing: Comparing Content of response [\#2960](https://github.com/nebulastream/nebulastream/issues/2960)
+
+## [v0.4.35](https://github.com/nebulastream/nebulastream/tree/v0.4.35) (2023-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.34...v0.4.35)
+
+**Implemented enhancements:**
+
+- \[TASK\] Removing Quotations in Query Definition of Tests [\#3448](https://github.com/nebulastream/nebulastream/issues/3448)
+
+### Bug Fixes 🐛
+
+- Parsing Oatpp String into nlohmann::json throws error [\#2967](https://github.com/nebulastream/nebulastream/issues/2967)
+
+#### REST API 
+
+- Find and Add Json library [\#2950](https://github.com/nebulastream/nebulastream/issues/2950)
+- Make host and port of REST Server configuratble when using Oatpp framework [\#2905](https://github.com/nebulastream/nebulastream/issues/2905)
+- Refactor MaintenanceController and SourceCatalogController, revisit response codes  [\#2719](https://github.com/nebulastream/nebulastream/issues/2719)
+- Refactor TopologyController, revisit response codes [\#2718](https://github.com/nebulastream/nebulastream/issues/2718)
+- Refactor QueryCatalogController, revisit response codes [\#2717](https://github.com/nebulastream/nebulastream/issues/2717)
+- Refactor BaseController [\#2716](https://github.com/nebulastream/nebulastream/issues/2716)
+
+## [v0.4.34](https://github.com/nebulastream/nebulastream/tree/v0.4.34) (2023-01-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.33...v0.4.34)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Output of `inferModel` operation is all 0 [\#3421](https://github.com/nebulastream/nebulastream/issues/3421)
+
+## [v0.4.33](https://github.com/nebulastream/nebulastream/tree/v0.4.33) (2023-01-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.32...v0.4.33)
+
+### Bug Fixes 🐛
+
+- \[BUG\] arm64 images break when running queries [\#3437](https://github.com/nebulastream/nebulastream/issues/3437)
+
+#### Runtime 
+
+- \[Feature\] Bool Support in Nautilus MemoryProvider/MemoryLayout [\#3373](https://github.com/nebulastream/nebulastream/issues/3373)
+
+#### REST API 
+
+- Delete all components of old REST API and ccprest usages [\#3001](https://github.com/nebulastream/nebulastream/issues/3001)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Port different ingestion rates to new Benchmark repo [\#3336](https://github.com/nebulastream/nebulastream/issues/3336)
+
+## [v0.4.32](https://github.com/nebulastream/nebulastream/tree/v0.4.32) (2023-01-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.31...v0.4.32)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NebulaStream on multi user systems [\#3009](https://github.com/nebulastream/nebulastream/issues/3009)
+
+## [v0.4.31](https://github.com/nebulastream/nebulastream/tree/v0.4.31) (2023-01-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.30...v0.4.31)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Float values written into DynamicTupleBuffer differ at read [\#3374](https://github.com/nebulastream/nebulastream/issues/3374)
+
+## [v0.4.30](https://github.com/nebulastream/nebulastream/tree/v0.4.30) (2023-01-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.29...v0.4.30)
+
+**Implemented enhancements:**
+
+- \[Feature\] Multiple logical and physical source for E2E Benchmarking [\#3332](https://github.com/nebulastream/nebulastream/issues/3332)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Remote Client Test fails randomly [\#3414](https://github.com/nebulastream/nebulastream/issues/3414)
+- \[BUG\] Location Integration Test and Remote Client Test always fail [\#3402](https://github.com/nebulastream/nebulastream/issues/3402)
+
+## [v0.4.29](https://github.com/nebulastream/nebulastream/tree/v0.4.29) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.28...v0.4.29)
+
+## [v0.4.28](https://github.com/nebulastream/nebulastream/tree/v0.4.28) (2023-01-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.27...v0.4.28)
+
+#### User Defined Functions
+
+- \[Feature\] Inform coordinator that a worker is capable of executing UDFs [\#3075](https://github.com/nebulastream/nebulastream/issues/3075)
+
+## [v0.4.27](https://github.com/nebulastream/nebulastream/tree/v0.4.27) (2023-01-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.26...v0.4.27)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Docker Build Failing: ubuntu-20\_04-Linux.arm64.deb Not Found [\#3428](https://github.com/nebulastream/nebulastream/issues/3428)
+- \[BUG\] Error if NebulaStream demo is on aarch64 [\#3145](https://github.com/nebulastream/nebulastream/issues/3145)
+
+#### Runtime 
+
+- \[Feature\] General Memory Provider [\#3408](https://github.com/nebulastream/nebulastream/issues/3408)
+
+## [v0.4.26](https://github.com/nebulastream/nebulastream/tree/v0.4.26) (2023-01-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.25...v0.4.26)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Continuous sources randomly failing [\#3410](https://github.com/nebulastream/nebulastream/issues/3410)
+
+## [v0.4.25](https://github.com/nebulastream/nebulastream/tree/v0.4.25) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.24...v0.4.25)
+
+#### Build Management
+
+- \[Feature\] Update to LLVM 15 [\#3375](https://github.com/nebulastream/nebulastream/issues/3375)
+
+### Miscellaneous Issues ✌️
+
+- \[JIT Compiler\] Add Loop Operations [\#3169](https://github.com/nebulastream/nebulastream/issues/3169)
+
+## [v0.4.24](https://github.com/nebulastream/nebulastream/tree/v0.4.24) (2023-01-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.23...v0.4.24)
+
+## [v0.4.23](https://github.com/nebulastream/nebulastream/tree/v0.4.23) (2023-01-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.22...v0.4.23)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Logger fails on flush while termination [\#3384](https://github.com/nebulastream/nebulastream/issues/3384)
+- \[BUG\] Release and BUILD\_NATIVE lead to half of the tests failing [\#3165](https://github.com/nebulastream/nebulastream/issues/3165)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Explore WAMR/iwasm [\#3385](https://github.com/nebulastream/nebulastream/issues/3385)
+
+## [v0.4.22](https://github.com/nebulastream/nebulastream/tree/v0.4.22) (2023-01-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.21...v0.4.22)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add global nautilus tumbling window [\#3329](https://github.com/nebulastream/nebulastream/issues/3329)
+
+## [v0.4.21](https://github.com/nebulastream/nebulastream/tree/v0.4.21) (2023-01-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.20...v0.4.21)
+
+### Miscellaneous Issues ✌️
+
+- One location for all hash functions [\#3387](https://github.com/nebulastream/nebulastream/issues/3387)
+- \[Feature\] Unit Test for Data Providers [\#3328](https://github.com/nebulastream/nebulastream/issues/3328)
+
+## [v0.4.20](https://github.com/nebulastream/nebulastream/tree/v0.4.20) (2023-01-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.19...v0.4.20)
+
+### Bug Fixes 🐛
+
+- \[BUG\] runtime-atan-expression-test  and runtime-cos-expression-test fail on macOS [\#3380](https://github.com/nebulastream/nebulastream/issues/3380)
+
+## [v0.4.19](https://github.com/nebulastream/nebulastream/tree/v0.4.19) (2023-01-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.18...v0.4.19)
+
+#### Runtime 
+
+- \[Feature\] Cleanup tests in nes-runtime [\#3360](https://github.com/nebulastream/nebulastream/issues/3360)
+
+#### User Defined Functions
+
+- \[Feature\] Add input and output type name of Java UDF to Java UDF descriptor [\#3308](https://github.com/nebulastream/nebulastream/issues/3308)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Reactivate e2e testrun in CI [\#3338](https://github.com/nebulastream/nebulastream/issues/3338)
+
+## [v0.4.18](https://github.com/nebulastream/nebulastream/tree/v0.4.18) (2023-01-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.17...v0.4.18)
+
+#### Operators 
+
+- Implement Non-Partitioned Lazy Join for Engine Paper [\#2501](https://github.com/nebulastream/nebulastream/issues/2501)
+
+## [v0.4.17](https://github.com/nebulastream/nebulastream/tree/v0.4.17) (2022-12-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.16...v0.4.17)
+
+#### Runtime 
+
+- \[Feature\] add test macro for nes-runtime tests [\#3369](https://github.com/nebulastream/nebulastream/issues/3369)
+
+## [v0.4.16](https://github.com/nebulastream/nebulastream/tree/v0.4.16) (2022-12-30)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.15...v0.4.16)
+
 ## [v0.4.15](https://github.com/nebulastream/nebulastream/tree/v0.4.15) (2022-12-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.14...v0.4.15)

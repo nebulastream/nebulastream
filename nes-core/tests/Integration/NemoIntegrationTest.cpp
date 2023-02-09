@@ -13,23 +13,14 @@
 */
 
 #include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <Util/MetricValidator.hpp>
-
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
 #include <Runtime/BufferManager.hpp>
-
-#include <Services/MonitoringService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
 #include <Util/TestUtils.hpp>
-#include <cpprest/json.h>
+#include <assert.h>
 #include <cstdint>
+#include <gtest/gtest.h>
 #include <memory>
-
-#include <REST/ServerTypes.hpp>
 
 using std::cout;
 using std::endl;
@@ -162,8 +153,11 @@ class NemoIntegrationTest : public Testing::NESBaseTest {
         NES_INFO("try to acc return");
         NES_INFO("Query ID: " << queryId);
 
-        assert(TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort)));
-        assert(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+        auto checkCompleted = TestUtils::checkCompleteOrTimeout(queryId, expectedNumberBuffers, std::to_string(restPort));
+        assert(checkCompleted);
+
+        auto queryStopped = TestUtils::stopQueryViaRest(queryId, std::to_string(restPort));
+        assert(queryStopped);
 
         std::ifstream ifs(outputFilePath.c_str());
         assert(ifs.good());

@@ -16,15 +16,15 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -40,6 +40,8 @@
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
+#include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
@@ -215,9 +217,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
     auto plan = query.getQueryPlan();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
@@ -245,9 +251,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     auto plan = query.getQueryPlan();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4, properties);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
@@ -1486,12 +1496,10 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
-        "some_class",
-        "some_method",
-        Catalogs::UDF::JavaSerializedInstance{1},
-        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
-        std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()));
+    auto javaUdfDescriptor =
+        Catalogs::UDF::JavaUdfDescriptorBuilder{}
+            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
+            .build();
     auto mapUdfLogicalOperatorNode =
         std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
@@ -1529,12 +1537,10 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
-        "some_class",
-        "some_method",
-        Catalogs::UDF::JavaSerializedInstance{1},
-        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
-        std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()));
+    auto javaUdfDescriptor =
+        Catalogs::UDF::JavaUdfDescriptorBuilder{}
+            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
+            .build();
     auto mapUdfLogicalOperatorNode =
         std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, Util::getNextOperatorId());
 
@@ -1580,21 +1586,17 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor1 = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
-        "some_class",
-        "some_method",
-        Catalogs::UDF::JavaSerializedInstance{1},
-        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
-        std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()));
+    auto javaUdfDescriptor1 =
+        Catalogs::UDF::JavaUdfDescriptorBuilder{}
+            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
+            .build();
     auto mapUdfLogicalOperatorNode1 =
         std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
-    auto javaUdfDescriptor2 = std::make_shared<Catalogs::UDF::JavaUdfDescriptor>(
-        "some_class",
-        "some_method",
-        Catalogs::UDF::JavaSerializedInstance{1},
-        Catalogs::UDF::JavaUdfByteCodeList{{"some_class", {1}}},
-        std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()));
+    auto javaUdfDescriptor2 =
+        Catalogs::UDF::JavaUdfDescriptorBuilder{}
+            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
+            .build();
     auto mapUdfLogicalOperatorNode2 =
         std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor1, Util::getNextOperatorId());
 
@@ -1623,4 +1625,5 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 1);
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("logicalSource1$outputAttribute1"));
 }
+
 }// namespace NES

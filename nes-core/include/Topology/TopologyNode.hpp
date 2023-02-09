@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
 #include <Nodes/Node.hpp>
-#include <Spatial/Index/Location.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
@@ -27,16 +26,18 @@ namespace NES {
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Spatial::Index::Experimental {
-using LocationPtr = std::shared_ptr<Location>;
+namespace Spatial::DataTypes::Experimental {
+class GeoLocation;
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
-enum class NodeType;
-}// namespace Spatial::Index::Experimental
+}// namespace Spatial::DataTypes::Experimental
+
+namespace Spatial::Experimental {
+enum class SpatialType;
+}// namespace Spatial::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 }// namespace Spatial::Mobility::Experimental
 
 /**
@@ -45,8 +46,13 @@ using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 class TopologyNode : public Node {
 
   public:
-    static TopologyNodePtr
-    create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    static TopologyNodePtr create(const uint64_t id,
+                                  const std::string& ipAddress,
+                                  const uint32_t grpcPort,
+                                  const uint32_t dataPort,
+                                  const uint16_t resources,
+                                  std::map<std::string, std::any> properties);
+
     virtual ~TopologyNode() = default;
 
     /**
@@ -95,13 +101,13 @@ class TopologyNode : public Node {
      * @brief Get maintenance flag where 1 represents marked for maintenance
      * @return bool
      */
-    bool getMaintenanceFlag() const;
+    bool isUnderMaintenance();
 
     /**
      * @brief sets maintenance flag where 1 represents marked for maintenance
      * @param flag
      */
-    void setMaintenanceFlag(bool flag);
+    void setForMaintenance(bool flag);
 
     std::string toString() const override;
 
@@ -111,7 +117,12 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-    explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    explicit TopologyNode(uint64_t id,
+                          std::string ipAddress,
+                          uint32_t grpcPort,
+                          uint32_t dataPort,
+                          uint16_t resources,
+                          std::map<std::string, std::any> properties);
 
     bool containAsParent(NodePtr node) override;
 
@@ -168,48 +179,18 @@ class TopologyNode : public Node {
 
     /**
      * Experimental
-     * @brief get the geographical coordinates of this topology node.
-     * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
-     */
-    NES::Spatial::Index::Experimental::WaypointPtr getCoordinates();
-
-    /**
-     * Experimental
-     * @return a smart pointer to this nodes reconnect schedule or nullptr if the node is not a mobile node
-     */
-    NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
-
-    /**
-     * Experimental
-     * @brief set the fixed geographical coordinates of this topology node, making it a field node
-     * @param lat: geographical latitude in signed degrees [-90, 90]
-     * @param lng: geographical longitude in signed degrees [-180, 180]
-     * @return true on success
-     */
-    void setFixedCoordinates(double latitude, double longitude);
-
-    /**
-     * Experimental
-     * @brief set the fixed geographical coordinates of this topology node, making it a field node
-     * @param geoLoc: the Geographical location of the node
-     * @return true on success
-     */
-    void setFixedCoordinates(NES::Spatial::Index::Experimental::Location geoLoc);
-
-    /**
-     * Experimental
      * @brief sets the status of the node as running on a mobile device or a fixed location device.
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
-     * @param workerSpatialType
+     * @param spatialType
      */
-    void setSpatialNodeType(NES::Spatial::Index::Experimental::NodeType workerSpatialType);
+    void setSpatialType(NES::Spatial::Experimental::SpatialType spatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    NES::Spatial::Index::Experimental::NodeType getSpatialNodeType();
+    NES::Spatial::Experimental::SpatialType getSpatialNodeType();
 
   private:
     uint64_t id;
@@ -218,9 +199,6 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
-    bool maintenanceFlag;
-    NES::Spatial::Index::Experimental::Location fixedCoordinates;
-    NES::Spatial::Index::Experimental::NodeType spatialType;
 
     /**
      * @brief A field to store a map of node properties

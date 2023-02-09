@@ -14,6 +14,7 @@
 
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,7 +22,7 @@
 #include <memory>
 namespace NES::Nautilus {
 
-class TextTypeTest : public testing::Test {
+class TextTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -31,13 +32,11 @@ class TextTypeTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down TextTypeTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }

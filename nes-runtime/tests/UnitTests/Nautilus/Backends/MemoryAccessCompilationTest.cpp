@@ -16,26 +16,22 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
+
 namespace NES::Nautilus {
 
-class MemoryAccessCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class MemoryAccessCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MemoryAccessCompilationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup MemoryAccessCompilationTest test class.");
     }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override { NES_DEBUG("Setup MemoryAccessCompilationTest test case."); }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down MemoryAccessCompilationTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down MemoryAccessCompilationTest test class."); }
@@ -53,7 +49,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest) {
     });
 
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    auto function = engine->getInvocableMember<int64_t, void*>("execute");
 
     ASSERT_EQ(function(&valI), 42);
 }
@@ -74,7 +70,7 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest) {
         storeFunction(tempPara);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(void*)>("execute");
+    auto function = engine->getInvocableMember<void, void*>("execute");
     function(&valI);
     ASSERT_EQ(valI, 43);
 }
@@ -98,7 +94,7 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
         return memScan(memPtr, size);
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int64_t (*)(int, void*)>("execute");
+    auto function = engine->getInvocableMember<int64_t, int, void*>("execute");
     auto array = new int64_t[]{1, 2, 3, 4, 5, 6, 7};
     ASSERT_EQ(function(7, array), 28);
 }

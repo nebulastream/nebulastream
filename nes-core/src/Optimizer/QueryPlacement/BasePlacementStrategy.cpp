@@ -28,7 +28,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <algorithm>
 #include <stack>
 #include <utility>
 
@@ -63,8 +63,8 @@ void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr top
     }
 }
 
-void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
-                                                 std::vector<OperatorNodePtr> downStreamPinnedOperators) {
+void BasePlacementStrategy::performPathSelection(const std::vector<OperatorNodePtr>& upStreamPinnedOperators,
+                                                 const std::vector<OperatorNodePtr>& downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
 

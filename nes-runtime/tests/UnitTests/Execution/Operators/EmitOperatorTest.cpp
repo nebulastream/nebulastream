@@ -18,12 +18,14 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -31,43 +33,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class EmitOperatorTest : public testing::Test {
+class EmitOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("EmitOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup EmitOperatorTest test class." << std::endl;
+        NES_INFO("Setup EmitOperatorTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup EmitOperatorTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down EmitOperatorTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down EmitOperatorTest test class." << std::endl; }
-};
-
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    MockedPipelineExecutionContext()
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            nullptr,
-            1,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            [this](TupleBuffer& buffer) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            {}){
-            // nop
-        };
-
-    std::vector<TupleBuffer> buffers;
+    static void TearDownTestCase() { NES_INFO("Tear down EmitOperatorTest test class."); }
 };
 
 /**

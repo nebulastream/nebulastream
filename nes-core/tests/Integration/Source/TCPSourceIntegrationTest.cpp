@@ -292,6 +292,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -392,6 +393,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -492,6 +494,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -592,6 +595,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -692,6 +696,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -792,6 +797,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -892,6 +898,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);
@@ -992,6 +999,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     serverThread.join();
 
     NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ASSERT_EQ(connection, 0);

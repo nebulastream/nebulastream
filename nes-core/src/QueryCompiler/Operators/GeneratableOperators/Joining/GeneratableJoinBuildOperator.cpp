@@ -23,7 +23,7 @@ GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id,
                                                             SchemaPtr inputSchema,
                                                             SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
-                                                            JoinBuildSide buildSide) {
+                                                            JoinBuildSideType buildSide) {
     return std::make_shared<GeneratableJoinBuildOperator>(
         GeneratableJoinBuildOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler), buildSide));
 }
@@ -31,7 +31,7 @@ GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id,
 GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchema,
                                                             SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
-                                                            JoinBuildSide buildSide) {
+                                                            JoinBuildSideType buildSide) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -43,12 +43,12 @@ GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id,
                                                            SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
                                                            Join::JoinOperatorHandlerPtr operatorHandler,
-                                                           JoinBuildSide buildSide)
+                                                           JoinBuildSideType buildSide)
     : OperatorNode(id), GeneratableJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)),
       buildSide(buildSide) {}
 
 void GeneratableJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    if (this->buildSide == Left) {
+    if (this->buildSide == JoinBuildSideType::Left) {
 
         auto joinDefinition = operatorHandler->getJoinDefinition();
         codegen->generateCodeForJoinSinkSetup(joinDefinition, context, this->id, operatorHandler);

@@ -17,6 +17,7 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -24,22 +25,16 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-class MapOperatorTest : public testing::Test {
+class MapOperatorTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MapOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MapOperatorTest test class." << std::endl;
+        NES_INFO("Setup MapOperatorTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup MapOperatorTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down MapOperatorTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down MapOperatorTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down MapOperatorTest test class."); }
 };
 
 /**

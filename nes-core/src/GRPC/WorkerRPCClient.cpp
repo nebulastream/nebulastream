@@ -15,17 +15,13 @@
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Spatial/Index/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectPrediction.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <health.grpc.pb.h>
 
 namespace NES {
 
@@ -449,7 +445,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std::string& address) {
+Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << address)
     ClientContext context;
     GetLocationRequest request;
@@ -458,66 +454,22 @@ Spatial::Index::Experimental::WaypointPtr WorkerRPCClient::getWaypoint(const std
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, request, &reply);
-    if (reply.has_coord()) {
-        auto coord = reply.coord();
-        auto timestamp = reply.timestamp();
+    if (reply.has_waypoint()) {
+        auto waypoint = reply.waypoint();
+        auto timestamp = waypoint.timestamp();
+        auto geoLocation = waypoint.geolocation();
         //if timestamp is valid, include it in waypoint
         if (timestamp != 0) {
-            return std::make_shared<Spatial::Index::Experimental::Waypoint>(
-                Spatial::Index::Experimental::Location(coord.lat(), coord.lng()),
+            return NES::Spatial::DataTypes::Experimental::Waypoint(
+                Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()),
                 timestamp);
         }
         //no valid timestamp to include
-        return std::make_shared<Spatial::Index::Experimental::Waypoint>(
-            Spatial::Index::Experimental::Location(coord.lat(), coord.lng()));
+        return NES::Spatial::DataTypes::Experimental::Waypoint(
+            NES::Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()));
     }
     //location is invalid
-    return std::make_shared<Spatial::Index::Experimental::Waypoint>(Spatial::Index::Experimental::Waypoint::invalid());
-}
-
-NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& address) {
-    NES_DEBUG("WorkerRPCClient: requesting reconnect schedule from" << address)
-    ClientContext context;
-    GetReconnectScheduleRequest request;
-    GetReconnectScheduleReply reply;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->GetReconnectSchedule(&context, request, &reply);
-
-    //check if the reply contained a schedule
-    if (reply.has_schedule()) {
-        const auto& schedule = reply.schedule();
-        //get start and enpoint of the predicted trajectory line
-        auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
-        auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
-
-        //get the position of the device when at the moment of the last node index update
-        auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
-
-        //iterate of the vector of reconnects and get all planned reconnects
-        auto vec = std::make_shared<std::vector<std::shared_ptr<Spatial::Mobility::Experimental::ReconnectPoint>>>();
-        for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
-            const auto& reconnectData = schedule.reconnectpoints(i);
-            auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
-            vec->push_back(std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectPoint>(
-                Spatial::Mobility::Experimental::ReconnectPoint{
-                    loc,
-                    NES::Spatial::Mobility::Experimental::ReconnectPrediction{reconnectData.reconnectprediction().id(),
-                                                                              reconnectData.reconnectprediction().time()}}));
-        }
-
-        //construct a schedule from the received data
-        return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(reply.schedule().parentid(),
-                                                                                         start,
-                                                                                         end,
-                                                                                         lastUpdatePosition,
-                                                                                         vec);
-    }
-    //if no schedule was received, return an empty schedule
-    return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(
-        Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
+    return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
 
 }// namespace NES

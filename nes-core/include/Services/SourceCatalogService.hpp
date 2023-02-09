@@ -28,6 +28,9 @@ using SchemaPtr = std::shared_ptr<Schema>;
 namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
+class SourceCatalogEntry;
+using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
 }// namespace Catalogs::Source
 
 /**
@@ -77,6 +80,22 @@ class SourceCatalogService {
     bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     /**
+     * @brief method to update schema of an existing logical source
+     * @param logicalSourceName: logical source name
+     * @param schema: schema object
+     * @return bool indicating success
+     */
+    bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+
+    /**
+     * @brief method to update schema of an existing logical source
+     * @param logicalSourceName: logical source name
+     * @param schema: schema object
+     * @return bool indicating success
+     */
+    bool updateLogicalSource(const std::string& logicalSourceName, const std::string& schema);
+
+    /**
      * @brief method to unregister a logical source
      * @param logicalSourceName
      * @return bool indicating success
@@ -89,6 +108,19 @@ class SourceCatalogService {
      * @return copy of the logical source
      */
     LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
+
+    /**
+     * @brief return all logical sources as string
+     * @return map of logical source name and string representing logical source information
+     */
+    std::map<std::string, std::string> getAllLogicalSourceAsString();
+
+    /**
+     * Get information about all physical sources
+     * @param logicalSourceName: logical source name
+     * @return vector containing source catalog entry
+     */
+    std::vector<Catalogs::Source::SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalSourceName);
 
   private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

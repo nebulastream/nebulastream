@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp"
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <utility>
@@ -20,8 +21,15 @@ LoopOperation::LoopOperation(LoopType loopType)
     : Operation(Operation::LoopOp, Types::StampFactory::createVoidStamp()), loopType(loopType) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
+// Todo leads to segfault
+void LoopOperation::setLoopType(LoopOperation::LoopType loopType) { this->loopType = loopType; }
 
+BasicBlockInvocation& LoopOperation::getLoopBodyBlock() { return loopBodyBlock; }
+BasicBlockInvocation& LoopOperation::getLoopFalseBlock() { return loopFalseBlock; }
+// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
+// void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
+BasicBlockInvocation& LoopOperation::getLoopEndBlock() { return loopEndBlock; }
 
 void LoopOperation::setLoopInfo(std::shared_ptr<LoopInfo> loopInfo) { this->loopInfo = loopInfo; }
 

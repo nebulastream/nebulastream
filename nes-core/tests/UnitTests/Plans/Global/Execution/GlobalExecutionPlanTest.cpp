@@ -13,6 +13,8 @@
 */
 
 #include <API/Query.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -20,6 +22,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
@@ -57,8 +60,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
-    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     globalExecutionPlan->addExecutionNode(executionNode);
@@ -80,8 +87,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
-    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
@@ -131,8 +142,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
-    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -191,8 +206,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
-    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan to the execution node");
@@ -252,8 +271,12 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
-    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topologyNode);
 
     //query sub plans for query 1
@@ -352,9 +375,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node
     uint64_t node1Id = 1;
-    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -370,7 +397,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     //create execution node
     uint64_t node2Id = 2;
-    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -427,9 +454,13 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     //create execution node 1
     uint64_t node1Id = 1;
-    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode1 = TopologyNode::create(node1Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -445,7 +476,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     //create execution node 2
     uint64_t node2Id = 2;
-    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode2 = TopologyNode::create(node2Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -460,7 +491,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     //create execution node 3
     uint64_t node3Id = 3;
-    TopologyNodePtr topologyNode3 = TopologyNode::create(node3Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode3 = TopologyNode::create(node3Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
 
     //Add sub plan
@@ -479,7 +510,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
 
     //create execution node 4
     uint64_t node4Id = 4;
-    TopologyNodePtr topologyNode4 = TopologyNode::create(node4Id, "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode4 = TopologyNode::create(node4Id, "localhost", 3200, 3300, 10, properties);
     const ExecutionNodePtr executionNode4 = ExecutionNode::createExecutionNode(topologyNode4);
 
     //Add sub plan

@@ -348,7 +348,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
   private:
     /**
-    * @brief helper function of getNodeType() function
+    * @brief helper function of getSpatialType() function
     */
     template<class NodeType>
     void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {

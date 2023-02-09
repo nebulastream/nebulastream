@@ -44,13 +44,15 @@ class TensorflowAdapter {
      * @param i
      * @return
      */
-    double getResultAt(int i);
+    float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
 
   private:
     TfLiteInterpreter* interpreter;
-    double* output{};
+    // TODO https://github.com/nebulastream/nebulastream/issues/3424
+    // Right now we only support 32-bit floats as output.
+    float* output{};
 #endif// TFDEF
 };
 

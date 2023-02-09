@@ -22,8 +22,8 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-#include <Spatial/Index/Location.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <map>
 #include <string>
 
@@ -44,6 +44,11 @@ class WorkerConfiguration : public BaseConfiguration {
   public:
     WorkerConfiguration() : BaseConfiguration(){};
     WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
+
+    /**
+     * @brief Factory function for a worker config
+     */
+    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
      * @brief IP of the Worker.
@@ -177,16 +182,16 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::Index::Experimental::Location, Configurations::Spatial::Index::Experimental::LocationFactory>
+    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::LocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
      * @brief specify if the worker is running on a mobile device, if it is a node with a known fixed loction, or if it
      * does not have a known location.
      */
-    EnumOption<NES::Spatial::Index::Experimental::NodeType> nodeSpatialType = {
+    EnumOption<NES::Spatial::Experimental::SpatialType> nodeSpatialType = {
         SPATIAL_TYPE_CONFIG,
-        NES::Spatial::Index::Experimental::NodeType::NO_LOCATION,
+        NES::Spatial::Experimental::SpatialType::NO_LOCATION,
         "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
 
     /**
@@ -203,12 +208,8 @@ class WorkerConfiguration : public BaseConfiguration {
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 #ifdef TFDEF
-    BoolOption isTfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
+    BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
 #endif// TFDEF
-    /**
-     * @brief Factory function for a worker config
-     */
-    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
      * @brief Configuration numberOfQueues.
@@ -251,6 +252,8 @@ class WorkerConfiguration : public BaseConfiguration {
                                      8,
                                      "Number of tuple buffers allowed in one network channel before blocking transfer."};
 
+    BoolOption isJavaUDFSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Java UDF execution supported by the worker"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,
@@ -284,7 +287,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &workerHealthCheckWaitTime,
                 &configPath,
 #ifdef TFDEF
-                &isTfInstalled
+                &isTensorflowSupported
 #endif
         };
     }

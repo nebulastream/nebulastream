@@ -25,7 +25,7 @@
 using namespace NES::Nautilus;
 namespace NES::Nautilus::IR {
 
-class LoopInferencePhaseTest : public testing::Test {
+class LoopInferencePhaseTest : public Testing::NESBaseTest {
   public:
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -33,17 +33,17 @@ class LoopInferencePhaseTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LoopInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup LoopInferencePhaseTest test class." << std::endl;
+        NES_INFO("Setup LoopInferencePhaseTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup LoopInferencePhaseTest test case." << std::endl; }
+    void SetUp() override { NES_INFO("Setup LoopInferencePhaseTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down LoopInferencePhaseTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down LoopInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down LoopInferencePhaseTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down LoopInferencePhaseTest test class."); }
 };
 
 void sumLoop() {
@@ -60,12 +60,12 @@ TEST_F(LoopInferencePhaseTest, sumLoopTest) {
         sumLoop();
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution.get() << std::endl;
+    NES_INFO(*execution.get());
     auto ir = irCreationPhase.apply(execution);
-    std::cout << ir->toString() << std::endl;
+    NES_INFO(ir->toString());
 
     ir = loopInferencePhase.apply(ir);
-    std::cout << ir->toString() << std::endl;
+    NES_INFO(ir->toString());
 
     auto rootBlock = ir->getRootOperation()->getFunctionBasicBlock();
     ASSERT_TRUE(rootBlock->getTerminatorOp()->getOperationType() == Operations::Operation::LoopOp);

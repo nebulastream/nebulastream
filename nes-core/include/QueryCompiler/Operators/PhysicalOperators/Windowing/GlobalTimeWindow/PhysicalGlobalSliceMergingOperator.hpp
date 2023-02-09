@@ -15,38 +15,45 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_GLOBALTIMEWINDOW_PHYSICALGLOBALSLICEMERGINGOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <variant>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::Runtime::Execution::Operators {
+class GlobalSliceMergingHandler;
+}
+
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief The slice merging operator receives pre aggregated keyed slices and merges them together.
  * Finally, it appends them to the global slice store.
  */
 class PhysicalGlobalSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
+
   public:
+    using WindowHandlerType = std::variant<Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr,
+                                           std::shared_ptr<Runtime::Execution::Operators::GlobalSliceMergingHandler>>;
     PhysicalGlobalSliceMergingOperator(OperatorId id,
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,
-                                       Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler);
+                                       WindowHandlerType operatorHandler,
+                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalGlobalSliceMergingOperator>
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler);
+    static std::shared_ptr<PhysicalGlobalSliceMergingOperator> create(SchemaPtr inputSchema,
+                                                                      SchemaPtr outputSchema,
+                                                                      WindowHandlerType operatorHandler,
+                                                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr getWindowHandler();
+    WindowHandlerType getWindowHandler();
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
+    const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
 
   private:
-    Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler;
+    WindowHandlerType operatorHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_GLOBALTIMEWINDOW_PHYSICALGLOBALSLICEMERGINGOPERATOR_HPP_

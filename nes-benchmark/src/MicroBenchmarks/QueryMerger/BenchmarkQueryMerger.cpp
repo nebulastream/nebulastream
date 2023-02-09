@@ -21,6 +21,8 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -110,13 +112,20 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
         LogicalSourcePtr logicalSource = streamCatalog->getLogicalSource("example" + std::to_string(j + 1));
         counter++;
 
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
         // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
-            auto topoNode = TopologyNode::create(i, "", i, i, 2);
+            //Create topology node
+            auto topologyNode = TopologyNode::create(i, "", i, i, 2, properties);
+            //Create physical source
             auto physicalSource =
                 PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
+            //Map physical source and topology node
             Catalogs::Source::SourceCatalogEntryPtr sce =
-                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
+                std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }

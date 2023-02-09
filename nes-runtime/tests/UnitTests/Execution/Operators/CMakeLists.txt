@@ -13,15 +13,7 @@
 
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)
+add_subdirectory(Streaming)
 
-add_executable(runtime-scan-operator-test "ScanOperatorTest.cpp")
-target_link_libraries(runtime-scan-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-scan-operator-test COMMAND runtime-scan-operator-test)
-
-add_executable(runtime-emit-operator-test "EmitOperatorTest.cpp")
-target_link_libraries(runtime-emit-operator-test nes-runtime-tests ${GTEST_LIBRARIES})
-add_test(NAME runtime-emit-operator-test COMMAND runtime-emit-operator-test)
-
-
-
-
+add_nes_runtime_test(runtime-scan-operator-test "ScanOperatorTest.cpp")
+add_nes_runtime_test(runtime-emit-operator-test "EmitOperatorTest.cpp")

@@ -25,6 +25,7 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Transforms/IPO/SCCP.h>
+#include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
@@ -45,7 +46,10 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& module,
     mlir::registerLLVMDialectTranslation(*module->getContext());
 
     // Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
-    auto maybeEngine = mlir::ExecutionEngine::create(*module, nullptr, optPipeline, llvm::CodeGenOpt::Level::Aggressive);
+    mlir::ExecutionEngineOptions options;
+    options.jitCodeGenOptLevel = llvm::CodeGenOpt::Level::Aggressive;
+    options.transformer = optPipeline;
+    auto maybeEngine = mlir::ExecutionEngine::create(*module, options);
 
     assert(maybeEngine && "failed to construct an execution engine");
     auto& engine = maybeEngine.get();

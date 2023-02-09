@@ -34,6 +34,9 @@ void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaU
     // Serialize schema.
     SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getOutputSchema(),
                                              javaUdfDescriptorMessage.mutable_outputschema());
+    // Serialize the input and output class names.
+    javaUdfDescriptorMessage.set_input_class_name(javaUdfDescriptor.getInputClassName());
+    javaUdfDescriptorMessage.set_output_class_name(javaUdfDescriptor.getOutputClassName());
 }
 
 Catalogs::UDF::JavaUdfDescriptorPtr
@@ -56,7 +59,9 @@ UdfSerializationUtil::deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessag
                                                     javaUdfDescriptorMessage.udf_method_name(),
                                                     serializedInstance,
                                                     javaUdfByteCodeList,
-                                                    outputSchema);
+                                                    outputSchema,
+                                                    javaUdfDescriptorMessage.input_class_name(),
+                                                    javaUdfDescriptorMessage.output_class_name());
 }
 
 }// namespace NES

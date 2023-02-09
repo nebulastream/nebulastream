@@ -23,9 +23,7 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-namespace NES {
-namespace REST {
-namespace Controller {
+namespace NES::REST::Controller {
 class ConnectivityController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -34,7 +32,7 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      */
-    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, oatpp::String completeRouterPrefix)
+    ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, const oatpp::String& completeRouterPrefix)
         : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix) {}
 
     /**
@@ -56,9 +54,7 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
         return createResponse(Status::CODE_200, response.dump());
     }
 };
-}//namespace Controller
-}// namespace REST
-}// namespace NES
+}// namespace NES::REST::Controller
 
 #include OATPP_CODEGEN_END(ApiController)
 

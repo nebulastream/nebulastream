@@ -13,29 +13,23 @@
 */
 
 #include <Execution/Expressions/Functions/MaxExpression.hpp>
+#include <NesBaseTest.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
 namespace NES::Runtime::Execution::Expressions {
 
-class MaxExpressionTest : public testing::Test {
+class MaxExpressionTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MaxExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup MaxExpressionTest test class." << std::endl;
+        NES_INFO("Setup MaxExpressionTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down MaxExpressionTest test class."); }
 };
 
 TEST_F(MaxExpressionTest, evaluateMaxExpressionInteger) {

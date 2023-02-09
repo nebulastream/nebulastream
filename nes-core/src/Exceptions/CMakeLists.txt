@@ -31,4 +31,5 @@ add_source_files(nes-core
         CoordinatesOutOfRangeException.cpp
         InvalidCoordinateFormatException.cpp
         MapEntryNotFoundException.cpp
+        LocationProviderException.cpp
 )

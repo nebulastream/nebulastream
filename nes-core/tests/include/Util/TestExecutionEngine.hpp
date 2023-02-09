@@ -134,6 +134,10 @@ class TestExecutionEngine {
     TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler) {
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.queryCompilerType = compiler;
+        workerConfiguration->queryCompiler.windowingStrategy =
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        workerConfiguration->queryCompiler.compilationStrategy =
+            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
         workerConfiguration->physicalSources.add(sourceConf);
@@ -160,11 +164,13 @@ class TestExecutionEngine {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    auto createDateSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
+    auto createDataSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
+
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
             inputSchema,
             [&](OperatorId id,
+                OriginId originId,
                 const SourceDescriptorPtr&,
                 const Runtime::NodeEnginePtr& nodeEngine,
                 size_t numSourceLocalBuffers,
@@ -173,7 +179,7 @@ class TestExecutionEngine {
                                                nodeEngine->getBufferManager(),
                                                nodeEngine->getQueryManager(),
                                                id,
-                                               0,
+                                               originId,
                                                numSourceLocalBuffers,
                                                std::move(successors));
             });
@@ -211,6 +217,8 @@ class TestExecutionEngine {
         return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     }
     bool stop() { return nodeEngine->stop(); }
+
+    Runtime::BufferManagerPtr getBufferManager() const { return nodeEngine->getBufferManager(); }
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

@@ -83,7 +83,8 @@ namespace NES::Nautilus {
 /**
  * @brief This test tests query execution using th mlir backend
  */
-class YSBTest : public testing::Test, public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
+class YSBTest : public Testing::NESBaseTest,
+                public ::testing::WithParamInterface<std::tuple<std::string, Schema::MemoryLayoutType>> {
   public:
     Tracing::SSACreationPhase ssaCreationPhase;
     Tracing::TraceToIRConversionPhase irCreationPhase;
@@ -91,14 +92,14 @@ class YSBTest : public testing::Test, public ::testing::WithParamInterface<std::
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup QueryExecutionTest test class." << std::endl;
+        NES_INFO("Setup QueryExecutionTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         auto param = this->GetParam();
         auto compiler = std::get<0>(param);
-        std::cout << "Setup Query6Test test case." << compiler << std::endl;
+        NES_INFO("Setup Query6Test test case." << compiler);
         if (compiler == "INTERPRETER") {
             executionEngine = std::make_shared<InterpretationBasedPipelineExecutionEngine>();
         } else if (compiler == "MLIR") {
@@ -123,10 +124,10 @@ class YSBTest : public testing::Test, public ::testing::WithParamInterface<std::
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down QueryExecutionTest test case." << std::endl; }
+    void TearDown() override { NES_INFO("Tear down QueryExecutionTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryExecutionTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryExecutionTest test class."); }
 };
 
 SchemaPtr getSchema() {

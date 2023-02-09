@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -37,8 +40,12 @@ TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     // create a node
-    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
     node->addNodeProperty("cores", 2);
     node->addNodeProperty("architecture", std::string("arm64"));
     node->addNodeProperty("withGPU", false);
@@ -58,8 +65,12 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     // create a node
-    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
     node->addNodeProperty("cores", 2);
 
     ASSERT_TRUE(node->getNodeProperty("cores").has_value());
@@ -74,12 +85,16 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     // create src and dst nodes
-    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
 
     grpcPort++;
     dataPort++;
-    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8, properties);
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
@@ -102,12 +117,16 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
     // create src and dst nodes
-    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8, properties);
 
     grpcPort++;
     dataPort++;
-    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8, properties);
 
     LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 // clang-format: off
-#include "gtest/gtest.h"
 // clang-format: on
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -63,7 +62,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
 
 TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(schema);
+    auto testSink = executionEngine->createDataSink(schema);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);

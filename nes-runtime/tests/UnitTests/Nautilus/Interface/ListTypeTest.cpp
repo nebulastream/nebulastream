@@ -19,13 +19,14 @@
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 namespace NES::Nautilus {
 
-class ListTypeTest : public testing::Test {
+class ListTypeTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -35,13 +36,11 @@ class ListTypeTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 100);
         NES_DEBUG("Setup ListTypeTest test case.");
     }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_DEBUG("Tear down ListTypeTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ListTypeTest test class."); }

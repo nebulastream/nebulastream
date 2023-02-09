@@ -21,6 +21,8 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -31,6 +33,7 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
@@ -62,7 +65,11 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
         topology = Topology::create();
         //Setup source catalog
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
-        auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
+        std::map<std::string, std::any> properties;
+        properties[NES::Worker::Properties::MAINTENANCE] = false;
+        properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+        auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "test1", defaultSourceType);
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
@@ -371,7 +378,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     sourceCatalog->addLogicalSource("example", schema);
     auto logicalSource = sourceCatalog->getLogicalSource("example");
 
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14, properties);
     auto physicalSource = PhysicalSource::create("example", "test1");
     Catalogs::Source::SourceCatalogEntryPtr sourceCatalogEntry1 =
         std::make_shared<Catalogs::Source::SourceCatalogEntry>(physicalSource, logicalSource, node);

@@ -184,7 +184,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() {
 
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+        NES_TRACE("contain compare field=" << field->getName() << " with other=" << fieldName);
         if (field->getName() == fieldName) {
             return true;
         }

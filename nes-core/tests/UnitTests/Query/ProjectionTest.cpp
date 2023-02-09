@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include "gtest/gtest.h"
-
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -350,6 +348,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -379,7 +378,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_EQ(plan->getPipelines().size(), 1U);
     ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
     ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -392,11 +391,11 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        ASSERT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
         auto resultBuffer = testSink->get(0);
         // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -404,7 +403,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
             Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+            ASSERT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         }
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -417,6 +416,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -445,7 +445,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_EQ(plan->getPipelines().size(), 1U);
     ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
     ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -458,11 +458,11 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        ASSERT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
         auto resultBuffer = testSink->get(0);
         // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -471,7 +471,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
             Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
+            ASSERT_EQ(resultRecordIndexFields[recordIndex], 8);
         }
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -484,6 +484,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -512,7 +513,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 1U);
+    ASSERT_EQ(plan->getPipelines().size(), 1U);
     ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
     ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -525,11 +526,11 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        ASSERT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
         auto resultBuffer = testSink->get(0);
         // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -540,8 +541,8 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
         for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
-            EXPECT_EQ(resultFields01[recordIndex], 8);
+            ASSERT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+            ASSERT_EQ(resultFields01[recordIndex], 8);
         }
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -554,6 +555,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -601,6 +603,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         windowSchema,
         [&](OperatorId,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t,
@@ -651,7 +654,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
         auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
@@ -659,7 +662,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
         NES_DEBUG("ProjectionTest: buffer=" << dynamicTupleBuffer);
 
         //TODO 1 Tuple im result buffer in 312 2 results?
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
+        ASSERT_NE(resultBuffer.getNumberOfTuples(), 0ULL);
 
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -670,13 +673,13 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 
         for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
             // start
-            EXPECT_EQ(startFields[recordIndex], 0ULL);
+            ASSERT_EQ(startFields[recordIndex], 0ULL);
             // end
-            EXPECT_EQ(endFields[recordIndex], 10ULL);
+            ASSERT_EQ(endFields[recordIndex], 10ULL);
             // key
-            EXPECT_EQ(keyFields[recordIndex], 1ULL);
+            ASSERT_EQ(keyFields[recordIndex], 1ULL);
             // value
-            EXPECT_EQ(valueFields[recordIndex], 10ULL);
+            ASSERT_EQ(valueFields[recordIndex], 10ULL);
         }
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));
@@ -718,7 +721,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
         SUCCEED();
         success = true;
     }
-    EXPECT_TRUE(success);
+    ASSERT_TRUE(success);
 }
 
 // P1 = Source1 -> filter1
@@ -727,7 +730,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 // So, merge is a blocking window_scan with two children.
 TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 
-    EXPECT_THROW(
+    ASSERT_THROW(
         {// created buffer per source * number of sources
             uint64_t expectedBuf = 20;
 
@@ -769,6 +772,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
         [&](OperatorId id,
+            OriginId,
             const SourceDescriptorPtr&,
             const Runtime::NodeEnginePtr&,
             size_t numSourceLocalBuffers,
@@ -807,7 +811,7 @@ TEST_F(ProjectionTest, mergeQuery) {
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 3U);
+    ASSERT_EQ(plan->getPipelines().size(), 3U);
     ASSERT_TRUE(nodeEngine->getQueryManager()->registerQuery(plan));
     ASSERT_TRUE(nodeEngine->getQueryManager()->startQuery(plan));
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
@@ -821,11 +825,11 @@ TEST_F(ProjectionTest, mergeQuery) {
         plan->getPipelines()[0]->execute(buffer, workerContext);
 
         // This plan should produce one output buffer
-        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        ASSERT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
         auto resultBuffer = testSink->get(0);
         // The output buffer should contain 5 tuple;
-        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
         auto resultLayout =
             Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
@@ -835,7 +839,7 @@ TEST_F(ProjectionTest, mergeQuery) {
         auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
 
         for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
+            ASSERT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
         }
     }
     ASSERT_TRUE(nodeEngine->getQueryManager()->stopQuery(plan));

@@ -15,8 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
@@ -91,6 +90,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
+    * @brief Lowers a java udf map operator
+    * @param queryPlan current plan
+    * @param operatorNode current operator
+    */
+    void lowerJavaUdfMapOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+
+    /**
     * @brief Lowers a window operator
     * @param queryPlan current plan
     * @param operatorNode current operator
@@ -147,7 +153,6 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerCEPIterationOperator(const QueryPlanPtr queryPlan, const LogicalOperatorNodePtr operatorNode);
 };
 
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

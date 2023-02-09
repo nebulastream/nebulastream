@@ -41,6 +41,9 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         //Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
+    // set the derived input schema
+    // TODO: check if this corresponds to the schema of the parent operator
+    javaUdfDescriptor->setInputSchema(inputSchema);
     return true;
 }
 
@@ -88,7 +91,18 @@ std::string MapJavaUdfLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() { return std::make_shared<MapJavaUdfLogicalOperatorNode>(*this); }
+OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
+    copy->setInputOriginIds(inputOriginIds);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    copy->setHashBasedSignature(hashBasedSignature);
+    copy->setZ3Signature(z3Signature);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
+    return copy;
+}
 
 bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
     // Explicit check here, so the cast using as throws no exception.

@@ -3142,13 +3142,13 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
                                               PipelineContextPtr context,
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
-                                              QueryCompilation::JoinBuildSide buildSide) {
-    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << buildSide
+                                              QueryCompilation::JoinBuildSideType buildSide) {
+    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << magic_enum::enum_name(buildSide)
                             << " out=" << joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
-    if (buildSide == QueryCompilation::JoinBuildSide::Left) {
+    if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
         auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightSourceType());
         context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
@@ -3175,7 +3175,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    if (buildSide == QueryCompilation::Left) {
+    if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
         auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration,
                                                             joinDef->getLeftJoinKey()->getStamp(),
                                                             "InputTuple",
@@ -3197,12 +3197,12 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowManagerVarDeclaration).assign(getWindowManagerStatement).copy());
 
-    if (buildSide == QueryCompilation::JoinBuildSide::Left) {
+    if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
         NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side left");
         auto getWindowStateStatement = getLeftJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowStateVarDeclaration).assign(getWindowStateStatement).copy());
-    } else if (buildSide == QueryCompilation::JoinBuildSide::Right) {
+    } else if (buildSide == QueryCompilation::JoinBuildSideType::Right) {
         NES_DEBUG("CCodeGenerator::generateCodeForJoin generate code for side right");
         auto getWindowStateStatement = getRightJoinState(windowJoinVariableDeclration);
         context->code->variableInitStmts.emplace_back(
@@ -3218,7 +3218,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto keyVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "_");
     auto recordHandler = context->getRecordHandler();
 
-    if (buildSide == QueryCompilation::JoinBuildSide::Left) {
+    if (buildSide == QueryCompilation::JoinBuildSideType::Left) {
         auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName + "leftKey");
@@ -3274,7 +3274,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
-        if (buildSide == QueryCompilation::JoinBuildSide::Right) {
+        if (buildSide == QueryCompilation::JoinBuildSideType::Right) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
@@ -3361,7 +3361,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context,
                                         windowJoinVariableDeclration,
-                                        buildSide == QueryCompilation::JoinBuildSide::Left);
+                                        buildSide == QueryCompilation::JoinBuildSideType::Left);
     return true;
 }
 

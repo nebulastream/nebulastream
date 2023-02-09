@@ -1,0 +1,44 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+namespace NES::Runtime::Execution::Operators {
+
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
+    for (const auto& _ : origins) {
+        watermarkProcessors.emplace_back(std::make_shared<Util::NonBlockingMonotonicSeqQueue<OriginId>>());
+    }
+};
+
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const std::vector<OriginId>& origins) {
+    return std::make_shared<MultiOriginWatermarkProcessor>(origins);
+}
+
+uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uint64_t sequenceNumber, OriginId origin) {
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        if (origins[originIndex] == origin) {
+            watermarkProcessors[originIndex]->emplace(sequenceNumber, ts);
+        }
+    }
+    return getCurrentWatermark();
+}
+
+uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {
+    auto minimalWatermark = UINT64_MAX;
+    for (const auto& wt : watermarkProcessors) {
+        minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
+    }
+    return minimalWatermark;
+}
+
+}// namespace NES::Runtime::Execution::Operators

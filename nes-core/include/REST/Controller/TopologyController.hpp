@@ -15,15 +15,17 @@
 #define NES_CORE_INCLUDE_REST_CONTROLLER_TOPOLOGYCONTROLLER_HPP_
 #include <REST/Controller/BaseRouterPrefix.hpp>
 #include <REST/Handlers/ErrorHandler.hpp>
-#include <Spatial/Index/Waypoint.hpp>
+#include <Services/TopologyManagerService.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
-#include <Util/Experimental/NodeTypeUtilities.hpp>
+#include <Util/Experimental/SpatialType.hpp>
+#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
 #include <oatpp/web/server/api/ApiController.hpp>
+#include <utility>
+
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 namespace NES {
@@ -46,11 +48,11 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     TopologyController(const std::shared_ptr<ObjectMapper>& objectMapper,
-                       TopologyPtr topology,
-                       oatpp::String completeRouterPrefix,
+                       TopologyManagerServicePtr topologyManagerService,
+                       const oatpp::String& completeRouterPrefix,
                        ErrorHandlerPtr errorHandler)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix), topology(std::move(topology)),
-          errorHandler(errorHandler) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix),
+          topologyManagerService(std::move(topologyManagerService)), errorHandler(std::move(errorHandler)) {}
 
     /**
      * Create a shared object of the API controller
@@ -60,16 +62,19 @@ class TopologyController : public oatpp::web::server::api::ApiController {
      * @param errorHandler - responsible for handling errors
      */
     static std::shared_ptr<TopologyController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                      TopologyPtr topology,
+                                                      TopologyManagerServicePtr topologyManagerService,
                                                       std::string routerPrefixAddition,
                                                       ErrorHandlerPtr errorHandler) {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
-        return std::make_shared<TopologyController>(objectMapper, std::move(topology), completeRouterPrefix, errorHandler);
+        return std::make_shared<TopologyController>(objectMapper,
+                                                    std::move(topologyManagerService),
+                                                    completeRouterPrefix,
+                                                    errorHandler);
     }
 
     ENDPOINT("GET", "", getTopology) {
         try {
-            auto topologyJson = getTopologyAsJson(topology);
+            auto topologyJson = topologyManagerService->getTopologyAsJson();
             return createResponse(Status::CODE_200, topologyJson.dump());
         } catch (nlohmann::json::exception e) {
             return errorHandler->handleError(Status::CODE_500, e.what());
@@ -98,13 +103,9 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            auto parentPhysicalNode = topology->findNodeWithId(parentId);
-            auto childPhysicalNode = topology->findNodeWithId(childId);
-
-            bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            bool added = topologyManagerService->addParent(childId, parentId);
             if (added) {
                 NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
-                topology->print();
             } else {
                 NES_ERROR("TopologyController::handlePost:addParent: Failed");
                 return errorHandler->handleError(Status::CODE_500, "TopologyController::handlePost:addParent: Failed");
@@ -134,10 +135,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             }
             uint64_t parentId = reqJson["parentId"].get<uint64_t>();
             uint64_t childId = reqJson["childId"].get<uint64_t>();
-            auto parentPhysicalNode = topology->findNodeWithId(parentId);
-            auto childPhysicalNode = topology->findNodeWithId(childId);
-
-            bool removed = topology->removeNodeAsChild(parentPhysicalNode, childPhysicalNode);
+            bool removed = topologyManagerService->removeParent(childId, parentId);
             if (removed) {
                 NES_DEBUG("TopologyController::handlePost:addParent: deleted link successfully");
             } else {
@@ -174,14 +172,14 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 "Could not add parent for node in topology: childId and parentId must be different.");
         }
 
-        TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
+        TopologyNodePtr childPhysicalNode = topologyManagerService->findNodeWithId(childId);
         if (!childPhysicalNode) {
             return errorHandler->handleError(
                 Status::CODE_400,
                 "Could not add parent for node in topology: Node with childId=" + std::to_string(childId) + " not found.");
         }
 
-        TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
+        TopologyNodePtr parentPhysicalNode = topologyManagerService->findNodeWithId(parentId);
         if (!parentPhysicalNode) {
             return errorHandler->handleError(
                 Status::CODE_400,
@@ -190,69 +188,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
         return std::nullopt;
     }
 
-    /**
-      * @brief function to obtain JSON representation of a NES Topology
-      * @param root of the Topology
-      * @return JSON representation of the Topology
-      */
-    nlohmann::json getTopologyAsJson(TopologyPtr topology) {
-        NES_INFO("TopologyController: getting topology as JSON");
-
-        nlohmann::json topologyJson{};
-        auto root = topology->getRoot();
-        std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
-        std::deque<TopologyNodePtr> childToAdd;
-
-        std::vector<nlohmann::json> nodes = {};
-        std::vector<nlohmann::json> edges = {};
-
-        while (!parentToAdd.empty()) {
-            // Current topology node to add to the JSON
-            TopologyNodePtr currentNode = parentToAdd.front();
-            nlohmann::json currentNodeJsonValue{};
-
-            parentToAdd.pop_front();
-            // Add properties for current topology node
-            currentNodeJsonValue["id"] = currentNode->getId();
-            currentNodeJsonValue["available_resources"] = currentNode->getAvailableResources();
-            currentNodeJsonValue["ip_address"] = currentNode->getIpAddress();
-            if (currentNode->getSpatialNodeType() != NES::Spatial::Index::Experimental::NodeType::MOBILE_NODE) {
-                NES::Spatial::Index::Experimental::Location location = *currentNode->getCoordinates()->getLocation();
-                auto locationInfo = nlohmann::json{};
-                if (location.isValid()) {
-                    locationInfo["latitude"] = location.getLatitude();
-                    locationInfo["longitude"] = location.getLongitude();
-                }
-                currentNodeJsonValue["location"] = locationInfo;
-            }
-            currentNodeJsonValue["nodeType"] = NES::Spatial::Util::NodeTypeUtilities::toString(currentNode->getSpatialNodeType());
-
-            for (const auto& child : currentNode->getChildren()) {
-                // Add edge information for current topology node
-                nlohmann::json currentEdgeJsonValue{};
-                currentEdgeJsonValue["source"] = child->as<TopologyNode>()->getId();
-                currentEdgeJsonValue["target"] = currentNode->getId();
-                edges.push_back(currentEdgeJsonValue);
-
-                childToAdd.push_back(child->as<TopologyNode>());
-            }
-
-            if (parentToAdd.empty()) {
-                parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-                childToAdd.clear();
-            }
-
-            nodes.push_back(currentNodeJsonValue);
-        }
-        NES_INFO("TopologyController: no more topology node to add");
-
-        // add `nodes` and `edges` JSON array to the final JSON result
-        topologyJson["nodes"] = nodes;
-        topologyJson["edges"] = edges;
-        return topologyJson;
-    }
-
-    TopologyPtr topology;
+    TopologyManagerServicePtr topologyManagerService;
     ErrorHandlerPtr errorHandler;
 };
 }//namespace Controller

@@ -12,6 +12,15 @@
     limitations under the License.
 */
 
+#include "Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp"
+#include "Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp"
+#include "Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp"
+#include "Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp"
+#include "Nautilus/IR/Operations/ConstIntOperation.hpp"
+#include "Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopInfo.hpp"
+#include "Nautilus/IR/Operations/Loop/LoopOperation.hpp"
+#include "Nautilus/Util/IRDumpHandler.hpp"
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
@@ -35,73 +44,7 @@ void StructuredControlFlowPhase::apply(std::shared_ptr<IR::IRGraph> ir) {
 
 void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::process() {
     std::shared_ptr<NES::Nautilus::IR::Operations::FunctionOperation> rootOperation = ir->getRootOperation();
-    findLoopHeadBlocks(rootOperation->getFunctionBasicBlock());
     createIfOperations(rootOperation->getFunctionBasicBlock());
-}
-
-void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::checkBranchForLoopHeadBlocks(
-    IR::BasicBlockPtr& currentBlock,
-    std::stack<IR::BasicBlockPtr>& candidates,
-    std::unordered_set<std::string>& visitedBlocks,
-    std::unordered_set<std::string>& loopHeaderCandidates) {
-    // Follow the true-branch of the current, and all nested if-operations until either
-    // currentBlock is an already visited block, or currentBlock is the return-block.
-    // Newly encountered if-operations are added as loopHeadCandidates.
-    while (!visitedBlocks.contains(currentBlock->getIdentifier())
-           && currentBlock->getTerminatorOp()->getOperationType() != Operation::ReturnOp) {
-        auto terminatorOp = currentBlock->getTerminatorOp();
-        if (terminatorOp->getOperationType() == Operation::BranchOp) {
-            auto nextBlock =
-                std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp)->getNextBlockInvocation().getBlock();
-            visitedBlocks.emplace(currentBlock->getIdentifier());
-            currentBlock = nextBlock;
-        } else if (terminatorOp->getOperationType() == Operation::IfOp) {
-            auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
-            loopHeaderCandidates.emplace(currentBlock->getIdentifier());
-            candidates.emplace(currentBlock);
-            visitedBlocks.emplace(currentBlock->getIdentifier());
-            currentBlock = ifOp->getTrueBlockInvocation().getBlock();
-        }
-    }
-    // If currentBlock is an already visited block that also is a loopHeaderCandidate, we found a loop-header-block.
-    if (loopHeaderCandidates.contains(currentBlock->getIdentifier())) {
-        //todo replace ifOperation with loopOperation and add LoopInfo #3169
-        auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-        // Currently, we increase the number of loopBackEdges (default: 0) of the loop-header-block.
-        // Thus, after this phase, if a block has numLoopBackEdges > 0, it is a loop-header-block.
-        // More information will be added in the scope of issue #3169.
-        currentBlock->incrementNumLoopBackEdge();
-    }
-}
-
-void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::findLoopHeadBlocks(IR::BasicBlockPtr currentBlock) {
-    std::stack<IR::BasicBlockPtr> ifBlocks;
-    std::unordered_set<std::string> loopHeaderCandidates;
-    std::unordered_set<std::string> visitedBlocks;
-
-    bool returnBlockVisited = false;
-    bool noMoreIfBlocks = true;
-    // We iterate over the IR graph starting with currentBlock being the body of the root-operation.
-    // We stop iterating when we have visited the return block at least once, and there are no more
-    // unvisited if-blocks on the stack. If the IR graph is valid, no more unvisited if-operations exist.
-    do {
-        // Follow a branch through the query branch until currentBlock is either the return- or an already visited block.
-        checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeaderCandidates);
-        // Set the current values for the loop halting values.
-        noMoreIfBlocks = ifBlocks.empty();
-        returnBlockVisited = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operation::ReturnOp);
-        if (!noMoreIfBlocks) {
-            // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.
-            // Since loops can only loop back on their true-branch, we can safely stop tracking it as a loop candidate.
-            loopHeaderCandidates.erase(ifBlocks.top()->getIdentifier());
-            // Set currentBlock to first block in false-branch of ifOperation.
-            // The false branch might contain nested loop-operations.
-            currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())
-                               ->getFalseBlockInvocation()
-                               .getBlock();
-            ifBlocks.pop();
-        }
-    } while (!(noMoreIfBlocks && returnBlockVisited));
 }
 
 bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCheck(
@@ -135,8 +78,9 @@ bool StructuredControlFlowPhase::StructuredControlFlowPhaseContext::mergeBlockCh
         openEdges = currentBlock->getNumLoopBackEdges() - numPriorVisits;
         if (openEdges < 2) {
             // We exhausted the loop-operations true-branch (body block) and now switch to its false-branch.
-            currentBlock = ifOperations.top()->ifOp->getFalseBlockInvocation().getBlock();
-            ifOperations.pop();
+            currentBlock = std::static_pointer_cast<Operations::LoopOperation>(currentBlock->getTerminatorOp())
+                               ->getLoopFalseBlock()
+                               .getBlock();
             // Since we switched to a new currentBlock, we need to check whether it is a merge-block with openEdges.
             // If the new currentBlock is a loop-header-block again, we have multiple recursive calls.
             return mergeBlockCheck(currentBlock, ifOperations, numMergeBlocksVisits, true, loopBlockWithVisitedBody);
@@ -184,18 +128,16 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 // If the currentBlock is an if-block, we push its if-operation on top of our IfOperation stack.
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
                 ifOperations.emplace(std::make_unique<IfOpCandidate>(IfOpCandidate{ifOp, true}));
-                // If the if-operation is a loop-header-if-operation, we processed everything 'above' the loop-header.
-                // Thus, we now explore the loop's body, which we remember using the loopBlockWithVisitedBody set.
-                // If numMergeBlockVisits exists for the loop-header-block, it will be reset.
-                // From now on, we will check whether it is an open-merge-block using its numLoopBackEdges count.
-                if (currentBlock->isLoopHeaderBlock()) {
-                    loopBlockWithVisitedBody.emplace(currentBlock);
-                    if (numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
-                        numMergeBlockVisits.erase(currentBlock->getIdentifier());
-                    }
-                }
                 // We now follow the if-operation's true-branch until we find a new if-operation or a merge-block.
                 currentBlock = ifOp->getTrueBlockInvocation().getBlock();
+                newVisit = true;
+            } else if (terminatorOp->getOperationType() == Operation::LoopOp) {
+                loopBlockWithVisitedBody.emplace(currentBlock);
+                if (numMergeBlockVisits.contains(currentBlock->getIdentifier())) {
+                    numMergeBlockVisits.erase(currentBlock->getIdentifier());
+                }
+                auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
+                currentBlock = loopOp->getLoopBodyBlock().getBlock();
                 newVisit = true;
             }
         }
@@ -217,8 +159,7 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
                 //  1. Are in their false-branches (their merge-block was pushed to the stack).
                 //  2. Have a corresponding merge-block on the stack that matches the currentBlock.
                 do {
-                    auto mergeBlock = std::move(mergeBlocks.top());
-                    ifOperations.top()->ifOp->setMergeBlock(std::move(mergeBlock));
+                    ifOperations.top()->ifOp->setMergeBlock(std::move(mergeBlocks.top()));
                     mergeBlocks.pop();
                     ifOperations.pop();
                 } while (!ifOperations.empty() && !ifOperations.top()->isTrueBranch && !mergeBlocks.empty()
@@ -232,4 +173,4 @@ void StructuredControlFlowPhase::StructuredControlFlowPhaseContext::createIfOper
     }
 }
 
-}// namespace NES::Nautilus::IR
+}//namespace NES::Nautilus::IR

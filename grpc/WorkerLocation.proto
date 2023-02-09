@@ -14,12 +14,19 @@
 
 syntax = "proto3";
 
-message Coordinates {
+package NES.Spatial.Protobuf;
+
+message Waypoint {
+  GeoLocation geoLocation = 1;
+  uint64 timestamp = 2;
+}
+
+message GeoLocation {
   double lat = 1;
   double lng = 2;
 }
 
-enum NodeType {
+enum SpatialType {
   NO_LOCATION = 0;
   FIXED_LOCATION = 1;
   MOBILE_NODE = 2;
@@ -27,23 +34,15 @@ enum NodeType {
 
 message WorkerLocationInfo {
   uint64 id = 1;
-  Coordinates coord = 2;
+  GeoLocation geoLocation = 2;
 }
 
 message ReconnectSchedule {
-  uint64 parentId = 1;
-  Coordinates pathStart = 2;
-  Coordinates pathEnd = 3;
-  Coordinates lastIndexUpdatePosition = 4;
   repeated SerializableReconnectPoint reconnectPoints = 5;
 }
 
-message SerializableReconnectPrediction {
+message SerializableReconnectPoint {
   uint64 id = 1;
   uint64 time = 2;
-}
-
-message SerializableReconnectPoint {
-  Coordinates coord = 1;
-  SerializableReconnectPrediction reconnectPrediction = 2;
+  GeoLocation geoLocation = 3;
 }

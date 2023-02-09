@@ -20,6 +20,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/BenchmarkUtils.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 
@@ -39,10 +40,12 @@ Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bu
 
 NES::Runtime::TupleBuffer DataGenerator::allocateBuffer() { return bufferManager->getBufferBlocking(); }
 
-DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::Node generatorNode) {
-    if (name == "Default") {
+DataGeneratorPtr DataGenerator::createGeneratorByName(std::string type, Yaml::Node generatorNode) {
+
+    NES_INFO("DataGenerator created from type: " << type)
+    if (type.empty() || type == "Default") {
         return std::make_shared<DefaultDataGenerator>(/* minValue */ 0, /* maxValue */ 1000);
-    } else if (name == "Uniform") {
+    } else if (type == "Uniform") {
         if (generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
             NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Uniform Datagenerator!");
         }
@@ -51,7 +54,7 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<DefaultDataGenerator>(minValue, maxValue);
 
-    } else if (name == "Zipfian") {
+    } else if (type == "Zipfian") {
         if (generatorNode["alpha"].IsNone() || generatorNode["minValue"].IsNone() || generatorNode["maxValue"].IsNone()) {
             NES_THROW_RUNTIME_ERROR("Alpha, minValue and maxValue are necessary for a Zipfian Datagenerator!");
         }
@@ -61,11 +64,11 @@ DataGeneratorPtr DataGenerator::createGeneratorByName(std::string name, Yaml::No
         auto maxValue = generatorNode["maxValue"].As<uint64_t>();
         return std::make_shared<ZipfianDataGenerator>(alpha, minValue, maxValue);
 
-    } else if (name == "YSB" || name == "YSBKafka") {
+    } else if (NES::Util::toUpperCase(type) == "YSB" || type == "YSBKafka") {
         return std::make_shared<YSBDataGenerator>();
 
     } else {
-        NES_THROW_RUNTIME_ERROR("DataGenerator " << name << " could not been parsed!");
+        NES_THROW_RUNTIME_ERROR("DataGenerator " << type << " could not been parsed!");
     }
 }
 

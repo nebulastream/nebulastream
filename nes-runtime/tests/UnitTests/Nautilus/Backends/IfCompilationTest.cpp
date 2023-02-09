@@ -16,15 +16,15 @@
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
 namespace NES::Nautilus {
 
-class IfCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class IfCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -32,14 +32,8 @@ class IfCompilationTest : public testing::Test, public AbstractCompilationBacken
         NES_DEBUG("Setup IfCompilationTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup IfCompilationTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down IfCompilationTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down IfCompilationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down IfCompilationTest test class."); }
 };
 
 Value<> ifThenCondition() {
@@ -56,7 +50,7 @@ TEST_P(IfCompilationTest, ifConditionTest) {
         return ifThenCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int16_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 43);
 }
 
@@ -76,7 +70,7 @@ TEST_P(IfCompilationTest, ifThenElseConditionTest) {
         return ifThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 85);
 }
 
@@ -98,7 +92,7 @@ TEST_P(IfCompilationTest, nestedIFThenElseConditionTest) {
         return nestedIfThenElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -121,7 +115,7 @@ TEST_P(IfCompilationTest, nestedIFThenNoElse) {
         return nestedIfNoElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -143,7 +137,7 @@ TEST_P(IfCompilationTest, doubleIfCondition) {
         return doubleIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -163,7 +157,7 @@ TEST_P(IfCompilationTest, ifElseIfCondition) {
         return ifElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 23);
 }
 
@@ -191,7 +185,7 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseCondition) {
         return deeplyNestedIfElseCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 12);
 }
 
@@ -215,7 +209,7 @@ TEST_P(IfCompilationTest, deeplyNestedIfElseIfCondition) {
         return deeplyNestedIfElseIfCondition();
     });
     auto engine = prepare(executionTrace);
-    auto function = engine->getInvocableMember<int32_t (*)()>("execute");
+    auto function = engine->getInvocableMember<int32_t>("execute");
     ASSERT_EQ(function(), 17);
 }
 

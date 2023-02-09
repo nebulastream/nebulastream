@@ -37,7 +37,8 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
             auto leftInputSchema = joinOp->getLeftInputSchema();
             uint64_t edgesLeft = 0;
             uint64_t edgesRight = 0;
-            for (const auto& child : joinOp->getChildren()) {
+            auto children = joinOp->getChildren();
+            for (const auto& child : children) {
                 auto childOperator = child->as<OperatorNode>();
                 if (childOperator->getOutputSchema()->equals(leftInputSchema, false)) {
                     edgesLeft++;

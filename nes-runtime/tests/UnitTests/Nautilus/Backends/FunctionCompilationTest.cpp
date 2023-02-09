@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,7 +26,7 @@
 
 namespace NES::Nautilus {
 
-class FunctionCompilationTest : public testing::Test, public AbstractCompilationBackendTest {
+class FunctionCompilationTest : public Testing::NESBaseTest, public AbstractCompilationBackendTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -32,14 +34,8 @@ class FunctionCompilationTest : public testing::Test, public AbstractCompilation
         NES_DEBUG("Setup FunctionCompilationTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
 int64_t addInt(int64_t x, int64_t y) { return x + y; };
@@ -57,7 +53,7 @@ TEST_P(FunctionCompilationTest, addIntFunctionTest) {
         return addIntFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 5);
 }
 
@@ -71,7 +67,7 @@ TEST_P(FunctionCompilationTest, returnConstFunctionTest) {
         return returnConstFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_EQ(function(), 42);
 }
 
@@ -85,7 +81,7 @@ TEST_P(FunctionCompilationTest, voidExceptionFunctionTest) {
         voidExceptionFunction();
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)()>("execute");
+    auto function = result->getInvocableMember<int64_t>("execute");
     ASSERT_ANY_THROW(function());
 }
 
@@ -103,7 +99,7 @@ TEST_P(FunctionCompilationTest, multiplyArgumentTest) {
         return multiplyArgumentFunction(tempPara);
     });
     auto result = prepare(executionTrace);
-    auto function = result->getInvocableMember<int64_t (*)(int64_t)>("execute");
+    auto function = result->getInvocableMember<int64_t, int64_t>("execute");
     ASSERT_EQ(function(10), 100);
     ASSERT_EQ(function(42), 420);
 }

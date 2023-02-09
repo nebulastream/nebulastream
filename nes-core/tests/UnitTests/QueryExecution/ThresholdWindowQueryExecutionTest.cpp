@@ -12,7 +12,6 @@
     limitations under the License.
 */
 // clang-format: off
-#include "gtest/gtest.h"
 // clang-format: on
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
@@ -71,7 +70,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTest) {
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
-    auto testSink = executionEngine->createDateSink(sinkSchema);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)

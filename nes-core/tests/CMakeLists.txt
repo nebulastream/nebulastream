@@ -130,7 +130,7 @@ add_nes_integration_test(source-catalog-controller-integration-tests "Integratio
 add_nes_integration_test(maintenance-controller-integration-test "Integration/REST/Controller/MaintenanceControllerTest.cpp")
 
 ### NES Location Controller Tests ###
-add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerTest.cpp")
+add_nes_integration_test(location-controller-integration-tests "Integration/REST/Controller/LocationControllerIntegrationTest.cpp")
 
 ### NES TopologyProperty Tests ###
 add_nes_unit_test(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
@@ -474,8 +474,7 @@ add_nes_unit_test(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
 
 
 ### Location Tests ###
-add_nes_unit_test(location-unit-tests "UnitTests/Common/LocationUnitTest.cpp")
-
+add_nes_unit_test(location-unit-tests "UnitTests/Spatial/DataTypes/LocationUnitTest.cpp")
 
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTest.cpp")
@@ -483,9 +482,8 @@ add_nes_unit_test(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTes
 ### Location Provider CSV Tests ###
 add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationProviderCSVTest.cpp")
 
-
-### Trajectory Predictor Test ###
-add_nes_unit_test(trajectory-predictor-tests "UnitTests/Spatial/TrajectoryPredictorTest.cpp")
+### Reconnect Schedule Predictor Test ###
+add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/ReconnectSchedulePredictorTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")
@@ -577,14 +575,8 @@ add_nes_integration_test(source-catalog-remote-test "Integration/Source/SourceCa
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
 
-
-# RESTEndpointTest
-add_nes_integration_test(rest-endpoint-test "Integration/RESTEndpointTest.cpp")
-
-
 ### WorkerCoordinatorStarter Tests ###
 add_nes_integration_test(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
-
 
 # NetworkStackUnitTest
 add_nes_integration_test(network-stack-test "UnitTests/Network/NetworkStackTest.cpp")

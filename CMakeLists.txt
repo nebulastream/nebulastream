@@ -14,7 +14,9 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v27)
+set(VCPKG_BINARY_VERSION v29)
+set(LLVM_BINARY_VERSION v1)
+set(LLVM_VERSION 15)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -42,6 +44,7 @@ option(NES_USE_LLD "Use LLD" OFF)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER "Enables the bytecode interpreter backend." OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
@@ -73,12 +76,17 @@ endif ()
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
-project(NES CXX)
+include(cmake/ImportLLVM.cmake)
+project(NES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
+
+# Emit warning if non clang-based compiler is used.
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(WARNING "This project only supports clang. You are using ${CMAKE_CXX_COMPILER_ID} in version ${CMAKE_CXX_COMPILER_VERSION}")
+endif ()
 
 # Find project version
 include(cmake/semver/GetSemanticVersion.cmake)
@@ -181,10 +189,9 @@ set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
 
-
 if (NOT APPLE)
     if (NES_USE_LLD)
-        message(STATUS "we use LLD for linking")
+        message(STATUS "Use LLD for linking")
         add_link_options("-fuse-ld=lld")
     endif ()
     # as per backward.h
@@ -249,24 +256,18 @@ if (NES_BUILD_NATIVE)
     endif ()
 else ()
     # Compiler should produce specific code for system architecture
-    MESSAGE("CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
         message(STATUS "CMAKE detects generic x86_64 arch support")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
     elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
         message(STATUS "CMAKE detects APPLE ARM64 support")
-        # Clang has the exact same macros for A14 as M1.
-        # Current Clang master has -mcpu=apple-m1 but
-        # not yet on latest release. Overall, arm64/aarch64
-        # offer so many different configuration parameters
-        # that compilers prefer -mcpu=XXX instead.
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
     elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
         message(STATUS "CMAKE detects generic ARM64 support")
         # Arm themselves suggest using -mcpu=native, or in general,
         # to use -mcpu=CPU_TYPE. For more info, here:
         # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a")
     else ()
         message(FATAL_ERROR "CMAKE_SYSTEM_PROCESSOR was ${CMAKE_SYSTEM_PROCESSOR} this is a unsupported architecture.")
     endif ()
@@ -277,7 +278,7 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-# folly and cpprestsdk relies on boost so we set the right configuration flag
+# folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
 # spdlog
@@ -418,17 +419,21 @@ endif ()
 if (NES_USE_KAFKA)
     # TODO #3351 The commands should be moved into a separate CMake config file.
     if (NOT APPLE)
+        find_package(RdKafka CONFIG REQUIRED)
+        set(LIBRARIES ${LIBRARIES} RdKafka::rdkafka RdKafka::rdkafka++)
+
         include_directories(${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka)
-        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1)
+        set(LIBRARIES ${LIBRARIES} ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a)
         add_compile_definitions(ENABLE_KAFKA_BUILD)
         add_library(cppkafka::cppkafka SHARED IMPORTED)
         set_target_properties(cppkafka::cppkafka
                 PROPERTIES
-                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.so.0.3.1
+                IMPORTED_LOCATION ${NES_DEPENDENCIES_BINARY_ROOT}/lib/libcppkafka.a
                 INTERFACE_INCLUDE_DIRECTORIES "${NES_DEPENDENCIES_BINARY_ROOT}/include/cppkafka"
                 )
-        install(IMPORTED_RUNTIME_ARTIFACTS cppkafka::cppkafka DESTINATION lib)
         message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
+    else()
+        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
     endif ()
 endif ()
 
@@ -509,6 +514,42 @@ if (CMAKE_USE_PAPI_PROFILER)
     add_compile_definitions(ENABLE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
+# LLVM
+find_package(LLVM ${LLVM_VERSION} CONFIG REQUIRED)
+if (LLVM_FOUND)
+    get_property(LLVM_COV_PATH TARGET llvm-cov PROPERTY LOCATION)
+    get_property(LLVM_PROFDATA_PATH TARGET llvm-profdata PROPERTY LOCATION)
+    get_property(LCOV_PATH TARGET llvm-cov PROPERTY LOCATION)
+    message(STATUS "LLVM version ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "LLVM binary dir ${LLVM_BINARY_DIR}")
+else ()
+    message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
+endif ()
+
+find_package(Clang CONFIG REQUIRED)
+if (Clang_FOUND)
+    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
+    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
+    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
+    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
+    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
+else ()
+    message(FATAL_ERROR "Cannot find clang.")
+endif ()
+
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
+    find_package(JNI)
+    if (JNI_FOUND)
+        message(STATUS "JNI found")
+        message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+        message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+        set(LIBRARIES ${LIBRARIES} ${JNI_LIBRARIES})
+        include_directories(${JNI_INCLUDE_DIRS})
+        add_compile_definitions(ENABLE_JNI)
+    else()
+        message(STATUS "JNI not found")
+    endif()
+endif()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
@@ -522,20 +563,6 @@ message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
-# LLVM
-find_package(LLVM 14 CONFIG REQUIRED)
-if (LLVM_FOUND)
-    message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
-    message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
-    message("-- LLVM tool dir ${LLVM_TOOLS_INSTALL_DIR}")
-    set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-14)
-    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
-    set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
-else ()
-    message(FATAL_ERROR "Cannot find llvm")
-endif ()
-message("-- LLVM version ${LLVM_VERSION_STRING}")
-message("-- LLVM version ${LLVM_ROOT_DIR}")
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
@@ -633,7 +660,6 @@ add_subdirectory(nes-runtime)
 add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
-
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)

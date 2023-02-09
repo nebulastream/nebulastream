@@ -17,9 +17,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 /**
  * @brief Physical operator for the join sink.
  * This operator queryIdAndCatalogEntryMapping the operator state and computes final join results.
@@ -31,10 +29,10 @@ class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBin
                                       const SchemaPtr& rightInputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Join::JoinOperatorHandlerPtr& operatorHandler);
-    static PhysicalOperatorPtr create(SchemaPtr leftInputSchema,
-                                      SchemaPtr rightInputSchema,
-                                      SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler);
+    static PhysicalOperatorPtr create(const SchemaPtr& leftInputSchema,
+                                      const SchemaPtr& rightInputSchema,
+                                      const SchemaPtr& outputSchema,
+                                      const Join::JoinOperatorHandlerPtr& operatorHandler);
     PhysicalJoinSinkOperator(OperatorId id,
                              SchemaPtr leftInputSchema,
                              SchemaPtr rightInputSchema,
@@ -43,8 +41,6 @@ class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBin
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_

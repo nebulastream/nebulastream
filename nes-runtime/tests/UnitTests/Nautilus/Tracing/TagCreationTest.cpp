@@ -14,6 +14,7 @@
 
 #include <Nautilus/Exceptions/TagCreationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -22,22 +23,16 @@
 
 namespace NES::Nautilus::Tracing {
 
-class TagCreationTest : public testing::Test {
+class TagCreationTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TagCreationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup TagCreationTest test class." << std::endl;
+        NES_INFO("Setup TagCreationTest test class.");
     }
 
-    /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup TagCreationTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down TagCreationTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down TagCreationTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down TagCreationTest test class."); }
 };
 
 TEST_F(TagCreationTest, tagCreation) {

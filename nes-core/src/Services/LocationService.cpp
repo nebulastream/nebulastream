@@ -13,48 +13,54 @@
 */
 
 #include <Services/LocationService.hpp>
+#include <Spatial/DataTypes/GeoLocation.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
-#include <Spatial/Index/Waypoint.hpp>
-#include <Spatial/Mobility/ReconnectPoint.hpp>
-#include <Spatial/Mobility/ReconnectSchedule.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
+#include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <nlohmann/json.hpp>
+#include <utility>
 
-namespace NES::Spatial::Index::Experimental {
-LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology){};
+namespace NES {
+
+LocationService::LocationService(TopologyPtr topology, Spatial::Index::Experimental::LocationIndexPtr locationIndex)
+    : locationIndex(std::move(locationIndex)), topology(std::move(topology)){};
 
 nlohmann::json LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
-    auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr || !nodePtr->getCoordinates()) {
+
+    if (!topology->findNodeWithId(nodeId)) {
         return nullptr;
     }
-    return convertNodeLocationInfoToJson(nodeId, *nodePtr->getCoordinates()->getLocation());
+
+    auto geoLocation = locationIndex->getGeoLocationForNode(nodeId);
+    if (geoLocation.has_value()) {
+        return convertNodeLocationInfoToJson(nodeId, geoLocation.value());
+    } else {
+        nlohmann::json nodeInfo;
+        nodeInfo["id"] = nodeId;
+        return nodeInfo;
+    }
 }
 
-nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
-    auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr || nodePtr->getSpatialNodeType() != NodeType::MOBILE_NODE) {
+nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t) {
+    /* auto nodePtr = topology->findNodeWithId(nodeId);
+    if (!nodePtr || nodePtr->getSpatialNodeType() != Spatial::Index::Experimental::SpatialType::MOBILE_NODE) {
         return nullptr;
     }
     auto schedule = nodePtr->getReconnectSchedule();
     nlohmann::json scheduleJson;
     auto startPtr = schedule->getPathStart();
-    scheduleJson["pathStart"];
-    if (startPtr) {
-        scheduleJson["pathStart"] = convertLocationToJson(*startPtr);
-    }
+
+    scheduleJson["pathStart"] = convertLocationToJson(std::move(startPtr));
+
     auto endPtr = schedule->getPathEnd();
-    scheduleJson["pathEnd"];
-    if (endPtr) {
-        scheduleJson["pathEnd"] = convertLocationToJson(*endPtr);
-    }
+    scheduleJson["pathEnd"] = convertLocationToJson(std::move(endPtr));
+
     auto updatePostion = schedule->getLastIndexUpdatePosition();
-    scheduleJson["indexUpdatePosition"];
-    if (updatePostion) {
-        scheduleJson["indexUpdatePosition"] = convertLocationToJson(*updatePostion);
-    }
+    scheduleJson["indexUpdatePosition"] = convertLocationToJson(std::move(updatePostion));
 
     auto reconnectArray = nlohmann::json::array();
     int i = 0;
@@ -64,50 +70,55 @@ nlohmann::json LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) 
         for (auto elem : reconnectVector) {
             nlohmann::json elemJson;
             elemJson["id"] = elem->reconnectPrediction.expectedNewParentId;
-            elemJson["reconnectPoint"] = convertLocationToJson(elem->predictedReconnectLocation);
+            elemJson["reconnectPoint"] = convertLocationToJson(std::move(elem->pointGeoLocation));
             elemJson["time"] = elem->reconnectPrediction.expectedTime;
             reconnectArray[i] = elemJson;
             i++;
         }
     }
     scheduleJson["reconnectPoints"] = reconnectArray;
-    return scheduleJson;
+    return scheduleJson;*/
+    NES_NOT_IMPLEMENTED();
 }
 
 nlohmann::json LocationService::requestLocationDataFromAllMobileNodesAsJson() {
-    auto nodeVector = locationIndex->getAllMobileNodeLocations();
+    auto nodeVector = locationIndex->getAllNodeLocations();
     auto locMapJson = nlohmann::json::array();
     size_t count = 0;
-    for (const auto& [nodeId, location] : nodeVector) {
-        nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, *location);
-        locMapJson[count] = nodeInfo;
-        ++count;
+    for (auto& [nodeId, location] : nodeVector) {
+        auto topologyNode = topology->findNodeWithId(nodeId);
+        if (topologyNode && topologyNode->getSpatialNodeType() == Spatial::Experimental::SpatialType::MOBILE_NODE) {
+            nlohmann::json nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
+            locMapJson[count] = nodeInfo;
+            ++count;
+        }
     }
     return locMapJson;
 }
 
-nlohmann::json LocationService::convertLocationToJson(Location location) {
+nlohmann::json LocationService::convertLocationToJson(NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json locJson;
-    if (location.isValid()) {
-        locJson[0] = location.getLatitude();
-        locJson[1] = location.getLongitude();
+    if (geoLocation.isValid()) {
+        locJson[0] = geoLocation.getLatitude();
+        locJson[1] = geoLocation.getLongitude();
     }
     return locJson;
 }
 
-nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id, Location loc) {
+nlohmann::json LocationService::convertNodeLocationInfoToJson(uint64_t id,
+                                                              NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation) {
     nlohmann::json nodeInfo;
     nodeInfo["id"] = id;
-    nlohmann::json locJson = convertLocationToJson(loc);
+    nlohmann::json locJson = convertLocationToJson(std::move(geoLocation));
     nodeInfo["location"] = locJson;
     return nodeInfo;
 }
-bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, Mobility::Experimental::ReconnectPrediction prediction) {
-    if (locationIndex->updatePredictedReconnect(mobileWorkerId, prediction)) {
-        return true;
-    } else if (topology->findNodeWithId(prediction.expectedNewParentId)) {
-        NES_WARNING("node exists but is not a mobile node")
-    }
-    return false;
+
+bool LocationService::updatePredictedReconnect(
+    const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+    const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions) {
+    (void) addPredictions;
+    (void) removePredictions;
+    NES_NOT_IMPLEMENTED();//Will be implemented as part of #
 }
-}// namespace NES::Spatial::Index::Experimental
+}// namespace NES

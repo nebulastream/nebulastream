@@ -17,7 +17,8 @@
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
-#include <mlir/Parser.h>
+#include <mlir/AsmParser/AsmParser.h>
+#include <mlir/Parser/Parser.h>
 
 namespace NES::Nautilus::Backends::MLIR {
 
@@ -36,12 +37,12 @@ void MLIRUtility::writeMLIRModuleToFile(mlir::OwningOpRef<mlir::ModuleOp>& mlirM
 }
 
 int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, const std::string& moduleString) {
-    mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
-    module = mlir::parseSourceString(mlirString, &context);
+    mlir::ParserConfig config(&context);
+    auto mlirModule = mlir::parseSourceString<mlir::ModuleOp>(mlirString, config);
 
     // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
-    if (!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {})) {
+    if (!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {})) {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
@@ -49,7 +50,7 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
     // JIT compile LLVM IR module and return engine that provides access compiled execute function.
-    auto engine = MLIR::JITCompiler::jitCompileModule(module, optPipeline, {}, {});
+    auto engine = MLIR::JITCompiler::jitCompileModule(mlirModule, optPipeline, {}, {});
     if (!engine->invoke(moduleString)) {
         return -1;
     } else

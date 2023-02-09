@@ -20,6 +20,7 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
@@ -29,7 +30,7 @@
 
 namespace NES::Runtime::Execution {
 
-class ScanEmitPipelineTest : public testing::Test, public AbstractPipelineExecutionTest {
+class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
@@ -38,22 +39,23 @@ class ScanEmitPipelineTest : public testing::Test, public AbstractPipelineExecut
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup ScanEmitPipelineTest test class." << std::endl;
+        NES_INFO("Setup ScanEmitPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup ScanEmitPipelineTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
+        NES_INFO("Setup ScanEmitPipelineTest test case.");
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+            GTEST_SKIP();
+        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down ScanEmitPipelineTest test case." << std::endl; }
-
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down ScanEmitPipelineTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down ScanEmitPipelineTest test class."); }
 };
 
 /**
@@ -61,8 +63,17 @@ class ScanEmitPipelineTest : public testing::Test, public AbstractPipelineExecut
  */
 TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
+    schema->addField("f1", BasicType::INT8);
+    schema->addField("f2", BasicType::INT16);
+    schema->addField("f3", BasicType::INT32);
+    schema->addField("f4", BasicType::INT64);
+    schema->addField("f5", BasicType::UINT8);
+    schema->addField("f6", BasicType::UINT16);
+    schema->addField("f7", BasicType::UINT32);
+    schema->addField("f8", BasicType::UINT64);
+    schema->addField("f9", BasicType::FLOAT32);
+    schema->addField("f10", BasicType::FLOAT64);
+    schema->addField("f11", BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
@@ -77,8 +88,18 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f1"].write((int8_t) i);
+        dynamicBuffer[i]["f2"].write((int16_t) i);
+        dynamicBuffer[i]["f3"].write((int32_t) i);
+        dynamicBuffer[i]["f4"].write((int64_t) i);
+        dynamicBuffer[i]["f5"].write((uint8_t) i);
+        dynamicBuffer[i]["f6"].write((uint16_t) i);
+        dynamicBuffer[i]["f7"].write((uint32_t) i);
+        dynamicBuffer[i]["f8"].write((uint64_t) i);
+        dynamicBuffer[i]["f9"].write((float) 1.1f);
+        dynamicBuffer[i]["f10"].write((double) 1.1);
+        auto value = (bool) (i % 2);
+        dynamicBuffer[i]["f11"].write<bool>(value);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -95,14 +116,24 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), i);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int8_t>(), (int8_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int16_t>(), (int16_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f3"].read<int32_t>(), (int32_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f4"].read<int64_t>(), (int64_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f5"].read<uint8_t>(), (uint8_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f6"].read<uint16_t>(), (uint16_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f7"].read<uint32_t>(), (uint32_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f8"].read<uint64_t>(), (uint64_t) i);
+        ASSERT_EQ(resultDynamicBuffer[i]["f9"].read<float>(), 1.1f);
+        ASSERT_EQ(resultDynamicBuffer[i]["f10"].read<double>(), 1.1);
+        auto value = (bool) (i % 2);
+        ASSERT_EQ(resultDynamicBuffer[i]["f11"].read<bool>(), value);
     }
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) {
                             return info.param;
                         });

@@ -35,16 +35,13 @@ namespace Monitoring {
 class RegistrationMetrics;
 }// namespace Monitoring
 
-namespace Spatial::Index::Experimental {
-class Location;
-using LocationPtr = std::shared_ptr<Location>;
+namespace Spatial::DataTypes::Experimental {
+class GeoLocation;
 class Waypoint;
-using WaypointPtr = std::shared_ptr<Waypoint>;
-enum class NodeType;
-}// namespace Spatial::Index::Experimental
+}// namespace Spatial::DataTypes::Experimental
 
 namespace Spatial::Mobility::Experimental {
-struct ReconnectPrediction;
+struct ReconnectPoint;
 }
 
 /**
@@ -119,23 +116,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to register a node after the connection is established
-     * @param ipAddress: where this node is listening
-     * @param grpcPort: the grpc port of the node
-     * @param dataPort: the data port of the node
-     * @param numberOfSlots: processing slots capacity
-     * @param registrationMetrics: metrics to report
-     * @param fixedCoordinates: the fixed geographical location of a non mobile node if it is known
-     * @param isMobile: indicates if this worker is running on a fixed location device or on a mobile device
+     * @param registrationRequest: request containing necessary input for worker registration
      * @return bool indicating success
      */
-    bool registerNode(const std::string& ipAddress,
-                      int64_t grpcPort,
-                      int64_t dataPort,
-                      int16_t numberOfSlots,
-                      const Monitoring::RegistrationMetrics& registrationMetrics,
-                      NES::Spatial::Index::Experimental::Location fixedCoordinates,
-                      NES::Spatial::Index::Experimental::NodeType spatialType,
-                      bool isTfInstalled);
+    bool registerWorker(const RegisterWorkerRequest& registrationRequest);
 
     /**
      * @brief method to check if the coordinator is alive
@@ -178,12 +162,12 @@ class CoordinatorRPCClient {
     /**
      * Experimental
      * @brief Method to get all field nodes (field nodes = non-mobile nodes with a specified geographical location) within a certain range around a geographical point
-     * @param coord: center of the query area
+     * @param geoLocation: center of the query area
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
-    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>>
-    getNodeIdsInRange(NES::Spatial::Index::Experimental::LocationPtr location, double radius);
+    std::vector<std::pair<uint64_t, NES::Spatial::DataTypes::Experimental::GeoLocation>>
+    getNodeIdsInRange(const NES::Spatial::DataTypes::Experimental::GeoLocation& geoLocation, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
@@ -223,21 +207,20 @@ class CoordinatorRPCClient {
     /**
      * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect
      * have changed or that the worker expects a reconnect to a different parent than the previously scheduled one
-     * @param nodeId The id of the calling worker
-     * @param scheduledReconnect a tuple containing the id of the new parent. The location where the reconnect is scheduled to happen
-     * and the expected time of the reconnect
-     * @return true if the information was succesfully saved at coordinator side
+     * @param removePredictions old predictions which should be removed
+     * @param addPredictions new predictions to be added
+     * @return true if the information was successfully received at coordinator side
      */
-    bool sendReconnectPrediction(uint64_t nodeId, NES::Spatial::Mobility::Experimental::ReconnectPrediction scheduledReconnect);
+    bool sendReconnectPrediction(const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& addPredictions,
+                                 const std::vector<NES::Spatial::Mobility::Experimental::ReconnectPoint>& removePredictions);
 
     /**
      * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
-     * @param nodeId the id of the calling worker
      * @param locationUpdate a tuple containing the mobile devices location and a timestamp indicating when the device was located
      * at the transmitted position
      * @return true if the information has benn succesfully processed
      */
-    bool sendLocationUpdate(uint64_t nodeId, NES::Spatial::Index::Experimental::WaypointPtr locationUpdate);
+    bool sendLocationUpdate(const NES::Spatial::DataTypes::Experimental::Waypoint& locationUpdate);
 
   private:
     uint64_t workerId;

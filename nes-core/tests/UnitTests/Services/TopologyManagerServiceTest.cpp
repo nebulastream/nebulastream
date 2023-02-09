@@ -19,12 +19,15 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/WorkerConfigurationKeys.hpp>
+#include <Configurations/WorkerPropertyKeys.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Experimental/NodeType.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 
@@ -67,34 +70,21 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
+    auto locationIndex = std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>();
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, locationIndex);
 
-    uint64_t nodeId = topologyManagerService->registerNode(ip,
-                                                           publish_port,
-                                                           5000,
-                                                           6,
-                                                           NES::Spatial::Index::Experimental::Location(),
-                                                           NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                                           /* isTfInstalled */ false);
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::FIXED_LOCATION;
+
+    uint64_t nodeId = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);
     EXPECT_NE(nodeId, 0u);
 
-    uint64_t nodeId1 = topologyManagerService->registerNode(ip,
-                                                            publish_port + 2,
-                                                            5000,
-                                                            6,
-                                                            NES::Spatial::Index::Experimental::Location(),
-                                                            NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                                            /* isTfInstalled */ false);
+    uint64_t nodeId1 = topologyManagerService->registerWorker(ip, publish_port + 2, 5000, 6, properties);
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
-    uint64_t nodeId2 = topologyManagerService->registerNode(ip,
-                                                            publish_port,
-                                                            5000,
-                                                            6,
-                                                            NES::Spatial::Index::Experimental::Location(),
-                                                            NES::Spatial::Index::Experimental::NodeType::FIXED_LOCATION,
-                                                            /* isTfInstalled */ false);
+    uint64_t nodeId2 = topologyManagerService->registerWorker(ip, publish_port, 5000, 6, properties);
     EXPECT_EQ(nodeId2, 0u);
 
     //test unregister not existing node

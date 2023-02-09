@@ -33,6 +33,7 @@ void IfOperation::setFalseBlockInvocation(BasicBlockPtr falseBlockInvocation) {
 }
 
 BasicBlockPtr IfOperation::getMergeBlock() { return mergeBlock.lock(); }
+OperationPtr IfOperation::getBooleanValue() { return booleanValue.lock(); }
 void IfOperation::setMergeBlock(BasicBlockPtr mergeBlock) { this->mergeBlock = mergeBlock; }
 
 std::string IfOperation::toString() {

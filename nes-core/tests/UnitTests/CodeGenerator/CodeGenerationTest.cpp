@@ -94,8 +94,8 @@ class CodeGenerationTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void TearDown() override {
         dataPort.reset();
-        Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
+        Testing::NESBaseTest::TearDown();
     }
 
     Runtime::NodeEnginePtr nodeEngine;

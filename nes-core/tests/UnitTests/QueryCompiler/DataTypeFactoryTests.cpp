@@ -32,10 +32,6 @@ class DataTypeFactoryTests : public Testing::NESBaseTest {
         NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DataTypeFactory test class.");
     }
-
-    void SetUp() {}
-
-    void TearDown() { NES_DEBUG("Tear down AddScanAndEmitPhase Test."); }
 };
 
 /**
