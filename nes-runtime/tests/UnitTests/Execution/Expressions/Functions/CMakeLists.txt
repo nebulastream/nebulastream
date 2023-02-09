@@ -40,4 +40,4 @@ add_nes_runtime_test(runtime-ceil-expression-test "CeilExpressionTest.cpp")
 add_nes_runtime_test(runtime-random-expression-test "RandomExpressionTest.cpp")
 add_nes_runtime_test(runtime-trunc-expression-test "TruncExpressionTest.cpp")
 add_nes_runtime_test(runtime-exp-expression-test "ExpExpressionTest.cpp")
-
+add_nes_runtime_test(runtime-sign-expression-test "SignExpressionTest.cpp")
