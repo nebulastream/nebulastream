@@ -31,57 +31,43 @@ class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule;
 using Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBasedContainmentBasedCompleteQueryMergerRule>;
 
 /**
- * @brief Z3SignatureBasedCompleteQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
- * only a single representative operator chain should exists in the Global Query Plan for all of them.
- * Effectively this rule will prune the global query plan for duplicate operators.
- *
- * Following are the conditions for the two queryIdAndCatalogEntryMapping to be equivalent:
- *  - For each global query node for first query, there should exists an equal global query node in the other query (except for the node with the sink operator).
- *
- *
- * Following is the example:
- * Given a Global Query Plan with two Global Query Node chains as follow:
- *                                                         GQPRoot
- *                                                         /     \
- *                                                       /        \
- *                                                     /           \
- *                                         GQN1({Sink1},{Q1})  GQN5({Sink2},{Q2})
- *                                                |                 |
- *                                        GQN2({Map1},{Q1})    GQN6({Map1},{Q2})
- *                                                |                 |
- *                                     GQN3({Filter1},{Q1})    GQN7({Filter1},{Q2})
- *                                                |                 |
- *                                  GQN4({Source(Car)},{Q1})   GQN8({Source(Car)},{Q2})
- *
- *
- * After running the Z3SignatureBasedCompleteQueryMergerRule, the resulting Global Query Plan will look as follow:
- *
- *                                                         GQPRoot
- *                                                         /     \
- *                                                        /       \
- *                                           GQN1({Sink1},{Q1}) GQN5({Sink2},{Q2})
- *                                                        \      /
- *                                                         \   /
- *                                                   GQN2({Map1},{Q1,Q2})
- *                                                           |
- *                                                  GQN3({Filter1},{Q1,Q2})
- *                                                           |
- *                                                GQN4({Source(Car)},{Q1,Q2})
- *
+ * @brief Z3SignatureBasedCompleteQueryMergerRule currently identifies containment relationships between the global query plan and newly registered queries
  */
 class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
 
   public:
-    static Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr create(const z3::ContextPtr& contextSig1Contained);
+    /**
+     * @brief create an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
+     * @param context The Z3 context for the SMT solver
+     * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
+     */
+    static Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr create(const z3::ContextPtr& context);
 
+    /**
+     * @brief checks for containment between the globalQueryPlan and the currently newly added query
+     * @param globalQueryPlan an instance of the global query plan
+     * @return true if containment is present, false otherwise
+     */
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
+    /**
+     * @brief destructor
+     */
     ~Z3SignatureBasedContainmentBasedCompleteQueryMergerRule() noexcept final = default;
 
+    /**
+     * @brief get an instance of the SignatureContainmentUtil
+     * @return an instance of signatureContainmentUtil
+     */
     const SignatureContainmentUtilPtr& getSignatureContainmentUtil() const;
 
   private:
-    explicit Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(const z3::ContextPtr& contextSig1Contained);
+    /**
+     * @brief explicit constructor
+     * @param context The Z3 context for the SMT solver
+     */
+    explicit Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(const z3::ContextPtr& context);
+
     SignatureContainmentUtilPtr signatureContainmentUtil;
 
 };

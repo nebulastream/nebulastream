@@ -33,7 +33,9 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 class SignatureContainmentUtil;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
-
+/**
+ * @brief enum describing the given containment relationship
+ */
 enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED, EQUALITY };
 
 /**
@@ -42,15 +44,24 @@ enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED,
 class SignatureContainmentUtil {
 
   public:
-    static SignatureContainmentUtilPtr create(const z3::ContextPtr& contextSig1Contained);
-
-    explicit SignatureContainmentUtil(const z3::ContextPtr& contextSig1Contained);
+    /**
+     * @brief creates an instance of the SignatureContainmentUtil
+     * @param context The Z3 context for the SMT solver
+     * @return instance of SignatureContainmentUtil
+     */
+    static SignatureContainmentUtilPtr create(const z3::ContextPtr& context);
 
     /**
-     * @brief Check equality of the given signatures
+     * @brief constructor fot signatureContainmentUtil
+     * @param context The Z3 context for the SMT solver
+     */
+    explicit SignatureContainmentUtil(const z3::ContextPtr& context);
+
+    /**
+     * @brief Check containment relationships for the given signatures
      * @param signature1
      * @param signature2
-     * @return true if tey are equal else false
+     * @return enum with containment relationships
      */
     ContainmentDetected checkContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
     /**

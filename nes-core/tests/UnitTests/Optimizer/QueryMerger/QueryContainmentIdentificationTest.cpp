@@ -169,8 +169,10 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     }
 };
 
-//more test cases needed: different schema
-
+//Todo: #3493 more test cases needed: different schema
+/**
+ * @brief test if the apply function for the containment based complete query merger rule returns true for the given queries (identifies containment correctly)
+ */
 TEST_F(QueryContainmentIdentificationTest, testContainmentBasedCompleteQueryMergerRule) {
     for (auto queries : containmentCasesTrue) {
         QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
@@ -204,7 +206,9 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentBasedCompleteQueryMerg
         ASSERT_TRUE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
-
+/**
+ * @brief test if the apply function for the containment based complete query merger rule returns false for the given queries (identifies no containment present correctly)
+ */
 TEST_F(QueryContainmentIdentificationTest, testContainmentBasedCompleteQueryMergerRuleReturnsFalse) {
     for (auto queries : noContainmentCases) {
         QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
@@ -238,7 +242,9 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentBasedCompleteQueryMerg
         ASSERT_FALSE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
-
+/**
+ * @brief tests if the correct containment relationship is returned by the signature containment util
+ */
 TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
     std::vector<Optimizer::ContainmentDetected> resultList;
     for (auto queries : containmentCasesMixed) {
