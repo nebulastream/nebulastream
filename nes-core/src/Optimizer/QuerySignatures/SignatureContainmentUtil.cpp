@@ -78,7 +78,7 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
                 if (counter >= 20050) {
                     resetSolver();
                 }
-                //todo: add window containment
+                //todo:  #3494 add window containment
                 //check for filter containment
                 return checkFilterContainment(signature1, signature2);
             }
@@ -164,7 +164,7 @@ ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const Query
 
 void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature1,
                                                          z3::expr_vector& projectionCondition) {
-    //todo:: think about order for projection
+    //todo: #3495 think about order for projection
     //check projection containment
     for (auto exp : signature1->getSchemaFieldToExprMaps()) {
         for (auto entry : exp) {
