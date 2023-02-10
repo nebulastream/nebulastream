@@ -89,7 +89,6 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 if (counter >= 20050) {
                     resetSolver();
                 }
-                //                NES_ERROR("SCHEMA CHK Z3 " << counter);
                 //If schema is matched then remove the other schema from the list to avoid duplicate matching
 
                 if (schemaMatched) {
@@ -128,31 +127,25 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         //Create a negation of CNF of all conditions collected till now
         solver->push();
         solver->add(!z3::mk_and(allConditions).simplify());
-        //        NES_ERROR("COND CHK Z3: " << counter);
         bool equal = solver->check() == z3::unsat;
         solver->pop();
         counter++;
         if (counter >= 20050) {
             resetSolver();
         }
-        //        NES_ERROR("Z3 Equality " << counter);
         return equal;
     } catch (...) {
         auto eptr = std::current_exception();
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            //            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping " << e.what());
+            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping " << e.what());
         }
         return false;
     }
 }
 
 bool SignatureEqualityUtil::resetSolver() {
-    //    this->context->set("solver2_unknown", true);
-    //    this->context->set("ignore_solver1", true);
-    //    this->context->set("timeout", 1);
-    //    solver = std::make_unique<z3::solver>(*context);
     solver->reset();
     counter = 0;
     return true;
