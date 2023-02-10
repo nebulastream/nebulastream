@@ -115,6 +115,11 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
+    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
@@ -132,6 +137,11 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     executablePipeline2->setup(pipelineContext2);
     executablePipeline2->execute(buffer,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
+
+    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline2.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -219,6 +229,11 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
+    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
@@ -236,6 +251,11 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     executablePipeline2->setup(pipelineContext2);
     executablePipeline2->execute(buffer,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
+
+    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline2.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -303,6 +323,11 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
+    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
@@ -320,6 +345,11 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     executablePipeline2->setup(pipelineContext2);
     executablePipeline2->execute(buffer2,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
+
+    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
+    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -393,6 +423,11 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
         ASSERT_EQ(numberOfResultBuffers, 3);
         // Todo: vector of number of emitted tuples?
         ASSERT_EQ(pipelineContext.buffers[2].getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
+
+        auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
+        std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+        std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+        std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
         auto resultBuffer = pipelineContext.buffers[0];
         auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);

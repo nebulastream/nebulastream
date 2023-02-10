@@ -40,7 +40,7 @@ ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTuple
     auto bufferRef = Value<MemRef>((int8_t*) std::addressof(inputTupleBuffer));
     auto recordBuffer = RecordBuffer(bufferRef);
 
-    std::cout << "Number of input tuples: " << inputTupleBuffer.getNumberOfTuples() << std::endl;
+    numberOfInputTuples = inputTupleBuffer.getNumberOfTuples();
     auto runtimeStart = std::chrono::high_resolution_clock::now();
 
     physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
@@ -48,8 +48,7 @@ ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTuple
 
     auto runtimeEnd = std::chrono::high_resolution_clock::now();
     auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
-    std::cout << "Number of emitted tuples: " << pipelineExecutionContext.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << duration.count() << " microseconds" << std::endl;
+    runtimePerBuffer = duration.count();
 
     return ExecutionResult::Finished;
 }
@@ -71,6 +70,14 @@ uint32_t NautilusExecutablePipelineStage::close(PipelineExecutionContext&, Worke
 uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
     // nop as we don't need this function in nautilus
     return 0;
+}
+
+uint64_t NautilusExecutablePipelineStage::getNumberOfInputTuples(){
+    return numberOfInputTuples;
+}
+
+uint64_t NautilusExecutablePipelineStage::getRuntimePerBuffer(){
+    return runtimePerBuffer;
 }
 
 std::string NautilusExecutablePipelineStage::getCodeAsString() { return "<no_code>"; }
