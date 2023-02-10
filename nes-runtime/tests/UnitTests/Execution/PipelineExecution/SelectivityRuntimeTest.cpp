@@ -239,7 +239,7 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
-    //ASSERT_EQ(resultBuffer2.getNumberOfTuples(), 250);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout,resultBuffer2);
     for(uint64_t i = 0; i < 10; i++){
@@ -274,29 +274,6 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    // create second pipeline
-    auto scanMemoryProviderPtr2 = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto scanOperator2 = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr2));
-
-    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constInt1 = std::make_shared<Expressions::ConstantIntegerExpression>(3);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1,constInt1);
-    auto selectionOperator2 = std::make_shared<Operators::Selection>(greaterThanExpression);
-    scanOperator2->setChild(selectionOperator2);
-
-    //auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto constInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(7);
-    auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readField1,constInt2);
-    auto selectionOperator2_2 = std::make_shared<Operators::Selection>(lessThanExpression);
-    selectionOperator2->setChild(selectionOperator2_2);
-
-    auto emitMemoryProviderPtr2=std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitOperator2=std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr2));
-    selectionOperator2_2->setChild(emitOperator2);
-
-    auto pipeline2=std::make_shared<PhysicalOperatorPipeline>();
-    pipeline2->setRootOperator(scanOperator2);
-
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -304,7 +281,7 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 100; i++) {
+    for (uint64_t i = 0; i < 500; i++) {
         uint64_t randomNumber = dist(rng);
         dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
@@ -313,7 +290,7 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
 
     auto buffer2 = bm->getBufferBlocking();
     auto dynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer2);
-    for (uint64_t i = 0; i < 100; i++) {
+    for (uint64_t i = 0; i < 500; i++) {
         dynamicBuffer2[i]["f1"].write((int64_t) 5);
         dynamicBuffer2[i]["f2"].write((int64_t) 1);
         dynamicBuffer2.setNumberOfTuples(i + 1);
@@ -346,7 +323,7 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
-    ASSERT_EQ(resultBuffer2.getNumberOfTuples(), 100);
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
 
     auto resultDynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout,resultBuffer2);
     for(uint64_t i = 0; i < 100; i++){
@@ -375,7 +352,7 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t i = 0; i < 512; i++) {
+        for (uint64_t i = 0; i < 500; i++) {
             uint64_t randomNumber = dist(rng);
             dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
             dynamicBuffer[i]["f2"].write((int64_t) 1);
@@ -384,6 +361,9 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
     }
 
     for (int i = 1; i < 21; ++i) {
+
+        std::cout << "Test Pipeline with selectivity of " << ((double)i/20) << "%." << std::endl;
+
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -416,7 +396,7 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
 
         auto resultBuffer = pipelineContext.buffers[0];
         auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-        for (uint64_t k = 0; k < resultBuffer.getNumberOfTuples(); k++) {
+        for (uint64_t k = 0; k < resultBuffer.getNumberOfTuples(); ++k) {
             ASSERT_LT(resultDynamicBuffer[k]["f1"].read<int64_t>(), i);
             ASSERT_EQ(resultDynamicBuffer[k]["f2"].read<int64_t>(), 1);
         }
