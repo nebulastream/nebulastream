@@ -29,14 +29,13 @@ auto constexpr workingTimeDeltaInMillSeconds = 10;
  */
 class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
   public:
-    /**
-     * @brief creates an ExternalProvider
-     * @param id
-     * @param providerMode
-     * @param preAllocatedBuffers
-     * @param predefinedIngestionRates
-     * @param ingestionRateCnt
-     */
+     /**
+      * @brief creates an ExternalProvider
+      * @param id
+      * @param providerMode
+      * @param preAllocatedBuffers
+      * @param ingestionRateGenerator
+      */
     ExternalProvider(uint64_t id,
                      DataProviderMode providerMode,
                      std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
@@ -76,9 +75,9 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     void stop() override;
 
     /**
-     * @brief overrides readNextBuffer by providing the next buffer to be added to NES
+     * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
      * @param sourceId
-     * @return
+     * @return either the next buffer in the queue or std::nullopt
      */
     std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
 

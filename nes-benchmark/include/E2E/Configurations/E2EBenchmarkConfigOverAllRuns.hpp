@@ -66,7 +66,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption batchSize;
     Configurations::IntConfigOption ingestionRateInBuffers;
-    Configurations::IntConfigOption ingestionRateCnt;
+    Configurations::IntConfigOption ingestionRateCount;
     Configurations::IntConfigOption numberOfPeriods;
     Configurations::StringConfigOption ingestionRateDistribution;
     Configurations::StringConfigOption dataProvider;

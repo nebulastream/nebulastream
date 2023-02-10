@@ -19,37 +19,39 @@
 
 namespace NES::Benchmark::IngestionRateGeneration {
 /**
+ * @brief As we still build on with libstdc++, this is how we get the numerical value of pi
+ * @return pi
+ */
+double constexpr PI() { return std::atan(1) * 4; }
+
+/**
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of sine and cosine distributed ingestion rates.
  */
 class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
-
-    // As we still build on with libstdc++, we have to use this way of getting PI
-    constexpr double PI() { return std::atan(1)*4; }
-
   public:
     /**
      * @brief constructor for a uniform ingestion rate generator
      * @param ingestionRateInBuffers
-     * @param ingestionRateCnt
+     * @param ingestionRateCount
      */
-    explicit TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateInBuffers, uint64_t ingestionRateCnt, uint64_t numberOfPeriods);
+    explicit TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateInBuffers, uint64_t ingestionRateCount, uint64_t numberOfPeriods);
 
     /**
-      * @brief creates a vector of length ingestionRateCnt and fills it with values that are distributed according to ingestionRateDistribution
+      * @brief creates a vector of length ingestionRateCount and fills it with values that are distributed according to ingestionRateDistribution
       * @return predefinedIngestionRates
       */
     std::vector<std::uint64_t> generateIngestionRates() override;
 
   private:
     /**
-     * @brief calculates the sine of x. Sine has a period length of ingestionRateInBuffers/numberOfPeriods
+     * @brief calculates the sine of x. Sine has a period length of ingestionRateInBuffers divided by numberOfPeriods
      * @param x
      * @return value
      */
     double getSinValue(uint64_t x);
 
     /**
-     * @brief calculates the cosine of x. Cosine has a period length of ingestionRateInBuffers/numberOfPeriods
+     * @brief calculates the cosine of x. Cosine has a period length of ingestionRateInBuffers divided by numberOfPeriods
      * @param x
      * @return value
      */
@@ -57,7 +59,6 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
 
     IngestionRateDistribution ingestionRateDistribution;
     uint64_t ingestionRateInBuffers;
-    uint64_t ingestionRateCnt;
     uint64_t numberOfPeriods;
     std::vector<uint64_t> predefinedIngestionRates;
 };
