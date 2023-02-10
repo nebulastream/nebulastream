@@ -14,8 +14,6 @@
 
 #include <Execution/Expressions/Functions/ExpExpression.hpp>
 #include <NesBaseTest.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -28,21 +26,11 @@ class ExpExpressionTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ExpExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup ExpExpressionTest test class.");
-    }
-
-    /* Will be called before a test is executed. */
-    void SetUp() override {
-        Testing::NESBaseTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
-        NES_DEBUG("Setup TextTypeTest test case.")
+        NES_INFO("Setup ExpExpressionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
-    std::shared_ptr<Runtime::WorkerContext> wc;
+    static void TearDownTestCase() { NES_INFO("Tear down ExpExpressionTest test class."); }
 };
 
 TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
@@ -50,27 +38,27 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 5));
-        ASSERT_NEAR(resultValue, (double) 148.413159,0.1);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     //Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t) 5));
-        ASSERT_NEAR(resultValue, (double) 148.413159,0.1);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) 5));
-        ASSERT_NEAR(resultValue, (double) 148.413159,0.1);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 5));
-        ASSERT_NEAR(resultValue, (double) 148.413159,0.1);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
