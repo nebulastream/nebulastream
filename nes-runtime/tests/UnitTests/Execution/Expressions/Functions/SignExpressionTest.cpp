@@ -109,6 +109,80 @@ TEST_F(SignExpressionTest, evaluateSignExpressionInteger) {
         ASSERT_EQ(resultValue, (float) -1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // UInt8 0
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt8 neg
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) -10));
+        ASSERT_EQ(resultValue, (float) -1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt8 pos
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 10));
+        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+
+    // UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>(u(int16_t) -10));
+        ASSERT_EQ(resultValue, (float) -1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 10));
+        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+
+    // UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) -10));
+        ASSERT_EQ(resultValue, (float) -1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 10));
+        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 0));
+        ASSERT_EQ(resultValue, (float) 0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 10));
+        ASSERT_EQ(resultValue, (float) 1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) -10));
+        ASSERT_EQ(resultValue, (float) -1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
 
 TEST_F(SignExpressionTest, evaluateSignExpressionFloat) {

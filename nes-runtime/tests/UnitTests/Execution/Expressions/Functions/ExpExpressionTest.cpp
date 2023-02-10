@@ -61,6 +61,32 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
         ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // UInt8
+    {
+        auto resultValue = expression.eval(Value<UInt8>((uint8_t) 5));
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+
+    // UInt16
+    {
+        auto resultValue = expression.eval(Value<UInt16>((uint16_t) 5));
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+
+    // UInt32
+    {
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 5));
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+    // UInt64
+    {
+        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 5));
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 }
 
 TEST_F(ExpExpressionTest, evaluateExpExpressionFloat) {
