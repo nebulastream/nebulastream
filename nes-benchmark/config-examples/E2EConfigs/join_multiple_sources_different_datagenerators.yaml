@@ -26,7 +26,6 @@ logicalSources:
 
 inputType: MemoryMode
 dataProviderMode: MemCopy
-dataProvider: Internal
 outputFile: JoinMultipleSources.csv
 benchmarkName: JoinMultipleSources
 query: 'Query::from("input1").joinWith(Query::from("input2"))
