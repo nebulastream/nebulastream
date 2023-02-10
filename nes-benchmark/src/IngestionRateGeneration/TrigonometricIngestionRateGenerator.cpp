@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <numbers>
 
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
 
@@ -38,10 +37,10 @@ std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestio
 }
 
 double TrigonometricIngestionRateGenerator::getSinValue(uint64_t x) {
-    return (0.5 * (1 + sin(2.0 * std::numbers::pi * x * (numberOfPeriods / (double) ingestionRateCnt))));
+    return (0.5 * (1 + sin(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCnt))));
 }
 
 double TrigonometricIngestionRateGenerator::getCosValue(uint64_t x) {
-    return (0.5 * (1 + cos(2.0 * std::numbers::pi * x * (numberOfPeriods / (double) ingestionRateCnt))));
+    return (0.5 * (1 + cos(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCnt))));
 }
 }// namespace NES::Benchmark::IngestionRateGeneration
