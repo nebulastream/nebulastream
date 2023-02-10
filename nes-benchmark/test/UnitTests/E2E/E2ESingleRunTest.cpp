@@ -124,11 +124,11 @@ namespace NES::Benchmark {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort);
 
-        std::stringstream ASSERTed;
-        ASSERTed << defaultDataGenerator->getName() << ": " << 123 << ", "
+        std::stringstream assertedString;
+        assertedString << defaultDataGenerator->getName() << ": " << 123 << ", "
                  << zipfianDataGenerator->getName() << ": " << 456;
 
-        ASSERT_EQ(ASSERTed.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
+        ASSERT_EQ(assertedString.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
     }
 
 
@@ -177,8 +177,8 @@ namespace NES::Benchmark {
         auto availFixedBufferSumStart = 294;
         auto MAX_TIMESTAMP = 10;
 
-        std::stringstream ASSERTedCsvFile;
-        ASSERTedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+        std::stringstream assertedCsvFile;
+        assertedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
                            "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
                            "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
                            "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,queryString"
@@ -197,7 +197,7 @@ namespace NES::Benchmark {
                                            timeStamp);
 
             if (i < MAX_TIMESTAMP - 1) {
-                ASSERTedCsvFile << "\"" << bmName << "\""
+                assertedCsvFile << "\"" << bmName << "\""
                                 << "," << NES_VERSION << "," << schemaSizeInB
                                 << "," << timeStamp << "," << (processedTasksStart + i)
                                 << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i)
@@ -219,6 +219,6 @@ namespace NES::Benchmark {
 
         std::ifstream ifs(csvFile);
         std::string writtenCsvFile((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-        ASSERT_EQ(writtenCsvFile, ASSERTedCsvFile.str());
+        ASSERT_EQ(writtenCsvFile, assertedCsvFile.str());
     }
 }
