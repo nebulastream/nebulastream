@@ -22,7 +22,6 @@ logicalSources:
     type: YSBKafka
     numberOfPhysicalSources: 1
 
-dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv
 benchmarkName: YSBQuery

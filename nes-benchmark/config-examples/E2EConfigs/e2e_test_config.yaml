@@ -18,7 +18,6 @@ logicalSources:
     type: YSB
     numberOfPhysicalSources: 1
 
-dataProvider: Internal
 dataProviderMode: ZeroCopy
 outputFile: YSBQuery.csv
 benchmarkName: YSBQuery
