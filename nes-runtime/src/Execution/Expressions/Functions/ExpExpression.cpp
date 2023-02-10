@@ -17,9 +17,10 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-        ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-            : subExpression(subExpression) {}
-        /**
+ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
+    : subExpression(subExpression) {}
+
+/**
  * @brief This method computes returns the exponential (Euler's number) e raised to the given subExpression.
  * This function is basically a wrapper for std::exp() and enables us to use it in our execution engine framework.
  * @param x double

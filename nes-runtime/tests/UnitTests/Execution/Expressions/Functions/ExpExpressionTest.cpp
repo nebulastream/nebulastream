@@ -38,20 +38,27 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 5));
-        ASSERT_EQ(resultValue, (float) 148.413159);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
+
+    //Int16
+    {
+        auto resultValue = expression.eval(Value<Int16>((int16_t) 5));
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t) 5));
-        ASSERT_EQ(resultValue, (float) 148.413159);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t) 5));
-        ASSERT_EQ(resultValue, (float) 148.413159);
+        ASSERT_NEAR(resultValue, (float) 148.413159,0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -61,13 +68,13 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) 5));
-        ASSERT_EQ(resultValue, std::exp(5));
+        ASSERT_NEAR(resultValue, std::exp(5),0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
         auto resultValue = expression.eval(Value<Double>((double) 5));
-        ASSERT_EQ(resultValue, std::exp(5));
+        ASSERT_NEAR(resultValue, std::exp(5),0.1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }

@@ -41,6 +41,12 @@ TEST_F(TruncExpressionTest, evaluateTruncExpressionInteger) {
         ASSERT_EQ(resultValue, (float) 1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
+    // Int16
+    {
+        auto resultValue = expression.eval(Value<Int16>((int16_t) 1.5));
+        ASSERT_EQ(resultValue, (float) 1.0);
+        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
+    }
 
     // Int32
     {
