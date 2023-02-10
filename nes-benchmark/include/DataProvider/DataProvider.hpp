@@ -36,46 +36,46 @@ class DataProvider {
     enum class DataProviderMode : uint8_t { ZERO_COPY, MEM_COPY };
 
     /**
-         * @brief creates a DataProvider object
-         * @param id
-         * @param providerMode
-         */
+     * @brief creates a DataProvider object
+     * @param id
+     * @param providerMode
+     */
     explicit DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode);
 
     /**
-         * @brief default destructor
-         */
+     * @brief default destructor
+     */
     virtual ~DataProvider() = default;
 
     /**
-         * @brief provides the next buffer to the runtime by a DataProviderMode way
-         * @param buffer
-         * @param sourceId
-         */
+     * @brief provides the next buffer to the runtime by a DataProviderMode way
+     * @param buffer
+     * @param sourceId
+     */
     void provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId);
 
     /**
-         * @brief reads the next buffer for the given sourceId
-         * @param sourceId
-         * @return
-         */
+     * @brief reads the next buffer for the given sourceId
+     * @param sourceId
+     * @return
+     */
     virtual std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) = 0;
 
     /**
-         * @brief creates a data provider
-         * @return
-         */
+     * @brief creates a data provider
+     * @return
+     */
     static DataProviderPtr createProvider(uint64_t id, NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                                           std::vector<Runtime::TupleBuffer> buffers);
 
     /**
-         * @brief starts this provider
-         */
+     * @brief starts this provider
+     */
     virtual void start() = 0;
 
     /**
-         * @brief stops this provider
-         */
+     * @brief stops this provider
+     */
     virtual void stop() = 0;
 
   protected:

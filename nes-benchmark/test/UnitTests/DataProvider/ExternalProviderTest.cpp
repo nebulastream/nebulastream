@@ -81,6 +81,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        // we wait for buffers to be ingested into the buffer queue
         sleep(1);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
@@ -125,6 +126,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        // we wait for the provider to startup
         sleep(1);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
@@ -176,6 +178,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        // we wait for the provider to startup
         sleep(1);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
@@ -225,6 +228,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        // we wait for the provider to startup
         sleep(1);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
@@ -267,6 +271,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
+        // we wait for the provider to startup
         sleep(1);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();

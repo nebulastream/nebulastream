@@ -15,19 +15,22 @@
 #include <IngestionRateGeneration/MDIngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
-MDIngestionRateGenerator::MDIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateCnt)
-    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution), ingestionRateCnt(ingestionRateCnt) {}
+MDIngestionRateGenerator::MDIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateCount)
+    : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution) {
+
+    IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
+}
 
 std::vector<std::uint64_t> MDIngestionRateGenerator::generateIngestionRates() {
-    for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
+    for (uint64_t i = 0; i < ingestionRateCount; ++i) {
         if (ingestionRateDistribution == IngestionRateDistribution::M1) {
-            predefinedIngestionRates.push_back(m1Values[i % 18]);
+            predefinedIngestionRates.push_back(m1Values[i % (sizeof(m1Values) / sizeof(m1Values[0]))]);
         } else if (ingestionRateDistribution == IngestionRateDistribution::M2) {
-            predefinedIngestionRates.push_back(m2Values[i % 18]);
+            predefinedIngestionRates.push_back(m2Values[i % (sizeof(m2Values) / sizeof(m2Values[0]))]);
         } else if (ingestionRateDistribution == IngestionRateDistribution::D1) {
-            predefinedIngestionRates.push_back(d1Values[i % 30]);
+            predefinedIngestionRates.push_back(d1Values[i % (sizeof(d1Values) / sizeof(d1Values[0]))]);
         } else if (ingestionRateDistribution == IngestionRateDistribution::D2) {
-            predefinedIngestionRates.push_back(d2Values[i % 30]);
+            predefinedIngestionRates.push_back(d2Values[i % (sizeof(d2Values) / sizeof(d2Values[0]))]);
         }
     }
 

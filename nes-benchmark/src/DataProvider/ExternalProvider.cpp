@@ -92,7 +92,7 @@ void ExternalProvider::generateData() {
             }
 
             buffersProcessedCount++;
-        }// while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta)
+        }
 
         auto currentTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -106,7 +106,7 @@ void ExternalProvider::generateData() {
             currentTime =
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         }
-    }// while (started)
+    }
 }
 
 std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t sourceId) {

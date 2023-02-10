@@ -23,16 +23,16 @@ IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E
     auto ingestionRateDistributionStr = configOverAllRuns.ingestionRateDistribution->getValue();
     auto ingestionRateDistribution = getDistributionFromString(ingestionRateDistributionStr);
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
-    auto ingestionRateCnt = configOverAllRuns.ingestionRateCnt->getValue();
+    auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
 
     if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM) {
-        return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCnt);
+        return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
     } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
-        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCnt, numberOfPeriods);
+        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCount, numberOfPeriods);
     } else if (ingestionRateDistribution == IngestionRateDistribution::M1 || ingestionRateDistribution == IngestionRateDistribution::M2 ||
                ingestionRateDistribution == IngestionRateDistribution::D1 || ingestionRateDistribution == IngestionRateDistribution::D2) {
-        return std::make_unique<MDIngestionRateGenerator>(ingestionRateDistribution, ingestionRateCnt);
+        return std::make_unique<MDIngestionRateGenerator>(ingestionRateDistribution, ingestionRateCount);
     } else {
         NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
     }

@@ -33,6 +33,7 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @param preAllocatedBuffers
      */
     InternalProvider(uint64_t id, DataProvider::DataProviderMode providerMode, std::vector<Runtime::TupleBuffer> buffers);
+
     /**
      * @brief destructor
      */
@@ -45,9 +46,9 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<Runtime::TupleBuffer>& getPreAllocatedBuffers();
 
     /**
-     * @brief overrides readNextBuffer by providing the next buffer to be added to NES
+     * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
      * @param sourceId
-     * @return
+     * @return either the next buffer in line or std::nullopt
      */
     std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) override;
 

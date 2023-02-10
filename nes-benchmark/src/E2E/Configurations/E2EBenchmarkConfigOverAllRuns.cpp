@@ -42,7 +42,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
     ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
-    ingestionRateCnt = ConfigurationOption<uint32_t>::create("ingestionRateCnt", 10000, "Number of potentially different ingestion rates");
+    ingestionRateCount = ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
     numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
     ingestionRateDistribution = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
@@ -65,7 +65,7 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- connectionString: " << connectionString->getValue() << std::endl
         << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl
         << "- ingestionRateInBuffers: " << ingestionRateInBuffers->getValueAsString() << std::endl
-        << "- ingestionRateCnt: " << ingestionRateCnt->getValueAsString() << std::endl
+        << "- ingestionRateCount: " << ingestionRateCount->getValueAsString() << std::endl
         << "- numberOfPeriods: " << numberOfPeriods->getValueAsString() << std::endl
         << "- ingestionRateDistribution: " << ingestionRateDistribution->getValue() << std::endl
         << "- dataProvider: " << dataProvider->getValue() << std::endl;
@@ -93,7 +93,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     auto dataProviderNode = yamlConfig["dataProvider"];
     if (!dataProviderNode.IsNone()) {
         configOverAllRuns.dataProvider->setValueIfDefined(dataProviderNode["name"]);
-        configOverAllRuns.ingestionRateCnt->setValueIfDefined(dataProviderNode["ingestionRateCnt"]);
+        configOverAllRuns.ingestionRateCount->setValueIfDefined(dataProviderNode["ingestionRateCount"]);
 
         auto ingestionRateDistributionNode = dataProviderNode["ingestionRateDistribution"];
         if (!ingestionRateDistributionNode.IsNone()) {

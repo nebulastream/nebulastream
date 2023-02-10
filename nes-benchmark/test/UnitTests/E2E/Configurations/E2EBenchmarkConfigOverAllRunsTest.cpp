@@ -67,7 +67,7 @@ namespace NES::Benchmark {
             << "- connectionString: " << std::endl
             << "- logicalSources: input1: Uniform" << std::endl
             << "- ingestionRateInBuffers: 50000" << std::endl
-            << "- ingestionRateCnt: 10000" << std::endl
+            << "- ingestionRateCount: 10000" << std::endl
             << "- numberOfPeriods: 1" << std::endl
             << "- ingestionRateDistribution: Uniform" << std::endl
             << "- dataProvider: Internal" << std::endl;
@@ -99,7 +99,7 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), 500);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateInBuffers->getValue(), 50000);
-        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCnt->getValue(), 10000);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 10000);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Uniform");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "Internal");
@@ -129,7 +129,7 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.batchSize->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfBuffersToProduce->getValue(), 5000000);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateInBuffers->getValue(), 35000);
-        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCnt->getValue(), 1000);
+        ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 1000);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 64);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Sinus");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "External");

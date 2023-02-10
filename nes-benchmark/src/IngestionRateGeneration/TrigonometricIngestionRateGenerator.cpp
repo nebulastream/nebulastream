@@ -17,13 +17,16 @@
 namespace NES::Benchmark::IngestionRateGeneration {
 TrigonometricIngestionRateGenerator::TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution,
                                                                          uint64_t ingestionRateInBuffers,
-                                                                         uint64_t ingestionRateCnt,
+                                                                         uint64_t ingestionRateCount,
                                                                          uint64_t numberOfPeriods)
     : IngestionRateGenerator(), ingestionRateDistribution(ingestionRateDistribution),
-      ingestionRateInBuffers(ingestionRateInBuffers), ingestionRateCnt(ingestionRateCnt), numberOfPeriods(numberOfPeriods) {}
+      ingestionRateInBuffers(ingestionRateInBuffers), numberOfPeriods(numberOfPeriods) {
+
+    IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
+}
 
 std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestionRates() {
-    for (uint64_t i = 0; i < ingestionRateCnt; ++i) {
+    for (uint64_t i = 0; i < ingestionRateCount; ++i) {
         if (ingestionRateDistribution == IngestionRateDistribution::SINUS) {
             uint64_t curIngestionRate = round(getSinValue(i) * ingestionRateInBuffers);
             predefinedIngestionRates.push_back(curIngestionRate);
@@ -37,10 +40,10 @@ std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestio
 }
 
 double TrigonometricIngestionRateGenerator::getSinValue(uint64_t x) {
-    return (0.5 * (1 + sin(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCnt))));
+    return (0.5 * (1 + sin(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCount))));
 }
 
 double TrigonometricIngestionRateGenerator::getCosValue(uint64_t x) {
-    return (0.5 * (1 + cos(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCnt))));
+    return (0.5 * (1 + cos(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCount))));
 }
 }// namespace NES::Benchmark::IngestionRateGeneration

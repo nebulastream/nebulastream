@@ -68,6 +68,9 @@ class IngestionRateGenerator {
       */
     static IngestionRateGeneratorPtr createIngestionRateGenerator(E2EBenchmarkConfigOverAllRuns& configOverAllRuns);
 
+  protected:
+    uint64_t ingestionRateCount = 0;
+
   private:
     /**
      * @brief determines whether the given ingestion rate distribution is supported
