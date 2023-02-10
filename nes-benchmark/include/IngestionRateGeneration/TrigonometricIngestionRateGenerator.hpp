@@ -22,6 +22,10 @@ namespace NES::Benchmark::IngestionRateGeneration {
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of sine and cosine distributed ingestion rates.
  */
 class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
+
+    // As we still build on with libstdc++, we have to use this way of getting PI
+    constexpr double PI() { return std::atan(1)*4; }
+
   public:
     /**
      * @brief constructor for a uniform ingestion rate generator
