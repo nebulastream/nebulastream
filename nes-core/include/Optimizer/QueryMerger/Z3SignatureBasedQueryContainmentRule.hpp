@@ -27,13 +27,13 @@ namespace NES::Optimizer {
 class SignatureContainmentUtil;
 using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 
-class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule;
-using Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBasedContainmentBasedCompleteQueryMergerRule>;
+class Z3SignatureBasedQueryContainmentRule;
+using Z3SignatureBasedQueryContainmentRulePtr = std::shared_ptr<Z3SignatureBasedQueryContainmentRule>;
 
 /**
  * @brief Z3SignatureBasedCompleteQueryMergerRule currently identifies containment relationships between the global query plan and newly registered queries
  */
-class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
+class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
 
   public:
     /**
@@ -41,7 +41,7 @@ class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public Bas
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedContainmentBasedCompleteQueryMergerRulePtr create(const z3::ContextPtr& context);
+    static Z3SignatureBasedQueryContainmentRulePtr create(const z3::ContextPtr& context);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -53,7 +53,7 @@ class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public Bas
     /**
      * @brief destructor
      */
-    ~Z3SignatureBasedContainmentBasedCompleteQueryMergerRule() noexcept final = default;
+    ~Z3SignatureBasedQueryContainmentRule() noexcept final = default;
 
     /**
      * @brief get an instance of the SignatureContainmentUtil
@@ -66,7 +66,7 @@ class Z3SignatureBasedContainmentBasedCompleteQueryMergerRule final : public Bas
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
      */
-    explicit Z3SignatureBasedContainmentBasedCompleteQueryMergerRule(const z3::ContextPtr& context);
+    explicit Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context);
 
     SignatureContainmentUtilPtr signatureContainmentUtil;
 
