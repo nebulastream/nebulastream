@@ -25,9 +25,13 @@ SignExpression::SignExpression(const NES::Runtime::Execution::Expressions::Expre
  * @param x double
  * @return double
  */
-double calculateSign(double x) { if (x > 0) return 1;
-                                 if (x < 0) return -1;
-                                 return 0;  }
+double calculateSign(double x) {
+    if (x > 0)
+        return 1;
+    if (x < 0)
+        return -1;
+    return 0;
+}
 
 Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
@@ -57,4 +61,4 @@ Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-}
+}// namespace NES::Runtime::Execution::Expressions
