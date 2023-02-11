@@ -48,6 +48,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       uint64_t numbersOfBufferToProduce,
                                       uint64_t batchSize);
 
+    static SourceDescriptorPtr create(SchemaPtr schema, KafkaSourceTypePtr sourceConfig);
+
     /**
      * @brief Get the list of kafka brokers
      */
@@ -121,6 +123,9 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    const KafkaSourceTypePtr& kafkaSourceType,
                                    uint64_t numbersOfBufferToProduce,
                                    uint64_t batchSize);
+
+    explicit KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType);
+
     std::string brokers;
     std::string topic;
     std::string groupId;
