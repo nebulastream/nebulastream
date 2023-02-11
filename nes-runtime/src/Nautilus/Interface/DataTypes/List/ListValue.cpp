@@ -149,13 +149,19 @@ ListValue<T>* ListValue<T>::sort() const {
     // create copy of list
     auto resultList = ListValue<T>::create(length());
     std::memcpy(resultList->data(), c_data(), length());
+    auto resultDataPtr = resultList->data();
     // TODO sort content of list (resultList->data()): look at the following links for inspiration
     // https://stackoverflow.com/questions/56115960/can-i-use-stdsort-on-heap-allocated-raw-arrays
     // https://en.cppreference.com/w/cpp/algorithm/sort
     for (uint32_t i = 0; i < length(); i++) {
-       if(c_data()[i+1]<c_data()[i]){
-           resultList->data()[i] = c_data()[i+1];
-       }
+        for (uint32_t j = i+1; i < length(); j++) {
+            uint32_t a = 0;
+            if(c_data()[i]>c_data()[j]){
+                a=c_data()[i];
+                resultDataPtr[i] = c_data()[j];
+                resultDataPtr[j] = a;
+            }
+        }
     }
     return resultList;
 }

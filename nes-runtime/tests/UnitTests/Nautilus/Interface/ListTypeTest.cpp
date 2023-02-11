@@ -119,4 +119,20 @@ TEST_F(ListTypeTest, containsTest) {
 
 }
 
+TEST_F(ListTypeTest,sortTest) {
+    int32_t array[6] = {7,3,5,1,4,2};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+
+
+    auto result = list1->sort();
+    ASSERT_EQ(result->length(), 6);
+    for (int32_t i = 0; i < 6; i++) {
+        ASSERT_EQ(result->data()[i], i % 6);
+    }
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+
+    result->~ListValue<int32_t>();
+}
+
 }// namespace NES::Nautilus
