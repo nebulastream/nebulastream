@@ -135,17 +135,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                     messages.pop_back();
                     return buffer.getBuffer();
                 } else {
-                    // this method copies the payload of the kafka message into a buffer
-                    Runtime::TupleBuffer buffer = localBufferManager->getBufferBlocking();
-                    NES_ASSERT(messages.back().get_payload().get_size() <= buffer.getBufferSize(), "The buffer is not large enough");
-                    std::memcpy(buffer.getBuffer(),
-                                messages.back().get_payload().get_data(),
-                                messages.back().get_payload().get_size());
-                    buffer.setNumberOfTuples(tupleCount);
-                    buffer.setCreationTimestamp(timeStamp);
-                    bufferProducedCnt++;
-                    messages.pop_back();
-                    return buffer;
+                    NES_ERROR("KafkaSource::receiveData: Unknown input format, use JSON");
                 }
             }//end of else
         } else {
