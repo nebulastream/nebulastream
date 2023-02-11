@@ -32,6 +32,9 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
       kafkaSourceType(std::move(kafkaSourceType)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout),
       offsetMode(offsetMode), numbersOfBufferToProduce(numbersOfBufferToProduce), batchSize(batchSize) {}
 
+KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema, KafkaSourceTypePtr kafkaSourceType)
+    : SourceDescriptor(std::move(schema)), kafkaSourceType(std::move(kafkaSourceType)) {}
+
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
                                              std::string logicalSourceName,
                                              std::string brokers,
@@ -91,6 +94,10 @@ SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                                          kafkaSourceType,
                                                                          numbersOfBufferToProduce,
                                                                          batchSize));
+}
+
+SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema, KafkaSourceTypePtr sourceConfig) {
+    return std::make_shared<KafkaSourceDescriptor>(KafkaSourceDescriptor(std::move(schema), std::move(sourceConfig)));
 }
 
 const std::string& KafkaSourceDescriptor::getBrokers() const { return brokers; }
