@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILATIONBACKEND_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
+#include <Nautilus/Backends/WASM/WASMExecutionContext.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 

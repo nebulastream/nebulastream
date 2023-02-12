@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/WASM/WASMExecutionContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
@@ -182,17 +183,18 @@ void WAMRExecutionEngine::registerNativeSymbols() {
 }
 
 //TODO: Replace printf
-void WAMRExecutionEngine::setup(size_t binaryLength, char* queryBinary) {
-    auto wasmBuffer = reinterpret_cast<uint8_t*>(queryBinary);
+void WAMRExecutionEngine::setup(const std::shared_ptr<WASMExecutionContext>& context) {
+    auto tmp = context->getQueryBinary();
+    auto wasmBuffer = reinterpret_cast<uint8_t*>(tmp);
     if (!wasm_runtime_init()) {
-        printf("WAMR init failed\n");
+        NES_ERROR("WAMR init failed");
     }
     registerNativeSymbols();
     int numNativeSymbols = sizeof(nativeSymbols) / sizeof(NativeSymbol);
     if (!wasm_runtime_register_natives(proxyFunctionModuleName, nativeSymbols, numNativeSymbols)) {
         printf("Host function registering failed\n");
     }
-    module = wasm_runtime_load(wasmBuffer, binaryLength, errorBuffer, sizeof(errorBuffer));
+    module = wasm_runtime_load(wasmBuffer, context->getBinaryLength(), errorBuffer, sizeof(errorBuffer));
     if (module == nullptr) {
         printf("Error loading module\n");
     }

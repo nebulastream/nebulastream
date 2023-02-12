@@ -19,13 +19,14 @@
 #include <cstdint>
 #include <string>
 #include <wasm_export.h>
+#include <Nautilus/Backends/WASM/WASMExecutionContext.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 
 class WAMRExecutionEngine {
   public:
     WAMRExecutionEngine();
-    void setup(size_t binaryLength, char* queryBinary);
+    void setup(const std::shared_ptr<WASMExecutionContext>& context);
     int32_t run();
     /**
      * Gets passed a pointer to a WorkerContext and creates a TupleBuffer. We copy the TupleBuffer and it's buffer into WASM

@@ -14,35 +14,54 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMRUNTIME_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMRUNTIME_HPP_
 
-#include <wasm.h>
+#include <Runtime/TupleBuffer.hpp>
+#include <Nautilus/Backends/WASM/WASMExecutionContext.hpp>
+#include <utility>
 #include <wasmtime.hh>
 
 namespace NES::Nautilus::Backends::WASM {
 
 class WASMRuntime {
   public:
-    WASMRuntime();
-    void setup(const std::vector<std::string>& proxyFunctions);
-    int32_t run(size_t binaryLength, char* queryBinary);
+    explicit WASMRuntime(std::shared_ptr<WASMExecutionContext>  ctx) : context(std::move(ctx)) {};
+    void setup();
+    int32_t run();
+    void close();
 
   private:
-    wasmtime::Engine engine;
-    wasmtime::Linker linker;
-    wasmtime::Store store;
-    wasmtime::WasiConfig wasiConfig;
+    std::shared_ptr<WASMExecutionContext> context;
+    std::shared_ptr<wasmtime::Engine> engine = nullptr;
+    std::shared_ptr<wasmtime::Linker> linker = nullptr;
+    std::shared_ptr<wasmtime::Store> store = nullptr;
+    std::shared_ptr<wasmtime::WasiConfig> wasiConfig = std::make_shared<wasmtime::WasiConfig>();
     wasmtime::Config config;
-    std::vector<wasmtime::Module> pyModule;
+    std::shared_ptr<wasmtime::Module> pyModule = nullptr;
+    std::shared_ptr<wasmtime::Func> execute = nullptr;
+    std::vector<std::shared_ptr<Runtime::TupleBuffer>> tupleBuffers;
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-    std::string proxyFunctionModule = "ProxyFunction";
-
-    void linkHostFunction(const std::string& proxyFunction);
+    const std::string proxyFunctionModule = "ProxyFunction";
+    const std::string functionName = "execute";
     std::string parseWATFile(const char* fileName);
     void prepareCPython();
-    void host_NES__Runtime__TupleBuffer__getBuffer(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__getBufferSize(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__getNumberOfTuples(const std::string& proxyFunctionName);
-    void host_NES__Runtime__TupleBuffer__setNumberOfTuples(const std::string& proxyFunctionName);
+    void allocateBufferProxy();
+    void host_emitBufferProxy();
+    void host_NES__Runtime__TupleBuffer__getBuffer();
+    void host_NES__Runtime__TupleBuffer__getBufferSize();
+    void host_NES__Runtime__TupleBuffer__getNumberOfTuples();
+    void host_NES__Runtime__TupleBuffer__setNumberOfTuples();
+
+    const char* wat = "(module\n"
+                      " (memory $memory 1)\n"
+                      " (export \"memory\" (memory $memory))\n"
+                      " (export \"execute\" (func $execute))\n"
+                      " (func $execute (result i32)\n"
+                      "  i32.const 2\n"
+                      "  i32.const 1\n"
+                      "  i32.add\n"
+                      "  return\n"
+                      " )\n"
+                      ")";
 };
 
 }// namespace NES::Nautilus::Backends::WASM

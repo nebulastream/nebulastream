@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMCOMPILER_HPP_
 
 
+#include <Nautilus/Backends/WASM/WASMExecutionContext.hpp>
 #include <Nautilus/Backends/WASM/Mapping.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -55,7 +56,7 @@ class WASMCompiler {
 
   public:
     WASMCompiler();
-    std::pair<size_t, char*> lower(const std::shared_ptr<IR::IRGraph>& ir);
+    std::shared_ptr<WASMExecutionContext> lower(const std::shared_ptr<IR::IRGraph>& ir);
 
     std::vector<std::string> getProxyFunctionNames() {
         std::vector<std::string> proxyFunctionNames;

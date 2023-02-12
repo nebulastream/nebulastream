@@ -48,10 +48,10 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 #For debugging purposes split WASM in different parts for now
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME "Enables the WebAssembly (WASM) wasmtime backend." OFF)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WASMTIME "Enables the WebAssembly (WASM) wasmtime backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM "Enables the WebAssembly (WASM) compilation backend." ON)
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WAMR "Enables the WebAssembly (WASM) WAMR backend." ON)
-message(STATUS "TEST: ${NES_ENABLE_EXPERIMENTAL_COMPILATION_WASM}")
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_WAMR "Enables the WebAssembly (WASM) WAMR backend." OFF)
+
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)

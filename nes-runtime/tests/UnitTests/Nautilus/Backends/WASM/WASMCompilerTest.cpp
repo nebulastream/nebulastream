@@ -22,6 +22,8 @@
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <NesBaseTest.hpp>
+//#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 
 namespace NES::Runtime::Execution {
 using namespace Nautilus;
@@ -37,17 +39,17 @@ class WASMCompilerTest : public Testing::NESBaseTest {
     Nautilus::Backends::WASM::WASMCompiler wasmCompiler;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WASMCompilerTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup WASMCompilerTest test class." << std::endl;
+        NES_DEBUG("Setup WASMCompilerTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup WASMCompilerTest test case." << std::endl; }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down WASMCompilerTest test case." << std::endl; }
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        NES_INFO("Setup SelectionPipelineTest test case.")
+    }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down WASMCompilerTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down WASMCompilerTest test class."); }
 };
 
 Value<> int32AddExpression() {
@@ -64,8 +66,12 @@ TEST_F(WASMCompilerTest, addIntFunctionTest) {
     std::cout << *executionTrace << std::endl;
     auto ir = irCreationPhase.apply(executionTrace);
     std::cout << ir->toString() << std::endl;
-    auto wasmCompiler = std::make_unique<Backends::WASM::WASMCompiler>();
-    wasmCompiler->lower(ir);
+    auto wasmCompiler = std::make_shared<Backends::WASM::WASMCompiler>();
+    auto executionCtx = wasmCompiler->lower(ir);
+    auto engine = std::make_shared<Backends::WASM::WASMRuntime>(executionCtx);
+    engine->setup();
+    ASSERT_EQ(engine->run(), 3);
+    engine->close();
 }
 
 Value<> int32SubExpression() {

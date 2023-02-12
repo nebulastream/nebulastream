@@ -22,8 +22,8 @@ namespace NES::Nautilus::Backends::WASM {
 //[[maybe_unused]] static CompilationBackendRegistry::Add<WASMCompilationBackend> wasmCompilerBackend("WASM");
 
 std::unique_ptr<WAMRExecutionEngine> WASMCompilationBackend::compile(const std::shared_ptr<IR::IRGraph>& ir) {
-    auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+    //auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
+    //timer.start();
 
     // 1. Create the WASMLoweringProvider and lower the given Nautilus IR. Return a WASM module.
     auto loweringProvider = std::make_unique<WASMCompiler>();
@@ -31,10 +31,10 @@ std::unique_ptr<WAMRExecutionEngine> WASMCompilationBackend::compile(const std::
 
     // 2. JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = std::make_unique<WAMRExecutionEngine>();
-    engine->setup(loweringResult.first, loweringResult.second);
+    engine->setup(loweringResult);
     // 3. Get execution function from engine. Create and return execution context.
 
-    timer.snapshot("WASMGeneration");
+    //timer.snapshot("WASMGeneration");
     return engine;
 }
 

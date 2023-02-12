@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/WASM/WASMCompilationBackend.hpp>
+//#include <Nautilus/Backends/WASM/WASMCompilationBackend.hpp>
+#include <Nautilus/Backends/WASM/WASMCompiler.hpp>
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -28,7 +30,8 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
+//#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
+#include "Nautilus/Backends/WASM/WASMRuntime.hpp"
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <NesBaseTest.hpp>
@@ -53,7 +56,7 @@ class WAMRExecutionTest : public Testing::NESBaseTest {
     Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
     Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
     //std::shared_ptr<ExecutionEngine::Experimental::PipelineExecutionEngine> executionEngine;
-    std::shared_ptr<Nautilus::Backends::WASM::WASMCompilationBackend> backend;
+    //std::shared_ptr<Nautilus::Backends::WASM::WASMCompilationBackend> backend;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("WAMRExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -66,7 +69,7 @@ class WAMRExecutionTest : public Testing::NESBaseTest {
         //provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>(100);
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
-        backend = std::make_shared<Nautilus::Backends::WASM::WASMCompilationBackend>();
+        //backend = std::make_shared<Nautilus::Backends::WASM::WASMCompilationBackend>();
         //executionEngine = std::make_shared<ExecutionEngine::Experimental::PipelineExecutionEngine>(backend);
     }
 
@@ -85,13 +88,13 @@ const char* wat = "(module\n"
                   "  return\n"
                   " )\n"
                   ")";
-
+/*
 TEST_F(WAMRExecutionTest, callAddFunction) {
     auto wamrRuntime = std::make_unique<Backends::WASM::WAMRExecutionEngine>();
-    //auto result = wamrRuntime->run(strlen(wat), const_cast<char*>(wat));
+    auto result = wamrRuntime->run(strlen(wat), const_cast<char*>(wat));
     //ASSERT_EQ(0, result);
 }
-
+*/
 TEST_F(WAMRExecutionTest, AggregationTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
@@ -103,8 +106,8 @@ TEST_F(WAMRExecutionTest, AggregationTest) {
     auto emit = std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProviderPtr2));
     scan->setChild(emit);
 
-    auto buffer = bm->getBufferBlocking();
-    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    auto buffer = std::make_shared<Runtime::TupleBuffer>(bm->getBufferBlocking());
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, *buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i);
         dynamicBuffer[i]["f2"].write((int64_t) i);
@@ -113,19 +116,19 @@ TEST_F(WAMRExecutionTest, AggregationTest) {
 
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scan);
-    auto mpeCtx = Runtime::Execution::Operators::MockedPipelineExecutionContext();
+    auto mpeCtx = std::make_shared<Runtime::Execution::Operators::MockedPipelineExecutionContext>();
     auto pipelineExecutionCtxRef = Value<MemRef>((int8_t*) &mpeCtx);
-    auto workerCtxRef = Value<MemRef>((int8_t*) nullptr);
+    auto workerCtxRef = Value<MemRef>((int8_t*) &wc);
     auto ctx = Runtime::Execution::ExecutionContext(workerCtxRef, pipelineExecutionCtxRef);
     pipeline->getRootOperator()->setup(ctx);
 
-    Timer timer("CompilationBasedPipelineExecutionEngine");
-    timer.start();
+    //Timer timer("CompilationBasedPipelineExecutionEngine");
+    //timer.start();
 
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &mpeCtx);
     pipelineExecutionContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto workerContextRef = Value<MemRef>((int8_t*) &wc);
     workerContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 1, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
@@ -144,15 +147,22 @@ TEST_F(WAMRExecutionTest, AggregationTest) {
         rootOperator->close(ctx, recordBuffer);
     });
 
-    NES_DEBUG(*executionTrace.get())
+    //NES_DEBUG(*executionTrace.get())
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    NES_DEBUG(*executionTrace.get())
-    timer.snapshot("Trace Generation");
+    //NES_DEBUG(*executionTrace.get())
+    //timer.snapshot("Trace Generation");
     auto ir = irCreationPhase.apply(executionTrace);
-    timer.snapshot("Nautilus IR Generation");
+    //timer.snapshot("Nautilus IR Generation");
     NES_DEBUG(ir->toString())
-    auto compilationBackend = std::make_unique<Backends::WASM::WASMCompilationBackend>();
-    auto engine = compilationBackend->compile(ir);
+    auto loweringProvider = std::make_unique<Nautilus::Backends::WASM::WASMCompiler>();
+    auto loweringResult = loweringProvider->lower(ir);
+    loweringResult->setArgs(wc, mpeCtx, buffer);
+    auto engine = std::make_unique<Backends::WASM::WASMRuntime>(loweringResult);
+    engine->setup();
+    engine->run();
+    engine->close();
+    //auto compilationBackend = std::make_unique<Backends::WASM::WASMCompilationBackend>();
+    //auto engine = compilationBackend->compile(ir);
 }
 
 TEST_F(WAMRExecutionTest, allocateBufferTest) {
