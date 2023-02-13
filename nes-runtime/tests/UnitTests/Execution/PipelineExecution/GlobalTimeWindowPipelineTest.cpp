@@ -15,6 +15,10 @@
 #include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/MaxAggregation.hpp>
+#include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -133,7 +137,8 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
-
+    preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
+    preAggExecutablePipeline->stop(pipeline1Context);
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
@@ -150,6 +155,109 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
+
+}// namespace NES::Runtime::Execution
+
+/**
+ * @brief Test running a pipeline containing a threshold window with a sum aggregation
+ */
+TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
+    auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    scanSchema->addField("f1", BasicType::INT64);
+    scanSchema->addField("f2", BasicType::INT64);
+    scanSchema->addField("ts", BasicType::INT64);
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
+    auto aggregationResultFieldName1 = "test$sum";
+    auto aggregationResultFieldName2 = "test$avg";
+    auto aggregationResultFieldName3 = "test$max";
+    auto aggregationResultFieldName4 = "test$min";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2, readF2, readF2, readF2};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType),
+        std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType),
+        std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType),
+        std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType)};
+    auto slicePreAggregation = std::make_shared<Operators::GlobalSlicePreAggregation>(0 /*handler index*/,
+                                                                                      readTsField,
+                                                                                      aggregationFields,
+                                                                                      aggregationFunctions);
+    scanOperator->setChild(slicePreAggregation);
+    auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    preAggPipeline->setRootOperator(scanOperator);
+    std::vector<std::string> resultFields = {aggregationResultFieldName1,
+                                             aggregationResultFieldName2,
+                                             aggregationResultFieldName3,
+                                             aggregationResultFieldName4};
+    auto sliceMerging =
+        std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions, resultFields, "start", "end");
+    auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    emitSchema = emitSchema->addField("test$sum", BasicType::INT64)
+                     ->addField("test$avg", BasicType::INT64)
+                     ->addField("test$max", BasicType::INT64)
+                     ->addField("test$min", BasicType::INT64);
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    sliceMerging->setChild(emitOperator);
+    auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    sliceMergingPipeline->setRootOperator(sliceMerging);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+
+    // Fill buffer
+    dynamicBuffer[0]["f1"].write((int64_t) 1);
+    dynamicBuffer[0]["f2"].write((int64_t) 10);
+    dynamicBuffer[0]["ts"].write((int64_t) 1);
+    dynamicBuffer[1]["f1"].write((int64_t) 2);
+    dynamicBuffer[1]["f2"].write((int64_t) 20);
+    dynamicBuffer[1]["ts"].write((int64_t) 1);
+    dynamicBuffer[2]["f1"].write((int64_t) 3);
+    dynamicBuffer[2]["f2"].write((int64_t) 30);
+    dynamicBuffer[2]["ts"].write((int64_t) 2);
+    dynamicBuffer[3]["f1"].write((int64_t) 1);
+    dynamicBuffer[3]["f2"].write((int64_t) 40);
+    dynamicBuffer[3]["ts"].write((int64_t) 3);
+    dynamicBuffer.setNumberOfTuples(4);
+    buffer.setWatermark(20);
+    buffer.setSequenceNumber(1);
+    buffer.setOriginId(0);
+
+    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
+    std::vector<OriginId> origins = {0};
+    auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    preAggExecutablePipeline->setup(pipeline1Context);
+
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
+
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    sliceMergingExecutablePipeline->setup(pipeline2Context);
+
+    preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
+    EXPECT_EQ(pipeline1Context.buffers.size(), 1);
+    sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
+
+    EXPECT_EQ(pipeline2Context.buffers.size(), 1);
+    preAggExecutablePipeline->stop(pipeline1Context);
+    sliceMergingExecutablePipeline->stop(pipeline2Context);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resultDynamicBuffer[0][0].read<int64_t>(), 100);
+    EXPECT_EQ(resultDynamicBuffer[0][1].read<int64_t>(), 25);
+    EXPECT_EQ(resultDynamicBuffer[0][2].read<int64_t>(), 10);
+    EXPECT_EQ(resultDynamicBuffer[0][3].read<int64_t>(), 40);
 
 }// namespace NES::Runtime::Execution
 

@@ -16,6 +16,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
+#include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
@@ -124,6 +125,59 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);
     value = ((uint64_t*) stateStore->getLastSlice()->getState()->ptr);
     ASSERT_EQ(*value, 1);
+    emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
+    auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
+    ASSERT_EQ(smt->startSlice, 10);
+    ASSERT_EQ(smt->endSlice, 20);
+    ASSERT_EQ(smt->sequenceNumber, 0);
+    ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
+}
+
+TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
+    auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto integer = DataTypeFactory::createInt64();
+    auto slicePreAggregation =
+        GlobalSlicePreAggregation(0 /*handler index*/,
+                                  readTs,
+                                  {readF2, readF2},
+                                  {std::make_shared<Aggregation::SumAggregationFunction>(integer, integer),
+                                   std::make_shared<Aggregation::CountAggregationFunction>(integer, integer)});
+
+    auto sliceStaging = std::make_shared<GlobalSliceStaging>();
+    std::vector<OriginId> origins = {0};
+    auto handler = std::make_shared<GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto buffer = bm->getBufferBlocking();
+
+    auto rb = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    slicePreAggregation.setup(ctx);
+    auto stateStore = handler->getThreadLocalSliceStore(wc->getId());
+
+    slicePreAggregation.open(ctx, rb);
+
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 12)}, {"f2", Value<>(42)}}));
+    ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
+    ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
+    ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
+    struct State {
+        uint64_t sum;
+        uint64_t count;
+    };
+    auto value = ((State*) stateStore->getFirstSlice()->getState()->ptr);
+    ASSERT_EQ(value[0].sum, 84);
+    ASSERT_EQ(value[0].count, 2);
+
+    emitRecord(slicePreAggregation, ctx, Record({{"f1", Value<>((uint64_t) 24)}, {"f2", Value<>(42)}}));
+    ASSERT_EQ(stateStore->getNumberOfSlices(), 2);
+    ASSERT_EQ(stateStore->getLastSlice()->getStart(), 20);
+    ASSERT_EQ(stateStore->getLastSlice()->getEnd(), 30);
+    value = ((State*) stateStore->getLastSlice()->getState()->ptr);
+    ASSERT_EQ(value[0].sum, 42);
+    ASSERT_EQ(value[0].count, 1);
     emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
     auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);

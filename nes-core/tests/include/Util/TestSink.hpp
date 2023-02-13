@@ -107,6 +107,58 @@ class TestSink : public SinkMedium {
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 };
 
+template<class Type>
+class CollectTestSink : public SinkMedium {
+  public:
+    CollectTestSink(const SchemaPtr& schema, const Runtime::NodeEnginePtr& nodeEngine, uint32_t numOfProducers = 1)
+        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0) {
+        auto bufferManager = nodeEngine->getBufferManager(0);
+        NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only support for row layouts");
+    };
+
+    static std::shared_ptr<TestSink>
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
+    }
+
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
+        std::unique_lock lock(m);
+        NES_DEBUG("TestSink: emit buffer" << inputBuffer.getNumberOfTuples());
+        auto typedResult = inputBuffer.getBuffer<Type>();
+        for (size_t i = 0; i < inputBuffer.getNumberOfTuples(); i++) {
+            results.emplace_back(typedResult[i]);
+        }
+        cv.notify_all();
+        return true;
+    }
+
+    std::vector<Type>& getResult() { return results; }
+
+    void setup() override{};
+
+    std::string toString() const override { return "Test_Sink"; }
+
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
+
+    void waitTillCompleted(size_t numberOfRecords) {
+        std::unique_lock lock(m);
+        cv.wait(lock, [&] {
+            return this->results.size() >= numberOfRecords;
+        });
+    }
+
+  public:
+    void shutdown() override {
+        // just in case someone is waiting. Check if they should be notified.
+        cv.notify_all();
+    }
+
+    mutable std::mutex m;
+    std::condition_variable cv;
+    uint64_t expectedBuffer;
+    std::vector<Type> results;
+};
+
 }// namespace NES
 
 #endif// NES_TESTS_UTIL_TEST_SINK_HPP_
