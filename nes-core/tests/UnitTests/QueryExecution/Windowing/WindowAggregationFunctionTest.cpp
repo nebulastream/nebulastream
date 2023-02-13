@@ -29,13 +29,13 @@ using Runtime::TupleBuffer;
 const static uint64_t windowSize = 10;
 const static uint64_t recordsPerBuffer = 100;
 
-class GlobalTumblingWindowAggregationFunctionTest
+class WindowAggregationFunctionTest
     : public Testing::TestWithErrorHandling<testing::Test>,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("GlobalTumblingWindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup GlobalTumblingWindowAggregationFunctionTest test class.");
+        NES::Logger::setupLogging("WindowAggregationFunctionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_DEBUG("QueryExecutionTest: Setup WindowAggregationFunctionTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -48,14 +48,14 @@ class GlobalTumblingWindowAggregationFunctionTest
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowAggregationFunctionTest test case.");
+        NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::TestWithErrorHandling<testing::Test>::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_DEBUG("QueryExecutionTest: Tear down GlobalTumblingWindowAggregationFunctionTest test class.");
+        NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test class.");
     }
 
     SchemaPtr sourceSchema;
@@ -82,7 +82,7 @@ class GlobalTumblingWindowAggregationFunctionTest
     }
 };
 
-TEST_P(GlobalTumblingWindowAggregationFunctionTest, testSumAggregation) {
+TEST_P(WindowAggregationFunctionTest, testSumAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -113,7 +113,7 @@ TEST_P(GlobalTumblingWindowAggregationFunctionTest, testSumAggregation) {
     EXPECT_EQ(results[1].value, 4950UL);
 }
 
-TEST_P(GlobalTumblingWindowAggregationFunctionTest, testAvgAggregation) {
+TEST_P(WindowAggregationFunctionTest, testAvgAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -144,7 +144,7 @@ TEST_P(GlobalTumblingWindowAggregationFunctionTest, testAvgAggregation) {
     EXPECT_EQ(results[1].value, 49UL);
 }
 
-TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMinAggregation) {
+TEST_P(WindowAggregationFunctionTest, testMinAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -175,7 +175,7 @@ TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMinAggregation) {
     EXPECT_EQ(results[1].value, 0UL);
 }
 
-TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMaxAggregation) {
+TEST_P(WindowAggregationFunctionTest, testMaxAggregation) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -206,7 +206,7 @@ TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMaxAggregation) {
     EXPECT_EQ(results[1].value, 99UL);
 }
 
-TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMultiAggregationFunctions) {
+TEST_P(WindowAggregationFunctionTest, testMultiAggregationFunctions) {
     struct ResultRecord {
         uint64_t start_ts;
         uint64_t end_ts;
@@ -248,8 +248,8 @@ TEST_P(GlobalTumblingWindowAggregationFunctionTest, testMultiAggregationFunction
 }
 
 INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
-                        GlobalTumblingWindowAggregationFunctionTest,
+                        WindowAggregationFunctionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
-                        [](const testing::TestParamInfo<GlobalTumblingWindowAggregationFunctionTest::ParamType>& info) {
+                        [](const testing::TestParamInfo<WindowAggregationFunctionTest::ParamType>& info) {
                             return magic_enum::enum_flags_name(info.param);
                         });
