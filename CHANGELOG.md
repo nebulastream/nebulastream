@@ -1,5 +1,24 @@
 # Changelog
 
+## [v.1.0](https://github.com/nebulastream/nebulastream/tree/v.1.0) (2023-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.44...v.1.0)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Float Value returns Double in DegreeExpression  [\#3112](https://github.com/nebulastream/nebulastream/issues/3112)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Spatial Data Type with functions  [\#3156](https://github.com/nebulastream/nebulastream/issues/3156)
+- \[DBPRO\] Add a test und `nes-runtime/tests/Execution/Expressions/Functions` [\#3100](https://github.com/nebulastream/nebulastream/issues/3100)
+- \[DBPRO\] Add the new expression under `nes-runtime/include/Execution/Expressions/Functions` and  `nes-runtime/src/Execution/Expressions/Functions`. [\#3099](https://github.com/nebulastream/nebulastream/issues/3099)
+- \[Feature\] Add TCP test server and enable testing for TCPSource [\#2966](https://github.com/nebulastream/nebulastream/issues/2966)
+
+## [v0.4.44](https://github.com/nebulastream/nebulastream/tree/v0.4.44) (2023-02-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.43...v0.4.44)
+
 ## [v0.4.43](https://github.com/nebulastream/nebulastream/tree/v0.4.43) (2023-02-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.42...v0.4.43)
