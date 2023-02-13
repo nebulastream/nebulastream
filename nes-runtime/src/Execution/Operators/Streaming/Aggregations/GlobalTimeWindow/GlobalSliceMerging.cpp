@@ -19,8 +19,8 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -121,10 +121,12 @@ Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& global
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
     for (Value<UInt64> i = (uint64_t) 0; i < sizeOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
+        uint64_t stateOffset = 0;
         for (const auto& function : aggregationFunctions) {
-            function->combine(globalSliceState, partitionState);
-            partitionState = partitionState + function->getSize();
-            globalSliceState = globalSliceState + function->getSize();
+            auto globalValuePtr = globalSliceState + stateOffset;
+            auto partitionValuePtr = partitionState + stateOffset;
+            function->combine(globalValuePtr.as<MemRef>(), partitionValuePtr.as<MemRef>());
+            stateOffset = stateOffset + function->getSize();
         }
     }
     Nautilus::FunctionCall("deletePartition", deletePartition, partition);
@@ -140,10 +142,13 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
-    for (const auto& function : aggregationFunctions) {
-        auto finalAggregationValue = function->lower(globalSliceState);
-        resultWindow.write("test$sum", finalAggregationValue);
-        globalSliceState = globalSliceState + function->getSize();
+    uint64_t stateOffset = 0;
+    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+        auto function = aggregationFunctions[i];
+        auto valuePtr = globalSliceState + stateOffset;
+        auto finalAggregationValue = function->lower(valuePtr.as<MemRef>());
+        resultWindow.write(aggregationResultExpressions[i], finalAggregationValue);
+        stateOffset = stateOffset + function->getSize();
     }
     child->execute(ctx, resultWindow);
 }

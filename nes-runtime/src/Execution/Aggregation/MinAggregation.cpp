@@ -13,16 +13,25 @@
 */
 
 #include <Execution/Aggregation/MinAggregation.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
 
 MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
+template<class T>
+T min(T first, T second) {
+    return first < second ? first : second;
+}
+
 void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load
     auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // compare
+    // TODO implement the function in nautilus if #3500 is fixed
+    auto result = FunctionCall<>("min", min<int64_t>, value.as<Nautilus::Int64>(), oldValue);
+    memref.store(result);
     auto isLessThan = Nautilus::LessThanOp(value, oldValue);
 
     if (isLessThan) {
@@ -32,6 +41,10 @@ void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
 }
 
 void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+    auto left = memref1.load<Nautilus::Int64>();
+    auto right = memref2.load<Nautilus::Int64>();
+    auto result = FunctionCall<>("min", min<int64_t>, left, right);
+    memref1.store(result);
     auto left = AggregationFunction::loadFromMemref(memref1, inputType);
     auto right = AggregationFunction::loadFromMemref(memref2, inputType);
 

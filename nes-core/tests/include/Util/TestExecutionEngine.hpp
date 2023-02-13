@@ -156,15 +156,15 @@ class TestExecutionEngine {
         originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
 
         // Initialize the typeInferencePhase with a dummy SourceCatalog & UdfCatalog
-        auto cppCompiler = Compiler::CPPCompiler::create();
-        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        auto queryParsingService = QueryParsingService::create(jitCompiler);
         Catalogs::UDF::UdfCatalogPtr udfCatalog = Catalogs::UDF::UdfCatalog::create();
-        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(queryParsingService);
+        // We inject an invalid query parsing service as it is not used in the tests.
+        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    auto createDataSink(SchemaPtr outputSchema) { return std::make_shared<TestSink>(1, outputSchema, nodeEngine); }
+    auto createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1) { return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine); }
+    template<class Type>
+    auto createCollectSink(SchemaPtr outputSchema) { return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine); }
 
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -207,7 +207,7 @@ class TestExecutionEngine {
     }
 
     bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan) {
-        return nodeEngine->stopQuery(plan->getQueryId());
+        return nodeEngine->stopQuery(plan->getQueryId(), Runtime::QueryTerminationType::HardStop);
     }
 
     Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer(const SchemaPtr& schema) {

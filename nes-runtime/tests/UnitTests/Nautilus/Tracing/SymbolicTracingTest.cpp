@@ -561,6 +561,19 @@ TEST_F(SymbolicTracingTest, deepLoopTest) {
     ASSERT_EQ(basicBlocks.size(), 61);
 }
 
+TEST_F(SymbolicTracingTest, DISABLED_nativeLoopTest) {
+    // tracing of native loops fails as nautilus can differentiate nautilus and native loops correctly.
+    auto execution = Nautilus::Tracing::traceFunction([]() {
+        nativeLoop();
+    });
+
+    NES_INFO(execution);
+    execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution->getBlocks();
+    NES_INFO(*execution.get());
+    ASSERT_EQ(basicBlocks.size(), 61);
+}
+
 TEST_F(SymbolicTracingTest, tracingBreakerTest) {
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

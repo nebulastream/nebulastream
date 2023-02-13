@@ -13,15 +13,26 @@
 */
 
 #include <Execution/Aggregation/MaxAggregation.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
 MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
+
+template<class T>
+T max(T first, T second) {
+    return first > second ? first : second;
+}
+
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load
     auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // compare
+    // TODO implement the function in nautilus if #3500 is fixed
+    auto result = FunctionCall<>("max", max<int64_t>, value.as<Nautilus::Int64>(), oldValue);
+    // store
+    memref.store(result);
     auto isGreaterThan = Nautilus::GreaterThanOp(value, oldValue);
 
     if (isGreaterThan) {
@@ -31,6 +42,12 @@ void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Naut
 }
 
 void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
+    auto left = memref1.load<Nautilus::Int64>();
+    auto right = memref2.load<Nautilus::Int64>();
+    // TODO implement the function in nautilus if #3500 is fixed
+    auto result = FunctionCall<>("max", max<int64_t>, left, right);
+    // store
+    memref1.store(result);
     auto left = AggregationFunction::loadFromMemref(memref1, inputType);
     auto right = AggregationFunction::loadFromMemref(memref2, inputType);
 
