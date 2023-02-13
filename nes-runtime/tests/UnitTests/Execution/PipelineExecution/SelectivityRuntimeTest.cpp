@@ -1,11 +1,11 @@
 //
 // Created by Juliane on 13.01.2023.
 //
-#include "Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp"
-#include "Execution/Expressions/LogicalExpressions/LessThanExpression.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -15,6 +15,9 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
+#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
+#include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
@@ -115,10 +118,20 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
-    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
-    std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
+    std::cout << "Number of output tuples: " << nautilusExecutablePipelineStage->getNumberOfOutputTuples() << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
+
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(nautilusExecutablePipelineStage);
+    pipelineSelectivity->collect();
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage);
+    pipelineRuntime->collect();
+
+    auto statisticsCollector = std::make_unique<StatisticsCollector>();
+    statisticsCollector->addStatistic(std::move(pipelineSelectivity));
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
