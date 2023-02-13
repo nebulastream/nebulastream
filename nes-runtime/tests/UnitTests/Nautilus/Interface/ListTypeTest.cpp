@@ -89,4 +89,49 @@ TEST_F(ListTypeTest, concatTest) {
     result->~ListValue<int32_t>();
 }
 
+TEST_F(ListTypeTest, prepend){
+    int32_t array[7] = {1, 2, 3, 4, 5, 6,7};
+    auto list1 = ListValue<int32_t>::create(array, 7);
+    auto result = list1->prepend(0);
+    ASSERT_EQ(result->length(), 8);
+    for (int32_t i = 0; i < 8; i++) {
+        ASSERT_EQ(result->data()[i], i% 8);
+    }
+    list1->~ListValue<int32_t>();
+    result->~ListValue<int32_t>();
+}
+
+TEST_F(ListTypeTest, listPosition){
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+    auto result = list1->listPosition(2);
+    int32_t found=0;
+    for (int32_t i = 0; i < 5; i++) {
+        if(list1()[i]==2){
+            ASSERT_EQ(result->i , i % 6);
+            found=1;
+        }
+    }
+    if(found==0){
+        ASSERT_EQ(result->found , found % 6);
+    }
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+    result->int32_t;
+}
+
+TEST_F(ListTypeTest, reverse){
+    int32_t array[6] = {0, 1, 2, 3, 4, 5};
+    auto list1 = ListValue<int32_t>::create(array, 6);
+    auto result = list1->revers();
+    ASSERT_EQ(result->length(), 6);
+    for (int32_t i = 5; i >-1 ; i--) {
+        ASSERT_EQ(result->data()[i], i % 6);
+    }
+    // free each list value explicitly here.
+    list1->~ListValue<int32_t>();
+    result->~ListValue<int32_t>();
+}
+
+
 }// namespace NES::Nautilus

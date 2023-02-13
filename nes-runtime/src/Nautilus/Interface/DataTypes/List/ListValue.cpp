@@ -109,9 +109,16 @@ ListValue<T>* ListValue<T>::append(T element) const {
 
 template<class T>
 ListValue<T>* ListValue<T>::prepend(T element) const {
-    // create result list
-    auto resultList = ListValue<T>::create(length() + 1);
     // TODO copy list and prepend on element to the result list
+    // create result list
+    auto leftListSize = length();
+    auto resultList = ListValue<T>::create(length() + 1);
+    auto resultDataPtr = resultList->data();
+    resultDataPtr[0] = element;
+    for (uint32_t i = 0; i < leftListSize; i++) {
+        resultDataPtr[1+ i] = c_data()[i];
+    }
+
     return resultList;
 }
 
@@ -123,8 +130,15 @@ bool ListValue<T>::contains(T element) const {
 
 template<class T>
 uint32_t ListValue<T>::listPosition(T element) const {
-    // TODO return the index of the element. If it is not contained return 0.
-    return 0;
+    // TODO return the index of the element. If it  containedis not return 0.
+    auto leftListSize = length();
+    int position=0;
+    for (uint32_t i = 0; i < leftListSize; i++) {
+        if (c_data()[i] == element) {
+            position=i;
+        }
+    }
+ return position;
 }
 template<class T>
 ListValue<T>* ListValue<T>::sort() const {
@@ -143,6 +157,13 @@ ListValue<T>* ListValue<T>::revers() const {
     std::memcpy(resultList->data(), c_data(), length());
     // TODO reverse content of list (resultList->data()): look at the following links for inspiration
     // https://cplusplus.com/reference/algorithm/reverse/
+    auto resultDataPtr = resultList->data();
+    int counter= length()-1;
+    for (uint32_t i = 0; i < length(); i++) {
+        resultDataPtr[i] = c_data()[counter];
+        counter--;
+    }
+
     return resultList;
 }
 
