@@ -68,7 +68,7 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
-TEST_P(KeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
+TEST_P(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
                             ->addField("test$key", BasicType::INT64)
@@ -82,6 +82,43 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, testSimpleTumblingWindow) {
     auto query = TestQuery::from(testSourceDescriptor)
                      .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
                      .byKey(Attribute("test$key", INT64))
+                     .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
+                     .project(Attribute("test$sum"))
+                     .sink(testSinkDescriptor);
+
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+
+    auto source = executionEngine->getDataSource(plan, 0);
+    auto inputBuffer = executionEngine->getBuffer(sourceSchema);
+    fillBuffer(inputBuffer);
+    ASSERT_EQ(inputBuffer.getBuffer().getNumberOfTuples(), 10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2u);
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// sum
+
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+    auto sourceSchema = Schema::create()
+                            ->addField("test$ts", BasicType::UINT64)
+                            ->addField("test$key", BasicType::INT64)
+                            ->addField("test$value", BasicType::INT64);
+    auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
+
+    auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+    auto testSink = executionEngine->createDataSink(sinkSchema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .window(TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(5)))
+                     .byKey(Attribute("test$key", INT64), Attribute("test$key", INT64))
                      .apply(Sum(Attribute("test$value", INT64))->as(Attribute("test$sum")))
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
