@@ -175,6 +175,122 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
 
 }// namespace NES::Runtime::Execution
 
+TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
+    auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    scanSchema->addField("k1", BasicType::INT64);
+    scanSchema->addField("k2", BasicType::INT64);
+    scanSchema->addField("v", BasicType::INT64);
+    scanSchema->addField("ts", BasicType::INT64);
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readKey1 = std::make_shared<Expressions::ReadFieldExpression>("k1");
+    auto readKey2 = std::make_shared<Expressions::ReadFieldExpression>("k2");
+    auto readValue = std::make_shared<Expressions::ReadFieldExpression>("v");
+    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
+    auto aggregationResultFieldName = "sum";
+    DataTypePtr integerType = DataTypeFactory::createInt64();
+    std::vector<Expressions::ExpressionPtr> keyFields = {readKey1, readKey2};
+    std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
+        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
+    PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    std::vector<PhysicalTypePtr> keyTypes = {physicalType, physicalType};
+    auto slicePreAggregation =
+        std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
+                                                              readTsField,
+                                                              keyFields,
+                                                              keyTypes,
+                                                              aggregationFields,
+                                                              aggregationFunctions,
+                                                              std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    scanOperator->setChild(slicePreAggregation);
+    auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    preAggPipeline->setRootOperator(scanOperator);
+    std::vector<std::string> aggregationResultExpressions = {aggregationResultFieldName};
+    std::vector<std::string> resultKeyFields = {"k1", "k2"};
+    auto sliceMerging = std::make_shared<Operators::KeyedSliceMerging>(0 /*handler index*/,
+                                                                       aggregationFunctions,
+                                                                       aggregationResultExpressions,
+                                                                       keyTypes,
+                                                                       resultKeyFields,
+                                                                       "start",
+                                                                       "end");
+    auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    emitSchema->addField("k1", BasicType::INT64);
+    emitSchema->addField("k2", BasicType::INT64);
+    emitSchema->addField("sum", BasicType::INT64);
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    sliceMerging->setChild(emitOperator);
+    auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
+    sliceMergingPipeline->setRootOperator(sliceMerging);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+
+    // Fill buffer
+    dynamicBuffer[0]["k1"].write((int64_t) 1);
+    dynamicBuffer[0]["k2"].write((int64_t) 1);
+    dynamicBuffer[0]["v"].write((int64_t) 10);
+    dynamicBuffer[0]["ts"].write((int64_t) 1);
+    dynamicBuffer[1]["k1"].write((int64_t) 1);
+    dynamicBuffer[1]["k2"].write((int64_t) 2);
+    dynamicBuffer[1]["v"].write((int64_t) 20);
+    dynamicBuffer[1]["ts"].write((int64_t) 1);
+    dynamicBuffer[2]["k1"].write((int64_t) 2);
+    dynamicBuffer[2]["k2"].write((int64_t) 2);
+    dynamicBuffer[2]["v"].write((int64_t) 30);
+    dynamicBuffer[2]["ts"].write((int64_t) 2);
+    dynamicBuffer[3]["k1"].write((int64_t) 1);
+    dynamicBuffer[3]["k2"].write((int64_t) 2);
+    dynamicBuffer[3]["v"].write((int64_t) 40);
+    dynamicBuffer[3]["ts"].write((int64_t) 3);
+    dynamicBuffer.setNumberOfTuples(4);
+    buffer.setWatermark(20);
+    buffer.setSequenceNumber(1);
+    buffer.setOriginId(0);
+
+    std::vector<OriginId> origins = {0};
+
+    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto sliceStaging = std::make_shared<Operators::KeyedSliceStaging>();
+    auto preAggregationHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
+
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>(sliceStaging);
+
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    preAggExecutablePipeline->setup(pipeline1Context);
+
+    preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
+    EXPECT_EQ(pipeline1Context.buffers.size(), 1);
+
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    sliceMergingExecutablePipeline->setup(pipeline2Context);
+    sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
+    EXPECT_EQ(pipeline2Context.buffers.size(), 1);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    EXPECT_EQ(resultDynamicBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resultDynamicBuffer[0]["k1"].read<int64_t>(), 1);
+    EXPECT_EQ(resultDynamicBuffer[0]["k2"].read<int64_t>(), 1);
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 10);
+    EXPECT_EQ(resultDynamicBuffer[1]["k1"].read<int64_t>(), 1);
+    EXPECT_EQ(resultDynamicBuffer[1]["k2"].read<int64_t>(), 2);
+    EXPECT_EQ(resultDynamicBuffer[1][aggregationResultFieldName].read<int64_t>(), 60);
+    EXPECT_EQ(resultDynamicBuffer[2]["k1"].read<int64_t>(), 2);
+    EXPECT_EQ(resultDynamicBuffer[2]["k2"].read<int64_t>(), 2);
+    EXPECT_EQ(resultDynamicBuffer[2][aggregationResultFieldName].read<int64_t>(), 30);
+
+    preAggExecutablePipeline->stop(pipeline1Context);
+    sliceMergingExecutablePipeline->stop(pipeline2Context);
+
+}// namespace NES::Runtime::Execution
+
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         KeyedTimeWindowPipelineTest,
                         ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
