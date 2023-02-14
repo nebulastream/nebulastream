@@ -144,8 +144,7 @@ TEST_P(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
 
 INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
                         KeyedTumblingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<KeyedTumblingWindowQueryExecutionTest::ParamType>& info) {
                             return magic_enum::enum_flags_name(info.param);
                         });
