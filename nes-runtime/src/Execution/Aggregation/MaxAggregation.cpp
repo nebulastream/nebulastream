@@ -25,39 +25,54 @@ T max(T first, T second) {
     return first > second ? first : second;
 }
 
+template<class T>
+Nautilus::Value<> callMaxTyped(Nautilus::Value<> leftValue, Nautilus::Value<> rightValue) {
+    return FunctionCall<>("max", max<typename T::RawType>, leftValue.as<T>(), rightValue.as<T>());
+}
+
+Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Value<>& rightValue) {
+    if (leftValue->isType<Nautilus::Int8>()) {
+        return callMaxTyped<Nautilus::Int8>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int16>()) {
+        return callMaxTyped<Nautilus::Int16>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int32>()) {
+        return callMaxTyped<Nautilus::Int32>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int64>()) {
+        return callMaxTyped<Nautilus::Int64>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt8>()) {
+        return callMaxTyped<Nautilus::UInt8>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt16>()) {
+        return callMaxTyped<Nautilus::UInt16>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt32>()) {
+        return callMaxTyped<Nautilus::UInt32>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt64>()) {
+        return callMaxTyped<Nautilus::UInt64>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Float>()) {
+        return callMaxTyped<Nautilus::Float>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Double>()) {
+        return callMaxTyped<Nautilus::Double>(leftValue, rightValue);
+    }
+    NES_NOT_IMPLEMENTED();
+}
+
+
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load
     auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
-    auto result = FunctionCall<>("max", max<int64_t>, value.as<Nautilus::Int64>(), oldValue);
+    auto result = callMax(oldValue, value);
     // store
     memref.store(result);
-    auto isGreaterThan = Nautilus::GreaterThanOp(value, oldValue);
-
-    if (isGreaterThan) {
-        // store
-        memref.store(value);
-    }
 }
 
 void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left = memref1.load<Nautilus::Int64>();
-    auto right = memref2.load<Nautilus::Int64>();
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto result = FunctionCall<>("max", max<int64_t>, left, right);
-    // store
-    memref1.store(result);
     auto left = AggregationFunction::loadFromMemref(memref1, inputType);
     auto right = AggregationFunction::loadFromMemref(memref2, inputType);
-
-    auto isLeftGreaterThanRight = Nautilus::GreaterThanOp(left, right);
-
-    if (isLeftGreaterThanRight) {
-        memref1.store(left);
-    } else {
-        memref1.store(right);
-    }
+    // TODO implement the function in nautilus if #3500 is fixed
+    auto result = callMax(left, right);
+    // store
+    memref1.store(result);
 }
 
 Nautilus::Value<> MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
