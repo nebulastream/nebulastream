@@ -25,36 +25,51 @@ T min(T first, T second) {
     return first < second ? first : second;
 }
 
+template<class T>
+Nautilus::Value<> callMinTyped(Nautilus::Value<> leftValue, Nautilus::Value<> rightValue) {
+    return FunctionCall<>("min", min<typename T::RawType>, leftValue.as<T>(), rightValue.as<T>());
+}
+
+Nautilus::Value<> callMin(const Nautilus::Value<>& leftValue, const Nautilus::Value<>& rightValue) {
+    if (leftValue->isType<Nautilus::Int8>()) {
+        return callMinTyped<Nautilus::Int8>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int16>()) {
+        return callMinTyped<Nautilus::Int16>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int32>()) {
+        return callMinTyped<Nautilus::Int32>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Int64>()) {
+        return callMinTyped<Nautilus::Int64>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt8>()) {
+        return callMinTyped<Nautilus::UInt8>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt16>()) {
+        return callMinTyped<Nautilus::UInt16>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt32>()) {
+        return callMinTyped<Nautilus::UInt32>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::UInt64>()) {
+        return callMinTyped<Nautilus::UInt64>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Float>()) {
+        return callMinTyped<Nautilus::Float>(leftValue, rightValue);
+    } else if (leftValue->isType<Nautilus::Double>()) {
+        return callMinTyped<Nautilus::Double>(leftValue, rightValue);
+    }
+    NES_NOT_IMPLEMENTED();
+}
+
 void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load
     auto oldValue = AggregationFunction::loadFromMemref(memref, inputType);
     // compare
     // TODO implement the function in nautilus if #3500 is fixed
-    auto result = FunctionCall<>("min", min<int64_t>, value.as<Nautilus::Int64>(), oldValue);
+    auto result = callMin(value, oldValue);
     memref.store(result);
-    auto isLessThan = Nautilus::LessThanOp(value, oldValue);
-
-    if (isLessThan) {
-        // store
-        memref.store(value);
-    }
 }
 
 void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left = memref1.load<Nautilus::Int64>();
-    auto right = memref2.load<Nautilus::Int64>();
-    auto result = FunctionCall<>("min", min<int64_t>, left, right);
-    memref1.store(result);
     auto left = AggregationFunction::loadFromMemref(memref1, inputType);
     auto right = AggregationFunction::loadFromMemref(memref2, inputType);
-
-    auto isLeftLessThanRight = Nautilus::LessThanOp(left, right);
-
-    if (isLeftLessThanRight) {
-        memref1.store(left);
-    } else {
-        memref1.store(right);
-    }
+    // TODO implement the function in nautilus if #3500 is fixed
+    auto result = callMin(left, right);
+    memref1.store(result);
 }
 
 Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
@@ -64,7 +79,6 @@ Nautilus::Value<> MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
 
 void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto minVal = createConstValue(std::numeric_limits<int64_t>::max(), inputType);
-
     memref.store(minVal);
 }
 uint64_t MinAggregationFunction::getSize() { return inputType->size(); }

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp"
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -178,7 +178,9 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto aggregationResultFieldName2 = "test$avg";
     auto aggregationResultFieldName3 = "test$max";
     auto aggregationResultFieldName4 = "test$min";
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readF2, readF2, readF2, readF2};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType),

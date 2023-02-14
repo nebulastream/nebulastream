@@ -87,13 +87,12 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
     auto readValue = std::make_shared<Expressions::ReadFieldExpression>("v");
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto aggregationResultFieldName = "test$sum";
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey};
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
-    PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<PhysicalTypePtr> types = {physicalType};
+    std::vector<PhysicalTypePtr> types = {integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
                                                               readTsField,
@@ -191,13 +190,14 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
     auto readValue = std::make_shared<Expressions::ReadFieldExpression>("v");
     auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto aggregationResultFieldName = "sum";
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     std::vector<Expressions::ExpressionPtr> keyFields = {readKey1, readKey2};
     std::vector<Expressions::ExpressionPtr> aggregationFields = {readValue};
     std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
         std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
     PhysicalTypePtr physicalType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    std::vector<PhysicalTypePtr> keyTypes = {physicalType, physicalType};
+    std::vector<PhysicalTypePtr> keyTypes = {integerType, integerType};
     auto slicePreAggregation =
         std::make_shared<Operators::KeyedSlicePreAggregation>(0 /*handler index*/,
                                                               readTsField,
