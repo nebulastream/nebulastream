@@ -19,6 +19,7 @@
 #include <unordered_map>
 namespace NES::Nautilus::Tracing {
 class TagRecorder;
+class TraceContext;
 
 /**
  * @brief The symbolic execution context supports the symbolic execution of functions.
@@ -58,6 +59,7 @@ class SymbolicExecutionContext {
     bool record(TagRecorder& tr);
 
   private:
+    friend TraceContext;
     /**
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.

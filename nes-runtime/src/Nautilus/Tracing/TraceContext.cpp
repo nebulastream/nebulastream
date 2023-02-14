@@ -159,6 +159,16 @@ bool TraceContext::traceCMP(const ValueRef& valueRef) {
 }
 
 ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr& type) {
+    // If the next operation already exists, we have to create the same value ref.
+    // Currently, we assume that it is correctly set.
+    // TODO this should be handled better at a fundamental level, which ensures that value references are always correct.
+    auto& currentBlock = executionTrace->getCurrentBlock();
+    if (currentBlock.operations.size() > currentOperationCounter) {
+        auto& operation = currentBlock.operations[currentOperationCounter];
+        if(auto* valRef = std::get_if<ValueRef>(&operation.result)){
+            return *valRef;
+        }
+    }
     return {executionTrace->getCurrentBlockIndex(), currentOperationCounter, type};
 }
 
@@ -181,7 +191,7 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode) {
 
 bool TraceContext::isKnownOperation(const Tag* tag) {
     if (auto ref = checkTag(tag)) {
-        NES_TRACE(*executionTrace);
+        NES_DEBUG(*executionTrace);
         // TODO #3500 Fix handling of repeated operations
         if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -208,7 +218,7 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
             initializeTraceIteration();
             auto result = function();
             traceReturnOperation(result);
-            NES_DEBUG("ExecutionTrace: " << *executionTrace);
+            //NES_DEBUG("ExecutionTrace: " << *executionTrace);
         } catch (const TraceTerminationException& ex) {
         }
     }
