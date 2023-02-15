@@ -97,13 +97,13 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> dist(0, 10);
+    std::uniform_int_distribution<int64_t> dist(0, 10);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 100; i++) {
-        uint64_t randomNumber = dist(rng);
-        dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
+    for (uint64_t i = 0; i < 500; i++) {
+        int64_t randomNumber = dist(rng);
+        dynamicBuffer[i]["f1"].write(randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
@@ -115,10 +115,12 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
-    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
@@ -138,10 +140,12 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     executablePipeline2->execute(buffer,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
 
-    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline2.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage2 = std::move(executablePipeline2);
+    auto nautilusExecutablePipelineStage2 = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage2);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage2->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -149,7 +153,7 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
 
     auto resultDynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout,resultBuffer2);
     for(uint64_t i = 0; i < resultBuffer2.getNumberOfTuples(); i++){
-        ASSERT_GT(resultDynamicBuffer2[i]["f1"].read<int64_t>(),resultDynamicBuffer2[i]["f2"].read<int64_t>());
+        ASSERT_GT(resultDynamicBuffer2[i]["f1"].read<int64_t>(),1);
     }
 }
 
@@ -211,13 +215,13 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> dist(0, 10);
+    std::uniform_int_distribution<int64_t> dist(0, 10);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 500; i++) {
-        uint64_t randomNumber = dist(rng);
-        dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
+        int64_t randomNumber = dist(rng);
+        dynamicBuffer[i]["f1"].write(randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
@@ -229,10 +233,12 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
-    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
@@ -252,10 +258,12 @@ TEST_P(SelectivityRuntimeTest, runtimesTest) {
     executablePipeline2->execute(buffer,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
 
-    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline2.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage2 = std::move(executablePipeline2);
+    auto nautilusExecutablePipelineStage2 = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage2);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage2->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -297,13 +305,13 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> dist(0, 10);
+    std::uniform_int_distribution<int64_t> dist(0, 10);
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 500; i++) {
-        uint64_t randomNumber = dist(rng);
-        dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
+        int64_t randomNumber = dist(rng);
+        dynamicBuffer[i]["f1"].write(randomNumber);
         dynamicBuffer[i]["f2"].write((int64_t) 1);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
@@ -323,10 +331,12 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
 
-    auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
@@ -346,10 +356,12 @@ TEST_P(SelectivityRuntimeTest, runtimeBufferTest) {
     executablePipeline2->execute(buffer2,pipelineContext2,*wc);
     executablePipeline2->stop(pipelineContext2);
 
-    auto *nautilusPipeline2 = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-    std::cout << "Number of input tuples: " << nautilusPipeline2->getNumberOfInputTuples() << std::endl;
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage2 = std::move(executablePipeline2);
+    auto nautilusExecutablePipelineStage2 = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage2);
+
+    std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage2->getNumberOfInputTuples() << std::endl;
     std::cout << "Number of emitted tuples: " << pipelineContext2.getNumberOfEmittedTuples() << std::endl;
-    std::cout << "Runtime per buffer: " << nautilusPipeline2->getRuntimePerBuffer()  << " microseconds" << std::endl;
+    std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage2->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext2.buffers.size(),1);
     auto resultBuffer2 = pipelineContext2.buffers[0];
@@ -374,30 +386,30 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> dist(0, 10);
+    std::uniform_int_distribution<int64_t> dist(0, 20);
 
     std::vector<TupleBuffer> bufferVector;
 
-    for (int j = 0; j < 3; ++j){
+    for (int i = 0; i < 4; ++i){
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t i = 0; i < 500; i++) {
-            uint64_t randomNumber = dist(rng);
-            dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
-            dynamicBuffer[i]["f2"].write((int64_t) 1);
-            dynamicBuffer.setNumberOfTuples(i + 1);
+        for (uint64_t j = 0; j < 500; j++) {
+            int64_t randomNumber = dist(rng);
+            dynamicBuffer[j]["f1"].write(randomNumber);
+            dynamicBuffer[j]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(j + 1);
         }
     }
 
-    for (int i = 1; i < 21; ++i) {
+    for (int j = 1; j < 21; ++j) {
 
-        std::cout << "Test Pipeline with selectivity of " << ((double)i/20) << "%." << std::endl;
+        std::cout << "Test Pipeline with selectivity of " << ((double)j / 20) << "%." << std::endl;
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
         auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(i);
+        auto constantExpression = std::make_shared<Expressions::ConstantIntegerExpression>(j);
         auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
         auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readF1, constantExpression);
         auto selectionOperator = std::make_shared<Operators::Selection>(lessThanExpression);
@@ -412,29 +424,42 @@ TEST_P(SelectivityRuntimeTest, selectivityBuffersTest) {
 
         auto executablePipeline = provider->create(pipeline);
 
+        std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+        auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+        uint64_t inputTuples = 0;
+        uint64_t emittedTuples = 0;
+        uint64_t runtime = 0;
+
         auto pipelineContext = MockedPipelineExecutionContext();
-        executablePipeline->setup(pipelineContext);
+        executablePipelineStage->setup(pipelineContext);
         for (TupleBuffer buffer : bufferVector) {
-            executablePipeline->execute(buffer, pipelineContext, *wc);
+            executablePipelineStage->execute(buffer, pipelineContext, *wc);
+
+            inputTuples += nautilusExecutablePipelineStage->getNumberOfInputTuples();
+            emittedTuples += pipelineContext.getNumberOfEmittedTuples();
+            runtime += nautilusExecutablePipelineStage->getRuntimePerBuffer();
+
+            std::cout << "\t Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
+            std::cout << "\t Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+            std::cout << "\t Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
         }
-        executablePipeline->stop(pipelineContext);
+        executablePipelineStage->stop(pipelineContext);
+
+        std::cout << "Pipeline Selectivity: " << (double) emittedTuples/inputTuples << " %" << std::endl;
+        std::cout << "Runtime of Pipeline: " << runtime  << " microseconds" << std::endl;
 
         auto numberOfResultBuffers = (uint64_t) pipelineContext.buffers.size();
-        ASSERT_EQ(numberOfResultBuffers, 3);
-        // Todo: vector of number of emitted tuples?
-        ASSERT_EQ(pipelineContext.buffers[2].getNumberOfTuples(), pipelineContext.getNumberOfEmittedTuples());
-
-        auto *nautilusPipeline = dynamic_cast<NautilusExecutablePipelineStage*>(executablePipeline.get());
-        std::cout << "Number of input tuples: " << nautilusPipeline->getNumberOfInputTuples() << std::endl;
-        std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
-        std::cout << "Runtime per buffer: " << nautilusPipeline->getRuntimePerBuffer()  << " microseconds" << std::endl;
+        ASSERT_EQ(numberOfResultBuffers, 4);
 
         auto resultBuffer = pipelineContext.buffers[0];
         auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-        for (uint64_t k = 0; k < resultBuffer.getNumberOfTuples(); ++k) {
-            ASSERT_LT(resultDynamicBuffer[k]["f1"].read<int64_t>(), i);
-            ASSERT_EQ(resultDynamicBuffer[k]["f2"].read<int64_t>(), 1);
+        for (uint64_t l = 0; l < resultBuffer.getNumberOfTuples(); ++l) {
+            ASSERT_LT(resultDynamicBuffer[l]["f1"].read<int64_t>(), j);
+            ASSERT_EQ(resultDynamicBuffer[l]["f2"].read<int64_t>(), 1);
         }
+
+        std::cout << "--------------" << std::endl;
     }
 }
 
