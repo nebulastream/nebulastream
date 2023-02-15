@@ -33,11 +33,42 @@ WorkerContext::WorkerContext(uint32_t workerId,
     });
     NES_ASSERT(!!localBufferPool, "Local buffer is not allowed to be null");
     NES_ASSERT(!!localBufferPoolTLS, "Local buffer is not allowed to be null");
+    statisticsFile.open("latency" + std::to_string(workerId) + ".csv", std::ios::out);
+    propagationFile.open("propagation" + std::to_string(workerId) + ".csv", std::ios::out);
+    storageFile.open("storage" + std::to_string(workerId) + ".csv", std::ios::out);
+    statisticsFile << "time,latency\n";
+    propagationFile << "time,propagationDelay,difference\n";
+    storageFile << "time,oldStorageSize,newStorageSize\n";
 }
 
 WorkerContext::~WorkerContext() {
     localBufferPool->destroy();
     localBufferPoolTLS.reset(nullptr);
+    storageFile.flush();
+    storageFile.close();
+    propagationFile.flush();
+    propagationFile.close();
+    statisticsFile.flush();
+    statisticsFile.close();
+}
+
+size_t WorkerContext::getStorageSize() {
+    auto size = 0;
+    for (auto iteratorPartitionId : this->storage) {
+        size += iteratorPartitionId.second.size();
+    }
+    return size;
+}
+
+void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    auto ts = std::chrono::system_clock::now();
+    auto timeNow = std::chrono::system_clock::to_time_t(ts);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
 uint32_t WorkerContext::getId() const { return workerId; }
@@ -69,40 +100,47 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::createStorage(Network::NesPartition nesPartition) {
-    this->storage[nesPartition] = std::make_shared<BufferStorage>();
+void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
+    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
 }
 
-void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
+void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
+    storage[nesPartitionId].push(buffer);
+}
+
+void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay) {
+    auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->insertBuffer(buffer);
-    } else {
-        NES_WARNING("No buffer storage found for partition " << nesPartition << ", buffer was dropped");
+        auto& [nesPar, pq] = *iteratorPartitionId;
+        auto oldStorageSize = pq.size();
+        while (!pq.empty()) {
+            auto topWatermark = pq.top().getWatermark();
+            if (topWatermark <= timestamp) {
+                pq.pop();
+            }
+            else {
+                break;
+            }
+        }
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        auto ts = std::chrono::system_clock::now();
+        auto timeNow = std::chrono::system_clock::to_time_t(ts);
+        propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+        propagationFile << propagationDelay << ",";
+        propagationFile << value.count() - propagationDelay << "\n";
+        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+        NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
+        NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
+        NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
+        storageFile << oldStorageSize << ",";
+        storageFile << pq.size() << "\n";
+        storageFile.flush();
     }
 }
 
-void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->trimBuffer(timestamp);
-    }
-}
-
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        return this->storage[nesPartition]->getTopElementFromQueue();
-    }
-    return {};
-}
-
-void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->removeTopElementFromQueue();
-    }
-}
 
 bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);

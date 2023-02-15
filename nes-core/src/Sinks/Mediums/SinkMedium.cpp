@@ -35,6 +35,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins),
       watermarkProcessor(std::move(watermarkProcessor)) {
     bufferCount = 0;
+    isWaiting = false;
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
@@ -57,10 +58,15 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-    if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
+    bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
+    if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
-        if (timestamp) {
+        if (isSync && timestamp) {
             notifyEpochTermination(timestamp);
+            isWaiting = false;
+        }
+        else {
+            isWaiting = true;
         }
     }
     bufferCount++;
@@ -89,13 +95,13 @@ std::string SinkMedium::getAppendAsString() const {
 }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
-    NES_ASSERT(queryId >= 0, "SinkMedium: no queryId found for querySubPlanId");
-    if (auto listener = nodeEngine->getQueryStatusListener(); listener) {
-        bool success = listener->notifyEpochTermination(epochBarrier, queryId);
-        if (success) {
-            return true;
-        }
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    if (nodeEngine->getQueryManager()->propagateEpochBackwards(querySubPlanId, epochBarrier, value.count())) {
+        return true;
     }
     return false;
 }

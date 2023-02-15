@@ -41,7 +41,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
     std::string ipAddress = "127.0.0.1";
     CoordinatorConfigurationPtr coordinatorConfig;
-    WorkerConfigurationPtr workerConfig;
+    WorkerConfigurationPtr workerConfig1;
     CSVSourceTypePtr csvSourceTypeInfinite;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
@@ -58,12 +58,22 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
 
         coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->numberOfBuffersPerEpoch = 10;
+        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
+        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+        coordinatorConfig->numWorkerThreads = 1;
 
-        workerConfig = WorkerConfiguration::create();
-        workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig1 = WorkerConfiguration::create();
+        workerConfig1->numberOfBuffersPerEpoch = 10;
+        workerConfig1->numberOfBuffersInSourceLocalBufferPool = 11;
+        workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig1->enableStatisticOutput = true;
+        workerConfig1->numberOfBuffersToProduce = 5000000;
+        workerConfig1->sourceGatheringInterval = 10;
+        workerConfig1->numWorkerThreads = 1;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -76,9 +86,32 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
         inputSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+                          ->addField("a", DataTypeFactory::createUInt64())
+                          ->addField("b", DataTypeFactory::createUInt64())
+                          ->addField("c", DataTypeFactory::createUInt64())
+                          ->addField("d", DataTypeFactory::createUInt64())
+                          ->addField("e", DataTypeFactory::createUInt64())
+                          ->addField("f", DataTypeFactory::createUInt64())
+                          ->addField("g", DataTypeFactory::createUInt64())
+                          ->addField("h", DataTypeFactory::createUInt64())
+                          ->addField("i", DataTypeFactory::createUInt64())
+                          ->addField("j", DataTypeFactory::createUInt64())
+                          ->addField("k", DataTypeFactory::createUInt64())
+                          ->addField("l", DataTypeFactory::createUInt64())
+                          ->addField("m", DataTypeFactory::createUInt64())
+                          ->addField("n", DataTypeFactory::createUInt64())
+                          ->addField("o", DataTypeFactory::createUInt64())
+                          ->addField("p", DataTypeFactory::createUInt64())
+                          ->addField("q", DataTypeFactory::createUInt64())
+                          ->addField("r", DataTypeFactory::createUInt64())
+                          ->addField("s", DataTypeFactory::createUInt64())
+                          ->addField("t", DataTypeFactory::createUInt64())
+                          ->addField("u", DataTypeFactory::createUInt64())
+                          ->addField("v", DataTypeFactory::createUInt64())
+                          ->addField("w", DataTypeFactory::createUInt64())
+                          ->addField("x", DataTypeFactory::createUInt64())
+                          ->addField("timestamp1", DataTypeFactory::createUInt64())
+                          ->addField("timestamp2", DataTypeFactory::createUInt64());
     }
 };
 
@@ -96,14 +129,14 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
-    workerConfig->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
@@ -181,9 +214,9 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
-    workerConfig->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
@@ -244,25 +277,26 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("A", inputSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
-    workerConfig->physicalSources.add(physicalSource1);
+//    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
+//    workerConfig1->physicalSources.add(physicalSource1);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    workerConfig1->lambdaSource = 1;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig1));
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -273,15 +307,21 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
+    NES_INFO("UpstreamBackupTest: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -290,9 +330,9 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("UpstreamBackupTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
+//    NES_INFO("UpstreamBackupTest: Stop worker 2");
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

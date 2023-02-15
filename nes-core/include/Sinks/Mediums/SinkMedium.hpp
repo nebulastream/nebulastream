@@ -20,6 +20,7 @@
 #include <Common/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <Util/EpochMessage.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
@@ -197,6 +198,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety
     std::mutex writeMutex; // TODO remove the mutex
+
+    bool isWaiting;
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

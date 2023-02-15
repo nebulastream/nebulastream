@@ -58,33 +58,17 @@ class BaseEvent {
 };
 
 struct PropagateEpochEvent {
-    /**
-     * @brief Propagates event along the topology of one query to trim tuple buffers in buffer storages
-     */
-    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp, uint64_t queryId)
-        : type(type), timestamp(timestamp), queryId(queryId) {}
+    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp, uint64_t propagationDelay) : type(type), timestamp(timestamp), propagationDelay(propagationDelay) {}
 
-    /**
-     * @brief Return type of the event
-     * @return event type
-     */
     Runtime::EventType getEventType() const { return type; }
 
-    /**
-     * @brief Return timestamp of the PropagateEpochEvent
-     * @return timestamp
-     */
     uint64_t timestampValue() const { return timestamp; }
 
-    /**
-     * @brief Return query id for which we propogate timestamp
-     * @return queryId
-     */
-    uint64_t queryIdValue() const { return queryId; }
+    uint64_t propagationDelayValue() const { return propagationDelay; }
 
     Runtime::EventType type;
     uint64_t timestamp;
-    uint64_t queryId;
+    uint64_t propagationDelay;
 };
 
 /**

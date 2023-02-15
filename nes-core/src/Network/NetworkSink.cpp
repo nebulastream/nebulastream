@@ -72,6 +72,13 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (channel) {
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        auto ts = std::chrono::system_clock::now();
+        auto timeNow = std::chrono::system_clock::to_time_t(ts);
+        inputBuffer.setCreationTimestamp(value.count());
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
@@ -138,56 +145,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::PropagateEpoch: {
-            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId << "punctuation= " << timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
-            workerContext.trimStorage(nesPartition, timestamp);
-            break;
-        }
-        case Runtime::StartBuffering: {
-            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
-            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
-                break;
-            }
-            if (reconnectBuffering) {
-                NES_DEBUG("Requested sink to buffer but it is already buffering")
-            } else {
-                this->reconnectBuffering = true;
-            }
-            break;
-        }
-        case Runtime::StopBuffering: {
-            //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
-            //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
-                break;
-            }
-            /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we
-            unbuffer*/
-            reconnectBuffering = false;
-            NES_INFO("stop buffering data for context " << workerContext.getId());
-            auto topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            NES_INFO("sending buffered data")
-            while (topBuffer) {
-                /*this will only work if guarantees are not set to at least once,
-                otherwise new tuples could be written to the buffer at the same time causing conflicting writes*/
-                if (!topBuffer.value().getBuffer()) {
-                    NES_WARNING("buffer does not exist");
-                    break;
-                }
-                if (!writeData(topBuffer.value(), workerContext)) {
-                    NES_WARNING("could not send all data from buffer")
-                    break;
-                }
-                NES_TRACE("buffer sent")
-                workerContext.removeTopTupleFromStorage(nesPartition);
-                topBuffer = workerContext.getTopTupleFromStorage(nesPartition);
-            }
+            auto epochMessage = task.getUserData<EpochMessage>();
+            workerContext.trimStorage(nesPartition, epochMessage.getTimestamp(), epochMessage.getReplicationLevel());
             break;
         }
         default: {
@@ -220,12 +180,32 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
     }
+    else if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto propagationDelay = epochEvent->propagationDelayValue();
+        auto success = queryManager->sendTrimmingReconfiguration(querySubPlanId, epochBarrier, propagationDelay);
+        if (success) {
+            NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " trimmed");
+            success = queryManager->propagateEpochBackwards(querySubPlanId, epochBarrier, propagationDelay);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch" << epochBarrier << " queryId " << queryId << " sent further");
+            } else {
+                NES_INFO("NetworkSink::onEvent:: end of propagation " << epochBarrier << " queryId " << queryId);
+            }
+        }
+        else {
+            NES_ERROR("NetworkSink::onEvent:: could not trim " << epochBarrier << " queryId " << queryId);
+        }
+    }
 }
+
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG(
         "NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: " << this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage
     onEvent(event);
+
 }
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }

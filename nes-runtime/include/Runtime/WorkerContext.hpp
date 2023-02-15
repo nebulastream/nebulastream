@@ -25,9 +25,14 @@
 #include <folly/ThreadLocal.h>
 #include <memory>
 #include <queue>
+#include <fstream>
 #include <unordered_map>
 
 namespace NES::Runtime {
+
+struct BufferOrdering : public std::greater<TupleBuffer> {
+    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+};
 
 class AbstractBufferProvider;
 
@@ -56,7 +61,11 @@ class WorkerContext {
     WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+    std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
+    std::ofstream statisticsFile;
+    std::ofstream storageFile;
+    std::ofstream propagationFile;
+    uint64_t currentEpoch;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -79,6 +88,8 @@ class WorkerContext {
      * @return raw pointer to AbstractBufferProvider
      */
     static WorkerContextBufferProviderRawPtr getBufferProviderTLS();
+
+    void printStatistics(Runtime::TupleBuffer& inputBuffer);
 
     /**
      * @brief Returns the thread-local buffer provider
@@ -127,24 +138,30 @@ class WorkerContext {
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-      * @brief This method creates a network storage for a thread
-      * @param nesPartitionId partition
-      */
-    void createStorage(Network::NesPartition nesPartition);
+     * @brief This method creates a network storage for a thread
+     * @param nesPartitionId partition id
+     */
+    void createStorage(Network::NesPartition nesPartitionId);
 
     /**
-      * @brief This method inserts a tuple buffer into the storage
-      * @param nesPartition partition
-      * @param TupleBuffer tuple buffer
-      */
-    void insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer);
+     * @brief This method reuturns buffer storage size
+     * @return size
+     */
+    size_t getStorageSize();
 
     /**
-      * @brief This method deletes a tuple buffer from the storage
-      * @param nesPartition partition
-      * @param timestamp timestamp
-      */
-    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+     * @brief This method inserts a tuple buffer into the storage
+     * @param nesPartitionId partition id
+     * @param TupleBuffer tuple buffer
+     */
+    void insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer);
+
+    /**
+     * @brief This method deletes a tuple buffer from the storage
+     * @param nesPartitionId partition id
+     * @param timestamp timestamp
+     */
+    void trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay);
 
     /**
      * @brief get the oldest buffered tuple for the specified partition

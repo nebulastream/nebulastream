@@ -280,13 +280,22 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
-      * @brief Triggers an epoch propagation for all network sinks
-      * @param source the source for which to trigger the soft end of stream
-      * @param queryId
-      * @param epochBarrier timestamp that should be trimmed in the storage
-      * @return true if successful
-      */
-    bool addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier);
+     * @brief Triggers an epoch propagation for all network sinks
+     * @param source the source for which to trigger the soft end of stream
+     * @param queryId
+     * @param epochBarrier timestamp that should be trimmed in the storage
+     * @return true if successful
+     */
+    bool sendTrimmingReconfiguration(uint64_t querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay);
+
+    /**
+     * @brief Triggers an epoch propagation for all network sinks
+     * @param sink the sink for which to trigger the epoch propagation
+     * @param queryId
+     * @param epochBarrier timestamp that should be trimmed in the storage
+     * @return true if successful
+     */
+    bool propagateEpochBackwards(uint64_t  querySubPlanId, uint64_t epochBarrier, uint64_t propagationDelay);
 
     /**
      * @return true if thread pool is running
@@ -335,6 +344,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param terminationType the type of termination (e.g., failure, soft)
      */
     void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+
+    /**
+     * @brief injects epoch barrier in all network sinks
+     * @param epochBarrier max timestamp of current epoch
+     * @param queryId query id
+     * @param source current operator
+     */
+    bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
   private:
     friend class ThreadPool;

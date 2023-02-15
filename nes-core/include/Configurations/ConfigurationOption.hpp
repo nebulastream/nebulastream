@@ -217,6 +217,7 @@ const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
+const std::string LAMBDA_SOURCE_CONFIG = "lambdaSource";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string WORKER_CONFIG = "worker";
@@ -292,6 +293,7 @@ const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 //Configuration names for source types
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
+const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
 const std::string SOURCE_GATHERING_INTERVAL_CONFIG = "sourceGatheringInterval";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
@@ -337,10 +339,9 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
-//Runtine configuration
+//Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
-const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 // Logical source configurations
