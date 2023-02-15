@@ -15,7 +15,6 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <z3++.h>
 
 namespace NES::Optimizer {
 
@@ -52,44 +51,45 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
         NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
                   << secondQueryProjectionConditions.to_string());
         NES_TRACE("SignatureContainmentUtil::checkContainment: Add projection sig1 conditions.");
+
         solver->push();
-        //for projection containment, Q1 contains Q2
+        //create FOL for projection containment to check if Sig2 contained by Sig1
         solver->add(z3::mk_and(firstQueryProjectionConditions).simplify());
         solver->push();
         solver->add(!z3::mk_and(secondQueryProjectionConditions).simplify());
         NES_TRACE("SignatureContainmentUtil::checkContainment: Check unsat for projection: " << solver->check());
+        //The rest of this method checks for containment as follows:
+        //  check if sig2 ⊆ sig1 for projections (including map conditions), i.e. if ((!cond2 && cond1) == unsat) <=> sig2 ⊆ sig1,
+        // since we're checking for projection containment, the negation is on the side of the contained condition,
+        // e.g. sig2 ⊆ sig1 <=> ((!(attr1==true && attr2==45) && (attr1==true && attr2==45, attr3==true)) == unsat)
+        //      true: check sig1 ⊆ sig2 for projections (including map conditions) --> if true, we have equal projections,
+        //      i.e. can only check other containment relationships if sources, projections, and maps are equal
+        //          true: check filter containment --> see checkFilterContainment() for details
+        //          false: return SIG_TWO_CONTAINED
+        //      false: check sig1 ⊆ sig2 for projections (including map conditions)
+        //          true: return SIG_ONE_CONTAINED
+        //          false: return NO_CONTAINMENT
         //check if Sig2 contained by Sig1 for projection
         if (solver->check() == z3::unsat) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2.");
-            //check for equality in projection
-            solver->pop(2);
-            counter++;
-            if (counter >= 20050) {
-                resetSolver();
-            }
+            //check for equality in projection, we can only check other containment relationships if sources, projections and maps are equal
+            resetSolver(2);
             solver->push();
             solver->add(!z3::mk_and(firstQueryProjectionConditions).simplify());
             solver->push();
             solver->add(z3::mk_and(secondQueryProjectionConditions).simplify());
             if (solver->check() == z3::unsat) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Equal sources, equal projection.");
-                solver->pop(2);
-                counter++;
-                if (counter >= 20050) {
-                    resetSolver();
-                }
+                resetSolver(2);
                 //todo:  #3494 add window containment
                 //check for filter containment
                 return checkFilterContainment(signature1, signature2);
             }
             return SIG_TWO_CONTAINED;
-            //check if new query contained by new query
         } else {
-            solver->pop(2);
-            counter++;
-            if (counter >= 20050) {
-                resetSolver();
-            }
+            //check if new query contained by SQP for projection containment identification
+            //since we require equal sources to check for further containment relationships, we cannot check for filter nor window containment here
+            resetSolver(2);
             solver->push();
             solver->add(!z3::mk_and(firstQueryProjectionConditions).simplify());
             solver->push();
@@ -105,7 +105,9 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
         try {
             std::rethrow_exception(exception);
         } catch (const std::exception& e) {
-            //NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping " << e.what());
+            NES_ERROR("SignatureContainmentUtil: Exception occurred while performing containment check among "
+                      "queryIdAndCatalogEntryMapping "
+                      << e.what());
         }
         return NO_CONTAINMENT;
     }
@@ -113,27 +115,36 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
 }
 ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& signature1,
                                                                      const QuerySignaturePtr& signature2) {
-    NES_TRACE("SignatureContainmentUtil::checkContainment: Remove previous conditions.");
+
+    NES_TRACE("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector firstQueryFilterConditions(*context);
     z3::expr_vector secondQueryFilterConditions(*context);
     NES_TRACE("SignatureContainmentUtil::checkContainment: Add filter conditions.");
+
     firstQueryFilterConditions.push_back(to_expr(*context, *signature1->getConditions()));
     secondQueryFilterConditions.push_back(to_expr(*context, *signature2->getConditions()));
+
     NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
               << firstQueryFilterConditions.to_string());
     NES_TRACE("SignatureContainmentUtil::checkContainment: content of Sig 2 expression vectors: "
               << secondQueryFilterConditions.to_string());
+    //The rest of the method checks for filter containment as follows:
+    //check if sig2 ⊆ sig1 for filters, i.e. if ((cond2 && !cond1) == unsat) <=> sig2 ⊆ sig1,
+    //since we're checking for projection containment, the negation is on the side of the contained condition,
+    //e.g. sig2 ⊆ sig1 <=> (((attr<5 && attr2==6) && !(attr1<=10 && attr2==45)) == unsat)
+    //      true: check if sig1 ⊆ sig2
+    //          true: return EQUALITY
+    //          false: return SIG_TWO_CONTAINED
+    //      false: check if sig1 ⊆ sig2
+    //          true: return SIG_ONE_CONTAINED
+    //          false: return NO_CONTAINMENT
     solver->push();
     solver->add(!z3::mk_and(firstQueryFilterConditions).simplify());
     solver->push();
     solver->add(z3::mk_and(secondQueryFilterConditions).simplify());
     NES_TRACE("SignatureContainmentUtil::checkContainment: Check unsat: " << solver->check());
     if (solver->check() == z3::unsat) {
-        solver->pop(2);
-        counter++;
-        if (counter >= 20050) {
-            resetSolver();
-        }
+        resetSolver(2);
         solver->push();
         solver->add(z3::mk_and(firstQueryFilterConditions).simplify());
         solver->push();
@@ -145,11 +156,7 @@ ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const Query
         NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2 for filters.");
         return SIG_TWO_CONTAINED;
     } else {
-        solver->pop(2);
-        counter++;
-        if (counter >= 20050) {
-            resetSolver();
-        }
+        resetSolver(2);
         solver->push();
         solver->add(z3::mk_and(firstQueryFilterConditions).simplify());
         solver->push();
@@ -162,15 +169,17 @@ ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const Query
     return NO_CONTAINMENT;
 }
 
-void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature1,
+void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature,
                                                          z3::expr_vector& projectionCondition) {
     //todo: #3495 think about order for projection
     //check projection containment
-    for (auto exp : signature1->getSchemaFieldToExprMaps()) {
+    // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
+    // else we indicate that the attribute is involved in the projection as attributeStingName == true
+    // all FOL are added to the projectionCondition vector
+    for (auto exp : signature->getSchemaFieldToExprMaps()) {
         for (auto entry : exp) {
             NES_TRACE("SignatureContainmentUtil::createProjectionCondition: strings: " << entry.first);
             NES_TRACE("SignatureContainmentUtil::createProjectionCondition: z3 expressions: " << entry.second->to_string());
-            //z3::ExprPtr orderExpr = std::make_shared<z3::expr>(context->int_const((entry.first+"_").c_str()));
             z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((entry.first.c_str())));
             if (entry.second->to_string() != entry.first) {
                 if (entry.second->is_int()) {
@@ -189,10 +198,15 @@ void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr
     }
 }
 
-bool SignatureContainmentUtil::resetSolver() {
-    solver->reset();
-    counter = 0;
-    return true;
+bool SignatureContainmentUtil::resetSolver(uint8_t numberOfValuesToPop) {
+    solver->pop(numberOfValuesToPop);
+    counter++;
+    if (counter >= 20050) {
+        solver->reset();
+        counter = 0;
+        return true;
+    }
+    return false;
 }
 
 }// namespace NES::Optimizer

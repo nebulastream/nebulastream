@@ -89,8 +89,8 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 if (counter >= 20050) {
                     resetSolver();
                 }
-                //If schema is matched then remove the other schema from the list to avoid duplicate matching
 
+                //If schema is matched then remove the other schema from the list to avoid duplicate matching
                 if (schemaMatched) {
                     otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
                     break;
