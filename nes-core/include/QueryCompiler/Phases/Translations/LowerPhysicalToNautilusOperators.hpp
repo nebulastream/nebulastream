@@ -126,7 +126,7 @@ class LowerPhysicalToNautilusOperators {
      * Create a unique pointer of an aggregation value of the given aggregation function then return it
      * @param aggregationType the type of this aggregation
      * @param inputType the data type of the input tuples for this aggregation
-     * @return
+     * @return unique pointer of an aggregation value
      */
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);

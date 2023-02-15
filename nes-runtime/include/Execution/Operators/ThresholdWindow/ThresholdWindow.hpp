@@ -42,7 +42,7 @@ class ThresholdWindow : public ExecutableOperator {
           aggregatedFieldAccessExpressions(std::move(aggregatedFieldAccessExpressions)),
           aggregationResultFieldIdentifiers(std::move(aggregationResultFieldIdentifiers)), minCount(minCount),
           operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(std::move(aggregationFunctions)) {
-        NES_ASSERT(aggregationFunctions.size() == aggregatedFieldAccessExpressions.size(),
+        NES_ASSERT(aggregationFunctions.size() == aggregationResultFieldIdentifiers.size(),
                    "The number of aggregation expression and aggregation functions need to be equals");
     };
 
