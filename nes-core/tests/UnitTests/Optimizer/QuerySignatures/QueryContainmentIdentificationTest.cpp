@@ -67,12 +67,12 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
-         Optimizer::SIG_ONE_CONTAINED},
+         Optimizer::LEFT_SIG_CONTAINED},
         //Sig1 contains Sig2
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
-         Optimizer::SIG_TWO_CONTAINED},
+         Optimizer::RIGHT_SIG_CONTAINED},
         //Sig2 contains Sig1 but containment cannot be detected
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(printSinkDescriptor),
@@ -82,7 +82,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
         {std::tuple<Query, Query>(
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
-         Optimizer::SIG_ONE_CONTAINED},
+         Optimizer::LEFT_SIG_CONTAINED},
         //No containment due to different transformations
         {std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
