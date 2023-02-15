@@ -193,6 +193,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorConfiguration->worker.numberOfBuffersInGlobalBufferManager = coordinatorConfiguration->numberOfBuffersInGlobalBufferManager;
     coordinatorConfiguration->worker.numberOfBuffersInSourceLocalBufferPool = coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool;
     coordinatorConfiguration->worker.numWorkerThreads = coordinatorConfiguration->numWorkerThreads;
+    coordinatorConfiguration->worker.bufferSizeInBytes = coordinatorConfiguration->bufferSizeInBytes;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());

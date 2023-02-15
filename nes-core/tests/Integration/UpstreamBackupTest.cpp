@@ -64,6 +64,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 1;
+        coordinatorConfig->bufferSizeInBytes = 131072;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
@@ -74,6 +75,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
         workerConfig1->numWorkerThreads = 1;
+        workerConfig1->bufferSizeInBytes = 131072;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -307,7 +309,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"b\"))).sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
