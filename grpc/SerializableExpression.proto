@@ -40,6 +40,10 @@ message SerializableExpression {
     string fieldName = 1;
     SerializableDataType type = 2;
   }
+  message FunctionExpression{
+    string functionName = 1;
+    repeated SerializableExpression arguments = 2;
+  }
   message FieldRenameExpression{
     string newFieldName = 1;
     SerializableExpression originalFieldAccessExpression = 2;
@@ -49,8 +53,8 @@ message SerializableExpression {
     SerializableExpression assignment = 2;
   }
   message WhenExpression{
-      SerializableExpression left = 1;
-      SerializableExpression right = 2;
+    SerializableExpression left = 1;
+    SerializableExpression right = 2;
   }
   message CaseExpression{
     repeated SerializableExpression left = 1;
