@@ -138,14 +138,11 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
-    preAggExecutablePipeline->stop(pipeline1Context);
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
     sliceMergingExecutablePipeline->setup(pipeline2Context);
-
-    preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
 
