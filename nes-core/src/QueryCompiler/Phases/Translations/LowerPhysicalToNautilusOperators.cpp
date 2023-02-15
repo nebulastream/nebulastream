@@ -496,7 +496,6 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
-    Runtime::Execution::Aggregation::AggregationFunctionPtr aggregationFunction;
     std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
     std::vector<std::string> aggregationResultFieldNames;
     std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
