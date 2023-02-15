@@ -1,0 +1,66 @@
+//
+// Created by pgrulich on 15.02.23.
+//
+
+#ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
+#define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
+#include <Nodes/Expressions/ExpressionNode.hpp>
+namespace NES {
+
+class LogicalFunction;
+class ValueType;
+using ValueTypePtr = std::shared_ptr<ValueType>;
+
+/**
+ * @brief This expression node represents a constant value and a fixed data type.
+ * Thus the stamp of this expression is always fixed.
+ */
+class FunctionExpression : public ExpressionNode {
+  public:
+    /**
+     * @brief Factory method to create a ConstantValueExpressionNode.
+     */
+    static ExpressionNodePtr
+    create(const DataTypePtr& stamp, const std::string& functionName, const std::vector<ExpressionNodePtr>& arguments);
+    virtual ~FunctionExpression() noexcept = default;
+
+    /**
+     * @brief On a constant value expression infer stamp has not to perform any action as its result type is always constant.
+     * @param typeInferencePhaseContext
+     * @param schema
+     */
+    void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
+
+    /**
+     * @brief Creates a string of the value and the type.
+     * @return
+     */
+    std::string toString() const override;
+
+    /**
+     * @brief Compares if another node is equal to this constant value expression.
+     * @param otherNode
+     * @return true if they are equal
+     */
+    bool equal(NodePtr const& rhs) const override;
+
+    /**
+    * @brief Create a deep copy of this expression node.
+    * @return ExpressionNodePtr
+    */
+    ExpressionNodePtr copy() override;
+
+  public:
+    explicit FunctionExpression(DataTypePtr stamp,
+                                std::string functionName,
+                                std::vector<ExpressionNodePtr> arguments,
+                                std::unique_ptr<LogicalFunction> function);
+
+  private:
+    const std::string functionName;
+    const std::vector<ExpressionNodePtr> arguments;
+    const std::unique_ptr<LogicalFunction> function;
+};
+
+}// namespace NES
+#endif//NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
