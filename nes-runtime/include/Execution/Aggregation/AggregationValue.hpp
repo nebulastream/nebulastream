@@ -22,14 +22,12 @@ namespace NES::Runtime::Execution::Aggregation {
 /**
  * Base class for aggregation Value
  */
-struct AggregationValue {
-
-};
+struct AggregationValue {};
 
 /**
  * Class for average aggregation Value, maintains sum and count to calc avg in the lower function
  */
-template <typename T>
+template<typename T>
 struct AvgAggregationValue : AggregationValue {
     uint64_t count = 0;
     T sum = 0;
@@ -38,7 +36,7 @@ struct AvgAggregationValue : AggregationValue {
 /**
  * Class for sum aggregation Value, maintains the sum of all occurred tuples
  */
-template <typename T>
+template<typename T>
 struct SumAggregationValue : AggregationValue {
     T sum = 0;
 };
@@ -46,7 +44,7 @@ struct SumAggregationValue : AggregationValue {
 /**
  * Class for count aggregation Value, maintains the number of occurred tuples
  */
-template <typename T>
+template<typename T>
 struct CountAggregationValue : AggregationValue {
     T count = 0;
 };
@@ -54,7 +52,7 @@ struct CountAggregationValue : AggregationValue {
 /**
  * Class for min aggregation Value, maintains the min value of all occurred tuples
  */
-template <typename T>
+template<typename T>
 struct MinAggregationValue : AggregationValue {
     T min = std::numeric_limits<T>::max();
 };
@@ -62,7 +60,7 @@ struct MinAggregationValue : AggregationValue {
 /**
  * Class for max aggregation Value, maintains the max value of all occurred tuples
  */
-template <typename T>
+template<typename T>
 struct MaxAggregationValue : AggregationValue {
     T max = std::numeric_limits<T>::min();
 };

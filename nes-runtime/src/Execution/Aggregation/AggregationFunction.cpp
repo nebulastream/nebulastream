@@ -59,7 +59,8 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
             };
         }
     } else {
-        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is not a basic type and is currently not supported");
+        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType
+                                                                << " is not a basic type and is currently not supported");
         NES_NOT_IMPLEMENTED();
     }
 }
@@ -103,7 +104,8 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
             };
         }
     } else {
-        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType << " is not a basic type and is currently not supported");
+        NES_ERROR("Aggregation Function::load: Physical Type: " << physicalType
+                                                                << " is not a basic type and is currently not supported");
         NES_NOT_IMPLEMENTED();
     }
 }

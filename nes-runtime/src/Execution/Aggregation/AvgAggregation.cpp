@@ -30,7 +30,7 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
 }
 
 Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref) {
-    const static int64_t sizeOfCountInBytes = 8L; // the sum is stored after the count, and the count is of type uint64
+    const static int64_t sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
     return (memref + sizeOfCountInBytes).as<Nautilus::MemRef>();
 }
 
@@ -53,12 +53,12 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
     // load memref1
     auto countLeft = AggregationFunction::loadFromMemref(memref1, countType);
     // calc the offset to get Memref of the count value
-    auto sumLeftMemref =  loadSumMemRef(memref1);
+    auto sumLeftMemref = loadSumMemRef(memref1);
     auto sumLeft = AggregationFunction::loadFromMemref(sumLeftMemref, inputType);
     // load memref2
     auto countRight = AggregationFunction::loadFromMemref(memref2, countType);
     // calc the offset to get Memref of the count value
-    auto sumRightMemref =  loadSumMemRef(memref2);
+    auto sumRightMemref = loadSumMemRef(memref2);
     auto sumRight = AggregationFunction::loadFromMemref(sumRightMemref, inputType);
 
     // add the values
@@ -71,8 +71,8 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, 
 
 Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref) {
     // load memrefs
-    auto count = AggregationFunction::loadFromMemref(memref, inputType); // load the count as an inputType to allow Division
-    auto sumMemref =  loadSumMemRef(memref);
+    auto count = AggregationFunction::loadFromMemref(memref, inputType);// load the count as an inputType to allow Division
+    auto sumMemref = loadSumMemRef(memref);
     auto sum = AggregationFunction::loadFromMemref(sumMemref, inputType);
     // calc the average
     auto finalVal = DivOp(sum, count);
@@ -84,13 +84,13 @@ Nautilus::Value<> AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef
 
 void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
     auto zero = createConstValue(0L, inputType);
-    auto sumMemref =  loadSumMemRef(memref);
+    auto sumMemref = loadSumMemRef(memref);
 
     memref.store(zero);
     sumMemref.store(zero);
 }
 uint64_t AvgAggregationFunction::getSize() {
-    return inputType->size() + 8L; // the count is always uint64, hence always 8bytes
+    return inputType->size() + 8L;// the count is always uint64, hence always 8bytes
 }
 
 }// namespace NES::Runtime::Execution::Aggregation
