@@ -1,8 +1,16 @@
 # Changelog
 
-## [v.1.0](https://github.com/nebulastream/nebulastream/tree/v.1.0) (2023-02-13)
+## [v0.5.1](https://github.com/nebulastream/nebulastream/tree/v0.5.1) (2023-02-15)
 
-[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.44...v.1.0)
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.0...v0.5.1)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support other Data Types for Nautilus Aggregation [\#3280](https://github.com/nebulastream/nebulastream/issues/3280)
+
+## [v0.5.0](https://github.com/nebulastream/nebulastream/tree/v0.5.0) (2023-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.44...v0.5.0)
 
 ### Bug Fixes 🐛
 
