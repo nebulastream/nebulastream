@@ -59,7 +59,7 @@ class LocationController : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "", getLocationInformationOfASingleNode, QUERY(UInt64, nodeId, "nodeId")) {
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeId);
         if (nodeLocationJson == nullptr) {
-            NES_ERROR2("node with id {} does not exist", nodeIde);
+            NES_ERROR2("node with id {} does not exist", nodeId);
             return errorHandler->handleError(Status::CODE_404, "No node with Id: " + std::to_string(nodeId));
         }
         return createResponse(Status::CODE_200, nodeLocationJson.dump());
