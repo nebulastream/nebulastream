@@ -113,10 +113,10 @@ void GlobalSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     auto sliceState =
         Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
     // 3. manipulate the current aggregate values
-    size_t stateOffset = 0;
+    uint64_t stateOffset = 0;
     for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
         auto value = aggregationExpressions[i]->execute(record);
-        auto state = sliceState + (stateOffset);
+        auto state = sliceState + stateOffset;
         stateOffset = stateOffset + aggregationFunctions[i]->getSize();
         aggregationFunctions[i]->lift(state.as<MemRef>(), value);
     }
