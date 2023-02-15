@@ -44,6 +44,10 @@
 namespace NES::Runtime::Execution {
 class ThresholdWindowPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
+    std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
+    std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
+    std::vector<Aggregation::AggregationFunctionPtr> aggVector;
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -93,8 +97,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, sumAgg, 0);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(sumAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                     0,
+                                                                     aggFieldAccessExpressionsVector,
+                                                                     resultFieldVector,
+                                                                     aggVector,
+                                                                     0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -126,7 +137,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     auto executablePipeline = provider->create(pipeline);
 
     auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(sumAggregationValue));
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -165,8 +177,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerPhysicalType, unsignedIntegerType);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, countAgg, 0);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(countAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -198,7 +217,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
     auto executablePipeline = provider->create(pipeline);
 
     auto countAggregationValue = std::make_unique<Aggregation::CountAggregationValue<int64_t>>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(countAggregationValue));
+    aggValues.emplace_back(std::move(countAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -236,8 +256,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, minAgg, 0);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(minAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -269,7 +296,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
     auto executablePipeline = provider->create(pipeline);
 
     auto minAggregationValue = std::make_unique<Aggregation::MinAggregationValue<int64_t>>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(minAggregationValue));
+    aggValues.emplace_back(std::move(minAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -307,8 +335,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
     auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, maxAgg, 0);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(maxAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -340,7 +375,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
     auto executablePipeline = provider->create(pipeline);
 
     auto maxAggregationValue = std::make_unique<Aggregation::MaxAggregationValue<int64_t>>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(maxAggregationValue));
+    aggValues.emplace_back(std::move(maxAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
@@ -378,8 +414,15 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
 
     auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
-    auto thresholdWindowOperator =
-        std::make_shared<Operators::ThresholdWindow>(greaterThanExpression, 0, readF2, aggregationResultFieldName, avgAgg, 0);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(avgAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -411,7 +454,8 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     auto executablePipeline = provider->create(pipeline);
 
     auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
-    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(avgAggregationValue));
+    aggValues.emplace_back(std::move(avgAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
     executablePipeline->setup(pipelineContext);
