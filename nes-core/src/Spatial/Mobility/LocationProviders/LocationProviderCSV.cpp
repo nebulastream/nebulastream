@@ -80,7 +80,7 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
             NES_ERROR2("LocationProviderCSV: {}", errorString);
             throw Spatial::Exception::LocationProviderException(errorString);
         }
-        NES_TRACE2("Read from csv: {}", latitudeString << ", " << longitudeString << ", " << time);
+        NES_TRACE2("Read from csv: {}, {}, {}", latitudeString, longitudeString, time);
 
         //add startTime to the offset obtained from csv to get absolute timestamp
         time += startTime;
