@@ -29,7 +29,7 @@ void CountAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Na
 }
 
 void CountAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) {
-    auto left =AggregationFunction::loadFromMemref(memref1, finalType);
+    auto left = AggregationFunction::loadFromMemref(memref1, finalType);
     auto right = AggregationFunction::loadFromMemref(memref2, finalType);
 
     auto tmp = left + right;
@@ -42,7 +42,7 @@ Nautilus::Value<> CountAggregationFunction::lower(Nautilus::Value<Nautilus::MemR
 }
 
 void CountAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto zero = Nautilus::Value<Nautilus::UInt64>((uint64_t) 0); // count always use UInt64
+    auto zero = Nautilus::Value<Nautilus::UInt64>((uint64_t) 0);// count always use UInt64
     memref.store(zero);
 }
 uint64_t CountAggregationFunction::getSize() { return sizeof(int64_t); }
