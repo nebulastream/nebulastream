@@ -46,51 +46,50 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    std::vector<std::tuple<Query, Query>> containmentCasesMixed = {
+    std::vector<std::tuple<std::tuple<Query, Query>, NES::Optimizer::ContainmentDetected>> containmentCasesMixed = {
         //Equal
-        std::tuple<Query, Query>(Query::from("car")
-
-                                     .map(Attribute("value") = 40)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .sink(printSinkDescriptor),
-                                 Query::from("car")
-                                     .map(Attribute("value") = 40)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .filter(Attribute("id") < 45)
-                                     .sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .map(Attribute("value") = 40)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .map(Attribute("value") = 40)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .filter(Attribute("id") < 45)
+                                      .sink(printSinkDescriptor)),
+         NES::Optimizer::EQUALITY},
         //Sig2 contains Sig1
-        std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
+             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor)),
+         Optimizer::SIG_ONE_CONTAINED},
         //Sig1 contains Sig2
-        std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 60).sink(printSinkDescriptor),
+             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor)),
+         Optimizer::SIG_TWO_CONTAINED},
         //Sig2 contains Sig1 but containment cannot be detected
-        std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car").map(Attribute("value") = 40).project(Attribute("value").as("newValue")).sink(printSinkDescriptor),
+             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+         Optimizer::NO_CONTAINMENT},
         //Sig2 contains Sig1
-        std::tuple<Query, Query>(
-            Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
-            Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+        {std::tuple<Query, Query>(
+             Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
+             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+         Optimizer::SIG_ONE_CONTAINED},
         //No containment due to different transformations
-        std::tuple<Query, Query>(Query::from("car")
-                                     .map(Attribute("value") = 40)
-                                     .map(Attribute("value") = Attribute("value") + 10)
-                                     .sink(printSinkDescriptor),
-                                 Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor))};
-    std::vector<NES::Optimizer::ContainmentDetected> containmentTestCases = {Optimizer::EQUALITY,
-                                                                             Optimizer::SIG_ONE_CONTAINED,
-                                                                             Optimizer::SIG_TWO_CONTAINED,
-                                                                             Optimizer::NO_CONTAINMENT,
-                                                                             Optimizer::SIG_ONE_CONTAINED,
-                                                                             Optimizer::NO_CONTAINMENT};
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .map(Attribute("value") = 40)
+                                      .map(Attribute("value") = Attribute("value") + 10)
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+         Optimizer::NO_CONTAINMENT}};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -122,7 +121,8 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
  */
 TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
     std::vector<Optimizer::ContainmentDetected> resultList;
-    for (auto queries : containmentCasesMixed) {
+    for (auto entry : containmentCasesMixed) {
+        auto queries = get<0>(entry);
         QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
         SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
         QueryId queryIdSQPQuery = PlanIdGenerator::getNextQueryId();
@@ -139,8 +139,7 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
 
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto z3InferencePhase =
-            Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
+            Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 
@@ -149,8 +148,7 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule =
-            Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
         std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
 
         NES_DEBUG(
@@ -185,7 +183,6 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
                 globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
             }
         }
-        resultList.push_back(containment);
+        ASSERT_EQ(containment, get<1>(entry));
     }
-    ASSERT_EQ(resultList, containmentTestCases);
 }

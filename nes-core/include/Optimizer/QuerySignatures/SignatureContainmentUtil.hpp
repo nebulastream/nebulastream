@@ -44,6 +44,7 @@ enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED,
 class SignatureContainmentUtil {
 
   public:
+
     /**
      * @brief creates an instance of the SignatureContainmentUtil
      * @param context The Z3 context for the SMT solver
@@ -52,30 +53,63 @@ class SignatureContainmentUtil {
     static SignatureContainmentUtilPtr create(const z3::ContextPtr& context);
 
     /**
-     * @brief constructor fot signatureContainmentUtil
+     * @brief constructor for signatureContainmentUtil
      * @param context The Z3 context for the SMT solver
      */
     explicit SignatureContainmentUtil(const z3::ContextPtr& context);
 
     /**
-     * @brief Check containment relationships for the given signatures
+     * @brief Check containment relationships for the given signatures as follows
+     * check if sig2 ⊆ sig1 for projections (including map conditions)
+     *      true: check sig1 ⊆ sig2 for projections (including map conditions) --> if true, we have equal projections, i.e. can only check other containment relationships if sources, projections, and maps are equal
+     *          true: check filter containment --> see checkFilterContainment() for details
+     *          false: return SIG_TWO_CONTAINED
+     *      false: check sig1 ⊆ sig2 for projections (including map conditions)
+     *          true: return SIG_ONE_CONTAINED
+     *          false: return NO_CONTAINMENT
      * @param signature1
      * @param signature2
      * @return enum with containment relationships
      */
     ContainmentDetected checkContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
-    /**
-     * @brief Reset z3 solver
-     * @return true if reset successful else false
-     */
-    bool resetSolver();
 
   private:
+
+    /**
+     * @brief creates conditions for checking projection containment:
+     * if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
+     * else we indicate that the attribute is involved in the projection as attributeStingName == true
+     * all FOL are added to the projectionCondition vector
+     * @param signature Query signature to extract conditions from
+     * @param projectionCondition z3 expression vector to add conditions to
+     */
+    void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionCondition);
+
+    /**
+     * @brief check for filter containment as follows:
+     * check if sig2 ⊆ sig1 for filters
+     *      true: check if sig1 ⊆ sig2
+     *          true: return EQUALITY
+     *          false: return SIG_TWO_CONTAINED
+     *      false: check if sig1 ⊆ sig2
+     *          true: return SIG_ONE_CONTAINED
+     *          false: return NO_CONTAINMENT
+     * @param signature1
+     * @param signature2
+     * @return
+     */
+    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
+
+    /**
+     * @brief pop expressions from z3 solver and reset if number of popped expressions exceeds 20050
+     * @param numberOfValuesToPop how many expressions should be popped from the solver
+     * @return true if solver was reset, otherwise false
+     */
+    bool resetSolver(uint8_t numberOfValuesToPop);
+
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
-    void createProjectionCondition(const QuerySignaturePtr& signature1, z3::expr_vector& projectionCondition);
-    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

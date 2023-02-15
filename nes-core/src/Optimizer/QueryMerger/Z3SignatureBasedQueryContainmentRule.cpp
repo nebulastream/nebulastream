@@ -68,6 +68,7 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
             //Check if the host and target sink operator signatures match each other
             auto containment = signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
             NES_TRACE("Z3SignatureBasedQueryContainmentRule: containment: " << containment);
+            //todo: #3503 create a containment based query merger to update the GQP based on containment relationships
             if (containment != NO_CONTAINMENT) {
                 targetToHostSinkOperatorMap[targetSink] = hostSink;
                 foundMatch = true;
@@ -82,6 +83,7 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return foundMatch;
 }
+
 const SignatureContainmentUtilPtr& Z3SignatureBasedQueryContainmentRule::getSignatureContainmentUtil() const {
     return signatureContainmentUtil;
 }

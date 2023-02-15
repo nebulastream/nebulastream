@@ -46,6 +46,8 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+    //Vector with tuples containing two queries. The queries exhibit different containment relationships
+    //We indicate the respective containment relationship above each tuple
     std::vector<std::tuple<Query, Query>> containmentCasesTrue = {
         //Equal
         std::tuple<Query, Query>(Query::from("car")
@@ -76,8 +78,9 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
             Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor))};
 
+    //Vector with tuples containing two queries. The queries do not exhibit containment relationships but are for testing
+    //that our algorithm correctly identifies these cases as NO_CONTAINMENT
     std::vector<std::tuple<Query, Query>> noContainmentCases = {
-        //Equal
         std::tuple<Query, Query>(Query::from("car")
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") < 45)
@@ -92,11 +95,9 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
                                      .filter(Attribute("id") > 45)
                                      .filter(Attribute("id") > 45)
                                      .sink(printSinkDescriptor)),
-        //Sig2 contains Sig1
         std::tuple<Query, Query>(
             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor),
             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor)),
-        //Sig1 contains Sig2
         std::tuple<Query, Query>(
             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") > 60).sink(printSinkDescriptor),
             Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor))};
@@ -162,6 +163,7 @@ TEST_F(Z3SignatureBasedQueryContainmentRuleTest, testContainmentBasedCompleteQue
         ASSERT_TRUE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
+
 /**
  * @brief test if the apply function for the containment based complete query merger rule returns false for the given queries (identifies no containment present correctly)
  */
