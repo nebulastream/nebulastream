@@ -36,7 +36,7 @@ using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 /**
  * @brief enum describing the given containment relationship
  */
-enum ContainmentDetected { NO_CONTAINMENT, SIG_ONE_CONTAINED, SIG_TWO_CONTAINED, EQUALITY };
+enum ContainmentDetected { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
 
 /**
  * @brief This is a utility to compare two signatures
@@ -60,18 +60,18 @@ class SignatureContainmentUtil {
 
     /**
      * @brief Check containment relationships for the given signatures as follows
-     * check if sig2 ⊆ sig1 for projections (including map conditions)
-     *      true: check sig1 ⊆ sig2 for projections (including map conditions) --> if true, we have equal projections, i.e. can only check other containment relationships if sources, projections, and maps are equal
+     * check if right sig ⊆ left sig for projections (including map conditions)
+     *      true: check left sig ⊆ right sig for projections (including map conditions) --> if true, we have equal projections, i.e. can only check other containment relationships if sources, projections, and maps are equal
      *          true: check filter containment --> see checkFilterContainment() for details
-     *          false: return SIG_TWO_CONTAINED
-     *      false: check sig1 ⊆ sig2 for projections (including map conditions)
-     *          true: return SIG_ONE_CONTAINED
+     *          false: return RIGHT_SIG_CONTAINED
+     *      false: check left sig ⊆ right sig for projections (including map conditions)
+     *          true: return LEFT_SIG_CONTAINED
      *          false: return NO_CONTAINMENT
-     * @param signature1
-     * @param signature2
+     * @param leftSignature
+     * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentDetected checkContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
+    ContainmentDetected checkContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
   private:
 
@@ -87,25 +87,35 @@ class SignatureContainmentUtil {
 
     /**
      * @brief check for filter containment as follows:
-     * check if sig2 ⊆ sig1 for filters
-     *      true: check if sig1 ⊆ sig2
+     * check if right sig ⊆ left sig for filters
+     *      true: check if left sig ⊆ right sig
      *          true: return EQUALITY
-     *          false: return SIG_TWO_CONTAINED
-     *      false: check if sig1 ⊆ sig2
-     *          true: return SIG_ONE_CONTAINED
+     *          false: return RIGHT_SIG_CONTAINED
+     *      false: check if left sig ⊆ right sig
+     *          true: return LEFT_SIG_CONTAINED
      *          false: return NO_CONTAINMENT
-     * @param signature1
-     * @param signature2
-     * @return
+     * @param leftSignature
+     * @param rightSignature
+     * @return enum with containment relationships
      */
-    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& signature1, const QuerySignaturePtr& signature2);
+    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
-     * @brief pop expressions from z3 solver and reset if number of popped expressions exceeds 20050
-     * @param numberOfValuesToPop how many expressions should be popped from the solver
-     * @return true if solver was reset, otherwise false
+     * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable
+     * it also pops the given number of conditions and calls resetSolver() if the counter hits the threshold for resetting
+     * @param negatedCondition condition that will be negated
+     * @param condition condition that will just be added to the solver as it is
+     * @param numberOfConditionsToPop given number of conditions to pop from the z3 solver
+     * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool resetSolver(uint8_t numberOfValuesToPop);
+    bool conditionsUnsatisfied(const z3::expr_vector& negatedCondition,
+                              const z3::expr_vector& condition,
+                              uint8_t numberOfConditionsToPop = 0);
+
+    /**
+     * @brief Reset z3 solver
+     */
+    void resetSolver();
 
     z3::ContextPtr context;
     z3::SolverPtr solver;
