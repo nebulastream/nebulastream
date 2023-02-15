@@ -63,7 +63,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersPerEpoch = 10;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
-        coordinatorConfig->numWorkerThreads = 1;
+        coordinatorConfig->numWorkerThreads = 4;
         coordinatorConfig->bufferSizeInBytes = 131072;
 
         workerConfig1 = WorkerConfiguration::create();
@@ -74,7 +74,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 10;
-        workerConfig1->numWorkerThreads = 1;
+        workerConfig1->numWorkerThreads = 4;
         workerConfig1->bufferSizeInBytes = 131072;
 
         csvSourceTypeInfinite = CSVSourceType::create();
