@@ -146,9 +146,14 @@ bool AdaptiveActiveStandby::execute(const std::vector<OperatorNodePtr>& pinnedUp
             NES_ERROR("AdaptiveActiveStandby: no z3Context for ILP strategy");
             return false;
         }
-        // TODO
-        NES_NOT_IMPLEMENTED();
-        score = executeILPStrategy();
+
+        score = executeILPStrategy(pinnedUpStreamOperators);
+
+        if (score <= 0) {
+            NES_DEBUG("AdaptiveActiveStandby: There are no valid replica placements.");
+            deleteReplicas();
+            return false;
+        }
     }
 
     auto currentTime = std::chrono::steady_clock::now();
@@ -1499,14 +1504,174 @@ std::string AdaptiveActiveStandby::localSearchStepToString(const LocalSearchStep
 }
 
 
-double AdaptiveActiveStandby::executeILPStrategy() {
+double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
+    const double failure = -1;
     z3::optimize opt(*z3Context);
     std::map<std::string, z3::expr> placementVariables;
-    std::map<OperatorId, z3::expr> operatorPositionMap;
+    std::map<OperatorId, z3::expr> operatorDistanceMap;
     std::map<TopologyNodeId, z3::expr> nodeUtilizationMap;
-    // TODO
-    //    std::map<TopologyNodeId, double> nodeMileageMap = computeMileage(pinnedUpStreamOperators); USE DISTANCES INSTEAD ?
-//    populateDistances();
+
+    NES_DEBUG("AdaptiveActiveStandby: starting ILP strategy");
+
+    // 1. populate maps, replicate all operators that are not placed on sources or sinks
+
+    // 1.1 collect first level of primaries that are placed on a different node that the pinned operators
+    std::set<NodePtr> closestAncestorsOnDifferentNodes;
+    for (const auto& currentOperator : pinnedUpStreamOperators) {
+        getAllClosestAncestorsOnDifferentNodes(currentOperator, closestAncestorsOnDifferentNodes);
+    }
+
+    std::deque<NodePtr> targetOperators (closestAncestorsOnDifferentNodes.begin(), closestAncestorsOnDifferentNodes.end());
+
+    // 1.2 iterate over all target primary operators
+    while (!targetOperators.empty()) {
+
+        // 1.2.1 get the first element, and remove from the targets
+        auto currentNode = targetOperators.front()->as<Node>();
+        targetOperators.pop_front();
+        auto currentPrimary = currentNode->as<OperatorNode>();
+
+        // 1.2.2 go next if a replica has already been created
+        if (currentPrimary->hasProperty(SECONDARY_OPERATOR_ID))
+            continue;
+
+        auto currentPrimaryId = currentPrimary->getId();
+
+        // 1.2.3 check where current node is pinned, go next if its on the root
+        auto primaryTopologyNode = findNodeWherePinned(currentPrimary);
+        if (primaryTopologyNode->getId() == topology->getRoot()->getId())
+            continue;
+
+        // 1.2.4 add current operator to primaryOperatorMap
+        if (!primaryOperatorMap.contains(currentPrimaryId))
+            primaryOperatorMap[currentPrimaryId] = currentPrimary;
+
+        // 1.2.5 replicate current primary
+        auto secondaryOperator = createReplica(currentPrimary);
+
+        // 1.2.6 add parents as new target operators in the queue if all necessary children have already been replicated
+        for (const auto& parentNode: currentPrimary->getParents()) {
+            // skip operators that are pinned to the sink
+            if (findNodeWherePinned(parentNode)->getId() == topology->getRoot()->getId())
+                continue;
+
+            // only add if all secondary children are created OR primary children are on source nodes
+            bool ready = true;
+
+            for (const auto& childNode: parentNode->getChildren()) {
+                auto childOperator = childNode->as<OperatorNode>();
+
+                if (isSecondary(childOperator))
+                    continue; // not a primary -> no replica needed
+
+                if (sourceNodes.contains(findNodeWherePinned(childOperator)->getId()))
+                    continue; // primary on a source node -> no replica needed
+
+                if (!childOperator->hasProperty(SECONDARY_OPERATOR_ID)) {
+                    ready = false;
+                    NES_DEBUG("AdaptiveActiveStandby: " << childOperator->toString() << " has no secondary operator property");
+                    break;
+                }
+            }
+            if (ready) {
+                NES_DEBUG("AdaptiveActiveStandby: adding " << parentNode->toString() << " to the queue");
+                targetOperators.push_back(parentNode);
+            }
+        }
+    }
+
+    // 1.3 make sure that there are operators that can be replicated
+    if (secondaryOperatorMap.empty())
+        return failure;
+
+
+    // 2. construct the placementVariable, compute distance, utilization and mileages
+    for (const auto& pinnedUpStreamOperator: pinnedUpStreamOperators) {
+
+        // 2.1 find all secondary paths from pinned upstream operators to the sink
+        std::vector<NodePtr> operatorPath;
+        operatorPath.push_back(pinnedUpStreamOperator);
+        while (!operatorPath.back()->getParents().empty()) {
+
+            auto& operatorToProcess = operatorPath.back();
+
+            // skip further processing if found an operator on the sink node
+            bool isPrimary = !isSecondary(operatorToProcess->as<OperatorNode>());
+
+            if (isPrimary && findNodeWherePinned(operatorToProcess)->getId() == topology->getRoot()->getId()) {
+                NES_DEBUG("AdaptiveActiveStandby: ILP found first primary operator on the sink. " <<
+                          "Skipping further downstream operators.");
+                break;
+            }
+
+            // look for the next downstream operators and add them to the path.
+            auto downstreamOperators = operatorToProcess->getParents();
+
+            if (downstreamOperators.empty()) {
+                NES_ERROR("AdaptiveActiveStandby: ILP unable to find pinned downstream operator.");
+                return failure;
+            }
+
+            // secondary operators are the only ones that are unpinned
+            // tree-like structure in primaries => tree-like structure in secondaries too
+            uint16_t unpinnedDownStreamOperatorCount = 0;
+            for (const auto& downstreamOperator : downstreamOperators) {
+
+                // FIXME: (issue #2290) Assuming a tree structure, hence a node can only have a single parent.
+                //  However, a query can have multiple sinks or parents.
+                if (unpinnedDownStreamOperatorCount > 1) {
+                    NES_ERROR("AdaptiveActiveStandby: Current ILP implementation cannot place plan with multiple " <<
+                              "downstream operators.");
+                    return failure;
+                }
+
+                // only include secondary operators in the path and finally a primary that is on the sink node
+                if (isSecondary(downstreamOperator->as<OperatorNode>()) ||
+                    findNodeWherePinned(downstreamOperator)->getId() == topology->getRoot()->getId()) {
+                    operatorPath.push_back(downstreamOperator);
+                    unpinnedDownStreamOperatorCount++;
+                }
+            }
+        }
+
+        // 2.2 find path between pinned upstream and downstream topology node
+        auto upstreamTopologyNode = findNodeWherePinned(pinnedUpStreamOperator);
+
+        auto nodeIdsToExclude = getNodeIdsToExcludeToTarget(pinnedUpStreamOperator, topology->getRoot());
+        for (const auto& [srcNodeId, srcNode]: sourceNodes) {
+            if (nodeIdsToExclude.contains(srcNodeId))
+                nodeIdsToExclude.erase(srcNodeId);
+        }
+        nodeIdsToExclude.erase(topology->getRoot()->getId());
+
+        // FIXME #2290: path with multiple parents not supported
+        // workaround: just pick one path
+        // if it gets supported, use topology->findAllPathsBetween
+        std::vector<TopologyNodePtr> topologyPath = topology->findPathBetween({upstreamTopologyNode},
+                                                                              {topology->getRoot()},
+                                                                              nodeIdsToExclude);
+
+        {
+            std::stringstream asd;
+            for (const auto& a: nodeIdsToExclude) {
+                asd << a << ", ";
+
+            }
+            NES_DEBUG("TESTTEST: " << asd.str());
+        }
+
+        while (!topologyPath.back()->getParents().empty()) {
+            topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
+        }
+
+        //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+        addConstraintsILP(opt,
+                          operatorPath,
+                          topologyPath,
+                          placementVariables,
+                          operatorDistanceMap,
+                          nodeUtilizationMap);
+    }
 
 
 

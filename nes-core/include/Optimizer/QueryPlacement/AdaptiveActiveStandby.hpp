@@ -428,7 +428,30 @@ class AdaptiveActiveStandby {
 
 
 
-    double executeILPStrategy();
+    /**
+     * Replicate primary operators and find the optimal placement for them by solving the placement problem as an
+     * Integer Linear Programming (ILP) problem. It populates the operator maps and saves placement in
+     * candidateOperatorToTopologyMap and candidateTopologyToOperatorMap
+     * @param pinnedUpStreamOperators: vector of the pinned upstream operators
+     * @return score of the placement. Should be a positive value, otherwise no valid placement found
+     */
+    double executeILPStrategy(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+
+    /**
+    * Populate the placement variables and adds constraints to the optimizer
+    * @param opt an instance of the Z3 optimize class
+    * @param operatorNodePath the selected sequence of operator to add
+    * @param topologyNodePath the selected sequence of topology node to add
+    * @param placementVariable a mapping between concatenation of operator id and placement id and their z3 expression
+    * @param operatorDistanceMap a mapping between operators (represented by ids) to their next operator in the topology
+    * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
+    */
+    void addConstraintsILP(z3::optimize& opt,
+                           std::vector<NodePtr>& operatorNodePath,
+                           std::vector<TopologyNodePtr>& topologyNodePath,
+                           std::map<std::string, z3::expr>& placementVariable,
+                           std::map<OperatorId, z3::expr>& operatorDistanceMap,
+                           std::map<TopologyNodeId, z3::expr>& nodeUtilizationMap);
 };
 }// namespace NES::Optimizer
 
