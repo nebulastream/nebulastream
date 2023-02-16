@@ -82,9 +82,6 @@ class GlobalSlicePreAggregationTest : public testing::Test {
     }
 };
 
-/**
- * @brief Tests if the map operator creates a new field.
- */
 TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");

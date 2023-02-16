@@ -62,14 +62,14 @@ class ChainedHashMap {
      * @brief Constructor for a the chained hash map.
      * @param keySize size of the keys in bytes.
      * @param valueSize size of the values in bytes.
-     * @param nrOfKeys a number of keys, which are assumed to be stored in the hash map.
+     * @param numberOfKeys a number of keys, which are assumed to be stored in the hash map.
      * This is used to size the entry area. A too small number of keys will increase coalitions. A too large number of keys will increase space requirements.
      * @param allocator the memory allocator, which is used to allocate space for entries.
      * @param pageSize the page size with DEFAULT_PAGE_SIZE as default.
      */
     ChainedHashMap(uint64_t keySize,
                    uint64_t valueSize,
-                   uint64_t nrOfKeys,
+                   uint64_t numberOfKeys,
                    std::unique_ptr<std::pmr::memory_resource> allocator,
                    size_t pageSize = DEFAULT_PAGE_SIZE);
 

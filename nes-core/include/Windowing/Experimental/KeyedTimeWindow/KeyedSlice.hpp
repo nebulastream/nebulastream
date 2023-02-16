@@ -25,7 +25,7 @@ namespace NES::Windowing::Experimental {
 class KeyedSlice {
   public:
     /**
-     * @brief Constructor to create a new slice that covers a specific range between stat and end.
+     * @brief Constructor to create a new slice that covers a specific range between start and end.
      * @param hashMapFactory a factory to create a new hashmap
      * @param start of the slice
      * @param end of the slice
@@ -60,10 +60,10 @@ class KeyedSlice {
     inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
 
     /**
-     * @brief State of the slice.
+     * @brief starte of the slice.
      * @return uint64_t
      */
-    inline NES::Experimental::Hashmap& getState() { return state; }
+    inline NES::Experimental::Hashmap& getstarte() { return starte; }
 
     /**
      * @brief Reinitialize slice.
@@ -76,7 +76,7 @@ class KeyedSlice {
   private:
     uint64_t start;
     uint64_t end;
-    NES::Experimental::Hashmap state;
+    NES::Experimental::Hashmap starte;
 };
 
 }// namespace NES::Windowing::Experimental

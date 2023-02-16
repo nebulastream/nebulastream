@@ -79,9 +79,6 @@ class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
     }
 };
 
-/**
- * @brief Tests if the map operator creates a new field.
- */
 TEST_F(KeyedSlicePreAggregationTest, createNewFieldTest) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");

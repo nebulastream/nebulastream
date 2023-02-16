@@ -35,12 +35,12 @@ List::~List() { NES_DEBUG("~List"); }
 
 List::ListValueIterator List::begin() {
     auto startIndex = Value<UInt32>((std::uint32_t) 0);
-    return List::ListValueIterator(*this, startIndex);
+    return {*this, startIndex};
 }
 
 List::ListValueIterator List::end() {
-    auto startIndex = length();
-    return List::ListValueIterator(*this, startIndex);
+    auto endIndex = length();
+    return {*this, endIndex};
 }
 
 List::ListValueIterator::ListValueIterator(List& listRef, Value<UInt32>& currentIndex)

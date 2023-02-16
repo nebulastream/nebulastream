@@ -18,18 +18,18 @@ namespace NES::Nautilus::Interface {
 
 /**
  * @brief Function to calculate the capacity of the hash map
- * @param nrOfKeys that are expected to be inserted in the hash map
+ * @param numberOfKeys that are expected to be inserted in the hash map
  * @return
  */
-size_t getCapacity(uint64_t nrOfKeys) {
+size_t getCapacity(uint64_t numberOfKeys) {
     // this is taken from https://github.com/TimoKersten/db-engine-paradigms/blob/ae3286b279ad26ab294224d630d650bc2f2f3519/include/common/runtime/Hashmap.hpp#L193
     const auto loadFactor = 0.7;
     // __builtin_clzll Returns the number of leading 0-bits in x,
     // starting at the most significant bit position.
     // If x is 0, the result is undefined.
-    size_t exp = 64 - __builtin_clzll(nrOfKeys);
+    size_t exp = 64 - __builtin_clzll(numberOfKeys);
     NES_ASSERT(exp < sizeof(size_t) * 8, "invalid exp");
-    if (((size_t) 1 << exp) < (nrOfKeys / loadFactor)) {
+    if (((size_t) 1 << exp) < (numberOfKeys / loadFactor)) {
         exp++;
     }
     return ((size_t) 1) << exp;

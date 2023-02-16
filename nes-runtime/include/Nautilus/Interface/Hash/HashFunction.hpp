@@ -41,7 +41,17 @@ class HashFunction {
     HashValue calculate(std::vector<Value<>>& values);
     virtual ~HashFunction() = default;
   protected:
+    /**
+     * @brief Initializes a hash value, e.g. a specific seed.
+     * @return HashValue
+     */
     virtual HashValue init() = 0;
+    /**
+     * @brief Calculates the hash of a specific value.
+     * @param hash
+     * @param value
+     * @return HashValue
+     */
     virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;
 };
 }// namespace NES::Nautilus::Interface

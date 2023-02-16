@@ -30,10 +30,10 @@ PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(OperatorId 
 std::string PhysicalKeyedSliceMergingOperator::toString() const { return "PhysicalKeyedSliceMergingOperator"; }
 
 std::shared_ptr<PhysicalKeyedSliceMergingOperator>
-PhysicalKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
-                                          SchemaPtr outputSchema,
-                                          WindowHandlerType keyedEventTimeWindowHandler,
-                                          Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+PhysicalKeyedSliceMergingOperator::create(const SchemaPtr& inputSchema,
+                                          const SchemaPtr& outputSchema,
+                                          const WindowHandlerType& keyedEventTimeWindowHandler,
+                                          const Windowing::LogicalWindowDefinitionPtr& windowDefinition) {
     return std::make_shared<PhysicalKeyedSliceMergingOperator>(Util::getNextOperatorId(),
                                                                inputSchema,
                                                                outputSchema,
