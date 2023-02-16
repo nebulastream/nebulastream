@@ -20,8 +20,9 @@
 
 namespace NES::Runtime::Execution {
 
-ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext, const Value<NES::Nautilus::MemRef>& pipelineContext)
-    : workerContext(workerContext), pipelineContext(pipelineContext) {}
+ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext,
+                                   const Value<NES::Nautilus::MemRef>& pipelineContext)
+    : workerContext(workerContext), pipelineContext(pipelineContext), origin((uint64_t) 0), watermarkTs((uint64_t) 0) {}
 
 void* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
@@ -97,5 +98,13 @@ Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) 
 
 const Value<MemRef>& ExecutionContext::getWorkerContext() const { return workerContext; }
 const Value<MemRef>& ExecutionContext::getPipelineContext() const { return pipelineContext; }
+
+const Value<UInt64>& ExecutionContext::getWatermarkTs() const { return watermarkTs; }
+
+void ExecutionContext::setWatermarkTs(Value<UInt64> watermarkTs) { this->watermarkTs = watermarkTs; }
+
+const Value<UInt64>& ExecutionContext::getOriginId() const { return origin; }
+
+void ExecutionContext::setOrigin(Value<UInt64> origin) { this->origin = origin; }
 
 }// namespace NES::Runtime::Execution

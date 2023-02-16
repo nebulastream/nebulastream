@@ -14,9 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -94,10 +94,18 @@ class ExecutionContext final {
      */
     const Value<MemRef>& getWorkerContext() const;
 
+    const Value<UInt64>& getOriginId() const;
+    void setOrigin(Value<UInt64> origin);
+
+    const Value<UInt64>& getWatermarkTs() const;
+    void setWatermarkTs(Value<UInt64> watermarkTs);
+
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
+    Value<UInt64> origin;
+    Value<UInt64> watermarkTs;
 };
 
 }// namespace NES::Runtime::Execution

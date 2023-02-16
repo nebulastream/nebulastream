@@ -40,13 +40,18 @@ uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr) {
     return thisPtr_->getOriginId();
 };
 
+void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value) {
+    auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
+    thisPtr_->setOriginId(value);
+};
+
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getWatermark();
 };
 void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->setWatermark(value);
+    thisPtr_->setWatermark(value);
 };
 uint64_t NES__Runtime__TupleBuffer__getCreationTimestamp(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;

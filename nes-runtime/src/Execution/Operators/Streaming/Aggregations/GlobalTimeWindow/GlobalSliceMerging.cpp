@@ -73,10 +73,11 @@ GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
                                        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                                        const std::vector<std::string>& aggregationResultExpressions,
                                        const std::string& startTsFieldName,
-                                       const std::string& endTsFieldName)
+                                       const std::string& endTsFieldName,
+                                       uint64_t resultOriginId)
     : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
       aggregationResultExpressions(aggregationResultExpressions), startTsFieldName(startTsFieldName),
-      endTsFieldName(endTsFieldName) {}
+      endTsFieldName(endTsFieldName), resultOriginId(resultOriginId) {}
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -137,8 +138,10 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
                                     Value<>& windowStart,
                                     Value<>& windowEnd,
                                     Value<MemRef>& globalSlice) const {
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
+    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    ctx.setOrigin(resultOriginId);
 
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);

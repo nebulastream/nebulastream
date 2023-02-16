@@ -73,10 +73,12 @@ KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,
                                      const std::vector<std::string>& resultKeyFields,
                                      std::string startTsFieldName,
-                                     std::string endTsFieldName)
+                                     std::string endTsFieldName,
+                                     uint64_t resultOriginId)
     : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
       aggregationResultExpressions(aggregationResultExpressions), resultKeyFields(resultKeyFields), keyDataTypes(keyDataTypes),
-      startTsFieldName(std::move(startTsFieldName)), endTsFieldName(std::move(endTsFieldName)), keySize(0), valueSize(0) {
+      startTsFieldName(std::move(startTsFieldName)), endTsFieldName(std::move(endTsFieldName)), keySize(0), valueSize(0),
+      resultOriginId(resultOriginId) {
     for (auto& keyType : keyDataTypes) {
         keySize = keySize + keyType->size();
     }
@@ -123,7 +125,8 @@ void KeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHa
                                                  Interface::ChainedHashMapRef& globalHashTable,
                                                  Value<>& endSliceTs) const {
     // combine all thread local partitions into the global slice hash map
-    auto partition = Nautilus::FunctionCall("eraseKeyedPartition", eraseKeyedPartition, globalOperatorHandler, endSliceTs.as<UInt64>());
+    auto partition =
+        Nautilus::FunctionCall("eraseKeyedPartition", eraseKeyedPartition, globalOperatorHandler, endSliceTs.as<UInt64>());
     auto numberOfPartitions = Nautilus::FunctionCall("getNumberOfKeyedPartition", getNumberOfKeyedPartition, partition);
     for (Value<UInt64> i = (uint64_t) 0; i < numberOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getKeyedPartitionState", getKeyedPartitionState, partition, i);
@@ -156,6 +159,8 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
                                    Value<>& windowStart,
                                    Value<>& windowEnd,
                                    Interface::ChainedHashMapRef& globalSliceHashMap) const {
+    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    ctx.setOrigin(resultOriginId);
     // create the final window content and emit it to the downstream operator
     for (const auto& globalEntry : globalSliceHashMap) {
         Record resultWindow;
@@ -166,7 +171,6 @@ void KeyedSliceMerging::emitWindow(ExecutionContext& ctx,
         auto sliceKeys = globalEntry.getKeyPtr();
         for (size_t i = 0; i < resultKeyFields.size(); ++i) {
             Value<> value = sliceKeys.load<UInt64>();
-
             resultWindow.write(resultKeyFields[i], value);
             sliceKeys = sliceKeys + keyDataTypes[i]->size();
         }

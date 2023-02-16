@@ -53,6 +53,13 @@ Value<UInt64> RecordBuffer::getOriginId() {
                           tupleBufferRef);
 }
 
+void RecordBuffer::setOriginId(const Value<UInt64>& originId) {
+    FunctionCall<>("NES__Runtime__TupleBuffer__setOriginId",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setOriginId,
+                   tupleBufferRef,
+                   originId);
+}
+
 Value<UInt64> RecordBuffer::getWatermarkTs() {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getWatermark",
                           Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark,

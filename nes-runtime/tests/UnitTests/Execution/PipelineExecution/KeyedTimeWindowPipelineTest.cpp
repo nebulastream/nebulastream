@@ -112,7 +112,8 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
                                                                        types,
                                                                        resultKeyFields,
                                                                        "start",
-                                                                       "end");
+                                                                       "end",
+                                                                       /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -217,7 +218,8 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
                                                                        keyTypes,
                                                                        resultKeyFields,
                                                                        "start",
-                                                                       "end");
+                                                                       "end",
+                                                                       /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("k1", BasicType::INT64);
     emitSchema->addField("k2", BasicType::INT64);

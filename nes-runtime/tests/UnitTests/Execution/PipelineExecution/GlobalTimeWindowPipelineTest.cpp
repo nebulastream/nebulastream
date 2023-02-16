@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -98,8 +98,12 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto preAggPipeline = std::make_shared<PhysicalOperatorPipeline>();
     preAggPipeline->setRootOperator(scanOperator);
     std::vector<std::string> resultFields = {aggregationResultFieldName};
-    auto sliceMerging =
-        std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions, resultFields, "start", "end");
+    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
+                                                                        aggregationFunctions,
+                                                                        resultFields,
+                                                                        "start",
+                                                                        "end",
+                                                                        /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
@@ -195,8 +199,12 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
                                              aggregationResultFieldName2,
                                              aggregationResultFieldName3,
                                              aggregationResultFieldName4};
-    auto sliceMerging =
-        std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/, aggregationFunctions, resultFields, "start", "end");
+    auto sliceMerging = std::make_shared<Operators::GlobalSliceMerging>(0 /*handler index*/,
+                                                                        aggregationFunctions,
+                                                                        resultFields,
+                                                                        "start",
+                                                                        "end",
+                                                                        /*origin id*/ 0);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("test$sum", BasicType::INT64)
                      ->addField("test$avg", BasicType::INT64)
