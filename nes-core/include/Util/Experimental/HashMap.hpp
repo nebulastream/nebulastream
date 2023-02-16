@@ -67,20 +67,20 @@ class Hashmap {
      * @param bufferProvider that is used to allocate new memory buffers at runtime.
      * @param keySize
      * @param valueSize
-     * @param nrOfKeys number of keys the HashMap should contain.
+     * @param numberOfKeys number of keys the HashMap should contain.
      */
     explicit Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
                      size_t keySize,
                      size_t valueSize,
-                     uint64_t nrOfKeys);
+                     uint64_t numberOfKeys);
 
     /**
      * @brief Sets the size for the HashMap. This function clears the current HashMap and initializes it with the new size.
      * Thus we don't perform resizing and the current content is lost.
-     * @param nrOfKeys number of keys the HashMap should contain.
+     * @param numberOfKeys number of keys the HashMap should contain.
      * @return
      */
-    uint64_t setSize(uint64_t nrOfKeys);
+    uint64_t setSize(uint64_t numberOfKeys);
 
     /**
      * @brief Calculates the

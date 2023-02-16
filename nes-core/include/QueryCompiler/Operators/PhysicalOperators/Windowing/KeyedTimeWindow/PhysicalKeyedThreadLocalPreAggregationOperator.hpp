@@ -37,16 +37,24 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
         Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalOperator>
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           WindowHandlerType keyedEventTimeWindowHandler,
-           Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    create(const SchemaPtr& inputSchema,
+           const SchemaPtr& outputSchema,
+           const WindowHandlerType& keyedEventTimeWindowHandler,
+           const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    /**
+     * @brief Returns the window handler of the slice merging operator
+     * @return WindowHandlerType
+     */
     WindowHandlerType getWindowHandler();
 
+    /**
+     * @brief Returns the window definition.
+     * @return Windowing::LogicalWindowDefinitionPtr&
+     */
     const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
 
   private:

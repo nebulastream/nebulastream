@@ -22,6 +22,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -29,7 +30,7 @@ KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t window
                                                                  uint64_t windowSlide,
                                                                  const std::vector<OriginId>& origins,
                                                                  std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr)
-    : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(weakSliceStagingPtr),
+    : windowSize(windowSize), windowSlide(windowSlide), weakSliceStaging(std::move(weakSliceStagingPtr)),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(origins)) {}
 
 KeyedThreadLocalSliceStore* KeyedSlicePreAggregationHandler::getThreadLocalSliceStore(uint64_t workerId) {

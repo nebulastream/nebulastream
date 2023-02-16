@@ -37,12 +37,21 @@ class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public A
                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalKeyedSliceMergingOperator>
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           WindowHandlerType operatorHandler,
-           Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    create(const SchemaPtr& inputSchema,
+           const SchemaPtr& outputSchema,
+           const WindowHandlerType& operatorHandler,
+           const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
+    /**
+     * @brief Returns the window handler of the slice merging operator
+     * @return WindowHandlerType
+     */
     WindowHandlerType getWindowHandler();
+
+    /**
+     * @brief Returns the window definition.
+     * @return Windowing::LogicalWindowDefinitionPtr&
+     */
     const Windowing::LogicalWindowDefinitionPtr& getWindowDefinition() const;
     std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -52,6 +61,6 @@ class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public A
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDSLICEMERGINGOPERATOR_HPP_

@@ -33,7 +33,7 @@ class KeyedSlice;
 /**
  * @brief The slice staging area is used as an area for the merging of the local slices.
  * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular watermark to the staging area.
- * As multiple threads can concurrently append slices, we synchronize accesses.
+ * As multiple threads can concurrently append slices, we synchronize accesses with a lock.
  */
 class KeyedSliceStaging {
   public:
@@ -58,9 +58,9 @@ class KeyedSliceStaging {
     std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceEndTs, std::unique_ptr<Nautilus::Interface::ChainedHashMap> sliceState);
 
     /**
-     * @brief Extracts a partition from the staging area.
+     * @brief Extracts a partition from the staging area and removes it.
      * @param sliceEndTs
-     * @return
+     * @return std::unique_ptr<Partition>
      */
     std::unique_ptr<Partition> erasePartition(uint64_t sliceEndTs);
 

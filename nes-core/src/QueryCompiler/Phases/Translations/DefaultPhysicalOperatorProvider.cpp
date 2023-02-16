@@ -521,9 +521,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         }
 
 
-        // Translate a central window operator in ->
-        // PhysicalKeyedThreadLocalPreAggregationOperator ->
-        // PhysicalKeyedSliceMergingOperator
+        // This function translates a central window operator in PhysicalKeyedThreadLocalPreAggregationOperator and PhysicalKeyedSliceMergingOperator
         auto preAggregationOperator =
             PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::create(windowInputSchema,
                                                                                       windowOutputSchema,
