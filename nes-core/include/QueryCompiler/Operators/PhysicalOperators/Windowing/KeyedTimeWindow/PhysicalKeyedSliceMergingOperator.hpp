@@ -36,6 +36,14 @@ class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public A
                                       WindowHandlerType operatorHandler,
                                       Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
+    /**
+     * @brief Creates an instance of the physical operator
+     * @param inputSchema
+     * @param outputSchema
+     * @param operatorHandler
+     * @param windowDefinition
+     * @return PhysicalKeyedSliceMergingOperatorPtr
+     */
     static std::shared_ptr<PhysicalKeyedSliceMergingOperator>
     create(const SchemaPtr& inputSchema,
            const SchemaPtr& outputSchema,

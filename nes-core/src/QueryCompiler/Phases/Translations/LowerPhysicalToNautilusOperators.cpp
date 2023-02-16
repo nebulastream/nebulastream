@@ -293,7 +293,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                    [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
                        return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
                    });
-    // assume that the window start and end ts are at the start
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
@@ -324,17 +324,17 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                        return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
                    });
     auto aggregationFunctions = lowerAggregations(aggregations);
-    // assume that the window start and end ts are at the start
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
     auto keys = physicalGSMO->getWindowDefinition()->getKeys();
 
     std::vector<std::string> resultKeyFields;
-    auto df = DefaultPhysicalTypeFactory();
     std::vector<PhysicalTypePtr> keyDataTypes;
     for (const auto& key : keys) {
         resultKeyFields.emplace_back(key->getFieldName());
-        keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
+        keyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
     }
     auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
                                                                                                    aggregationFunctions,

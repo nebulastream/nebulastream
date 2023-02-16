@@ -72,7 +72,9 @@ void KeyedSlicePreAggregationHandler::triggerThreadLocalState(Runtime::WorkerCon
                 NES_FATAL_ERROR("SliceStaging is invalid, this should only happen after a hard stop. Drop all in flight data.");
                 return;
             }
+            // add slice to slice staging
             auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
+            // if all worker threads added a slice, the slice merging is ready for merging
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
                     NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");

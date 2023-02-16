@@ -50,14 +50,20 @@ class KeyedSliceMerging : public Operator {
     /**
      * @brief Function to combine all pre-aggregated slices.
      * @param globalOperatorHandler reference to the window handler
-     * @param sliceMergeTask reference to the slice merging task
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
     void combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
                                            Nautilus::Interface::ChainedHashMapRef& globalHashTable,
                                            Value<>& endSliceTs) const;
-    void mergeHashTable(Interface::ChainedHashMapRef& globalSliceHashMap, Interface::ChainedHashMapRef& threadLocalSliceHashMap) const;
+
+    /**
+     * @brief Function to merge a thread local hash table of key-value paris into the global hash table
+     * @param globalEntry
+     * @param threadLocalSliceHashMap
+     */
+    void mergeHashTable(Interface::ChainedHashMapRef& globalEntry, Interface::ChainedHashMapRef& threadLocalSliceHashMap) const;
+
     /**
      * @brief Function to emit a window to the downstream operator.
      * @param ctx execution context

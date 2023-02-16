@@ -32,6 +32,15 @@ using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 class KeyedThreadLocalSliceStore final : public ThreadLocalSliceStore<KeyedSlice> {
   public:
     static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
+
+    /**
+     * @brief Constructor to create a new thread local keyed slice store
+     * @param keySize size of the key in bytes
+     * @param valueSize size of the value in bytes
+     * @param windowSize size of the window in ms
+     * @param windowSlide size of the window slide in ms
+     * @param numberOfKeys number of expected keys
+     */
     explicit KeyedThreadLocalSliceStore(uint64_t keySize,
                                         uint64_t valueSize,
                                         uint64_t windowSize,
@@ -40,6 +49,12 @@ class KeyedThreadLocalSliceStore final : public ThreadLocalSliceStore<KeyedSlice
     ~KeyedThreadLocalSliceStore() override = default;
 
   private:
+    /**
+     * @brief Allocates a new slice and the internal hash-table.
+     * @param startTs of the slice
+     * @param endTs of the slice
+     * @return slice
+     */
     KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t keySize;
     const uint64_t valueSize;
