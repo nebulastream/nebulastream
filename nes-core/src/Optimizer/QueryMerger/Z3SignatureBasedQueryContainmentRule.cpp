@@ -27,15 +27,15 @@
 namespace NES::Optimizer {
 
 Z3SignatureBasedQueryContainmentRule::Z3SignatureBasedQueryContainmentRule(
-    const z3::ContextPtr& contextSig1Contained)
+    const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
-    signatureContainmentUtil = SignatureContainmentUtil::create(std::move(contextSig1Contained));
+    signatureContainmentUtil = SignatureContainmentUtil::create(std::move(context));
 }
 
 Z3SignatureBasedQueryContainmentRulePtr
-Z3SignatureBasedQueryContainmentRule::create(const z3::ContextPtr& contextSig1Contained) {
+Z3SignatureBasedQueryContainmentRule::create(const z3::ContextPtr& context) {
     return std::make_shared<Z3SignatureBasedQueryContainmentRule>(
-        Z3SignatureBasedQueryContainmentRule(std::move(contextSig1Contained)));
+        Z3SignatureBasedQueryContainmentRule(std::move(context)));
 }
 
 bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
@@ -82,9 +82,5 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
     }
     globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return foundMatch;
-}
-
-const SignatureContainmentUtilPtr& Z3SignatureBasedQueryContainmentRule::getSignatureContainmentUtil() const {
-    return signatureContainmentUtil;
 }
 }// namespace NES::Optimizer
