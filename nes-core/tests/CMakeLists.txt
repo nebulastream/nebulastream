@@ -658,10 +658,8 @@ target_link_libraries(nes-coordinator-test nes-tests)
 add_test(NAME nes-coordinator-test COMMAND nes-coordinator-test)
 
 ### Location Integration Test ###
-if (NES_USE_S2)
-    add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
-    target_link_libraries(location-integration-tests nes-tests)
-endif ()
+add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
+target_link_libraries(location-integration-tests nes-tests)
 
 add_subdirectory(UnitTests/QueryExecution)
 

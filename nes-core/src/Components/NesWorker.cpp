@@ -161,10 +161,12 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
+#ifdef S2DEF
         if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
             trajectoryPredictor =
                 std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(mobilityConfig);
         }
+#endif
     }
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
