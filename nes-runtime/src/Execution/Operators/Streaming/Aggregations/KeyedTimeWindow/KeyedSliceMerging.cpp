@@ -140,16 +140,17 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
                                        Interface::ChainedHashMapRef& threadLocalSliceHashMap) const {
     // inserts all entries from the thread local hash map into the global hash map.
     // 1. iterate over all entries in thread local hash map.
-    for (const auto& thEntry : threadLocalSliceHashMap) {
+    for (const auto& threadLocalEntry : threadLocalSliceHashMap) {
         // 2. insert entry or update existing one with same key.
-        globalSliceHashMap.insertEntryOrUpdate(thEntry, [&](auto& gEntry) {
+        globalSliceHashMap.insertEntryOrUpdate(threadLocalEntry, [&](auto& globalEntry) {
             // 2b. update aggregation if the entry was already existing in the global hash map
-            auto thValuePtr = thEntry.getValuePtr();
-            auto gValuePtr = gEntry.getValuePtr();
+            auto threadLocalValue = threadLocalEntry.getValuePtr();
+            auto globalValue = globalEntry.getValuePtr();
+            // 2c. apply aggregation functions and combine the values
             for (const auto& function : aggregationFunctions) {
-                function->combine(thValuePtr, gValuePtr);
-                thValuePtr = thValuePtr + function->getSize();
-                gValuePtr = gValuePtr + function->getSize();
+                function->combine(threadLocalValue, globalValue);
+                threadLocalValue = threadLocalValue + function->getSize();
+                globalValue = globalValue + function->getSize();
             }
         });
     }
