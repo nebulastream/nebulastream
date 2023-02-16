@@ -148,7 +148,7 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
+        auto signatureContainmentUtil = Optimizer::SignatureContainmentUtil::create(context);
         std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
 
         NES_DEBUG(
@@ -169,9 +169,8 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
                 auto hostSink = hostQueryPlan->getSinkOperators()[0];
 
                 //Check if the host and target sink operator signatures match each other
-                containment = signatureBasedEqualQueryMergerRule->getSignatureContainmentUtil()->checkContainment(
-                    hostSink->getZ3Signature(),
-                    targetSink->getZ3Signature());
+                containment =
+                    signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
                 NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
                 if (containment != NES::Optimizer::NO_CONTAINMENT) {
                     targetToHostSinkOperatorMap[targetSink] = hostSink;

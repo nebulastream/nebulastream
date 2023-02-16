@@ -55,12 +55,6 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
      */
     ~Z3SignatureBasedQueryContainmentRule() noexcept final = default;
 
-    /**
-     * @brief get an instance of the SignatureContainmentUtil
-     * @return an instance of signatureContainmentUtil
-     */
-    const SignatureContainmentUtilPtr& getSignatureContainmentUtil() const;
-
   private:
     /**
      * @brief explicit constructor
