@@ -166,9 +166,9 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer& record
                            ctx.getWorkerContext(),
                            ctx.getPipelineContext(),
                            ctx.getWorkerId(),
-                           recordBuffer.getOriginId(),
+                           ctx.getOriginId(),
                            recordBuffer.getSequenceNr(),
-                           recordBuffer.getWatermarkTs());
+                           ctx.getWatermarkTs());
 }
 
 }// namespace NES::Runtime::Execution::Operators
