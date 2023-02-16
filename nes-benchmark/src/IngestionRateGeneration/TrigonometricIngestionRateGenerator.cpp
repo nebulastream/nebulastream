@@ -39,11 +39,11 @@ std::vector<std::uint64_t> TrigonometricIngestionRateGenerator::generateIngestio
     return predefinedIngestionRates;
 }
 
-double TrigonometricIngestionRateGenerator::getSinValue(uint64_t x) {
-    return (0.5 * (1 + sin(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCount))));
+double TrigonometricIngestionRateGenerator::getSinValue(uint64_t xValue) {
+    return (0.5 * (1 + sin(2.0 * PI() * xValue * (numberOfPeriods / (double) ingestionRateCount))));
 }
 
-double TrigonometricIngestionRateGenerator::getCosValue(uint64_t x) {
-    return (0.5 * (1 + cos(2.0 * PI() * x * (numberOfPeriods / (double) ingestionRateCount))));
+double TrigonometricIngestionRateGenerator::getCosValue(uint64_t xValue) {
+    return (0.5 * (1 + cos(2.0 * PI() * xValue * (numberOfPeriods / (double) ingestionRateCount))));
 }
 }// namespace NES::Benchmark::IngestionRateGeneration

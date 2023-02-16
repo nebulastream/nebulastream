@@ -45,17 +45,17 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
   private:
     /**
      * @brief calculates the sine of x. Sine has a period length of ingestionRateInBuffers divided by numberOfPeriods
-     * @param x
+     * @param xValue
      * @return value
      */
-    double getSinValue(uint64_t x);
+    double getSinValue(uint64_t xValue);
 
     /**
      * @brief calculates the cosine of x. Cosine has a period length of ingestionRateInBuffers divided by numberOfPeriods
-     * @param x
+     * @param xValue
      * @return value
      */
-    double getCosValue(uint64_t x);
+    double getCosValue(uint64_t xValue);
 
     IngestionRateDistribution ingestionRateDistribution;
     uint64_t ingestionRateInBuffers;
