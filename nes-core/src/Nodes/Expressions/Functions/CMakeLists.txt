@@ -14,4 +14,4 @@
 add_source_files(nes-core
         FunctionExpression.cpp
         FunctionRegistry.cpp
-        ArithmeticalFunctions.cpp)
+        LogFunction.cpp)

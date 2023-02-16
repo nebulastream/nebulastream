@@ -30,6 +30,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <utility>
 namespace NES {
 
@@ -67,7 +68,7 @@ ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode
 
 ExpressionNodePtr EXP(const ExpressionNodePtr& exp) { return ExpExpressionNode::create(exp); }
 
-ExpressionNodePtr LOGN(const ExpressionNodePtr& exp) { return LogExpressionNode::create(exp); }
+ExpressionNodePtr LOGN(const ExpressionNodePtr& exp) { return FunctionExpression::create(exp->getStamp(), "log", {exp}); }
 
 ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) { return Log10ExpressionNode::create(exp); }
 

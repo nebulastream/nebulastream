@@ -38,6 +38,6 @@ bool FunctionExpression::equal(const NodePtr& rhs) const {
     return false;
 }
 
-ExpressionNodePtr FunctionExpression::copy() { return create(functionName, arguments); }
+ExpressionNodePtr FunctionExpression::copy() { return FunctionExpression::create(stamp, functionName, arguments); }
 
 }// namespace NES
