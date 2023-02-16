@@ -77,6 +77,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->numWorkerThreads = 4;
         workerConfig1->bufferSizeInBytes = 131072;
 
+
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
         csvSourceTypeInfinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers);
