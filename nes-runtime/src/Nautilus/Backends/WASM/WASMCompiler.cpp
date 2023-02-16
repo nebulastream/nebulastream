@@ -43,7 +43,7 @@ std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<
     BinaryenModulePrintStackIR(wasm, false);
     std::cout << "------ Optimized WASM ------" << std::endl;
     //BinaryenModuleOptimize(wasm);
-    BinaryenModulePrintStackIR(wasm, false);
+    //BinaryenModulePrintStackIR(wasm, false);
     static char result[2048];
     auto wasmLength = BinaryenModuleWrite(wasm, result, 2048);
     return std::make_shared<WASMExecutionContext>(wasmLength, result);

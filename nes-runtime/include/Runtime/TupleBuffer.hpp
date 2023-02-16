@@ -275,8 +275,8 @@ class TupleBuffer {
         return controlBlock->getNumberOfChildrenBuffer();
     }
 
-#ifdef NES_ENABLE_WAMR
     inline void setBuffer(uint8_t* newPtr) noexcept { ptr = newPtr; }
+#ifdef NES_ENABLE_WAMR
 
     inline void setBufferSize(uint32_t newSize) noexcept { size = newSize; }
 

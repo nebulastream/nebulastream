@@ -29,6 +29,15 @@ class WASMRuntime {
     void close();
 
   private:
+    struct BufferInfo {
+        std::shared_ptr<Runtime::TupleBuffer> tupleBuffer;
+        uint64_t memoryIndex;
+        bool copied;
+        BufferInfo(std::shared_ptr<Runtime::TupleBuffer> tb, uint64_t index, bool cp)
+            : tupleBuffer(std::move(tb)), memoryIndex(index), copied(cp){};
+        BufferInfo() = default;
+    };
+
     std::shared_ptr<WASMExecutionContext> context;
     std::shared_ptr<wasmtime::Engine> engine = nullptr;
     std::shared_ptr<wasmtime::Linker> linker = nullptr;
@@ -37,7 +46,7 @@ class WASMRuntime {
     wasmtime::Config config;
     std::shared_ptr<wasmtime::Module> pyModule = nullptr;
     std::shared_ptr<wasmtime::Func> execute = nullptr;
-    std::vector<std::shared_ptr<Runtime::TupleBuffer>> tupleBuffers;
+    std::vector<BufferInfo> tupleBuffers;
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
     const std::string proxyFunctionModule = "ProxyFunction";
