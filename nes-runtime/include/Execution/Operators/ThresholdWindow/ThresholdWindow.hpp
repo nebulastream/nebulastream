@@ -54,7 +54,7 @@ class ThresholdWindow : public ExecutableOperator {
     const std::vector<Nautilus::Record::RecordFieldIdentifier> aggregationResultFieldIdentifiers;
     uint64_t minCount = 0;
     uint64_t operatorHandlerIndex;
-    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions;
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 }// namespace NES::Runtime::Execution::Operators
 

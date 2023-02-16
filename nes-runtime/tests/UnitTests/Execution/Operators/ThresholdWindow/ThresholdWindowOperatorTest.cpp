@@ -46,7 +46,7 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup ThresholdWindowOperatorTest test class.")
+        NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -105,10 +105,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -162,11 +158,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
 
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
-
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -215,11 +206,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
     EXPECT_EQ(collector->records.size(), 0);
-
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
 
     thresholdWindowOperator->terminate(ctx);
 }
@@ -275,11 +261,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 2);
 
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
-
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -333,11 +314,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     EXPECT_EQ(collector->records.size(), 1);
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 3);
-
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
 
     thresholdWindowOperator->terminate(ctx);
 }
@@ -393,11 +369,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 3);
 
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
-
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -452,11 +423,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     EXPECT_EQ(collector->records[0].numberOfFields(), 1);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), (uint64_t) 2);
 
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
-
     thresholdWindowOperator->terminate(ctx);
 }
 
@@ -487,15 +453,12 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType);
     auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType);
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType);
-    resultFieldVector.emplace_back(aggregationResultFieldNameSum);
-    resultFieldVector.emplace_back(aggregationResultFieldNameMax);
-    resultFieldVector.emplace_back(aggregationResultFieldNameMin);
-    resultFieldVector.emplace_back(aggregationResultFieldNameMean);
-    resultFieldVector.emplace_back(aggregationResultFieldNameCount);
-    aggFieldAccessExpressionsVector.push_back(readF2);
-    aggFieldAccessExpressionsVector.push_back(readF1);
-    aggFieldAccessExpressionsVector.push_back(readF3);
-    aggFieldAccessExpressionsVector.push_back(readF4);
+    for (auto resultField : {aggregationResultFieldNameSum, aggregationResultFieldNameMax, aggregationResultFieldNameMin, aggregationResultFieldNameMean, aggregationResultFieldNameCount}) {
+        resultFieldVector.emplace_back(resultField);
+    }
+    for (auto accessField : {readF2, readF1, readF3, readF4}) {
+        aggFieldAccessExpressionsVector.push_back(accessField);
+    }
     aggVector.push_back(sumAgg);
     aggVector.push_back(maxAgg);
     aggVector.push_back(minAgg);
@@ -541,11 +504,6 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMin), 50);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameMean), 3);
     EXPECT_EQ(collector->records[0].read(aggregationResultFieldNameCount), (uint64_t) 2);
-
-    aggFieldAccessExpressionsVector.clear();
-    resultFieldVector.clear();
-    aggVector.clear();
-    aggValues.clear();
 
     thresholdWindowOperator->terminate(ctx);
 }

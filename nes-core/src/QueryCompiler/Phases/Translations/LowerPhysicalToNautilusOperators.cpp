@@ -496,45 +496,32 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto minCount = thresholdWindowType->getMinimumCount();
 
     auto aggregations = thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
-    int64_t aggregationContainCount = -1;
     std::vector<Runtime::Execution::Aggregation::AggregationFunctionPtr> aggregationFunctions;
     std::vector<std::string> aggregationResultFieldNames;
     std::vector<std::shared_ptr<Runtime::Execution::Expressions::Expression>> aggregatedFieldAccesses;
     // iterate over all aggregation function and lower them
     for (int64_t i = 0; i < (int64_t) aggregations.size(); ++i) {
         auto aggregation = aggregations[i];// get the aggregation function
-        /** check if the aggregation is not of type Count
-          *  count is treated different as does not agg onField but onTuple thus the onField for count should not be set to anything
-          *  and we want the count aggregation to appear last in the aggregation so that all vectors, i.e., aggregationFunctions,
-          *  aggregationResultFieldNames, and aggregatedFieldAccesses have corresponding indexes.
-          *  Thus, we only save here the index of the potentially contained count agg
-          */
-        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
-            auto aggregationFunction = lowerAggregations(aggregations)[i];
-            aggregationFunctions.emplace_back(aggregationFunction);
-            // Obtain the field name used to store the aggregation result
-            auto thresholdWindowResultSchema =
-                operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
-            auto aggregationResultFieldName = thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator()
-                + aggregation->getTypeAsString();
-            aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
-            auto aggregatedFieldAccess = lowerExpression(aggregation->on());
-            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
-        } else {
-            // save the index of the count aggregation
-            aggregationContainCount = i;
-        }
-    }
-    // if a count agg occurred add its details as last object to aggregationFunctions and aggregationResultFieldNames
-    if (aggregationContainCount > 0) {
-        auto aggregationFunction = lowerAggregations(aggregations)[aggregationContainCount];
+        auto aggregationFunction = lowerAggregations(aggregations)[i];
         aggregationFunctions.emplace_back(aggregationFunction);
         // Obtain the field name used to store the aggregation result
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
-        auto aggregationResultFieldName = thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator()
-            + aggregations[aggregationContainCount]->getTypeAsString();
+        auto aggregationResultFieldName =
+            thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + aggregation->getTypeAsString();
         aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
+        /** check if the aggregation is not of type Count
+          *  count is treated different as does not agg onField but onTuple thus the onField for count should not be set to anything
+          *  and we want that all vectors, i.e., aggregationFunctions, aggregationResultFieldNames, and aggregatedFieldAccesses
+          *  have corresponding indexes. Thus, we add a null pointer as access field for count agg.
+          */
+        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
+            auto aggregatedFieldAccess = lowerExpression(aggregation->on());
+            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
+        } else {
+            auto aggregatedFieldAccess2 = nullptr;
+            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess2);
+        }
     }
 
     return std::make_shared<Runtime::Execution::Operators::ThresholdWindow>(predicate,
