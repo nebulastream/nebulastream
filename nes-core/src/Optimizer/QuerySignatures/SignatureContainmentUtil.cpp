@@ -61,20 +61,20 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         //          false: return NO_CONTAINMENT
         //check if right sig contained by left sig for projection
         if (conditionsUnsatisfied(rightQueryProjectionConditions, leftQueryProjectionConditions)) {
-            NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2.");
+            NES_TRACE("SignatureContainmentUtil::checkContainment: left Sig contains right Sig.");
             //check for equality in projection, we can only check other containment relationships if sources, projections and maps are equal
             if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Equal sources, equal projection.");
-                //todo:  #3494 add window containment
-                //check for filter containment
-                return checkFilterContainment(leftSignature, rightSignature);
+                return checkWindowContainment(leftSignature, rightSignature);
             }
             return ContainmentType::RIGHT_SIG_CONTAINED;
         } else {
             //check if new query contained by SQP for projection containment identification
             //since we require equal sources to check for further containment relationships, we cannot check for filter nor window containment here
-            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)) {
-                NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1.");
+            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)
+                && checkWindowContainment(leftSignature, rightSignature) == ContainmentType::EQUALITY
+                && checkFilterContainment(leftSignature, rightSignature) == ContainmentType::EQUALITY) {
+                NES_TRACE("SignatureContainmentUtil::checkContainment: right Sig contains left Sig.");
                 return ContainmentType::LEFT_SIG_CONTAINED;
             }
         }
@@ -89,6 +89,32 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         }
     }
     return ContainmentType::NO_CONTAINMENT;
+}
+
+ContainmentType SignatureContainmentUtil::checkWindowContainment(const QuerySignaturePtr& leftSignature,
+                                                                     const QuerySignaturePtr& rightSignature) {
+    z3::expr_vector leftQueryWindowConditions(*context);
+    z3::expr_vector rightQueryWindowConditions(*context);
+    createWindowCondition(leftSignature, leftQueryWindowConditions);
+    createWindowCondition(rightSignature, rightQueryWindowConditions);
+    if (conditionsUnsatisfied(leftQueryWindowConditions, rightQueryWindowConditions, 2)) {
+        if (conditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions, 2)) {
+            NES_TRACE("SignatureContainmentUtil::checkWindowContainment: Equal windows.");
+            return checkFilterContainment(leftSignature, rightSignature);
+        }
+        if (checkFilterContainment(leftSignature, rightSignature) == EQUALITY) {
+            NES_TRACE("SignatureContainmentUtil::checkWindowContainment: left sig contains right sig for windows.");
+            return ContainmentType::RIGHT_SIG_CONTAINED;
+        }
+    } else {
+        if (conditionsUnsatisfied(rightQueryWindowConditions, leftQueryWindowConditions, 2)
+            && checkFilterContainment(leftSignature, rightSignature) == EQUALITY) {
+            NES_TRACE("SignatureContainmentUtil::checkWindowContainment: right sig contains left sig for windows.");
+            return ContainmentType::LEFT_SIG_CONTAINED;
+        }
+    }
+    return ContainmentType::NO_CONTAINMENT;
+    //check for filter containment
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
@@ -180,5 +206,4 @@ void SignatureContainmentUtil::resetSolver() {
     solver->reset();
     counter = 0;
 }
-
 }// namespace NES::Optimizer

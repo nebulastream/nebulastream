@@ -711,8 +711,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         z3::expr windowTimeSizeVal = context->int_val(length);
         auto windowTimeSlideVar = context->int_const("window-time-slide");
         z3::expr windowTimeSlideVal = context->int_val(slide);
-        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
 
         //FIXME: when count based window is implemented #1383
         //    auto windowCountSizeVar = context->int_const("window-count-size");
@@ -722,7 +722,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
                                     windowTimeKeyExpression,
                                     windowTimeSlideExpression,
                                     windowTimeSizeExpression};
-
+        auto windowExpressions = childQuerySignature->getWindowsExpressions();
         if (windowExpressions.find(windowKey) == windowExpressions.end()) {
             windowExpressions[windowKey] =
                 std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));

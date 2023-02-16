@@ -84,6 +84,14 @@ class SignatureContainmentUtil {
     void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionCondition);
 
     /**
+     * @brief creates conditions for checking window containment:
+     * all FOL are added to the projectionCondition vector
+     * @param signature Query signature to extract conditions from
+     * @param windowCondition z3 expression vector to add conditions to
+     */
+    void createWindowCondition(const QuerySignaturePtr& signature, z3::expr_vector& windowCondition);
+
+    /**
      * @brief check for filter containment as follows:
      * check if right sig ⊆ left sig for filters
      *      true: check if left sig ⊆ right sig
@@ -97,6 +105,21 @@ class SignatureContainmentUtil {
      * @return enum with containment relationships
      */
     ContainmentType checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+
+    /**
+     * @brief check for window containment as follows:
+     * check if right sig ⊆ left sig for windows
+     *      true: check if left sig ⊆ right sig
+     *          true: return EQUALITY
+     *          false: return RIGHT_SIG_CONTAINED
+     *      false: check if left sig ⊆ right sig
+     *          true: return LEFT_SIG_CONTAINED
+     *          false: return NO_CONTAINMENT
+     * @param leftSignature
+     * @param rightSignature
+     * @return enum with containment relationships
+     */
+    ContainmentDetected checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable

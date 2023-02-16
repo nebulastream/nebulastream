@@ -90,11 +90,49 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .map(Attribute("value") = Attribute("value") + 10)
                                       .sink(printSinkDescriptor),
                                   Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
+         Optimizer::ContainmentType::NO_CONTAINMENT},
+        //No containment due to different transformations
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor)),
+         Optimizer::ContainmentType::EQUALITY},
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor)),
+         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor)),
+         Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .filter(Attribute("value") < 40)
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(20)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+                                      .apply(Sum(Attribute("value1")))
+                                      .sink(printSinkDescriptor)),
          Optimizer::ContainmentType::NO_CONTAINMENT}};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedCompleteQueryMergerRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedCompleteQueryMergerRuleTest test case.");
     }
 
