@@ -75,7 +75,7 @@ class MonitoringControllerTest : public Testing::NESBaseTest {
                 NES_DEBUG("checking status of query " << id);
                 if (!TestUtils::checkRunningOrTimeout(id, std::to_string(restPort))) {
                     succes = false;
-                    }
+                }
             }
         }
         return succes;
