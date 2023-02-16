@@ -67,6 +67,7 @@ class RecordBuffer {
     void setNumRecords(Value<UInt64> numRecordsValue);
 
     Value<UInt64> getOriginId();
+    void setOriginId(const Value<UInt64>& originId);
     Value<UInt64> getSequenceNr();
     Value<UInt64> getWatermarkTs();
     void setWatermarkTs(Value<UInt64> watermarkTs);

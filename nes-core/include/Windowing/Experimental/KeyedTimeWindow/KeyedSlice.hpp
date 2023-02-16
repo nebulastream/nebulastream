@@ -60,10 +60,10 @@ class KeyedSlice {
     inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
 
     /**
-     * @brief starte of the slice.
+     * @brief State of the slice.
      * @return uint64_t
      */
-    inline NES::Experimental::Hashmap& getstarte() { return starte; }
+    inline NES::Experimental::Hashmap& getState() { return state; }
 
     /**
      * @brief Reinitialize slice.
@@ -76,7 +76,7 @@ class KeyedSlice {
   private:
     uint64_t start;
     uint64_t end;
-    NES::Experimental::Hashmap starte;
+    NES::Experimental::Hashmap state;
 };
 
 }// namespace NES::Windowing::Experimental

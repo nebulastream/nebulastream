@@ -41,7 +41,8 @@ class KeyedSliceMerging : public Operator {
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       const std::vector<std::string>& resultKeyFields,
                       std::string  startTsFieldName,
-                      std::string  endTsFieldName);
+                      std::string  endTsFieldName,
+                      uint64_t resultOriginId);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
@@ -73,6 +74,7 @@ class KeyedSliceMerging : public Operator {
     const std::string endTsFieldName;
     uint64_t keySize;
     uint64_t valueSize;
+    uint64_t resultOriginId;
 };
 
 }// namespace NES::Runtime::Execution::Operators
