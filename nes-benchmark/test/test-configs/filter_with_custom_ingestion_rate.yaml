@@ -16,7 +16,8 @@ dataProvider:
   name: External
   ingestionRateCount: 1000
   ingestionRateDistribution:
-    type: Uniform
+    type: Custom
+    values: 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 90000, 80000, 70000, 60000, 50000, 40000, 30000, 20000
 
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
