@@ -132,9 +132,9 @@ void GlobalSlicePreAggregation::close(ExecutionContext& executionCtx, RecordBuff
                            executionCtx.getWorkerContext(),
                            executionCtx.getPipelineContext(),
                            executionCtx.getWorkerId(),
-                           recordBuffer.getOriginId(),
+                           executionCtx.getOriginId(),
                            recordBuffer.getSequenceNr(),
-                           recordBuffer.getWatermarkTs());
+                           executionCtx.getWatermarkTs());
 }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -302,7 +302,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                                                                                                     aggregationFields,
                                                                                                     startTs,
                                                                                                     endTs,
-                                                                                                    physicalGSMO->getOutputOriginIds()[0]);
+                                                                                                    physicalGSMO->getWindowDefinition()->getOriginId());
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
@@ -343,7 +343,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                                                                                                    resultKeyFields,
                                                                                                    startTs,
                                                                                                    endTs,
-                                                                                                   physicalGSMO->getOutputOriginIds()[0]);
+                                                                                                   physicalGSMO->getWindowDefinition()->getOriginId());
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
