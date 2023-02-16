@@ -24,7 +24,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <Util/TestUtils.hpp>
 
 namespace NES {
 class TopologyControllerTest : public Testing::NESBaseTest {
