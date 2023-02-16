@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.5.2](https://github.com/nebulastream/nebulastream/tree/v0.5.2) (2023-02-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.1...v0.5.2)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Controller tests are not shutting down the coordinator [\#3447](https://github.com/nebulastream/nebulastream/issues/3447)
+- \[BUG\] Exception when executing a query in the nes-executable Docker image on ARM macOS because of missing jemalloc header [\#3409](https://github.com/nebulastream/nebulastream/issues/3409)
+
 ## [v0.5.1](https://github.com/nebulastream/nebulastream/tree/v0.5.1) (2023-02-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.0...v0.5.1)
