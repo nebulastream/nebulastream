@@ -519,8 +519,8 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
             auto aggregatedFieldAccess = lowerExpression(aggregation->on());
             aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
         } else {
-            auto aggregatedFieldAccess2 = nullptr;
-            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess2);
+            auto aggregatedFieldAccess = nullptr;
+            aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
         }
     }
 
