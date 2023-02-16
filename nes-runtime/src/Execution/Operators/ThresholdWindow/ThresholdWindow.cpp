@@ -82,6 +82,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         }
         FunctionCall("incrementCount", incrementCount, handler);
         FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(true));
+        FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
         if (isWindowOpen) {
@@ -98,14 +99,22 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }
                 auto resultRecord = Record(std::map<Nautilus::Record::RecordFieldIdentifier, Value<>>(aggResults));
+                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
+                FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
                 child->execute(ctx, resultRecord);
+            } else {
+                // if the minCount is not reached, we still need to close the window, reset counter and release the lock if the handler
+                FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
+                FunctionCall("resetCount", resetCount, handler);
+                FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
             }
-            FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
-            FunctionCall("resetCount", resetCount, handler);
         }// end if isWindowOpen
+        else {
+            // if the window is closed, we do nothing and release the handler
+            FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
+        }
     }
-    FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
 }
 
 }// namespace NES::Runtime::Execution::Operators
