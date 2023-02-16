@@ -111,7 +111,8 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
             }
         }// end if isWindowOpen
         else {
-            // if the window is closed, we do nothing and release the handler
+            // if the window is closed, we reset the counter and release the handler
+            FunctionCall("resetCount", resetCount, handler);
             FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
         }
     }
