@@ -71,6 +71,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         remove(singleLocationPath.c_str());
         writeWaypointsToCsv(singleLocationPath, {{{52.55227464714949, 13.351743136322877}, 0}});
 
+#ifdef S2DEF
         auto interpolatedCsv = std::string(TEST_DATA_DIRECTORY) + "path1.csv";
         remove(interpolatedCsv.c_str());
         std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> waypointsToInterpolate;
@@ -81,6 +82,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         waypointsToInterpolate.push_back({{52.51309876750171, 13.57837236374691}, 5000000000});
         auto interpolatedPath = interpolatePath(waypointsToInterpolate, 1000);
         writeWaypointsToCsv(interpolatedCsv, interpolatedPath);
+#endif
 
         auto inputSequence = std::string(TEST_DATA_DIRECTORY) + "sequence_long.csv";
         std::ofstream inputSequenceStream(inputSequence);
@@ -130,6 +132,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         return numberOfNodes == nodes;
     }
 
+#ifdef S2DEF
     /**
      * @brief check if two location objects latitudes and longitudes do not differ more than the specified error
      * @param location1
@@ -177,6 +180,7 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
         }
         return interpolatedPath;
     }
+#endif
 
     static void TearDownTestCase() {
         NES_INFO("Tear down LocationIntegrationTests class.");
@@ -270,11 +274,14 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
         NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
     ASSERT_EQ(topologyManagerService->getGeoLocationForNode(node2->getId()),
               NES::Spatial::DataTypes::Experimental::GeoLocation(52.51094383152051, 13.463078966025266));
+
+#ifdef S2DEF
     NES_INFO("NEIGHBORS");
     auto inRange = topologyManagerService->getNodesIdsInRange(
         NES::Spatial::DataTypes::Experimental::GeoLocation(52.53736960143897, 13.299134894776092),
         50.0);
     ASSERT_EQ(inRange.size(), (size_t) 3);
+#endif
     topologyManagerService->updateGeoLocation(
         node3->getId(),
         NES::Spatial::DataTypes::Experimental::GeoLocation(53.559524264262194, 10.039384739854102));
@@ -408,7 +415,6 @@ TEST_F(LocationIntegrationTests, testInvalidLocationFromCmd) {
                  NES::Spatial::Exception::CoordinatesOutOfRangeException);
 }
 
-#ifdef S2DEF
 TEST_F(LocationIntegrationTests, testMovingDevice) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -748,7 +754,6 @@ TEST_F(LocationIntegrationTests, testMovingDeviceSimulatedStartTimeInPast) {
     bool retStopWrk1 = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk1);
 }
-#endif
 
 TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 
@@ -815,6 +820,8 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     ASSERT_FALSE(loc4.getLocation().isValid());
 }
 
+
+#ifdef S2DEF
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
@@ -938,6 +945,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     bool retStopWrk1 = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk1);
 }
+#endif
 
 TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     NES_INFO(" start coordinator");
@@ -1185,6 +1193,7 @@ TEST_F(LocationIntegrationTests, testReconfigWithoutRunningQuery) {
     ASSERT_TRUE(retStopCord);
 }
 
+#ifdef S2DEF
 TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     NES_INFO(" start coordinator");
     std::string testFile = getTestResourceFolder() / "sequence_with_reconnecting_out.csv";
@@ -1324,4 +1333,5 @@ TEST_F(LocationIntegrationTests, testSequenceWithReconnecting) {
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
+#endif
 }// namespace NES::Spatial
