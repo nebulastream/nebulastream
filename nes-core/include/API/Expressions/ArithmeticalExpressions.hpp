@@ -37,6 +37,7 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp);
 ExpressionNodePtr SQRT(const ExpressionNodePtr& exp);
 ExpressionNodePtr EXP(const ExpressionNodePtr& exp);
+ExpressionNodePtr LOG(const ExpressionNodePtr& exp);
 ExpressionNodePtr LOGN(const ExpressionNodePtr& exp);
 ExpressionNodePtr LOG10(const ExpressionNodePtr& exp);
 ExpressionNodePtr ROUND(const ExpressionNodePtr& exp);

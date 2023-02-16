@@ -1,12 +1,13 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/Functions/FunctionRegistry.hpp>
 
 namespace NES {
 
-class LogFunction : public UnaryLogicalFunction {
+/*
+ * Defines the log function and registers it to the FunctionRegistry.
+ */
+class LogFunction: public UnaryLogicalFunction {
   public:
     [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
         if (input->isNumeric()) {

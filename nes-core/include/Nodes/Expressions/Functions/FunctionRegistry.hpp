@@ -3,15 +3,10 @@
 
 #include <Util/PluginRegistry.hpp>
 namespace NES {
-class DataType;
-using DataTypePtr = std::shared_ptr<DataType>;
 
-class LogicalFunction {
-  public:
-    LogicalFunction() = default;
-    [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const = 0;
-    virtual ~LogicalFunction() = default;
-};
+class DataType;
+class LogicalFunction;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class LogicalFunctionProvider {
   public:
@@ -38,7 +33,15 @@ class FunctionRegistry {
         explicit Add(std::string name) { static auto type = registry::Add<TypedProvider<V>>(name); }
     };
 
-    static std::unique_ptr<LogicalFunction> getFunction(const std::string& name) { return registry::getPlugin(name)->create(); }
+    static std::unique_ptr<LogicalFunction> getFunction(const std::string& name);
+    static bool hasFunction(const std::string& name);
+};
+
+class LogicalFunction {
+  public:
+    LogicalFunction() = default;
+    [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const = 0;
+    virtual ~LogicalFunction() = default;
 };
 
 class UnaryLogicalFunction : public LogicalFunction {
