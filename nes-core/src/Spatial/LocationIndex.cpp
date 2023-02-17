@@ -69,13 +69,12 @@ bool LocationIndex::removeNodeFromSpatialIndex(TopologyNodeId topologyNodeId) {
             return true;
         }
         NES_ERROR("Failed to remove worker location");
-        return false;
 #else
         workerGeoLocationMap.erase(topologyNodeId);
         return true;
 #endif
     }
-    return true;
+    return false;
 }
 
 std::optional<TopologyNodeId> LocationIndex::getClosestNodeTo(const Spatial::DataTypes::Experimental::GeoLocation&& geoLocation,
