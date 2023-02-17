@@ -251,8 +251,8 @@ class TupleBuffer {
     /// @brief get the sequence number
     [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
 
-    /// @brief set the creation timestamp with a timestamp
-    inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
+    /// @brief set the creation timestamp with a timestamp in milliseconds
+    inline void setCreationTimestampInMilliSeconds(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }

@@ -330,7 +330,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setNumberOfTuples(bufferHeader->numOfRecords);
                     buffer.setOriginId(bufferHeader->originId);
                     buffer.setWatermark(bufferHeader->watermark);
-                    buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
+                    buffer.setCreationTimestampInMilliSeconds(bufferHeader->creationTimestamp);
                     buffer.setSequenceNumber(bufferHeader->sequenceNumber);
 
                     for (auto&& childBuffer : children) {

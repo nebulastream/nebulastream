@@ -103,7 +103,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                             messages.back().get_payload().get_data(),
                             messages.back().get_payload().get_size());
                 buffer.setNumberOfTuples(tupleCnt);
-                buffer.setCreationTimestamp(timeStamp);
+                buffer.setCreationTimestampInMilliSeconds(timeStamp);
                 bufferProducedCnt++;
                 messages.pop_back();
                 return buffer;
