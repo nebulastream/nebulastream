@@ -36,7 +36,7 @@ using SignatureContainmentUtilPtr = std::shared_ptr<SignatureContainmentUtil>;
 /**
  * @brief enum describing the given containment relationship
  */
-enum ContainmentDetected { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
+enum ContainmentType { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, EQUALITY };
 
 /**
  * @brief This is a utility to compare two signatures
@@ -71,7 +71,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentDetected checkContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentType checkContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
   private:
 
@@ -98,19 +98,17 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentDetected checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentType checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable
      * it also pops the given number of conditions and calls resetSolver() if the counter hits the threshold for resetting
      * @param negatedCondition condition that will be negated
      * @param condition condition that will just be added to the solver as it is
-     * @param numberOfConditionsToPop given number of conditions to pop from the z3 solver
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
     bool conditionsUnsatisfied(const z3::expr_vector& negatedCondition,
-                              const z3::expr_vector& condition,
-                              uint8_t numberOfConditionsToPop = 0);
+                              const z3::expr_vector& condition);
 
     /**
      * @brief Reset z3 solver
@@ -120,6 +118,7 @@ class SignatureContainmentUtil {
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
+    const uint16_t RESET_SOLVER_THRESHOLD = 20050;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

@@ -86,7 +86,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
                 schemaMatched = solver->check() == z3::unsat;
                 solver->pop();
                 counter++;
-                if (counter >= 20050) {
+                if (counter >= RESET_SOLVER_THRESHOLD) {
                     resetSolver();
                 }
 
@@ -130,7 +130,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         bool equal = solver->check() == z3::unsat;
         solver->pop();
         counter++;
-        if (counter >= 20050) {
+        if (counter >= RESET_SOLVER_THRESHOLD) {
             resetSolver();
         }
         return equal;

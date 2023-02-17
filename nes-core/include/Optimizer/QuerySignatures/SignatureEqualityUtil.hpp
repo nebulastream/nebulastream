@@ -61,6 +61,7 @@ class SignatureEqualityUtil {
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
+    const uint16_t RESET_SOLVER_THRESHOLD = 20050;
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_
