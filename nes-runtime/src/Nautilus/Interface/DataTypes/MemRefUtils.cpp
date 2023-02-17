@@ -73,4 +73,4 @@ bool memEquals(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size)
 void memCopy(Value<MemRef>&& ptr1, Value<MemRef>&& ptr2, Value<UInt64>&& size) {
     FunctionCall("memcpy", memcpy, ptr1, ptr2, size);
 }
-}// namespace NES::Nautilus
+}// namespace NES::Nautilus::MemRefUtils

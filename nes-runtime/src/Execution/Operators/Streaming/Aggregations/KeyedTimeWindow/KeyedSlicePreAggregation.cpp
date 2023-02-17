@@ -58,13 +58,14 @@ void setupWindowHandler2(void* ss, void* ctx, uint64_t keySize, uint64_t valueSi
 class LocalKeyedSliceStoreState : public Operators::OperatorState {
   public:
     explicit LocalKeyedSliceStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
-                                  uint64_t keySize,
-                                  uint64_t valueSize,
-                                  const Value<MemRef>& sliceStoreState)
+                                       uint64_t keySize,
+                                       uint64_t valueSize,
+                                       const Value<MemRef>& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
     auto findSliceStateByTs(Value<UInt64>& timestampValue) {
-        auto htPtr = Nautilus::FunctionCall("findKeyedSliceStateByTsProxy", findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
+        auto htPtr =
+            Nautilus::FunctionCall("findKeyedSliceStateByTsProxy", findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
         return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
     }
     const std::vector<PhysicalTypePtr> keyDataTypes;
@@ -111,7 +112,8 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer&) const 
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getKeyedSliceStoreProxy", getKeyedSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto sliceStore =
+        Nautilus::FunctionCall("getKeyedSliceStoreProxy", getKeyedSliceStoreProxy, globalOperatorHandler, ctx.getWorkerId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalKeyedSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));

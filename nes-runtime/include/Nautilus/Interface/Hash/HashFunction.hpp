@@ -40,6 +40,7 @@ class HashFunction {
      */
     HashValue calculate(std::vector<Value<>>& values);
     virtual ~HashFunction() = default;
+
   protected:
     /**
      * @brief Initializes a hash value, e.g. a specific seed.

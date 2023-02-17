@@ -58,7 +58,6 @@ ChainedHashMap::ChainedHashMap(uint64_t keySize,
     pages.emplace_back(page);
 }
 
-
 ChainedHashMap::Entry* ChainedHashMap::allocateNewEntry() {
     // check if a new page should be allocated
     if (currentSize % entriesPerPage == 0) {
@@ -84,8 +83,6 @@ ChainedHashMap::~ChainedHashMap() {
     allocator->deallocate(entries, capacity * sizeof(Entry*));
 }
 
-int8_t* ChainedHashMap::getPage(uint64_t pageIndex) {
-    return pages[pageIndex];
-}
+int8_t* ChainedHashMap::getPage(uint64_t pageIndex) { return pages[pageIndex]; }
 
 }// namespace NES::Nautilus::Interface

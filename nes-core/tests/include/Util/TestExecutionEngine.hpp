@@ -162,9 +162,13 @@ class TestExecutionEngine {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
 
-    auto createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1) { return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine); }
+    auto createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1) {
+        return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine);
+    }
     template<class Type>
-    auto createCollectSink(SchemaPtr outputSchema) { return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine); }
+    auto createCollectSink(SchemaPtr outputSchema) {
+        return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine);
+    }
 
     auto createDataSource(SchemaPtr inputSchema) {
         return std::make_shared<TestUtils::TestSourceDescriptor>(

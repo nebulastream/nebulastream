@@ -41,6 +41,7 @@ class List : public Nautilus::Any {
         ListValueIterator& operator++();
         bool operator==(const ListValueIterator& other) const;
         Value<> operator*();
+
       private:
         List& list;
         Value<UInt32> currentIndex;
