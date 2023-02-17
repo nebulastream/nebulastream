@@ -242,17 +242,17 @@ class TupleBuffer {
     /// @brief set the watermark from a timestamp
     inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
-    /// @brief get the creation timestamp as a timestamp
-    [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
+    /// @brief get the creation timestamp in milliseconds
+    [[nodiscard]] constexpr uint64_t getCreationTimestampInMS() const noexcept { return controlBlock->getCreationTimestamp(); }
 
     /// @brief set the sequence number
     inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
 
     /// @brief get the sequence number
-    [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
+    [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); }
 
-    /// @brief set the creation timestamp with a timestamp in milliseconds
-    inline void setCreationTimestampInMilliSeconds(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
+    /// @brief set the creation timestamp in milliseconds
+    inline void setCreationTimestampInMS(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }

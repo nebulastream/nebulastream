@@ -38,7 +38,7 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
         auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
         auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
 
-        wrapBuffer.setCreationTimestampInMilliSeconds(timeStamp);
+        wrapBuffer.setCreationTimestampInMS(timeStamp);
         wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
         return wrapBuffer;
     }

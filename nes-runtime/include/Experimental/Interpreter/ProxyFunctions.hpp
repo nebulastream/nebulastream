@@ -53,9 +53,9 @@ void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     thisPtr_->setWatermark(value);
 };
-uint64_t NES__Runtime__TupleBuffer__getCreationTimestamp(void* thisPtr) {
+uint64_t NES__Runtime__TupleBuffer__getCreationTimestampInMS(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->getCreationTimestamp();
+    return thisPtr_->getCreationTimestampInMS();
 };
 void NES__Runtime__TupleBuffer__setSequenceNumber(void* thisPtr, uint64_t sequenceNumber) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
@@ -65,9 +65,9 @@ uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
     return thisPtr_->getSequenceNumber();
 }
-void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t value) {
+void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->setCreationTimestampInMilliSeconds(value);
+    return thisPtr_->setCreationTimestampInMS(value);
 }
 
 }// namespace NES::Runtime::ProxyFunctions
