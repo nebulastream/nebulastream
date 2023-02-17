@@ -79,7 +79,7 @@ class KeyedSlicePreAggregationTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(KeyedSlicePreAggregationTest, createNewFieldTest) {
+TEST_F(KeyedSlicePreAggregationTest, aggregate) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("ts");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto readV1 = std::make_shared<Expressions::ReadFieldExpression>("v1");
