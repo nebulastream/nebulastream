@@ -48,6 +48,8 @@ namespace Spatial::Mobility::Experimental {
 
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
+class ReconnectSchedulePredictor;
+using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
 /**
  * @brief this class uses mobile device location data in order to make a prediction about the devices future trajectory and creates a schedule
@@ -57,6 +59,14 @@ using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
 class ReconnectSchedulePredictor {
   public:
     ReconnectSchedulePredictor(
+        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+
+    /**
+     * Creates a new reconnect schedule predictor if NES was compiles with NES_USE_S2. Otherwise returns a nullptr
+     * @param configuration The configuration for the reconnect schedulue predictor to be created
+     * @return a pointer to the created reconnect schedule creator or nullptr is s2 is not activated
+     */
+    static ReconnectSchedulePredictorPtr create(
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
 #ifdef S2DEF
