@@ -88,17 +88,14 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
         if (isWindowOpen) {
             auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
             if (recordCount >= minCount) {
-                std::map<Nautilus::Record::RecordFieldIdentifier, Value<>> aggResults;
+                auto resultRecord = Record();
                 for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
-                    aggResults.insert(
-                        std::pair<Nautilus::Record::RecordFieldIdentifier, Value<>>(aggregationResultFieldIdentifiers[i],
-                                                                                    std::move(aggregationResult)));
+                    resultRecord.write(aggregationResultFieldIdentifiers[i],aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }
-                auto resultRecord = Record(std::map<Nautilus::Record::RecordFieldIdentifier, Value<>>(aggResults));
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
