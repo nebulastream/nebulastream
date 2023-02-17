@@ -19,7 +19,6 @@ namespace NES::Runtime::Execution::Aggregation {
 MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
     : AggregationFunction(inputType, finalType) {}
 
-
 template<class T>
 T max(T first, T second) {
     return first > second ? first : second;
@@ -54,7 +53,6 @@ Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Va
     }
     NES_NOT_IMPLEMENTED();
 }
-
 
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {
     // load

@@ -16,9 +16,9 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
@@ -510,8 +510,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
             sliceMergingOperatorHandler = smOperatorHandler;
         } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
             auto sliceStaging = std::make_shared<Runtime::Execution::Operators::KeyedSliceStaging>();
-            sliceMergingOperatorHandler =
-                std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
+            sliceMergingOperatorHandler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
             auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
             preAggregationWindowHandler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
                 timeBasedWindowType->getSize().getTime(),
@@ -519,7 +518,6 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
                 windowOperator->getInputOriginIds(),
                 sliceStaging);
         }
-
 
         // This function translates a central window operator in PhysicalKeyedThreadLocalPreAggregationOperator and PhysicalKeyedSliceMergingOperator
         auto preAggregationOperator =

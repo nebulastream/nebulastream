@@ -45,7 +45,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
 
 Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
     // load the has value from the entry
-    return getMember(ref,ChainedHashMap::Entry, hash).load<UInt64>();
+    return getMember(ref, ChainedHashMap::Entry, hash).load<UInt64>();
 }
 
 bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) { return ref != 0; }

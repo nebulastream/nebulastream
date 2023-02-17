@@ -43,7 +43,7 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
     NES_DEBUG("stop GlobalSliceMergingHandler: " << queryTerminationType);
 }
 
-KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys){
+KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask, uint64_t numberOfKeys) {
     // allocate hash map
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));

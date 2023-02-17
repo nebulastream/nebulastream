@@ -29,18 +29,16 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
   public:
     using WindowHandlerType = std::variant<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr,
                                            std::shared_ptr<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>>;
-    PhysicalKeyedThreadLocalPreAggregationOperator(
-        OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        WindowHandlerType keyedEventTimeWindowHandler,
-        Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalKeyedThreadLocalPreAggregationOperator(OperatorId id,
+                                                   SchemaPtr inputSchema,
+                                                   SchemaPtr outputSchema,
+                                                   WindowHandlerType keyedEventTimeWindowHandler,
+                                                   Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    static std::shared_ptr<PhysicalOperator>
-    create(const SchemaPtr& inputSchema,
-           const SchemaPtr& outputSchema,
-           const WindowHandlerType& keyedEventTimeWindowHandler,
-           const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
+    static std::shared_ptr<PhysicalOperator> create(const SchemaPtr& inputSchema,
+                                                    const SchemaPtr& outputSchema,
+                                                    const WindowHandlerType& keyedEventTimeWindowHandler,
+                                                    const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
@@ -62,6 +60,6 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDTHREADLOCALPREAGGREGATIONOPERATOR_HPP_

@@ -40,8 +40,8 @@ class KeyedSliceMerging : public Operator {
                       const std::vector<std::string>& aggregationResultExpressions,
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       const std::vector<std::string>& resultKeyFields,
-                      std::string  startTsFieldName,
-                      std::string  endTsFieldName,
+                      std::string startTsFieldName,
+                      std::string endTsFieldName,
                       uint64_t resultOriginId);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -54,8 +54,8 @@ class KeyedSliceMerging : public Operator {
      * @return reference to the newly created slice
      */
     void combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                           Nautilus::Interface::ChainedHashMapRef& globalHashTable,
-                                           Value<>& endSliceTs) const;
+                                  Nautilus::Interface::ChainedHashMapRef& globalHashTable,
+                                  Value<>& endSliceTs) const;
 
     /**
      * @brief Function to merge a thread local hash table of key-value paris into the global hash table
@@ -70,7 +70,10 @@ class KeyedSliceMerging : public Operator {
      * @param windowStart start of the window
      * @param windowEnd end of the window
      */
-    void emitWindow(ExecutionContext& ctx, Value<>& windowStart, Value<>& windowEnd, Interface::ChainedHashMapRef& globalSliceHashMap) const;
+    void emitWindow(ExecutionContext& ctx,
+                    Value<>& windowStart,
+                    Value<>& windowEnd,
+                    Interface::ChainedHashMapRef& globalSliceHashMap) const;
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::vector<std::string> aggregationResultExpressions;

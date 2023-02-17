@@ -16,7 +16,6 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -297,12 +296,13 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
-    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1,
-                                                                                                    aggregationFunctions,
-                                                                                                    aggregationFields,
-                                                                                                    startTs,
-                                                                                                    endTs,
-                                                                                                    physicalGSMO->getWindowDefinition()->getOriginId());
+    auto sliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::GlobalSliceMerging>(operatorHandlers.size() - 1,
+                                                                            aggregationFunctions,
+                                                                            aggregationFields,
+                                                                            startTs,
+                                                                            endTs,
+                                                                            physicalGSMO->getWindowDefinition()->getOriginId());
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }
@@ -336,14 +336,15 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         resultKeyFields.emplace_back(key->getFieldName());
         keyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
     }
-    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
-                                                                                                   aggregationFunctions,
-                                                                                                   resultAggregationFields,
-                                                                                                   keyDataTypes,
-                                                                                                   resultKeyFields,
-                                                                                                   startTs,
-                                                                                                   endTs,
-                                                                                                   physicalGSMO->getWindowDefinition()->getOriginId());
+    auto sliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                           aggregationFunctions,
+                                                                           resultAggregationFields,
+                                                                           keyDataTypes,
+                                                                           resultKeyFields,
+                                                                           startTs,
+                                                                           endTs,
+                                                                           physicalGSMO->getWindowDefinition()->getOriginId());
     pipeline.setRootOperator(sliceMergingOperator);
     return sliceMergingOperator;
 }

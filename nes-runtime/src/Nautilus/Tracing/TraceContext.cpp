@@ -165,7 +165,7 @@ ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr& t
     auto& currentBlock = executionTrace->getCurrentBlock();
     if (currentBlock.operations.size() > currentOperationCounter) {
         auto& operation = currentBlock.operations[currentOperationCounter];
-        if(auto* valRef = std::get_if<ValueRef>(&operation.result)){
+        if (auto* valRef = std::get_if<ValueRef>(&operation.result)) {
             return *valRef;
         }
     }

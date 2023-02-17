@@ -44,6 +44,6 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
     Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_KEYEDTIMEWINDOW_PHYSICALKEYEDGLOBALSLICESTOREAPPENDOPERATOR_HPP_

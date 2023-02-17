@@ -15,12 +15,12 @@
 #ifndef NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_KEYEDTIMEWINDOW_KEYEDSLICESTAGING_HPP_
 #define NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_KEYEDTIMEWINDOW_KEYEDSLICESTAGING_HPP_
 
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <cinttypes>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 namespace NES::Nautilus::Interface {
 class ChainedHashMap;
@@ -55,7 +55,8 @@ class KeyedSliceStaging {
      * @param entries the entries of the slice.
      * @return returns the number of threads already appended a slice to the staging area.
      */
-    std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceEndTs, std::unique_ptr<Nautilus::Interface::ChainedHashMap> sliceState);
+    std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceEndTs,
+                                              std::unique_ptr<Nautilus::Interface::ChainedHashMap> sliceState);
 
     /**
      * @brief Extracts a partition from the staging area and removes it.

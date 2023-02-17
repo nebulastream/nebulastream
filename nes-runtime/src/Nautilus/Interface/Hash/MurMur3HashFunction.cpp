@@ -133,7 +133,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
         return FunctionCall("hashTextValue", hashTextValue, hash, value.as<Text>()->getReference());
     } else if (value->isType<List>()) {
         auto list = value.as<List>();
-        for(auto listValue : list.getValue()){
+        for (auto listValue : list.getValue()) {
             calculate(hash, listValue);
         }
         return hash;

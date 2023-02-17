@@ -198,8 +198,8 @@ Value<> f2(Value<> x) {
 
 Value<> nativeLoop() {
     Value agg = Value(0);
-   for (uint64_t i = 0 ; i< 10; i++) {
-        if(agg > 42){
+    for (uint64_t i = 0; i < 10; i++) {
+        if (agg > 42) {
             agg = agg + 1;
         }
     }

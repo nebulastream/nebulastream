@@ -73,6 +73,7 @@ class ChainedHashMapRef {
          * @return bool
          */
         bool operator==(std::nullptr_t rhs);
+
       private:
         mutable Value<MemRef> ref;
         mutable uint64_t keyOffset;
@@ -111,7 +112,6 @@ class ChainedHashMapRef {
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       uint64_t keySize,
                       uint64_t valueSize);
-
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
