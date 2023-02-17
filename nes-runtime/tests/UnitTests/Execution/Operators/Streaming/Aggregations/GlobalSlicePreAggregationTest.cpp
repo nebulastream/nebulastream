@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
@@ -74,6 +74,8 @@ class GlobalSlicePreAggregationTest : public testing::Test {
         buffer.setOriginId(originId);
         buffer.setSequenceNumber(sequenceNumber);
         auto rb = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+        ctx.setWatermarkTs(wts);
+        ctx.setOrigin(originId);
         slicePreAggregation.close(ctx, rb);
     }
 
@@ -123,6 +125,7 @@ TEST_F(GlobalSlicePreAggregationTest, performAggregation) {
     value = ((uint64_t*) stateStore->getLastSlice()->getState()->ptr);
     ASSERT_EQ(*value, 1);
     emitWatermark(slicePreAggregation, ctx, 22, 0, 1);
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto smt = (SliceMergeTask*) pipelineContext.buffers[0].getBuffer();
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
@@ -134,16 +137,15 @@ TEST_F(GlobalSlicePreAggregationTest, performMultipleAggregation) {
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
 
-     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
-     PhysicalTypePtr i64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-     PhysicalTypePtr ui64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr i64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr ui64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto slicePreAggregation =
-        GlobalSlicePreAggregation(0 /*handler index*/,
-                                  readTs,
-                                  {readF2, readF2},
-                                  {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64),
-                                   std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64)});
+    auto slicePreAggregation = GlobalSlicePreAggregation(0 /*handler index*/,
+                                                         readTs,
+                                                         {readF2, readF2},
+                                                         {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64),
+                                                          std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64)});
 
     auto sliceStaging = std::make_shared<GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
