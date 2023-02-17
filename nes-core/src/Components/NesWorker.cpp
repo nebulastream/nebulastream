@@ -161,12 +161,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
         locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig);
-#ifdef S2DEF
         if (locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            trajectoryPredictor =
-                std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(mobilityConfig);
+            //is s2 is activated, create a reconnect schedule predictor
+            trajectoryPredictor = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(mobilityConfig);
         }
-#endif
     }
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
@@ -243,11 +241,9 @@ bool NesWorker::stop(bool) {
             NES_WARNING("No health check service was created");
         }
 
-        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            if (workerMobilityHandler) {
-                workerMobilityHandler->stop();
-                NES_TRACE("triggered stopping of location update push thread");
-            }
+        if (workerMobilityHandler) {
+            workerMobilityHandler->stop();
+            NES_TRACE("triggered stopping of location update push thread");
         }
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
