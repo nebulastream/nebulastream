@@ -46,7 +46,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UdfCatalog> udfCatalog;
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    std::vector<std::tuple<std::tuple<Query, Query>, NES::Optimizer::ContainmentDetected>> containmentCasesMixed = {
+    std::vector<std::tuple<std::tuple<Query, Query>, NES::Optimizer::ContainmentType>> containmentCasesMixed = {
         //Equal
         {std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
@@ -120,68 +120,30 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
  * @brief tests if the correct containment relationship is returned by the signature containment util
  */
 TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
-    std::vector<Optimizer::ContainmentDetected> resultList;
+    std::vector<Optimizer::ContainmentType> resultList;
     for (auto entry : containmentCasesMixed) {
         auto queries = get<0>(entry);
         QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
-        SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        QueryId queryIdSQPQuery = PlanIdGenerator::getNextQueryId();
-        queryPlanSQPQuery->setQueryId(queryIdSQPQuery);
-
         QueryPlanPtr queryPlanNewQuery = get<1>(queries).getQueryPlan();
-        SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
-        QueryId queryIdNewQuery = PlanIdGenerator::getNextQueryId();
-        queryPlanNewQuery->setQueryId(queryIdNewQuery);
-
+        //typ inference face
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
         typeInferencePhase->execute(queryPlanSQPQuery);
         typeInferencePhase->execute(queryPlanNewQuery);
-
+        //obtain context and create signatures
         z3::ContextPtr context = std::make_shared<z3::context>();
-        auto z3InferencePhase =
+        auto signatureInferencePhase =
             Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
-        z3InferencePhase->execute(queryPlanSQPQuery);
-        z3InferencePhase->execute(queryPlanNewQuery);
-
-        auto globalQueryPlan = GlobalQueryPlan::create();
-        globalQueryPlan->addQueryPlan(queryPlanSQPQuery);
-        globalQueryPlan->addQueryPlan(queryPlanNewQuery);
-
-        //execute
+        signatureInferencePhase->execute(queryPlanSQPQuery);
+        signatureInferencePhase->execute(queryPlanNewQuery);
+        SinkLogicalOperatorNodePtr sinkOperatorSQPQuery = queryPlanSQPQuery->getSinkOperators()[0];
+        SinkLogicalOperatorNodePtr sinkOperatorNewQuery = queryPlanSQPQuery->getSinkOperators()[0];
         auto signatureContainmentUtil = Optimizer::SignatureContainmentUtil::create(context);
-        std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
-
-        NES_DEBUG(
-            "Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global "
-            "Query Plan");
-        Optimizer::ContainmentDetected containment = NES::Optimizer::NO_CONTAINMENT;
-        //Iterate over all shared query metadata to identify equal shared metadata
-        for (const auto& targetQueryPlan : queryPlansToAdd) {
-            bool matched = false;
-            auto hostSharedQueryPlans =
-                globalQueryPlan->getSharedQueryPlansConsumingSources(targetQueryPlan->getSourceConsumed());
-            for (auto& hostSharedQueryPlan : hostSharedQueryPlans) {
-                auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
-                // Prepare a map of matching address and target sink global query nodes
-                // if there are no matching global query nodes then the shared query metadata are not matched
-                std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
-                auto targetSink = targetQueryPlan->getSinkOperators()[0];
-                auto hostSink = hostQueryPlan->getSinkOperators()[0];
-
-                //Check if the host and target sink operator signatures match each other
-                containment =
-                    signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
-                NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
-                if (containment != NES::Optimizer::NO_CONTAINMENT) {
-                    targetToHostSinkOperatorMap[targetSink] = hostSink;
-                    matched = true;
-                }
-            }
-            if (!matched) {
-                NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: computing a new Shared Query Plan");
-                globalQueryPlan->createNewSharedQueryPlan(targetQueryPlan);
-            }
-        }
+        std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
+        auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
+        auto newSink = queryPlanNewQuery->getSinkOperators()[0];
+        //Check if the host and target sink operator signatures have a containment relationship
+        Optimizer::ContainmentType containment = signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
+        NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
         ASSERT_EQ(containment, get<1>(entry));
     }
 }

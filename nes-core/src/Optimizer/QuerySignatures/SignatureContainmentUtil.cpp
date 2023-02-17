@@ -27,7 +27,7 @@ SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& context
     this->solver = std::make_unique<z3::solver>(*this->context);
 }
 
-ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
                                                                const QuerySignaturePtr& rightSignature) {
     NES_TRACE("SignatureContainmentUtil::checkContainment: Checking for containment.");
     try {
@@ -63,7 +63,7 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
         if (conditionsUnsatisfied(rightQueryProjectionConditions, leftQueryProjectionConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2.");
             //check for equality in projection, we can only check other containment relationships if sources, projections and maps are equal
-            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions, 2)) {
+            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Equal sources, equal projection.");
                 //todo:  #3494 add window containment
                 //check for filter containment
@@ -73,7 +73,7 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
         } else {
             //check if new query contained by SQP for projection containment identification
             //since we require equal sources to check for further containment relationships, we cannot check for filter nor window containment here
-            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions, 2)) {
+            if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1.");
                 return LEFT_SIG_CONTAINED;
             }
@@ -91,7 +91,7 @@ ContainmentDetected SignatureContainmentUtil::checkContainment(const QuerySignat
     return NO_CONTAINMENT;
 }
 
-ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
+ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
                                                                      const QuerySignaturePtr& rightSignature) {
     NES_TRACE("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
@@ -113,15 +113,15 @@ ContainmentDetected SignatureContainmentUtil::checkFilterContainment(const Query
     //      false: check if left sig ⊆ right sig
     //          true: return RIGHT_SIG_CONTAINED
     //          false: return NO_CONTAINMENT
-    if (conditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions, 2)) {
-        if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions, 2)) {
+    if (conditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions)) {
+        if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
             return EQUALITY;
         }
         NES_TRACE("SignatureContainmentUtil::checkContainment: left sig contains right sig for filters.");
         return RIGHT_SIG_CONTAINED;
     } else {
-        if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions, 2)) {
+        if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: right sig contains left sig for filters.");
             return LEFT_SIG_CONTAINED;
         }
@@ -136,20 +136,20 @@ void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr
     // if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
     // else we indicate that the attribute is involved in the projection as attributeStingName == true
     // all FOL are added to the projectionCondition vector
-    for (auto exp : signature->getSchemaFieldToExprMaps()) {
-        for (auto entry : exp) {
-            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: strings: " << entry.first);
-            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: z3 expressions: " << entry.second->to_string());
-            z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((entry.first.c_str())));
-            if (entry.second->to_string() != entry.first) {
-                if (entry.second->is_int()) {
-                    expr = std::make_shared<z3::expr>(context->int_const(entry.first.c_str()));
-                } else if (entry.second->is_fpa()) {
-                    expr = std::make_shared<z3::expr>(context->fpa_const<64>(entry.first.c_str()));
-                } else if (entry.second->is_string_value()) {
-                    expr = std::make_shared<z3::expr>(context->string_const(entry.first.c_str()));
+    for (auto schemaFieldToExpressionMap : signature->getSchemaFieldToExprMaps()) {
+        for (auto [attributeName, z3Expression] : schemaFieldToExpressionMap) {
+            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: strings: " << attributeName);
+            NES_TRACE("SignatureContainmentUtil::createProjectionCondition: z3 expressions: " << z3Expression->to_string());
+            z3::ExprPtr expr = std::make_shared<z3::expr>(context->bool_const((attributeName.c_str())));
+            if (z3Expression->to_string() != attributeName) {
+                if (z3Expression->is_int()) {
+                    expr = std::make_shared<z3::expr>(context->int_const(attributeName.c_str()));
+                } else if (z3Expression->is_fpa()) {
+                    expr = std::make_shared<z3::expr>(context->fpa_const<64>(attributeName.c_str()));
+                } else if (z3Expression->is_string_value()) {
+                    expr = std::make_shared<z3::expr>(context->string_const(attributeName.c_str()));
                 }
-                projectionCondition.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *entry.second)));
+                projectionCondition.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *z3Expression)));
             } else {
                 z3::ExprPtr columnIsUsed = std::make_shared<z3::expr>(context->bool_val(true));
                 projectionCondition.push_back(to_expr(*context, Z3_mk_eq(*context, *expr, *columnIsUsed)));
@@ -159,23 +159,22 @@ void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr
 }
 
 bool SignatureContainmentUtil::conditionsUnsatisfied(const z3::expr_vector& negatedCondition,
-                                                     const z3::expr_vector& condition,
-                                                     uint8_t numberOfConditionsToPop) {
-
-    solver->pop(numberOfConditionsToPop);
-    counter++;
-    if (counter >= 20050) {
-        resetSolver();
-    }
+                                                     const z3::expr_vector& condition) {
     solver->push();
     solver->add(!z3::mk_and(negatedCondition).simplify());
     solver->push();
     solver->add(z3::mk_and(condition).simplify());
     NES_TRACE("SignatureContainmentUtil::conditionsUnsatisfied: Check unsat: " << solver->check());
+    bool conditionUnsatisfied = false;
     if (solver->check() == z3::unsat) {
-        return true;
+        conditionUnsatisfied = true;
     }
-    return false;
+    solver->pop(2);
+    counter++;
+    if (counter >= RESET_SOLVER_THRESHOLD) {
+        resetSolver();
+    }
+    return conditionUnsatisfied;
 }
 
 void SignatureContainmentUtil::resetSolver() {
