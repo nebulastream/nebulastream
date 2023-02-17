@@ -284,6 +284,35 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     EXPECT_EQ(str, expected);
 }
 
+TEST_F(KafkaSourceTest, DISABLED_KafkaSourceJson) {
+    auto kafkaSource = createKafkaSource(test_schema,
+                                         nodeEngine->getBufferManager(),
+                                         nodeEngine->getQueryManager(),
+                                         2,
+                                         brokers,
+                                         topic,
+                                         groupId,
+                                         true,
+                                         100,
+                                         "earliest",
+                                         kafkaSourceType,
+                                         OPERATORID,
+                                         OPERATORID,
+                                         NUMSOURCELOCALBUFFERS,
+                                         1,
+                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
+    cppkafka::Producer producer(config);
+    string message = R"({"var": "32"})";
+    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
+    producer.flush();
+
+    auto tuple_buffer = kafkaSource->receiveData();
+    EXPECT_TRUE(tuple_buffer.has_value());
+    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
+    EXPECT_EQ(*tuple, 32);
+}
+
 // Disabled, because it requires a manually set up Kafka broker
 TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
