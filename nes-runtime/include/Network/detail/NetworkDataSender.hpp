@@ -49,7 +49,7 @@ class NetworkDataSender : public BaseChannelType {
         auto originId = inputBuffer.getOriginId();
         auto watermark = inputBuffer.getWatermark();
         auto sequenceNumber = inputBuffer.getSequenceNumber();
-        auto creationTimestamp = inputBuffer.getCreationTimestamp();
+        auto creationTimestamp = inputBuffer.getCreationTimestampInMS();
         auto payloadSize = tupleSize * numOfTuples;
         auto* ptr = inputBuffer.getBuffer<uint8_t>();
         auto numOfChildren = inputBuffer.getNumberOfChildrenBuffer();

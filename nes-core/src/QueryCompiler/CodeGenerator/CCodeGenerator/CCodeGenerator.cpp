@@ -776,7 +776,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         auto currentWatermarkVariableDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
 
-        auto getCreationTimestamp = call("getCreationTimestamp");
+        auto getCreationTimestamp = call("getCreationTimestampInMS");
         auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
 
         if (watermarkFieldName != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
@@ -1045,7 +1045,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
 
     auto timeCharacteristicField =
         Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
-    auto getCreationTimestamp = call("getCreationTimestamp");
+    auto getCreationTimestamp = call("getCreationTimestampInMS");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
@@ -1200,7 +1200,7 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
 
     auto timeCharacteristicField =
         Windowing::WindowType::asTimeBasedWindowType(window->getWindowType())->getTimeCharacteristic()->getField()->getName();
-    auto getCreationTimestamp = call("getCreationTimestamp");
+    auto getCreationTimestamp = call("getCreationTimestampInMS");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
     if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);

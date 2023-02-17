@@ -53,7 +53,7 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
             };
             case MEM_COPY: {
                 std::memcpy(buffer.getBuffer(), providedBuffer.value().getBuffer(), buffer.getBufferSize());
-                providedBuffer.value().setCreationTimestampInMilliSeconds(buffer.getCreationTimestamp());
+                providedBuffer.value().setCreationTimestampInMS(buffer.getCreationTimestampInMS());
                 return;
             };
         }
