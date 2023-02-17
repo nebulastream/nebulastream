@@ -67,7 +67,7 @@ uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr) {
 }
 void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t value) {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*) thisPtr;
-    return thisPtr_->setCreationTimestamp(value);
+    return thisPtr_->setCreationTimestampInMilliSeconds(value);
 }
 
 }// namespace NES::Runtime::ProxyFunctions
