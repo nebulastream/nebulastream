@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.5.5](https://github.com/nebulastream/nebulastream/tree/v0.5.5) (2023-02-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.4...v0.5.5)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add trunc\(x\) expression [\#3060](https://github.com/nebulastream/nebulastream/issues/3060)
+- \[DBPRO\] Add exp\(x\) expression [\#3057](https://github.com/nebulastream/nebulastream/issues/3057)
+- \[DBPRO\] Add sign\(x\) expression [\#3052](https://github.com/nebulastream/nebulastream/issues/3052)
+
 ## [v0.5.4](https://github.com/nebulastream/nebulastream/tree/v0.5.4) (2023-02-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.3...v0.5.4)
