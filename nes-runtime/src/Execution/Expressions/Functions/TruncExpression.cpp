@@ -55,4 +55,4 @@ Value<> TruncExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-}
+}// namespace NES::Runtime::Execution::Expressions
