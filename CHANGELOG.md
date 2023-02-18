@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.4](https://github.com/nebulastream/nebulastream/tree/v0.5.4) (2023-02-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.3...v0.5.4)
+
+#### Documentation 
+
+- \[Feature\] creation timestamp unit [\#3490](https://github.com/nebulastream/nebulastream/issues/3490)
+
 ## [v0.5.3](https://github.com/nebulastream/nebulastream/tree/v0.5.3) (2023-02-17)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.2...v0.5.3)
