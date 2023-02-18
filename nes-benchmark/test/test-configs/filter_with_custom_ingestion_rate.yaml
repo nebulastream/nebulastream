@@ -21,6 +21,6 @@ dataProvider:
 
 inputType: MemoryMode
 dataProviderMode: ZeroCopy
-outputFile: FilterWithUniformIngestionRate.csv
-benchmarkName: FilterWithUniformIngestionRate
+outputFile: FilterWithCustomIngestionRate.csv
+benchmarkName: FilterWithCustomIngestionRate
 query: 'Query::from("input1").filter(Attribute("value") < 100).sink(NullOutputSinkDescriptor::create());'
