@@ -48,6 +48,10 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
+    // calculate the number of buffers to produce per working time delta and append to the queue
+    // note that the predefined ingestion rates represent the number of buffers to be produced per second,
+    // so we multiply them with the working time delta and ingest the resulting number of buffers as quickly as possible into the system,
+    // before we wait for the next period to start
     auto workingTimeDeltaInSec = workingTimeDeltaInMillSeconds / 1000.0;
     auto buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[0] * workingTimeDeltaInSec;
     NES_ASSERT(buffersToProducePerWorkingTimeDelta > 0, "Ingestion rate is too small!");
@@ -57,23 +61,30 @@ void ExternalProvider::generateData() {
     auto ingestionRateIndex = 0L;
 
     started = true;
+
+    // continue producing buffers as long as the generator is running
     while (started) {
+        // get the timestamp of the current period
         auto periodStartTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         auto buffersProcessedCount = 0;
 
+        // produce the required number of buffers for the current period
         while (buffersProcessedCount < buffersToProducePerWorkingTimeDelta) {
             auto currentSecond =
                 std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
+            // get the buffer to produce
             auto bufferIndex = runningOverAllCount++ % preAllocatedBuffers.size();
             auto buffer = preAllocatedBuffers[bufferIndex];
 
+            // wrap the buffer in a tuple buffer and set its metadata
             auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
             wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
             wrapBuffer.setCreationTimestamp(
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
+            // create a buffer holder and write it to the queue
             TupleBufferHolder bufferHolder;
             bufferHolder.bufferToHold = wrapBuffer;
 
@@ -81,6 +92,7 @@ void ExternalProvider::generateData() {
                 NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
             }
 
+            // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
             if (lastSecond != currentSecond) {
                 if ((buffersToProducePerWorkingTimeDelta =
                          predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec) == 0) {
@@ -94,6 +106,7 @@ void ExternalProvider::generateData() {
             buffersProcessedCount++;
         }
 
+        // get the current time and wait until the next period start time
         auto currentTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
