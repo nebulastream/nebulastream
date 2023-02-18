@@ -69,6 +69,7 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::IntConfigOption ingestionRateCount;
     Configurations::IntConfigOption numberOfPeriods;
     Configurations::StringConfigOption ingestionRateDistribution;
+    Configurations::StringConfigOption customValues;
     Configurations::StringConfigOption dataProvider;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
