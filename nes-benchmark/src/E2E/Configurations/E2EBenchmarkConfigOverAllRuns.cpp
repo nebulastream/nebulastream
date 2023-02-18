@@ -45,6 +45,7 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     ingestionRateCount = ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
     numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
     ingestionRateDistribution = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
+    customValues = ConfigurationOption<std::string>::create("customValues", "50000", "A vector of custom ingestion rates");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
 }
 
@@ -68,6 +69,7 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- ingestionRateCount: " << ingestionRateCount->getValueAsString() << std::endl
         << "- numberOfPeriods: " << numberOfPeriods->getValueAsString() << std::endl
         << "- ingestionRateDistribution: " << ingestionRateDistribution->getValue() << std::endl
+        << "- customValues: " << customValues->getValue() << std::endl
         << "- dataProvider: " << dataProvider->getValue() << std::endl;
 
     return oss.str();
@@ -100,6 +102,7 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
             configOverAllRuns.ingestionRateDistribution->setValueIfDefined(ingestionRateDistributionNode["type"]);
             configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(ingestionRateDistributionNode["ingestionRateInBuffers"]);
             configOverAllRuns.numberOfPeriods->setValueIfDefined(ingestionRateDistributionNode["numberOfPeriods"]);
+            configOverAllRuns.customValues->setValueIfDefined(ingestionRateDistributionNode["values"]);
         }
     }
 

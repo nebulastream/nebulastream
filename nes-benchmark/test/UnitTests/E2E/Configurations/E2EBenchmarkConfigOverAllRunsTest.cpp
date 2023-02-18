@@ -13,13 +13,13 @@
 */
 
 #include <API/Schema.hpp>
-#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
+#include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-#include <Util/yaml/Yaml.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
+#include <gtest/gtest.h>
 
 namespace NES::Benchmark {
     class E2EBenchmarkConfigOverAllRunsTest : public Testing::NESBaseTest {
@@ -70,6 +70,7 @@ namespace NES::Benchmark {
             << "- ingestionRateCount: 10000" << std::endl
             << "- numberOfPeriods: 1" << std::endl
             << "- ingestionRateDistribution: Uniform" << std::endl
+            << "- customValues: 50000" << std::endl
             << "- dataProvider: Internal" << std::endl;
         auto expectedString = oss.str();
 
@@ -102,6 +103,7 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 10000);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 1);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Uniform");
+        ASSERT_EQ(defaultConfigOverAllRuns.customValues->getValue(), "50000");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "Internal");
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
@@ -132,6 +134,7 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateCount->getValue(), 1000);
         ASSERT_EQ(defaultConfigOverAllRuns.numberOfPeriods->getValue(), 64);
         ASSERT_EQ(defaultConfigOverAllRuns.ingestionRateDistribution->getValue(), "Sinus");
+        ASSERT_EQ(defaultConfigOverAllRuns.customValues->getValue(), "50000");
         ASSERT_EQ(defaultConfigOverAllRuns.dataProvider->getValue(), "External");
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: Uniform");
     }

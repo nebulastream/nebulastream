@@ -12,31 +12,23 @@
     limitations under the License.
 */
 
-#ifndef NES_MDINGESTIONRATEGENERATOR_HPP
-#define NES_MDINGESTIONRATEGENERATOR_HPP
+#ifndef NES_CUSTOMINGESTIONRATEGENERATOR_HPP
+#define NES_CUSTOMINGESTIONRATEGENERATOR_HPP
 
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
 /**
- * @brief The following vectors contain values for the ingestion rate distributions M1, M2, D1 and D2
- */
-const std::vector<uint64_t> m1Values{35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000,35000};
-const std::vector<uint64_t> m2Values{10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000};
-const std::vector<uint64_t> d1Values{10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000};
-const std::vector<uint64_t> d2Values{100000,90000,80000,70000,60000,50000,40000,30000,20000,10000,20000,30000,40000,50000,60000,70000,80000,90000,100000,90000,80000,70000,60000,50000,40000,30000,20000,30000,40000,50000};
-
-/**
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of M1, M2, D1 and D2 distributed ingestion rates.
  */
-class MDIngestionRateGenerator : public IngestionRateGenerator {
+class CustomIngestionRateGenerator : public IngestionRateGenerator {
   public:
     /**
      * @brief constructor for a uniform ingestion rate generator
      * @param ingestionRateDistribution
      * @param ingestionRateCount
      */
-    explicit MDIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateCount);
+    explicit CustomIngestionRateGenerator(uint64_t ingestionRateCount, std::vector<uint64_t>& customValues);
 
     /**
       * @brief creates a vector of length ingestionRateCount and fills it with values of m1Values, m2Values, d1Values or d2Values
@@ -45,9 +37,9 @@ class MDIngestionRateGenerator : public IngestionRateGenerator {
     std::vector<std::uint64_t> generateIngestionRates() override;
 
   private:
-    IngestionRateDistribution ingestionRateDistribution;
+    std::vector<uint64_t> customValues;
     std::vector<uint64_t> predefinedIngestionRates;
 };
 }// namespace NES::Benchmark::IngestionRateGeneration
 
-#endif//NES_MDINGESTIONRATEGENERATOR_HPP
+#endif//NES_CUSTOMINGESTIONRATEGENERATOR_HPP

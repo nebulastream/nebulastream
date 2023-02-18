@@ -30,10 +30,7 @@ enum class IngestionRateDistribution : uint8_t {
     UNIFORM,
     SINUS,
     COSINUS,
-    M1,
-    M2,
-    D1,
-    D2,
+    CUSTOM,
     UNDEFINED
 };
 
