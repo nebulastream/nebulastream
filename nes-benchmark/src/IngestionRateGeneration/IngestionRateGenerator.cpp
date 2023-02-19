@@ -26,13 +26,13 @@ IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E
     auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
     auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
     auto numberOfPeriods = configOverAllRuns.numberOfPeriods->getValue();
-    auto customValues = NES::Util::splitWithStringDelimiter<uint64_t>(configOverAllRuns.customValues->getValue(), ",");
 
     if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM) {
         return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
     } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
         return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCount, numberOfPeriods);
     } else if (ingestionRateDistribution == IngestionRateDistribution::CUSTOM) {
+        auto customValues = NES::Util::splitWithStringDelimiter<uint64_t>(configOverAllRuns.customValues->getValue(), ",");
         return std::make_unique<CustomIngestionRateGenerator>(ingestionRateCount, customValues);
     } else {
         NES_THROW_RUNTIME_ERROR("Ingestion rate distribution not supported");
