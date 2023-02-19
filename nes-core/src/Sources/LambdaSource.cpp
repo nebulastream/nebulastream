@@ -71,6 +71,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     auto buffer = bufferManager->getBufferBlocking();
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(),
                     "value to write is larger than the buffer");
+    //    Runtime::TupleBuffer buffer;
 
     generationFunction(buffer, numberOfTuplesToProduce);
     if (!buffer) {

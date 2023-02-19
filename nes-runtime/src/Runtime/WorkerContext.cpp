@@ -67,7 +67,7 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ",";
     statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
