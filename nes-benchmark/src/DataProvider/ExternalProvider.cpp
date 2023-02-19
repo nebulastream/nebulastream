@@ -81,7 +81,7 @@ void ExternalProvider::generateData() {
             // wrap the buffer in a tuple buffer and set its metadata
             auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
             wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-            wrapBuffer.setCreationTimestamp(
+            wrapBuffer.setCreationTimestampInMS(
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 
             // create a buffer holder and write it to the queue
