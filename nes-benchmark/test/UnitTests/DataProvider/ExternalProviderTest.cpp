@@ -47,6 +47,51 @@ namespace NES::Benchmark::DataProvision {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
+    TEST_F(ExternalProviderTest, uniformIngestionRateTest) {
+        E2EBenchmarkConfigOverAllRuns configOverAllRuns;
+        configOverAllRuns.dataProvider->setValue("External");
+        size_t sourceId = 0;
+        size_t numberOfBuffers = 2;
+
+        std::vector<Runtime::TupleBuffer> createdBuffers;
+        createdBuffers.reserve(numberOfBuffers);
+
+        auto schemaDefault = Schema::create(Schema::ROW_LAYOUT)
+                                 ->addField(createField("id", NES::UINT64))
+                                 ->addField(createField("value", NES::UINT64))
+                                 ->addField(createField("payload", NES::UINT64))
+                                 ->addField(createField("timestamp", NES::UINT64));
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
+
+        for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+            Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
+            auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, bufferRef);
+
+            for (uint64_t curRecord = 0; curRecord < dynamicBuffer.getCapacity(); ++curRecord) {
+                dynamicBuffer[curRecord]["id"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["value"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
+                dynamicBuffer[curRecord]["timestamp"].write<uint64_t>(curRecord);
+            }
+
+            dynamicBuffer.setNumberOfTuples(dynamicBuffer.getCapacity());
+            createdBuffers.emplace_back(bufferRef);
+        }
+
+        auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+        // we wait for buffers to be ingested into the buffer queue
+        sleep(1);
+
+        auto& bufferQueue = externalProviderDefault->getBufferQueue();
+        auto queueSize = bufferQueue.size();
+
+        // we expect queueSize to not exactly match the theoretical value of 50000 as we cannot ensure that exactly 1 second has
+        // passed between starting the provider and getting the queue size
+        NES_INFO(queueSize);
+        ASSERT_TRUE(50000 <= queueSize && queueSize <= 50500);
+    }
+
     TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
