@@ -1,6 +1,0 @@
-# ~~~ This should not be used as an example, rather we omit unnecessary parameters for testing purposes ~~~
-# We only use this to test if such a configuration throws an exception
-dataProvider:
-  name: External
-  ingestionRateDistribution:
-    type: SomeRandomType
