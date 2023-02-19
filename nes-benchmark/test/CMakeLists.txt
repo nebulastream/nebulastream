@@ -54,4 +54,8 @@ target_link_libraries(e2e-benchmark-config-over-all-runs-test nes-benchmark)
 add_nes_unit_test(e2e-benchmark-runner-test "UnitTests/E2E/E2ERunnerTest.cpp")
 target_link_libraries(e2e-benchmark-runner-test nes-benchmark)
 
+# Adding unit test for all ingestion rate generators
+add_nes_unit_test(ingestion-rate-generation-test "UnitTests/IngestionRateGeneration/IngestionRateGenerationTest.cpp")
+target_link_libraries(ingestion-rate-generation-test nes-benchmark)
+
 message(STATUS "Done building benchmarks tests")
