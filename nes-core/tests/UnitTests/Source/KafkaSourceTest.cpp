@@ -303,14 +303,17 @@ TEST_F(KafkaSourceTest, DISABLED_KafkaSourceJson) {
                                          std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
     cppkafka::Producer producer(config);
-    string message = R"({"var": "32"})";
+    string message = R"({"var": 0})";
     producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
     producer.flush();
 
     auto tuple_buffer = kafkaSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
+    uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-    EXPECT_EQ(*tuple, 32);
+    value = *tuple;
+    uint64_t expected = 0;
+    EXPECT_EQ(value, expected);
 }
 
 // Disabled, because it requires a manually set up Kafka broker

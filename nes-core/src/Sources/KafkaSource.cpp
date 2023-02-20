@@ -105,6 +105,8 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
     while (true) {
+        //if the source is requested to stop we
+        messages = consumer->poll_batch(batchSize);
         //iterate over the polled message buffer
         if (!messages.empty()) {
             reuseCnt++;
@@ -114,6 +116,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
                 }
                 return std::nullopt;
             } else {
+                successFullPollCnt++;
                 const uint64_t tupleSize = schema->getSchemaSizeInBytes();
                 const uint64_t tupleCount = messages.back().get_payload().get_size() / tupleSize;
                 const uint64_t payloadSize = messages.back().get_payload().get_size();
@@ -140,22 +143,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             }//end of else
         } else {
             NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
-
-            //poll a batch of messages and put it into a vector
-            messages = consumer->poll_batch(batchSize);
-
-            //do bookkeeping make the behavior comprehensible
-            if (!messages.empty()) {
-                successFullPollCnt++;
-            } else {
-                failedFullPollCnt++;
-            }
-
-            //if the source is requested to stop we
-            if (!this->running) {
-                NES_DEBUG("Source stops so stop pulling from kafka");
-                return std::nullopt;
-            }
+            failedFullPollCnt++;
         }
     }
 }
