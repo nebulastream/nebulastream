@@ -528,6 +528,22 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
+#ifdef TFDEF
+        auto f1_in = std::make_shared<ExpressionItem>(Attribute("f1", NES::BasicType::FLOAT32));
+        auto f2_in = std::make_shared<ExpressionItem>(Attribute("f2", NES::BasicType::FLOAT32));
+        auto f1_out = std::make_shared<ExpressionItem>(Attribute("f1_out", NES::BasicType::FLOAT32));
+        auto f2_out = std::make_shared<ExpressionItem>(Attribute("f2_out", NES::BasicType::FLOAT32));
+        auto f3_out = std::make_shared<ExpressionItem>(Attribute("f3_out", NES::BasicType::FLOAT32));
+
+        auto inferModel = LogicalOperatorFactory::createInferModelOperator("test.file",
+                                                                           {f1_in, f2_in}, {f1_out, f2_out, f3_out});
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(inferModel);
+        auto inferModelOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(inferModel->equal(inferModelOperator));
+#endif // TFDEF
+    }
+
+    {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(filter);
         auto filterOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
