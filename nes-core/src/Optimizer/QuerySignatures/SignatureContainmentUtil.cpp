@@ -47,19 +47,19 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
                   << leftQueryProjectionConditions.to_string());
         NES_TRACE("SignatureContainmentUtil::checkContainment: content of right sig expression vectors: "
                   << rightQueryProjectionConditions.to_string());
-        //create FOL for projection containment to check if Sig2 contained by Sig1
+        //create First Order Logic (FOL) for projection containment to check if right sig contained by left sig
         //The rest of this method checks for containment as follows:
-        //  check if sig2 ⊆ sig1 for projections (including map conditions), i.e. if ((!cond2 && cond1) == unsat) <=> sig2 ⊆ sig1,
+        //  check if right sig ⊆ left sig for projections (including map conditions), i.e. if ((!cond2 && cond1) == unsat) <=> right sig ⊆ left sig,
         // since we're checking for projection containment, the negation is on the side of the contained condition,
-        // e.g. sig2 ⊆ sig1 <=> ((!(attr1==true && attr2==45) && (attr1==true && attr2==45, attr3==true)) == unsat)
-        //      true: check sig1 ⊆ sig2 for projections (including map conditions) --> if true, we have equal projections,
+        // e.g. right sig ⊆ left sig <=> ((!(attr1==true && attr2==45) && (attr1==true && attr2==45, attr3==true)) == unsat)
+        //      true: check left sig ⊆ right sig for projections (including map conditions) --> if true, we have equal projections,
         //      i.e. can only check other containment relationships if sources, projections, and maps are equal
         //          true: check filter containment --> see checkFilterContainment() for details
         //          false: return SIG_TWO_CONTAINED
-        //      false: check sig1 ⊆ sig2 for projections (including map conditions)
+        //      false: check left sig ⊆ right sig for projections (including map conditions)
         //          true: return SIG_ONE_CONTAINED
         //          false: return NO_CONTAINMENT
-        //check if Sig2 contained by Sig1 for projection
+        //check if right sig contained by left sig for projection
         if (conditionsUnsatisfied(rightQueryProjectionConditions, leftQueryProjectionConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Sig1 contains Sig2.");
             //check for equality in projection, we can only check other containment relationships if sources, projections and maps are equal
@@ -169,7 +169,7 @@ bool SignatureContainmentUtil::conditionsUnsatisfied(const z3::expr_vector& nega
     if (solver->check() == z3::unsat) {
         conditionUnsatisfied = true;
     }
-    solver->pop(2);
+    solver->pop(NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER);
     counter++;
     if (counter >= RESET_SOLVER_THRESHOLD) {
         resetSolver();

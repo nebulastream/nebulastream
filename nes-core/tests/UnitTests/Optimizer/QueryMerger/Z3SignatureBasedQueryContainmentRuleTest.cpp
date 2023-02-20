@@ -51,7 +51,6 @@ class Z3SignatureBasedQueryContainmentRuleTest : public Testing::TestWithErrorHa
     std::vector<std::tuple<Query, Query>> containmentCasesTrue = {
         //Equal
         std::tuple<Query, Query>(Query::from("car")
-
                                      .map(Attribute("value") = 40)
                                      .filter(Attribute("id") < 45)
                                      .filter(Attribute("id") < 45)
