@@ -53,6 +53,9 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field: " << schemaKeys[fieldIndex]);
             jsonValue = parsedJSONObject[schemaKeys[fieldIndex]].dump();
+            if (jsonValue == "null") { // key doesn't exist in parsedJSONObject, which is not an error itself
+                return false;
+            }
         } catch (nlohmann::json::exception jsonException) {
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
