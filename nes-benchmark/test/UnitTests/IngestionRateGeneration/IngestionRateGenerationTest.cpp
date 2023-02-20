@@ -58,14 +58,8 @@ namespace NES::Benchmark {
         configOverAllRuns.dataProvider->setValue("External");
 
         auto defaultIngestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
-        //auto expectedIngestionRateGenerator = std::dynamic_cast<IngestionRateGeneration::UniformIngestionRateGenerator&>(defaultIngestionRateGenerator.get());
-        //ASSERT_TRUE(expectedIngestionRateGenerator != NULL);
-
-        auto ingestionRateInBuffers = configOverAllRuns.ingestionRateInBuffers->getValue();
-        auto ingestionRateCount = configOverAllRuns.ingestionRateCount->getValue();
-
-        auto expectedIngestionRateGenerator = std::make_unique<IngestionRateGeneration::UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
-        ASSERT_TRUE(typeid(defaultIngestionRateGenerator) == typeid(expectedIngestionRateGenerator));
+        auto expectedIngestionRateGenerator = dynamic_cast<IngestionRateGeneration::UniformIngestionRateGenerator*>(defaultIngestionRateGenerator.get());
+        ASSERT_TRUE(expectedIngestionRateGenerator != nullptr);
     }
 
     TEST_F(IngestionRateGenerationTest, undefinedIngestionRateTest) {
