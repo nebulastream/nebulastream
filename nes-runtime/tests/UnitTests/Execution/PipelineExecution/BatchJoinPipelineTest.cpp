@@ -45,6 +45,7 @@ namespace NES::Runtime::Execution {
 
 class BatchJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
+    Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -122,7 +123,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto joinBuildExecutablePipeline = provider->create(pipeline);
+    auto joinBuildExecutablePipeline = provider->create(pipeline, options);
     auto joinHandler = std::make_shared<Operators::BatchJoinHandler>();
     auto pipeline1Context = MockedPipelineExecutionContext({joinHandler});
     joinBuildExecutablePipeline->setup(pipeline1Context);

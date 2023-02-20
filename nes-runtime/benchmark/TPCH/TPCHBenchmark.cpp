@@ -78,7 +78,10 @@ class BenchmarkRunner {
             runQuery(compileTimeTimer, executionTimeTimer);
             sumCompilation += compileTimeTimer.getPrintTime();
             sumExecution += executionTimeTimer.getPrintTime();
-            NES_INFO2("Run {} compilation time {}, execution time {}", i, compileTimeTimer.getPrintTime(), executionTimeTimer.getPrintTime());
+            NES_INFO2("Run {} compilation time {}, execution time {}",
+                      i,
+                      compileTimeTimer.getPrintTime(),
+                      executionTimeTimer.getPrintTime());
         }
 
         NES_INFO2("Final {} compilation time {}, execution time {} ",
@@ -94,6 +97,7 @@ class BenchmarkRunner {
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
     ExecutablePipelineProvider* provider;
+    Nautilus::CompilationOptions options;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
@@ -109,8 +113,8 @@ class Query6Runner : public BenchmarkRunner {
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
         auto pipeline2 = plan.getPipeline(1);
-        auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
-        auto emitExecutablePipeline = provider->create(pipeline2.pipeline);
+        auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+        auto emitExecutablePipeline = provider->create(pipeline2.pipeline, options);
         aggExecutablePipeline->setup(*pipeline1.ctx);
         emitExecutablePipeline->setup(*pipeline2.ctx);
         compileTimeTimer.snapshot("setup");
@@ -138,7 +142,7 @@ class Query1Runner : public BenchmarkRunner {
         auto plan = TPCH_Query1::getPipelinePlan(tables, bm);
         compileTimeTimer.start();
         auto pipeline1 = plan.getPipeline(0);
-        auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
+        auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
         aggExecutablePipeline->setup(*pipeline1.ctx);
         compileTimeTimer.snapshot("setup");
         compileTimeTimer.pause();
@@ -168,9 +172,9 @@ class Query3Runner : public BenchmarkRunner {
         auto pipeline2 = plan.getPipeline(1);
         auto pipeline3 = plan.getPipeline(2);
         compileTimeTimer.start();
-        auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
-        auto orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline);
-        auto lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline);
+        auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+        auto orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline, options);
+        auto lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline, options);
 
         aggExecutablePipeline->setup(*pipeline1.ctx);
         orderCustomersJoinBuildPipeline->setup(*pipeline2.ctx);

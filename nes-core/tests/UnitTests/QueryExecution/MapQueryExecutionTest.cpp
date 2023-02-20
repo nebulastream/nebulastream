@@ -25,6 +25,9 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class MapQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
                               public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
@@ -36,7 +39,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */

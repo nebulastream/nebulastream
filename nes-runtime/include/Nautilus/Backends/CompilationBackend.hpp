@@ -15,6 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
 #include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Nautilus::Backends {
@@ -29,7 +31,8 @@ class CompilationBackend {
      * @brief Compiles ir graph to executable.
      * @return std::unique_ptr<Executable>
      */
-    virtual std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph>) = 0;
+    virtual std::unique_ptr<Executable>
+    compile(std::shared_ptr<IR::IRGraph>, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
     virtual ~CompilationBackend() = default;
 };
 

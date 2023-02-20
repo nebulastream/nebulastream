@@ -17,6 +17,7 @@ add_source_files(nes-common
         ThreadNaming.cpp
         FileMutex.cpp
         NonBlockingMonotonicSeqQueue.cpp
+        DumpHelper.cpp
 )
 add_subdirectory(yaml)
 add_subdirectory(Logger)

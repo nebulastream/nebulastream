@@ -26,6 +26,10 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
+
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class ThresholdWindowQueryExecutionTest
     : public Testing::TestWithErrorHandling<testing::Test>,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
@@ -38,7 +42,7 @@ class ThresholdWindowQueryExecutionTest
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */

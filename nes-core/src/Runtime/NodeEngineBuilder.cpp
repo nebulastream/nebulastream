@@ -277,6 +277,12 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
     // sets the query compiler
     queryCompilationOptions->setQueryCompiler(queryCompilerConfiguration.queryCompilerType);
+
+    // set the dump mode
+    queryCompilationOptions->setDumpMode(queryCompilerConfiguration.queryCompilerDumpMode);
+
+    // set nautilus backend
+    queryCompilationOptions->setNautilusBackend(queryCompilerConfiguration.nautilusBackend);
     return queryCompilationOptions;
 }
 

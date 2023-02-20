@@ -15,6 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
 
+#include <Util/DumpHelper.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
 #include <llvm/IR/Module.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
@@ -31,7 +33,8 @@ class LLVMIROptimizer {
     LLVMIROptimizer(); // Disable default constructor
     ~LLVMIROptimizer();// Disable default destructor
 
-    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions);
+    static llvm::function_ref<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(bool linkProxyFunctions,
+                                                                                   const CompilationOptions& options);
 };
 }// namespace NES::Nautilus::Backends::MLIR
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

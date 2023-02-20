@@ -29,7 +29,9 @@
 
 namespace NES::Nautilus::Backends::MLIR {
 
-llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions) {
+llvm::function_ref<llvm::Error(llvm::Module*)>
+LLVMIROptimizer::getLLVMOptimizerPipeline(bool linkProxyFunctions,
+                                          const CompilationOptions&) {
     // Return LLVM optimizer pipeline.
     if (linkProxyFunctions) {
         return [](llvm::Module* llvmIRModule) mutable {
@@ -50,11 +52,14 @@ llvm::function_ref<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizer
             return optimizedModule;
         };
     } else {
-        return [](llvm::Module* llvmIRModule) mutable {
+        return [](llvm::Module* llvmIRModule) {
             // TODO make the optimization level dynamic.
             auto optPipeline = mlir::makeOptimizingTransformer(1, 0, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::outs(), nullptr);
+            std::string result;
+            auto output = llvm::raw_string_ostream(result);
+            llvmIRModule->print(output, nullptr);
+
             return optimizedModule;
         };
     }

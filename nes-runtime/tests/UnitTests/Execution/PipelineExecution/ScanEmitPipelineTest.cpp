@@ -33,6 +33,7 @@ namespace NES::Runtime::Execution {
 
 class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
+    Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -50,6 +51,8 @@ class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelin
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
+        options.setDumpToConsole(true);
+        options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(0, bm, 100);
@@ -104,7 +107,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);

@@ -169,9 +169,6 @@ MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context
 mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std::shared_ptr<IR::IRGraph> ir) {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);
-    mlir::OpPrintingFlags flags;
-    llvm::raw_ostream& output = llvm::outs();
-    theModule->print(output, flags);
     // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -573,9 +570,6 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::IfOperat
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame) {
-    printf("BranchOperation.getNextBlock.getIdentifier: %s\n",
-           branchOp->getNextBlockInvocation().getBlock()->getIdentifier().c_str());
-    printf("BranchOperation first BlockArg name:\n");
     std::vector<mlir::Value> mlirTargetBlockArguments;
     for (auto targetBlockArgument : branchOp->getNextBlockInvocation().getArguments()) {
         mlirTargetBlockArguments.push_back(frame.getValue(targetBlockArgument->getIdentifier()));

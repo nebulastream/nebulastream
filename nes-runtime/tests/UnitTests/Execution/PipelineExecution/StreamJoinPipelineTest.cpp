@@ -64,7 +64,7 @@ class StreamJoinPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StreamJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -294,9 +294,9 @@ TEST_P(StreamJoinPipelineTest, streamJoinPipeline) {
     auto pipelineExecCtxSink =
         StreamJoinMockedPipelineExecutionContext(bufferManager, noWorkerThreads, streamJoinOpHandler, curPipelineId++);
 
-    auto executablePipelineLeft = provider->create(pipelineBuildLeft);
-    auto executablePipelineRight = provider->create(pipelineBuildRight);
-    auto executablePipelineSink = provider->create(pipelineSink);
+    auto executablePipelineLeft = provider->create(pipelineBuildLeft, options);
+    auto executablePipelineRight = provider->create(pipelineBuildRight, options);
+    auto executablePipelineSink = provider->create(pipelineSink, options);
 
     EXPECT_EQ(executablePipelineLeft->setup(pipelineExecCtxLeft), 0);
     EXPECT_EQ(executablePipelineRight->setup(pipelineExecCtxRight), 0);
