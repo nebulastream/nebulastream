@@ -13,6 +13,7 @@
 */
 #include <WorkQueues/StorageHandles/LockManager.hpp>
 #include <WorkQueues/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <algorithm>
 #include <utility>
 
 namespace NES {

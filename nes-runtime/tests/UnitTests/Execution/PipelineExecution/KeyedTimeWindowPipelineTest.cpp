@@ -49,7 +49,7 @@ class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelin
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("KeyedTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -147,11 +147,11 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum) {
 
     std::vector<OriginId> origins = {0};
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::KeyedSliceStaging>();
     auto preAggregationHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>(sliceStaging);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
@@ -259,11 +259,11 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
 
     std::vector<OriginId> origins = {0};
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::KeyedSliceStaging>();
     auto preAggregationHandler = std::make_shared<Operators::KeyedSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
 
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>(sliceStaging);
 
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});

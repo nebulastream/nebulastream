@@ -16,6 +16,7 @@
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <algorithm>
+#include <sstream>
 
 namespace NES::Nautilus::Tracing {
 
@@ -97,6 +98,12 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     }
 
     return mergeBlock;
+}
+
+std::string ExecutionTrace::toString() const {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const ExecutionTrace& executionTrace) {

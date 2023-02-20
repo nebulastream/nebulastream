@@ -21,7 +21,9 @@ namespace NES::Nautilus::Backends::MLIR {
  */
 class MLIRCompilationBackend : public CompilationBackend {
   public:
-    std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir) override;
+    std::unique_ptr<Executable> compile(std::shared_ptr<IR::IRGraph> ir,
+                                        const CompilationOptions& options,
+                                        const DumpHelper& dumpHelper) override;
 };
 
 }// namespace NES::Nautilus::Backends::MLIR

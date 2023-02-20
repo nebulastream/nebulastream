@@ -39,7 +39,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(const QueryCompilation::QueryCompil
                                              bool sourceSharing)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>()),
-      compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options->getCompilationStrategy())),
+      compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)), sourceSharing(sourceSharing) {}
@@ -55,12 +55,11 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
     NES_INFO("Compile Query with Nautilus");
     try {
         Timer timer("DefaultQueryCompiler");
-
         auto queryId = request->getQueryPlan()->getQueryId();
         auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
-
+        auto query = std::to_string(queryId) + "-" + std::to_string(subPlanId);
         // create new context for handling debug output
-        auto dumpContext = DumpContext::create("QueryCompilation-" + std::to_string(queryId) + "-" + std::to_string(subPlanId));
+        auto dumpContext = DumpContext::create("QueryCompilation-" + query);
 
         timer.start();
         NES_DEBUG2("compile query with id: {} subPlanId: {}", queryId, subPlanId);

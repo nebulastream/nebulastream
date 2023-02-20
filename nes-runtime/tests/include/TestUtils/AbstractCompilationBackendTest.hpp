@@ -43,7 +43,9 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
         std::cout << ir->toString() << std::endl;
         auto param = this->GetParam();
         auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
-        return compiler->compile(ir);
+        auto dumpHelper = DumpHelper::create("", true, false, "");
+        CompilationOptions options;
+        return compiler->compile(ir, options, dumpHelper);
     }
 };
 }// namespace NES::Nautilus

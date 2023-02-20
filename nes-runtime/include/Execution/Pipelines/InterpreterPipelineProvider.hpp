@@ -22,7 +22,8 @@ namespace NES::Runtime::Execution {
  */
 class InterpreterPipelineProvider : public ExecutablePipelineProvider {
   public:
-    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline) override;
+    std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
+                                                    const Nautilus::CompilationOptions&) override;
 };
 }// namespace NES::Runtime::Execution
 

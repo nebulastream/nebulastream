@@ -49,7 +49,7 @@ class GlobalTimeWindowPipelineTest : public Testing::NESBaseTest, public Abstrac
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GlobalTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -134,7 +134,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
@@ -142,7 +142,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithSum) {
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
@@ -238,7 +238,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     buffer.setSequenceNumber(1);
     buffer.setOriginId(0);
 
-    auto preAggExecutablePipeline = provider->create(preAggPipeline);
+    auto preAggExecutablePipeline = provider->create(preAggPipeline, options);
     auto sliceStaging = std::make_shared<Operators::GlobalSliceStaging>();
     std::vector<OriginId> origins = {0};
     auto preAggregationHandler = std::make_shared<Operators::GlobalSlicePreAggregationHandler>(10, 10, origins, sliceStaging);
@@ -246,7 +246,7 @@ TEST_P(GlobalTimeWindowPipelineTest, windowWithMultiAggregates) {
     auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
     preAggExecutablePipeline->setup(pipeline1Context);
 
-    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline);
+    auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::GlobalSliceMergingHandler>(sliceStaging);
 
     auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});

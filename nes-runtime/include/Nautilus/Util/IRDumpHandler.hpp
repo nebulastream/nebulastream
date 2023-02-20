@@ -20,8 +20,7 @@
 #include <memory>
 #include <unordered_set>
 
-namespace NES {
-namespace Nautilus::IR {
+namespace NES::Nautilus::IR {
 
 // class Operation;
 using OperationPtr = std::shared_ptr<Operations::Operation>;
@@ -70,7 +69,6 @@ class NESIRDumpHandler {
     void dumpHelper(BasicBlockPtr const& basicBlock);
 };
 
-}// namespace Nautilus::IR
-}// namespace NES
+}// namespace NES::Nautilus::IR
 
 #endif// NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

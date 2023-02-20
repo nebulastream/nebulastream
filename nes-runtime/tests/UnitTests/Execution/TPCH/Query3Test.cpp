@@ -64,6 +64,7 @@ class TPCH_Q3 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 
   public:
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F0_01;
+    Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
@@ -106,9 +107,9 @@ TEST_P(TPCH_Q3, joinPipeline) {
     auto pipeline1 = plan.getPipeline(0);
     auto pipeline2 = plan.getPipeline(1);
     auto pipeline3 = plan.getPipeline(2);
-    auto aggExecutablePipeline = provider->create(pipeline1.pipeline);
-    auto orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline);
-    auto lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline);
+    auto aggExecutablePipeline = provider->create(pipeline1.pipeline, options);
+    auto orderCustomersJoinBuildPipeline = provider->create(pipeline2.pipeline, options);
+    auto lineitems_ordersJoinBuildPipeline = provider->create(pipeline3.pipeline, options);
 
     aggExecutablePipeline->setup(*pipeline1.ctx);
     orderCustomersJoinBuildPipeline->setup(*pipeline2.ctx);

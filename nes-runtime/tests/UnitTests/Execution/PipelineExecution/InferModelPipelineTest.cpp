@@ -38,7 +38,7 @@ class InferModelPipelineTest : public Testing::NESBaseTest, public AbstractPipel
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("InferModelPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -130,7 +130,7 @@ TEST_P(InferModelPipelineTest, thresholdWindowWithSum) {
     dynamicBuffer[1][f4].write((bool) true);
     dynamicBuffer.setNumberOfTuples(2);
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto handler = std::make_shared<Operators::InferModelHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
 

@@ -21,6 +21,8 @@
 
 namespace NES::Runtime::Execution {
 
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
@@ -34,7 +36,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */

@@ -16,8 +16,8 @@
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <cstdint>
-namespace NES {
-namespace QueryCompilation {
+#include <string>
+namespace NES::QueryCompilation {
 
 /**
  * @brief Set of common options for the query compiler
@@ -30,6 +30,29 @@ class QueryCompilerOptions {
         // Uses the nautilus query compiler
         NAUTILUS_QUERY_COMPILER
     };
+
+    enum class DumpMode : uint8_t {
+        // Disables all dumping
+        NONE,
+        // Dumps intermediate representations to console, std:out
+        CONSOLE,
+        // Dumps intermediate representations to file
+        FILE,
+        // Dumps intermediate representations to console and file
+        FILE_AND_CONSOLE
+    };
+
+    enum class NautilusBackend : uint8_t {
+        // Uses the interpretation based nautilus backend.
+        INTERPRETER,
+        // Uses the mlir based nautilus backend.
+        MLIR_COMPILER,
+        // Uses the byte code interpretation based nautilus backend.
+        BC_INTERPRETER,
+        // Uses the flounder based nautilus backend.
+        FLOUNDER_COMPILER
+    };
+
     enum class FilterProcessingStrategy : uint8_t {
         // Uses a branches to process filter expressions
         BRANCHED,
@@ -126,6 +149,11 @@ class QueryCompilerOptions {
 
     void setWindowingStrategy(WindowingStrategy windowingStrategy);
 
+    [[nodiscard]] NautilusBackend getNautilusBackend() const;
+    void setNautilusBackend(const NautilusBackend nautilusBackend);
+    [[nodiscard]] const DumpMode& getDumpMode() const;
+    void setDumpMode(DumpMode dumpMode);
+
   protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
@@ -134,8 +162,9 @@ class QueryCompilerOptions {
     FilterProcessingStrategy filterProcessingStrategy;
     WindowingStrategy windowingStrategy;
     QueryCompiler queryCompiler;
+    NautilusBackend nautilusBackend;
+    DumpMode dumpMode;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

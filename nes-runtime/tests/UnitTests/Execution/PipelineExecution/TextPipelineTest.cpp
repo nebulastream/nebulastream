@@ -39,7 +39,7 @@ class TextPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExe
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-
+    Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TextPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -105,7 +105,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto executablePipeline = provider->create(pipeline);
+    auto executablePipeline = provider->create(pipeline, options);
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);

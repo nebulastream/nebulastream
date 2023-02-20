@@ -112,12 +112,12 @@ bool OperatorNode::addChild(NodePtr newNode) {
     });
 
     if (found == currentChildren.end()) {
-        NES_DEBUG2("OperatorNode: Adding node {} to the children.", newNode->toString());
+        NES_TRACE2("OperatorNode: Adding node {} to the children.", newNode->toString());
         children.push_back(newNode);
         newNode->addParent(shared_from_this());
         return true;
     }
-    NES_DEBUG2("OperatorNode: the node is already part of its children so skip add child operation.");
+    NES_TRACE2("OperatorNode: the node is already part of its children so skip add child operation.");
     return false;
 }
 
@@ -139,12 +139,12 @@ bool OperatorNode::addParent(NodePtr newNode) {
     });
 
     if (found == currentParents.end()) {
-        NES_DEBUG2("OperatorNode: Adding node {} to the Parents.", newNode->toString());
+        NES_TRACE2("OperatorNode: Adding node {} to the Parents.", newNode->toString());
         parents.push_back(newNode);
         newNode->addChild(shared_from_this());
         return true;
     }
-    NES_DEBUG2("OperatorNode: the node is already part of its parent so skip add parent operation.");
+    NES_TRACE2("OperatorNode: the node is already part of its parent so skip add parent operation.");
     return false;
 }
 

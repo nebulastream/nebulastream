@@ -28,6 +28,9 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class MapJavaUdfQueryExecutionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
@@ -38,7 +41,7 @@ class MapJavaUdfQueryExecutionTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         executionEngine =
-            std::make_shared<TestExecutionEngine>(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER);
+            std::make_shared<TestExecutionEngine>(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER, dumpMode);
     }
 
     /* Will be called before a test is executed. */

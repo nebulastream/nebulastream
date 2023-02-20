@@ -29,6 +29,9 @@ using Runtime::TupleBuffer;
 const static uint64_t windowSize = 10;
 const static uint64_t recordsPerBuffer = 100;
 
+// Dump IR
+constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
+
 class WindowAggregationFunctionTest
     : public Testing::TestWithErrorHandling<testing::Test>,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
@@ -42,7 +45,7 @@ class WindowAggregationFunctionTest
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         auto queryCompiler = this->GetParam();
 
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler);
+        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
         sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
     }
 
