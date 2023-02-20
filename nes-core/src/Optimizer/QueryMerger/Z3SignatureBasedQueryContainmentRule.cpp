@@ -61,7 +61,6 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
             auto hostQueryPlan = hostSharedQueryPlan->getQueryPlan();
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
-            std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             auto targetSink = targetQueryPlan->getSinkOperators()[0];
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
 
@@ -70,7 +69,6 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
             NES_TRACE("Z3SignatureBasedQueryContainmentRule: containment: " << containment);
             //todo: #3503 create a containment based query merger to update the GQP based on containment relationships
             if (containment != NO_CONTAINMENT) {
-                targetToHostSinkOperatorMap[targetSink] = hostSink;
                 foundMatch = true;
                 matched = true;
             }
