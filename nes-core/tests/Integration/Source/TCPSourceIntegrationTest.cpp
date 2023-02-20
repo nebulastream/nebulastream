@@ -65,7 +65,13 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      */
     void startServer() {
         // Create a socket (IPv4, TCP)
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        // After one test was executed, the remaining test calls to create a socket initially return 0
+        // The close method does not recognize 0 as a valid file descriptor and therefore will not close the socket properly, hence
+        // we use a while loop to retrieve a valid file descriptor
+        while (sockfd == 0) {
+            sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            NES_TRACE("TCPSourceIntegrationTest::startServer: sockfd: " << sockfd);
+        }
         if (sockfd == -1) {
             NES_ERROR("TCPSourceIntegrationTest: Failed to create socket. errno: " << errno);
             exit(EXIT_FAILURE);
@@ -95,13 +101,16 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     }
 
     /**
-     * @brief stopps the TCP server running on tcpServerPort
+     * @brief stops the TCP server running on tcpServerPort
      */
     void stopServer() {
         // Close the connections
-        while (close(sockfd) < 0) {
-            NES_TRACE("TCPSourceIntegrationTest: Closing Server connection pls wait ...");
-        };
+        auto closed = close(sockfd);
+        NES_TRACE("Closing Server connection pls wait ..." << closed);
+        if (closed == -1) {
+            NES_ERROR("TCPSourceIntegrationTest::stopServer: Could not close socket. " << strerror(errno));
+            exit(EXIT_FAILURE);
+        }
     }
 
     /**
@@ -112,18 +121,15 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     int sendMessages(std::string message, int repeatSending) {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << errno);
+            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
             return -1;
         }
-
         for (int i = 0; i < repeatSending; ++i) {
             NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message << " iter=" << i);
             send(connection, message.c_str(), message.size(), 0);
         }
-
         // Close the connections
         return close(connection);
     }
@@ -135,13 +141,11 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     int sendMessageCSVVariableLength() {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << errno);
+            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
             return -1;
         }
-
         std::string message = "100,4.986,sonne";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
@@ -183,13 +187,11 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
     int sendMessageJSONVariableLength() {
         // Grab a connection from the queue
         auto addrlen = sizeof(sockaddr);
-
         int connection = accept(sockfd, (struct sockaddr*) &sockaddr, (socklen_t*) &addrlen);
         if (connection < 0) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << errno);
+            NES_ERROR("TCPSourceIntegrationTest: Failed to grab connection. errno: " << strerror(errno));
             return -1;
         }
-
         std::string message = "{\"id\":\"4\", \"value\":\"5.893\", \"name\":\"hello\"}";
         NES_TRACE("TCPSourceIntegrationTest: Sending message: " << message);
         send(connection, std::to_string(message.length()).c_str(), 2, 0);
