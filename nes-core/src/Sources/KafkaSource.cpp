@@ -97,56 +97,70 @@ KafkaSource::~KafkaSource() {
               << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
               << " failedFullPollCnt=" << failedFullPollCnt << "reuseCnt=" << reuseCnt);
 }
-std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
-    if (!connect()) {
-        NES_DEBUG("Connect Kafa Source");
-    }
 
+std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
+    NES_DEBUG("TCPSource  " << this << ": receiveData ");
+    NES_DEBUG("TCPSource buffer allocated ");
+    if (!connect()) {
+        return std::nullopt;
+    }
+    auto tupleBuffer = allocateBuffer();
+    try {
+        do {
+            if (!running) {
+                return std::nullopt;
+            }
+            fillBuffer(tupleBuffer);
+        } while (tupleBuffer.getNumberOfTuples() == 0);
+    } catch (const std::exception& e) {
+        NES_ERROR("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
+        throw e;
+    }
+    return tupleBuffer.getBuffer();
+}
+
+
+bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
     uint64_t currentPollCnt = 0;
     NES_DEBUG("KAFKASOURCE tries to receive data...");
-    while (true) {
-        //if the source is requested to stop we
-        messages = consumer->poll_batch(batchSize);
-        //iterate over the polled message buffer
-        if (!messages.empty()) {
-            reuseCnt++;
-            if (messages.back().get_error()) {
-                if (!messages.back().is_eof()) {
-                    NES_WARNING("KAFKASOURCE received error notification: " << messages.back().get_error());
-                }
-                return std::nullopt;
-            } else {
-                successFullPollCnt++;
-                const uint64_t tupleSize = schema->getSchemaSizeInBytes();
-                const uint64_t tupleCount = messages.back().get_payload().get_size() / tupleSize;
-                const uint64_t payloadSize = messages.back().get_payload().get_size();
+    //poll a batch of messages and put it into a vector
+    messages = consumer->poll_batch(batchSize);
 
-                NES_TRACE("KAFKASOURCE recv #tups: " << tupleCount << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
-                                                     << ", msg: " << messages.back().get_payload());
-                auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
-                auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
-
-                if (useJson) {
-                    auto buffer = allocateBuffer();
-                    for (auto& message : messages) {
-                        inputParser->writeInputTupleToTupleBuffer(std::string(message.get_payload()),
-                                                                  tupleCount, buffer,
-                                                                  schema, localBufferManager);
-                    }
-                    buffer.setNumberOfTuples(tupleCount);
-                    generatedTuples += tupleCount;
-                    messages.pop_back();
-                    return buffer.getBuffer();
-                } else {
-                    NES_ERROR("KafkaSource::receiveData: Unknown input format, use JSON");
-                }
-            }//end of else
+    //iterate over the polled message buffer
+    if (!messages.empty()) {
+        reuseCnt++;
+        if (messages.back().get_error()) {
+            if (!messages.back().is_eof()) {
+                NES_WARNING("KAFKASOURCE received error notification: " << messages.back().get_error());
+            }
+            return false;
         } else {
-            NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
-            failedFullPollCnt++;
-        }
+            const uint64_t tupleSize = schema->getSchemaSizeInBytes();
+            const uint64_t tupleCount = messages.back().get_payload().get_size() / tupleSize;
+            const uint64_t payloadSize = messages.back().get_payload().get_size();
+
+            NES_TRACE("KAFKASOURCE recv #tups: " << tupleCount << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
+                                                 << ", msg: " << messages.back().get_payload());
+            auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
+            auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
+
+            for (auto& message : messages) {
+                inputParser->writeInputTupleToTupleBuffer(std::string(message.get_payload()),
+                                                          tupleCount, tupleBuffer,
+                                                          schema, localBufferManager);
+            }
+            tupleBuffer.setNumberOfTuples(tupleCount);
+            generatedTuples += tupleCount;
+            messages.pop_back();
+            generatedBuffers++;
+            return true;
+        }//end of else
     }
+    NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
+    failedFullPollCnt++;
+    return false;
 }
+
 
 std::string KafkaSource::toString() const {
     std::stringstream ss;

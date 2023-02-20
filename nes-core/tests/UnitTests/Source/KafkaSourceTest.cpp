@@ -284,37 +284,86 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
     EXPECT_EQ(str, expected);
 }
 #endif
+// Disabled, because it requires a manually set up Kafka broker
+TEST_F(KafkaSourceTest, testDeployOneWorkerWithKafkaSourceConfigJson) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-TEST_F(KafkaSourceTest, KafkaSourceJson) {
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         kafkaSourceType,
-                                         OPERATORID,
-                                         OPERATORID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+
+    NES_INFO("KAFKASOURCETEST:: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    //register logical source
+    std::string source =
+        R"(Schema::create()->addField(createField("var", UINT32));)";
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+    NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
+
+    // submit message to kafka
     cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
     cppkafka::Producer producer(config);
-    string message = R"({"var": 0})";
+    string message = R"({"var": 6})";
     producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
     producer.flush();
 
-    auto tuple_buffer = kafkaSource->receiveData();
-    EXPECT_TRUE(tuple_buffer.has_value());
-    uint64_t value = 0;
-    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-    value = *tuple;
-    uint64_t expected = 0;
-    EXPECT_EQ(value, expected);
+    NES_INFO("KAFKASOURCETEST:: Start worker 1");
+    wrkConf->coordinatorPort = port;
+    kafkaSourceType->setBrokers(KAFKA_BROKER);
+    kafkaSourceType->setTopic(topic);
+    kafkaSourceType->setGroupId(groupId);
+    kafkaSourceType->setAutoCommit(true);
+    kafkaSourceType->setConnectionTimeout(100);
+    kafkaSourceType->setNumberOfBuffersToProduce(1);
+    auto physicalSource = PhysicalSource::create("stream", "test_stream", kafkaSourceType);
+    wrkConf->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("KAFKASOURCETEST: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
+    NES_INFO("KAFKASOURCETEST: Submit query");
+    string query = R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"("));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    sleep(2);
+    NES_INFO("KAFKASOURCETEST: Remove query");
+    queryService->validateAndQueueStopQueryRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|stream$var:UINT32|\n"
+        "+----------------------------------------------------+\n"
+        "|0|\n|0|\n"
+        "+----------------------------------------------------+";
+
+    NES_INFO("TCPSourceIntegrationTest: content=" << content);
+    NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    NES_INFO("KAFKASOURCETEST: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("KAFKASOURCETEST: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("KAFKASOURCETEST: Test finished");
 }
 
 // Disabled, because it requires a manually set up Kafka broker
