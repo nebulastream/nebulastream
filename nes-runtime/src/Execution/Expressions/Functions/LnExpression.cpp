@@ -21,11 +21,11 @@ LnExpression::LnExpression(const NES::Runtime::Execution::Expressions::Expressio
     : subExpression(subExpression) {}
 
 /**
-    * @brief This method calculates the ln of x.
-    * This function is basically a wrapper for std::log and enables us to use it in our execution engine framework.
-    * @param x double
-    * @return double
-    */
+* @brief This method calculates the ln of x.
+* This function is basically a wrapper for std::log and enables us to use it in our execution engine framework.
+* @param x double
+* @return double
+*/
 double calculateLn(double x) { return std::log(x); }
 
 Value<> LnExpression::execute(NES::Nautilus::Record& record) const {

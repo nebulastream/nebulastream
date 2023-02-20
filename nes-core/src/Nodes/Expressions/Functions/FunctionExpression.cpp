@@ -4,23 +4,23 @@
 
 namespace NES {
 
-FunctionExpression::FunctionExpression(DataTypePtr stamp,
-                                       std::string functionName,
-                                       std::vector<ExpressionNodePtr> arguments,
-                                       std::unique_ptr<LogicalFunction> function)
-    : ExpressionNode(std::move(stamp)), functionName(std::move(functionName)), arguments(std::move(arguments)),
-      function(std::move(function)) {}
+FunctionExpression::FunctionExpression(DataTypePtr stamp, std::string functionName, std::unique_ptr<LogicalFunction> function)
+    : ExpressionNode(std::move(stamp)), functionName(std::move(functionName)), function(std::move(function)) {}
 
 ExpressionNodePtr FunctionExpression::create(const DataTypePtr& stamp,
                                              const std::string& functionName,
                                              const std::vector<ExpressionNodePtr>& arguments) {
     auto function = FunctionRegistry::getFunction(functionName);
-    return std::make_shared<FunctionExpression>(stamp, functionName, arguments, std::move(function));
+    auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function));
+    for (const auto& arg : arguments) {
+        expression->addChild(arg);
+    }
+    return expression;
 }
 
 void FunctionExpression::inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) {
     std::vector<DataTypePtr> argumentTypes;
-    for (const auto& input : arguments) {
+    for (const auto& input : getArguments()) {
         input->inferStamp(typeInferencePhaseContext, schema);
         argumentTypes.emplace_back(input->getStamp());
     }
@@ -39,5 +39,13 @@ bool FunctionExpression::equal(const NodePtr& rhs) const {
 }
 
 ExpressionNodePtr FunctionExpression::copy() { return FunctionExpression::create(stamp, functionName, arguments); }
+const std::string& FunctionExpression::getFunctionName() const { return functionName; }
+std::vector<ExpressionNodePtr> FunctionExpression::getArguments() const {
+    std::vector<ExpressionNodePtr> arguments;
+    for (const auto& child : getChildren()) {
+        arguments.emplace_back(child->as<ExpressionNode>());
+    }
+    return arguments;
+}
 
 }// namespace NES

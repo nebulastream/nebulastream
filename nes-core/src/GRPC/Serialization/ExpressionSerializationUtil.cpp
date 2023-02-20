@@ -35,6 +35,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
@@ -198,6 +199,19 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(Serializabl
             auto fieldAssignmentExpression = deserializeExpression(serializedFieldAccessExpression.mutable_assignment());
             expressionNodePtr = FieldAssignmentExpressionNode::create(fieldAccessNode->as<FieldAccessExpressionNode>(),
                                                                       fieldAssignmentExpression);
+        } else if (serializedExpression->details().Is<SerializableExpression_FunctionExpression>()) {
+            // de-serialize field read expression node.
+            NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as function expression node.");
+            SerializableExpression_FunctionExpression functionExpression;
+            serializedExpression->details().UnpackTo(&functionExpression);
+            auto functionName = functionExpression.functionname();
+            std::vector<ExpressionNodePtr> arguments;
+            for(auto arg:  functionExpression.arguments()){
+                arguments.emplace_back(deserializeExpression(&arg));
+            };
+            auto resultStamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression->mutable_stamp());
+            auto functionExpressionNode = FunctionExpression::create(resultStamp, functionName, arguments);
+            expressionNodePtr = functionExpressionNode;
         } else if (serializedExpression->details().Is<SerializableExpression_WhenExpression>()) {
             // de-serialize WHEN expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as When expression node.");
@@ -427,6 +441,18 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(const ExpressionNo
         auto equalsExpressionNode = expression->as<NegateExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_NegateExpression();
         serializeExpression(equalsExpressionNode->child(), serializedExpressionNode.mutable_child());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<FunctionExpression>()) {
+        // serialize negate expression node.
+        NES_TRACE(
+            "ExpressionSerializationUtil:: serialize function logical expression to SerializableExpression_FunctionExpression");
+        auto functionExpressionNode = expression->as<FunctionExpression>();
+        auto serializedExpressionNode = SerializableExpression_FunctionExpression();
+        serializedExpressionNode.set_functionname(functionExpressionNode->getFunctionName());
+        for (const auto& child : functionExpressionNode->getChildren()) {
+            auto argument = serializedExpressionNode.add_arguments();
+            serializeExpression(child->as<ExpressionNode>(), argument);
+        };
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
         NES_FATAL_ERROR("ExpressionSerializationUtil: No serialization implemented for this logical expression node: "

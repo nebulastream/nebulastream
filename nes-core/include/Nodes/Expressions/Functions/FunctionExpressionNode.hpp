@@ -49,16 +49,16 @@ class FunctionExpression : public ExpressionNode {
     * @return ExpressionNodePtr
     */
     ExpressionNodePtr copy() override;
+    const std::string& getFunctionName() const;
+    std::vector<ExpressionNodePtr> getArguments() const;
 
   public:
     explicit FunctionExpression(DataTypePtr stamp,
                                 std::string functionName,
-                                std::vector<ExpressionNodePtr> arguments,
                                 std::unique_ptr<LogicalFunction> function);
 
   private:
     const std::string functionName;
-    const std::vector<ExpressionNodePtr> arguments;
     const std::unique_ptr<LogicalFunction> function;
 };
 
