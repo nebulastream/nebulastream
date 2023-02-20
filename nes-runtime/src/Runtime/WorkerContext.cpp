@@ -16,6 +16,7 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <sys/time.h>
 
 namespace NES::Runtime {
 
@@ -66,8 +67,33 @@ void WorkerContext::printStatistics(Runtime::TupleBuffer& inputBuffer) {
     auto epoch = now_ms.time_since_epoch();
     auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
     auto ts = std::chrono::system_clock::now();
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
     auto timeNow = std::chrono::system_clock::to_time_t(ts);
-    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ",";
+    char buffer[26];
+    int millisec;
+    struct tm* tm_info;
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+    if (millisec>=1000) { // Allow for rounding up to nearest second
+        millisec -=1000;
+        tv.tv_sec++;
+    }
+
+    tm_info = localtime(&tv.tv_sec);
+
+    strftime(buffer, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ".";
+    if (millisec < 10)
+        statisticsFile << "00" << millisec << ",";
+    else if (millisec < 100)
+        statisticsFile << "0" << millisec << ",";
+    else
+        statisticsFile << millisec << ",";
     statisticsFile << value.count() - inputBuffer.getCreationTimestamp() << "\n";
 }
 
