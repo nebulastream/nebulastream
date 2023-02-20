@@ -22,7 +22,7 @@ namespace NES::Benchmark::IngestionRateGeneration {
  * @brief As we still build on with libstdc++, this is how we get the numerical value of pi
  * @return pi
  */
-double constexpr PI() { return std::atan(1) * 4; }
+double PI() { return std::atan(1) * 4; }
 
 /**
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of sine and cosine distributed ingestion rates.
