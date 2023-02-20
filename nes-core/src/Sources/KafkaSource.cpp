@@ -79,7 +79,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         fieldName = field->getName();
-        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
+        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
     switch (sourceConfig->getInputFormat()->getValue()) {
