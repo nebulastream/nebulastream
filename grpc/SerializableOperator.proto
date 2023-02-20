@@ -399,48 +399,91 @@ message SerializableOperator{
   }
 
   /**
+    Properties of distribution characteristic
+  */
+  message DistributionCharacteristic {
+    enum Distribution{
+      // `Unset' indicates that the logical operator has just been deserialized from a client.
+      // The deserialization logic in the coordinator will change it to `Complete' to be inline with the creation
+      // logic in `Query::window' and `Query::windowByKey'.
+      // TODO This logic should be revisited when #2884 is fixed.
+      Unset = 0;
+      Complete = 1;
+      Slicing = 2;
+      Combining = 3;
+      Merging = 4;
+    }
+    Distribution distr = 1;
+  }
+
+  /**
+    Time Characteristic contains properties for the time characteristics
+  */
+  message TimeCharacteristic {
+    enum Type{
+      EventTime = 0;
+      IngestionTime = 1;
+    }
+    Type type = 1;
+    string field = 2;
+    uint64 multiplier = 3;
+  }
+
+  /**
+    Properties of a tumbling window
+  */
+  message TumblingWindow {
+    TimeCharacteristic timeCharacteristic = 1;
+    uint32 size = 2;
+  }
+
+  /**
+    Properties of a sliding window
+  */
+  message SlidingWindow {
+    TimeCharacteristic timeCharacteristic = 1;
+    uint32 size = 2;
+    uint32 slide = 3;
+  }
+
+  /**
+    Properties of a threshold window
+  */
+  message ThresholdWindow {
+    SerializableExpression predicate = 1;
+    uint32 minimumCount = 2;
+  }
+
+  /**
+    Properties of a trigger policy
+  */
+  message TriggerPolicy{
+    enum Type{
+      triggerOnTime = 0;
+      triggerOnRecord = 1;
+      triggerOnBuffer = 2;
+      triggerOnWatermarkChange = 3;
+    }
+    Type type = 1;
+    uint64 timeInMs = 2;
+  }
+
+  /**
+    Properties of a trigger action
+  */
+  message TriggerAction
+  {
+    enum Type{
+      Complete = 0;
+      Slicing = 1;
+    }
+    Type type = 1;
+  }
+
+  /**
     Window Details contains properties for the window operator
   */
   message WindowDetails {
-
-    message DistributionCharacteristic {
-      enum Distribution{
-        // `Unset' indicates that the logical operator has just been deserialized from a client.
-        // The deserialization logic in the coordinator will change it to `Complete' to be inline with the creation
-        // logic in `Query::window' and `Query::windowByKey'.
-        // TODO This logic should be revisited when #2884 is fixed.
-        Unset = 0;
-        Complete = 1;
-        Slicing = 2;
-        Combining = 3;
-        Merging = 4;
-      }
-      Distribution distr = 1;
-    }
-
-    message TimeCharacteristic {
-      enum Type{
-        EventTime = 0;
-        IngestionTime = 1;
-      }
-      Type type = 1;
-      string field = 2;
-      uint64 multiplier = 3;
-    }
-    message TumblingWindow {
-      TimeCharacteristic timeCharacteristic = 1;
-      uint32 size = 2;
-    }
-    message SlidingWindow {
-      TimeCharacteristic timeCharacteristic = 1;
-      uint32 size = 2;
-      uint32 slide = 3;
-    }
-
-    message ThresholdWindow {
-      SerializableExpression predicate = 1;
-      uint32 minimumCount = 2;
-    }
 
     message Aggregation {
       enum Type{
@@ -455,27 +498,6 @@ message SerializableOperator{
       SerializableExpression onField = 2;
       SerializableExpression asField = 3;
     }
-
-    message TriggerPolicy{
-      enum Type{
-        triggerOnTime = 0;
-        triggerOnRecord = 1;
-        triggerOnBuffer = 2;
-        triggerOnWatermarkChange = 3;
-      }
-      Type type = 1;
-      uint64 timeInMs = 2;
-    }
-
-    message TriggerAction
-    {
-      enum Type{
-        Complete = 0;
-        Slicing = 1;
-      }
-      Type type = 1;
-    }
-
 
     google.protobuf.Any windowType = 1;
     repeated Aggregation windowAggregations = 2;
@@ -492,46 +514,7 @@ message SerializableOperator{
   */
   message JoinDetails {
 
-    message DistributionCharacteristic {
-      enum Distribution{
-        Complete = 0;
-        Slicing = 1;
-        Combining = 3;
-        Merging = 4;
-      }
-      Distribution distr = 1;
-    }
-
-    message TimeCharacteristic {
-      enum Type{
-        EventTime = 0;
-        IngestionTime = 1;
-      }
-      Type type = 1;
-      string field = 2;
-    }
-    message TumblingWindow {
-      TimeCharacteristic timeCharacteristic = 1;
-      uint32 size = 2;
-    }
-    message SlidingWindow {
-      TimeCharacteristic timeCharacteristic = 1;
-      uint32 size = 2;
-      uint32 slide = 3;
-    }
-
-    message TriggerPolicy{
-      enum Type{
-        triggerOnTime = 0;
-        triggerOnRecord = 1;
-        triggerOnBuffer = 2;
-        triggerOnWatermarkChange = 3;
-      }
-      Type type = 1;
-      uint64 timeInMs = 2;
-    }
-
-    message TriggerAction
+    message JoinTriggerAction
     {
       enum Type{
         LazyNestedLoop = 0;
@@ -547,17 +530,17 @@ message SerializableOperator{
       JoinType jointype = 1;
     }
 
-    google.protobuf.Any windowType = 2;
-    DistributionCharacteristic distrChar = 3;
-    SerializableExpression onLeftKey = 4;
-    SerializableExpression onRightKey = 5;
-    SerializableExpression leftSourceType = 6;
-    SerializableExpression rightSourceType = 7;
-    TriggerPolicy triggerPolicy = 8;
-    TriggerAction action = 9;
-    uint64 numberOfInputEdgesLeft = 10;
-    uint64 numberOfInputEdgesRight = 11;
-    JoinTypeCharacteristic jointype = 12;
+    google.protobuf.Any windowType = 1;
+    DistributionCharacteristic distrChar = 2;
+    SerializableExpression onLeftKey = 3;
+    SerializableExpression onRightKey = 4;
+    SerializableExpression leftSourceType = 5;
+    SerializableExpression rightSourceType = 6;
+    TriggerPolicy triggerPolicy = 7;
+    JoinTriggerAction action = 8;
+    uint64 numberOfInputEdgesLeft = 9;
+    uint64 numberOfInputEdgesRight = 10;
+    JoinTypeCharacteristic jointype = 11;
   }
 
   /**
@@ -578,6 +561,20 @@ message SerializableOperator{
   message MapJavaUdfDetails {
       JavaUdfDescriptorMessage javaUdfDescriptor = 1;
   }
+
+  /**
+    Properties of a java window udf
+  */
+  message JavaUdfWindowDetails {
+    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
+
+    google.protobuf.Any windowType = 2;
+    DistributionCharacteristic distrChar = 3;
+    repeated SerializableExpression keys = 4;
+    uint64 allowedLateness = 5;
+    uint64 origin = 6;
+  }
+
 
   google.protobuf.Any details = 1;
   repeated uint64 childrenIds = 2;
