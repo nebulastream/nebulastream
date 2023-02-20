@@ -157,7 +157,32 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         propagationFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
         propagationFile << propagationDelay << ",";
         propagationFile << value.count() - propagationDelay << "\n";
-        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+        timeval curTime;
+        gettimeofday(&curTime, NULL);
+        int milli = curTime.tv_usec / 1000;
+        char buffer[26];
+        int millisec;
+        struct tm* tm_info;
+        struct timeval tv;
+
+        gettimeofday(&tv, NULL);
+
+        millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+        if (millisec>=1000) { // Allow for rounding up to nearest second
+            millisec -=1000;
+            tv.tv_sec++;
+        }
+
+        tm_info = localtime(&tv.tv_sec);
+
+        strftime(buffer, 26, "%Y:%m:%d %H:%M:%S", tm_info);
+        storageFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %H:%M:%S") << ".";
+        if (millisec < 10)
+            storageFile << "00" << millisec << ",";
+        else if (millisec < 100)
+            storageFile << "0" << millisec << ",";
+        else
+            storageFile << millisec << ",";
         NES_DEBUG("BufferStorage: Deleted old size " << oldStorageSize << " tuples");
         NES_DEBUG("BufferStorage: Deleted new size " << pq.size() << " tuples");
         NES_DEBUG("BufferStorage: Deleted diff " << oldStorageSize - pq.size() << " tuples");
