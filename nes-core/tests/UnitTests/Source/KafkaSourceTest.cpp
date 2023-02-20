@@ -283,8 +283,9 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                                                                                << ". Received value is: " << str);
     EXPECT_EQ(str, expected);
 }
+#endif
 
-TEST_F(KafkaSourceTest, DISABLED_KafkaSourceJson) {
+TEST_F(KafkaSourceTest, KafkaSourceJson) {
     auto kafkaSource = createKafkaSource(test_schema,
                                          nodeEngine->getBufferManager(),
                                          nodeEngine->getQueryManager(),
@@ -383,6 +384,6 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-#endif
+
 }// namespace NES
 #endif
