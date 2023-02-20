@@ -283,9 +283,9 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
                                                                                                << ". Received value is: " << str);
     EXPECT_EQ(str, expected);
 }
-#endif
+
 // Disabled, because it requires a manually set up Kafka broker
-TEST_F(KafkaSourceTest, testDeployOneWorkerWithKafkaSourceConfigJson) {
+TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -433,6 +433,6 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-
+#endif
 }// namespace NES
 #endif
