@@ -10,7 +10,7 @@ FunctionExpression::FunctionExpression(DataTypePtr stamp, std::string functionNa
 ExpressionNodePtr FunctionExpression::create(const DataTypePtr& stamp,
                                              const std::string& functionName,
                                              const std::vector<ExpressionNodePtr>& arguments) {
-    auto function = FunctionRegistry::getFunction(functionName);
+    auto function = FunctionRegistry::getPlugin(functionName);
     auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function));
     for (const auto& arg : arguments) {
         expression->addChild(arg);
@@ -38,7 +38,7 @@ bool FunctionExpression::equal(const NodePtr& rhs) const {
     return false;
 }
 
-ExpressionNodePtr FunctionExpression::copy() { return FunctionExpression::create(stamp, functionName, arguments); }
+ExpressionNodePtr FunctionExpression::copy() { return FunctionExpression::create(stamp, functionName, getArguments()); }
 const std::string& FunctionExpression::getFunctionName() const { return functionName; }
 std::vector<ExpressionNodePtr> FunctionExpression::getArguments() const {
     std::vector<ExpressionNodePtr> arguments;

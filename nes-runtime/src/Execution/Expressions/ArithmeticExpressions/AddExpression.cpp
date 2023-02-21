@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -20,7 +21,7 @@ Value<> AddExpression::execute(Record& record) const {
     Value rightValue = rightSubExpression->execute(record);
     return leftValue + rightValue;
 }
-AddExpression::AddExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+AddExpression::AddExpression(ExpressionPtr  leftSubExpression, ExpressionPtr  rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
 
 }// namespace NES::Runtime::Execution::Expressions

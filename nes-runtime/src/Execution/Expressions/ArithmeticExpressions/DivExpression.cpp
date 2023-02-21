@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -20,7 +21,7 @@ Value<> DivExpression::execute(Record& record) const {
     Value rightValue = rightSubExpression->execute(record);
     return leftValue / rightValue;
 }
-DivExpression::DivExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+DivExpression::DivExpression(ExpressionPtr  leftSubExpression, ExpressionPtr  rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
 
 }// namespace NES::Runtime::Execution::Expressions

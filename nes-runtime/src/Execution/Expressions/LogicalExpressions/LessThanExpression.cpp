@@ -13,11 +13,12 @@
 */
 
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
 LessThanExpression::LessThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
 Value<> LessThanExpression::execute(Record& record) const {
     Value<> leftValue = leftSubExpression->execute(record);

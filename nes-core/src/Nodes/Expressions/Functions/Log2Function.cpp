@@ -5,9 +5,9 @@
 namespace NES {
 
 /*
- * Defines the log function and registers it to the FunctionRegistry.
+ * Defines the log2 function and registers it to the FunctionRegistry.
  */
-class LogFunction: public UnaryLogicalFunction {
+class Log2Function : public UnaryLogicalFunction {
   public:
     [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
         if (input->isNumeric()) {
@@ -18,6 +18,6 @@ class LogFunction: public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static FunctionRegistry::Add<LogFunction> logFunction("log");
+[[maybe_unused]] static FunctionRegistry::Add<Log2Function> logFunction("log2");
 
 }// namespace NES

@@ -111,12 +111,6 @@ message SerializableExpression {
   message FloorExpression{
     SerializableExpression child = 1;
   }
-  message Log10Expression{
-    SerializableExpression child = 1;
-  }
-  message LogExpression{
-    SerializableExpression child = 1;
-  }
   message ModExpression{
     SerializableExpression left = 1;
     SerializableExpression right = 2;

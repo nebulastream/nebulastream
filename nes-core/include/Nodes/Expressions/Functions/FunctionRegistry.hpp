@@ -8,34 +8,7 @@ class DataType;
 class LogicalFunction;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-class LogicalFunctionProvider {
-  public:
-    LogicalFunctionProvider() = default;
-    [[nodiscard]] virtual std::unique_ptr<LogicalFunction> create() const = 0;
-    virtual ~LogicalFunctionProvider() = default;
-};
-
-class FunctionRegistry {
-  private:
-    using registry = Util::NamedPluginRegistry<LogicalFunctionProvider>;
-
-    template<class T>
-        requires std::is_class_v<T> && std::is_base_of_v<LogicalFunction, T>
-    class TypedProvider : public LogicalFunctionProvider {
-      public:
-        [[nodiscard]] std::unique_ptr<LogicalFunction> create() const override { return std::make_unique<T>(); }
-    };
-
-  public:
-    template<typename V>
-    class Add {
-      public:
-        explicit Add(std::string name) { static auto type = registry::Add<TypedProvider<V>>(name); }
-    };
-
-    static std::unique_ptr<LogicalFunction> getFunction(const std::string& name);
-    static bool hasFunction(const std::string& name);
-};
+using FunctionRegistry = Util::PluginFactory<LogicalFunction>;
 
 class LogicalFunction {
   public:

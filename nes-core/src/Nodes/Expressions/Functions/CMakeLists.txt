@@ -14,4 +14,7 @@
 add_source_files(nes-core
         FunctionExpression.cpp
         FunctionRegistry.cpp
-        LogFunction.cpp)
+        LnFunction.cpp
+        Log2Function.cpp
+        Log10Function.cpp
+        )
