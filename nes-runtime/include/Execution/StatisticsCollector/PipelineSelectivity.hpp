@@ -24,12 +24,14 @@ namespace NES::Runtime::Execution {
  */
 class PipelineSelectivity : public Statistic {
   public:
-    PipelineSelectivity(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
+    PipelineSelectivity(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
     void collect() const override;
+    uint64_t getPipelineID() { return this->pipelineId; }
+    std::string getType() const override;
 
   private:
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
-
+    const uint64_t pipelineId;
 };
 
 }// namespace NES::Runtime::Execution

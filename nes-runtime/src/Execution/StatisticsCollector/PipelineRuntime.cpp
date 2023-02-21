@@ -1,5 +1,5 @@
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
+#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -8,7 +8,11 @@ void PipelineRuntime::collect() const {
     std::cout << "PipelineRuntime " << runtime << " microseconds" << std::endl;
 }
 
-PipelineRuntime::PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage)
-    : nautilusExecutablePipelineStage(nautilusExecutablePipelineStage) {}
+std::string PipelineRuntime::getType() const {
+    return "PipelineRuntime";
+}
+
+PipelineRuntime::PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId)
+    : nautilusExecutablePipelineStage(nautilusExecutablePipelineStage), pipelineId(pipelineId) {}
 
 } // namespace NES::Runtime::Execution
