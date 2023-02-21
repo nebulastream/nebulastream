@@ -26,10 +26,9 @@ namespace NES::Optimizer {
 BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
                                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                const TopologyPtr& topology,
-                                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                                               const z3::ContextPtr& z3Context) {
+                                                               const TypeInferencePhasePtr& typeInferencePhase) {
     switch (placementStrategy) {
-        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
+        case PlacementStrategy::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::Manual:

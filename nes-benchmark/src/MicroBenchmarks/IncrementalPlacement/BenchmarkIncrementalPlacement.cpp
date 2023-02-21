@@ -408,7 +408,6 @@ int main(int argc, const char* argv[]) {
             auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              z3Context,
                                                                               incrementalPlacement);
 
             //Perform steps to optimize queries

@@ -48,8 +48,7 @@ class ILPStrategy : public BasePlacementStrategy {
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
-                                           TypeInferencePhasePtr typeInferencePhase,
-                                           z3::ContextPtr z3Context);
+                                           TypeInferencePhasePtr typeInferencePhase);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight
