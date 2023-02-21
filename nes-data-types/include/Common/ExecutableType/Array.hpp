@@ -16,6 +16,7 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
 
 #include <Common/ExecutableType/NESType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -23,7 +24,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutableTypes {
 /**
@@ -408,6 +408,6 @@ struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::strin
         return format_to(ctx.out(), "{}", executable_type_array);
     }
 };
-} //namespace fmt
+}//namespace fmt
 
 #endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

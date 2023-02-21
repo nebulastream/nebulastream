@@ -77,7 +77,10 @@ class ExecutableCompleteAggregationTriggerAction
                   uint64_t lastWatermark,
                   Runtime::WorkerContextRef workerContext) override {
         NES_TRACE2("ExecutableCompleteAggregationTriggerAction (id={} {}): doAction for currentWatermark={} lastWatermark={}",
-                   id, this->windowDefinition->getDistributionType()->toString(), currentWatermark, lastWatermark);
+                   id,
+                   this->windowDefinition->getDistributionType()->toString(),
+                   currentWatermark,
+                   lastWatermark);
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -101,7 +104,11 @@ class ExecutableCompleteAggregationTriggerAction
                              lastWatermark,
                              workerContext);//put key into this
             NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): {} check key={} nextEdge={} id={}",
-                       this->windowDefinition->getDistributionType()->toString(), toString(), it.first, it.second->nextEdge, id);
+                       this->windowDefinition->getDistributionType()->toString(),
+                       toString(),
+                       it.first,
+                       it.second->nextEdge,
+                       id);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -111,8 +118,15 @@ class ExecutableCompleteAggregationTriggerAction
             if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): Dispatch last buffer output buffer with {} records, content={} originId={} windowAction={} currentWatermark={} lastWatermark={}",
-                       this->windowDefinition->getDistributionType()->toString(), tupleBuffer.getNumberOfTuples(), dynamicTupleBuffer, tupleBuffer.getOriginId(), toString(), currentWatermark, lastWatermark);
+                NES_TRACE2("ExecutableCompleteAggregationTriggerAction ({}): Dispatch last buffer output buffer with {} records, "
+                           "content={} originId={} windowAction={} currentWatermark={} lastWatermark={}",
+                           this->windowDefinition->getDistributionType()->toString(),
+                           tupleBuffer.getNumberOfTuples(),
+                           dynamicTupleBuffer,
+                           tupleBuffer.getOriginId(),
+                           toString(),
+                           currentWatermark,
+                           lastWatermark);
             }
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
@@ -145,7 +159,8 @@ class ExecutableCompleteAggregationTriggerAction
         auto windows = std::vector<WindowState>();
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR2("ExecutableCompleteAggregationTriggerAction id={}: the weakExecutionContext was already expired!", id);
+            NES_FATAL_ERROR2("ExecutableCompleteAggregationTriggerAction id={}: the weakExecutionContext was already expired!",
+                             id);
         }
         auto executionContext = this->weakExecutionContext.lock();
 
@@ -161,17 +176,32 @@ class ExecutableCompleteAggregationTriggerAction
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             NES_TRACE2("ExecutableCompleteAggregationTriggerAction{}: ({}): trigger sliceid={} start={} end={}",
-                     id, this->windowDefinition->getDistributionType()->toString(), sliceId, slices[sliceId].getStartTs(), slices[sliceId].getEndTs());
+                       id,
+                       this->windowDefinition->getDistributionType()->toString(),
+                       sliceId,
+                       slices[sliceId].getStartTs(),
+                       slices[sliceId].getEndTs());
         }
 
         if (currentWatermark > lastWatermark) {
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: aggregateWindows trigger because currentWatermark={} > lastWatermark={}", id, currentWatermark, lastWatermark);
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: aggregateWindows trigger because currentWatermark={} > "
+                       "lastWatermark={}",
+                       id,
+                       currentWatermark,
+                       lastWatermark);
             Windowing::WindowType::asTimeBasedWindowType(windowDef->getWindowType())
                 ->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
             NES_TRACE2("ExecutableCompleteAggregationTriggerAction {} ({}): trigger Complete or combining window for slices={}",
-                       id, this->windowDefinition->getDistributionType()->toString(), slices.size(), windows.size());
+                       id,
+                       this->windowDefinition->getDistributionType()->toString(),
+                       slices.size(),
+                       windows.size());
         } else {
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: aggregateWindows No trigger because NOT currentWatermark={} > lastWatermark={}", id, currentWatermark, lastWatermark);
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: aggregateWindows No trigger because NOT "
+                       "currentWatermark={} > lastWatermark={}",
+                       id,
+                       currentWatermark,
+                       lastWatermark);
         }
 
         //we have to sort the windows as the sliding window put them out in inverse order which produces failures with initializing windows
@@ -190,14 +220,28 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): key={} window.getStartTs()={} slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={} recCnt={}",
-                        id, this->windowDefinition->getDistributionType()->toString(), key, window.getStartTs(), slices[sliceId].getStartTs(), window.getEndTs(), slices[sliceId].getEndTs(), slices[sliceId].getRecordsPerSlice());
-
+                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): key={} window.getStartTs()={} "
+                           "slices[sliceId].getStartTs()={} window.getEndTs()={} slices[sliceId].getEndTs()={} recCnt={}",
+                           id,
+                           this->windowDefinition->getDistributionType()->toString(),
+                           key,
+                           window.getStartTs(),
+                           slices[sliceId].getStartTs(),
+                           window.getEndTs(),
+                           slices[sliceId].getEndTs(),
+                           slices[sliceId].getRecordsPerSlice());
 
                 if (window.getStartTs() <= slices[sliceId].getStartTs() && window.getEndTs() >= slices[sliceId].getEndTs()
                     && slices[sliceId].getRecordsPerSlice() != 0) {
-                    NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): create partial agg windowId={} sliceId={} key={} partAgg={} recCnt={}",
-                               id, this->windowDefinition->getDistributionType()->toString(), windowId, sliceId, key, executableWindowAggregation->lower(partialAggregates[sliceId]), slices[sliceId].getRecordsPerSlice());
+                    NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): create partial agg windowId={} sliceId={} "
+                               "key={} partAgg={} recCnt={}",
+                               id,
+                               this->windowDefinition->getDistributionType()->toString(),
+                               windowId,
+                               sliceId,
+                               key,
+                               executableWindowAggregation->lower(partialAggregates[sliceId]),
+                               slices[sliceId].getRecordsPerSlice());
                     partialFinalAggregates[windowId] =
                         executableWindowAggregation->combine(partialFinalAggregates[windowId], partialAggregates[sliceId]);
                     //we have to do this in order to prevent that we output a window that has no slice associated
@@ -216,8 +260,16 @@ class ExecutableCompleteAggregationTriggerAction
                 auto& window = windows[i];
                 largestClosedWindow = std::max((int64_t) window.getEndTs(), largestClosedWindow);
                 auto value = executableWindowAggregation->lower(partialFinalAggregates[i]);
-                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}) write i={} key={} value={} window.start()={} window.getEndTs()={} recordsPerWindow[i]={}",
-                           id, this->windowDefinition->getDistributionType()->toString(), i, key, value, window.getStartTs(), window.getEndTs(), recordsPerWindow[i]);
+                NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}) write i={} key={} value={} window.start()={} "
+                           "window.getEndTs()={} recordsPerWindow[i]={}",
+                           id,
+                           this->windowDefinition->getDistributionType()->toString(),
+                           i,
+                           key,
+                           value,
+                           window.getStartTs(),
+                           window.getEndTs(),
+                           recordsPerWindow[i]);
 
                 //if we would write to a new buffer and we still have tuples to write
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
@@ -227,8 +279,14 @@ class ExecutableCompleteAggregationTriggerAction
                         auto rowLayout =
                             Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
-                        NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): Dispatch intermediate output buffer with {} records, content={} originId={} windowAction={}",
-                                   id, this->windowDefinition->getDistributionType()->toString(), currentNumberOfTuples, dynamicTupleBuffer, tupleBuffer.getOriginId(), toString());
+                        NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): Dispatch intermediate output buffer "
+                                   "with {} records, content={} originId={} windowAction={}",
+                                   id,
+                                   this->windowDefinition->getDistributionType()->toString(),
+                                   currentNumberOfTuples,
+                                   dynamicTupleBuffer,
+                                   tupleBuffer.getOriginId(),
+                                   toString());
                     }
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
@@ -259,7 +317,10 @@ class ExecutableCompleteAggregationTriggerAction
                     currentNumberOfTuples++;
                 }
             }//end of for
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): remove slices until={}", id, this->windowDefinition->getDistributionType()->toString(), currentWatermark);
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): remove slices until={}",
+                       id,
+                       this->windowDefinition->getDistributionType()->toString(),
+                       currentWatermark);
             //remove the old slices from current watermark - allowed lateness as there could be no tuple before that
             if (largestClosedWindow != 0) {
                 store->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
@@ -267,7 +328,9 @@ class ExecutableCompleteAggregationTriggerAction
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
-            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): aggregate: no window qualifies", id, this->windowDefinition->getDistributionType()->toString());
+            NES_TRACE2("ExecutableCompleteAggregationTriggerAction {}: ({}): aggregate: no window qualifies",
+                       id,
+                       this->windowDefinition->getDistributionType()->toString());
         }
     }
 

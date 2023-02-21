@@ -106,7 +106,8 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             return createResponse(Status::CODE_200, response.dump());
         } catch (const std::exception& exc) {
             NES_ERROR2("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the "
-                      "query plan for user request: {}", exc.what());
+                       "query plan for user request: {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_400,
                                              "Exception occurred while building query plans for user request"
                                                  + std::string(exc.what()));

@@ -170,12 +170,15 @@ class TestHarness {
             // Check if logical source already exists
             auto sourceCatalog = nesCoordinator->getSourceCatalog();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-                NES_TRACE2("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}", logicalSourceName);
+                NES_TRACE2("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
+                           logicalSourceName);
                 sourceCatalog->addLogicalSource(logicalSourceName, schema);
             } else {
                 // Check if it has the same schema
                 if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
-                    NES_TRACE2("TestHarness: logical source {} exists in the source catalog with different schema, replacing it with a new schema", logicalSourceName);
+                    NES_TRACE2("TestHarness: logical source {} exists in the source catalog with different schema, replacing it "
+                               "with a new schema",
+                               logicalSourceName);
                     sourceCatalog->removeLogicalSource(logicalSourceName);
                     sourceCatalog->addLogicalSource(logicalSourceName, schema);
                 }
@@ -513,11 +516,12 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG2("TestHarness: outputSchema: {}", queryCatalogService->getEntryForQuery(queryId)
-                                                       ->getInputQueryPlan()
-                                                       ->getSinkOperators()[0]
-                                                       ->getOutputSchema()
-                                                       ->toString());
+        NES_DEBUG2("TestHarness: outputSchema: {}",
+                   queryCatalogService->getEntryForQuery(queryId)
+                       ->getInputQueryPlan()
+                       ->getSinkOperators()[0]
+                       ->getOutputSchema()
+                       ->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
@@ -553,7 +557,8 @@ class TestHarness {
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
-        NES_DEBUG2("TestHarness: ExecutedQueryPlan: {}",queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+        NES_DEBUG2("TestHarness: ExecutedQueryPlan: {}",
+                   queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
         queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
 
         for (const auto& worker : testHarnessWorkerConfigurations) {

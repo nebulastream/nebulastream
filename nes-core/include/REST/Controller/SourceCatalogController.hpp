@@ -96,8 +96,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
                                              "Resource Not Found: Logical source " + logicalSourceName
                                                  + " has no physical source defined.");
         } catch (const std::exception& exc) {
-            NES_ERROR2("SourceCatalogController: get allPhysicalSource: Exception occurred while building the query plan for user "
-                      "request.");
+            NES_ERROR2(
+                "SourceCatalogController: get allPhysicalSource: Exception occurred while building the query plan for user "
+                "request.");
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
@@ -113,7 +114,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404, "Resource Not Found: No Schema found for " + logicalSourceName);
         } catch (const std::exception& exc) {
-            NES_ERROR2("SourceCatalogController: get schema: Exception occurred while retrieving the schema for a logical source {}", exc.what());
+            NES_ERROR2(
+                "SourceCatalogController: get schema: Exception occurred while retrieving the schema for a logical source {}",
+                exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");
@@ -140,7 +143,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
             std::string logicalSourceName = reqJson["logicalSourceName"];
             std::string schema = reqJson["schema"];
-            NES_DEBUG2("SourceCatalogController: addLogicalSource: Try to add new Logical Source {} and {}", logicalSourceName, schema);
+            NES_DEBUG2("SourceCatalogController: addLogicalSource: Try to add new Logical Source {} and {}",
+                       logicalSourceName,
+                       schema);
             bool added = sourceCatalogService->registerLogicalSource(logicalSourceName, schema);
             NES_DEBUG2("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", added);
             //Prepare the response
@@ -153,7 +158,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
         } catch (const std::exception& exc) {
             NES_ERROR2("SourceCatalogController: addLogicalSource: Exception occurred while trying to add new "
-                      "logical source {}", exc.what());
+                       "logical source {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
@@ -182,7 +188,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
 
             // try to add the user supplied source
             bool added = sourceCatalogService->registerLogicalSource(sourceName, deserializedSchema);
-            NES_DEBUG2("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ? {}", added);
+            NES_DEBUG2("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ? {}",
+                       added);
 
             if (!added) {
                 nlohmann::json errorResponse{};
@@ -196,7 +203,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             return createResponse(Status::CODE_200, result.dump());
         } catch (const std::exception& exc) {
             NES_ERROR2("SourceCatalogController: addLogicalSource-ex: Exception occurred while trying to add new "
-                      "logical source {}", exc.what());
+                       "logical source {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
@@ -224,7 +232,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             std::string sourceName = reqJson["logicalSourceName"];
             std::string schema = reqJson["schema"];
             NES_DEBUG2("SourceCatalogController: updateLogicalSource: Try to update  Logical Source {} with schema {}",
-                       sourceName, schema);
+                       sourceName,
+                       schema);
             bool updated = sourceCatalogService->updateLogicalSource(sourceName, schema);
             NES_DEBUG2("SourceCatalogController: addLogicalSource: Successfully added new logical Source ? {}", updated);
             // Prepare the response
@@ -238,7 +247,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
         } catch (const std::exception& exc) {
             NES_ERROR2("SourceCatalogController: updateLogicalSource: Exception occurred while updating "
-                      "Logical Source {}", exc.what());
+                       "Logical Source {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
@@ -284,7 +294,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
         } catch (const std::exception& exc) {
             NES_ERROR2("SourceCatalogController: updateLogicalSource: Exception occurred while updating "
-                      "Logical Source. {}", exc.what());
+                       "Logical Source. {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "RestServer: Unable to start REST server unknown exception.");
@@ -296,7 +307,8 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
         NES_DEBUG2("SourceCatalogController: deleteLogicalSource: REST received request to delete the given Logical Source.");
         try {
             bool deleted = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
-            NES_DEBUG2("SourceCatalogController: deleteLogicalSource: Successfully deleted the given logical Source: {}", deleted);
+            NES_DEBUG2("SourceCatalogController: deleteLogicalSource: Successfully deleted the given logical Source: {}",
+                       deleted);
             // Prepare the response
             if (deleted) {
                 nlohmann::json success;
@@ -310,7 +322,7 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             }
         } catch (const std::exception& exc) {
             NES_ERROR2("SourceCatalogController: deleteLogicalSource: Exception occurred while building the query plan for user "
-                      "request.");
+                       "request.");
             return errorHandler->handleError(Status::CODE_500, exc.what());
         } catch (...) {
             return errorHandler->handleError(Status::CODE_500, "SourceCatalogController:unknown exception.");

@@ -305,10 +305,11 @@ class DynamicTupleBuffer {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-namespace fmt{
+namespace fmt {
 template<>
 struct formatter<NES::Runtime::MemoryLayouts::DynamicTupleBuffer> : formatter<std::string> {
-    auto format(const NES::Runtime::MemoryLayouts::DynamicTupleBuffer& dynamic_tuple_buffer, format_context& ctx) -> decltype(ctx.out()) {
+    auto format(const NES::Runtime::MemoryLayouts::DynamicTupleBuffer& dynamic_tuple_buffer, format_context& ctx)
+        -> decltype(ctx.out()) {
         return format_to(ctx.out(), "MemoryLayout Schema: {}", dynamic_tuple_buffer.getMemoryLayout()->getSchema()->toString());
     }
 };
