@@ -43,7 +43,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      * @brief Set up test cases, starts a TCP server before all tests are run
      */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
     }
 
@@ -68,12 +68,18 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         // After one test was executed, the remaining test calls to create a socket initially return 0
         // The close method does not recognize 0 as a valid file descriptor and therefore will not close the socket properly, hence
         // we use a while loop to retrieve a valid file descriptor
-        while (sockfd == 0) {
+        uint8_t counter = 0;
+        while (sockfd == 0 && counter < 10) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            NES_TRACE("TCPSourceIntegrationTest::startServer: sockfd: " << sockfd);
+            NES_TRACE("Retrieved sockfd: " << sockfd << " on try: " << counter);
+            counter++;
+        }
+        if (sockfd == 0) {
+            NES_ERROR("Failed to grap a valid file descriptor. errno: " << errno);
+            exit(EXIT_FAILURE);
         }
         if (sockfd == -1) {
-            NES_ERROR("TCPSourceIntegrationTest: Failed to create socket. errno: " << errno);
+            NES_ERROR("Failed to create socket. errno: " << errno);
             exit(EXIT_FAILURE);
         }
 
