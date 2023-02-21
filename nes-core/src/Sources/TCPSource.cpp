@@ -217,7 +217,6 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         //copy and delete tuple from circularBuffer
                         popped = popGivenNumberOfValues(inputTupleSize, false);
                     } catch (const std::exception& e) {
-                        delete[] messageBuffer;
                         NES_ERROR("Failed to obtain tupleSize with user inputted size. Error: " << e.what());
                         throw e;
                     }
