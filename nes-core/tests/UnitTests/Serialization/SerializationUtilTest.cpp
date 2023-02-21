@@ -27,7 +27,6 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/Log10ExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
@@ -66,6 +65,7 @@
 #include <iostream>
 
 #include <API/Windowing.hpp>
+#include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Util/JavaUdfDescriptorBuilder.hpp>
@@ -463,12 +463,6 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         EXPECT_TRUE(expression->equal(deserializedExpression));
     }
     {
-        auto expression = Log10ExpressionNode::create(f1);
-        auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
-        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        EXPECT_TRUE(expression->equal(deserializedExpression));
-    }
-    {
         auto expression = SqrtExpressionNode::create(f1);
         auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
@@ -486,6 +480,14 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
         EXPECT_TRUE(expression->equal(deserializedExpression));
     }
+}
+
+TEST_F(SerializationUtilTest, functionExpressionSerialization) {
+    auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "1"));
+    auto expression = FunctionExpression::create(argument1->getStamp(), "ln", {argument1});
+    auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
+    auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+    EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
 TEST_F(SerializationUtilTest, udfCallExpressionSerialization) {
