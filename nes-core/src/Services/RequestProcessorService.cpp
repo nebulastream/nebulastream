@@ -65,6 +65,11 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    z3::config cfg;
+    cfg.set("timeout", 1000);
+    cfg.set("model", false);
+    cfg.set("type_check", false);
+    z3Context = std::make_shared<z3::context>(cfg);
     queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                  topology,
                                                                  typeInferencePhase,
@@ -72,11 +77,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                  queryReconfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient, queryCatalogService);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-    z3::config cfg;
-    cfg.set("timeout", 1000);
-    cfg.set("model", false);
-    cfg.set("type_check", false);
-    z3Context = std::make_shared<z3::context>(cfg);
+
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(topology,
                                                                                queryCatalogService,
                                                                                sourceCatalog,
