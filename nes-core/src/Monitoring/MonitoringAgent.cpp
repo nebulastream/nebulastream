@@ -100,14 +100,29 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
 bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
     if (enabled) {
         for (auto metricType : monitoringPlan->getMetricTypes()) {
-            // auto generate the specifics
-            MonitoringSourceTypePtr sourceType =
-                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
-            std::string metricTypeString = NES::Monitoring::toString(metricType);
-
-            NES_INFO2("MonitoringAgent: Adding physical source to config {} _ph", metricTypeString);
-            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
-            workerConfig->physicalSources.add(source);
+            MonitoringSourceTypePtr sourceType;
+            uint64_t sampleRate = monitoringPlan->getSampleRate(metricType);
+            if (sampleRate > 0) {
+                sourceType = MonitoringSourceType::create(
+                    MetricUtils::createCollectorTypeFromMetricType(metricType),
+                    std::chrono::milliseconds(sampleRate));
+            } else {
+                sourceType = MonitoringSourceType::create(
+                    MetricUtils::createCollectorTypeFromMetricType(metricType));
+            }
+            SchemaPtr defaultSchema = Monitoring::MetricUtils::defaultSchema(metricType);
+            if (monitoringPlan->getSchema(metricType)->equals(defaultSchema, false)) {
+                std::string metricTypeString = NES::Monitoring::toString(metricType) + "_default";
+                NES_DEBUG("MonitoringAgent: Adding physical source to worker config " << metricTypeString + "_ph");
+                auto source = PhysicalSource::create(metricTypeString, metricTypeString + "_ph", sourceType);
+                workerConfig->physicalSources.add(source);
+            } else {
+                std::string logicalSourceString = Monitoring::MetricUtils::createLogicalSourceName(metricType,
+                                                                                                   monitoringPlan->getSchema(metricType));
+                auto source = PhysicalSource::create(logicalSourceString, logicalSourceString + "_ph", sourceType);
+                workerConfig->physicalSources.add(source);
+                NES_DEBUG("MonitoringAgent: Adding physical source to worker config " << logicalSourceString + "_ph");
+            }
         }
         return true;
     }
@@ -117,4 +132,8 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
 
 void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 
+MetricCollectorPtr MonitoringAgent::getCollector(MetricType metricType) {
+    auto metricCollector = catalog->getMetricCollector(metricType);
+    return metricCollector;
+}
 }// namespace NES::Monitoring

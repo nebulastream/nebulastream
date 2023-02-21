@@ -19,6 +19,12 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include <Monitoring/MonitoringCatalog.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -114,6 +120,45 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
     EXPECT_TRUE(secondSourceSchema->contains("csv_id_4"));
     EXPECT_TRUE(thirdSourceSchema->contains("csv_id_5"));
+}
+
+TEST_F(ConfigTest, testWorkerMonitoringConfig) {
+    // create manually the configured schemas for comparison
+    std::list<std::string> configuredDisk = {"F_BSIZE", "F_BLOCKS", "F_FRSIZE"};
+    uint64_t sampleDisk = 1000;
+    SchemaPtr schemaDisk = Monitoring::DiskMetrics::createSchema("", configuredDisk);
+    std::list<std::string> configuredCpu = {"nice", "user", "system"};
+    uint64_t sampleCpu = 1000;
+    SchemaPtr schemaCpu = Monitoring::CpuMetrics::createSchema("", configuredCpu);
+    std::list<std::string> configuredMem = {"FREE_RAM"};
+    uint64_t sampleMem = 4000;
+    SchemaPtr schemaMem = Monitoring::MemoryMetrics::createSchema("", configuredMem);
+    std::list<std::string> configuredNetwork = {"rBytes", "rFifo", "tPackets"};
+    uint64_t sampleNetwork = 3000;
+    SchemaPtr schemaNetwork = Monitoring::NetworkMetrics::createSchema("", configuredNetwork);
+    std::list<uint64_t> coresTest = {6, 3, 2, 0};
+
+
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerMonitoringConfig.yaml");
+
+    std::string temp_config = workerConfigPtr->monitoringConfiguration.getValue();
+    nlohmann::json configurationMonitoringJson =
+        Monitoring::MetricUtils::parseMonitoringConfigStringToJson(workerConfigPtr->monitoringConfiguration.getValue());
+    Monitoring::MonitoringPlanPtr monitoringPlanJson = Monitoring::MonitoringPlan::setSchemaJson(configurationMonitoringJson);
+    Monitoring::MonitoringCatalogPtr monitoringCatalog = Monitoring::MonitoringCatalog::createCatalog(monitoringPlanJson);
+
+    ASSERT_TRUE(monitoringPlanJson->getSchema(Monitoring::WrappedCpuMetrics)->equals(schemaCpu, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(Monitoring::DiskMetric)->equals(schemaDisk, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(Monitoring::MemoryMetric)->equals(schemaMem, false));
+    ASSERT_TRUE(monitoringPlanJson->getSchema(Monitoring::WrappedNetworkMetrics)->equals(schemaNetwork, false));
+
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(Monitoring::WrappedCpuMetrics), sampleCpu);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(Monitoring::DiskMetric), sampleDisk);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(Monitoring::MemoryMetric), sampleMem);
+    ASSERT_EQ(monitoringPlanJson->getSampleRate(Monitoring::WrappedNetworkMetrics), sampleNetwork);
+
+    ASSERT_EQ(monitoringPlanJson->getCores(), coresTest);
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {

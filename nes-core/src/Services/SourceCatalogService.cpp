@@ -31,6 +31,13 @@ SourceCatalogService::SourceCatalogService(Catalogs::Source::SourceCatalogPtr so
     NES_ASSERT(this->sourceCatalog, "sourceCatalogPtr has to be valid");
 }
 
+bool SourceCatalogService::logicalSourceLookUp(const std::string& logicalSourceName) {
+    std::unique_lock<std::mutex> lock(addRemoveLogicalSource);
+    NES_DEBUG("SourceCatalogService::logicalSourceLookUp: look up logical source=" << logicalSourceName);
+    bool success = sourceCatalog->containsLogicalSource(logicalSourceName);
+    return success;
+}
+
 bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
                                                   const std::string& physicalSourceName,
                                                   const std::string& logicalSourceName) {

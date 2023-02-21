@@ -27,6 +27,8 @@ class NetworkCollector : public MetricCollector {
   public:
     explicit NetworkCollector();
 
+    explicit NetworkCollector(SchemaPtr schema);
+
     /**
      * @brief Returns the type of metric collector
      * @return the metric collector type
@@ -51,6 +53,12 @@ class NetworkCollector : public MetricCollector {
      * @return The metrics object
      */
     const MetricPtr readMetric() const override;
+
+    /**
+     * @brief Set the schema for the collector
+     * @param schema
+     */
+    void setSchema(SchemaPtr schema) override;
 
   private:
     AbstractSystemResourcesReaderPtr resourceReader;

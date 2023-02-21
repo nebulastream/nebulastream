@@ -82,6 +82,34 @@ MonitoringManager::~MonitoringManager() {
     topology.reset();
 }
 
+bool MonitoringManager::registerMonitoringPlans(const uint64_t& nodeId, const MonitoringPlanPtr& monitoringPlan) {
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+        return false;
+    }
+    if (!monitoringPlan) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+        return false;
+    }
+    if (!nodeId) {
+        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+        return false;
+    }
+
+    NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered MonitoringPlan successfully.");
+    monitoringPlanMap[nodeId] = monitoringPlan;
+
+    return true;
+}
+
+bool MonitoringManager::insertLogicalSource(std::string logicalSourceName) {
+    if (!logicalMonitoringSources.contains(logicalSourceName)) {
+        logicalMonitoringSources.insert(logicalSourceName);
+        return true;
+    }
+    return false;
+}
+
 bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds, MonitoringPlanPtr monitoringPlan) {
     if (!enableMonitoring) {
         NES_ERROR2("MonitoringManager: Register plan failed. Monitoring is disabled.");
@@ -188,7 +216,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const NES::Configuratio
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
             MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string logicalSourceName = NES::Monitoring::toString(metricType);
+            std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_default";
             logicalMonitoringSources.insert(logicalSourceName);
             NES_INFO2("MonitoringManager: Creating logical source {}", logicalSourceName);
             config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));

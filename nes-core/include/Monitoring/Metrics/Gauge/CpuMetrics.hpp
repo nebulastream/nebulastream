@@ -19,6 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 #include <vector>
+#include <list>
 
 namespace NES::Monitoring {
 
@@ -38,12 +39,47 @@ class CpuMetrics {
   public:
     CpuMetrics();
 
+    CpuMetrics(SchemaPtr schema);
+
     /**
-     * @brief Returns the schema of the class with a given prefix.
+     * @brief Returns the default schema (schema with all metrics) of the class with a given prefix.
      * @param prefix
      * @return the schema
      */
-    static SchemaPtr getSchema(const std::string& prefix);
+    static SchemaPtr getDefaultSchema(const std::string& prefix);
+
+    /**
+     * @brief Returns the schema of the class created according to the given list of metrics.
+     * @param prefix
+     * @param configuredMetrics list of strings with the configured metrics
+     * @return the schema
+     */
+    static SchemaPtr createSchema(const std::string& prefix, const std::list<std::string>& configuredMetrics);
+
+    /**
+     * @brief Sets the schema of a metrics object to the given schema.
+     * @param newSchema
+    */
+    void setSchema(SchemaPtr newSchema);
+
+    /**
+     * @brief Returns the schema of the class.
+     * @return the schema
+     */
+    [[nodiscard]] SchemaPtr getSchema() const;
+
+    /**
+     * @brief Returns a vector of strings with all possible metrics for this class.
+     * @return vector of strings
+     */
+    static std::vector<std::string> getAttributesVector();
+
+    /**
+     * @brief Returns a value for the given metric.
+     * @param metricName the name of the metric
+     * @return metric value
+     */
+    uint64_t getValue(const std::string& metricName) const;
 
     /**
      * @brief Writes a metrics objects to the given TupleBuffer and index.
@@ -88,6 +124,7 @@ class CpuMetrics {
     uint64_t steal;
     uint64_t guest;
     uint64_t guestnice;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**

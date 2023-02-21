@@ -70,6 +70,45 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService,
                                   LocationServicePtr locationService);
+
+    /**
+     * @brief RPC Call to register a monitoring plan at the monitoring manager
+     * @param context: the server context
+     * @param request: monitoring plan registration request
+     * @param reply: monitoring plan registration reply
+     * @return success
+     */
+    Status RegisterMonitoringPlan(ServerContext* context, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) override;
+
+    /**
+     * @brief RPC Call to register a monitoring plan at the monitoring manager
+     * @param context: the server context
+     * @param request: monitoring plan registration request
+     * @param reply: monitoring plan registration reply
+     * @return success
+     */
+    Status LogicalSourceLookUp(ServerContext* context, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) override;
+
+    /**
+     * @brief RPC Call to register a logical source name at the source catalog
+     * @param context: the server context
+     * @param request: logical source name registration request
+     * @param reply: logical source name registration reply
+     * @return success
+     */
+    Status RegisterLogicalSourceName(ServerContext* context, const RegisterLogicalSourceNameRequest* request,
+                                     RegisterLogicalSourceNameReply* reply) override;
+
+    /**
+     * @brief RPC Call to register a logical source and schema at the source catalog
+     * @param context: the server context
+     * @param request: logical source and schema registration request
+     * @param reply: logical source and schema registration reply
+     * @return success
+     */
+    Status RegisterLogicalSourceV2(ServerContext* context, const RegisterLogicalSourceV2Request* request,
+                                   RegisterLogicalSourceV2Reply* reply) override;
+
     /**
      * @brief RPC Call to register a node
      * @param context: the server context

@@ -290,6 +290,29 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
                                  uint64_t numberOfOrigins = 1);
 
+/**
+ * @brief create a monitoring data sink with a monitoring manager
+ * @param metricStore
+ * @param monitoringManager
+ * @param nodeEngine
+ * @param numOfProducers
+ * @param queryId
+ * @param querySubPlanId
+ * @param faultToleranceType
+ * @param numberOfOrigins
+ * @return a data sink pointer
+ */
+DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
+                                 Monitoring::MonitoringManagerPtr monitoringManager,
+                                 Monitoring::MetricCollectorType collectorType,
+                                 const SchemaPtr& schema,
+                                 Runtime::NodeEnginePtr nodeEngine,
+                                 uint32_t numOfProducers,
+                                 QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                 uint64_t numberOfOrigins = 1);
+
 namespace Experimental::MaterializedView {
 
 /**

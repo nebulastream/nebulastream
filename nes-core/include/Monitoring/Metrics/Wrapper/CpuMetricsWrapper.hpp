@@ -26,9 +26,24 @@ namespace NES::Monitoring {
  */
 class CpuMetricsWrapper {
   public:
-    CpuMetricsWrapper() = default;
+    CpuMetricsWrapper();
     CpuMetricsWrapper(uint64_t nodeId);
+    CpuMetricsWrapper(uint64_t nodeId, SchemaPtr schema);
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    CpuMetricsWrapper(std::vector<CpuMetrics>&& arr, SchemaPtr schema);
+    CpuMetricsWrapper(SchemaPtr schema);
+
+    /**
+     * @brief Get the schema of the wrapper
+     * @return the schema
+     */
+    [[nodiscard]] SchemaPtr getSchema() const;
+
+    /**
+     * @brief Set the schema of the wrapper
+     * @param newSchema
+     */
+    void setSchema(SchemaPtr newSchema);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
@@ -75,9 +90,16 @@ class CpuMetricsWrapper {
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
 
+    /**
+     * @brief Set the cpu cores that are to be monitored
+     * @param coresList
+     */
+    void setCores(const std::list<uint64_t>& coresList);
+
   private:
     std::vector<CpuMetrics> cpuMetrics;
     uint64_t nodeId;
+    SchemaPtr schema;
 } __attribute__((packed));
 
 /**

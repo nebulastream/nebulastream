@@ -286,6 +286,29 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                             numberOfOrigins);
 }
 
+DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
+                                 Monitoring::MonitoringManagerPtr monitoringManager,
+                                 Monitoring::MetricCollectorType type,
+                                 const SchemaPtr& schema,
+                                 Runtime::NodeEnginePtr nodeEngine,
+                                 uint32_t numOfProducers,
+                                 QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 FaultToleranceType::Value faultToleranceType,
+                                 uint64_t numberOfOrigins) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<MonitoringSink>(format,
+                                            metricStore,
+                                            monitoringManager,
+                                            type,
+                                            nodeEngine,
+                                            numOfProducers,
+                                            queryId,
+                                            querySubPlanId,
+                                            faultToleranceType,
+                                            numberOfOrigins);
+}
+
 namespace Experimental::MaterializedView {
 
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,

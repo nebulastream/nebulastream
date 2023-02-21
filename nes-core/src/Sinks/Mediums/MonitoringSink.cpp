@@ -24,6 +24,8 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/AbstractMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 
 namespace NES {
 MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
@@ -44,6 +46,29 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       metricStore(metricStore), collectorType(collectorType) {
+    monitoringManager = nullptr;
+    NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
+}
+
+MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
+                               Monitoring::MetricStorePtr metricStore,
+                               Monitoring::MonitoringManagerPtr monitoringManager,
+                               Monitoring::MetricCollectorType collectorType,
+                               Runtime::NodeEnginePtr nodeEngine,
+                               uint32_t numOfProducers,
+                               QueryId queryId,
+                               QuerySubPlanId querySubPlanId,
+                               FaultToleranceType::Value faultToleranceType,
+                               uint64_t numberOfOrigins)
+    : SinkMedium(std::move(sinkFormat),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+      metricStore(metricStore), collectorType(collectorType), monitoringManager(monitoringManager) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
 }
 
@@ -60,10 +85,25 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto& buffer : dataBuffers) {
-        Monitoring::MetricPtr parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
-        Monitoring::readFromBuffer(parsedMetric, buffer, 0);
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];
+        Monitoring::MetricPtr parsedMetric;
+
+        if (monitoringManager != nullptr) {
+            Monitoring::MonitoringPlanPtr monitoringPlan = monitoringManager->getMonitoringPlan(nodeId);
+            Monitoring::MetricType metricType = Monitoring::MetricUtils::getMetricTypeFromCollectorType(collectorType);
+            SchemaPtr schema = monitoringPlan->getSchema(metricType);
+            if (schema) {
+                parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorTypeAndSchema(collectorType, schema);
+            } else {
+                parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
+            }
+        } else {
+            parsedMetric = Monitoring::MetricUtils::createMetricFromCollectorType(collectorType);
+        }
+
+        Monitoring::readFromBuffer(parsedMetric, buffer, 0);
+
         NES_TRACE2("MonitoringSink: Received buffer for {} with {} tuple and size {}:{}",
                    nodeId,
                    inputBuffer.getNumberOfTuples(),

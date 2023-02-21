@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 
 #include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -36,6 +37,13 @@ class MonitoringCatalog {
      * @return the catalog
      */
     static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors);
+
+    /**
+     * @brief Creates a monitoring catalog for a given monitoring plan
+     * @param monitoringPlan
+     * @return Ptr to the monitoring catalog
+     */
+    static MonitoringCatalogPtr createCatalog(const Monitoring::MonitoringPlanPtr& monitoringPlan);
 
     /**
      * Creates a MonitoringCatalog with a pre-initialized map that contains basic MetricTypes and their collectors.

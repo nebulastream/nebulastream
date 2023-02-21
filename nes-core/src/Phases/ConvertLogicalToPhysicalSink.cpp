@@ -81,6 +81,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO2("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
         const MonitoringSinkDescriptorPtr monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
         return createMonitoringSink(nodeEngine->getMetricStore(),
+                                    nodeEngine->getMonitoringManager(),
                                     monitoringSinkDescriptor->getCollectorType(),
                                     schema,
                                     nodeEngine,

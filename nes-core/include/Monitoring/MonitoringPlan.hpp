@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <list>
 
 namespace NES::Monitoring {
 
@@ -29,8 +30,37 @@ namespace NES::Monitoring {
 */
 class MonitoringPlan {
   public:
-    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+    //static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics);
+    static MonitoringPlanPtr create(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores);
     static MonitoringPlanPtr defaultPlan();
+
+    /**
+     * @brief Gets the schema for a metric type
+     * @param metric
+     * @return Ptr to the schema
+    */
+    SchemaPtr getSchema(MetricType metric);
+
+    /**
+     * @brief Gets the sample rate for a metric type
+     * @param metric
+     * @return sample rate
+    */
+    uint64_t getSampleRate(MetricType metric);
+
+    /**
+     * @brief Creates a monitoring plan for a given configuration of the monitoring
+     * @param configuredMetrics: configuration of the monitoring
+     * @return Ptr to the monitoring plan
+    */
+    static MonitoringPlanPtr setSchemaJson(nlohmann::json& configuredMetrics);
+
+    /**
+     * @brief Gets a list of cpu core numbers that have to be monitored
+     * @return List of cores
+    */
+    std::list<uint64_t> getCores();
 
     /**
      * @brief Returns the default collectors of the plan.
@@ -42,7 +72,7 @@ class MonitoringPlan {
      * @brief Add a specific metric to the plan
      * @param metric
     */
-    bool addMetric(MetricType metric);
+    //bool addMetric(MetricType metric);
 
     /**
      * @brief Checks if a metric is part of the MonitoringPlan
@@ -61,7 +91,7 @@ class MonitoringPlan {
      * @brief Returns the MetricType objects that represent the plan.
      * @return A set of metric type objects.
     */
-    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
+    [[nodiscard]] const std::set<MetricType> getMetricTypes() const;
 
     /**
      * @brief Returns the MetricType objects that represent the plan.
@@ -72,10 +102,13 @@ class MonitoringPlan {
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
   private:
-    explicit MonitoringPlan(const std::set<MetricType>& metrics);
+    //explicit MonitoringPlan(const std::set<MetricType>& metrics);
+    explicit MonitoringPlan(const std::map <MetricType, std::pair<SchemaPtr, uint64_t>>& metrics, std::list<uint64_t> cores);
 
     //enum defined in SerializableDataType.proto
-    std::set<MetricType> metricTypes;
+    //std::set<MetricType> metricTypes;
+    std::map <MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlan;
+    std::list<uint64_t> cpuCores = {};
 };
 
 }// namespace NES::Monitoring

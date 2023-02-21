@@ -36,6 +36,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Monitoring/MonitoringAgent.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
@@ -212,8 +213,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         NES_INFO2("ConvertLogicalToPhysicalSource: Creating monitoring source");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
-        auto metricCollector =
-            Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
+        auto metricType = Monitoring::MetricUtils::metricTypeFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
+        auto metricCollector = nodeEngine->getMonitoringAgent()->getCollector(metricType);
         metricCollector->setNodeId(nodeEngine->getNodeId());
         return createMonitoringSource(metricCollector,
                                       monitoringSourceDescriptor->getWaitTime(),

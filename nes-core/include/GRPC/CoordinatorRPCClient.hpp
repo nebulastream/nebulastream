@@ -22,6 +22,7 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
+#include <Monitoring/MonitoringPlan.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -59,6 +60,35 @@ class CoordinatorRPCClient {
     explicit CoordinatorRPCClient(const std::string& address,
                                   uint32_t rpcRetryAttemps = 10,
                                   std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
+
+    /**
+     * @brief Register the monitoring plan at the monitoring manager
+     * @param monitoringPlan
+     * @return bool indicating success
+     */
+    bool registerMonitoringPlan(const Monitoring::MonitoringPlanPtr& monitoringPlan);
+
+    /**
+     * @brief Checks at the source catalog if a logical source with the name already exists
+     * @param logicalSourceName
+     * @return bool indicating success
+     */
+    bool logicalSourceLookUp(const std::string& logicalSourceName);
+
+    /**
+     * @brief Register a logical source name at the source catalog
+     * @param logicalSourceName
+     * @return bool indicating success
+     */
+    bool registerLogicalSourceName(const std::string& logicalSourceName);
+
+    /**
+     * @brief Register a logical source with is schema at the source catalog
+     * @param logicalSourceName
+     * @param logicalSourceSchema
+     * @return bool indicating success
+     */
+    bool registerLogicalSourceV2(const std::string& logicalSourceName, const SchemaPtr& logicalSourceSchema);
 
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator

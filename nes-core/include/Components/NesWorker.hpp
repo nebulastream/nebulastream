@@ -66,6 +66,9 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace Monitoring
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
@@ -81,7 +84,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
+    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr,
+              Monitoring::MonitoringManagerPtr monitoringManager = nullptr);
 
     /**
      * @brief default dtor
@@ -266,6 +270,17 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& prom);
 
     /**
+     * @brief Register physical sources at the source catalog.
+     * @param physicalSources: a vector of all physical sources to be registered
+     */
+    void registerLogicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
+    /**
+     * @brief Register the monitoring plan at the monitoring manager.
+     */
+    void registerMonitoringPlan();
+
+    /**
      * @brief helper method to ensure client is connected before calling rpc functions
      * @return
      */
@@ -283,6 +298,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     TopologyNodeId workerId;
     HealthCheckServicePtr healthCheckService;
 
+
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::shared_ptr<std::thread> statisticOutputThread;
@@ -294,6 +310,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::atomic<bool> connected{false};
     uint32_t parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
+    Monitoring::MonitoringManagerPtr monitoringManager;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

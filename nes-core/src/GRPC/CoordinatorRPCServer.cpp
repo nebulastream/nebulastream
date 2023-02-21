@@ -18,6 +18,7 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
@@ -41,6 +42,80 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
       sourceCatalogService(std::move(sourceCatalogService)), queryCatalogService(std::move(queryCatalogService)),
       monitoringManager(std::move(monitoringManager)), replicationService(std::move(replicationService)),
       locationService(std::move(locationService)){};
+
+Status CoordinatorRPCServer::RegisterMonitoringPlan(ServerContext*, const RegisterMonitoringPlanRequest* request, RegisterMonitoringPlanReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan: request =" << request);
+
+    std::map <Monitoring::MetricType, std::pair<SchemaPtr, uint64_t>> monitoringPlanMap;
+    std::pair<SchemaPtr, uint64_t> pairTemp;
+    TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
+    SchemaPtr schema;
+    Monitoring::MetricType metricType;
+    std::list<uint64_t> coreList;
+    for (const auto& monitoringPlanPart : request->monitoringplanpart()) {
+        metricType = Monitoring::parse(monitoringPlanPart.metrictype());
+        schema = Schema::parse(monitoringPlanPart.schema());
+        pairTemp = std::make_pair(schema, monitoringPlanPart.samplerate());
+        monitoringPlanMap[metricType] = pairTemp;
+    }
+    for (const auto& coreNum : request->coreslist()) {
+        coreList.push_back(coreNum.corenum());
+    }
+    Monitoring::MonitoringPlanPtr monitoringPlan = Monitoring::MonitoringPlan::create(monitoringPlanMap, coreList);
+    bool success = monitoringManager->registerMonitoringPlans(request->id(), monitoringPlan);
+    if (!success) {
+        NES_ERROR("CoordinatorRPCServer::RegisterMonitoringPlan failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+    NES_DEBUG("CoordinatorRPCServer::RegisterMonitoringPlan Succeed");
+    reply->set_success(true);
+    return Status::OK;
+}
+
+Status CoordinatorRPCServer::RegisterLogicalSourceName(ServerContext*, const RegisterLogicalSourceNameRequest* request, RegisterLogicalSourceNameReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: request =" << request);
+
+    bool success = monitoringManager->insertLogicalSource(request->logicalsourcename());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource successfully inserted");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceName: LogicalSource already in set");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status CoordinatorRPCServer::LogicalSourceLookUp(ServerContext*, const LogicalSourceLookUpRequest* request, LogicalSourceLookUpReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: request =" << request);
+
+    bool success = sourceCatalogService->logicalSourceLookUp(request->logicalsourcename());
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does already exist");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_INFO("CoordinatorRPCServer::LogicalSourceLookUp: LogicalSource does not exist yet");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
+
+Status CoordinatorRPCServer::RegisterLogicalSourceV2(ServerContext*, const RegisterLogicalSourceV2Request* request
+                                                     , RegisterLogicalSourceV2Reply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: request =" << request);
+
+    SchemaPtr schema = Schema::parse(request->logicalsourceschema());
+    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), schema);
+    if (success) {
+        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource successfully registered");
+        reply->set_success(true);
+        return Status::OK;
+    }
+    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSourceNEW: LogicalSource NOT successfully registered");
+    reply->set_success(false);
+    return Status::CANCELLED;
+}
 
 Status CoordinatorRPCServer::RegisterWorker(ServerContext*,
                                             const RegisterWorkerRequest* registrationRequest,

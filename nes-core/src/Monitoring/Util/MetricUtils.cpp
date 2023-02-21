@@ -106,10 +106,10 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
 
 SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
-        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchema("");
-        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
-        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
+        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getDefaultSchema("");
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getDefaultSchema("");
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getDefaultSchema("");
+        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getDefaultSchema("");
         default: {
             NES_FATAL_ERROR2("MetricUtils: Collector type not supported {}", NES::Monitoring::toString(type));
         }
@@ -132,4 +132,221 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
+std::string MetricUtils::listToString(const std::string& separator, const std::list<std::string>& list) {
+    std::string string;
+    auto lengthSeperator = separator.size();
+    for (const std::string& listItem : list) {
+        string += listItem + separator;
+    }
+    string = string.substr(0, string.size()-lengthSeperator);
+
+    return string;
+}
+
+MetricType MetricUtils::metricTypeFromCollectorType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return WrappedCpuMetrics;
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetric;
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetric;
+        case MetricCollectorType::NETWORK_COLLECTOR: return WrappedNetworkMetrics;
+        default: NES_FATAL_ERROR("MetricUtils: Not supported collector type " << toString(type));
+    }
+    return UnknownMetric;
+}
+
+MetricType MetricUtils::metricTypeFromSourceName(std::string sourceName) {
+    MetricType metricType;
+    if (sourceName.substr(0, 4) == "disk"){
+        metricType = DiskMetric;
+    } else if (sourceName.substr(0, 6) == "memory") {
+        metricType = MemoryMetric;
+    } else if (sourceName.substr(0, 11) == "wrapped_cpu") {
+        metricType = WrappedCpuMetrics;
+    } else if (sourceName.substr(0, 15) == "wrapped_network") {
+        metricType = WrappedNetworkMetrics;
+    } else {
+        NES_ERROR("MetricUtils: metricTypeFromSourceName: MetricType cannot be defined from sourceName")
+        metricType = UnknownMetric;
+    }
+
+    return metricType;
+}
+
+SchemaPtr MetricUtils::defaultSchema(MetricType metricType) {
+    SchemaPtr defaultSchema;
+    if (metricType == CpuMetric || metricType == WrappedCpuMetrics) {
+        defaultSchema = CpuMetrics::getDefaultSchema("");
+    } else if (metricType == NetworkMetric || metricType == WrappedNetworkMetrics) {
+        defaultSchema = NetworkMetrics::getDefaultSchema("");
+    } else if (metricType == DiskMetric) {
+        defaultSchema = DiskMetrics::getDefaultSchema("");
+    } else if (metricType == MemoryMetric) {
+        defaultSchema = MemoryMetrics::getDefaultSchema("");
+    }
+
+    return defaultSchema;
+}
+
+std::string MetricUtils::createLogicalSourceName(MetricType metricType, SchemaPtr schema) {
+    std::string logicalSourceName = NES::Monitoring::toString(metricType) + "_" + schema->toStringForLogicalSourceName();
+    return logicalSourceName;
+}
+
+nlohmann::json MetricUtils::parseMonitoringConfigStringToJson(std::string rawConfigString) {
+    // init json to save everything
+    nlohmann::json monitoringConfigurationJson;
+    // argument for splitting the string
+    std::string delimiter(" - ");
+
+    // erase first 3 characters from the raw string and check, if the string has the right format in the beginning
+    if (rawConfigString.substr(0, 3) == delimiter) {
+        rawConfigString.erase(0, 3);
+    } else {
+        //throw exception
+        std::cout << "String has the wrong format";
+    }
+    // list to save strings for each metric
+    std::list<std::string> tokenList;
+
+    size_t pos = 0;
+    std::string token;
+    std::list<std::string>::iterator i;
+    i = tokenList.begin();
+
+    // split rawString into n different strings;
+    // each string will represent the configuration of one metric type
+    while ((pos = rawConfigString.find(delimiter)) != std::string::npos) {
+        token = rawConfigString.substr(0, pos);
+        rawConfigString.erase(0, pos + delimiter.length());
+        tokenList.insert(i, token);
+        ++i;
+    }
+    tokenList.insert(i, rawConfigString);
+
+    std::string metricType;
+    std::string attributes;
+    std::vector<std::string> vectorAttributes;
+    std::string sampleRate;
+    std::string cores;
+    std::vector<uint64_t> vectorCores;
+    std::list<std::string>::iterator j;
+    // split the metric configuration strings and parse them to json
+    for (i = tokenList.begin(); i != tokenList.end(); ++i) {
+        delimiter = ": ";
+        pos = i->find(delimiter);
+        metricType = i->substr(0, pos);
+        i->erase(0, pos + delimiter.length());
+
+        delimiter = "attributes: \"";
+        i->erase(0, delimiter.length());
+
+        delimiter = "\"";
+        pos = i->find(delimiter);
+        attributes = i->substr(0, pos);
+        i->erase(0, pos + delimiter.length() + 1);
+
+        if (metricType == "cpu" && (i->find("cores") != std::string::npos)){
+            delimiter = "cores: \"";
+            i->erase(0, delimiter.length());
+
+            delimiter = "\"";
+            pos = i->find(delimiter);
+            cores = i->substr(0, pos);
+            i->erase(0, pos + delimiter.length() + 1);
+
+            delimiter = ", ";
+            if (!(i->find(delimiter) != std::string::npos)) {
+                while ((pos = cores.find(delimiter)) != std::string::npos) {
+                    token = cores.substr(0, pos);
+                    cores.erase(0, pos + delimiter.length());
+                    vectorCores.emplace_back(stoi(token));
+                }
+            } else {
+                vectorCores.emplace_back(stoi(cores));
+            }
+            vectorCores.emplace_back(stoi(cores));
+            monitoringConfigurationJson[metricType]["cores"] = vectorCores;
+            vectorCores.clear();
+        }
+
+        if (i->find("sampleRate") != std::string::npos) {
+            delimiter = "sampleRate: ";
+            i->erase(0, delimiter.length());
+
+            delimiter = " ";
+            pos = i->find(delimiter);
+            sampleRate = i->substr(0, pos);
+
+            monitoringConfigurationJson[metricType]["sampleRate"] = std::stoi(sampleRate);
+        } else {
+            monitoringConfigurationJson[metricType]["sampleRate"] = 1000;
+        }
+
+        // parse attribute string to list of strings
+        delimiter = ", ";
+        if (i->find(delimiter) == std::string::npos) {
+            while ((pos = attributes.find(delimiter)) != std::string::npos) {
+                token = attributes.substr(0, pos);
+                attributes.erase(0, pos + delimiter.length());
+                vectorAttributes.push_back(token);
+            }
+        } else {
+            vectorAttributes.emplace_back(attributes);
+        }
+        vectorAttributes.push_back(attributes);
+        monitoringConfigurationJson[metricType]["attributes"] = vectorAttributes;
+        vectorAttributes.clear();
+    }
+
+    return monitoringConfigurationJson;
+}
+
+std::list<std::string> MetricUtils:: jsonArrayToList(nlohmann::json jsonAttributes) {
+    std::list<std::string> attributesList;
+    int i;
+    auto arrayLength = jsonAttributes.size();
+    for (i = 0; i < static_cast<int>(arrayLength); i++) {
+        attributesList.push_front(jsonAttributes[i]);
+    }
+
+    return attributesList;
+}
+
+std::list<uint64_t> MetricUtils:: jsonArrayToIntegerList(nlohmann::json jsonAttributes) {
+    std::list<uint64_t> coresList;
+    int i;
+    auto arrayLength = jsonAttributes.size();
+    for (i = 0; i < static_cast<int>(arrayLength); i++) {
+        coresList.push_front(jsonAttributes[i]);
+    }
+
+    return coresList;
+}
+
+MetricType MetricUtils::getMetricTypeFromCollectorType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return MetricType::WrappedCpuMetrics;
+        case MetricCollectorType::DISK_COLLECTOR: return MetricType::DiskMetric;
+        case MetricCollectorType::MEMORY_COLLECTOR: return MetricType::MemoryMetric;
+        case MetricCollectorType::NETWORK_COLLECTOR: return MetricType::WrappedNetworkMetrics;
+        default: {
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
+        }
+    }
+    return UnknownMetric;
+}
+
+MetricPtr MetricUtils::createMetricFromCollectorTypeAndSchema(MetricCollectorType type, SchemaPtr schema) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(Monitoring::CpuMetricsWrapper(schema), WrappedCpuMetrics);
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(Monitoring::DiskMetrics(schema), DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(Monitoring::MemoryMetrics(schema), MemoryMetric);
+        case MetricCollectorType::NETWORK_COLLECTOR:
+            return std::make_shared<Metric>(Monitoring::NetworkMetricsWrapper(schema), WrappedNetworkMetrics);
+        default: {
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::Monitoring::toString(type));
+        }
+    }
+    return nullptr;
+}
 }// namespace NES::Monitoring
