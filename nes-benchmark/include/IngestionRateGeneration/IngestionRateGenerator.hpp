@@ -15,24 +15,18 @@
 #ifndef NES_INGESTIONRATEGENERATOR_HPP
 #define NES_INGESTIONRATEGENERATOR_HPP
 
-#include <Util/Logger/Logger.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace NES::Benchmark::IngestionRateGeneration {
 
 /**
  * @brief This class defines the different types of supported ingestion rate generators.
  */
-enum class IngestionRateDistribution : uint8_t {
-    UNIFORM,
-    SINUS,
-    COSINUS,
-    CUSTOM,
-    UNDEFINED
-};
+enum class IngestionRateDistribution : uint8_t { UNIFORM, SINUS, COSINUS, CUSTOM, UNDEFINED };
 
 class IngestionRateGenerator;
 using IngestionRateGeneratorPtr = std::unique_ptr<IngestionRateGenerator>;
@@ -58,7 +52,7 @@ class IngestionRateGenerator {
      */
     virtual std::vector<uint64_t> generateIngestionRates() = 0;
 
-     /**
+    /**
       * @brief creates a specific type of ingestion rate generator based on the given ingestion rate distribution
       * @param configOverAllRuns
       * @return pointer to a type of ingestion rate generator

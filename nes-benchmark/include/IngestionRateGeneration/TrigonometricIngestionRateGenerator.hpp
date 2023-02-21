@@ -34,7 +34,10 @@ class TrigonometricIngestionRateGenerator : public IngestionRateGenerator {
      * @param ingestionRateInBuffers
      * @param ingestionRateCount
      */
-    explicit TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution, uint64_t ingestionRateInBuffers, uint64_t ingestionRateCount, uint64_t numberOfPeriods);
+    explicit TrigonometricIngestionRateGenerator(IngestionRateDistribution ingestionRateDistribution,
+                                                 uint64_t ingestionRateInBuffers,
+                                                 uint64_t ingestionRateCount,
+                                                 uint64_t numberOfPeriods);
 
     /**
       * @brief creates a vector of length ingestionRateCount and fills it with values that are distributed according to ingestionRateDistribution

@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/BenchmarkUtils.hpp>
 #include <IngestionRateGeneration/CustomIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
+#include <Util/BenchmarkUtils.hpp>
 
 namespace NES::Benchmark::IngestionRateGeneration {
 
@@ -29,8 +29,12 @@ IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E
 
     if (ingestionRateDistribution == IngestionRateDistribution::UNIFORM) {
         return std::make_unique<UniformIngestionRateGenerator>(ingestionRateInBuffers, ingestionRateCount);
-    } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
-        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution, ingestionRateInBuffers, ingestionRateCount, numberOfPeriods);
+    } else if (ingestionRateDistribution == IngestionRateDistribution::SINUS
+               || ingestionRateDistribution == IngestionRateDistribution::COSINUS) {
+        return std::make_unique<TrigonometricIngestionRateGenerator>(ingestionRateDistribution,
+                                                                     ingestionRateInBuffers,
+                                                                     ingestionRateCount,
+                                                                     numberOfPeriods);
     } else if (ingestionRateDistribution == IngestionRateDistribution::CUSTOM) {
         auto customValues = NES::Util::splitWithStringDelimiter<uint64_t>(configOverAllRuns.customValues->getValue(), ",");
         return std::make_unique<CustomIngestionRateGenerator>(ingestionRateCount, customValues);
@@ -40,10 +44,18 @@ IngestionRateGeneratorPtr IngestionRateGenerator::createIngestionRateGenerator(E
 }
 
 IngestionRateDistribution IngestionRateGenerator::getDistributionFromString(std::string& ingestionRateDistribution) {
-    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform" || ingestionRateDistribution == "uniform") return IngestionRateDistribution::UNIFORM;
-    else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus") return IngestionRateDistribution::SINUS;
-    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus" || ingestionRateDistribution == "cosinus") return IngestionRateDistribution::COSINUS;
-    else if (ingestionRateDistribution == "CUSTOM" || ingestionRateDistribution == "Custom" || ingestionRateDistribution == "custom") return IngestionRateDistribution::CUSTOM;
-    else return IngestionRateDistribution::UNDEFINED;
+    if (ingestionRateDistribution == "UNIFORM" || ingestionRateDistribution == "Uniform"
+        || ingestionRateDistribution == "uniform")
+        return IngestionRateDistribution::UNIFORM;
+    else if (ingestionRateDistribution == "SINUS" || ingestionRateDistribution == "Sinus" || ingestionRateDistribution == "sinus")
+        return IngestionRateDistribution::SINUS;
+    else if (ingestionRateDistribution == "COSINUS" || ingestionRateDistribution == "Cosinus"
+             || ingestionRateDistribution == "cosinus")
+        return IngestionRateDistribution::COSINUS;
+    else if (ingestionRateDistribution == "CUSTOM" || ingestionRateDistribution == "Custom"
+             || ingestionRateDistribution == "custom")
+        return IngestionRateDistribution::CUSTOM;
+    else
+        return IngestionRateDistribution::UNDEFINED;
 }
 }// namespace NES::Benchmark::IngestionRateGeneration

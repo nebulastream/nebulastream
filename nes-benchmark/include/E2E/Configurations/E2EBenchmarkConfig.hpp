@@ -19,8 +19,8 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace NES::Benchmark {
 

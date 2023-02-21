@@ -13,12 +13,11 @@
 */
 
 #include <DataProvider/DataProvider.hpp>
-#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <cstring>
 #include <memory>
-
 
 namespace NES::Benchmark::DataProvision {
 DataProviderPtr DataProvider::createProvider(uint64_t providerId,
@@ -36,7 +35,8 @@ DataProviderPtr DataProvider::createProvider(uint64_t providerId,
     if (configOverAllRuns.dataProvider->getValue() == "Internal") {
         return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
     } else if (configOverAllRuns.dataProvider->getValue() == "External") {
-        auto ingestionRateGenerator = IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
+        auto ingestionRateGenerator =
+            IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
         return std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, std::move(ingestionRateGenerator));
     } else {
         NES_THROW_RUNTIME_ERROR("Could not parse dataProvider = " << configOverAllRuns.dataProvider->getValue() << "!");
