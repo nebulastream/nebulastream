@@ -112,7 +112,7 @@ ExpressionProvider::lowerFunctionExpression(const std::shared_ptr<FunctionExpres
         arguments.emplace_back(lowerExpression(arg));
     }
     auto functionProvider =
-        Runtime::Execution::Expressions::ExecutableFunctionRegistry::getPlugin(expressionNode->getFunctionName());
+        Runtime::Execution::Expressions::ExecutableFunctionRegistry::createPlugin(expressionNode->getFunctionName());
     return functionProvider->create(arguments);
 }
 }// namespace NES::QueryCompilation
