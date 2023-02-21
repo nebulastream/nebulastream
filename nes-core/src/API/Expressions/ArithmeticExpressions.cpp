@@ -66,11 +66,17 @@ ExpressionNodePtr SQRT(const ExpressionNodePtr& exp) { return SqrtExpressionNode
 
 ExpressionNodePtr EXP(const ExpressionNodePtr& exp) { return ExpExpressionNode::create(exp); }
 
-ExpressionNodePtr LN(const ExpressionNodePtr& exp) { return FunctionExpression::create(exp->getStamp(), "ln", {exp}); }
+ExpressionNodePtr LN(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "ln", {exp});
+}
 
-ExpressionNodePtr LOG2(const ExpressionNodePtr& exp) { return FunctionExpression::create(exp->getStamp(), "log2", {exp}); }
+ExpressionNodePtr LOG2(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log2", {exp});
+}
 
-ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) { return FunctionExpression::create(exp->getStamp(), "log10", {exp}); }
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
+}
 
 ExpressionNodePtr ROUND(const ExpressionNodePtr& exp) { return RoundExpressionNode::create(exp); }
 
