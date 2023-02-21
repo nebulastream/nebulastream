@@ -31,6 +31,6 @@ class LnFunction : public UnaryLogicalFunction {
     }
 };
 
-[[maybe_unused]] static FunctionRegistry::Add<LnFunction> logFunction("ln");
+[[maybe_unused]] static LogicalFunctionRegistry::Add<LnFunction> logFunction("ln");
 
 }// namespace NES

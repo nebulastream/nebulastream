@@ -20,14 +20,26 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-class FunctionProvider {
+/**
+ * @brief The function provider, is the base class, which registers an expression in the engine.
+ */
+class FunctionExpressionProvider {
   public:
+    /**
+     * @brief Creates a new function expression, which a set of arguments.
+     * @param args aruments for the function expression
+     * @return std::unique_ptr<Expression>
+     */
     virtual std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) = 0;
-    virtual ~FunctionProvider() = default;
+    virtual ~FunctionExpressionProvider() = default;
 };
 
+/**
+ * @brief A function provider for unary function expressions.
+ * @tparam T
+ */
 template<typename T>
-class UnaryFunctionProvider : public FunctionProvider {
+class UnaryFunctionProvider : public FunctionExpressionProvider {
   public:
     std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override {
         NES_ASSERT(args.size() == 1, "A unary function should receive one argument");
@@ -35,8 +47,12 @@ class UnaryFunctionProvider : public FunctionProvider {
     };
 };
 
+/**
+ * @brief A function provider for binary function expressions.
+ * @tparam T
+ */
 template<typename T>
-class BinaryFunctionProvider : public FunctionProvider {
+class BinaryFunctionProvider : public FunctionExpressionProvider {
   public:
     std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override {
         NES_ASSERT(args.size() == 2, "A binary function should receive two arguments");
@@ -44,7 +60,10 @@ class BinaryFunctionProvider : public FunctionProvider {
     };
 };
 
-using ExecutableFunctionRegistry = Util::PluginFactory<FunctionProvider>;
+/**
+ * @brief The ExecutableFunctionRegistry manages all executable function expressions for the engine.
+ */
+using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;
 
 }// namespace NES::Runtime::Execution::Expressions
 
