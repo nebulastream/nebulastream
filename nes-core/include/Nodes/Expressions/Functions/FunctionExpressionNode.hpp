@@ -22,33 +22,32 @@ class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /**
- * @brief This expression node represents a constant value and a fixed data type.
- * Thus the stamp of this expression is always fixed.
+ * @brief This expression node represents a function with a specific name.
+ * Internally it stores a LogicalFunction, which is used for inference.
  */
-class FunctionExpression : public ExpressionNode {
+class FunctionExpression final : public ExpressionNode {
   public:
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
     static ExpressionNodePtr
     create(const DataTypePtr& stamp, const std::string& functionName, const std::vector<ExpressionNodePtr>& arguments);
-    virtual ~FunctionExpression() noexcept = default;
 
     /**
-     * @brief On a constant value expression infer stamp has not to perform any action as its result type is always constant.
-     * @param typeInferencePhaseContext
-     * @param schema
+     * @brief On a function value expression infer stamp invokes inferStamp on the child LogicalFunction
+     * @param typeInferencePhaseContext TypeInferencePhaseContext
+     * @param schema current logical schema
      */
     void inferStamp(const Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext, SchemaPtr schema) override;
 
     /**
-     * @brief Creates a string of the value and the type.
+     * @brief Creates a string representation of the function
      * @return
      */
     std::string toString() const override;
 
     /**
-     * @brief Compares if another node is equal to this constant value expression.
+     * @brief Compares if another node is equal to this function
      * @param otherNode
      * @return true if they are equal
      */
@@ -59,8 +58,20 @@ class FunctionExpression : public ExpressionNode {
     * @return ExpressionNodePtr
     */
     ExpressionNodePtr copy() override;
+
+    /**
+     * @brief Returns the function name of this function
+     * @return const std::string&
+     */
     const std::string& getFunctionName() const;
+
+    /**
+     * @brief Returns the set of arguments of this function.
+     * @return std::vector<ExpressionNodePtr>
+     */
     std::vector<ExpressionNodePtr> getArguments() const;
+
+    ~FunctionExpression() noexcept override = default;
 
   public:
     explicit FunctionExpression(DataTypePtr stamp,

@@ -23,7 +23,7 @@ FunctionExpression::FunctionExpression(DataTypePtr stamp, std::string functionNa
 ExpressionNodePtr FunctionExpression::create(const DataTypePtr& stamp,
                                              const std::string& functionName,
                                              const std::vector<ExpressionNodePtr>& arguments) {
-    auto function = FunctionRegistry::getPlugin(functionName);
+    auto function = LogicalFunctionRegistry::getPlugin(functionName);
     auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function));
     for (const auto& arg : arguments) {
         expression->addChild(arg);

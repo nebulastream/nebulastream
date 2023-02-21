@@ -22,11 +22,22 @@ class DataType;
 class LogicalFunction;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-using FunctionRegistry = Util::PluginFactory<LogicalFunction>;
+/**
+ * @brief The LogicalFunctionRegistry manages all logical functions.
+ */
+using LogicalFunctionRegistry = Util::PluginFactory<LogicalFunction>;
 
+/**
+ * @brief Base class for all logical functions.
+ */
 class LogicalFunction {
   public:
     LogicalFunction() = default;
+    /**
+     * @brief
+     * @param inputStamps
+     * @return
+     */
     [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const = 0;
     virtual ~LogicalFunction() = default;
 };
@@ -36,6 +47,13 @@ class UnaryLogicalFunction : public LogicalFunction {
     [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
     [[nodiscard]] virtual DataTypePtr inferUnary(const DataTypePtr& input) const = 0;
 };
+
+class BinaryLogicalFunction : public LogicalFunction {
+  public:
+    [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
+    [[nodiscard]] virtual DataTypePtr inferUnary(const DataTypePtr& input) const = 0;
+};
+
 
 }// namespace NES
 #endif//NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONREGISTRY_HPP_
