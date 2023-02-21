@@ -65,7 +65,8 @@ class DataProvider {
      * @brief creates a data provider
      * @return
      */
-    static DataProviderPtr createProvider(uint64_t id, NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+    static DataProviderPtr createProvider(uint64_t id,
+                                          NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                                           std::vector<Runtime::TupleBuffer> buffers);
 
     /**

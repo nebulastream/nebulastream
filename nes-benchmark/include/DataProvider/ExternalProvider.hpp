@@ -29,7 +29,7 @@ auto constexpr workingTimeDeltaInMillSeconds = 10;
  */
 class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
   public:
-     /**
+    /**
       * @brief creates an ExternalProvider
       * @param id
       * @param providerMode
@@ -85,15 +85,15 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      * @brief overrides the recyclePooledBuffer interface. We have nothing to add in this class
      * @param buffer
      */
-    void recyclePooledBuffer(Runtime::detail::MemorySegment *buffer) override;
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
     /**
      * @brief overrides the recycleUnpooledBuffer interface. We have nothing to add in this class
      * @param buffer
      */
-    void recycleUnpooledBuffer(Runtime::detail::MemorySegment *buffer) override;
+    void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
-private:
+  private:
     /**
      * @brief generates data based on predefinedIngestionRates
      */

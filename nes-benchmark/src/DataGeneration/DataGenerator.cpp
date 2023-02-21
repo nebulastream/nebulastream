@@ -24,7 +24,6 @@
 
 namespace NES::Benchmark::DataGeneration {
 
-
 Runtime::MemoryLayouts::MemoryLayoutPtr DataGenerator::getMemoryLayout(size_t bufferSize) {
 
     auto schema = this->getSchema();

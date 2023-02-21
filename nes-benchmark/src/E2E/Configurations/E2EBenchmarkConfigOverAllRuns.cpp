@@ -41,10 +41,14 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
-    ingestionRateInBuffers = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
-    ingestionRateCount = ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
-    numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
-    ingestionRateDistribution = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
+    ingestionRateInBuffers =
+        ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
+    ingestionRateCount =
+        ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
+    numberOfPeriods =
+        ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
+    ingestionRateDistribution =
+        ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
     customValues = ConfigurationOption<std::string>::create("customValues", "50000", "A vector of custom ingestion rates");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
 }
@@ -117,7 +121,8 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
             }
 
             configOverAllRuns.sourceNameToDataGenerator[sourceName] =
-                    DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);;
+                DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
+            ;
         }
         NES_DEBUG("No additional sources have been added!");
     }

@@ -19,7 +19,8 @@ ExternalProvider::ExternalProvider(uint64_t id,
                                    DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
                                    IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
-    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers), ingestionRateGenerator(std::move(ingestionRateGenerator)) {
+    : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers),
+      ingestionRateGenerator(std::move(ingestionRateGenerator)) {
     predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();
 
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
@@ -34,7 +35,9 @@ std::thread& ExternalProvider::getGeneratorThread() { return generatorThread; }
 
 void ExternalProvider::start() {
     if (!started) {
-        generatorThread = std::thread([this] {this->generateData();});
+        generatorThread = std::thread([this] {
+            this->generateData();
+        });
     }
 }
 
@@ -82,7 +85,8 @@ void ExternalProvider::generateData() {
             auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
             wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
             wrapBuffer.setCreationTimestampInMS(
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                    .count());
 
             // create a buffer holder and write it to the queue
             TupleBufferHolder bufferHolder;
@@ -95,7 +99,8 @@ void ExternalProvider::generateData() {
             // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
             if (lastSecond != currentSecond) {
                 if ((buffersToProducePerWorkingTimeDelta =
-                         predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec) == 0) {
+                         predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec)
+                    == 0) {
                     buffersToProducePerWorkingTimeDelta = 1;
                 }
 
@@ -117,7 +122,8 @@ void ExternalProvider::generateData() {
 
         while (currentTime < nextPeriodStartTime) {
             currentTime =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+                    .count();
         }
     }
 }
@@ -153,4 +159,4 @@ ExternalProvider::~ExternalProvider() {
 
     preAllocatedBuffers.clear();
 }
-}// namespace NES::Benchmark::DateProviding
+}// namespace NES::Benchmark::DataProvision
