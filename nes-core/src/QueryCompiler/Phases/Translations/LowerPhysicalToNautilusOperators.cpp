@@ -17,7 +17,6 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
@@ -46,6 +45,7 @@
 #include <Execution/Operators/ThresholdWindow/ThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/ThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
@@ -375,7 +375,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
 
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> aggregationFields;
     std::transform(aggregations.cbegin(), aggregations.cend(), std::back_inserter(aggregationFields), [&](auto& agg) {
-        return lowerExpression(agg->on());
+        return expressionProvider->lowerExpression(agg->on());
     });
     auto timeWindow = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
     auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
@@ -387,7 +387,7 @@ LowerPhysicalToNautilusOperators::lowerKeyedThreadLocalPreAggregationOperator(
     auto df = DefaultPhysicalTypeFactory();
     std::vector<PhysicalTypePtr> keyDataTypes;
     for (const auto& key : keys) {
-        keyReadExpressions.emplace_back(lowerExpression(key));
+        keyReadExpressions.emplace_back(expressionProvider->lowerExpression(key));
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
