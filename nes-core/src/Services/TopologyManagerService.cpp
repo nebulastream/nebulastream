@@ -138,7 +138,10 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
         return false;
     }
     NES_DEBUG("TopologyManagerService::AddParent: sensorParent node " << parentId << " exists");
+    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
+    childPhysicalNode->addLinkProperty(parentPhysicalNode, linkProperty);
+    parentPhysicalNode->addLinkProperty(childPhysicalNode, linkProperty);
     auto children = parentPhysicalNode->getChildren();
     for (const auto& child : children) {
         if (child->as<TopologyNode>()->getId() == childId) {
