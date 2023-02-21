@@ -11,22 +11,29 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_STATISTIC_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_STATISTIC_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_COLLECTORTRIGGER_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_COLLECTORTRIGGER_HPP_
 
-#include <string>
+#include <Execution/StatisticsCollector/Statistic.hpp>
 
 namespace NES::Runtime::Execution {
+
+enum TriggerType { PipelineStatisticsTrigger };
+
 /**
- * @brief interface for specific statistics that can be collected
+ * @brief triggers statistics collector
  */
-class Statistic {
+class CollectorTrigger {
   public:
-    virtual void collect() const = 0;
-    virtual std::string getType() const = 0;
-    virtual ~Statistic() = default;
+    explicit CollectorTrigger(TriggerType triggerType);
+
+    TriggerType getTriggerType();
+
+    std::string getTypeAsString();
+
+  private:
+    TriggerType triggerType;
+
 };
-
 }// namespace NES::Runtime::Execution
-
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_STATISTIC_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_COLLECTORTRIGGER_HPP_

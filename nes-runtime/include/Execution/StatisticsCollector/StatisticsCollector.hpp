@@ -17,6 +17,7 @@ limitations under the License.
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <memory>
 #include <vector>
+#include <Execution/StatisticsCollector/CollectorTrigger.hpp>
 
 namespace NES::Runtime::Execution {
 /**
@@ -26,6 +27,7 @@ class StatisticsCollector {
   public:
     StatisticsCollector() : listOfStatistics(){};
     void addStatistic(std::shared_ptr<Statistic> statistic);
+    void updateStatisticsHandler(CollectorTrigger trigger);
 
   private:
     std::vector<std::shared_ptr<Statistic>> listOfStatistics;
