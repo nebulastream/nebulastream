@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.7](https://github.com/nebulastream/nebulastream/tree/v0.5.7) (2023-02-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.6...v0.5.7)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Dynamic ingestion rate for benchmarking [\#3333](https://github.com/nebulastream/nebulastream/issues/3333)
+
+## [v0.5.6](https://github.com/nebulastream/nebulastream/tree/v0.5.6) (2023-02-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.5...v0.5.6)
+
 ## [v0.5.5](https://github.com/nebulastream/nebulastream/tree/v0.5.5) (2023-02-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.4...v0.5.5)
