@@ -142,6 +142,8 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
 
     childPhysicalNode->addLinkProperty(parentPhysicalNode, linkProperty);
     parentPhysicalNode->addLinkProperty(childPhysicalNode, linkProperty);
+    childPhysicalNode->addNodeProperty("slots", 100);
+    parentPhysicalNode->addNodeProperty("slots", 100);
     auto children = parentPhysicalNode->getChildren();
     for (const auto& child : children) {
         if (child->as<TopologyNode>()->getId() == childId) {
