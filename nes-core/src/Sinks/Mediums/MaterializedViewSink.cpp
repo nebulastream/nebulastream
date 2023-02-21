@@ -38,6 +38,8 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
 // It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
 void MaterializedViewSink::shutdown() { view->clear(); }
 
+void MaterializedViewSink::setup() {};
+
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     NES_INFO("MaterializedViewSink::writeData");
     bool ret = view->writeData(inputBuffer);
