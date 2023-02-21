@@ -118,7 +118,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
         NES_TRACE("ExpressionSerializationUtil:: serialize case expression " << expression->toString() << ".");
         auto caseExpressionNode = expression->as<CaseExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_CaseExpression();
-        for (auto elem : caseExpressionNode->getWhenChildren()) {
+        for (const auto& elem : caseExpressionNode->getWhenChildren()) {
             serializeExpression(elem, serializedExpressionNode.add_left());
         }
         serializeExpression(caseExpressionNode->getDefaultExp(), serializedExpressionNode.mutable_right());

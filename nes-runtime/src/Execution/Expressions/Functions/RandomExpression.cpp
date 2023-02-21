@@ -17,7 +17,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <utility>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 RandomExpression::RandomExpression(NES::Runtime::Execution::Expressions::ExpressionPtr subExpression)
@@ -57,5 +57,5 @@ Value<> RandomExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RandomExpression>> randomFunction("random");
 }// namespace NES::Runtime::Execution::Expressions

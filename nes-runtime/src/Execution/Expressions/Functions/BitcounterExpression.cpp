@@ -16,7 +16,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <bit>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
@@ -48,5 +48,5 @@ Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Integer.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<BitcounterExpression>> bitcountFunction("bitcount");
 }// namespace NES::Runtime::Execution::Expressions

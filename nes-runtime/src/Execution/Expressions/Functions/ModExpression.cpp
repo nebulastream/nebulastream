@@ -14,7 +14,7 @@
 #include <Execution/Expressions/Functions/ModExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 ModExpression::ModExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
@@ -59,5 +59,5 @@ Value<> ModExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<ModExpression>> modFunction("mod");
 }// namespace NES::Runtime::Execution::Expressions

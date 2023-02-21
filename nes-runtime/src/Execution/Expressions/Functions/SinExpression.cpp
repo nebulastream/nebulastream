@@ -15,7 +15,7 @@
 #include <Execution/Expressions/Functions/SinExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 SinExpression::SinExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -58,5 +58,5 @@ Value<> SinExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SinExpression>> sinFunction("sin");
 }// namespace NES::Runtime::Execution::Expressions

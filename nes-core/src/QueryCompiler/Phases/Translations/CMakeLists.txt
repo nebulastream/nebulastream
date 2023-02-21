@@ -23,5 +23,6 @@ add_source_files(nes-core
         DefaultDataSourceProvider.cpp
         SourceSharingDataSourceProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
+        ExpressionProvider.cpp
 )
 

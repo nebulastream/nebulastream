@@ -14,7 +14,7 @@
 #include <Execution/Expressions/Functions/SqrtExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 SqrtExpression::SqrtExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -55,5 +55,5 @@ Value<> SqrtExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SqrtExpression>> sqrtFunction("sqrt");
 }// namespace NES::Runtime::Execution::Expressions

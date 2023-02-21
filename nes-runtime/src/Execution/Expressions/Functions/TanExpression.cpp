@@ -15,7 +15,7 @@
 #include <Execution/Expressions/Functions/TanExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : expression(expression) {}
@@ -50,5 +50,5 @@ Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<TanExpression>> tanFunction("tan");
 }// namespace NES::Runtime::Execution::Expressions
