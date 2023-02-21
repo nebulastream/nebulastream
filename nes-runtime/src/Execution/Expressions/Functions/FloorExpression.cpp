@@ -15,7 +15,7 @@
 #include <Execution/Expressions/Functions/FloorExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 FloorExpression::FloorExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
@@ -48,5 +48,5 @@ Value<> FloorExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FloorExpression>> floorFunction("floor");
 }// namespace NES::Runtime::Execution::Expressions

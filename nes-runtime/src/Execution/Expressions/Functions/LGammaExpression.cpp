@@ -14,7 +14,7 @@
 #include <Execution/Expressions/Functions/LGammaExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 LGammaExpression::LGammaExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
@@ -57,4 +57,5 @@ Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LGammaExpression>> lgammaFunction("lgamma");
 }// namespace NES::Runtime::Execution::Expressions

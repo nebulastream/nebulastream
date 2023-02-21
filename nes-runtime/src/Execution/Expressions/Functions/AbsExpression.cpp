@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
 
@@ -42,4 +43,6 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
+
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");
 }// namespace NES::Runtime::Execution::Expressions

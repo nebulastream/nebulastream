@@ -15,7 +15,7 @@
 #include <Execution/Expressions/Functions/CeilExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 CeilExpression::CeilExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
@@ -47,5 +47,5 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>> ceilFunction("ceil");
 }// namespace NES::Runtime::Execution::Expressions

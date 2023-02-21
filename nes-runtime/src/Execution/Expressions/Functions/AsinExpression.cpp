@@ -15,6 +15,7 @@
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -40,5 +41,7 @@ Value<> AsinExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
+
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AsinExpression>> asinFunction("asin");
 
 }// namespace NES::Runtime::Execution::Expressions

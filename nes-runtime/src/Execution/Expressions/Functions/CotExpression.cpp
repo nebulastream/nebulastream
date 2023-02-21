@@ -15,7 +15,7 @@
 #include <Execution/Expressions/Functions/CotExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 CotExpression::CotExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& radians) : radians(radians) {}
@@ -55,5 +55,5 @@ Value<> CotExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CotExpression>> cotFunction("cot");
 }// namespace NES::Runtime::Execution::Expressions

@@ -24,12 +24,13 @@ namespace NES::Runtime::Execution::Expressions {
   */
 class AbsExpression : public Expression {
   public:
-    AbsExpression(const ExpressionPtr& subExpression);
+    explicit AbsExpression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;
 };
+
 }// namespace NES::Runtime::Execution::Expressions
 
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_

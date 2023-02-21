@@ -14,6 +14,7 @@
 #include <Execution/Expressions/Functions/RadiansExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 using namespace std;
 namespace NES::Runtime::Execution::Expressions {
 
@@ -43,4 +44,5 @@ Value<> RadiansExpression::execute(NES::Nautilus::Record& record) const {
         NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
+static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RadiansExpression>> radiansFunction("radians");
 }// namespace NES::Runtime::Execution::Expressions
