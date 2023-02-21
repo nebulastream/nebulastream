@@ -124,7 +124,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             watermarkProcessor->updateWatermark(ts, sequenceNumber, originId);
             auto newWatermark = watermarkProcessor->getCurrentWatermark();
             if (oldWatermark < newWatermark) {
-                NES_DEBUG2("AbstractWindowHandler trigger for before={}, afterMin={}",oldWatermark, newWatermark);
+                NES_DEBUG2("AbstractWindowHandler trigger for before={}, afterMin={}", oldWatermark, newWatermark);
                 trigger(workerContext);
             }
         } else {

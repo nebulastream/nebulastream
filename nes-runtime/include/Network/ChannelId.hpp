@@ -42,7 +42,7 @@ class ChannelId {
 }// namespace Network
 }// namespace NES
 
-namespace fmt{
+namespace fmt {
 template<>
 struct formatter<NES::Network::ChannelId> : formatter<std::string> {
     auto format(const NES::Network::ChannelId& channel_id, format_context& ctx) -> decltype(ctx.out()) {

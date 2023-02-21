@@ -80,7 +80,8 @@ class TopologyController : public oatpp::web::server::api::ApiController {
             return errorHandler->handleError(Status::CODE_500, e.what());
         } catch (const std::exception& exc) {
             NES_ERROR2("TopologyController: handleGet -getTopology: Exception occurred while building the "
-                      "topology: {}", exc.what());
+                       "topology: {}",
+                       exc.what());
             return errorHandler->handleError(Status::CODE_500,
                                              "Exception occurred while building topology" + std::string(exc.what()));
         } catch (...) {

@@ -147,6 +147,6 @@ bool DynamicTupleBuffer::TupleIterator::operator!=(TupleIterator other) const { 
 
 DynamicTuple DynamicTupleBuffer::TupleIterator::operator*() const { return buffer[currentIndex]; }
 
-MemoryLayoutPtr DynamicTupleBuffer::getMemoryLayout() const {return memoryLayout;}
+MemoryLayoutPtr DynamicTupleBuffer::getMemoryLayout() const { return memoryLayout; }
 
 }// namespace NES::Runtime::MemoryLayouts

@@ -131,7 +131,11 @@ class JoinHandler : public AbstractJoinHandler {
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
-        NES_TRACE2("JoinHandler {}: run for watermarkLeft={} watermarkRight={} lastWatermark={}", id, watermarkLeft, watermarkRight, lastWatermark);
+        NES_TRACE2("JoinHandler {}: run for watermarkLeft={} watermarkRight={} lastWatermark={}",
+                   id,
+                   watermarkLeft,
+                   watermarkRight,
+                   lastWatermark);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
         // we cannot use 0 as this will create a lot of unnecessary windows
@@ -156,7 +160,11 @@ class JoinHandler : public AbstractJoinHandler {
             NES_TRACE2("JoinHandler {}: set lastWatermarkLeft to min value of stores={}", id, lastWatermark);
         }
 
-        NES_TRACE2("JoinHandler {}: run doing with watermarkLeft={} watermarkRight={} lastWatermark={}", id,  watermarkLeft,  watermarkRight, lastWatermark);
+        NES_TRACE2("JoinHandler {}: run doing with watermarkLeft={} watermarkRight={} lastWatermark={}",
+                   id,
+                   watermarkLeft,
+                   watermarkRight,
+                   lastWatermark);
         lock.unlock();
 
         auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
@@ -218,7 +226,10 @@ class JoinHandler : public AbstractJoinHandler {
     bool setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override {
         this->originId = 0;
 
-        NES_DEBUG2("JoinHandler {}: setup Join handler with join def={} string={}", id, joinDefinition, joinDefinition->getOutputSchema()->toString());
+        NES_DEBUG2("JoinHandler {}: setup Join handler with join def={} string={}",
+                   id,
+                   joinDefinition,
+                   joinDefinition->getOutputSchema()->toString());
         // Initialize JoinHandler Manager
         //TODO: note allowed lateness is currently not supported for windwos
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType(), 0, id);
@@ -298,7 +309,8 @@ class JoinHandler : public AbstractJoinHandler {
             }
             case Runtime::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG2("SoftEndOfStream received on join handler {}: going to flush in-flight windows and cleanup", toString());
+                    NES_DEBUG2("SoftEndOfStream received on join handler {}: going to flush in-flight windows and cleanup",
+                               toString());
                     flushInflightWindows();
                     cleanup();
                 } else {
@@ -308,7 +320,8 @@ class JoinHandler : public AbstractJoinHandler {
             }
             case Runtime::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG2("HardEndOfStream received on join handler {} going to flush in-flight windows and cleanup", toString());
+                    NES_DEBUG2("HardEndOfStream received on join handler {} going to flush in-flight windows and cleanup",
+                               toString());
                     cleanup();
                 } else {
                     NES_DEBUG2("HardEndOfStream received on join handler {}: ref counter is:{} ", toString(), refCnt.load());

@@ -16,9 +16,9 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <optional>
 #include <unordered_map>
-#include <Util/Logger/Logger.hpp>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {

@@ -45,7 +45,10 @@ class WindowSliceStore {
             }
         }
         auto lastSlice = sliceMetaData.back();
-        NES_ERROR2("getSliceIndexByTs for could not find a slice, this should not happen. current ts {} last slice {} - {}", ts, lastSlice.getStartTs(), lastSlice.getEndTs());
+        NES_ERROR2("getSliceIndexByTs for could not find a slice, this should not happen. current ts {} last slice {} - {}",
+                   ts,
+                   lastSlice.getStartTs(),
+                   lastSlice.getEndTs());
         NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts"
                                 << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
         //TODO: change this back once we have the vector clocks
@@ -94,14 +97,20 @@ class WindowSliceStore {
             if (itSlice->getEndTs() > watermark) {
                 break;
             }
-            NES_TRACE2("WindowSliceStore removeSlicesUntil: watermark={} from slice endts={} sliceMetaData size={} partialaggregate size={}",
-                      watermark, itSlice->getEndTs(), sliceMetaData.size(), partialAggregates.size());
+            NES_TRACE2("WindowSliceStore removeSlicesUntil: watermark={} from slice endts={} sliceMetaData size={} "
+                       "partialaggregate size={}",
+                       watermark,
+                       itSlice->getEndTs(),
+                       sliceMetaData.size(),
+                       partialAggregates.size());
             itAggs++;
         }
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         partialAggregates.erase(partialAggregates.begin(), itAggs);
-        NES_TRACE2("WindowSliceStore: removeSlicesUntil size after cleanup slice={} aggs={}", sliceMetaData.size(), partialAggregates.size());
+        NES_TRACE2("WindowSliceStore: removeSlicesUntil size after cleanup slice={} aggs={}",
+                   sliceMetaData.size(),
+                   partialAggregates.size());
     }
 
     /**

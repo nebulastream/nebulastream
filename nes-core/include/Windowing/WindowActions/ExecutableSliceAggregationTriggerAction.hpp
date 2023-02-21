@@ -68,7 +68,10 @@ class ExecutableSliceAggregationTriggerAction
                   uint64_t currentWatermark,
                   uint64_t lastWatermark,
                   Runtime::WorkerContextRef workerContext) {
-        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: doAction for currentWatermark={} lastWatermark={}", id, currentWatermark, lastWatermark);
+        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: doAction for currentWatermark={} lastWatermark={}",
+                   id,
+                   currentWatermark,
+                   lastWatermark);
 
         if (this->weakExecutionContext.expired()) {
             NES_FATAL_ERROR2("ExecutableSliceAggregationTriggerAction {}: the weakExecutionContext was already expired!", id);
@@ -81,7 +84,11 @@ class ExecutableSliceAggregationTriggerAction
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
-            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: {} check key={} nextEdge={}", id, toString(), it.first, it.second->nextEdge);
+            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: {} check key={} nextEdge={}",
+                       id,
+                       toString(),
+                       it.first,
+                       it.second->nextEdge);
 
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, tupleBuffer, currentWatermark, lastWatermark, workerContext);
@@ -94,8 +101,17 @@ class ExecutableSliceAggregationTriggerAction
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
 
                 //write remaining buffer
-                NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: Dispatch last buffer output buffer with {} currentWatermark={} lastWatermark={} records, content={} originId={} windowAction{}= this->nextPipeline={}",
-                          id, tupleBuffer.getNumberOfTuples(), currentWatermark, lastWatermark, dynamicTupleBuffer.toString(this->windowSchema), tupleBuffer.getOriginId(), toString(), executionContext->toString());
+                NES_TRACE2(
+                    "ExecutableSliceAggregationTriggerAction {}: Dispatch last buffer output buffer with {} currentWatermark={} "
+                    "lastWatermark={} records, content={} originId={} windowAction{}= this->nextPipeline={}",
+                    id,
+                    tupleBuffer.getNumberOfTuples(),
+                    currentWatermark,
+                    lastWatermark,
+                    dynamicTupleBuffer.toString(this->windowSchema),
+                    tupleBuffer.getOriginId(),
+                    toString(),
+                    executionContext->toString());
             }
 
             //forward buffer to next  pipeline stage
@@ -136,16 +152,34 @@ class ExecutableSliceAggregationTriggerAction
         uint64_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
         uint64_t maxSliceEnd = 0;
 
-        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: trigger {} slices key={} current watermark is={} lastWatermark={} currentNumberOfTuples={} tupleBuffer.getNumberOfTuples()={}",
-                  id , slices.size(), key, currentWatermark, lastWatermark, currentNumberOfTuples, tupleBuffer.getNumberOfTuples());
+        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: trigger {} slices key={} current watermark is={} "
+                   "lastWatermark={} currentNumberOfTuples={} tupleBuffer.getNumberOfTuples()={}",
+                   id,
+                   slices.size(),
+                   key,
+                   currentWatermark,
+                   lastWatermark,
+                   currentNumberOfTuples,
+                   tupleBuffer.getNumberOfTuples());
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             //test if latest tuple in window is after slice end
-            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: check slice start={} end={} key={} currentWatermark={}", id, slices[sliceId].getStartTs(), slices[sliceId].getEndTs(), key, currentWatermark);
+            NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: check slice start={} end={} key={} currentWatermark={}",
+                       id,
+                       slices[sliceId].getStartTs(),
+                       slices[sliceId].getEndTs(),
+                       key,
+                       currentWatermark);
 
             if (slices[sliceId].getEndTs() <= currentWatermark) {
-                NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: write result slices[sliceId].getStartTs()={} slices[sliceId].getEndTs()={} currentWatermark={} sliceID={} recCnt={}",
-                           id, slices[sliceId].getStartTs(), slices[sliceId].getEndTs(), currentWatermark, sliceId, slices[sliceId].getRecordsPerSlice());
+                NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: write result slices[sliceId].getStartTs()={} "
+                           "slices[sliceId].getEndTs()={} currentWatermark={} sliceID={} recCnt={}",
+                           id,
+                           slices[sliceId].getStartTs(),
+                           slices[sliceId].getEndTs(),
+                           currentWatermark,
+                           sliceId,
+                           slices[sliceId].getRecordsPerSlice());
 
                 //if we would write to a new buffer and we still have tuples to write
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
@@ -158,8 +192,13 @@ class ExecutableSliceAggregationTriggerAction
                         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
 
                         //write full buffer
-                        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: Dispatch intermediate output buffer with {} records, content={} originId={} windowAction={}",
-                                  id, currentNumberOfTuples, dynamicTupleBuffer, tupleBuffer.getOriginId(), toString());
+                        NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: Dispatch intermediate output buffer with {} "
+                                   "records, content={} originId={} windowAction={}",
+                                   id,
+                                   currentNumberOfTuples,
+                                   dynamicTupleBuffer,
+                                   tupleBuffer.getOriginId(),
+                                   toString());
                     }
 
                     //forward buffer to next  pipeline stage
@@ -182,8 +221,11 @@ class ExecutableSliceAggregationTriggerAction
                 maxSliceEnd = std::max(maxSliceEnd, slices[sliceId].getEndTs());
 
             } else {
-                NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: SL: Dont write result because slices[sliceId].getEndTs()= {} <= currentWatermark={}",
-                           id, slices[sliceId].getEndTs(), currentWatermark);
+                NES_TRACE2("ExecutableSliceAggregationTriggerAction {}: SL: Dont write result because "
+                           "slices[sliceId].getEndTs()= {} <= currentWatermark={}",
+                           id,
+                           slices[sliceId].getEndTs(),
+                           currentWatermark);
             }
         }//end of for
          //remove the old slices from current watermark
