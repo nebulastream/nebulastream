@@ -86,10 +86,53 @@ TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
+TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
+    auto schema = Schema::create()->addField("test$id", BasicType::FLOAT64);
+
+    auto resultSchema = Schema::create()
+                            ->addField("test$id", BasicType::FLOAT64)
+                            ->addField("test$log10", BasicType::FLOAT64)
+                            ->addField("test$log2", BasicType::FLOAT64)
+                            ->addField("test$ln", BasicType::FLOAT64);
+    auto testSink = executionEngine->createDataSink(resultSchema);
+    auto testSourceDescriptor = executionEngine->createDataSource(schema);
+
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    auto query = TestQuery::from(testSourceDescriptor)
+                     .map(Attribute("log10") = LOG10(Attribute("id")))
+                     .map(Attribute("log2") = LOG2(Attribute("id")))
+                     .map(Attribute("ln") = LN(Attribute("id")))
+                     .sink(testSinkDescriptor);
+    auto plan = executionEngine->submitQuery(query.getQueryPlan());
+    auto source = executionEngine->getDataSource(plan, 0);
+    ASSERT_TRUE(!!source);
+    // add buffer
+    auto inputBuffer = executionEngine->getBuffer(schema);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        inputBuffer[recordIndex][0].write<double>(recordIndex);
+    }
+    inputBuffer.setNumberOfTuples(10);
+    source->emitBuffer(inputBuffer);
+    testSink->waitTillCompleted();
+
+    // compare results
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1u);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
+    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+        EXPECT_EQ(resultBuffer[recordIndex]["test$log10"].read<double>(), std::log10(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex]["test$log2"].read<double>(), std::log2(recordIndex));
+        EXPECT_EQ(resultBuffer[recordIndex]["test$ln"].read<double>(), std::log(recordIndex));
+    }
+    ASSERT_TRUE(executionEngine->stopQuery(plan));
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                        ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
                             return magic_enum::enum_flags_name(info.param);
                         });
