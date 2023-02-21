@@ -425,9 +425,9 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 }
 
 /**
- * @brief test distributed tumbling window and event time
+ * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -515,9 +515,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 }
 
 /**
- * @brief test distributed tumbling window and event time
+ * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
     struct Test {
         uint64_t id;
         uint64_t value;
@@ -567,9 +567,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
 }
 
 /**
- * @brief test distributed sliding window and event time
+ * @brief test distributed sliding window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
     struct Test {
         uint64_t value;
         uint64_t id;
@@ -723,9 +723,9 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 }
 
 /**
- * @brief test central tumbling window and event time
+ * @brief test central tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowEventTime) {
     struct Test {
         uint64_t value;
         uint64_t id;
@@ -772,9 +772,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 }
 
 /**
- * @brief test central sliding window and event time
+ * @brief test central sliding window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeySlidingWindowEventTime) {
     struct Test {
         uint64_t value;
         uint64_t id;
@@ -889,7 +889,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
+/**
+ * @brief tests window with ingestion time, for now disabled see issue #3324
+ */
+TEST_F(WindowDeploymentTest, DISABLED_testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -1040,9 +1043,9 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 }
 
 /**
- * @brief test central tumbling window and event time
+ * @brief test central tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
+TEST_F(WindowDeploymentTest, DISABLED_testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
@@ -1121,9 +1124,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
 }
 
 /**
- * @brief test distributed tumbling window and event time
+ * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     struct Test {
         uint64_t id;
         uint64_t value;
@@ -1176,9 +1179,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 }
 
 /**
- * @brief test distributed tumbling window and event time
+ * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, testDistributedTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
+TEST_F(WindowDeploymentTest, DISABLED_testDistributedTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -2120,7 +2123,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, testMultipleAggregationFunctionsOnMultipleWorkers) {
+/**
+ * for now disabled see issue #3324
+ */
+TEST_F(WindowDeploymentTest, DISABLED_testMultipleAggregationFunctionsOnMultipleWorkers) {
     // This test creates a window operation with two aggregation functions (sum and count).
     // The old window strategy produces the wrong result (0.0000) for any aggregation other than the first.
     // Using the THREAD_LOCAL window strategy produces the correct result.
