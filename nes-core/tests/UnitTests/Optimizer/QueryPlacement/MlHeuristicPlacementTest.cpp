@@ -46,7 +46,6 @@ using namespace Configurations;
 
 class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    z3::ContextPtr z3Context;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     QueryParsingServicePtr queryParsingService;
@@ -64,7 +63,6 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
     void SetUp() override {
         Testing::TestWithErrorHandling<testing::Test>::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
-        z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -170,7 +168,7 @@ TEST_F(MlHeuristicPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::MlHeuristic, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
