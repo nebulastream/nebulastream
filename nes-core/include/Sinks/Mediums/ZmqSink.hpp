@@ -42,8 +42,8 @@ class ZmqSink : public SinkMedium {
     ~ZmqSink() override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
-    void setup() override { connect(); };
-    void shutdown() override{};
+    void setup() override;
+    void shutdown() override;
     std::string toString() const override;
 
     /**

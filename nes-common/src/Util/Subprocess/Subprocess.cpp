@@ -77,6 +77,8 @@ bool Subprocess::kill() {
     return res;
 }
 
+uint64_t Subprocess::getPid() { return pid; };
+
 void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& argv) {
     if (dup2(outPipe[WRITE], STDOUT_FILENO) == -1) {
         std::perror("subprocess: dup2() failed");

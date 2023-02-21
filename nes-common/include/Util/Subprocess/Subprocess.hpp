@@ -47,7 +47,7 @@ class Subprocess {
      * Method to get the pid of a process
      * @retun pid
      */
-    uint64_t getPid() { return pid; };
+    uint64_t getPid();
 
   private:
     /**

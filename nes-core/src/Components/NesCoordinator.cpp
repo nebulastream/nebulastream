@@ -232,6 +232,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     return 0UL;
 }
 
+Catalogs::Source::SourceCatalogPtr NesCoordinator::getSourceCatalog() const { return sourceCatalog; }
+
+ReplicationServicePtr NesCoordinator::getReplicationService() const { return replicationService; }
+
+TopologyPtr NesCoordinator::getTopology() const { return topology; }
+
 bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     auto expected = true;

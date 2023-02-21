@@ -50,6 +50,9 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
 
+void ZmqSink::setup() { connect(); };
+void ZmqSink::shutdown() {};
+
 ZmqSink::~ZmqSink() {
     NES_DEBUG("ZmqSink::~ZmqSink: destructor called");
     bool success = disconnect();

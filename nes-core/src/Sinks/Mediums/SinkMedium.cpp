@@ -48,6 +48,8 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     }
 }
 
+OperatorId SinkMedium::getOperatorId() const { return 0; }
+
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;

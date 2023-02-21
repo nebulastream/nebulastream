@@ -46,7 +46,7 @@ class MaterializedViewSink : public SinkMedium {
      * @brief setup method for materialized view sink
      * @Note required by sinkmedium but does nothing
      */
-    void setup() override{};
+    void setup() override;
 
     /**
      * @brief shutdown method for materialized view sink
