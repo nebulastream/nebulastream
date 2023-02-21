@@ -99,6 +99,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
+                // crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);
             } else {
                 // if the minCount is not reached, we still need to close the window, reset counter and release the lock if the handler
