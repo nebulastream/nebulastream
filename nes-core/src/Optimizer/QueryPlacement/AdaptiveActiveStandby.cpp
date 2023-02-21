@@ -1664,7 +1664,7 @@ double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodeP
             topologyPath.emplace_back(topologyPath.back()->getParents()[0]->as<TopologyNode>());
         }
 
-        //2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
+        // 2.3 Add constraints to Z3 solver and compute operator distance, node utilization, and node mileage map
         addConstraintsILP(opt,
                           operatorPath,
                           topologyPath,
@@ -1674,8 +1674,82 @@ double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodeP
     }
 
 
+    return std::stod(score);
+}
 
-    return 0;
+void AdaptiveActiveStandby::addConstraintsILP(z3::optimize& opt,
+                                              std::vector<NodePtr>& operatorNodePath,
+                                              std::vector<TopologyNodePtr>& topologyNodePath,
+                                              std::map<std::string, z3::expr>& placementVariable,
+                                              std::map<OperatorId, z3::expr>& operatorDistanceMap,
+                                              std::map<TopologyNodeId, z3::expr>& nodeUtilizationMap) {
+
+    for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
+        OperatorNodePtr operatorNode = operatorNodePath[i]->as<OperatorNode>();
+        OperatorId operatorId = operatorNode->getId();
+
+        if (operatorMapILP.find(operatorId) != operatorMapILP.end()) {
+            // initialize the path constraint variable to 0
+            auto pathConstraint = z3Context->int_val(0);
+            for (const auto& node: topologyNodePath) {
+                TopologyNodePtr topologyNode = node->as<TopologyNode>();
+                uint64_t topologyID = topologyNode->getId();
+                std::string variableID = std::to_string(operatorId) + KEY_SEPARATOR + std::to_string(topologyID);
+                auto iter = placementVariable.find(variableID);
+                if (iter != placementVariable.end()) {
+                    pathConstraint = pathConstraint + iter->second;
+                }
+            }
+            opt.add(pathConstraint == 1);
+            break;  // all following nodes already created
+        }
+
+        operatorMapILP[operatorId] = operatorNode;
+        // fill the placement variable, utilization, and distance map
+        auto sum_i = z3Context->int_val(0);
+        auto D_i = z3Context->int_val(0);
+        for (uint64_t j = 0; j < topologyNodePath.size(); j++) {
+            TopologyNodePtr topologyNode = topologyNodePath[j]->as<TopologyNode>();
+            uint64_t topologyID = topologyNode->getId();
+
+            // create placement variable and constrain it to {0,1}
+            std::string variableID = std::to_string(operatorId) + KEY_SEPARATOR + std::to_string(topologyID);
+            auto P_IJ = z3Context->int_const(variableID.c_str());
+            if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
+                opt.add(P_IJ == 1); // fix the placement of source and sink
+            } else {
+                // binary decision on whether to place or not, hence constrained to be either 0 or 1
+                opt.add(P_IJ == 0 || P_IJ == 1);
+            }
+            placementVariable.insert(std::make_pair(variableID, P_IJ));
+            sum_i = sum_i + P_IJ;
+
+            // add to node utilization
+            auto slots = getOperatorCost(operatorNode);
+
+            auto iterator = nodeUtilizationMap.find(topologyID);
+            if (iterator != nodeUtilizationMap.end()) {
+                iterator->second = iterator->second + slots * P_IJ;
+            } else {
+                // utilization of a node = slots (i.e. computing cost of operator) * placement variable
+                nodeUtilizationMap.insert(std::make_pair(topologyID, slots * P_IJ));
+            }
+
+            // distance matrix would not work here if there are multiple paths
+            // add distance to root through this path (positive part of distance equation)
+            double M = 0;
+            auto currentNode = topologyNode;
+            while (!currentNode->getParents().empty()) {
+                auto parentNode = currentNode->getParents()[0]->as<TopologyNode>();
+                M += getDistance(currentNode, parentNode);
+                currentNode = parentNode;
+            }
+            D_i = D_i + z3Context->real_val(std::to_string(z3ScaleDistances*M).c_str()) * P_IJ;
+        }
+        operatorDistanceMap.insert(std::make_pair(operatorId, D_i));
+        // add constraint that operator is placed exactly once on topology path
+        opt.add(sum_i == 1);
+    }
 }
 
 }// namespace NES::Optimizer

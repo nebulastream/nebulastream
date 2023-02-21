@@ -151,7 +151,10 @@ class AdaptiveActiveStandby {
 
     // ILP solver
     z3::ContextPtr z3Context;
-//    const char* const KEY_SEPARATOR = ",";
+    const char* const KEY_SEPARATOR = ",";
+    std::map<OperatorId, OperatorNodePtr> operatorMapILP;
+    const int z3ScaleDistances = 1000;    // to avoid losing precision in case of many decimals
+
 
     explicit AdaptiveActiveStandby(TopologyPtr topology,
                                    PlacementStrategy::ValueAAS placementStrategyAAS,
