@@ -23,8 +23,8 @@ namespace NES {
 class LnFunction : public UnaryLogicalFunction {
   public:
     [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (input->isNumeric()) {
-            NES_ERROR("LogExpressions can only be evaluated on numeric values.");
+        if (!input->isNumeric()) {
+            NES_THROW_RUNTIME_ERROR("LogExpressions can only be evaluated on numeric values.");
         }
         // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
         return DataTypeFactory::createDouble();
