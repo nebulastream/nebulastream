@@ -90,6 +90,18 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
         NES_DEBUG("TranslateToLegacyPhase: Translate CaseExpressionNode: " << caseExpressionNode->toString());
         return CasePredicate(whenExprs, legacyDefault).copy();
+    } else if (expression->instanceOf<FunctionExpression>()) {
+        // Translate function expressions to legacy expressions in old query compiler.
+        auto function = expression->as<FunctionExpression>();
+        if (function->getFunctionName() == "log10") {
+            // Translate LOG10 expression node.
+            auto legacyChild = transformExpression(function->getArguments()[0]);
+            return UnaryPredicate(UnaryOperatorType::LOG10_OP, legacyChild).copy();
+        } else if (function->getFunctionName() == "ln") {
+            // Translate LOG expression node.
+            auto legacyChild = transformExpression(function->getArguments()[0]);
+            return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
+        }
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
     NES_NOT_IMPLEMENTED();
@@ -164,18 +176,6 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto sqrtExpressionNode = expression->as<SqrtExpressionNode>();
         auto legacyChild = transformExpression(sqrtExpressionNode->child());
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
-    } else if (expression->instanceOf<FunctionExpression>()) {
-        // Translate function expressions to legacy expressions in old query compiler.
-        auto function = expression->as<FunctionExpression>();
-        if (function->getFunctionName() == "log10") {
-            // Translate LOG10 expression node.
-            auto legacyChild = transformExpression(function->getArguments()[0]);
-            return UnaryPredicate(UnaryOperatorType::LOG10_OP, legacyChild).copy();
-        } else if (function->getFunctionName() == "ln") {
-            // Translate LOG expression node.
-            auto legacyChild = transformExpression(function->getArguments()[0]);
-            return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
-        }
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
                     << expression->toString());
