@@ -66,6 +66,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
         jsonValue = Util::trim(jsonValue, '\'');
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount, bufferManager);
     }
+    tupleBuffer.setNumberOfTuples(tupleCount + 1);
     return true;
 }
 }// namespace NES
