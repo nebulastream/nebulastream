@@ -14,7 +14,6 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Runtime/BufferRecycler.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
@@ -57,11 +56,11 @@ KafkaSource::KafkaSource(SchemaPtr schema,
       brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit),
       kafkaConsumerTimeout(std::chrono::milliseconds(kafkaConsumerTimeout)), offsetMode(offsetMode), batchSize(batchSize) {
 
-    config = std::make_unique<cppkafka::Configuration>();
-    config->set("metadata.broker.list", brokers.c_str());
-    config->set("group.id", groupId);
-    config->set("enable.auto.commit", autoCommit ? "true" : "false");
-    config->set("auto.offset.reset", offsetMode);
+    config = {{"metadata.broker.list", brokers},
+              {"group.id", groupId},
+              {"auto.offset.reset", offsetMode},
+              // Disable auto commit
+              {"enable.auto.commit", false}};
 
     this->numBuffersToProcess = numbersOfBufferToProduce;
 
@@ -85,7 +84,6 @@ KafkaSource::KafkaSource(SchemaPtr schema,
     switch (sourceConfig->getInputFormat()->getValue()) {
         case Configurations::InputFormat::JSON:
             inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
-            useJson = true;
             break;
         default:
             break;
@@ -95,7 +93,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 KafkaSource::~KafkaSource() {
     NES_INFO("Kafka source " << topic << " partition/group=" << groupId << " produced=" << bufferProducedCnt
               << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
-              << " failedFullPollCnt=" << failedFullPollCnt << "reuseCnt=" << reuseCnt);
+              << " failedFullPollCnt=" << failedFullPollCnt);
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
@@ -121,44 +119,63 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
 
 
 bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
-    uint64_t currentPollCnt = 0;
-    NES_DEBUG("KAFKASOURCE tries to receive data...");
-    //poll a batch of messages and put it into a vector
-    messages = consumer->poll_batch(batchSize);
 
-    //iterate over the polled message buffer
-    if (!messages.empty()) {
-        reuseCnt++;
-        if (messages.back().get_error()) {
-            if (!messages.back().is_eof()) {
-                NES_WARNING("KAFKASOURCE received error notification: " << messages.back().get_error());
-            }
-            return false;
-        } else {
-            const uint64_t tupleSize = schema->getSchemaSizeInBytes();
-            const uint64_t tupleCount = messages.back().get_payload().get_size() / tupleSize;
-            const uint64_t payloadSize = messages.back().get_payload().get_size();
+    const uint64_t tupleSize = schema->getSchemaSizeInBytes();
+    const uint32_t tupleBufferCapacity = tupleBuffer.getCapacity();
+    uint32_t tupleCount = 0;
 
-            NES_TRACE("KAFKASOURCE recv #tups: " << tupleCount << ", tupleSize: " << tupleSize << " payloadSize=" << payloadSize
-                                                 << ", msg: " << messages.back().get_payload());
-            auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
-            auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
+    auto flushIntervalTimerStart = std::chrono::system_clock::now();
+    bool flushIntervalPassed = false;
+
+    while (tupleCount < tupleBufferCapacity && !flushIntervalPassed) {
+        NES_DEBUG2("KAFKASOURCE tries to receive data...");
+        //poll a batch of messages and put it into a vector
+        messages = consumer->poll_batch(batchSize);
+        consumer->async_commit();
+
+        //iterate over the polled message buffer
+        if (!messages.empty()) {
+
+            NES_TRACE2("KafkaSource poll {} ", messages.size());
 
             for (auto& message : messages) {
-                inputParser->writeInputTupleToTupleBuffer(std::string(message.get_payload()),
-                                                          tupleCount, tupleBuffer,
-                                                          schema, localBufferManager);
+                if (tupleCount < tupleBufferCapacity) {
+
+                    if (message.get_error()) {
+                        if (!message.is_eof()) {
+                            NES_ERROR("KAFKASOURCE received error notification: " << message.get_error());
+                            throw message.get_error();
+                        }
+                        NES_WARNING2("KafkaSource reached end of topic");
+                        tupleBuffer.setNumberOfTuples(tupleCount);
+                        return true;
+                    }
+                    inputParser->writeInputTupleToTupleBuffer(std::string(message.get_payload()),
+                                                              tupleCount, tupleBuffer,
+                                                              schema, localBufferManager);
+                    tupleCount++;
+                } else {
+                    // FIXME: how to handle messages that are of size > tupleBufferCapacity
+                    // NOTE: this will lead to missing tuples as we drop messages that do not fit in the buffer
+                    NES_ERROR2("KafkaSource polled messages do not fit into a single buffer");
+                    tupleBuffer.setNumberOfTuples(tupleCount);
+                    return true;
+                }
             }
-            tupleBuffer.setNumberOfTuples(tupleCount);
-            generatedTuples += tupleCount;
-            messages.pop_back();
-            generatedBuffers++;
-            return true;
-        }//end of else
+        }
+        // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
+        // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
+        // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
+        if ((bufferFlushIntervalMs > 0 && tupleCount > 0
+             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
+                     .count()
+                 >= bufferFlushIntervalMs)) {
+            NES_DEBUG2("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            flushIntervalPassed = true;
+        }
     }
-    NES_DEBUG("Poll NOT successfull for cnt=" << currentPollCnt++);
-    failedFullPollCnt++;
-    return false;
+    tupleBuffer.setNumberOfTuples(tupleCount);
+    return true;
 }
 
 
@@ -176,12 +193,6 @@ std::string KafkaSource::toString() const {
 bool KafkaSource::connect() {
     if (!connected) {
         DataSource::open();
-        // Construct the configuration
-        cppkafka::Configuration config = {{"metadata.broker.list", brokers},
-                                          {"group.id", groupId},
-                                          {"auto.offset.reset", "earliest"},
-                                          // Disable auto commit
-                                          {"enable.auto.commit", false}};
 
         // Create the consumer
         consumer = std::make_unique<cppkafka::Consumer>(config);

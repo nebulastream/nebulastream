@@ -18,11 +18,11 @@
 #ifdef ENABLE_KAFKA_BUILD
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <cppkafka/configuration.h>
 #include <cstdint>
 #include <memory>
 #include <string>
 namespace cppkafka {
-class Configuration;
 class Consumer;
 class Message;
 }// namespace cppkafka
@@ -126,10 +126,9 @@ class KafkaSource : public DataSource {
     std::string topic;
     std::string groupId;
     bool autoCommit;
-    std::unique_ptr<cppkafka::Configuration> config;
+    cppkafka::Configuration config;
     KafkaSourceTypePtr sourceConfig;
     bool connected{false};
-    bool useJson{false};
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::string offsetMode;
     std::unique_ptr<cppkafka::Consumer> consumer;
@@ -139,7 +138,7 @@ class KafkaSource : public DataSource {
     std::vector<cppkafka::Message> messages;
     uint64_t successFullPollCnt = 0;
     uint64_t failedFullPollCnt = 0;
-    uint64_t reuseCnt = 0;
+    uint32_t bufferFlushIntervalMs = 500;
     std::unique_ptr<Parser> inputParser;
     std::vector<PhysicalTypePtr> physicalTypes;
 };
