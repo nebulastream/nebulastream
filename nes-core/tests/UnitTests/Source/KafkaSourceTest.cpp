@@ -286,6 +286,13 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
 
 // Disabled, because it requires a manually set up Kafka broker
 TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
+    // submit message to kafka
+    cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
+    cppkafka::Producer producer(config);
+    string message = R"({"var": 6})";
+    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
+    producer.flush();
+
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -302,13 +309,6 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
         R"(Schema::create()->addField(createField("var", UINT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
-
-    // submit message to kafka
-    cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
-    cppkafka::Producer producer(config);
-    string message = R"({"var": 6})";
-    producer.produce(cppkafka::MessageBuilder(topic).partition(0).payload(message));
-    producer.flush();
 
     NES_INFO("KAFKASOURCETEST:: Start worker 1");
     wrkConf->coordinatorPort = port;
@@ -349,7 +349,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
         "+----------------------------------------------------+\n"
         "|stream$var:UINT32|\n"
         "+----------------------------------------------------+\n"
-        "|0|\n|0|\n"
+        "|6|\n"
         "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
