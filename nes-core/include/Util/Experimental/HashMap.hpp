@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Experimental/CRC32Hash.hpp>
 #include <Util/Experimental/Hash.hpp>

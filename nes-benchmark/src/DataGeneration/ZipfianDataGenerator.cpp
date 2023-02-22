@@ -16,6 +16,8 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/ZipfianGenerator.hpp>
 
 namespace NES::Benchmark::DataGeneration {

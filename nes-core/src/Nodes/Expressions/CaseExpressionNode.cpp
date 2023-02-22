@@ -14,8 +14,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/CaseExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
 

@@ -17,7 +17,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

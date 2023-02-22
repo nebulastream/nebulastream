@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSink.hpp>
-
 #include <Common/Identifiers.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -32,7 +32,6 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/FaultToleranceType.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

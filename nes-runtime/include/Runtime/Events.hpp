@@ -15,7 +15,6 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES::Network {
 class ExchangeProtocol;
@@ -122,21 +121,6 @@ class StartSourceEvent : public BaseEvent {
     // todo only for compliance, don't call!
     uint8_t* data() override { return nullptr; }
 };
-
-/**
- * @brief This is the listener for runtime events
- */
-class RuntimeEventListener : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener, false> {
-    friend class NES::Network::ExchangeProtocol;
-
-  protected:
-    /**
-     * @brief API method called upon receiving an event
-     * @param event
-     */
-    virtual void onEvent(Runtime::BaseEvent& event) = 0;
-};
-using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 }// namespace NES::Runtime
 

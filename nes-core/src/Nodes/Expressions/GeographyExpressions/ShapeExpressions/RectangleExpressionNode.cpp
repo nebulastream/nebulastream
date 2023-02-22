@@ -15,6 +15,7 @@
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
 #include <Nodes/Node.hpp>
+#include <sstream>
 
 namespace NES {
 RectangleExpressionNode::RectangleExpressionNode(RectangleExpressionNode* other) : ShapeExpressionNode(other->type) {

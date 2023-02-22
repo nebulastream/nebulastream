@@ -17,7 +17,6 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -30,6 +29,8 @@
 namespace NES::Runtime {
 
 class AbstractBufferProvider;
+class BufferStorage;
+using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 /**
  * @brief A WorkerContext represents the current state of a worker thread

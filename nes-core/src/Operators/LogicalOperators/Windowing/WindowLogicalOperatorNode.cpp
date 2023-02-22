@@ -19,11 +19,11 @@
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <sstream>
-
 namespace NES {
 
 WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
@@ -132,8 +132,9 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
     signatureStream << "." << *childSignature.begin()->second.begin();
 
+    auto signature = signatureStream.str();
     //Update the signature
-    auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
+    auto hashCode = hashGenerator(signature);
+    hashBasedSignature[hashCode] = {signature};
 }
 }// namespace NES

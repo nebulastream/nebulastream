@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Network/EventBufferMessage.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>

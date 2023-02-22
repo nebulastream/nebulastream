@@ -15,11 +15,11 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
 #define NES_COMMON_INCLUDE_UTIL_NONBLOCKINGMONOTONICSEQQUEUE_HPP_
 
-#include <Util/Logger/Logger.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <algorithm>
 #include <array>
-#include <assert.h>
 #include <atomic>
+#include <cassert>
 #include <memory>
 
 namespace NES::Util {
@@ -65,7 +65,7 @@ class NonBlockingMonotonicSeqQueue {
      */
     class Block {
       public:
-        Block(uint64_t blockIndex) : blockIndex(blockIndex){};
+        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex){};
         ~Block() = default;
         const uint64_t blockIndex;
         std::array<Container, blockSize> log = {};
@@ -74,7 +74,7 @@ class NonBlockingMonotonicSeqQueue {
 
   public:
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
-    ~NonBlockingMonotonicSeqQueue() {}
+    ~NonBlockingMonotonicSeqQueue() = default;
 
     /**
      * @brief Emplace a new element to the queue.
@@ -144,7 +144,7 @@ class NonBlockingMonotonicSeqQueue {
 
         // check if we really found the correct block
         if (!(seq >= currentBlock->blockIndex * blockSize && seq < currentBlock->blockIndex * blockSize + blockSize)) {
-            NES_THROW_RUNTIME_ERROR("The found block is wrong");
+            throw Exceptions::RuntimeException("The found block is wrong");
         }
 
         // Emplace value in block
@@ -184,7 +184,6 @@ class NonBlockingMonotonicSeqQueue {
                     if (value.seq == nextSeqNumber) {
                         // Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
-                            NES_TRACE("Swap HEAD: remove " << currentBlock->blockIndex << " - " << currentBlock.use_count());
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
                         };
                         continue;
@@ -215,7 +214,7 @@ class NonBlockingMonotonicSeqQueue {
             // append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
             if (!nextBlock) {
-                NES_THROW_RUNTIME_ERROR("The next block dose not exists. This should not happen here.");
+                throw Exceptions::RuntimeException("The next block dose not exists. This should not happen here.");
             }
             // move to the next block
             currentBlock = nextBlock;

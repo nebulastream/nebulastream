@@ -13,6 +13,7 @@
 */
 
 #include <Nodes/Expressions/BinaryExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {

@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <utility>
 

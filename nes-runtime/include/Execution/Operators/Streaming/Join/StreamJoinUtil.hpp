@@ -14,14 +14,17 @@
 #ifndef NES_STREAMJOINUTIL_HPP
 #define NES_STREAMJOINUTIL_HPP
 
-#include <Nautilus/Interface/Record.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cerrno>
 #include <cstdint>
+#include <memory>
+#include <string>
 #include <cstring>
 #include <sys/mman.h>
+
+namespace NES {
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}// namespace NES
 
 namespace NES::Runtime::Execution {
 

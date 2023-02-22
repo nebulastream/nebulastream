@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <cstring>
 
 namespace NES::Runtime::Execution::Operators {

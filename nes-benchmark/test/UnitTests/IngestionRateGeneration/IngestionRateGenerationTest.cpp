@@ -15,6 +15,7 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 #include <IngestionRateGeneration/TrigonometricIngestionRateGenerator.hpp>

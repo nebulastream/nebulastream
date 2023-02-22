@@ -14,7 +14,6 @@
 #ifndef NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_
 #define NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_NODETYPE_HPP_
 
-#include <WorkerLocation.grpc.pb.h>
 #include <string>
 
 namespace NES::Spatial::Experimental {

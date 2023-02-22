@@ -19,9 +19,11 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/Events.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <chrono>
+#include <atomic>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution {

@@ -15,10 +15,9 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 
-#include <Runtime/Events.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-
 namespace NES {
 namespace Runtime {
 class TupleBuffer;

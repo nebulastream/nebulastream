@@ -15,10 +15,10 @@
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <utility>
 
 namespace NES::Windowing {

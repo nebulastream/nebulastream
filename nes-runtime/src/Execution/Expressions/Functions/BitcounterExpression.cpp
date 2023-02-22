@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -45,7 +46,7 @@ Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("bitcounter", bitcounter, leftValue.as<UInt64>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Integer.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Integer.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<BitcounterExpression>> bitcountFunction("bitcount");

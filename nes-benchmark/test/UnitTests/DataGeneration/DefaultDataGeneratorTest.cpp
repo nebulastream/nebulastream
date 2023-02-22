@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
-#include <DataGeneration/DataGenerator.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

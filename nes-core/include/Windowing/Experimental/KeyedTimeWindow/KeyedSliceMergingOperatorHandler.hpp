@@ -17,6 +17,8 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
+#include <atomic>
+#include <ctype.h>
 
 namespace NES::Experimental {
 class HashMapFactory;

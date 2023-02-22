@@ -13,6 +13,7 @@
 */
 
 #include <NesBaseTest.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>

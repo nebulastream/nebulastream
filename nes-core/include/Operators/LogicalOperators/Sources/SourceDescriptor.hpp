@@ -15,8 +15,7 @@
 #ifndef NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
-#include <Util/Logger/Logger.hpp>
-#include <iostream>
+#include <Exceptions/RuntimeException.hpp>
 #include <memory>
 namespace NES {
 
@@ -33,7 +32,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Creates a new source descriptor with a logicalSourceName.
      * @param schema the source schema
      */
-    SourceDescriptor(SchemaPtr schema);
+    explicit SourceDescriptor(SchemaPtr schema);
 
     /**
      * @brief Creates a new source descriptor with a logicalSourceName.
@@ -79,8 +78,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR2("SourceDescriptor: We performed an invalid cast");
-        throw std::bad_cast();
+        throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
     }
 
     /**

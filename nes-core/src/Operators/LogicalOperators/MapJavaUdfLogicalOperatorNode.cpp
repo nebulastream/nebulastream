@@ -15,9 +15,9 @@
 #include <API/AttributeField.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <numeric>
 #include <sstream>
-
 namespace NES {
 
 MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,

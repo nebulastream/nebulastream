@@ -16,9 +16,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -33,6 +30,7 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <iterator>
 #include <utility>

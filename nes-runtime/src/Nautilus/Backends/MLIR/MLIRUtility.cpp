@@ -19,6 +19,7 @@
 #include <Nautilus/Backends/MLIR/MLIRUtility.hpp>
 #include <mlir/AsmParser/AsmParser.h>
 #include <mlir/Parser/Parser.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus::Backends::MLIR {
 

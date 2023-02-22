@@ -13,8 +13,7 @@
 */
 
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
-#include <Nodes/Node.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other) : ShapeExpressionNode(other->type) {

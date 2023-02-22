@@ -16,6 +16,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <iostream>
 #include <string>

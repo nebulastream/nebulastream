@@ -18,6 +18,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::InferModel {
 

@@ -16,10 +16,9 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
-
 namespace NES::Optimizer {
 
 SyntacticQueryValidation::SyntacticQueryValidation(QueryParsingServicePtr queryParsingService)

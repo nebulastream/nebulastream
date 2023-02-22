@@ -21,34 +21,32 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributedWindowRule.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
-#include <Sources/SourceCreator.hpp>
 #include <Util/DummySink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Util/TestUtils.hpp>
 #include <iostream>
 #include <utility>
-
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
-#include <Util/TestQueryCompiler.hpp>
-
-#include <NesBaseTest.hpp>
-#include <Util/TestUtils.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;

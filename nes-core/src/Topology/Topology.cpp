@@ -14,11 +14,10 @@
 
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/Index/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <deque>
 #include <utility>

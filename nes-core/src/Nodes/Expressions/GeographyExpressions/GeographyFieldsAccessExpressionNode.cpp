@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <memory>
-
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <memory>
 
 namespace NES {
 GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(DataTypePtr stamp)

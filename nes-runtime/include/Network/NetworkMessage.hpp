@@ -227,19 +227,7 @@ class DataBufferMessage {
     uint32_t const numOfChildren;
 };
 
-/**
- * @brief This a payload message with an event
- */
-class EventBufferMessage {
-  public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::EventBuffer;
 
-    explicit inline EventBufferMessage(Runtime::EventType eventType, uint32_t payloadSize) noexcept
-        : eventType(eventType), payloadSize(payloadSize) {}
-
-    Runtime::EventType const eventType;
-    uint32_t const payloadSize;
-};
 
 }// namespace Messages
 }// namespace Network

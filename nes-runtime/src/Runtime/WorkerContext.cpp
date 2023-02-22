@@ -13,6 +13,7 @@
 */
 
 #include <Network/NetworkChannel.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>

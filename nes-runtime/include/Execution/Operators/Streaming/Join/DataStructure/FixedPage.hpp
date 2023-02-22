@@ -17,6 +17,7 @@
 #include <Runtime/BloomFilter.hpp>
 #include <atomic>
 #include <cstddef>
+#include <memory>
 
 namespace NES::Runtime::Execution::Operators {
 

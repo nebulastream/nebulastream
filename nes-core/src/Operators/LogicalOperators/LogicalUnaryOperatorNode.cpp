@@ -14,6 +14,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 LogicalUnaryOperatorNode::LogicalUnaryOperatorNode(OperatorId id)

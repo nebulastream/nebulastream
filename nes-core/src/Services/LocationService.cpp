@@ -13,8 +13,8 @@
 */
 
 #include <Services/LocationService.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
-#include <Spatial/DataTypes/Waypoint.hpp>
 #include <Spatial/Index/LocationIndex.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectPoint.hpp>
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedule.hpp>

@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <limits>
 
 namespace NES::Runtime::Execution::Aggregation {
 MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType)
@@ -51,7 +53,7 @@ Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Va
     } else if (leftValue->isType<Nautilus::Double>()) {
         return callMaxTyped<Nautilus::Double>(leftValue, rightValue);
     }
-    NES_NOT_IMPLEMENTED();
+    throw Exceptions::NotImplementedException("Type not implemented");
 }
 
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {

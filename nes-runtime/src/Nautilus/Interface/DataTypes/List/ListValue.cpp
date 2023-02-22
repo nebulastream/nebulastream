@@ -15,6 +15,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <iostream>
 #include <string>

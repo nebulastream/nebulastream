@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime {
 

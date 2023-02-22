@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/Atan2Expression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -42,7 +43,7 @@ Value<> Atan2Expression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateAtan2", calculateAtan2, leftValue.as<Double>(), rightValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Double or Float.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<Atan2Expression>> atan2Function("atan");

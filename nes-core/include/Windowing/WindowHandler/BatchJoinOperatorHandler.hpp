@@ -17,7 +17,9 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <atomic>
 
 namespace NES::Join::Experimental {
 /**

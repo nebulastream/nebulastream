@@ -11,12 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cmath>
-
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/BloomFilter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cmath>
 
 namespace NES::Runtime {
 

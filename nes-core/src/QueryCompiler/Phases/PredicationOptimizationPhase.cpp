@@ -23,6 +23,7 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation {
 

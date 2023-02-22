@@ -15,7 +15,7 @@
 #ifndef NES_DATAGENERATOR_HPP
 #define NES_DATAGENERATOR_HPP
 
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/yaml/Yaml.hpp>
 
 namespace NES::Benchmark::DataGeneration {

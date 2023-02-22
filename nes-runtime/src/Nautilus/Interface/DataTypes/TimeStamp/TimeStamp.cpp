@@ -13,6 +13,7 @@
 */
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <ctime>
 #include <iomanip>

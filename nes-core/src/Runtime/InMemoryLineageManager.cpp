@@ -14,6 +14,7 @@
 
 #include <Runtime/InMemoryLineageManager.hpp>
 #include <Util/BufferSequenceNumber.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime {
 

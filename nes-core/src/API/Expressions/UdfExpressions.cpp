@@ -14,6 +14,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {

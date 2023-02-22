@@ -14,7 +14,6 @@
 #ifndef NES_BLOOMFILTER_HPP
 #define NES_BLOOMFILTER_HPP
 
-#include <Util/Logger/Logger.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>

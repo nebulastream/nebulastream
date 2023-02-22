@@ -249,5 +249,5 @@ INSTANTIATE_TEST_CASE_P(testGlobalTumblingWindow,
                         WindowAggregationFunctionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<WindowAggregationFunctionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });

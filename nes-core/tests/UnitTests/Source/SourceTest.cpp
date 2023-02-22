@@ -14,51 +14,49 @@
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/NullOutputSink.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/GatheringMode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/MetricValidator.hpp>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <string>
-
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/MetricValidator.hpp>
 #include <Util/TestUtils.hpp>
-
-#include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
-#include <NesBaseTest.hpp>
-#include <Runtime/WorkerContext.hpp>
+#include <cstring>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <iostream>
+#include <limits>
+#include <string>
 
 namespace NES {
 

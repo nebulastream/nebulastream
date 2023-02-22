@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

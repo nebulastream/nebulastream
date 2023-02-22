@@ -16,10 +16,9 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/core.h>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 class ChannelId {
   public:
@@ -39,7 +38,6 @@ class ChannelId {
     const NesPartition nesPartition;
     const uint32_t threadId;
 };
-}// namespace Network
 }// namespace NES
 
 namespace fmt {

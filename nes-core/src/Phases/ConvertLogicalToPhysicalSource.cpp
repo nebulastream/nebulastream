@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Network/NetworkManager.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -28,15 +30,12 @@
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/Logger/Logger.hpp>
-
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)

@@ -14,6 +14,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>

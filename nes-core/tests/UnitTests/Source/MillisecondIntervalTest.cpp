@@ -12,25 +12,24 @@
     limitations under the License.
 */
 
-#include <chrono>
-#include <thread>
-
-#include <NesBaseTest.hpp>
-#include <gtest/gtest.h>
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
+#include <chrono>
+#include <gtest/gtest.h>
+#include <thread>
 using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
 
