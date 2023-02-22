@@ -18,6 +18,7 @@
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Events.hpp>
+#include <Network/EventBufferMessage.hpp>
 
 namespace NES::Network::detail {
 

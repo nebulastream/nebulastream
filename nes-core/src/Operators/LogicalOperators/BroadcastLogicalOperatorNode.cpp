@@ -17,7 +17,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)

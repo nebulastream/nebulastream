@@ -14,5 +14,6 @@
 
 add_source_files(nes-common
         NesLogger.cpp
+        LogLevel.cpp
 )
 

@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <limits>
 
 namespace NES::Runtime::Execution::Aggregation {
 
@@ -52,7 +54,7 @@ Nautilus::Value<> callMin(const Nautilus::Value<>& leftValue, const Nautilus::Va
     } else if (leftValue->isType<Nautilus::Double>()) {
         return callMinTyped<Nautilus::Double>(leftValue, rightValue);
     }
-    NES_NOT_IMPLEMENTED();
+    throw Exceptions::NotImplementedException("Type not implemented");
 }
 
 void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) {

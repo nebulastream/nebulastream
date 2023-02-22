@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/details/periodic_worker.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 namespace NES {
 

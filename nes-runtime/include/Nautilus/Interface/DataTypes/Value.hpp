@@ -23,7 +23,6 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <memory>
 #include <type_traits>

@@ -19,6 +19,7 @@
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Experimental/SpatialType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
 

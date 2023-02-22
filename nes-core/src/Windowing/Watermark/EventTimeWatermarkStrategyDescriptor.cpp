@@ -17,8 +17,10 @@
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <sstream>
 #include <utility>
 
 namespace NES::Windowing {
@@ -51,9 +53,9 @@ TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() { return unit; }
 std::string EventTimeWatermarkStrategyDescriptor::toString() {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << onField << ",";
+    ss << "FIELD =" << onField->toString() << ",";
     ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
-    return std::string();
+    return ss.str();
 }
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Optimizer::TypeInferencePhaseContext&, SchemaPtr schema) {

@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/HardwareManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <map>
 #include <string>

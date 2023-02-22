@@ -13,8 +13,8 @@
 */
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Views/MaterializedView.hpp>
-
 namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,

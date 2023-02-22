@@ -164,7 +164,7 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType) {
     } else if constexpr (std::is_pointer_v<Type>) {
         return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
     } else if constexpr (std::is_base_of_v<NESType, Type>) {
-        return physicalType->isArrayType();
+        return isArray(physicalType);
     }
     return false;
 }

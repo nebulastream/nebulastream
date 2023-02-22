@@ -26,7 +26,7 @@
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/PolygonExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/RectangleExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 ShapeExpressionNodePtr CIRCLE(double latitude, double longitude, double distance) {

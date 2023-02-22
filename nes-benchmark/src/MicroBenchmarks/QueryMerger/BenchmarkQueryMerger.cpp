@@ -13,17 +13,14 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -33,10 +30,10 @@
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
 #include <fstream>
+#include <unistd.h>
 
 using namespace NES;
 using namespace NES::Benchmark;

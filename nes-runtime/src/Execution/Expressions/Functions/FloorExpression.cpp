@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/FloorExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -45,7 +46,7 @@ Value<> FloorExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are Float.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FloorExpression>> floorFunction("floor");

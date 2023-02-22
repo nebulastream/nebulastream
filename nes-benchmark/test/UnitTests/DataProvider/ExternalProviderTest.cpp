@@ -14,8 +14,11 @@
 
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <NesBaseTest.hpp>
+#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 

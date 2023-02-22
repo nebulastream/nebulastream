@@ -13,8 +13,8 @@
 */
 
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
-
 namespace NES {
 
 std::string Iterator::dataJson() {

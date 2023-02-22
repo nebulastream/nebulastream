@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>

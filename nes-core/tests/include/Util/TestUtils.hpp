@@ -22,6 +22,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/ServerTypes.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>

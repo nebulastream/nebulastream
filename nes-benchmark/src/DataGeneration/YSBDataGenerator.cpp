@@ -17,8 +17,8 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fstream>
-#include <utility>
 
 namespace NES::Benchmark::DataGeneration {
 

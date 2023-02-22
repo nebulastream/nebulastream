@@ -16,7 +16,7 @@
 #define NES_CORE_INCLUDE_UTIL_GATHERINGMODE_HPP_
 
 #include <cinttypes>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 
 namespace NES {

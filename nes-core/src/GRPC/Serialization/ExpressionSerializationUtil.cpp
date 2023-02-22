@@ -55,6 +55,7 @@
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
 #include <SerializableExpression.pb.h>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 SerializableExpression* ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expression,

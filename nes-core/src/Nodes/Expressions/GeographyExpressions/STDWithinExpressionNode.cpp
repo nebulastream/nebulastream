@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 STDWithinExpressionNode::STDWithinExpressionNode()
     : ExpressionNode(DataTypeFactory::createBoolean()), GeographyExpressionNode() {}

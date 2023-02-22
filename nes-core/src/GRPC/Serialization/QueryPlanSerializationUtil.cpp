@@ -19,9 +19,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

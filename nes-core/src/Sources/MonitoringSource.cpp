@@ -14,14 +14,13 @@
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringCatalog.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
-
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <utility>

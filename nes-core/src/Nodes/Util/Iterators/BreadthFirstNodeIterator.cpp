@@ -14,8 +14,8 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 
 BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)){};

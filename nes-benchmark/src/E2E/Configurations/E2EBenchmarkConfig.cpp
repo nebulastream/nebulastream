@@ -14,6 +14,7 @@
 
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <vector>
 
 namespace NES::Benchmark {

@@ -14,7 +14,10 @@
 
 #include <NesBaseTest.hpp>
 #include <DataProvider/InternalProvider.hpp>
+#include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

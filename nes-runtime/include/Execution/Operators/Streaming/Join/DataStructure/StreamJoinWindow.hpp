@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/DataStructure/LocalHashTable.hpp>
 #include <Execution/Operators/Streaming/Join/DataStructure/SharedJoinHashTable.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <vector>
 
 namespace NES::Runtime::Execution {

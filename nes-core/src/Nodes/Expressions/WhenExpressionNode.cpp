@@ -14,7 +14,9 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
+
 namespace NES {
 WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
 

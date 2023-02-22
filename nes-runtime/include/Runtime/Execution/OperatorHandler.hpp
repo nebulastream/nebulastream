@@ -17,6 +17,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -73,7 +74,7 @@ class OperatorHandler : public Reconfigurable {
         if (instanceOf<OperatorHandlerType>()) {
             return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
         }
-        NES_THROW_RUNTIME_ERROR("OperatorHandler:: we performed an invalid cast of operator to type "
+        throw Exceptions::RuntimeException("OperatorHandler:: we performed an invalid cast of operator to type "
                                 + std::string(typeid(OperatorHandlerType).name()));
     }
 };

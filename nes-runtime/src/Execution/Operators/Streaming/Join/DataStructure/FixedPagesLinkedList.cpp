@@ -14,7 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/DataStructure/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators {
 
 uint8_t* FixedPagesLinkedList::append(const uint64_t hash) {

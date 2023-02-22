@@ -14,6 +14,7 @@
 #include <Execution/Expressions/Functions/CosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Exceptions/NotImplementedException.hpp>
 #include <cmath>
 namespace NES::Runtime::Execution::Expressions {
 
@@ -52,7 +53,7 @@ Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CosExpression>> cosFunction("cos");

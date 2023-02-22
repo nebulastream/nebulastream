@@ -17,7 +17,6 @@
 
 #include <Common/Identifiers.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>

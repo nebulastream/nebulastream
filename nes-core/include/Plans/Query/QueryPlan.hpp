@@ -149,11 +149,9 @@ class QueryPlan {
     template<class T>
     std::vector<std::shared_ptr<T>> getOperatorByType() {
         // Find all the nodes in the query plan
-        NES_DEBUG2("QueryPlan: Get all  nodes in the query plan.");
         std::vector<std::shared_ptr<T>> operators;
         // Maintain a list of visited nodes as there are multiple root nodes
         std::set<uint64_t> visitedOpIds;
-        NES_TRACE2("QueryPlan: Iterate over all root nodes to find the operator.");
         for (const auto& rootOperator : rootOperators) {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
@@ -162,10 +160,8 @@ class QueryPlan {
                     // skip rest of the steps as the node found in already visited node list
                     continue;
                 }
-                NES_TRACE2("QueryPlan: Inserting operator in collection of already visited node.");
                 visitedOpIds.insert(visitingOp->getId());
                 if (visitingOp->instanceOf<T>()) {
-                    NES_TRACE2("QueryPlan: Found leaf node. Adding to the collection of window nodes.");
                     operators.push_back(visitingOp->as<T>());
                 }
             }

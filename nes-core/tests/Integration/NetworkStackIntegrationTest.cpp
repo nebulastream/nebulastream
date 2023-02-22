@@ -27,38 +27,32 @@
 #include <Network/NetworkSource.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/DefaultSource.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestQuery.hpp>
+#include <Util/TestQueryCompiler.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
-
-#include <NesBaseTest.hpp>
-#include <Sinks/Mediums/NullOutputSink.hpp>
-#include <Util/TestQuery.hpp>
-#include <Util/TestQueryCompiler.hpp>
 
 using namespace std;
 

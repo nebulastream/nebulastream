@@ -37,14 +37,7 @@ class ThresholdWindow : public ExecutableOperator {
                     const std::vector<Expressions::ExpressionPtr>& aggregatedFieldAccessExpressions,
                     const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
                     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                    uint64_t operatorHandlerIndex)
-        : predicateExpression(std::move(predicateExpression)),
-          aggregatedFieldAccessExpressions(std::move(aggregatedFieldAccessExpressions)),
-          aggregationResultFieldIdentifiers(std::move(aggregationResultFieldIdentifiers)), minCount(minCount),
-          operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(std::move(aggregationFunctions)) {
-        NES_ASSERT(aggregationFunctions.size() == aggregationResultFieldIdentifiers.size(),
-                   "The number of aggregation expression and aggregation functions need to be equals");
-    };
+                    uint64_t operatorHandlerIndex);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 

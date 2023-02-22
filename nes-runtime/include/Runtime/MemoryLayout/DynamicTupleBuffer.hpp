@@ -19,8 +19,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstring>
@@ -305,14 +303,4 @@ class DynamicTupleBuffer {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-namespace fmt {
-template<>
-struct formatter<NES::Runtime::MemoryLayouts::DynamicTupleBuffer> : formatter<std::string> {
-    auto format(const NES::Runtime::MemoryLayouts::DynamicTupleBuffer& dynamic_tuple_buffer, format_context& ctx)
-        -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "MemoryLayout Schema: {}", dynamic_tuple_buffer.getMemoryLayout()->getSchema()->toString());
-    }
-};
-
-}// namespace fmt
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_DYNAMICTUPLEBUFFER_HPP_

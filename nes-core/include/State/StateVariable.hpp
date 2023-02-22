@@ -15,14 +15,13 @@
 #ifndef NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_
 #define NES_CORE_INCLUDE_STATE_STATEVARIABLE_HPP_
 
+#include <State/StateId.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-
-#include <State/StateId.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES {
 namespace Runtime {

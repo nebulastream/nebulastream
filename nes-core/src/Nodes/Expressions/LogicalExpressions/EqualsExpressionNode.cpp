@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <sstream>
 namespace NES {
 
 EqualsExpressionNode::EqualsExpressionNode(EqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}

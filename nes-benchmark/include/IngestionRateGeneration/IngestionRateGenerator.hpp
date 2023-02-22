@@ -16,7 +16,6 @@
 #define NES_INGESTIONRATEGENERATOR_HPP
 
 #include <E2E/Configurations/E2EBenchmarkConfig.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <string>
 #include <vector>

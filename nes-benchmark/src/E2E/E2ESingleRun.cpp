@@ -18,6 +18,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <E2E/E2ESingleRun.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>

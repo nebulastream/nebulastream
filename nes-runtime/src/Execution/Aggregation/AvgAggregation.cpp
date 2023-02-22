@@ -12,12 +12,10 @@
     limitations under the License.
 */
 
-#include "Nautilus/Interface/DataTypes/Integer/Int.hpp"
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
 

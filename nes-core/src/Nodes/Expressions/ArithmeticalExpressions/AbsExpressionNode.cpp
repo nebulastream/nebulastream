@@ -17,6 +17,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
 
 namespace NES {

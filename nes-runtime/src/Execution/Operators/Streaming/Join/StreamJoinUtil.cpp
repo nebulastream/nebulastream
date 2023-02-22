@@ -17,7 +17,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Util {
 

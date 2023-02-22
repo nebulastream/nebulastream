@@ -13,7 +13,7 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
-#include <Util/Logger/Logger.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <unordered_map>
 namespace NES::Nautilus {
 
@@ -28,7 +28,7 @@ class Frame {
     V getValue(K key) {
         auto value = frameMap.find(key);
         if (value == frameMap.end()) {
-            NES_THROW_RUNTIME_ERROR("Key " << key << " dose not exists in frame.");
+            throw Exceptions::RuntimeException("Key " + key + " dose not exists in frame.");
         }
         return value->second;
     }

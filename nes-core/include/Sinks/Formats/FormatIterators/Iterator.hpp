@@ -19,7 +19,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatType.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Exceptions/NotImplementedException.hpp>
 namespace NES {
 
 class Iterator {
@@ -67,7 +67,7 @@ class Iterator {
             case FormatTypes::TEXT_FORMAT:
             case FormatTypes::NES_FORMAT:
             case FormatTypes::CSV_FORMAT:
-            default: NES_NOT_IMPLEMENTED();
+            default: throw Exceptions::NotImplementedException("SinkFormat not implemented");
         }
     };
 

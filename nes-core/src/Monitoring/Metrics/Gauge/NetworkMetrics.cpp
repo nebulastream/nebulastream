@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>

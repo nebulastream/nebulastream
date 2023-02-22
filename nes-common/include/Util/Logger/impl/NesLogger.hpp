@@ -17,8 +17,13 @@
 
 #include <Util/Logger/LogLevel.hpp>
 #include <fmt/core.h>
-#include <spdlog/async.h>
-#include <spdlog/spdlog.h>
+#include <spdlog/fwd.h>
+#include <spdlog/logger.h>
+
+namespace spdlog::details {
+class thread_pool;
+class periodic_worker;
+}// namespace spdlog::details
 
 namespace NES {
 

@@ -15,6 +15,7 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation {
 PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)){};

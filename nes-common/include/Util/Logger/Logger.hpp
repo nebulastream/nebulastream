@@ -19,7 +19,6 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -44,20 +43,6 @@ namespace NES {
 #elif defined(NES_LOGLEVEL_NONE)
 #define NES_COMPILE_TIME_LOG_LEVEL 1
 #endif
-
-/**
- * @brief GetLogLevel returns the integer LogLevel value for an specific LogLevel value.
- * @param value LogLevel
- * @return integer between 1 and 7 to identify the log level.
- */
-constexpr uint64_t getLogLevel(const LogLevel value) { return magic_enum::enum_integer(value); }
-
-/**
- * @brief getLogName returns the string representation LogLevel value for a specific LogLevel value.
- * @param value LogLevel
- * @return string of value
- */
-constexpr auto getLogName(const LogLevel value) { return magic_enum::enum_name(value); }
 
 /**
  * @brief LogCaller is our compile-time trampoline to invoke the Logger method for the desired level of logging L

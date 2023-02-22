@@ -14,9 +14,8 @@
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
-#include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
-
 namespace NES {
 
 WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(

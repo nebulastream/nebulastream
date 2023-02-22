@@ -19,7 +19,6 @@
 #include <Spatial/DataTypes/Waypoint.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Experimental/SpatialType.hpp>
-#include <Util/Experimental/SpatialTypeUtility.hpp>
 #include <nlohmann/json.hpp>
 #include <oatpp/core/macro/codegen.hpp>
 #include <oatpp/core/macro/component.hpp>
@@ -35,8 +34,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class ErrorHandler;
 using ErrorHandlerPtr = std::shared_ptr<ErrorHandler>;
 
-namespace REST {
-namespace Controller {
+namespace REST::Controller {
 class TopologyController : public oatpp::web::server::api::ApiController {
 
   public:
@@ -191,7 +189,6 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     TopologyManagerServicePtr topologyManagerService;
     ErrorHandlerPtr errorHandler;
 };
-}//namespace Controller
 }// namespace REST
 }// namespace NES
 

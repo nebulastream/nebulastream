@@ -23,6 +23,7 @@ add_source_files(nes-runtime
         HardwareManager.cpp
         NesThread.cpp
         BloomFilter.cpp
+        TaggedPointer.cpp
         )
 
 add_source_files(nes-runtime

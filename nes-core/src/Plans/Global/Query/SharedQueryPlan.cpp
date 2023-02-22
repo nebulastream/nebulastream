@@ -19,9 +19,9 @@
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
-
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)

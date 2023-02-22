@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/SignExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
@@ -58,7 +59,7 @@ Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateSign", calculateSign, subValue.as<Double>());
     } else {
         // Throw an exception if no type is applicable
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 }// namespace NES::Runtime::Execution::Expressions

@@ -16,6 +16,7 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime {
 LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,

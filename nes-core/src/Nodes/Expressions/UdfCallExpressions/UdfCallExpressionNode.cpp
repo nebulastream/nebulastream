@@ -20,6 +20,7 @@
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
 #include <utility>
+#include <sstream>
 
 namespace NES {
 

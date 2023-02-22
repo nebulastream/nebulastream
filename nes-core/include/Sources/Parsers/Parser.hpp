@@ -14,11 +14,13 @@
 #ifndef NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 #define NES_CORE_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <string>
 
 namespace NES {
+
+namespace  Runtime::MemoryLayouts{
+class DynamicTupleBuffer;
+}
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;

@@ -19,6 +19,7 @@
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <Util/PlacementStrategy.hpp>
 
 namespace NES::Optimizer {

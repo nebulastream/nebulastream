@@ -11,12 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sources/StaticDataSource.hpp>
-#include <State/StateManager.hpp>
-#include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 #include <variant>

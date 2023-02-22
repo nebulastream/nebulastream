@@ -16,11 +16,10 @@
 #define NES_CORE_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 
 #include <Common/Identifiers.hpp>
-#include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
@@ -29,6 +28,9 @@
 #include <map>
 #include <vector>
 
+namespace NES::Runtime {
+class ReconfigurationMessage;
+}
 namespace NES::Network {
 class NetworkSink;
 }

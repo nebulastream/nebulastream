@@ -15,8 +15,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 
 LogicalOperatorNode::LogicalOperatorNode(uint64_t id)
