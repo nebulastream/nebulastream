@@ -22,14 +22,17 @@ class FunctionExpression;
 
 namespace Runtime::Execution::Expressions {
 class Expression;
-}
+using ExpressionPtr = std::shared_ptr<Expression>;
+}// namespace Runtime::Execution::Expressions
 
 namespace QueryCompilation {
 class ExpressionProvider {
   public:
-    std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
+    Runtime::Execution::Expressions::ExpressionPtr lowerExpression(const ExpressionNodePtr& expressionNode);
+
   private:
-    std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode);
+    Runtime::Execution::Expressions::ExpressionPtr
+    lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode);
 };
 
 }// namespace QueryCompilation
