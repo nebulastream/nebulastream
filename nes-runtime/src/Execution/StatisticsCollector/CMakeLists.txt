@@ -15,4 +15,5 @@ add_source_files(nes-runtime
                 Statistic.cpp
                 PipelineSelectivity.cpp
                 PipelineRuntime.cpp
-                CollectorTrigger.cpp)
+                CollectorTrigger.cpp
+                Profiler.cpp)

@@ -26,11 +26,14 @@ limitations under the License.
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
+#include <Execution/StatisticsCollector/Profiler.hpp>
 #include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 #include <random>
@@ -96,22 +99,22 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
     pipeline->setRootOperator(scanOperator);
 
     std::vector<TupleBuffer> bufferVector;
-    std::vector<std::uniform_int_distribution<int>> distVector;
+    std::vector<std::uniform_int_distribution<int64_t>> distVector;
 
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    distVector.push_back(std::uniform_int_distribution<int>(2, 8));
-    distVector.push_back(std::uniform_int_distribution<int>(0, 10));
-    distVector.push_back(std::uniform_int_distribution<int>(8, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(2, 8));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(0, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(8, 10));
 
     for (int j = 0; j < 3; ++j) {
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t i = 0; i < 500; i++) {
-            uint64_t randomNumber = distVector[j](rng);
-            dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
+            int64_t randomNumber = distVector[j](rng);
+            dynamicBuffer[i]["f1"].write(randomNumber);
             dynamicBuffer[i]["f2"].write((int64_t) 1);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
@@ -189,22 +192,22 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     pipeline->setRootOperator(scanOperator);
 
     std::vector<TupleBuffer> bufferVector;
-    std::vector<std::uniform_int_distribution<int>> distVector;
+    std::vector<std::uniform_int_distribution<int64_t>> distVector;
 
     // generate values in random order
     std::random_device rd;
     std::mt19937 rng(rd());
-    distVector.push_back(std::uniform_int_distribution<int>(2, 8));
-    distVector.push_back(std::uniform_int_distribution<int>(0, 10));
-    distVector.push_back(std::uniform_int_distribution<int>(8, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(2, 8));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(0, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(8, 10));
 
     for (int j = 0; j < 3; ++j) {
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
         for (uint64_t i = 0; i < 500; i++) {
-            uint64_t randomNumber = distVector[j](rng);
-            dynamicBuffer[i]["f1"].write((int64_t) randomNumber);
+            int64_t randomNumber = distVector[j](rng);
+            dynamicBuffer[i]["f1"].write(randomNumber);
             dynamicBuffer[i]["f2"].write((int64_t) 1);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
@@ -241,6 +244,57 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
         //ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
         //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+    }
+}
+
+TEST_P(StatisticsCollectorTest, testProfiler) {
+
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto equalsExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, readF2);
+    auto selectionOperator = Operators::Selection(equalsExpression);
+    auto collector = std::make_shared<Operators::CollectOperator>();
+    selectionOperator.setChild(collector);
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    std::vector<Record> recordBuffer = std::vector<Record>();
+
+    for (int i = 0; i < 10; ++i) {
+        recordBuffer.push_back(Record({{"f1", Value<>(10)}, {"f2", Value<>(5)}}));
+    }
+
+    auto profiler = Profiler();
+    const char *fileName;
+
+    for (Record record : recordBuffer) {
+        profiler.startProfiling();
+
+        selectionOperator.execute(ctx, record);
+
+        profiler.stopProfiling();
+
+        fileName = profiler.writeToOutputFile();
+    }
+
+    ASSERT_EQ(collector->records.size(), 10);
+
+    std::ifstream file(fileName);
+    std::string line;
+    if (file.is_open()) {
+        int64_t count = 0;
+        while (std::getline(file, line)) {
+            std::cout << line << std::endl;
+            ++count;
+        }
+        ASSERT_EQ(count, 10);
+        file.close();
+        remove(fileName);
+    } else {
+        NES_THROW_RUNTIME_ERROR("Can not open file");
     }
 }
 
