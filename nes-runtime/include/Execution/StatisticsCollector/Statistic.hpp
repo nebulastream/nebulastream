@@ -18,11 +18,19 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief interface for specific statistics that can be collected
+ * @brief Interface for specific statistics that can be collected.
+ * Each statistic can implement how it is collected.
  */
 class Statistic {
   public:
+    /**
+     * @brief Collects the statistic when called from the StatisticsCollector.
+     */
     virtual void collect() const = 0;
+    /**
+     * @brief Get the type of statistic.
+     * @return type of statistic.
+     */
     virtual std::string getType() const = 0;
     virtual ~Statistic() = default;
 };

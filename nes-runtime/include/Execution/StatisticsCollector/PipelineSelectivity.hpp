@@ -20,12 +20,17 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief collects the selectivity of a pipeline
+ * @brief Implements a statistic that collects the selectivity of a pipeline.
  */
 class PipelineSelectivity : public Statistic {
   public:
     PipelineSelectivity(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
     void collect() const override;
+
+    /**
+    * @brief Get the pipelineId of the pipeline for which the selectivity is collected.
+    * @return pipelineId
+    */
     uint64_t getPipelineID() { return this->pipelineId; }
     std::string getType() const override;
 

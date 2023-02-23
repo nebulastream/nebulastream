@@ -21,12 +21,21 @@ namespace NES::Runtime::Execution {
 enum TriggerType { PipelineStatisticsTrigger };
 
 /**
- * @brief triggers statistics collector
+ * @brief Implements triggers for the collection of the statistics. Are handled by the StatisticsCollector.
  */
 class CollectorTrigger {
   public:
+
+    /**
+    * @brief creates a trigger of a certain type.
+    * @param triggerType type of the trigger.
+    */
     explicit CollectorTrigger(TriggerType triggerType);
 
+    /**
+    * @brief Get the type of trigger.
+    * @return triggerType
+    */
     TriggerType getTriggerType();
 
     std::string getTypeAsString();
@@ -35,5 +44,6 @@ class CollectorTrigger {
     TriggerType triggerType;
 
 };
+
 }// namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_COLLECTORTRIGGER_HPP_

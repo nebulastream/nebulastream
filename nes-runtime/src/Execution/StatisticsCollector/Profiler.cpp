@@ -16,24 +16,6 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
-    int64_t ret; // try int
-    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
-    return ret;
-}
-
-void Profiler::startProfiling(){
-    ioctl(fileDescriptor, PERF_EVENT_IOC_RESET, 0);
-    ioctl(fileDescriptor, PERF_EVENT_IOC_ENABLE, 0);
-}
-
-void Profiler::stopProfiling(){
-    ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, 0);
-    read(fileDescriptor, &count, sizeof(uint64_t));
-}
-
-
-
 Profiler::Profiler (){
     memset(&pe, 0, sizeof(pe));
     pe.type = PERF_TYPE_HARDWARE;
@@ -50,6 +32,22 @@ Profiler::Profiler (){
         fprintf(stderr, "Error opening perf event: %m\n");
         exit(1);
     }
+}
+
+long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
+    int64_t ret; // try int
+    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+    return ret;
+}
+
+void Profiler::startProfiling(){
+    ioctl(fileDescriptor, PERF_EVENT_IOC_RESET, 0);
+    ioctl(fileDescriptor, PERF_EVENT_IOC_ENABLE, 0);
+}
+
+void Profiler::stopProfiling(){
+    ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, 0);
+    read(fileDescriptor, &count, sizeof(uint64_t));
 }
 
 uint64_t Profiler::getCount() {
@@ -73,9 +71,5 @@ const char* Profiler::writeToOutputFile() {
 Profiler::~Profiler() {
     close(fileDescriptor);
 }
-
-
-
-
 
 }// namespace NES::Runtime::Execution

@@ -21,12 +21,25 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief collects various statistics
+ * @brief Collects various statistics that can be implemented with the interface Statistic.
  */
 class StatisticsCollector {
   public:
+    /**
+     * @brief Constructor for the StatisticsCollector.
+     */
     StatisticsCollector() : listOfStatistics(){};
+
+    /**
+     * @brief Adds a statistic that should be collected to the list of statistics.
+     * @param statistic that should be collected.
+     */
     void addStatistic(std::shared_ptr<Statistic> statistic);
+
+    /**
+     * @brief Handles different triggers that trigger the collection of a statistic.
+     * @param trigger triggers the collection of a statistic.
+     */
     void updateStatisticsHandler(CollectorTrigger trigger);
 
   private:
@@ -34,5 +47,4 @@ class StatisticsCollector {
 };
 
 }// namespace NES::Runtime::Execution
-
 #endif// NES_RUNTIME_INCLUDE_EXECUTION_STATISTICSCOLLECTOR_HPP_

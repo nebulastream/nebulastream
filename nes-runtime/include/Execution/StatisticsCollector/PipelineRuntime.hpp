@@ -20,12 +20,17 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief collects the runtime of a pipeline
+ * @brief Implements a statistic that collects the runtime of a pipeline.
  */
 class PipelineRuntime : public Statistic {
   public:
     PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
     void collect() const override;
+
+    /**
+    * @brief Get the pipelineId of the pipeline for which the runtime is collected.
+    * @return pipelineId
+    */
     uint64_t getPipelineID() { return this->pipelineId; }
     std::string getType() const override;
 

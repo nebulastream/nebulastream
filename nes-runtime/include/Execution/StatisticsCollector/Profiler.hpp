@@ -26,18 +26,42 @@ limitations under the License.
 #include <unistd.h>
 
 namespace NES::Runtime::Execution {
-
+/**
+* @brief Profiler that collects branch misses.
+*/
 class Profiler {
   public:
+    /**
+     * @brief Constructor for the profiler.
+     */
     Profiler();
-    long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
+
+    /**
+     * @brief Starts profiling of the code.
+     */
     void startProfiling();
+
+    /**
+     * @brief Ends profiling the code.
+     */
     void stopProfiling();
+
+    /**
+     * @brief Get the number of branch misses.
+     * @return number of branch misses.
+     */
     uint64_t getCount();
+
+    /**
+     * @brief Writes the number of branch misses to an output file.
+     * @return name of the output file.
+     */
     const char* writeToOutputFile();
     ~Profiler();
 
   private:
+    long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
+
     struct perf_event_attr pe;
     int fileDescriptor;
     uint64_t count;
