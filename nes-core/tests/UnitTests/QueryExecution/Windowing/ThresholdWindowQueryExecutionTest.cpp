@@ -367,7 +367,8 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCountAndS
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::INT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
-    auto sinkSchema = Schema::create()->addField("test$Count", BasicType::INT64)->addField("test$Sum", BasicType::INT64);;
+    auto sinkSchema = Schema::create()->addField("test$Count", BasicType::INT64)->addField("test$Sum", BasicType::INT64);
+    ;
     auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -390,7 +391,7 @@ TEST_F(ThresholdWindowQueryExecutionTest, simpleThresholdWindowTestWithCountAndS
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 3LL);// Count
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 3LL);  // Count
     EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 210LL);// Sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));

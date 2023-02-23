@@ -93,7 +93,7 @@ void NES::Runtime::Execution::Operators::ThresholdWindow::execute(ExecutionConte
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
-                    resultRecord.write(aggregationResultFieldIdentifiers[i],aggregationResult);
+                    resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));

@@ -46,9 +46,8 @@ class ILPStrategy : public BasePlacementStrategy {
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
-    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           TypeInferencePhasePtr typeInferencePhase);
+    static BasePlacementStrategyPtr
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight

@@ -453,7 +453,11 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType);
     auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType);
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(integerType, unsignedIntegerType);
-    for (auto resultField : {aggregationResultFieldNameSum, aggregationResultFieldNameMax, aggregationResultFieldNameMin, aggregationResultFieldNameMean, aggregationResultFieldNameCount}) {
+    for (auto resultField : {aggregationResultFieldNameSum,
+                             aggregationResultFieldNameMax,
+                             aggregationResultFieldNameMin,
+                             aggregationResultFieldNameMean,
+                             aggregationResultFieldNameCount}) {
         resultFieldVector.emplace_back(resultField);
     }
     for (auto accessField : {readF2, readF1, readF3, readF4}) {
@@ -491,9 +495,18 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
 
     thresholdWindowOperator->setup(ctx);
 
-    auto recordFifty = Record({{"f1", Value<>((int64_t) 50)}, {"f2", Value<>((int64_t) 2)}, {"f3", Value<>((int64_t) 50)}, {"f4", Value<>((int64_t) 2)}});
-    auto recordNinety = Record({{"f1", Value<>((int64_t) 90)}, {"f2", Value<>((int64_t) 3)}, {"f3", Value<>((int64_t) 90)}, {"f4", Value<>((int64_t) 4)}});
-    auto recordTwenty = Record({{"f1", Value<>((int64_t) 20)}, {"f2", Value<>((int64_t) 4)}, {"f3", Value<>((int64_t) 50)}, {"f4", Value<>((int64_t) 2)}});// closes the window
+    auto recordFifty = Record({{"f1", Value<>((int64_t) 50)},
+                               {"f2", Value<>((int64_t) 2)},
+                               {"f3", Value<>((int64_t) 50)},
+                               {"f4", Value<>((int64_t) 2)}});
+    auto recordNinety = Record({{"f1", Value<>((int64_t) 90)},
+                                {"f2", Value<>((int64_t) 3)},
+                                {"f3", Value<>((int64_t) 90)},
+                                {"f4", Value<>((int64_t) 4)}});
+    auto recordTwenty = Record({{"f1", Value<>((int64_t) 20)},
+                                {"f2", Value<>((int64_t) 4)},
+                                {"f3", Value<>((int64_t) 50)},
+                                {"f4", Value<>((int64_t) 2)}});// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
