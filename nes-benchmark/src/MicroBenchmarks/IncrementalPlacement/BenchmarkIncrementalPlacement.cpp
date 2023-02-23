@@ -405,10 +405,8 @@ int main(int argc, const char* argv[]) {
 
             auto globalExecutionPlan = GlobalExecutionPlan::create();
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-            auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              incrementalPlacement);
+            auto queryPlacementPhase =
+                Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, incrementalPlacement);
 
             //Perform steps to optimize queries
             for (uint64_t i = 0; i < numOfQueries; i++) {

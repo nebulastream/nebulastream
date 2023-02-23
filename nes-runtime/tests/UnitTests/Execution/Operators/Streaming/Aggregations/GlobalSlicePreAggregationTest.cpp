@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>

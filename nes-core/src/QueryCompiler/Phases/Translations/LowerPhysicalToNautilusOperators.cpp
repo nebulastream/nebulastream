@@ -16,7 +16,6 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -210,8 +209,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
         }
         // pass aggValues to ThresholdWindowHandler
-        auto handler =
-            std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+        auto handler = std::make_shared<Runtime::Execution::Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
 

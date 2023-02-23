@@ -100,11 +100,11 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
     resultFieldVector.emplace_back(aggregationResultFieldName);
     aggVector.emplace_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
-                                                                     0,
-                                                                     aggFieldAccessExpressionsVector,
-                                                                     resultFieldVector,
-                                                                     aggVector,
-                                                                     0);
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
     scanOperator->setChild(thresholdWindowOperator);
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

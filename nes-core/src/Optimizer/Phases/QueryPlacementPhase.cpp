@@ -33,8 +33,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          TypeInferencePhasePtr typeInferencePhase,
                                          bool queryReconfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)),
-      queryReconfiguration(queryReconfiguration) {
+      typeInferencePhase(std::move(typeInferencePhase)), queryReconfiguration(queryReconfiguration) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 

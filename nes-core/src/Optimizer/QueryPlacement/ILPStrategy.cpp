@@ -36,9 +36,8 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                           TopologyPtr topology,
-                                                           TypeInferencePhasePtr typeInferencePhase) {
+std::unique_ptr<BasePlacementStrategy>
+ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase) {
     z3::config cfg;
     cfg.set("timeout", 1000);
     cfg.set("model", false);
