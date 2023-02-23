@@ -18,6 +18,7 @@ add_source_files(nes-runtime
         InvocationPlugin.cpp
         BooleanInvocationPlugin.cpp
         MemRefInvocationPlugin.cpp
+        MemRefUtils.cpp
         )
 
 add_subdirectory(Text)

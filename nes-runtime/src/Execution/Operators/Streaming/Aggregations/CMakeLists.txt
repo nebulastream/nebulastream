@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(GlobalTimeWindow)
+add_subdirectory(KeyedTimeWindow)
 
 add_source_files(nes-runtime
         WindowProcessingException.cpp

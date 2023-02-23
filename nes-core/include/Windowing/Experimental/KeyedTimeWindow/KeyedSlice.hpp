@@ -25,7 +25,7 @@ namespace NES::Windowing::Experimental {
 class KeyedSlice {
   public:
     /**
-     * @brief Constructor to create a new slice that covers a specific range between stat and end.
+     * @brief Constructor to create a new slice that covers a specific range between start and end.
      * @param hashMapFactory a factory to create a new hashmap
      * @param start of the slice
      * @param end of the slice

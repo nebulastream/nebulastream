@@ -29,7 +29,7 @@ class WindowSliceStore {
     explicit WindowSliceStore(PartialAggregateType value)
         : defaultValue(value), partialAggregates(std::vector<PartialAggregateType>()) {}
 
-    ~WindowSliceStore() { NES_TRACE("~WindowSliceStore()"); }
+    ~WindowSliceStore() { NES_TRACE2("~WindowSliceStore()"); }
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
@@ -40,13 +40,15 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
-                NES_TRACE("getSliceIndexByTs for ts=" << ts << " return index=" << i);
+                NES_TRACE2("getSliceIndexByTs for ts={} return index={}", ts, i);
                 return i;
             }
         }
         auto lastSlice = sliceMetaData.back();
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen. current ts"
-                  << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
+        NES_ERROR2("getSliceIndexByTs for could not find a slice, this should not happen. current ts {} last slice {} - {}",
+                   ts,
+                   lastSlice.getStartTs(),
+                   lastSlice.getEndTs());
         NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts"
                                 << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
         //TODO: change this back once we have the vector clocks
@@ -58,8 +60,7 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_TRACE("appendSlice "
-                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+        NES_TRACE2("appendSlice start={} end={}", slice.getStartTs(), slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
     }
@@ -69,8 +70,7 @@ class WindowSliceStore {
     * @param slice
     */
     inline void prependSlice(SliceMetaData slice) {
-        NES_TRACE("prependSlice "
-                  << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+        NES_TRACE2("prependSlice start={} end={}", slice.getStartTs(), slice.getEndTs());
         sliceMetaData.emplace(sliceMetaData.begin(), slice);
         partialAggregates.emplace(partialAggregates.begin(), defaultValue);
     }
@@ -97,17 +97,20 @@ class WindowSliceStore {
             if (itSlice->getEndTs() > watermark) {
                 break;
             }
-            NES_TRACE("WindowSliceStore removeSlicesUntil: watermark=" << watermark << " from slice endts=" << itSlice->getEndTs()
-                                                                       << " sliceMetaData size=" << sliceMetaData.size()
-                                                                       << " partialaggregate size=" << partialAggregates.size());
-
+            NES_TRACE2("WindowSliceStore removeSlicesUntil: watermark={} from slice endts={} sliceMetaData size={} "
+                       "partialaggregate size={}",
+                       watermark,
+                       itSlice->getEndTs(),
+                       sliceMetaData.size(),
+                       partialAggregates.size());
             itAggs++;
         }
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         partialAggregates.erase(partialAggregates.begin(), itAggs);
-        NES_TRACE("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-                                                                                  << " aggs=" << partialAggregates.size());
+        NES_TRACE2("WindowSliceStore: removeSlicesUntil size after cleanup slice={} aggs={}",
+                   sliceMetaData.size(),
+                   partialAggregates.size());
     }
 
     /**

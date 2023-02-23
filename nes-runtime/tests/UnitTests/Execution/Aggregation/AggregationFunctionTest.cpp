@@ -14,6 +14,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -40,9 +41,11 @@ class AggregationFunctionTest : public Testing::NESBaseTest {
  * Tests the lift, combine, lower and reset functions of the Sum Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType);
-    auto sumValue = Aggregation::SumAggregationValue();
+    auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
@@ -67,37 +70,42 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineSum) {
  * Tests the lift, combine, lower and reset functions of the Count Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineCount) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto countAgg = Aggregation::CountAggregationFunction(integerType, integerType);
-    auto countValue = Aggregation::CountAggregationValue();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    auto unsignedIntegerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+
+    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType);
+
+    auto countValue = Aggregation::CountAggregationValue<uint64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
     // test lift
     countAgg.lift(memref, incomingValue);
-    ASSERT_EQ(countValue.count, 1);
+    ASSERT_EQ(countValue.count, (uint64_t) 1);
 
     // test combine
     countAgg.combine(memref, memref);
-    ASSERT_EQ(countValue.count, 2);
+    ASSERT_EQ(countValue.count, (uint64_t) 2);
 
     // test lower
     auto aggregationResult = countAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);
+    ASSERT_EQ(aggregationResult, (uint64_t) 2);
 
     // test reset
     countAgg.reset(memref);
-    EXPECT_EQ(countValue.count, 0);
+    EXPECT_EQ(countValue.count, (uint64_t) 0);
 }
 
 /**
  * Tests the lift, combine, lower and reset functions of the Average Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    DataTypePtr doubleType = DataTypeFactory::createDouble();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+    PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType);
-    auto avgValue = Aggregation::AvgAggregationValue();
+    auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
@@ -125,19 +133,49 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineAvg) {
  * Tests the lift, combine, lower and reset functions of the Min Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
-    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
-    auto minValue = Aggregation::MinAggregationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    // lift value in minAgg
-    minAgg.lift(memref, incomingValue);
-    ASSERT_EQ(minValue.min, incomingValue);
+    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType);
+    auto minValue = Aggregation::MinAggregationValue<int64_t>();
+    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+
+    // lift value in minAgg with an initial value of 5, thus the current min should be 5
+    minAgg.lift(memref, incomingValueFive);
+    ASSERT_EQ(minValue.min, incomingValueFive);
+
+    // lift value in minAgg with a higher value of 10, thus the current min should still be 5
+    minAgg.lift(memref, incomingValueTen);
+    ASSERT_EQ(minValue.min, incomingValueFive);
+
+    // lift value in minAgg with a lower value of 1, thus the current min should change to 1
+    minAgg.lift(memref, incomingValueOne);
+    ASSERT_EQ(minValue.min, incomingValueOne);
+
+    // lift value in minAgg with a higher value of 2, thus the current min should still be 1
+    minAgg.lift(memref, incomingValueTwo);
+    ASSERT_EQ(minValue.min, incomingValueOne);
 
     // combine memrefs in minAgg
-    minAgg.combine(memref, memref);
-    ASSERT_EQ(minValue.min, 1);
+    auto anotherMinValue = Aggregation::MinAggregationValue<int64_t>();
+    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMinValue);
+    minAgg.lift(anotherMemref, incomingValueTen);
+
+    // test if memref1 < memref2
+    minAgg.combine(memref, anotherMemref);
+    ASSERT_EQ(minValue.min, incomingValueOne);
+
+    // test if memref1 > memref2
+    minAgg.combine(anotherMemref, memref);
+    ASSERT_EQ(anotherMinValue.min, incomingValueOne);
+
+    // test if memref1 = memref2
+    minAgg.lift(anotherMemref, incomingValueOne);
+    ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
     // lower value in minAgg
     auto aggregationResult = minAgg.lower(memref);
@@ -152,23 +190,54 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineMin) {
  * Tests the lift, combine, lower and reset functions of the Max Aggregation
  */
 TEST_F(AggregationFunctionTest, scanEmitPipelineMax) {
-    DataTypePtr integerType = DataTypeFactory::createInt64();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType);
-    auto maxValue = Aggregation::MaxAggregationValue();
+    auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
-    auto incomingValue = Nautilus::Value<Nautilus::Int64>((int64_t) 2);
+    auto incomingValueFive = Nautilus::Value<Nautilus::Int64>((int64_t) 5);
+    auto incomingValueTen = Nautilus::Value<Nautilus::Int64>((int64_t) 10);
+    auto incomingValueOne = Nautilus::Value<Nautilus::Int64>((int64_t) 1);
+    auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>((int64_t) 15);
 
-    // lift value in minAgg
-    maxAgg.lift(memref, incomingValue);
-    ASSERT_EQ(maxValue.max, incomingValue);
+    // lift value in maxAgg with an initial value of 5, thus the current min should be 5
+    maxAgg.lift(memref, incomingValueFive);
+    ASSERT_EQ(maxValue.max, incomingValueFive);
 
-    // combine memrefs in minAgg
-    maxAgg.combine(memref, memref);
-    ASSERT_EQ(maxValue.max, 2);
+    // lift value in maxAgg with a higher value of 10, thus the current min should change to 10
+    maxAgg.lift(memref, incomingValueTen);
+    ASSERT_EQ(maxValue.max, incomingValueTen);
+
+    // lift value in maxAgg with a lower value of 1, thus the current min should still be 10
+    maxAgg.lift(memref, incomingValueOne);
+    ASSERT_EQ(maxValue.max, incomingValueTen);
+
+    // lift value in maxAgg with a higher value of 15, thus the current min should change to 15
+    maxAgg.lift(memref, incomingValueFifteen);
+    ASSERT_EQ(maxValue.max, incomingValueFifteen);
+
+    // combine memrefs in maxAgg
+    auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
+    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMaxValue);
+    maxAgg.lift(anotherMemref, incomingValueOne);
+
+    // test if memref1 > memref2
+    maxAgg.combine(memref, anotherMemref);
+    ASSERT_EQ(maxValue.max, incomingValueFifteen);
+
+    // test if memref1 < memref2
+    maxAgg.combine(anotherMemref, memref);
+    ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
+
+    // test if memref1 = memref2
+    maxAgg.lift(anotherMemref, incomingValueFifteen);
+    maxAgg.combine(memref, anotherMemref);
+    ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
     // lower value in minAgg
     auto aggregationResult = maxAgg.lower(memref);
-    ASSERT_EQ(aggregationResult, 2);
+    ASSERT_EQ(aggregationResult, incomingValueFifteen);
 
     // test reset
     maxAgg.reset(memref);

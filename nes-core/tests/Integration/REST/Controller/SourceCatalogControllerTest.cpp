@@ -70,6 +70,11 @@ class SourceCatalogControllerTest : public Testing::NESBaseTest {
         ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     CoordinatorConfigurationPtr coordinatorConfig;
     NesCoordinatorPtr coordinator;
 };
@@ -85,7 +90,8 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    nlohmann::json response = nlohmann::json::parse(r.text);
+    nlohmann::json response;
+    ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     NES_DEBUG(r.text);
     bool found = false;
     for (auto& el : response.items()) {
@@ -95,6 +101,7 @@ TEST_F(SourceCatalogControllerTest, testGetAllLogicalSource) {
         }
     }
     ASSERT_TRUE(found);
+    stopCoordinator();
 }
 
 TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
@@ -120,10 +127,12 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
-    nlohmann::json response = nlohmann::json::parse(r.text);
+    nlohmann::json response;
+    ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     ASSERT_TRUE(response.contains("Physical Sources") && response["Physical Sources"].size() != 0);
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
+    stopCoordinator();
 }
 
 TEST_F(SourceCatalogControllerTest, testGetSchema) {
@@ -147,6 +156,7 @@ TEST_F(SourceCatalogControllerTest, testGetSchema) {
     // and check if its fields match with the fields defined in the schema above
     ASSERT_TRUE(response.fields().size() == 1);
     ASSERT_TRUE(response.fields(0).name() == "ID");
+    stopCoordinator();
 }
 
 TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
@@ -166,12 +176,14 @@ TEST_F(SourceCatalogControllerTest, testPostLogicalSource) {
     future.wait();
     cpr::Response response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    nlohmann::json success = nlohmann::json::parse(response.text);
+    nlohmann::json success;
+    ASSERT_NO_THROW(success = nlohmann::json::parse(response.text));
     ASSERT_TRUE(success["success"]);
     ASSERT_TRUE(!sourceCatalog->getAllLogicalSource().empty());
     SchemaPtr schemaFromCoordinator = sourceCatalog->getLogicalSource("car")->getSchema();
     //TODO: is it a bug that one has to define the field name with a '$' in the schema for it to be found using hasFieldName ?
     ASSERT_TRUE(schemaFromCoordinator->hasFieldName("ID") != nullptr);
+    stopCoordinator();
 }
 
 TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
@@ -194,13 +206,15 @@ TEST_F(SourceCatalogControllerTest, testUpdateLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    nlohmann::json jsonResponse = nlohmann::json::parse(r.text);
+    nlohmann::json jsonResponse;
+    ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
     ASSERT_TRUE(jsonResponse["success"]);
     auto coordinatorSchema = sourceCatalog->getLogicalSource("car")->getSchema();
     //TODO: is it a bug that one has to define the field name with a '$' in the schema for it to be found using hasFieldName ?
     ASSERT_TRUE(coordinatorSchema->hasFieldName("ID") != nullptr);
     ASSERT_TRUE(coordinatorSchema->hasFieldName("value") != nullptr);
     ASSERT_TRUE(coordinatorSchema->hasFieldName("timestamp") != nullptr);
+    stopCoordinator();
 }
 TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     startCoordinator();
@@ -215,9 +229,11 @@ TEST_F(SourceCatalogControllerTest, testDeleteLogicalSource) {
     future.wait();
     cpr::Response r = future.get();
     ASSERT_EQ(r.status_code, 200l);
-    nlohmann::json success = nlohmann::json::parse(r.text);
+    nlohmann::json success;
+    ASSERT_NO_THROW(success = nlohmann::json::parse(r.text));
     ASSERT_TRUE(success["success"]);
     ASSERT_FALSE(sourceCatalog->containsLogicalSource("test_stream"));
+    stopCoordinator();
 }
 
 }// namespace NES

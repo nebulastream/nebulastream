@@ -17,10 +17,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {
 

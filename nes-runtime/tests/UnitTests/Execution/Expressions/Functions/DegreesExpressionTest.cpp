@@ -68,8 +68,7 @@ TEST_F(DegreesExpressionTest, evaluateDegreesExpressionFloat) {
     // Float
     {
         auto resultValue = expression.eval(Value<Float>((float) M_PI));
-        //TODO: We currently receive a Double as result here #3112
-        //  ASSERT_EQ(resultValue, 180);
+        ASSERT_EQ(resultValue.as<Double>(), calculateDegrees((float) M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double

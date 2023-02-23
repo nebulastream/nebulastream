@@ -17,11 +17,10 @@
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalSliceStaging.hpp>
-#include <Execution/Operators/Streaming/Aggregations/GlobalTimeWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -71,8 +70,14 @@ void* getDefaultMergingState(void* ss) {
 }
 
 GlobalSliceMerging::GlobalSliceMerging(uint64_t operatorHandlerIndex,
-                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
+                                       const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+                                       const std::vector<std::string>& aggregationResultExpressions,
+                                       const std::string& startTsFieldName,
+                                       const std::string& endTsFieldName,
+                                       uint64_t resultOriginId)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions),
+      aggregationResultExpressions(aggregationResultExpressions), startTsFieldName(startTsFieldName),
+      endTsFieldName(endTsFieldName), resultOriginId(resultOriginId) {}
 
 void GlobalSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -100,8 +105,8 @@ void GlobalSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    Value<> startSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, startSlice)).as<MemRef>().load<UInt64>();
-    Value<> endSliceTs = (sliceMergeTask + (uint64_t) offsetof(SliceMergeTask, endSlice)).as<MemRef>().load<UInt64>();
+    Value<> startSliceTs = getMember(sliceMergeTask, SliceMergeTask, startSlice).load<UInt64>();
+    Value<> endSliceTs = getMember(sliceMergeTask, SliceMergeTask, endSlice).load<UInt64>();
     // 2. load the thread local slice store according to the worker id.
     auto globalSliceState = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask, endSliceTs);
     // emit global slice when we have a tumbling window.
@@ -117,10 +122,12 @@ Value<MemRef> GlobalSliceMerging::combineThreadLocalSlices(Value<MemRef>& global
     auto sizeOfPartitions = Nautilus::FunctionCall("getSizeOfPartition", getSizeOfPartition, partition);
     for (Value<UInt64> i = (uint64_t) 0; i < sizeOfPartitions; i = i + (uint64_t) 1) {
         auto partitionState = Nautilus::FunctionCall("getPartitionState", getPartitionState, partition, i);
+        uint64_t stateOffset = 0;
         for (const auto& function : aggregationFunctions) {
-            function->combine(globalSliceState, partitionState);
-            partitionState = partitionState + function->getSize();
-            globalSliceState = globalSliceState + function->getSize();
+            auto globalValuePtr = globalSliceState + stateOffset;
+            auto partitionValuePtr = partitionState + stateOffset;
+            function->combine(globalValuePtr.as<MemRef>(), partitionValuePtr.as<MemRef>());
+            stateOffset = stateOffset + function->getSize();
         }
     }
     Nautilus::FunctionCall("deletePartition", deletePartition, partition);
@@ -131,15 +138,20 @@ void GlobalSliceMerging::emitWindow(ExecutionContext& ctx,
                                     Value<>& windowStart,
                                     Value<>& windowEnd,
                                     Value<MemRef>& globalSlice) const {
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
+    ctx.setWatermarkTs(windowEnd.as<UInt64>());
+    ctx.setOrigin(resultOriginId);
 
+    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
     Record resultWindow;
-    resultWindow.write("start_ts", windowStart);
-    resultWindow.write("end_ts", windowEnd);
-    for (const auto& function : aggregationFunctions) {
-        auto finalAggregationValue = function->lower(globalSliceState);
-        resultWindow.write("test$sum", finalAggregationValue);
-        globalSliceState = globalSliceState + function->getSize();
+    resultWindow.write(startTsFieldName, windowStart);
+    resultWindow.write(endTsFieldName, windowEnd);
+    uint64_t stateOffset = 0;
+    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+        auto function = aggregationFunctions[i];
+        auto valuePtr = globalSliceState + stateOffset;
+        auto finalAggregationValue = function->lower(valuePtr.as<MemRef>());
+        resultWindow.write(aggregationResultExpressions[i], finalAggregationValue);
+        stateOffset = stateOffset + function->getSize();
     }
     child->execute(ctx, resultWindow);
 }

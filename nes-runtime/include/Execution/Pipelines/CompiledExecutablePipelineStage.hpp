@@ -13,14 +13,12 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <future>
+
+namespace NES::Nautilus::Backends {
+class Executable;
+}
 
 namespace NES::Runtime::Execution {
 class PhysicalOperatorPipeline;

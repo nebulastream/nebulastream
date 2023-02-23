@@ -119,8 +119,7 @@ class E2ESingleRun {
     int restPortSingleRun;
     NES::Configurations::CoordinatorConfigurationPtr coordinatorConf;
     NES::NesCoordinatorPtr coordinator;
-    std::vector<DataProviding::DataProviderPtr> allDataProviders;
-    std::vector<DataGeneration::DataGeneratorPtr> allDataGenerators;
+    std::vector<DataProvision::DataProviderPtr> allDataProviders;
     std::vector<NES::Runtime::BufferManagerPtr> allBufferManagers;
     Measurements::Measurements measurements;
     std::vector<QueryId> submittedIds;

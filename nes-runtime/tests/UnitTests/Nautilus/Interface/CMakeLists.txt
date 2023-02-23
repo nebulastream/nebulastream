@@ -16,3 +16,5 @@ add_nes_runtime_test(nautilus-custom-data-type-test "CustomDataTypeTest.cpp")
 add_nes_runtime_test(nautilus-list-type-test "ListTypeTest.cpp")
 add_nes_runtime_test(nautilus-text-type-test "TextTypeTest.cpp")
 
+add_subdirectory(Hash)
+add_subdirectory(HashMap)

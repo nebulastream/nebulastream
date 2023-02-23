@@ -21,7 +21,6 @@
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/BenchmarkUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Version/version.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
@@ -70,7 +69,9 @@ void E2ESingleRun::createSources() {
     size_t sourceCnt = 0;
     NES_INFO("Creating sources and the accommodating data generation and data providing...");
 
-    for (const auto& [logicalSourceName, dataGenerator] : configOverAllRuns.sourceNameToDataGenerator) {
+    for (const auto& item : configOverAllRuns.sourceNameToDataGenerator) {
+        auto logicalSourceName = item.first;
+        auto dataGenerator = item.second.get();
         auto schema = dataGenerator->getSchema();
         auto logicalSource = LogicalSource::create(logicalSourceName, schema);
         coordinatorConf->logicalSources.add(logicalSource);
@@ -82,7 +83,6 @@ void E2ESingleRun::createSources() {
         dataGenerator->setBufferManager(bufferManager);
 
         allBufferManagers.emplace_back(bufferManager);
-        allDataGenerators.emplace_back(dataGenerator);
 
         NES_INFO("Creating #" << numberOfPhysicalSrc << " physical sources for logical source "
                               << logicalSource->getLogicalSourceName());
@@ -123,7 +123,8 @@ void E2ESingleRun::createSources() {
                 NES_THROW_RUNTIME_ERROR("Kafka not supported on OSX");
 #endif
             } else {
-                auto dataProvider = DataProviding::DataProvider::createProvider(sourceCnt, configOverAllRuns, createdBuffers);
+                auto dataProvider =
+                    DataProvision::DataProvider::createProvider(/* sourceIndex */ sourceCnt, configOverAllRuns, createdBuffers);
 
                 // Adding necessary items to the corresponding vectors
                 allDataProviders.emplace_back(dataProvider);
@@ -369,11 +370,6 @@ E2ESingleRun::~E2ESingleRun() {
         dataProvider.reset();
     }
     allDataProviders.clear();
-
-    for (auto& dataGenerator : allDataGenerators) {
-        dataGenerator.reset();
-    }
-    allDataGenerators.clear();
 
     for (auto& bufferManager : allBufferManagers) {
         bufferManager.reset();

@@ -170,15 +170,15 @@ class TestHarness {
             // Check if logical source already exists
             auto sourceCatalog = nesCoordinator->getSourceCatalog();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-                NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source "
-                          << logicalSourceName);
+                NES_TRACE2("TestHarness: logical source does not exist in the source catalog, adding a new logical source {}",
+                           logicalSourceName);
                 sourceCatalog->addLogicalSource(logicalSourceName, schema);
             } else {
                 // Check if it has the same schema
                 if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
-                    NES_TRACE("TestHarness: logical source " << logicalSourceName
-                                                             << " exists in the source catalog with "
-                                                                "different schema, replacing it with a new schema");
+                    NES_TRACE2("TestHarness: logical source {} exists in the source catalog with different schema, replacing it "
+                               "with a new schema",
+                               logicalSourceName);
                     sourceCatalog->removeLogicalSource(logicalSourceName);
                     sourceCatalog->addLogicalSource(logicalSourceName, schema);
                 }
@@ -383,8 +383,8 @@ class TestHarness {
         }
 
         auto tupleSize = schema->getSchemaSizeInBytes();
-        NES_DEBUG("Tuple Size: " << tupleSize);
-        NES_DEBUG("currentSourceNumOfRecords: " << currentSourceNumOfRecords);
+        NES_DEBUG2("Tuple Size: {}", tupleSize);
+        NES_DEBUG2("currentSourceNumOfRecords: {}", currentSourceNumOfRecords);
         auto memAreaSize = currentSourceNumOfRecords * tupleSize;
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
@@ -516,11 +516,12 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG("TestHarness: outputSchema: " << queryCatalogService->getEntryForQuery(queryId)
-                                                       ->getInputQueryPlan()
-                                                       ->getSinkOperators()[0]
-                                                       ->getOutputSchema()
-                                                       ->toString());
+        NES_DEBUG2("TestHarness: outputSchema: {}",
+                   queryCatalogService->getEntryForQuery(queryId)
+                       ->getInputQueryPlan()
+                       ->getSinkOperators()[0]
+                       ->getOutputSchema()
+                       ->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
@@ -542,7 +543,7 @@ class TestHarness {
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {
-            NES_WARNING("TestHarness:ifs.good() returns false for query with id " << queryId << " file path=" << filePath);
+            NES_WARNING2("TestHarness:ifs.good() returns false for query with id {} file path= {}", queryId, filePath);
         }
 
         // check the length of the output file
@@ -556,8 +557,8 @@ class TestHarness {
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
-        NES_DEBUG("TestHarness: ExecutedQueryPlan: "
-                  << queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
+        NES_DEBUG2("TestHarness: ExecutedQueryPlan: {}",
+                   queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan()->toString());
         queryPlan = queryCatalogService->getEntryForQuery(queryId)->getExecutedQueryPlan();
 
         for (const auto& worker : testHarnessWorkerConfigurations) {

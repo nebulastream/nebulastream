@@ -64,8 +64,7 @@ class PlacementStrategyFactory {
     static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
                                                 const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                 const TopologyPtr& topology,
-                                                const TypeInferencePhasePtr& typeInferencePhase,
-                                                const z3::ContextPtr& z3Context);
+                                                const TypeInferencePhasePtr& typeInferencePhase);
 };
 }// namespace NES::Optimizer
 #endif// NES_CORE_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

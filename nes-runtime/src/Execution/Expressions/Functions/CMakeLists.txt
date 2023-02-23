@@ -39,4 +39,7 @@
          FloorExpression.cpp
          CeilExpression.cpp
          RandomExpression.cpp
+         TruncExpression.cpp
+         SignExpression.cpp
+         ExpExpression.cpp
          )

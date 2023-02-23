@@ -14,7 +14,7 @@
 
 #include <DataProvider/InternalProvider.hpp>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 InternalProvider::InternalProvider(uint64_t id,
                                    DataProvider::DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers)
@@ -38,7 +38,7 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
         auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
         auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
 
-        wrapBuffer.setCreationTimestamp(timeStamp);
+        wrapBuffer.setCreationTimestampInMS(timeStamp);
         wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
         return wrapBuffer;
     }
@@ -59,4 +59,4 @@ InternalProvider::~InternalProvider() {
     preAllocatedBuffers.clear();
 }
 
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision

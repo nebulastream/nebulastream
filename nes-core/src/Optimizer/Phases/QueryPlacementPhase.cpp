@@ -31,23 +31,19 @@ namespace NES::Optimizer {
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         z3::ContextPtr z3Context,
                                          bool queryReconfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), z3Context(std::move(z3Context)),
-      queryReconfiguration(queryReconfiguration) {
+      typeInferencePhase(std::move(typeInferencePhase)), queryReconfiguration(queryReconfiguration) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                   z3::ContextPtr z3Context,
                                                    bool queryReconfiguration) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),
                                                                      std::move(typeInferencePhase),
-                                                                     std::move(z3Context),
                                                                      queryReconfiguration));
 }
 
@@ -57,7 +53,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategyPtr =
-        PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
+        PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase);
 
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();

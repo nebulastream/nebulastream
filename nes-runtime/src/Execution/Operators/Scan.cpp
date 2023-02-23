@@ -13,6 +13,7 @@
 */
 
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -23,6 +24,9 @@ Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::
     : memoryProvider(std::move(memoryProvider)), projections(projections) {}
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+    // initialize global state variables to keep track of the watermark ts and the origin id
+    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
+    ctx.setOrigin(recordBuffer.getOriginId());
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer

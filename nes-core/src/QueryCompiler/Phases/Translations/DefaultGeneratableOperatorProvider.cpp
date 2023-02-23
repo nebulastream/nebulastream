@@ -380,16 +380,17 @@ void DefaultGeneratableOperatorProvider::lowerKeyedThreadLocalSlicePreAggregatio
 
     auto slicePreAggregationOperator = operatorNode->as<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>();
 
-    auto windowAggregationDescriptors =
-        slicePreAggregationOperator->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto windowAggregationDescriptors = slicePreAggregationOperator->getWindowDefinition()->getWindowAggregation();
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableAggregations;
     for (auto agg : windowAggregationDescriptors) {
         generatableAggregations.emplace_back(lowerWindowAggregation(agg));
     }
+    auto windowHandler = std::get<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr>(
+        slicePreAggregationOperator->getWindowHandler());
     auto generatableOperator = GeneratableOperators::GeneratableKeyedThreadLocalPreAggregationOperator::create(
         slicePreAggregationOperator->getInputSchema(),
         slicePreAggregationOperator->getOutputSchema(),
-        slicePreAggregationOperator->getWindowHandler(),
+        windowHandler,
         generatableAggregations);
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
@@ -398,15 +399,17 @@ void DefaultGeneratableOperatorProvider::lowerKeyedSliceMergingOperator(
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalKeyedSliceMergingOperator>();
 
-    auto windowAggregationDescriptor = sliceMergingOperator->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto windowAggregationDescriptor = sliceMergingOperator->getWindowDefinition()->getWindowAggregation();
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableAggregations;
-    for (auto agg : windowAggregationDescriptor) {
+    for (const auto& agg : windowAggregationDescriptor) {
         generatableAggregations.emplace_back(lowerWindowAggregation(agg));
     }
+    auto windowHandler =
+        std::get<Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr>(sliceMergingOperator->getWindowHandler());
     auto generatableOperator =
         GeneratableOperators::GeneratableKeyedSliceMergingOperator::create(sliceMergingOperator->getInputSchema(),
                                                                            sliceMergingOperator->getOutputSchema(),
-                                                                           sliceMergingOperator->getWindowHandler(),
+                                                                           windowHandler,
                                                                            generatableAggregations);
     queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
 }

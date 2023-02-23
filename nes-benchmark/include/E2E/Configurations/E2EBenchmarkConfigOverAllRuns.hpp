@@ -18,6 +18,7 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <map>
 
 namespace NES::Benchmark {
 class E2EBenchmarkConfigOverAllRuns {
@@ -64,6 +65,12 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::IntConfigOption numberOfPreAllocatedBuffer;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption batchSize;
+    Configurations::IntConfigOption ingestionRateInBuffers;
+    Configurations::IntConfigOption ingestionRateCount;
+    Configurations::IntConfigOption numberOfPeriods;
+    Configurations::StringConfigOption ingestionRateDistribution;
+    Configurations::StringConfigOption customValues;
+    Configurations::StringConfigOption dataProvider;
     Configurations::StringConfigOption outputFile;
     Configurations::StringConfigOption benchmarkName;
     Configurations::StringConfigOption inputType;

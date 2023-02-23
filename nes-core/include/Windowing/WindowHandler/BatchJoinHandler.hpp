@@ -42,7 +42,7 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
         : AbstractBatchJoinHandler(std::move(batchJoinDefinition)), id(id), refCnt(2), isRunning(false),
           hashTable(std::make_shared<HashTable<KeyType, InputTypeBuild>>()) {
         NES_ASSERT(this->batchJoinDefinition, "invalid join definition");
-        NES_TRACE("Created join handler with id=" << id);
+        NES_TRACE2("Created join handler with id={}", id);
     }
 
     static AbstractBatchJoinHandlerPtr create(LogicalBatchJoinDefinitionPtr batchJoinDefinition, uint64_t id) {

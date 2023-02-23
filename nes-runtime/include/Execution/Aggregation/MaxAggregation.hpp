@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Aggregation {
 class MaxAggregationFunction : public AggregationFunction {
 
   public:
-    MaxAggregationFunction(const DataTypePtr& inputType, const DataTypePtr& finalType);
+    MaxAggregationFunction(const PhysicalTypePtr& inputType, const PhysicalTypePtr& finalType);
 
     void lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Value<> value) override;
     void combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2) override;

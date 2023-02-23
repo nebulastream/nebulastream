@@ -43,6 +43,11 @@ class MaintenanceControllerTest : public Testing::NESBaseTest {
         NES_INFO("QueryControllerTest: Coordinator started successfully");
     }
 
+    void stopCoordinator() {
+        bool stopCrd = coordinator->stopCoordinator(true);
+        ASSERT_TRUE(stopCrd);
+    }
+
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
 };
@@ -61,8 +66,10 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'id' must be provided");
+    stopCoordinator();
 }
 
 // test behavior of POST request when request body doesn't contain 'migrationType'
@@ -81,8 +88,10 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestMissingMigrationType
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 400l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "Field 'migrationType' must be provided");
+    stopCoordinator();
 }
 
 // test behavior of POST request when supplied 'migrationType' isn't supported/doesn't exist
@@ -101,12 +110,14 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchMigrationType)
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     std::string message =
         "MigrationType: 0"
         " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
         "Buffering)";
     EXPECT_EQ(res["message"], message);
+    stopCoordinator();
 }
 
 // test behavior of POST request when supplied 'nodeId' doesn't exist
@@ -124,8 +135,10 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestNoSuchNodeId) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 404l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["message"], "No Topology Node with ID " + std::to_string(69));
+    stopCoordinator();
 }
 
 // test behavior of POST request when all required fields are provided and are valid
@@ -143,10 +156,12 @@ TEST_F(MaintenanceControllerTest, testPostMaintenanceRequestAllFieldsProvided) {
     future.wait();
     auto response = future.get();
     EXPECT_EQ(response.status_code, 200l);
-    auto res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     EXPECT_EQ(res["Info"], "Successfully submitted Maintenance Request");
     EXPECT_EQ(res["Node Id"], nodeId);
     EXPECT_EQ(res["Migration Type"],
               Experimental::MigrationType::toString(Experimental::MigrationType::MIGRATION_WITH_BUFFERING));
+    stopCoordinator();
 }
 }// namespace NES

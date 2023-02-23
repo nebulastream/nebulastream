@@ -1,5 +1,95 @@
 # Changelog
 
+## [v0.5.8](https://github.com/nebulastream/nebulastream/tree/v0.5.8) (2023-02-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.7...v0.5.8)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ILP z3 conf is called after placement [\#3527](https://github.com/nebulastream/nebulastream/issues/3527)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support for multi-aggregation threshold windows [\#3294](https://github.com/nebulastream/nebulastream/issues/3294)
+
+## [v0.5.7](https://github.com/nebulastream/nebulastream/tree/v0.5.7) (2023-02-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.6...v0.5.7)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Dynamic ingestion rate for benchmarking [\#3333](https://github.com/nebulastream/nebulastream/issues/3333)
+
+## [v0.5.6](https://github.com/nebulastream/nebulastream/tree/v0.5.6) (2023-02-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.5...v0.5.6)
+
+## [v0.5.5](https://github.com/nebulastream/nebulastream/tree/v0.5.5) (2023-02-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.4...v0.5.5)
+
+### Miscellaneous Issues ✌️
+
+- \[DBPRO\] Add trunc\(x\) expression [\#3060](https://github.com/nebulastream/nebulastream/issues/3060)
+- \[DBPRO\] Add exp\(x\) expression [\#3057](https://github.com/nebulastream/nebulastream/issues/3057)
+- \[DBPRO\] Add sign\(x\) expression [\#3052](https://github.com/nebulastream/nebulastream/issues/3052)
+
+## [v0.5.4](https://github.com/nebulastream/nebulastream/tree/v0.5.4) (2023-02-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.3...v0.5.4)
+
+#### Documentation 
+
+- \[Feature\] creation timestamp unit [\#3490](https://github.com/nebulastream/nebulastream/issues/3490)
+
+## [v0.5.3](https://github.com/nebulastream/nebulastream/tree/v0.5.3) (2023-02-17)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.2...v0.5.3)
+
+### Bug Fixes 🐛
+
+- \[BUG\] RestServer shutdown sequence breaks when using Oatpp [\#3030](https://github.com/nebulastream/nebulastream/issues/3030)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add keyed tumbling window operator [\#3417](https://github.com/nebulastream/nebulastream/issues/3417)
+
+## [v0.5.2](https://github.com/nebulastream/nebulastream/tree/v0.5.2) (2023-02-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.1...v0.5.2)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Controller tests are not shutting down the coordinator [\#3447](https://github.com/nebulastream/nebulastream/issues/3447)
+- \[BUG\] Exception when executing a query in the nes-executable Docker image on ARM macOS because of missing jemalloc header [\#3409](https://github.com/nebulastream/nebulastream/issues/3409)
+
+## [v0.5.1](https://github.com/nebulastream/nebulastream/tree/v0.5.1) (2023-02-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.0...v0.5.1)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support other Data Types for Nautilus Aggregation [\#3280](https://github.com/nebulastream/nebulastream/issues/3280)
+
+## [v0.5.0](https://github.com/nebulastream/nebulastream/tree/v0.5.0) (2023-02-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.44...v0.5.0)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Float Value returns Double in DegreeExpression  [\#3112](https://github.com/nebulastream/nebulastream/issues/3112)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Spatial Data Type with functions  [\#3156](https://github.com/nebulastream/nebulastream/issues/3156)
+- \[DBPRO\] Add a test und `nes-runtime/tests/Execution/Expressions/Functions` [\#3100](https://github.com/nebulastream/nebulastream/issues/3100)
+- \[DBPRO\] Add the new expression under `nes-runtime/include/Execution/Expressions/Functions` and  `nes-runtime/src/Execution/Expressions/Functions`. [\#3099](https://github.com/nebulastream/nebulastream/issues/3099)
+- \[Feature\] Add TCP test server and enable testing for TCPSource [\#2966](https://github.com/nebulastream/nebulastream/issues/2966)
+
+## [v0.4.44](https://github.com/nebulastream/nebulastream/tree/v0.4.44) (2023-02-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.43...v0.4.44)
+
 ## [v0.4.43](https://github.com/nebulastream/nebulastream/tree/v0.4.43) (2023-02-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.4.42...v0.4.43)

@@ -15,6 +15,7 @@
 #define NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -23,13 +24,11 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <vector>
 
 namespace NES {
-namespace Windowing {
-class WindowAggregationDescriptor;
-using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
-}// namespace Windowing
+namespace Windowing {}// namespace Windowing
 namespace QueryCompilation {
 
 /**
@@ -99,10 +98,18 @@ class LowerPhysicalToNautilusOperators {
     lowerGlobalSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerKeyedSliceMergingOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                   const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                   std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerGlobalThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                                  const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerKeyedThreadLocalPreAggregationOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
@@ -114,6 +121,15 @@ class LowerPhysicalToNautilusOperators {
     std::shared_ptr<Runtime::Execution::Expressions::Expression> lowerExpression(const ExpressionNodePtr& expressionNode);
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& functions);
+
+    /**
+     * Create a unique pointer of an aggregation value of the given aggregation function then return it
+     * @param aggregationType the type of this aggregation
+     * @param inputType the data type of the input tuples for this aggregation
+     * @return unique pointer of an aggregation value
+     */
+    std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
+    getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 #ifdef ENABLE_JNI
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMapJavaUdf(Runtime::Execution::PhysicalOperatorPipeline& pipeline,

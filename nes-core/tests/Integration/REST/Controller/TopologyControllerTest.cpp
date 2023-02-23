@@ -51,16 +51,17 @@ class TopologyControllerTest : public Testing::NESBaseTest {
 
     NesCoordinatorPtr coordinator;
     CoordinatorConfigurationPtr coordinatorConfig;
+    uint64_t sleeptime = 1;
 };
 
 TEST_F(TopologyControllerTest, testGetTopology) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
     cpr::Response r = cpr::Get(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology"});
+    nlohmann::json response;
     EXPECT_EQ(r.status_code, 200l);
     NES_DEBUG(r.text);
-    nlohmann::json response = nlohmann::json::parse(r.text);
+    ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
     NES_DEBUG(response.dump());
     EXPECT_EQ(r.status_code, 200l);
     for (auto edge : response["edges"]) {
@@ -70,12 +71,14 @@ TEST_F(TopologyControllerTest, testGetTopology) {
         EXPECT_TRUE(node.contains("id") && node.contains("ip_address") && node.contains("nodeType") && node.contains("location")
                     && node.contains("available_resources"));
     }
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
     nlohmann::json request{};
     request["childId"] = 1;
     auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
@@ -83,16 +86,19 @@ TEST_F(TopologyControllerTest, testAddParentMissingParentId) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{3000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["message"], " Request body missing 'parentId'");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
     nlohmann::json request{};
     request["parentId"] = 1;
     auto response = cpr::Post(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/topology/addParent"},
@@ -100,16 +106,19 @@ TEST_F(TopologyControllerTest, testAddParentMissingChildId) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{3000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["message"], " Request body missing 'childId'");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
-
     nlohmann::json request{};
     request["parentId"] = 1;
     request["childId"] = 7;
@@ -118,10 +127,14 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchChild) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{3000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["message"], "Could not add parent for node in topology: Node with childId=7 not found.");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
@@ -133,6 +146,7 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(coordinatorConfig->restPort.getValue(), 5, 1));
 
     nlohmann::json request{};
     request["parentId"] = 3;
@@ -142,10 +156,16 @@ TEST_F(TopologyControllerTest, testAddParentNoSuchParent) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{3000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["message"], "Could not add parent for node in topology: Node with parentId=3 not found.");
+    bool stopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
@@ -160,10 +180,14 @@ TEST_F(TopologyControllerTest, testAddParentSameChildAndParent) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{30000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 400l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["message"], "Could not add parent for node in topology: childId and parentId must be different.");
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
@@ -175,6 +199,7 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(coordinatorConfig->restPort.getValue(), 5, 1));
 
     nlohmann::json request{};
     request["parentId"] = 1;
@@ -184,9 +209,15 @@ TEST_F(TopologyControllerTest, testAddParentAlreadyExists) {
                               cpr::Body{request.dump()},
                               cpr::ConnectTimeout{3000},
                               cpr::Timeout{30000});
+    nlohmann::json res;
     EXPECT_EQ(response.status_code, 500l);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
+    bool stopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 TEST_F(TopologyControllerTest, testRemoveParent) {
@@ -198,6 +229,7 @@ TEST_F(TopologyControllerTest, testRemoveParent) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(TestUtils::waitForWorkers(coordinatorConfig->restPort.getValue(), 5, 1));
 
     nlohmann::json request{};
     request["parentId"] = 1;
@@ -211,9 +243,15 @@ TEST_F(TopologyControllerTest, testRemoveParent) {
     cpr::Response response = asyncResp.get();
     EXPECT_EQ(response.status_code, 200l);
     NES_DEBUG(response.text);
-    nlohmann::json res = nlohmann::json::parse(response.text);
+    nlohmann::json res;
+    ASSERT_NO_THROW(res = nlohmann::json::parse(response.text));
     NES_DEBUG(res.dump());
     EXPECT_EQ(res["success"], true);
+    bool stopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(stopWrk1);
+    bool stopCrd = coordinator->stopCoordinator(true);
+    NES_DEBUG("shut down coordinator with rest port " << coordinatorConfig->restPort);
+    EXPECT_TRUE(stopCrd);
 }
 
 }// namespace NES

@@ -19,7 +19,12 @@ add_source_files(nes-benchmark
         DataGeneration/ZipfianDataGenerator.cpp
         DataGeneration/YSBDataGenerator.cpp
         DataProvider/DataProvider.cpp
+        DataProvider/ExternalProvider.cpp
         DataProvider/InternalProvider.cpp
+        IngestionRateGeneration/CustomIngestionRateGenerator.cpp
+        IngestionRateGeneration/IngestionRateGenerator.cpp
+        IngestionRateGeneration/TrigonometricIngestionRateGenerator.cpp
+        IngestionRateGeneration/UniformIngestionRateGenerator.cpp
         Measurements.cpp
         E2E/E2ERunner.cpp
         E2E/E2ESingleRun.cpp)

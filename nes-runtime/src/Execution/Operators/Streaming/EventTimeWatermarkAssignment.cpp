@@ -41,7 +41,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
 }
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     auto state = (WatermarkState*) executionCtx.getLocalState(this);
-    recordBuffer.setWatermarkTs(state->currentWatermark.as<UInt64>());
+    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
     Operator::close(executionCtx, recordBuffer);
 }
 

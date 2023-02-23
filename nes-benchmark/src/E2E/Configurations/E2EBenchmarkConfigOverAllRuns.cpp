@@ -40,7 +40,17 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
-    sourceNameToDataGenerator = {{"input1", std::make_shared<DataGeneration::DefaultDataGenerator>(0, 1000)}};
+    sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
+    ingestionRateInBuffers =
+        ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
+    ingestionRateCount =
+        ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
+    numberOfPeriods =
+        ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
+    ingestionRateDistribution =
+        ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
+    customValues = ConfigurationOption<std::string>::create("customValues", "50000", "A vector of custom ingestion rates");
+    dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
 }
 
 std::string E2EBenchmarkConfigOverAllRuns::toString() {
@@ -58,7 +68,13 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() {
         << "- batchSize: " << batchSize->getValueAsString() << std::endl
         << "- dataProviderMode: " << dataProviderMode->getValue() << std::endl
         << "- connectionString: " << connectionString->getValue() << std::endl
-        << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl;
+        << "- logicalSources: " << getStrLogicalSrcDataGenerators() << std::endl
+        << "- ingestionRateInBuffers: " << ingestionRateInBuffers->getValueAsString() << std::endl
+        << "- ingestionRateCount: " << ingestionRateCount->getValueAsString() << std::endl
+        << "- numberOfPeriods: " << numberOfPeriods->getValueAsString() << std::endl
+        << "- ingestionRateDistribution: " << ingestionRateDistribution->getValue() << std::endl
+        << "- customValues: " << customValues->getValue() << std::endl
+        << "- dataProvider: " << dataProvider->getValue() << std::endl;
 
     return oss.str();
 }
@@ -80,6 +96,20 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.batchSize->setValueIfDefined(yamlConfig["batchSize"]);
     configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
 
+    auto dataProviderNode = yamlConfig["dataProvider"];
+    if (!dataProviderNode.IsNone()) {
+        configOverAllRuns.dataProvider->setValueIfDefined(dataProviderNode["name"]);
+        configOverAllRuns.ingestionRateCount->setValueIfDefined(dataProviderNode["ingestionRateCount"]);
+
+        auto ingestionRateDistributionNode = dataProviderNode["ingestionRateDistribution"];
+        if (!ingestionRateDistributionNode.IsNone()) {
+            configOverAllRuns.ingestionRateDistribution->setValueIfDefined(ingestionRateDistributionNode["type"]);
+            configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(ingestionRateDistributionNode["ingestionRateInBuffers"]);
+            configOverAllRuns.numberOfPeriods->setValueIfDefined(ingestionRateDistributionNode["numberOfPeriods"]);
+            configOverAllRuns.customValues->setValueIfDefined(ingestionRateDistributionNode["values"]);
+        }
+    }
+
     auto logicalSourcesNode = yamlConfig["logicalSources"];
     if (logicalSourcesNode.IsSequence()) {
         configOverAllRuns.sourceNameToDataGenerator.clear();
@@ -90,8 +120,9 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
-            auto dataGenerator = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
-            configOverAllRuns.sourceNameToDataGenerator[sourceName] = dataGenerator;
+            configOverAllRuns.sourceNameToDataGenerator[sourceName] =
+                DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
+            ;
         }
         NES_DEBUG("No additional sources have been added!");
     }
@@ -113,7 +144,8 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() {
 
 size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
     size_t size = 0;
-    for (auto [logicalSource, dataGenerator] : sourceNameToDataGenerator) {
+    for (auto&& item : sourceNameToDataGenerator) {
+        auto dataGenerator = item.second.get();
         size += dataGenerator->getSchema()->getSchemaSizeInBytes();
     }
 

@@ -13,13 +13,15 @@
 */
 
 #include <DataProvider/DataProvider.hpp>
+#include <DataProvider/ExternalProvider.hpp>
 #include <DataProvider/InternalProvider.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 #include <cstring>
+#include <memory>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 DataProviderPtr DataProvider::createProvider(uint64_t providerId,
-                                             NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
+                                             NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
                                              std::vector<Runtime::TupleBuffer> buffers) {
     DataProviderMode dataProviderMode;
     if (configOverAllRuns.dataProviderMode->getValue() == "ZeroCopy") {
@@ -30,8 +32,15 @@ DataProviderPtr DataProvider::createProvider(uint64_t providerId,
         NES_THROW_RUNTIME_ERROR("Could not parse dataProviderMode = " << configOverAllRuns.dataProviderMode->getValue() << "!");
     }
 
-    // Later on we might have a second data provider. For now all data providers are of type InternalProvider
-    return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
+    if (configOverAllRuns.dataProvider->getValue() == "Internal") {
+        return std::make_shared<InternalProvider>(providerId, dataProviderMode, buffers);
+    } else if (configOverAllRuns.dataProvider->getValue() == "External") {
+        auto ingestionRateGenerator =
+            IngestionRateGeneration::IngestionRateGenerator::createIngestionRateGenerator(configOverAllRuns);
+        return std::make_shared<ExternalProvider>(providerId, dataProviderMode, buffers, std::move(ingestionRateGenerator));
+    } else {
+        NES_THROW_RUNTIME_ERROR("Could not parse dataProvider = " << configOverAllRuns.dataProvider->getValue() << "!");
+    }
 }
 
 DataProvider::DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode) : id(id), providerMode(providerMode) {}
@@ -40,7 +49,7 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
     auto providedBuffer = readNextBuffer(sourceId);
     if (providedBuffer.has_value()) {
         switch (providerMode) {
-            case ZERO_COPY: {
+            case DataProviderMode::ZERO_COPY: {
                 auto dataPtr = reinterpret_cast<uintptr_t>(buffer.getBuffer());
                 bool success = collector.insert(dataPtr, TupleBufferHolder(buffer));
                 NES_ASSERT(success, "could not put buffer into collector");
@@ -51,13 +60,13 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
                 buffer = providedBuffer.value();
                 return;
             };
-            case MEM_COPY: {
+            case DataProviderMode::MEM_COPY: {
                 std::memcpy(buffer.getBuffer(), providedBuffer.value().getBuffer(), buffer.getBufferSize());
-                providedBuffer.value().setCreationTimestamp(buffer.getCreationTimestamp());
+                providedBuffer.value().setCreationTimestampInMS(buffer.getCreationTimestampInMS());
                 return;
             };
         }
     }
 }
 
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision

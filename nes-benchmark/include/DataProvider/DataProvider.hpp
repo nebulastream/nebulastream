@@ -21,58 +21,62 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <cstdint>
+#include <memory>
 
-namespace NES::Benchmark::DataProviding {
+namespace NES::Benchmark::DataProvision {
 
 class DataProvider;
 using DataProviderPtr = std::shared_ptr<DataProvider>;
 
+/**
+ * @brief This class enables support for different types of ingestion methods: either as quickly as possible or dynamically predefined.
+ */
 class DataProvider {
   public:
-    enum DataProviderMode { ZERO_COPY, MEM_COPY };
+    enum class DataProviderMode : uint8_t { ZERO_COPY, MEM_COPY };
 
     /**
-         * @brief creates a DataProvider object
-         * @param id
-         * @param providerMode
-         */
+     * @brief creates a DataProvider object
+     * @param id
+     * @param providerMode
+     */
     explicit DataProvider(uint64_t id, DataProvider::DataProviderMode providerMode);
 
     /**
-         * @brief default destructor
-         */
+     * @brief default destructor
+     */
     virtual ~DataProvider() = default;
 
     /**
-         * @brief provides the next buffer to the runtime by a DataProviderMode way
-         * @param buffer
-         * @param sourceId
-         */
+     * @brief provides the next buffer to the runtime by a DataProviderMode way
+     * @param buffer
+     * @param sourceId
+     */
     void provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sourceId);
 
     /**
-         * @brief reads the next buffer for the given sourceId
-         * @param sourceId
-         * @return
-         */
+     * @brief reads the next buffer for the given sourceId
+     * @param sourceId
+     * @return
+     */
     virtual std::optional<Runtime::TupleBuffer> readNextBuffer(uint64_t sourceId) = 0;
 
     /**
-         * @brief creates a data provider
-         * @return
-         */
-    static std::shared_ptr<DataProvider> createProvider(uint64_t id,
-                                                        NES::Benchmark::E2EBenchmarkConfigOverAllRuns configOverAllRuns,
-                                                        std::vector<Runtime::TupleBuffer> buffers);
+     * @brief creates a data provider
+     * @return
+     */
+    static DataProviderPtr createProvider(uint64_t id,
+                                          NES::Benchmark::E2EBenchmarkConfigOverAllRuns& configOverAllRuns,
+                                          std::vector<Runtime::TupleBuffer> buffers);
 
     /**
-         * @brief starts this provider
-         */
+     * @brief starts this provider
+     */
     virtual void start() = 0;
 
     /**
-         * @brief stops this provider
-         */
+     * @brief stops this provider
+     */
     virtual void stop() = 0;
 
   protected:
@@ -80,6 +84,6 @@ class DataProvider {
     DataProviderMode providerMode;
     cuckoohash_map<uintptr_t, TupleBufferHolder> collector;
 };
-}// namespace NES::Benchmark::DataProviding
+}// namespace NES::Benchmark::DataProvision
 
 #endif//NES_DATAPROVIDER_HPP

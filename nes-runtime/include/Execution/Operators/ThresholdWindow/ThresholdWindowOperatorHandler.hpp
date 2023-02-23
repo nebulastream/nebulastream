@@ -22,24 +22,22 @@
 
 namespace NES::Runtime::Execution::Operators {
 /**
- * @breif This handler stores states of a threshold window during its execution
+ * @brief This handler stores states of a threshold window during its execution
  */
 class ThresholdWindowOperatorHandler : public OperatorHandler {
   public:
-    explicit ThresholdWindowOperatorHandler(std::unique_ptr<Aggregation::AggregationValue> AggregationValue)
-        : AggregationValue(std::move(AggregationValue)) {}
+    explicit ThresholdWindowOperatorHandler(std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues)
+        : AggregationValues(std::move(AggregationValues)) {}
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
 
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
 
-    // TODO 3250: maybe move from this class to the aggregation
-    int64_t sum = 0L;// stores the sum aggregation
-    uint64_t recordCount =
-        0;// counts the records contributing to the aggregate,  // TODO 3250: maybe move this count to the AggregationValue
+    uint64_t recordCount = 0;// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
-    std::unique_ptr<Aggregation::AggregationValue> AggregationValue;
+    std::vector<std::unique_ptr<Aggregation::AggregationValue>> AggregationValues;
+    uint8_t aggregationType;
 };
 }// namespace NES::Runtime::Execution::Operators
 

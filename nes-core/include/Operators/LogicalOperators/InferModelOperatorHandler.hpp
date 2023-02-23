@@ -32,7 +32,7 @@ class InferModelOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     static InferModelOperatorHandlerPtr create(std::string model);
 
-    ~InferModelOperatorHandler() override { NES_DEBUG("~InferModelOperatorHandler()"); }
+    ~InferModelOperatorHandler() override { NES_DEBUG2("~InferModelOperatorHandler()"); }
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
