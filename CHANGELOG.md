@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.8](https://github.com/nebulastream/nebulastream/tree/v0.5.8) (2023-02-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.7...v0.5.8)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ILP z3 conf is called after placement [\#3527](https://github.com/nebulastream/nebulastream/issues/3527)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Support for multi-aggregation threshold windows [\#3294](https://github.com/nebulastream/nebulastream/issues/3294)
+
 ## [v0.5.7](https://github.com/nebulastream/nebulastream/tree/v0.5.7) (2023-02-21)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.6...v0.5.7)
