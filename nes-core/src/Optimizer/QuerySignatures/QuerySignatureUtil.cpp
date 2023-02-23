@@ -610,8 +610,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(const z3::Cont
     z3::expr windowTimeSizeVal = context->int_val(length);
     auto windowTimeSlideVar = context->int_const("window-time-slide");
     z3::expr windowTimeSlideVal = context->int_val(slide);
-    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSizeVar, windowTimeSizeVal));
+    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_le(*context, windowTimeSlideVar, windowTimeSlideVal));
 
     //Compute join window key expression
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
