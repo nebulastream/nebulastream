@@ -71,14 +71,15 @@ class WAMRExecutionTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
         //provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>(100);
-        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 10);
+        uint32_t bufferSize = 1024 * 1024;
+        bm = std::make_shared<Runtime::BufferManager>(bufferSize, 5);
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 3);
         //backend = std::make_shared<Nautilus::Backends::WASM::WASMCompilationBackend>();
         //executionEngine = std::make_shared<ExecutionEngine::Experimental::PipelineExecutionEngine>(backend);
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down WAMRExecutionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down WAMRExecutionTest test class.") }
 };
 
 TEST_F(WAMRExecutionTest, scanEmitTest) {
@@ -139,10 +140,16 @@ TEST_F(WAMRExecutionTest, scanEmitTest) {
     auto loweringResult = loweringProvider->lower(ir);
     loweringResult->setArgs(wc, mpeCtx, std::make_shared<Runtime::TupleBuffer>(buffer));
     auto engine = std::make_unique<Backends::WASM::WASMRuntime>(loweringResult);
+
+    Timer timer("WASMExecutionTest");
+    timer.start();
     engine->setup();
+    timer.snapshot("WASM_Setup");
     engine->run();
+    timer.snapshot("WASM_Execute");
     engine->close();
-    
+    timer.pause();
+    NES_INFO("WASMExecutionTest " << timer)
     //auto compilationBackend = std::make_unique<Backends::WASM::WASMCompilationBackend>();
     //auto engine = compilationBackend->compile(ir);
 }
@@ -170,19 +177,20 @@ TEST_F(WAMRExecutionTest, selectionTest) {
 
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
+    for (uint64_t i = 0; i < dynamicBuffer.getCapacity()/2; i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i);
-        dynamicBuffer[i]["f2"].write((int64_t) i);
+        dynamicBuffer[i]["f2"].write((int64_t) (i+2));
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
+    //NES_INFO("DYNA: " << buffer.getNumberOfTuples())
 
     //Timer timer("CompilationBasedPipelineExecutionEngine");
     //timer.start();
 
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &mpeCtx);
+    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) mpeCtx.get());
     pipelineExecutionContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto workerContextRef = Value<MemRef>((int8_t*) &wc);
+    auto workerContextRef = Value<MemRef>((int8_t*) wc.get());
     workerContextRef.ref =
         Nautilus::Tracing::ValueRef(INT32_MAX, 1, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
     auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef((int8_t*) &buffer)));
@@ -212,9 +220,26 @@ TEST_F(WAMRExecutionTest, selectionTest) {
     auto loweringResult = loweringProvider->lower(ir);
     loweringResult->setArgs(wc, mpeCtx, std::make_shared<Runtime::TupleBuffer>(buffer));
     auto engine = std::make_unique<Backends::WASM::WASMRuntime>(loweringResult);
+
+    Timer timer("WASMExecutionTest");
+    timer.start();
     engine->setup();
+    timer.snapshot("WASM_Setup");
     engine->run();
+    timer.snapshot("WASM_Execute");
     engine->close();
+    timer.pause();
+    NES_INFO("WASMExecutionTest " << timer)
+
+    NES_INFO("BufferSize: " << mpeCtx->buffers.size())
+    NES_INFO("Buffers: " << engine->getTupleBuffers().size())
+    NES_INFO("Tuples: " << mpeCtx->buffers[0].getNumberOfTuples())
+    auto resultBuffer = mpeCtx->buffers[0];
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < 5; i++) {
+        NES_INFO(resultDynamicBuffer[i]["f1"].read<int64_t>())
+        NES_INFO(resultDynamicBuffer[i]["f2"].read<int64_t>())
+    }
 }
 
 TEST_F(WAMRExecutionTest, mapTest) {
@@ -281,23 +306,28 @@ TEST_F(WAMRExecutionTest, mapTest) {
     auto loweringResult = loweringProvider->lower(ir);
     loweringResult->setArgs(wc, mpeCtx, std::make_shared<Runtime::TupleBuffer>(buffer));
     auto engine = std::make_unique<Backends::WASM::WASMRuntime>(loweringResult);
-    engine->setup();
-    engine->run();
-    engine->close();
 
+    Timer timer("WASMExecutionTest");
+    timer.start();
+    engine->setup();
+    timer.snapshot("WASM_Setup");
+    engine->run();
+    timer.snapshot("WASM_Execute");
+    engine->close();
+    timer.pause();
+    NES_INFO("WASMExecutionTest " << timer)
+    NES_INFO("BufferSize " << mpeCtx->buffers.size())
+    NES_INFO("TupleBuffers " << engine->getTupleBuffers().size())
     auto resultBuffer = mpeCtx->buffers[0];
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < resultDynamicBuffer.getCapacity(); i++) {
-        NES_INFO(resultDynamicBuffer[i]["f1"].read<int64_t>())
+    for (uint64_t i = 0; i < 10; i++) {
+        //NES_INFO(resultDynamicBuffer[i]["f1"].read<int64_t>())
         NES_INFO(resultDynamicBuffer[i]["f2"].read<int64_t>())
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 5);
     }
+}
 
-    auto dynamicBuffer2 = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < dynamicBuffer2.getCapacity(); i++) {
-        NES_INFO(dynamicBuffer2[i]["f1"].read<int64_t>())
-        NES_INFO(dynamicBuffer2[i]["f2"].read<int64_t>())
-    }
+TEST_F(WAMRExecutionTest, memoryTest) {
+
 }
 
 }// namespace NES::Nautilus

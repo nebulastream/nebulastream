@@ -19,7 +19,6 @@
 #include <iostream>
 #include <utility>
 #include <span>
-#include <Util/Timer.hpp>
 
 
 using namespace wasmtime;
@@ -73,8 +72,6 @@ void WASMRuntime::setup() {
     store->context().set_wasi(std::move(*wasiConfig)).unwrap();
     linker->define_wasi().unwrap();
 
-    Timer timer("WASMRuntime");
-    timer.start();
     allocateBufferProxy();
     host_NES__Runtime__TupleBuffer__getBuffer();
     host_NES__Runtime__TupleBuffer__getBufferSize();
@@ -83,15 +80,12 @@ void WASMRuntime::setup() {
     host_emitBufferProxy();
 
     //prepareCPython();
-    auto handCodedWat = parseWATFile("/home/victor/map.wat");
+    auto handCodedWat = parseWATFile("/home/victor/selection_optimized.wat");
     Span query{(uint8_t*) context->getQueryBinary(), context->getBinaryLength()};
     //auto module = Module::compile(*engine, query).unwrap();
     auto module = Module::compile(*engine, handCodedWat).unwrap();
     auto instance = linker->instantiate(*store, module).unwrap();
     execute = std::make_shared<Func>(std::get<Func>(*instance.get(*store, functionName)));
-    timer.snapshot("Setup");
-    timer.pause();
-    NES_INFO(timer)
 }
 
 int32_t WASMRuntime::run() {
@@ -100,8 +94,6 @@ int32_t WASMRuntime::run() {
     ExternRef externref3(context->tupleBuffer);
     std::vector<Val> params{ externref1, externref2, externref3 };
     //std::vector<Val> params{ (int64_t)1, (int64_t)2, (int64_t)3 };
-    Timer timer("WASMRuntime");
-    timer.start();
     auto results = execute->call(*store, params).unwrap();
     if (!results.empty()) {
         auto res = *results[0].externref();
@@ -115,9 +107,6 @@ int32_t WASMRuntime::run() {
             tb.tupleBuffer->release();
         }
     }
-    timer.snapshot("Execute");
-    timer.pause();
-    NES_INFO(timer)
     return 0;
 }
 
@@ -129,30 +118,26 @@ void WASMRuntime::close() {
 
 void WASMRuntime::allocateBufferProxy() {
     auto res = linker->func_new(proxyFunctionModule, "allocateBufferProxy", FuncType({ValKind::ExternRef}, {ValKind::ExternRef}),
-                                [&](Caller caller, Span<const Val> params, Span<Val> results) {
-                                    NES_INFO("allocateBufferProxy called")
+                                [&](Caller caller, std::span<const Val> params, Span<Val> results) {
+                                    //NES_INFO("allocateBufferProxy called")
                                     ExternRef er = *params[0].externref();
-                                    std::any &data = er.data();
-                                    auto wctx = std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(data);
+                                    auto wctx = std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(er.data());
 
                                     auto mem = std::get<Memory>(*caller.get_export("memory"));
 
                                     auto tbuffer = wctx->allocateTupleBuffer();
                                     auto tb = std::make_shared<Runtime::TupleBuffer>(tbuffer);
-
+                                    NES_INFO("ALLOCA: " << tb->getNumberOfTuples())
                                     BufferInfo bufferInfo = BufferInfo();
-                                    if (tupleBuffers.empty()) {
-                                        bufferInfo = BufferInfo(tb, 0, true);
-                                    } else {
+                                    uint64_t index = 0;
+                                    if (!tupleBuffers.empty()) {
                                         auto ele = tupleBuffers.back();
-                                        bufferInfo = BufferInfo(tb, ele.memoryIndex + ele.tupleBuffer->getBufferSize(), true);
+                                        index = ele.memoryIndex + ele.tupleBuffer->getBufferSize();
                                     }
-                                    uint64_t k = 0;
+                                    bufferInfo = BufferInfo(tb, index, true);
                                     auto buffer = tb->getBuffer();
-                                    for (uint64_t i = bufferInfo.memoryIndex; i < bufferInfo.memoryIndex + bufferInfo.tupleBuffer->getBufferSize(); ++i) {
-                                        mem.data(*store)[i] = buffer[k];
-                                        ++k;
-                                    }
+                                    std::copy(buffer, buffer + tb->getBufferSize(), mem.data(*store).data() + bufferInfo.memoryIndex);
+
                                     tupleBuffers.emplace_back(bufferInfo);
                                     ExternRef res(tb);
                                     results[0] = res;
@@ -165,51 +150,40 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer() {
                                 "NES__Runtime__TupleBuffer__getBuffer",
                                 FuncType({ValKind::ExternRef}, {ValKind::I64}),
                                 [&](auto caller, auto params, auto results) {
-                                    NES_INFO("getBuffer called")
+                                    //NES_INFO("getBuffer called")
                                     auto mem = std::get<Memory>(*caller.get_export("memory"));
                                     ExternRef er = *params[0].externref();
-                                    std::any &data = er.data();
-                                    auto tb = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(data);
+                                    auto tb = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
                                     int64_t bufferPtr;
                                     bool found = false;
                                     for (auto& ele : tupleBuffers) {
                                         if (ele.tupleBuffer == tb) {
-                                            NES_INFO("Found existing TupleBuffer")
                                             if (!ele.copied) {
                                                 auto buffer = ele.tupleBuffer->getBuffer();
-                                                uint64_t k = 0;
-                                                for (uint64_t i = ele.memoryIndex; i < ele.memoryIndex + ele.tupleBuffer->getBufferSize(); ++i) {
-                                                    mem.data(*store)[i] = buffer[k];
-                                                    ++k;
-                                                }
+                                                auto bufferSize = ele.tupleBuffer->getBufferSize();
+                                                std::copy(buffer, buffer + bufferSize, mem.data(*store).data() + ele.memoryIndex);
                                                 ele.copied = true;
                                             }
                                             bufferPtr = (int64_t)ele.memoryIndex;
                                             found = true;
+                                            break;
                                         }
                                     }
                                     if (!found) {
+                                        //NES_INFO("Not found!" << tupleBuffers.back().memoryIndex << " " << tupleBuffers.back().tupleBuffer->getBufferSize())
                                         uint64_t index;
                                         if (tupleBuffers.empty()) {
                                            index = 0;
                                         } else {
                                             index = tupleBuffers.back().memoryIndex + tupleBuffers.back().tupleBuffer->getBufferSize();
                                         }
-                                        NES_INFO("(First) tupleBuffer starting from " << index)
                                         BufferInfo bufferInfo = BufferInfo(tb, index, true);
                                         auto buffer = tb->getBuffer();
-                                        uint64_t k = 0;
-                                        for (uint64_t i = index; i < index + tb->getBufferSize(); ++i) {
-                                            mem.data(*store)[i] = buffer[k];
-                                            ++k;
-                                        }
-                                        for (uint64_t i = 100; i < 150; ++i) {
-                                            //std::cout << "HERE: " << (int64_t)mem.data(*store)[i] << std::endl;
-                                        }
+                                        auto bufferSize = tb->getBufferSize();
+                                        std::copy(buffer, buffer + bufferSize, mem.data(*store).data() + index);
                                         tupleBuffers.emplace_back(bufferInfo);
-                                        bufferPtr = 0;
+                                        bufferPtr = (int64_t)index;
                                     }
-
                                     Val value(bufferPtr);
                                     results[0] = value;
                                     return std::monostate();
@@ -236,13 +210,13 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__getBufferSize() {
                                 "NES__Runtime__TupleBuffer__getNumberOfTuples",
                                 FuncType({ValKind::ExternRef}, {ValKind::I64}),
                                 [](auto caller, auto params, auto results) {
-                                    NES_INFO("getNumberOfTuples called")
                                     (void) caller;
                                     ExternRef er = *params[0].externref();
                                     auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
                                     auto numTuples = tupleBuffer->getNumberOfTuples();
                                     Val value((int64_t)numTuples);
                                     results[0] = value;
+                                    NES_INFO("Get NumTuples: " << numTuples)
                                     return std::monostate();
                                 });
 }
@@ -256,6 +230,7 @@ void WASMRuntime::host_NES__Runtime__TupleBuffer__setNumberOfTuples() {
                                     (void) results;
                                     ExternRef er = *params[0].externref();
                                     auto numTuples = params[1].i64();
+                                    NES_INFO("Set NumTuples: " << numTuples)
                                     auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
                                     tupleBuffer->setNumberOfTuples((uint64_t)numTuples);
                                     return std::monostate();
@@ -267,8 +242,8 @@ void WASMRuntime::host_emitBufferProxy() {
                                 "emitBufferProxy",
                                 FuncType({ValKind::ExternRef, ValKind::ExternRef, ValKind::ExternRef}, {}),
                                 [&](auto caller, auto params, auto results) {
-                                    NES_INFO("emitBufferProxy called")
                                     (void) results;
+                                    NES_INFO("EMIT")
                                     Memory memory = std::get<Memory>(*caller.get_export("memory"));
                                     ExternRef erWcCtx = *params[0].externref();
                                     ExternRef erPipelineCtx = *params[1].externref();
@@ -281,20 +256,15 @@ void WASMRuntime::host_emitBufferProxy() {
                                         if (ele.tupleBuffer == tupleBuffer) {
                                             index = ele.memoryIndex;
                                             NES_INFO("FOUND!! Index: " << index)
+                                            break;
                                         }
                                     }
                                     tupleBuffer->setBuffer(memory.data(*store).data() + index);
                                     if (tupleBuffer->getNumberOfTuples() != 0) {
+                                        //NES_INFO("Emitting")
                                         pipelineContext->emitBuffer(*tupleBuffer, *wcCtx);
                                     }
-                                    //tupleBuffer->release();
-                                    for (int i = 0; i < 250; ++i) {
-                                        //std::cout << "MEM: " << i << " " << (int64_t)memory.data(*store)[i] << "x" << std::endl;
-                                        //std::cout << "Last TB: " << i << " " << (int64_t)tupleBuffers.back().tupleBuffer->getBuffer()[i] << "x" << std::endl;
-                                    }
-                                    for (auto e : tupleBuffers) {
-                                        std::cout << "TupleBufferIndex: " << e.memoryIndex << " Copied? " << e.copied << std::endl;
-                                    }
+                                    tupleBuffer->release();
                                     return std::monostate();
                                 });
 }

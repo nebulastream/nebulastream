@@ -29,6 +29,7 @@ std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<
     BinaryenSetColorsEnabled(true);
     BinaryenFeatures features = BinaryenFeatureAll();
     BinaryenModuleSetFeatures(wasm, features);
+    BinaryenSetOptimizeLevel(2);
 
     relooper = RelooperCreate(wasm);
     consumed.clear();
@@ -40,8 +41,9 @@ std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<
     if (!BinaryenModuleValidate(wasm)) {
         NES_THROW_RUNTIME_ERROR("Generated pre-optimized wasm is incorrect!");
     }
+    //BinaryenModulePrint(wasm);
     BinaryenModulePrintStackIR(wasm, false);
-    std::cout << "------ Optimized WASM ------" << std::endl;
+    NES_INFO("------ Optimized WASM ------")
     //BinaryenModuleOptimize(wasm);
     //BinaryenModulePrintStackIR(wasm, false);
     static char result[2048];
@@ -130,7 +132,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
     /**
      * Memory stuff here, extract it later on
      */
-    BinaryenSetMemory(wasm, 128, 128, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, true, memoryName);
+    BinaryenSetMemory(wasm, 512, 512, memoryName, nullptr, nullptr, nullptr, nullptr, 0, false, true, memoryName);
 
     BinaryenExpressionRef body = generateCFG();
     /**
@@ -286,14 +288,13 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperat
     auto addressId = loadOp->getAddress()->getIdentifier();
     auto ptr = expressions.getValue(addressId);
 
-    auto loadExpression = BinaryenLoad(wasm, 8, false, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
+    auto loadExpression = BinaryenLoad(wasm, 8, true, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
     consumed.emplace(addressId, ptr);
     expressions.setValue(loadOpId, loadExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp,
                                 BinaryenExpressions& expressions) {
-    NES_INFO(storeOp->getAddress()->getIdentifier())
     auto value = expressions.getValue(storeOp->getValue()->getIdentifier());
     auto address = expressions.getValue(storeOp->getAddress()->getIdentifier());
     BinaryenExpressionRef storeExpression;
@@ -595,6 +596,9 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOper
             auto nextArgumentType = BinaryenExpressionGetType(expressions.getValue(currentTrueArguments[i]->getIdentifier()));
             localVariables.setUniqueValue(nextTrueArguments[i]->getIdentifier(), nextArgumentType);
             auto localSet = BinaryenLocalSet(wasm, localsIndex, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+
+            consumed.emplace(currentTrueArguments[i]->getIdentifier(), expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+
             expressions.setValue("set_" + nextTrueArguments[i]->getIdentifier(), localSet);
             localVarMapping.setValue("set_" + nextTrueArguments[i]->getIdentifier(), localSet);
             localGet = BinaryenLocalGet(wasm, localsIndex, nextArgumentType);
@@ -645,6 +649,9 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::IfOperatio
                 auto nextTrueType = BinaryenExpressionGetType(expressions.getValue(currentTrueArguments[i]->getIdentifier()));
                 localVariables.setUniqueValue(nextTrue[i]->getIdentifier(), nextTrueType);
                 auto x = BinaryenLocalSet(wasm, localsIndex, expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+
+                consumed.emplace(currentTrueArguments[i]->getIdentifier(), expressions.getValue(currentTrueArguments[i]->getIdentifier()));
+
                 expressions.setValue("set_" + nextTrue[i]->getIdentifier(), x);
                 localVarMapping.setValue("set_" + nextTrue[i]->getIdentifier(), x);
                 localGet = BinaryenLocalGet(wasm, localsIndex, nextTrueType);
@@ -676,6 +683,9 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::IfOperatio
                 auto nextFalseType = BinaryenExpressionGetType(expressions.getValue(currentFalse[i]->getIdentifier()));
                 localVariables.setUniqueValue(nextFalse[i]->getIdentifier(), nextFalseType);
                 auto x = BinaryenLocalSet(wasm, localsIndex, expressions.getValue(currentFalse[i]->getIdentifier()));
+
+                consumed.emplace(currentFalse[i]->getIdentifier(), expressions.getValue(currentFalse[i]->getIdentifier()));
+
                 expressions.setValue("set_" + nextFalse[i]->getIdentifier(), x);
                 localVarMapping.setValue("set_" + nextFalse[i]->getIdentifier(), x);
                 localGet = BinaryenLocalGet(wasm, localsIndex, nextFalseType);
