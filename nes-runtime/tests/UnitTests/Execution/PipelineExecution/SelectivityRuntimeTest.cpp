@@ -125,9 +125,11 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     std::cout << "Number of output tuples: " << nautilusExecutablePipelineStage->getNumberOfOutputTuples() << std::endl;
     std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(nautilusExecutablePipelineStage);
+    auto pipelineId = pipelineContext.getPipelineID();
+
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(nautilusExecutablePipelineStage, pipelineId);
     pipelineSelectivity->collect();
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage, pipelineId);
     pipelineRuntime->collect();
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
