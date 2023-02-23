@@ -196,8 +196,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
                         // allocate buffer with size of tuple
                         messageBuffer = new char[inputTupleSize];
-                        NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << inputTupleSize << "'");
-                        NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
+                        NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << inputTupleSize << "'");
+                        NES_DEBUG("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
                         //copy and delete tuple from circularBuffer, delete tuple separator
                         popped = popGivenNumberOfValues(inputTupleSize, true);
                         break;
@@ -212,8 +212,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         inputTupleSize = sourceConfig->getSocketBufferSize()->getValue();
                         //allocate buffer with tupleSize
                         messageBuffer = new char[inputTupleSize];
-                        NES_TRACE("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << inputTupleSize << "'");
-                        NES_TRACE("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
+                        NES_DEBUG("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '" << inputTupleSize << "'");
+                        NES_DEBUG("TCPSOURCE::fillBuffer: current circular buffer size: '" << circularBuffer.size() << "'");
                         //copy and delete tuple from circularBuffer
                         popped = popGivenNumberOfValues(inputTupleSize, false);
                     } catch (const std::exception& e) {
@@ -231,13 +231,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     //then we won't overwrite the tupleSize but try again to pop the next message.
                     if (popped) {
                         try {
-                            NES_TRACE("TCPSOURCE::fillBuffer: obtain socket buffer size");
+                            NES_DEBUG("TCPSOURCE::fillBuffer: obtain socket buffer size");
                             //create buffer to save buffer size from socket in aka the number of bytes indicating the size of the next tuple
                             messageBuffer = new char[sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue()];
                             //copy and delete the size of the next tuple from the circular buffer
                             popped = popGivenNumberOfValues(sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue(),
                                                             false);
-                            NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << messageBuffer);
+                            NES_DEBUG("TCPSOURCE::fillBuffer: socket buffer size is: " << messageBuffer);
                             //if we successfully obtained the tuple size from the buffer convert bufferSizeFromSocket to an integer and delete the char*
                             if (popped) {
                                 inputTupleSize = std::stoi(messageBuffer);
