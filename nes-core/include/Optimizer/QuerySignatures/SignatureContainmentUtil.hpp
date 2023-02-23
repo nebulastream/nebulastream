@@ -119,7 +119,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentDetected checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable
@@ -128,7 +128,18 @@ class SignatureContainmentUtil {
      * @param condition condition that will just be added to the solver as it is
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool conditionsUnsatisfied(const z3::expr_vector& negatedCondition, const z3::expr_vector& condition);
+    bool containmentConditionsUnsatisfied(const z3::expr_vector& negatedCondition,
+                              const z3::expr_vector& condition);
+
+    /**
+     * @brief checks if the combination (combined via &&) of negated conditions is unsatisfiable
+     * it also pops the given number of conditions and calls resetSolver() if the counter hits the threshold for resetting
+     * @param leftConditions condition that will be negated
+     * @param rightConditions condition that will be negated
+     * @return true if the combination of the given conditions is unsatisfiable, false otherwise
+     */
+    bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions,
+                                          const z3::expr_vector& rightConditions);
 
     /**
      * @brief Reset z3 solver
