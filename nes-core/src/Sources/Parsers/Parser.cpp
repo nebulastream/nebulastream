@@ -156,7 +156,6 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
         // improve behavior with json library
         strcpy(value, inputString.c_str());
     }
-    tupleBuffer.setNumberOfTuples(tupleCount + 1);
 }
 
 }//namespace NES
