@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/Functions/FunctionRegistry.hpp>
+#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 
 namespace NES {
 

@@ -68,7 +68,7 @@ class NamedPluginRegistry {
   public:
 
     /**
-     * @brief Returns a existing instance of this plugin.
+     * @brief Returns an existing instance of this plugin.
      * @param name
      * @return std::unique_ptr<T>
      */

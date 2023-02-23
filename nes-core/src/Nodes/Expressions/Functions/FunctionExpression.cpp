@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
-#include <Nodes/Expressions/Functions/FunctionRegistry.hpp>
+#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <utility>
 
 namespace NES {

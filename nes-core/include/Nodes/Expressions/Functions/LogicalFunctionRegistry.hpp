@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONREGISTRY_HPP_
-#define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONREGISTRY_HPP_
+#ifndef NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_
+#define NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_
 
 #include <Util/PluginRegistry.hpp>
 namespace NES {
@@ -34,9 +34,9 @@ class LogicalFunction {
   public:
     LogicalFunction() = default;
     /**
-     * @brief
-     * @param inputStamps
-     * @return
+     * @brief infers the stamp for the logical function
+     * @param inputStamps of the arguments
+     * @return DataTypePtr
      */
     [[nodiscard]] virtual DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const = 0;
     virtual ~LogicalFunction() = default;
@@ -51,9 +51,9 @@ class UnaryLogicalFunction : public LogicalFunction {
 class BinaryLogicalFunction : public LogicalFunction {
   public:
     [[nodiscard]] DataTypePtr inferStamp(const std::vector<DataTypePtr>& inputStamps) const final;
-    [[nodiscard]] virtual DataTypePtr inferUnary(const DataTypePtr& input) const = 0;
+    [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const = 0;
 };
 
 
 }// namespace NES
-#endif//NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_FUNCTIONREGISTRY_HPP_
+#endif//NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_

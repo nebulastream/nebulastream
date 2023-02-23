@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nodes/Expressions/Functions/FunctionRegistry.hpp>
+#include <Nodes/Expressions/Functions/LogicalFunctionRegistry.hpp>
 
 namespace NES {
 
@@ -19,4 +19,10 @@ DataTypePtr UnaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inp
     NES_ASSERT(inputStamps.size() == 1, "Unary function should only receive one input stamp.");
     return inferUnary(inputStamps[0]);
 }
+
+DataTypePtr BinaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inputStamps) const {
+    NES_ASSERT(inputStamps.size() == 2, "Binary function should receive two input stamp.");
+    return inferBinary(inputStamps[0], inputStamps[1]);
+}
+
 }// namespace NES
