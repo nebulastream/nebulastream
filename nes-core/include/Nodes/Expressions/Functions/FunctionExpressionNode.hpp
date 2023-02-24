@@ -74,9 +74,7 @@ class FunctionExpression final : public ExpressionNode {
     ~FunctionExpression() noexcept override = default;
 
   public:
-    explicit FunctionExpression(DataTypePtr stamp,
-                                std::string functionName,
-                                std::unique_ptr<LogicalFunction> function);
+    explicit FunctionExpression(DataTypePtr stamp, std::string functionName, std::unique_ptr<LogicalFunction> function);
 
   private:
     const std::string functionName;

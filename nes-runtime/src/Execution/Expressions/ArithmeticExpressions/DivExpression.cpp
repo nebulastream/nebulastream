@@ -21,7 +21,7 @@ Value<> DivExpression::execute(Record& record) const {
     Value rightValue = rightSubExpression->execute(record);
     return leftValue / rightValue;
 }
-DivExpression::DivExpression(ExpressionPtr  leftSubExpression, ExpressionPtr  rightSubExpression)
+DivExpression::DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
 
 }// namespace NES::Runtime::Execution::Expressions

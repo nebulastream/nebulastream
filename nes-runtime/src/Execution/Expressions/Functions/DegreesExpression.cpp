@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <Execution/Expressions/Functions/DegreesExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 DegreesExpression::DegreesExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)
     : SubExpression(SubExpression) {}

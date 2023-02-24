@@ -13,10 +13,10 @@
 */
 
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <bit>
 #include <cmath>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& SubExpression)

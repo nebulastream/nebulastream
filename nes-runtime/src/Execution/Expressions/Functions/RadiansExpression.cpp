@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/RadiansExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 using namespace std;
 namespace NES::Runtime::Execution::Expressions {
 

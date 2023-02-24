@@ -21,7 +21,7 @@ Value<> AddExpression::execute(Record& record) const {
     Value rightValue = rightSubExpression->execute(record);
     return leftValue + rightValue;
 }
-AddExpression::AddExpression(ExpressionPtr  leftSubExpression, ExpressionPtr  rightSubExpression)
+AddExpression::AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
 
 }// namespace NES::Runtime::Execution::Expressions

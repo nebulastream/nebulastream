@@ -54,6 +54,5 @@ class BinaryLogicalFunction : public LogicalFunction {
     [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const = 0;
 };
 
-
 }// namespace NES
 #endif//NES_NES_CORE_INCLUDE_NODES_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_

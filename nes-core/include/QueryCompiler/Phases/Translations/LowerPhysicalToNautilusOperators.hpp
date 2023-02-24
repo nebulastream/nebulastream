@@ -63,6 +63,7 @@ class LowerPhysicalToNautilusOperators {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
     ~LowerPhysicalToNautilusOperators();
+
   private:
     /**
      * @brief Inserts streamJoinOperatorHandler into operatorHandlers, if it does not already exist

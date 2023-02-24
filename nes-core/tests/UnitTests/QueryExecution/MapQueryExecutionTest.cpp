@@ -129,7 +129,6 @@ TEST_P(MapQueryExecutionTest, MapLogarithmicFunctions) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-
 INSTANTIATE_TEST_CASE_P(testMapQueries,
                         MapQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
