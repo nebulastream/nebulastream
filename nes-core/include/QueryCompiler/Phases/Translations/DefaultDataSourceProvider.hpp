@@ -44,6 +44,6 @@ class DefaultDataSourceProvider {
   protected:
     QueryCompilerOptionsPtr compilerOptions;
 };
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_

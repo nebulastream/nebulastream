@@ -66,7 +66,6 @@ class NamedPluginRegistry {
     static inline std::map<std::string, std::unique_ptr<T>> items = std::map<std::string, std::unique_ptr<T>>();
 
   public:
-
     /**
      * @brief Returns an existing instance of this plugin.
      * @param name
@@ -134,9 +133,11 @@ class PluginFactory {
       public:
         [[nodiscard]] std::unique_ptr<Base> create() const override { return std::make_unique<Sub>(); }
     };
+
   private:
     static inline std::list<std::string> names = std::list<std::string>();
-    static inline std::map<std::string, std::unique_ptr<Provider<T>>> items = std::map<std::string, std::unique_ptr<Provider<T>>>();
+    static inline std::map<std::string, std::unique_ptr<Provider<T>>> items =
+        std::map<std::string, std::unique_ptr<Provider<T>>>();
 
   public:
     /**

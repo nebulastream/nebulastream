@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class DivExpression : public Expression {
   public:
-    DivExpression(ExpressionPtr  leftSubExpression, ExpressionPtr  rightSubExpression);
+    DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) const override;
 
   private:

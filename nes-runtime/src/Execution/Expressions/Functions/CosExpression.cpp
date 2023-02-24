@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <Execution/Expressions/Functions/CosExpression.hpp>
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 CosExpression::CosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)

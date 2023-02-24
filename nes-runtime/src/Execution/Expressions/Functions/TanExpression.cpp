@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/TanExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : expression(expression) {}
