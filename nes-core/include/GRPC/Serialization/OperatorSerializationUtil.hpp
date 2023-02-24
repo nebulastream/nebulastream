@@ -65,6 +65,8 @@ class OperatorSerializationUtil {
                                         SerializableOperator_SourceDetails& sourceDetails,
                                         bool isClientOriginated = false);
 
+
+
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
      * @param sinkOperator The sink operator node.
@@ -90,12 +92,33 @@ class OperatorSerializationUtil {
                                       SerializableOperator_JoinDetails& streamjoinDetails);
 
     /**
+     * @brief De-serializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
+     * @param sinkDetails The serialized sink operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return JoinLogicalOperatorNode
+     */
+    static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails,
+                                                              OperatorId operatorId);
+
+
+
+    /**
      * @brief Serializes an batch join operator and all its properties to a SerializableOperator_JoinDetails object.
      * @param BatchJoinLogicalOperatorNodePtr The window operator node.
      * @param batchJoinDetails the serialized SerializableOperator_BatchJoinDetails.
      */
     static void serializeBatchJoinOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& joinOperator,
                                            SerializableOperator_BatchJoinDetails& batchJoinDetails);
+
+    /**
+     * @brief De-serializes the SerializableOperator_BatchJoinDetails and all its properties back to a join operatorNodePtr
+     * @param sinkDetails The serialized sink operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return BatchJoinLogicalOperatorNode
+     */
+    static Experimental::BatchJoinLogicalOperatorNodePtr
+    deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId);
+
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -112,24 +135,6 @@ class OperatorSerializationUtil {
      */
     static WindowOperatorNodePtr deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails,
                                                            OperatorId operatorId);
-
-    /**
-     * @brief De-serializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
-     * @param sinkDetails The serialized sink operator details.
-     * @param operatorId: id of the operator to be deserialized
-     * @return JoinLogicalOperatorNode
-     */
-    static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails,
-                                                              OperatorId operatorId);
-
-    /**
-     * @brief De-serializes the SerializableOperator_BatchJoinDetails and all its properties back to a join operatorNodePtr
-     * @param sinkDetails The serialized sink operator details.
-     * @param operatorId: id of the operator to be deserialized
-     * @return BatchJoinLogicalOperatorNode
-     */
-    static Experimental::BatchJoinLogicalOperatorNodePtr
-    deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.
@@ -196,6 +201,11 @@ class OperatorSerializationUtil {
      */
     static void serializeInputSchema(const OperatorNodePtr &operatorNode, SerializableOperator &serializedOperator);
 
+
+    static OperatorNodePtr deserializeInputSchema(const SerializableOperator& serializedOperator);
+
+
+
     /**
      * @brief Serializes an inferModel logical operator
      * @param inferModel operator
@@ -203,6 +213,10 @@ class OperatorSerializationUtil {
      */
     static void serializeInferModelOperator(const InferModel::InferModelLogicalOperatorNodePtr& inferModel,
                                             SerializableOperator_InferModelDetails& serializedOperator);
+
+
+    static InferModel::InferModelLogicalOperatorNodePtr
+    deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
 };
 
 }// namespace NES
