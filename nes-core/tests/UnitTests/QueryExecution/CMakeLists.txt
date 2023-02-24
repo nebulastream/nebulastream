@@ -2,6 +2,12 @@
 ### FilterQueryExecutionTest ###
 add_nes_unit_test(filter-query-execution-test "FilterQueryExecutionTest.cpp")
 
+### ProjectionQueryExecutionTest ###
+add_nes_unit_test(projection-query-execution-test "ProjectionQueryExecutionTest.cpp")
+
+### MergeQueryExecutionTest ###
+add_nes_unit_test(merge-query-execution-test "MergeQueryExecutionTest.cpp")
+
 ### MapQueryExecutionTest ###
 add_nes_unit_test(map-query-execution-test "MapQueryExecutionTest.cpp")
 

@@ -223,10 +223,6 @@ if (NES_USE_GPU)
     add_nes_unit_test(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
 endif (NES_USE_GPU)
 
-### ProjectionTest ###
-add_nes_unit_test(projection-test "UnitTests/Query/ProjectionTest.cpp")
-
-
 ### TupleBufferTest ###
 add_nes_unit_test(tuple-buffer-test "UnitTests/Runtime/TupleBufferTest.cpp")
 
