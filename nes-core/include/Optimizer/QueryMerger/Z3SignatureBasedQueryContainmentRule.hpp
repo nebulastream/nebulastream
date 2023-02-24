@@ -63,7 +63,6 @@ class Z3SignatureBasedQueryContainmentRule final : public BaseQueryMergerRule {
     explicit Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context);
 
     SignatureContainmentUtilPtr signatureContainmentUtil;
-
 };
 }// namespace NES::Optimizer
 

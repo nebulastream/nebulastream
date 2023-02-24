@@ -23,8 +23,7 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(const z3::ContextPtr& con
     return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context)
-    : counter(0) {
+SignatureEqualityUtil::SignatureEqualityUtil(const z3::ContextPtr& context) : counter(0) {
     //need different context for two solvers
     this->context = context;
     this->solver = std::make_unique<z3::solver>(*context);
@@ -139,7 +138,9 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping " << e.what());
+            NES_ERROR(
+                "SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping "
+                << e.what());
         }
         return false;
     }
