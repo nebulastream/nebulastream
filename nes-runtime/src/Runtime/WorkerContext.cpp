@@ -135,6 +135,7 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 }
 
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp, uint64_t propagationDelay) {
+    NES_DEBUG("BufferStorage: Received trimming message with a timestamp " << timestamp);
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         auto& [nesPar, pq] = *iteratorPartitionId;
