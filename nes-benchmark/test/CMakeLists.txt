@@ -35,9 +35,8 @@ add_nes_unit_test(internal-provider-test "UnitTests/DataProvider/InternalProvide
 target_link_libraries(internal-provider-test nes-benchmark)
 
 # Adding unit test for ExternalProvider
-# TODO disabled till #3550 is fixed.
-#add_nes_unit_test(external-provider-test "UnitTests/DataProvider/ExternalProviderTest.cpp")
-#target_link_libraries(external-provider-test nes-benchmark)
+add_nes_unit_test(external-provider-test "UnitTests/DataProvider/ExternalProviderTest.cpp")
+target_link_libraries(external-provider-test nes-benchmark)
 
 # Adding unit test for E2ESingleRunTest
 add_nes_unit_test(e2e-single-run-test "UnitTests/E2E/E2ESingleRunTest.cpp")
