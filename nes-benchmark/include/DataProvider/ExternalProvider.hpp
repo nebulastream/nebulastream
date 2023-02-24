@@ -108,7 +108,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
-    bool started = false;
+    std::atomic<bool> started = false;
     std::thread generatorThread;
     std::vector<uint64_t> predefinedIngestionRates;
 };
