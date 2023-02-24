@@ -26,16 +26,13 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedQueryContainmentRule::Z3SignatureBasedQueryContainmentRule(
-    const z3::ContextPtr& context)
+Z3SignatureBasedQueryContainmentRule::Z3SignatureBasedQueryContainmentRule(const z3::ContextPtr& context)
     : BaseQueryMergerRule() {
     signatureContainmentUtil = SignatureContainmentUtil::create(std::move(context));
 }
 
-Z3SignatureBasedQueryContainmentRulePtr
-Z3SignatureBasedQueryContainmentRule::create(const z3::ContextPtr& context) {
-    return std::make_shared<Z3SignatureBasedQueryContainmentRule>(
-        Z3SignatureBasedQueryContainmentRule(std::move(context)));
+Z3SignatureBasedQueryContainmentRulePtr Z3SignatureBasedQueryContainmentRule::create(const z3::ContextPtr& context) {
+    return std::make_shared<Z3SignatureBasedQueryContainmentRule>(Z3SignatureBasedQueryContainmentRule(std::move(context)));
 }
 
 bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
@@ -44,9 +41,8 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
              "Global Query Plan");
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
-        NES_WARNING(
-            "Z3SignatureBasedQueryContainmentRule: Found no new query plan to add in the global query plan."
-            " Skipping the Signature Based Equal Query Merger Rule.");
+        NES_WARNING("Z3SignatureBasedQueryContainmentRule: Found no new query plan to add in the global query plan."
+                    " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
@@ -65,7 +61,8 @@ bool Z3SignatureBasedQueryContainmentRule::apply(GlobalQueryPlanPtr globalQueryP
             auto hostSink = hostQueryPlan->getSinkOperators()[0];
 
             //Check if the host and target sink operator signatures match each other
-            auto containment = signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
+            auto containment =
+                signatureContainmentUtil->checkContainment(hostSink->getZ3Signature(), targetSink->getZ3Signature());
             NES_TRACE("Z3SignatureBasedQueryContainmentRule: containment: " << containment);
             //todo: #3503 create a containment based query merger to update the GQP based on containment relationships
             if (containment != NO_CONTAINMENT) {

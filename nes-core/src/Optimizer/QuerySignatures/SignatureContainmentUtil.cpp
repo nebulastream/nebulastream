@@ -28,7 +28,7 @@ SignatureContainmentUtil::SignatureContainmentUtil(const z3::ContextPtr& context
 }
 
 ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignaturePtr& leftSignature,
-                                                               const QuerySignaturePtr& rightSignature) {
+                                                           const QuerySignaturePtr& rightSignature) {
     NES_TRACE("SignatureContainmentUtil::checkContainment: Checking for containment.");
     try {
         auto otherConditions = rightSignature->getConditions();
@@ -92,7 +92,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
-                                                                     const QuerySignaturePtr& rightSignature) {
+                                                                 const QuerySignaturePtr& rightSignature) {
     NES_TRACE("SignatureContainmentUtil::checkContainment: Create new condition vectors.");
     z3::expr_vector leftQueryFilterConditions(*context);
     z3::expr_vector rightQueryFilterConditions(*context);
@@ -158,8 +158,7 @@ void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr
     }
 }
 
-bool SignatureContainmentUtil::conditionsUnsatisfied(const z3::expr_vector& negatedCondition,
-                                                     const z3::expr_vector& condition) {
+bool SignatureContainmentUtil::conditionsUnsatisfied(const z3::expr_vector& negatedCondition, const z3::expr_vector& condition) {
     solver->push();
     solver->add(!z3::mk_and(negatedCondition).simplify());
     solver->push();

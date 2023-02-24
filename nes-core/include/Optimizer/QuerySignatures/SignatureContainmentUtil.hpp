@@ -44,7 +44,6 @@ enum ContainmentType { NO_CONTAINMENT, LEFT_SIG_CONTAINED, RIGHT_SIG_CONTAINED, 
 class SignatureContainmentUtil {
 
   public:
-
     /**
      * @brief creates an instance of the SignatureContainmentUtil
      * @param context The Z3 context for the SMT solver
@@ -74,7 +73,6 @@ class SignatureContainmentUtil {
     ContainmentType checkContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
   private:
-
     /**
      * @brief creates conditions for checking projection containment:
      * if we are given a map value for the attribute, we create a FOL as attributeStringName == mapCondition, e.g. age == 25
@@ -107,8 +105,7 @@ class SignatureContainmentUtil {
      * @param condition condition that will just be added to the solver as it is
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool conditionsUnsatisfied(const z3::expr_vector& negatedCondition,
-                              const z3::expr_vector& condition);
+    bool conditionsUnsatisfied(const z3::expr_vector& negatedCondition, const z3::expr_vector& condition);
 
     /**
      * @brief Reset z3 solver

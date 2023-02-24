@@ -147,8 +147,7 @@ TEST_F(Z3SignatureBasedQueryContainmentRuleTest, testContainmentBasedCompleteQue
 
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto z3InferencePhase =
-            Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
+            Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 
@@ -157,8 +156,7 @@ TEST_F(Z3SignatureBasedQueryContainmentRuleTest, testContainmentBasedCompleteQue
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule =
-            Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
         ASSERT_TRUE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
@@ -184,8 +182,7 @@ TEST_F(Z3SignatureBasedQueryContainmentRuleTest, testContainmentBasedCompleteQue
 
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto z3InferencePhase =
-            Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
+            Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedQueryContainmentRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 
@@ -194,9 +191,7 @@ TEST_F(Z3SignatureBasedQueryContainmentRuleTest, testContainmentBasedCompleteQue
         globalQueryPlan->addQueryPlan(queryPlanNewQuery);
 
         //execute
-        auto signatureBasedEqualQueryMergerRule =
-            Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
+        auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedQueryContainmentRule::create(context);
         ASSERT_FALSE(signatureBasedEqualQueryMergerRule->apply(globalQueryPlan));
     }
 }
-

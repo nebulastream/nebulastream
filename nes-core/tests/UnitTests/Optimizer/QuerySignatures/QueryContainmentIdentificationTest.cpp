@@ -142,7 +142,8 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         auto sqpSink = queryPlanSQPQuery->getSinkOperators()[0];
         auto newSink = queryPlanNewQuery->getSinkOperators()[0];
         //Check if the host and target sink operator signatures have a containment relationship
-        Optimizer::ContainmentType containment = signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
+        Optimizer::ContainmentType containment =
+            signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
         NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << containment);
         ASSERT_EQ(containment, get<1>(entry));
     }
