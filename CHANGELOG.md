@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.10](https://github.com/nebulastream/nebulastream/tree/v0.5.10) (2023-02-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.9...v0.5.10)
+
+### Query Optimizer 🔧
+
+- \[Feature\] Query Containment utilizing an SMT Solver [\#3455](https://github.com/nebulastream/nebulastream/issues/3455)
+
 ## [v0.5.9](https://github.com/nebulastream/nebulastream/tree/v0.5.9) (2023-02-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.8...v0.5.9)
