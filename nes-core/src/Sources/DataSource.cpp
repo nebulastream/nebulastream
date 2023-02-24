@@ -336,7 +336,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 1000;
+    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 100;
     while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
