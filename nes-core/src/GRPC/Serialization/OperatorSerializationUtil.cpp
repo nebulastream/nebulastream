@@ -380,7 +380,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (details.Is<SerializableOperator_InferModelDetails>()) {
 #ifdef TFDEF
         // de-serialize infer model operator
-        NES_TRACE2("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
         auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
         details.UnpackTo(&serializedInferModelOperator);
 
