@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.5.9](https://github.com/nebulastream/nebulastream/tree/v0.5.9) (2023-02-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.8...v0.5.9)
+
+**Implemented enhancements:**
+
+- \[TASK\] Simplify registration of function expressions [\#3501](https://github.com/nebulastream/nebulastream/issues/3501)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add new function for calculating the difference between two dates [\#3288](https://github.com/nebulastream/nebulastream/issues/3288)
+- \[Feature\] Add function to get the name of the month based on the date [\#3287](https://github.com/nebulastream/nebulastream/issues/3287)
+- \[Feature\] Add Operator to subtract days from a date [\#3286](https://github.com/nebulastream/nebulastream/issues/3286)
+- \[Feature\] Add Operator to add days to a Date [\#3285](https://github.com/nebulastream/nebulastream/issues/3285)
+- \[Feature\] Add Date class and InvocationPlugin [\#3284](https://github.com/nebulastream/nebulastream/issues/3284)
+
 ## [v0.5.8](https://github.com/nebulastream/nebulastream/tree/v0.5.8) (2023-02-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.7...v0.5.8)
