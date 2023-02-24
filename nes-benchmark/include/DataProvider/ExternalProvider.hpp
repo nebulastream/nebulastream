@@ -75,6 +75,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     void stop() override;
 
     /**
+     * @brief getter for checking if the external provider has started
+     * @return true, if the external provider is up and running
+     */
+    bool isStarted() const;
+
+    /**
      * @brief overrides readNextBuffer by providing the next buffer to be added to the caller
      * @param sourceId
      * @return either the next buffer in the queue or std::nullopt

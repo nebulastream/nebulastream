@@ -159,4 +159,7 @@ ExternalProvider::~ExternalProvider() {
 
     preAllocatedBuffers.clear();
 }
+
+bool ExternalProvider::isStarted() const { return started; }
+
 }// namespace NES::Benchmark::DataProvision

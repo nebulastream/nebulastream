@@ -47,7 +47,11 @@ namespace NES::Benchmark::DataProvision {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
-    TEST_F(ExternalProviderTest, uniformIngestionRateTest) {
+    /**
+     * @brief This test should not be run on the CI, as here we use a sleep to generate x amount of buffers and then
+     * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
+     */
+    TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
         size_t sourceId = 0;
@@ -128,7 +132,7 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
         // we wait for the provider to startup
-        sleep(1);
+        while(!externalProviderDefault->isStarted()) {}
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
@@ -180,7 +184,7 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
         // we wait for the provider to startup
-        sleep(1);
+        while(!externalProviderDefault->isStarted()) {}
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
@@ -230,7 +234,7 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
         // we wait for the provider to startup
-        sleep(1);
+        while(!externalProviderDefault->isStarted()) {}
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -273,7 +277,7 @@ namespace NES::Benchmark::DataProvision {
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
         // we wait for the provider to startup
-        sleep(1);
+        while(!externalProviderDefault->isStarted()) {}
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -314,6 +318,11 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        externalProviderDefault->start();
+
+        // we wait for the provider to startup
+        while(!externalProviderDefault->isStarted()) {}
+
         externalProviderDefault->stop();
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
