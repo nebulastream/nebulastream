@@ -18,7 +18,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-enum TriggerType { PipelineStatisticsTrigger };
+enum TriggerType { PipelineStatisticsTrigger, PerformanceStartTrigger, PerformanceEndTrigger};
 
 /**
  * @brief Implements triggers for the collection of the statistics. Are handled by the StatisticsCollector.

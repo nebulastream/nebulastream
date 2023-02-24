@@ -12,32 +12,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINERUNTIME_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINERUNTIME_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
+#include <Execution/StatisticsCollector/Profiler.hpp>
 
 namespace NES::Runtime::Execution {
 /**
  * @brief Implements a statistic that collects the runtime of a pipeline.
  */
-class PipelineRuntime : public Statistic {
+class PerformanceStatistics : public Statistic {
   public:
-    PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
+    PerformanceStatistics();
     void collect() override;
 
     /**
     * @brief Get the pipelineId of the pipeline for which the runtime is collected.
     * @return pipelineId
     */
-    uint64_t getPipelineID() const { return this->pipelineId; }
     std::string getType() const override;
 
+    void startProfiling();
+
   private:
-    const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
-    const uint64_t pipelineId;
+    Profiler profiler;
 };
 
 }// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PIPELINERUNTIME_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_

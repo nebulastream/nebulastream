@@ -35,22 +35,22 @@ Profiler::Profiler (){
 }
 
 long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
-    int64_t ret; // try int
+    int64_t ret;
     ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
     return ret;
 }
 
-void Profiler::startProfiling(){
+void Profiler::startProfiling() {
     ioctl(fileDescriptor, PERF_EVENT_IOC_RESET, 0);
     ioctl(fileDescriptor, PERF_EVENT_IOC_ENABLE, 0);
 }
 
-void Profiler::stopProfiling(){
+void Profiler::stopProfiling() {
     ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, 0);
     read(fileDescriptor, &count, sizeof(uint64_t));
 }
 
-uint64_t Profiler::getCount() {
+uint64_t Profiler::getCount() const {
     return count;
 }
 

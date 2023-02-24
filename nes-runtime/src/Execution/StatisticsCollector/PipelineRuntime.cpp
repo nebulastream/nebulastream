@@ -3,7 +3,7 @@
 
 namespace NES::Runtime::Execution {
 
-void PipelineRuntime::collect() const {
+void PipelineRuntime::collect() {
     auto runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
     std::cout << "PipelineRuntime " << runtime << " microseconds" << std::endl;
 }

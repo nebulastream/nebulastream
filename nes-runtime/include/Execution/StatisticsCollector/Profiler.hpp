@@ -50,7 +50,7 @@ class Profiler {
      * @brief Get the number of branch misses.
      * @return number of branch misses.
      */
-    uint64_t getCount();
+    uint64_t getCount() const;
 
     /**
      * @brief Writes the number of branch misses to an output file.
@@ -60,7 +60,7 @@ class Profiler {
     ~Profiler();
 
   private:
-    long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
+    static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
 
     struct perf_event_attr pe;
     int fileDescriptor;

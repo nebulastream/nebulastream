@@ -247,6 +247,9 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     }
 }
 
+/**
+ * @brief test the profiler
+ */
 TEST_P(StatisticsCollectorTest, testProfiler) {
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

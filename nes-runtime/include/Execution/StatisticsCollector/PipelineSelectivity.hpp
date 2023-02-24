@@ -25,13 +25,13 @@ namespace NES::Runtime::Execution {
 class PipelineSelectivity : public Statistic {
   public:
     PipelineSelectivity(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
-    void collect() const override;
+    void collect() override;
 
     /**
     * @brief Get the pipelineId of the pipeline for which the selectivity is collected.
     * @return pipelineId
     */
-    uint64_t getPipelineID() { return this->pipelineId; }
+    uint64_t getPipelineID() const { return this->pipelineId; }
     std::string getType() const override;
 
   private:

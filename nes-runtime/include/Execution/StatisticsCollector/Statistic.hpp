@@ -26,7 +26,7 @@ class Statistic {
     /**
      * @brief Collects the statistic when called from the StatisticsCollector.
      */
-    virtual void collect() const = 0;
+    virtual void collect() = 0;
     /**
      * @brief Get the type of statistic.
      * @return type of statistic.

@@ -16,7 +16,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-void PipelineSelectivity::collect() const {
+void PipelineSelectivity::collect() {
     auto numberOfInputTuples = nautilusExecutablePipelineStage->getNumberOfInputTuples();
     auto numberOfOutputTuples = nautilusExecutablePipelineStage->getNumberOfOutputTuples();
 
