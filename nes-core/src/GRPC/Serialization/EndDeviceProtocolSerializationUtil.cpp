@@ -66,11 +66,7 @@ using namespace EndDeviceProtocol;
 
 DefaultPhysicalTypeFactory EndDeviceProtocolSerializationUtil::physicalFactory = DefaultPhysicalTypeFactory();
 
-std::string EndDeviceProtocolSerializationUtil::asString(ExpressionInstructions e) {
-    auto res = std::string();
-    res.push_back(e);
-    return res;
-}
+
 
 std::string getFieldNameFromSchemaName(std::string s){
     auto pos = s.find('$');
@@ -87,24 +83,25 @@ std::string EndDeviceProtocolSerializationUtil::serializeConstantValue(Expressio
     auto basicPhysType = dynamic_pointer_cast<BasicPhysicalType>(physType);
 
     std::string res = asString(ExpressionInstructions::CONST);
-    //TODO: fix here to allow for other data types
-    int8_t value = stoi(basicValue->value);
-    res.push_back(DataTypes::INT8);
-//    switch (basicPhysType->nativeType) {
-//        case BasicPhysicalType::INT_8: res.push_back(DataTypes::INT8); break;
-//        case BasicPhysicalType::UINT_8: res.push_back(DataTypes::UINT8); break;
-//        case BasicPhysicalType::INT_16: res.push_back(DataTypes::INT16); break;
-//        case BasicPhysicalType::UINT_16: res.push_back(DataTypes::UINT16); break;
-//        case BasicPhysicalType::INT_32: res.push_back(DataTypes::INT32); break;
-//        case BasicPhysicalType::UINT_32: res.push_back(DataTypes::UINT32); break;
-//        case BasicPhysicalType::INT_64: res.push_back(DataTypes::INT64); break;
-//        case BasicPhysicalType::UINT_64: res.push_back(DataTypes::UINT64); break;
-//        case BasicPhysicalType::FLOAT: res.push_back(DataTypes::FLOAT); break;
-//        case BasicPhysicalType::DOUBLE: res.push_back(DataTypes::DOUBLE); break;
-//        default: throw UnsupportedEDSerialisationException();
-//    }
 
-    res += value;
+    EDData data;
+    switch (basicPhysType->nativeType) {
+        case BasicPhysicalType::UINT_8:
+        case BasicPhysicalType::UINT_16:
+        case BasicPhysicalType::UINT_32:
+            data.set__uint8_32(stoul(basicValue->value));
+             break;
+        case BasicPhysicalType::UINT_64: data.set__uint64(stoul(basicValue->value)); break;
+        case BasicPhysicalType::INT_8:
+        case BasicPhysicalType::INT_16:
+        case BasicPhysicalType::INT_32: data.set__int8_32(stoi(basicValue->value)); break;
+        case BasicPhysicalType::INT_64: data.set__int64(stol(basicValue->value)); break;
+        case BasicPhysicalType::FLOAT: data.set__float(std::stof(basicValue->value)); break;
+        case BasicPhysicalType::DOUBLE: data.set__double(std::stod(basicValue->value)); break;
+        default: throw UnsupportedEDSerialisationException();
+    }
+
+    res+=data.SerializeAsString();
     return res;
 }
 std::string EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(ExpressionNodePtr anode,
@@ -155,7 +152,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeLogicalExpression(Expre
     }
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
+EndDeviceProtocolSerializationUtil::EDDataVector EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
 
     auto fanode = node->as<FieldAccessExpressionNode>();
     auto fullName = fanode->getFieldName();
@@ -164,14 +161,19 @@ std::string EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(E
         NES_WARNING("No register defined for field: " + name);
         throw UnsupportedEDSerialisationException();
     }
-    //TODO: somehow fix this. This is real ugly.
+
     auto id = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), name));
-    std::string res;
-    res += asString(ExpressionInstructions::VAR);
-    res.push_back(id);
+    EDDataVector res;
+    EDData instr;
+    instr.set_instruction(ExpressionInstructions::VAR);
+    res.push_back(instr);
+
+    EDData number;
+    number.set__int8_32(id);
+    res.push_back(number);
     return res;
 }
-std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
+EndDeviceProtocolSerializationUtil::EDDataVector EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNodePtr node, EDRegistersPtr registers) {
     if (node->instanceOf<ConstantValueExpressionNode>()) {
         return serializeConstantValue(node->as<ConstantValueExpressionNode>());
     } else if (node->instanceOf<FieldAccessExpressionNode>()) {
@@ -184,8 +186,7 @@ std::string EndDeviceProtocolSerializationUtil::serializeExpression(ExpressionNo
         throw UnsupportedEDSerialisationException();
     }
 }
-EndDeviceProtocolSerializationUtil::EDMapOperationPtr
-EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegistersPtr registers) {
+void EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegistersPtr registers, EDMapOperation* edMapOperation) {
     auto mapNode = node->as<MapLogicalOperatorNode>();
     auto expressionNode = mapNode->getMapExpression();
     auto schemaFieldName = expressionNode->getField()->getFieldName();
@@ -200,23 +201,18 @@ EndDeviceProtocolSerializationUtil::serializeMapOperator(NodePtr node, EDRegiste
     } else {
         attribute = std::distance(registers->begin(), std::find(registers->begin(), registers->end(), schemaFieldName));
     }
-    auto result = std::make_shared<MapOperation>();
-    result->set_attribute(attribute);
-    result->mutable_function()->set_instructions(expression);
-    return result;
+    edMapOperation->set_attribute(attribute);
+    edMapOperation->mutable_function()->Assign(expression.begin(), expression.end());
 }
-EndDeviceProtocolSerializationUtil::EDFilterOperationPtr
-EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node, EDRegistersPtr registers) {
+
+void EndDeviceProtocolSerializationUtil::serializeFilterOperator(NodePtr node, EDRegistersPtr registers, EDFilterOperation* filterOperation) {
     auto filterNode = node->as<FilterLogicalOperatorNode>();
     auto expressionNode = filterNode->getPredicate();
-    auto ser_expr = serializeLogicalExpression(expressionNode, registers);
+    auto data = serializeLogicalExpression(expressionNode, std::move(registers));
 
-    auto result = std::make_shared<FilterOperation>();
-    result->mutable_predicate()->set_instructions(ser_expr);
-    return result;
+    filterOperation->mutable_predicate()->Assign(data.begin(), data.end());
 }
-EndDeviceProtocolSerializationUtil::EDWindowOperationPtr
-EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, EDRegistersPtr __attribute__((unused)) registers) {
+void EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, EDRegistersPtr __attribute__((unused)) registers, EDWindowOperation* windowOperation) {
     NES_NOT_IMPLEMENTED();
     //TODO: NES only supports time-based windows while ED atm only supports count-based. Need to add time-based support
     auto windowNode = node->as<WindowOperatorNode>();
@@ -250,25 +246,20 @@ EndDeviceProtocolSerializationUtil::serializeWindowOperator(NodePtr node, EDRegi
     return std::make_shared<EndDeviceProtocol::WindowOperation>();
 };
 
-EndDeviceProtocolSerializationUtil::EDQueryOperationPtr
-EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegistersPtr registers) {
+void EndDeviceProtocolSerializationUtil::serializeOperator(NodePtr node, EDRegistersPtr registers, EDOperation* serialized_Operation) {
+    EDOperation operation;
     if (node->instanceOf<MapLogicalOperatorNode>()) {
-        auto map = serializeMapOperator(node, registers);
-        auto queryOp = std::make_shared<Query_Operation>();
-        queryOp->mutable_map()->CopyFrom(*map);
-        return queryOp;
+        auto map = serialized_Operation->mutable_map();
+        serializeMapOperator(node, registers, map);
     }
     if (node->instanceOf<FilterLogicalOperatorNode>()) {
-        auto filter = serializeFilterOperator(node, registers);
-        auto queryOp = std::make_shared<Query_Operation>();
-        queryOp->mutable_filter()->CopyFrom(*filter);
-        return queryOp;
+        auto filter = serialized_Operation->mutable_filter();
+        serializeFilterOperator(node, registers, filter);
+
     }
     if (node->instanceOf<WindowLogicalOperatorNode>()) {
-        auto window = serializeWindowOperator(node, registers);
-        auto queryOp = std::make_shared<Query_Operation>();
-        queryOp->mutable_window()->CopyFrom(*window);
-        return queryOp;
+        auto window = serialized_Operation->mutable_window();
+        serializeWindowOperator(node, registers, window);
     } else {
         throw UnsupportedEDSerialisationException();
     }
@@ -295,7 +286,7 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
         operatorNodeList.push_back(opNode);
     }
 
-    EDQueryPtr query = std::make_shared<EndDeviceProtocol::Query>();
+    EDQuery query = EndDeviceProtocol::Query();
     for (auto nodeIter = operatorNodeList.rbegin(); nodeIter < operatorNodeList.rend(); ++nodeIter) {
         auto node = nodeIter->get();
         //right now we only support the nodes below
@@ -306,17 +297,9 @@ EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(NES::QueryPlan
         }
         auto opNode = node->as<LogicalUnaryOperatorNode>();
         try {
-            auto serialized = serializeOperator(opNode, sensorFields);
-            std::string outputTypes;
-            for (const auto& field : opNode->getOutputSchema()->fields) {
-                //TODO: add support for more than 1 datatype
-                if (field->getDataType()->isInteger()){
-                    outputTypes.push_back(EndDeviceProtocol::DataTypes::INT8);
-                }
-            };
-            query->mutable_resulttype()->assign(outputTypes);
-            auto operation = query->add_operations();
-            operation->CopyFrom(*serialized);
+            auto op = *query.mutable_operations()->Add();
+             serializeOperator(opNode, sensorFields, op);
+
 
             sourceDescriptor->setSchema(opNode->getOutputSchema());
             opNode->removeAndJoinParentAndChildren();
