@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -73,7 +74,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
-        workerConfig1->sourceGatheringInterval = 10;
+        workerConfig1->sourceGatheringInterval = 10000;
         workerConfig1->numWorkerThreads = 4;
         workerConfig1->bufferSizeInBytes = 131072;
 
@@ -301,16 +302,23 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    EXPECT_TRUE(retStart2);
 //    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
+//    crd->getTopologyManagerService()->removeParent(4,1);
+//    crd->getTopologyManagerService()->removeParent(3,1);
+//    crd->getTopologyManagerService()->addParent(3,2);
+    crd->getTopologyManagerService()->addParent(2,1);
+
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
 
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
+
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"A\").sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp2\")), Seconds(1))).byKey(Attribute(\"d\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
 
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);

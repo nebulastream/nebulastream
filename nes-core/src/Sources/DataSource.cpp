@@ -94,6 +94,11 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
     buffer.setSequenceNumber(maxSequenceNumber);
+    auto now = std::chrono::system_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    auto epoch = now_ms.time_since_epoch();
+    auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+    buffer.setWatermark(value.count());
     emitWork(buffer);
 }
 
@@ -331,7 +336,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
+    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 1000;
     while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =

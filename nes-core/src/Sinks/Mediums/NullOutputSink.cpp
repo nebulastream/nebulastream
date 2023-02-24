@@ -33,7 +33,17 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  querySubPlanId,
                  faultToleranceType,
                  numberOfOrigins,
-                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {}
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
+//        trimmingThread = std::make_shared<std::thread>(([this]() {
+//            while(this->nodeEngine->getQueryStatus(this->queryId) == Runtime::Execution::ExecutableQueryPlanStatus::Running) {
+//                std::this_thread::sleep_for(5ms);
+//                auto timestamp = this->watermarkProcessor->getCurrentWatermark();
+//                if(timestamp) {
+//                    notifyEpochTermination(timestamp);
+//                }
+//            }
+//        }));
+}
 
 NullOutputSink::~NullOutputSink() = default;
 

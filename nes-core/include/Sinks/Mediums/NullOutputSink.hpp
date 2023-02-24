@@ -18,13 +18,16 @@
 #include <cstdint>
 #include <memory>
 #include <sstream>
+#include <Runtime/NodeEngine.hpp>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <iostream>
 
 namespace NES {
-
+using namespace std::chrono_literals;
 /**
  * @brief this class provides a print sink
  */
@@ -80,6 +83,7 @@ class NullOutputSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
+    std::shared_ptr<std::thread> trimmingThread;
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES

@@ -78,7 +78,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
         auto ts = std::chrono::system_clock::now();
         auto timeNow = std::chrono::system_clock::to_time_t(ts);
-        inputBuffer.setCreationTimestamp(value.count());
+        inputBuffer.setCreationTimestampInMS(value.count());
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         if (success) {
             insertIntoStorageCallback(inputBuffer, workerContext);
