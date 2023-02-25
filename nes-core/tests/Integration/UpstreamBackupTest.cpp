@@ -61,14 +61,14 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->numberOfBuffersPerEpoch = 1;
+        coordinatorConfig->numberOfBuffersPerEpoch = 10;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
         coordinatorConfig->numWorkerThreads = 4;
         coordinatorConfig->bufferSizeInBytes = 131072;
 
         workerConfig1 = WorkerConfiguration::create();
-        workerConfig1->numberOfBuffersPerEpoch = 1;
+        workerConfig1->numberOfBuffersPerEpoch = 10;
         workerConfig1->numberOfBuffersInSourceLocalBufferPool = 11;
         workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
@@ -324,7 +324,19 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     query =
-        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp2\")), Seconds(1))).byKey(Attribute(\"d\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"d\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
+
+    queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+
+    query =
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp2\")), Seconds(1))).byKey(Attribute(\"a\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
+
+    queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+
+    query =
+        "Query::from(\"A\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp1\")), Seconds(1))).byKey(Attribute(\"c\")).apply(Sum(Attribute(\"w\"))).sink(NullOutputSinkDescriptor::create());";
 
     queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);

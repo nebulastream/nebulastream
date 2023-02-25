@@ -65,12 +65,15 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     //TODO: This assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
     queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
                                 std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
-
+    if (numberOfBuffersPerEpoch > 1) {
+        numberOfBuffersPerEpoch = numberOfBuffersPerEpoch / 2;
+    }
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
                                                                                     << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+
 
     // 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start(std::move(stateManager))) {
