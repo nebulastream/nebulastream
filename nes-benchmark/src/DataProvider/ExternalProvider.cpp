@@ -142,6 +142,7 @@ std::optional<Runtime::TupleBuffer> ExternalProvider::readNextBuffer(uint64_t so
     if (res) {
         return bufferHolder.bufferToHold;
     } else if (!started) {
+        NES_WARNING("Buffer expected but not ready for now!");
         return std::nullopt;
     } else {
         NES_THROW_RUNTIME_ERROR("This should not happen! An empty buffer was returned while provider is started!");
