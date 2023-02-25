@@ -59,7 +59,9 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     std::unique_lock lock(writeMutex);
     if (inputBuffer.getOriginId() > maxOriginId) {
         maxOriginId = inputBuffer.getOriginId();
-        buffersPerEpoch = buffersPerEpoch / 2;
+        if (buffersPerEpoch > 1) {
+            buffersPerEpoch = buffersPerEpoch / 2;
+        }
     }
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
