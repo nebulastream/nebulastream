@@ -33,6 +33,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 
 /**
  * @brief This header includes all headers that are necessary to formulate queryIdAndCatalogEntryMapping in CPP.

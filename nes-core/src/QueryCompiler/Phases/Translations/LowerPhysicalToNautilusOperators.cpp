@@ -128,6 +128,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    NES_INFO("Lower node:" << operatorNode->toString() << "to NautilusOperator." );
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -467,10 +468,12 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
                                                        uint64_t handlerIndex) {
+    NES_INFO("lowerThresholdWindow " << operatorPtr->toString() << "and handlerid " << handlerIndex);
     auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+    NES_INFO("lowerThresholdWindow Predicate" << thresholdWindowType->getPredicate());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
     auto minCount = thresholdWindowType->getMinimumCount();
 
@@ -481,6 +484,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     // iterate over all aggregation function and lower them
     for (int64_t i = 0; i < (int64_t) aggregations.size(); ++i) {
         auto aggregation = aggregations[i];// get the aggregation function
+        NES_INFO("lowerThresholdWindow Aggregations: " << aggregation->toString());
         auto aggregationFunction = lowerAggregations(aggregations)[i];
         aggregationFunctions.emplace_back(aggregationFunction);
         // Obtain the field name used to store the aggregation result
@@ -527,6 +531,7 @@ LowerPhysicalToNautilusOperators::lowerMapJavaUdf(Runtime::Execution::PhysicalOp
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationPtr>& aggs) {
+    NES_INFO("Lower Window Aggregations to Nautilus Operator");
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     std::transform(
         aggs.cbegin(),

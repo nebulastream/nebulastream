@@ -58,6 +58,7 @@ QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& opt
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
+    NES_INFO("Compile Query with Default Compiler");
     try {
         Timer timer("DefaultQueryCompiler");
 

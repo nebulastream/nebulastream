@@ -650,8 +650,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
-        if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
             if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
+                NES_INFO("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =
                     PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema,
                                                                                windowOutputSchema,
@@ -659,7 +659,6 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
                 operatorNode->replace(thresholdWindowPhysicalOperator);
                 return;
             }
-        }
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {

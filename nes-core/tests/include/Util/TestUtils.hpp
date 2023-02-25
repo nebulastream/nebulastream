@@ -175,6 +175,8 @@ template<typename T>
                         prefix);
 }
 
+std::string enableNautilus() { return "--queryCompiler.queryCompilerType=NAUTILUS_QUERY_COMPILER"; }
+
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags

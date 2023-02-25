@@ -23,6 +23,8 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+
 #include <z3++.h>
 
 namespace NES {
@@ -71,8 +73,14 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     for (auto& agg : windowAggregation) {
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    windowType->inferStamp(inputSchema);
+
+    if (windowDefinition->getWindowType()->isThresholdWindow()){
+        auto windowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
+        windowType->inferStamp(inputSchema);
+    }else {
+        auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        windowType->inferStamp(inputSchema);
+    }
 
     //Construct output schema
     outputSchema->clear();
