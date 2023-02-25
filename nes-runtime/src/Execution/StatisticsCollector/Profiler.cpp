@@ -13,25 +13,40 @@ limitations under the License.
 */
 
 #include "Execution/StatisticsCollector/Profiler.hpp"
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Runtime::Execution {
 
-Profiler::Profiler (){
-    memset(&pe, 0, sizeof(pe));
-    pe.type = PERF_TYPE_HARDWARE;
-    pe.config = PERF_COUNT_HW_BRANCH_MISSES;
-    pe.size = sizeof(pe);
-    pe.disabled = 1;
+Profiler::Profiler (std::vector<perf_hw_id> events){
+    numberOfEvents = events.size();
+    eventIds.resize(numberOfEvents);
+    fileDescriptor = -1;
 
-    // for user events only
-    pe.exclude_kernel = 1;
-    pe.exclude_hv = 1;
+    for (size_t i = 0; i < numberOfEvents; ++i) {
+        memset(&pe, 0, sizeof(pe));
+        pe.type = PERF_TYPE_HARDWARE;
+        pe.config = events[i]; // specify event e.g., branch misses or cache misses
+        pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // for multiple events
+        pe.size = sizeof(pe);
+        pe.disabled = 1;
 
-    fileDescriptor = perf_event_open(&pe, 0, -1, -1, 0);
-    if (fileDescriptor == -1) {
-        fprintf(stderr, "Error opening perf event: %m\n");
-        exit(1);
+        // only profile on user level
+        pe.exclude_kernel = 1;
+        pe.exclude_hv = 1;
+
+        int eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
+        if (eventFileDescriptor == -1) {
+            NES_THROW_RUNTIME_ERROR("Error opening perf event");
+        }
+
+        eventToIdMap[events[i]] = 0;
+        ioctl(eventFileDescriptor, PERF_EVENT_IOC_ID, &eventToIdMap[events[i]]);
+
+        if (fileDescriptor == -1){
+            fileDescriptor = eventFileDescriptor;
+        }
     }
+
 }
 
 long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
@@ -40,18 +55,27 @@ long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int 
     return ret;
 }
 
-void Profiler::startProfiling() {
-    ioctl(fileDescriptor, PERF_EVENT_IOC_RESET, 0);
-    ioctl(fileDescriptor, PERF_EVENT_IOC_ENABLE, 0);
+void Profiler::startProfiling() const {
+    ioctl(fileDescriptor, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+    ioctl(fileDescriptor, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
 }
 
 void Profiler::stopProfiling() {
-    ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, 0);
-    read(fileDescriptor, &count, sizeof(uint64_t));
+    ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+    read(fileDescriptor, buf, sizeof(buf));
 }
 
-uint64_t Profiler::getCount() const {
-    return count;
+uint64_t Profiler::getEventId(perf_hw_id event) {
+    return eventToIdMap[event];
+}
+
+uint64_t Profiler::getCount(uint64_t eventId) const {
+    for (uint64_t i = 0; i < rfPtr->nr; i++){
+        if (rfPtr->values[i].id == eventId) {
+            return rfPtr->values[i].value;
+        }
+    }
+    return 0;
 }
 
 const char* Profiler::writeToOutputFile() {
@@ -59,13 +83,15 @@ const char* Profiler::writeToOutputFile() {
 
     outputFile = fopen(fileName, "a+");
 
-    if (outputFile != NULL) {
-        fprintf(outputFile, "Branch misses: %lu\n", count);
+    if (outputFile != nullptr) {
+        for (uint64_t i = 0; i < rfPtr->nr; i++){
+            fprintf(outputFile, "%lu\t%lu\n", rfPtr->values[i].id, rfPtr->values[i].value);
+        }
         fclose(outputFile);
         return fileName;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Error opening file");
     }
-
-    return nullptr;
 }
 
 Profiler::~Profiler() {

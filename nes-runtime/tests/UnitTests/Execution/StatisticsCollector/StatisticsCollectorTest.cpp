@@ -24,6 +24,7 @@ limitations under the License.
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
@@ -128,28 +129,32 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
 
     auto pipelineId = pipelineContext.getPipelineID();
 
+    // initialize statistics pipeline selectivity and pipeline runtime
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(nautilusExecutablePipelineStage, pipelineId);
     auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+
+        // collect the statistics
         pipelineSelectivity->collect();
         pipelineRuntime->collect();
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
+    // create a statistics collector and add the statistics to its list
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     statisticsCollector->addStatistic(std::move(pipelineSelectivity));
     statisticsCollector->addStatistic(std::move(pipelineRuntime));
 
     ASSERT_EQ(pipelineContext.buffers.size(), 3);
     auto resultBuffer = pipelineContext.buffers[0];
-
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
-        //ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-        //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
+        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 9);
+        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
 
@@ -239,11 +244,11 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
 
     ASSERT_EQ(pipelineContext.buffers.size(), 3);
     auto resultBuffer = pipelineContext.buffers[0];
-
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
-        //ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-        //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
+        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 8);
+        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
 
@@ -270,7 +275,13 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
         recordBuffer.push_back(Record({{"f1", Value<>(10)}, {"f2", Value<>(5)}}));
     }
 
-    auto profiler = Profiler();
+    std::vector<perf_hw_id> events;
+    events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
+    events.push_back(PERF_COUNT_HW_CACHE_MISSES);
+
+    auto profiler = Profiler(events);
+    uint64_t branchMissesId = profiler.getEventId(PERF_COUNT_HW_BRANCH_MISSES);
+    uint64_t cacheMissesId = profiler.getEventId(PERF_COUNT_HW_CACHE_MISSES);
     const char *fileName;
 
     for (Record record : recordBuffer) {
@@ -280,6 +291,11 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
 
         profiler.stopProfiling();
 
+        ASSERT_NE(profiler.getCount(branchMissesId), 0);
+        ASSERT_NE(profiler.getCount(cacheMissesId), 0);
+
+        std::cout << "Branch Misses " << profiler.getCount(branchMissesId) << std::endl;
+        std::cout << "Cache Misses " << profiler.getCount(cacheMissesId) << std::endl;
         fileName = profiler.writeToOutputFile();
     }
 
@@ -293,11 +309,98 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
             std::cout << line << std::endl;
             ++count;
         }
-        ASSERT_EQ(count, 10);
+        ASSERT_EQ(count, events.size() * 10);
         file.close();
         remove(fileName);
     } else {
         NES_THROW_RUNTIME_ERROR("Can not open file");
+    }
+}
+
+/**
+ * @brief test the statistics branch and cache
+ */
+TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    // create pipeline
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+    scanOperator->setChild(selectionOperator);
+
+    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(9);
+    auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readField1, constantInt2);
+    auto selectionOperator2 = std::make_shared<Operators::Selection>(lessThanExpression);
+    selectionOperator->setChild(selectionOperator2);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    selectionOperator2->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    std::vector<TupleBuffer> bufferVector;
+    std::vector<std::uniform_int_distribution<int64_t>> distVector;
+
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    distVector.push_back(std::uniform_int_distribution<int64_t>(2, 8));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(0, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(8, 10));
+
+    for (int j = 0; j < 3; ++j) {
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t i = 0; i < 500; i++) {
+            int64_t randomNumber = distVector[j](rng);
+            dynamicBuffer[i]["f1"].write(randomNumber);
+            dynamicBuffer[i]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+    auto pipelineContext = MockedPipelineExecutionContext();
+
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    std::vector<perf_hw_id> events;
+    events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
+    events.push_back(PERF_COUNT_HW_CACHE_MISSES);
+    Profiler profiler = Profiler(events);
+
+    auto branchMisses = std::make_unique<BranchMisses>(profiler);
+
+    auto statisticsCollector = std::make_unique<StatisticsCollector>();
+    //statisticsCollector->addStatistic(std::move(branchMisses));
+
+    nautilusExecutablePipelineStage->setup(pipelineContext);
+    for (TupleBuffer buffer : bufferVector) {
+        branchMisses->startProfiling();
+        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+        branchMisses->collect();
+    }
+    nautilusExecutablePipelineStage->stop(pipelineContext);
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 3);
+    auto resultBuffer = pipelineContext.buffers[0];
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
+        //ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
+        //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
 

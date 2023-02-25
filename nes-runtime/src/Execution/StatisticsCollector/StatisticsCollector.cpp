@@ -11,10 +11,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/CollectorTrigger.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
-#include <Execution/StatisticsCollector/PerformanceStatistics.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <string>
@@ -42,7 +42,7 @@ void StatisticsCollector::updateStatisticsHandler(CollectorTrigger trigger) {
             }
             break ;
         } else if (type == Execution::PerformanceStartTrigger && statisticType == "PerformanceStatistics") {
-            auto perfStatistics = std::dynamic_pointer_cast<PerformanceStatistics>(stat);
+            auto perfStatistics = std::dynamic_pointer_cast<BranchMisses>(stat);
             perfStatistics->startProfiling();
             break ;
         } else if (type == Execution::PerformanceEndTrigger && statisticType == "PerformanceStatistics") {

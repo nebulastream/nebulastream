@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
@@ -23,9 +23,9 @@ namespace NES::Runtime::Execution {
 /**
  * @brief Implements a statistic that collects the runtime of a pipeline.
  */
-class PerformanceStatistics : public Statistic {
+class BranchMisses : public Statistic {
   public:
-    PerformanceStatistics();
+    BranchMisses(Profiler profiler);
     void collect() override;
 
     /**
@@ -38,7 +38,8 @@ class PerformanceStatistics : public Statistic {
 
   private:
     Profiler profiler;
+    uint64_t eventId;
 };
 
 }// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_PERFORMANCESTATISTICS_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
