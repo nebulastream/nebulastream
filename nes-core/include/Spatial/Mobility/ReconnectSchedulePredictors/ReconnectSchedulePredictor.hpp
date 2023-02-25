@@ -66,8 +66,8 @@ class ReconnectSchedulePredictor {
      * @param configuration The configuration for the reconnect schedulue predictor to be created
      * @return a pointer to the created reconnect schedule creator or nullptr is s2 is not activated
      */
-    static ReconnectSchedulePredictorPtr create(
-        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
+    static ReconnectSchedulePredictorPtr
+    create(const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration);
 
 #ifdef S2DEF
     /**

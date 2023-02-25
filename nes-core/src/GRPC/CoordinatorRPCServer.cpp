@@ -93,9 +93,9 @@ CoordinatorRPCServer::UnregisterWorker(ServerContext*, const UnregisterWorkerReq
     NES_DEBUG("CoordinatorRPCServer::UnregisterNode: request =" << request);
 
     auto spatialType = topologyManagerService->findNodeWithId(request->workerid())->getSpatialNodeType();
-    bool success = topologyManagerService->removeGeoLocation(request->workerid()) ||
-        spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION ||
-        spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
+    bool success = topologyManagerService->removeGeoLocation(request->workerid())
+        || spatialType == NES::Spatial::Experimental::SpatialType::NO_LOCATION
+        || spatialType == NES::Spatial::Experimental::SpatialType::INVALID;
     if (success) {
         if (!topologyManagerService->unregisterNode(request->workerid())) {
             NES_ERROR("CoordinatorRPCServer::UnregisterNode: Worker was not removed");
