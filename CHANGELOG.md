@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.11](https://github.com/nebulastream/nebulastream/tree/v0.5.11) (2023-02-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.10...v0.5.11)
+
+### Bug Fixes 🐛
+
+- \[BUG\] If s2 is not activated, Location Controller Tests fail [\#3514](https://github.com/nebulastream/nebulastream/issues/3514)
+
 ## [v0.5.10](https://github.com/nebulastream/nebulastream/tree/v0.5.10) (2023-02-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.9...v0.5.10)
