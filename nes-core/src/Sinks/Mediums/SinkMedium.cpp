@@ -47,7 +47,6 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
         updateWatermarkCallback = [](Runtime::TupleBuffer&) {
         };
     }
-    maxOriginId = 0;
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
@@ -60,7 +59,7 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
-    if ((!(bufferCount % this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch()) && bufferCount != 0) || isWaiting) {
+    if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
         auto timestamp = watermarkProcessor->getCurrentWatermark();
         if (isSync && timestamp) {
             notifyEpochTermination(timestamp);

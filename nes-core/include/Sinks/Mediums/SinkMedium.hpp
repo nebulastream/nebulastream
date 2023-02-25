@@ -199,7 +199,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentTuples{0};// TODO check thread safety
     std::mutex writeMutex; // TODO remove the mutex
 
-    uint64_t maxOriginId;
     bool isWaiting;
 };
 
