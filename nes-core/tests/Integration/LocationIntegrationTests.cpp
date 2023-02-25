@@ -820,7 +820,6 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     ASSERT_FALSE(loc4.getLocation().isValid());
 }
 
-
 #ifdef S2DEF
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     size_t coverage = 5000;
