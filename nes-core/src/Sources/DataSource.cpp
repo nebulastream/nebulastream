@@ -331,7 +331,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 1000;
+    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
     while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
@@ -362,7 +362,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         //next point in time when to start producing again
-        nextPeriodStartTime = uint64_t(startPeriod + (1));
+        nextPeriodStartTime = uint64_t(startPeriod + (100));
         NES_TRACE("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
                                                       << " nextPeriodStartTime=" << nextPeriodStartTime);
 
