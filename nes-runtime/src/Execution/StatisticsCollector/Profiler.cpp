@@ -18,11 +18,9 @@ limitations under the License.
 namespace NES::Runtime::Execution {
 
 Profiler::Profiler (std::vector<perf_hw_id> events){
-    numberOfEvents = events.size();
-    eventIds.resize(numberOfEvents);
     fileDescriptor = -1;
 
-    for (size_t i = 0; i < numberOfEvents; ++i) {
+    for (size_t i = 0; i < events.size(); ++i) {
         memset(&pe, 0, sizeof(pe));
         pe.type = PERF_TYPE_HARDWARE;
         pe.config = events[i]; // specify event e.g., branch misses or cache misses
@@ -43,16 +41,11 @@ Profiler::Profiler (std::vector<perf_hw_id> events){
         ioctl(eventFileDescriptor, PERF_EVENT_IOC_ID, &eventToIdMap[events[i]]);
 
         if (fileDescriptor == -1){
+            // use one filedescriptor for a group of events
             fileDescriptor = eventFileDescriptor;
         }
     }
 
-}
-
-long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
-    int64_t ret;
-    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
-    return ret;
 }
 
 void Profiler::startProfiling() const {
@@ -78,17 +71,14 @@ uint64_t Profiler::getCount(uint64_t eventId) const {
     return 0;
 }
 
-const char* Profiler::writeToOutputFile() {
-    const char *fileName = "profilerOut.txt";
-
-    outputFile = fopen(fileName, "a+");
+void Profiler::writeToOutputFile(const char *fileName) {
+    FILE* outputFile = fopen(fileName, "a+");
 
     if (outputFile != nullptr) {
         for (uint64_t i = 0; i < rfPtr->nr; i++){
             fprintf(outputFile, "%lu\t%lu\n", rfPtr->values[i].id, rfPtr->values[i].value);
         }
         fclose(outputFile);
-        return fileName;
     } else {
         NES_THROW_RUNTIME_ERROR("Error opening file");
     }
@@ -96,6 +86,12 @@ const char* Profiler::writeToOutputFile() {
 
 Profiler::~Profiler() {
     close(fileDescriptor);
+}
+
+long Profiler::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags) {
+    int64_t ret;
+    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+    return ret;
 }
 
 }// namespace NES::Runtime::Execution

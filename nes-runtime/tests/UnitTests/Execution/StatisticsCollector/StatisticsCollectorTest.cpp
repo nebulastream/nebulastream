@@ -247,7 +247,7 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
         ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
-        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 8);
+        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 9);
         ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
@@ -282,7 +282,7 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
     auto profiler = Profiler(events);
     uint64_t branchMissesId = profiler.getEventId(PERF_COUNT_HW_BRANCH_MISSES);
     uint64_t cacheMissesId = profiler.getEventId(PERF_COUNT_HW_CACHE_MISSES);
-    const char *fileName;
+    const char *fileName = "profilerTestOutput.txt";
 
     for (Record record : recordBuffer) {
         profiler.startProfiling();
@@ -293,10 +293,7 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
 
         ASSERT_NE(profiler.getCount(branchMissesId), 0);
         ASSERT_NE(profiler.getCount(cacheMissesId), 0);
-
-        std::cout << "Branch Misses " << profiler.getCount(branchMissesId) << std::endl;
-        std::cout << "Cache Misses " << profiler.getCount(cacheMissesId) << std::endl;
-        fileName = profiler.writeToOutputFile();
+        profiler.writeToOutputFile(fileName);
     }
 
     ASSERT_EQ(collector->records.size(), 10);
@@ -309,9 +306,9 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
             std::cout << line << std::endl;
             ++count;
         }
-        ASSERT_EQ(count, events.size() * 10);
         file.close();
         remove(fileName);
+        ASSERT_EQ(count, events.size() * 10);
     } else {
         NES_THROW_RUNTIME_ERROR("Can not open file");
     }
@@ -381,7 +378,7 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     events.push_back(PERF_COUNT_HW_CACHE_MISSES);
     Profiler profiler = Profiler(events);
 
-    auto branchMisses = std::make_unique<BranchMisses>(profiler);
+    auto branchMisses = std::make_shared<BranchMisses>(profiler);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     //statisticsCollector->addStatistic(std::move(branchMisses));

@@ -29,7 +29,7 @@ limitations under the License.
 #include <vector>
 namespace NES::Runtime::Execution {
 /**
-* @brief Profiler that collects branch misses.
+* @brief Profiler that enables performance monitoring by calling perf_event_open().
 */
 class Profiler {
   public:
@@ -57,30 +57,27 @@ class Profiler {
     uint64_t getEventId(perf_hw_id event) ;
 
     /**
-     * @brief Get the number of branch misses.
-     * @return number of branch misses.
+     * @brief Get the count of the event, e.g., number of branch misses, number of cache misses.
+     * @param eventId
+     * @return count of event.
      */
     uint64_t getCount(uint64_t eventId) const;
 
     /**
-     * @brief Writes the number of branch misses to an output file.
-     * @return name of the output file.
+     * @brief Writes the count of all events to an output file.
+     * @param fileName path to the file
      */
-    const char* writeToOutputFile();
+    void writeToOutputFile(const char *fileName);
     ~Profiler();
 
   private:
     static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
 
-    struct perf_event_attr pe;
-    size_t numberOfEvents;
-    std::vector<uint64_t> eventIds;
-    std::map<perf_hw_id,uint64_t> eventToIdMap;
     int fileDescriptor;
-    //uint64_t count;
+    struct perf_event_attr pe;
+    std::map<perf_hw_id,uint64_t> eventToIdMap;
     char buf[4096];
     struct read_format* rfPtr = reinterpret_cast<read_format*>(buf);
-    FILE* outputFile;
 };
 
 struct read_format {
