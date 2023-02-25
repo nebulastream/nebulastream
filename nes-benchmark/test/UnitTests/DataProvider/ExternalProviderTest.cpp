@@ -48,6 +48,13 @@ namespace NES::Benchmark::DataProvision {
     };
 
     /**
+     * @brief busy waiting until the ExternalProvider has started
+     */
+    void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
+        while(!externalProvider.isStarted()) {}
+    }
+
+    /**
      * @brief This test should not be run on the CI, as here we use a sleep to generate x amount of buffers and then
      * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
      */
@@ -131,15 +138,12 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        while(!externalProviderDefault->isStarted()) {}
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
-        TupleBufferHolder bufferHolder;
-        bufferQueue.read(bufferHolder);
-        auto expectedNextBuffer = bufferHolder.bufferToHold;
+        auto expectedNextBuffer = createdBuffers[0];
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
 
@@ -183,15 +187,12 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        while(!externalProviderDefault->isStarted()) {}
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto nextBufferDefault = externalProviderDefault->readNextBuffer(sourceId);
 
         auto& bufferQueue = externalProviderDefault->getBufferQueue();
-        TupleBufferHolder bufferHolder;
-        bufferQueue.read(bufferHolder);
-        auto expectedNextBuffer = bufferHolder.bufferToHold;
+        auto expectedNextBuffer = createdBuffers[0];
 
         ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
 
@@ -233,8 +234,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        while(!externalProviderDefault->isStarted()) {}
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -276,8 +276,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-        // we wait for the provider to startup
-        while(!externalProviderDefault->isStarted()) {}
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();
         ASSERT_TRUE(generatorThread.joinable());
@@ -319,9 +318,7 @@ namespace NES::Benchmark::DataProvision {
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
         externalProviderDefault->start();
-
-        // we wait for the provider to startup
-        while(!externalProviderDefault->isStarted()) {}
+        waitForExternalProviderStartup(*externalProviderDefault);
 
         externalProviderDefault->stop();
 
