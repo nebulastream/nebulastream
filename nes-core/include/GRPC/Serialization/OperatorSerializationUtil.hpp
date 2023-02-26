@@ -33,6 +33,7 @@ class SerializableOperator_JoinDetails;
 class SerializableOperator_BatchJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
 
+
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and de-serialize logical operator trees to a
  * corresponding protobuffer object.
