@@ -11,8 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Expressions)
-add_subdirectory(Operators)
-add_subdirectory(Aggregation)
-add_subdirectory(PipelineExecution)
-add_subdirectory(TPCH)
+add_nes_runtime_test(runtime-tpch-test "Query6Test.cpp" "Query1Test.cpp")
+target_link_libraries(runtime-tpch-test PUBLIC tpch-dbgen)

@@ -19,3 +19,4 @@ add_nes_runtime_test(runtime-keyed-window-pipeline-test "KeyedTimeWindowPipeline
 add_nes_runtime_test(runtime-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_runtime_test(runtime-mapjavaudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
 add_nes_runtime_test(runtime-stream-join-pipeline-test "StreamJoinPipelineTest.cpp")
+add_nes_runtime_test(runtime-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
