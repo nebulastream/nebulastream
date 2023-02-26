@@ -67,7 +67,6 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
         };
         return false;
     };
-
     template<class SourceType>
     bool instanceOf() {
         if (dynamic_cast<SourceType*>(this)) {
