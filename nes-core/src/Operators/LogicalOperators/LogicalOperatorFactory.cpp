@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -136,5 +137,16 @@ LogicalOperatorFactory::createMapJavaUdfLogicalOperator(const Catalogs::UDF::Jav
                                                         OperatorId id) {
     return std::make_shared<MapJavaUdfLogicalOperatorNode>(javaUdfDescriptor, id);
 }
+
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+                                                           Windowing::WindowTypePtr windowType,
+                                                           Windowing::DistributionCharacteristicPtr distributionType,
+                                                           std::vector<FieldAccessExpressionNodePtr> onKey,
+                                                           uint64_t allowedLateness, OriginId originId, OperatorId id) {
+    return std::make_shared<WindowJavaUdfLogicalOperatorNode>(javaUdfDescriptor, windowType, distributionType,
+                                                              onKey, allowedLateness, originId, id);
+}
+
 
 }// namespace NES

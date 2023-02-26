@@ -35,6 +35,7 @@ class SerializableOperator_WatermarkStrategyDetails;
 class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
 class SerializableOperator_MapJavaUdfDetails;
+class SerializableOperator_JavaUdfWindowDetails;
 class SerializableOperator_CEPIterationDetails;
 class SerializableOperator_ProjectionDetails;
 class SerializableOperator_FilterDetails;
@@ -321,6 +322,21 @@ class OperatorSerializationUtil {
     static LogicalUnaryOperatorNodePtr
     deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails);
 
+    /**
+     * @brief serializes a windowJavaUdf operator
+     * @param windowJavaUdfOperatorNode
+     * @return SerializableOperator_MapJavaUdfDetails
+     */
+    static SerializableOperator_JavaUdfWindowDetails
+    serializeWindowJavaUdfOperator(const WindowJavaUdfLogicalOperatorNode& windowJavaUdfOperatorNode);
+
+    /**
+     * @brief deserializes a windowJavaUdf operator
+     * @param windowJavaUdfDetails
+     * @return WindowJavaUdfLogicalOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr
+    deserializeWindowJavaUdfOperator(const SerializableOperator_JavaUdfWindowDetails& windowJavaUdfDetails);
 };
 }// namespace NES
 
