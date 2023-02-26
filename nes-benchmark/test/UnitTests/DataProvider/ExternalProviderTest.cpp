@@ -51,7 +51,8 @@ namespace NES::Benchmark::DataProvision {
      * @brief busy waiting until the ExternalProvider has started
      */
     void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
-        while(!externalProvider.isStarted()) {}
+        NES_DEBUG("Waiting until ExternalProvider has started...");
+        externalProvider.waitUntilStarted();
     }
 
     /**
