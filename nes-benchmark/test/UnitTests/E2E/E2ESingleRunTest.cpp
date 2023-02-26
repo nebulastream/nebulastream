@@ -43,6 +43,9 @@ namespace NES::Benchmark {
         ASSERT_NO_THROW(E2ESingleRun singleRun(configPerRun, configOverAllRuns, *rpcCoordinatorPort, *restPort));
     }
 
+    /**
+     * @brief Testing if E2ESingleRun::setupCoordinatorConfig() is correct by comparing with a hardcoded truth
+     */
     TEST_F(E2ESingleRunTest, setUpCoordinatorAndWorkerConfig) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         E2EBenchmarkConfigPerRun configPerRun;
@@ -68,6 +71,10 @@ namespace NES::Benchmark {
                   configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue());
     }
 
+    /**
+     * @brief Testing if E2ESingleRun::createSources() is correct by creating several configPerRuns and then comparing versus a
+     * hardcoded truth
+     */
     TEST_F(E2ESingleRunTest, createSources) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
@@ -114,6 +121,10 @@ namespace NES::Benchmark {
         }
     }
 
+    /**
+     * @brief Testing if E2ESingleRun::getStringLogicalSourceToNumberOfPhysicalSources() is correct by comparing versus
+     * a hardcoded truth
+     */
     TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources) {
         auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
         auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
@@ -131,7 +142,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(assertedString.str(), configPerRun.getStringLogicalSourceToNumberOfPhysicalSources());
     }
 
-
+    /**
+     * @brief Testing if E2ESingleRun::writeHeaderToCsvFile() is correct by creating multiple different measurements and
+     * then compare the written csv file to a hardcoded truth
+     */
     TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
         auto bmName = "Some awesome BM Name", inputType = "Auto", dataProviderMode = "ZeroCopy";
         auto queryString = "Query::from(source)", csvFile = "tmp.csv";

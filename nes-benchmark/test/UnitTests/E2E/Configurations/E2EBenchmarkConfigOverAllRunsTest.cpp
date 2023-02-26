@@ -46,6 +46,9 @@ namespace NES::Benchmark {
         static void TearDownTestCase() { NES_INFO("Tear down E2EBenchmarkConfigOverAllRunsTest test class."); }
     };
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::toStringTest() is correct by comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, toStringTest) {
         std::stringstream oss;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
@@ -77,6 +80,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultString, expectedString);
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
+     * a yaml file and comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, generateConfigOverAllRunsInternalProviderTest) {
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
         Yaml::Node yamlConfig;
@@ -108,6 +115,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: YSB");
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
+     * a yaml file with a dynamic ingestion rate and comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, dynamicGenerateConfigOverAllRunsTest) {
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
         Yaml::Node yamlConfig;
@@ -139,6 +150,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: Uniform");
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns() is correct by parsing
+     * a yaml file with a custom ingestion rate and comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, customGenerateConfigOverAllRunsTest) {
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
         Yaml::Node yamlConfig;
@@ -170,6 +185,9 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultConfigOverAllRuns.getStrLogicalSrcDataGenerators(), "input1: Uniform");
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() is correct by comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getTotalSchemaSizeTest) {
         size_t expectedSize = 0;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;
@@ -187,6 +205,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultSize, expectedSize);
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() is correct by
+     * comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigOverAllRunsTest, getStrLogicalSrcDataGeneratorsTest) {
         std::stringstream expectedString;
         E2EBenchmarkConfigOverAllRuns defaultConfigOverAllRuns;

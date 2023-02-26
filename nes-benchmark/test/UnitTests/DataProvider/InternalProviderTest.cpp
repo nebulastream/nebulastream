@@ -47,6 +47,10 @@ namespace NES::Benchmark::DataProvision {
         std::shared_ptr<Runtime::BufferManager> bufferManager;
     };
 
+    /**
+     * @brief Testing if InternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a row layout
+     */
     TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         uint64_t currentlyEmittedBuffer = 0;
@@ -96,6 +100,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(dataBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if InternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a column layout
+     */
     TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         uint64_t currentlyEmittedBuffer = 0;
@@ -145,6 +153,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(dataBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     *  row layout
+     */
     TEST_F(InternalProviderTest, stopRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         size_t sourceId = 0;
@@ -183,6 +195,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_EQ(preAllocatedBuffers.size(), 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     * column layout
+     */
     TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         size_t sourceId = 0;

@@ -47,7 +47,9 @@ namespace NES::Benchmark::DataGeneration {
         static void TearDownTestCase() { NES_INFO("Tear down DefaultDataGeneratorTest test class."); }
     };
 
-    /* The following test block tests the member functions of the DefaultDataGenerator */
+    /**
+     * @brief Testing if DefaultDataGenerator::getSchema() works by comparing versus a hardcoded truth
+     */
     TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
         auto minValue = 0;
         auto maxValue = 1000;
@@ -64,6 +66,9 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_TRUE(expectedSchema->equals(schemaDefault, true));
     }
 
+    /**
+     * @brief Testing if DefaultDataGenerator::getName() works by comparing versus a hardcoded truth
+     */
     TEST_F(DefaultDataGeneratorTest, getNameTest) {
         auto minValue = 0;
         auto maxValue = 1000;
@@ -76,6 +81,9 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_EQ(nameDefault, expectedName);
     }
 
+    /**
+     * @brief Testing if DefaultDataGenerator::toString() works by comparing versus a hardcoded truth
+     */
     TEST_F(DefaultDataGeneratorTest, toStringTest) {
         auto minValue = 0;
         auto maxValue = 1000;
@@ -90,6 +98,10 @@ namespace NES::Benchmark::DataGeneration {
         ASSERT_EQ(stringDefault, expectedString);
     }
 
+    /**
+     * @brief Testing if DefaultDataGenerator::createData() works by creating tuples and then comparing the expected tupleBuffers
+     * with the created one's from the DefaultDataGenerator
+     */
     TEST_F(DefaultDataGeneratorTest, createDataTest) {
         auto minValue = 0;
         auto maxValue = 1000;

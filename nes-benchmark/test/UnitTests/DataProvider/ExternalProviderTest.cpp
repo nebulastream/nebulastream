@@ -103,6 +103,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(50000 <= queueSize && queueSize <= 50500);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a row layout
+     */
     TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -152,6 +156,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
+     * accessed by readNextBuffer() for a column layout
+     */
     TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -201,6 +209,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(memcmp(defaultBuffer, expectedBuffer, nextBufferDefault->getBufferSize()) == 0);
     }
 
+    /**
+     * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
+     * for row layout
+     */
     TEST_F(ExternalProviderTest, startRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -243,6 +255,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
+     * for column layout
+     */
     TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -285,6 +301,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     *  row layout
+     */
     TEST_F(ExternalProviderTest, stopRowLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
@@ -329,6 +349,10 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_TRUE(preAllocatedBuffers.empty());
     }
 
+    /**
+     * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
+     * column layout
+     */
     TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
         E2EBenchmarkConfigOverAllRuns configOverAllRuns;
         configOverAllRuns.dataProvider->setValue("External");
