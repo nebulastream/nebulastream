@@ -35,7 +35,7 @@ class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     std::string toString() const override;
-    SinkDescriptorPtr getSinkDescriptor();
+    SinkDescriptorPtr getSinkDescriptor() const;
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
     bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;

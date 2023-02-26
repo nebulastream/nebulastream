@@ -38,8 +38,8 @@ class CsvSourceDescriptor : public SourceDescriptor {
      */
     CSVSourceTypePtr getSourceConfig() const;
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
-    std::string toString() override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
   private:

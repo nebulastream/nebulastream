@@ -34,7 +34,7 @@ SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string
 
 const std::string& BinarySourceDescriptor::getFilePath() const { return filePath; }
 
-bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<BinarySourceDescriptor>()) {
         return false;
     }
@@ -42,7 +42,7 @@ bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return filePath == otherDefaultSource->getFilePath() && getSchema()->equals(otherDefaultSource->getSchema());
 }
 
-std::string BinarySourceDescriptor::toString() { return "BinarySourceDescriptor(" + filePath + ")"; }
+std::string BinarySourceDescriptor::toString() const { return "BinarySourceDescriptor(" + filePath + ")"; }
 
 SourceDescriptorPtr BinarySourceDescriptor::copy() {
     auto copy = BinarySourceDescriptor::create(schema->copy(), filePath);

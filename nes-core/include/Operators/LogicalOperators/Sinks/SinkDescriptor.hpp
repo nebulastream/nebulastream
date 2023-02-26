@@ -40,6 +40,13 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     * @return bool true if node is of SinkMedium
     */
     template<class SinkType>
+    bool instanceOf() const {
+        if (dynamic_cast<SinkType*>(this)) {
+            return true;
+        };
+        return false;
+    };
+    template<class SinkType>
     bool instanceOf() {
         if (dynamic_cast<SinkType*>(this)) {
             return true;
@@ -71,6 +78,13 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     * @return returns a shared pointer of the NodeType
     */
     template<class SinkType>
+    std::shared_ptr<SinkType> as() const {
+        if (instanceOf<SinkType>()) {
+            return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
+        }
+        throw std::bad_cast();
+    }
+    template<class SinkType>
     std::shared_ptr<SinkType> as() {
         if (instanceOf<SinkType>()) {
             return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
@@ -78,7 +92,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         throw std::bad_cast();
     }
 
-    virtual std::string toString() = 0;
+    virtual std::string toString() const = 0;
     [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
 
   protected:

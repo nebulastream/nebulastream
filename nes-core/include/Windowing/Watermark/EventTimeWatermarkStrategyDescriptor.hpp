@@ -27,11 +27,11 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
   public:
     static WatermarkStrategyDescriptorPtr create(const ExpressionItem& onField, TimeMeasure allowedLateness, TimeUnit unit);
 
-    ExpressionNodePtr getOnField();
+    ExpressionNodePtr getOnField() const;
 
-    TimeMeasure getAllowedLateness();
+    TimeMeasure getAllowedLateness() const;
 
-    TimeUnit getTimeUnit();
+    TimeUnit getTimeUnit() const;
 
     bool equal(WatermarkStrategyDescriptorPtr other) override;
 

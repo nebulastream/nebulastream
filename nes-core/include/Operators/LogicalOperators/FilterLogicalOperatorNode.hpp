@@ -31,7 +31,7 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
    * @brief get the filter predicate.
    * @return PredicatePtr
    */
-    ExpressionNodePtr getPredicate();
+    ExpressionNodePtr getPredicate() const;
     float getSelectivity();
     void setSelectivity(float newSelectivity);
 

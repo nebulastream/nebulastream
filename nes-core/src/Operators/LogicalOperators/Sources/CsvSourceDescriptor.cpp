@@ -37,7 +37,7 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, CSVSourceTypeP
 
 CSVSourceTypePtr CsvSourceDescriptor::getSourceConfig() const { return csvSourceType; }
 
-bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
     }
@@ -45,7 +45,7 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return csvSourceType->equal(otherSource->getSourceConfig());
 }
 
-std::string CsvSourceDescriptor::toString() { return "CsvSourceDescriptor(" + csvSourceType->toString() + ")"; }
+std::string CsvSourceDescriptor::toString() const { return "CsvSourceDescriptor(" + csvSourceType->toString() + ")"; }
 
 SourceDescriptorPtr CsvSourceDescriptor::copy() {
     auto copy = CsvSourceDescriptor::create(schema->copy(), csvSourceType, logicalSourceName, physicalSourceName);

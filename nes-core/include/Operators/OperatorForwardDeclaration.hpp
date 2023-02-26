@@ -70,6 +70,9 @@ using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 class MapJavaUdfLogicalOperatorNode;
 using MapJavaUdfLogicalOperatorNodePtr = std::shared_ptr<MapJavaUdfLogicalOperatorNode>;
 
+class IterationLogicalOperatorNode;
+using IterationLogicalOperatorNodePtr = std::shared_ptr<IterationLogicalOperatorNode>;
+
 namespace InferModel {
 class InferModelLogicalOperatorNode;
 using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;

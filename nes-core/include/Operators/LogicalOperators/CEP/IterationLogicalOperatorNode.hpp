@@ -19,7 +19,6 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
-
 /**
  * @brief iteration operator, which contains the number of expected iterations (minimal,maximal) for an event of one source
  * i.e., how often a duplicate event can (need to) appear before it fits the pattern

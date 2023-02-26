@@ -24,7 +24,7 @@ SourceDescriptorPtr LogicalSourceDescriptor::create(std::string logicalSourceNam
     return std::make_shared<LogicalSourceDescriptor>(LogicalSourceDescriptor(std::move(logicalSourceName)));
 }
 
-bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<LogicalSourceDescriptor>()) {
         return false;
     }
@@ -32,7 +32,7 @@ bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return getLogicalSourceName() == otherLogicalSource->getLogicalSourceName();
 }
 
-std::string LogicalSourceDescriptor::toString() {
+std::string LogicalSourceDescriptor::toString() const {
     return "LogicalSourceDescriptor(" + logicalSourceName + ", " + physicalSourceName + ")";
 }
 

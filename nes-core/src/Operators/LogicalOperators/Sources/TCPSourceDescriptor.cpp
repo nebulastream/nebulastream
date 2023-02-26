@@ -37,9 +37,9 @@ SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypeP
 
 TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const { return tcpSourceType; }
 
-std::string TCPSourceDescriptor::toString() { return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")"; }
+std::string TCPSourceDescriptor::toString() const { return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")"; }
 
-bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
 
     if (!other->instanceOf<TCPSourceDescriptor>()) {
         return false;

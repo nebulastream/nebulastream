@@ -26,15 +26,15 @@ SourceDescriptorPtr MonitoringSourceDescriptor::create(std::chrono::milliseconds
     return std::make_shared<MonitoringSourceDescriptor>(MonitoringSourceDescriptor(waitTime, metricCollectorType));
 }
 
-bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) {
-    if (!other->instanceOf<MonitoringSourceDescriptor>()) {
+bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
+    if (!other->instanceOf<const MonitoringSourceDescriptor>()) {
         return false;
     }
-    auto otherNetworkSource = other->as<MonitoringSourceDescriptor>();
+    auto otherNetworkSource = other->as<const MonitoringSourceDescriptor>();
     return waitTime == otherNetworkSource->getWaitTime() && metricCollectorType == otherNetworkSource->getMetricCollectorType();
 }
 
-std::string MonitoringSourceDescriptor::toString() {
+std::string MonitoringSourceDescriptor::toString() const {
     return "MonitoringSourceDescriptor(" + std::to_string(metricCollectorType) + ")";
 }
 
@@ -44,8 +44,8 @@ SourceDescriptorPtr MonitoringSourceDescriptor::copy() {
     return copy;
 }
 
-std::chrono::milliseconds MonitoringSourceDescriptor::getWaitTime() { return waitTime; }
+std::chrono::milliseconds MonitoringSourceDescriptor::getWaitTime() const { return waitTime; }
 
-Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() { return metricCollectorType; }
+Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() const { return metricCollectorType; }
 
 }// namespace NES

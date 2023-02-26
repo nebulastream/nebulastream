@@ -52,7 +52,7 @@ bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
         && (waitTime == otherSinkDescriptor->waitTime) && (retryTimes == otherSinkDescriptor->retryTimes);
 }
 
-std::string NetworkSinkDescriptor::toString() {
+std::string NetworkSinkDescriptor::toString() const {
     return "NetworkSinkDescriptor(partition=" + nesPartition.toString() + ";nodeLocation=" + nodeLocation.createZmqURI() + ")";
 }
 
@@ -64,7 +64,7 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
+uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() const { return uniqueNetworkSinkDescriptorId; }
 
 FaultToleranceType::Value NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 

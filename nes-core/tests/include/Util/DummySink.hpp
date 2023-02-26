@@ -23,7 +23,7 @@ class DummySink : public SinkDescriptor {
     static SinkDescriptorPtr create() { return std::make_shared<DummySink>(); }
     DummySink() = default;
     ~DummySink() override = default;
-    [[nodiscard]] std::string toString() override { return std::string(); }
+    [[nodiscard]] std::string toString() const override { return std::string(); }
     [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
 }// namespace NES

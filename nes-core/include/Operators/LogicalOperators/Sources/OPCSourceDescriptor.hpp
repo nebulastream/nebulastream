@@ -62,7 +62,7 @@ class OPCSourceDescriptor : public SourceDescriptor {
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
-    std::string toString() override;
+    std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
   private:

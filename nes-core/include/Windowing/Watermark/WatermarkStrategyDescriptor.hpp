@@ -46,6 +46,13 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     * @return bool true if node is of WatermarkStrategyDescriptor
     */
     template<class WatermarkStrategyType>
+    bool instanceOf() const {
+        if (dynamic_cast<WatermarkStrategyType*>(this)) {
+            return true;
+        };
+        return false;
+    };
+    template<class WatermarkStrategyType>
     bool instanceOf() {
         if (dynamic_cast<WatermarkStrategyType*>(this)) {
             return true;
@@ -58,6 +65,13 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     * @tparam WatermarkStrategyType
     * @return returns a shared pointer of the WatermarkStrategyType
     */
+    template<class WatermarkStrategyType>
+    std::shared_ptr<WatermarkStrategyType> as() const {
+        if (instanceOf<WatermarkStrategyType>()) {
+            return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
+        }
+        throw std::bad_cast();
+    }
     template<class WatermarkStrategyType>
     std::shared_ptr<WatermarkStrategyType> as() {
         if (instanceOf<WatermarkStrategyType>()) {

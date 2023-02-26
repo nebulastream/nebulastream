@@ -55,8 +55,8 @@ class TestSourceDescriptor : public SourceDescriptor {
                                     std::move(std::move(successors)));
     }
 
-    [[nodiscard]] std::string toString() override { return std::string(); }
-    [[nodiscard]] bool equal(SourceDescriptorPtr const&) override { return false; }
+    [[nodiscard]] std::string toString() const override { return std::string(); }
+    [[nodiscard]] bool equal(SourceDescriptorPtr const&) const override { return false; }
     SourceDescriptorPtr copy() override { return NES::SourceDescriptorPtr(); }
 
   private:
@@ -74,7 +74,7 @@ class TestSinkDescriptor : public SinkDescriptor {
     explicit TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
     DataSinkPtr getSink() { return sink; }
     ~TestSinkDescriptor() override = default;
-    std::string toString() override { return std::string(); }
+    std::string toString() const override { return std::string(); }
     bool equal(SinkDescriptorPtr const&) override { return false; }
 
   private:

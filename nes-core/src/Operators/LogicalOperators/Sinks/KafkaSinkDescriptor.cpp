@@ -27,7 +27,7 @@ SinkDescriptorPtr KafkaSinkDescriptor::create(std::string sinkFormat, std::strin
     return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(sinkFormat, topic, brokers, timeout));
 }
 
-std::string KafkaSinkDescriptor::toString() { return "KafkaSinkDescriptor()"; }
+std::string KafkaSinkDescriptor::toString() const { return "KafkaSinkDescriptor()"; }
 
 bool KafkaSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<KafkaSinkDescriptor>()) {

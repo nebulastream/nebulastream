@@ -24,7 +24,8 @@ SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType::Value faultTol
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(faultToleranceType, numberOfOrigins));
 }
 
-std::string PrintSinkDescriptor::toString() { return "PrintSinkDescriptor()"; }
+std::string PrintSinkDescriptor::toString() const { return "PrintSinkDescriptor()"; }
+
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
 
 FaultToleranceType::Value PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }

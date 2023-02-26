@@ -23,7 +23,7 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const& pr
     selectivity = 1.0;
 }
 
-ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
+ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() const { return predicate; }
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;

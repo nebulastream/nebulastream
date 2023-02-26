@@ -162,7 +162,7 @@ class OperatorNode : public Node {
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual std::vector<OriginId> getOutputOriginIds() = 0;
+    virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
   protected:
     /**

@@ -27,11 +27,11 @@ SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceNa
     : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)),
       physicalSourceName(std::move(physicalSourceName)) {}
 
-SchemaPtr SourceDescriptor::getSchema() { return schema; }
+SchemaPtr SourceDescriptor::getSchema() const { return schema; }
 
-std::string SourceDescriptor::getLogicalSourceName() { return logicalSourceName; }
+std::string SourceDescriptor::getLogicalSourceName() const { return logicalSourceName; }
 
-std::string SourceDescriptor::getPhysicalSourceName() { return physicalSourceName; }
+std::string SourceDescriptor::getPhysicalSourceName() const { return physicalSourceName; }
 
 void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }
 

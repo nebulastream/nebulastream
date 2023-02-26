@@ -53,13 +53,21 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Returns the schema, which is produced by this source descriptor
      * @return SchemaPtr
      */
-    SchemaPtr getSchema();
+    SchemaPtr getSchema() const;
 
     /**
     * @brief Checks if the source descriptor is of type SourceType
     * @tparam SourceType
     * @return bool true if source descriptor is of SourceType
     */
+    template<class SourceType>
+    bool instanceOf() const {
+        if (dynamic_cast<SourceType*>(this)) {
+            return true;
+        };
+        return false;
+    };
+
     template<class SourceType>
     bool instanceOf() {
         if (dynamic_cast<SourceType*>(this)) {
@@ -74,6 +82,14 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     * @return returns a shared pointer of the SourceType
     */
     template<class SourceType>
+    std::shared_ptr<SourceType> as() const {
+        if (instanceOf<SourceType>()) {
+            return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
+        }
+        NES_FATAL_ERROR("SourceDescriptor: We performed an invalid cast");
+        throw std::bad_cast();
+    }
+    template<class SourceType>
     std::shared_ptr<SourceType> as() {
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
@@ -85,13 +101,13 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName
      */
-    std::string getLogicalSourceName();
+    std::string getLogicalSourceName() const;
 
     /**
      * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
      * @return logicalSourceName
      */
-    std::string getPhysicalSourceName();
+    std::string getPhysicalSourceName() const;
 
     /**
      * @brief Set physical source name
@@ -109,14 +125,14 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      * @brief Returns the string representation of the source descriptor.
      * @return string
      */
-    virtual std::string toString() = 0;
+    virtual std::string toString() const = 0;
 
     /**
      * @brief Checks if two source descriptors are the same.
      * @param other source descriptor.
      * @return true if both are the same.
      */
-    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) = 0;
+    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) const = 0;
 
     virtual SourceDescriptorPtr copy() = 0;
 

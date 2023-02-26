@@ -87,7 +87,7 @@ bool OPCSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         && password == otherOPCSource->getPassword();
 }
 
-std::string OPCSourceDescriptor::toString() { return "OPCSourceDescriptor()"; }
+std::string OPCSourceDescriptor::toString() const { return "OPCSourceDescriptor()"; }
 
 SourceDescriptorPtr OPCSourceDescriptor::copy() {
     auto copy = OPCSourceDescriptor::create(schema->copy(), logicalSourceName, url, nodeId, user, password);

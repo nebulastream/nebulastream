@@ -60,9 +60,9 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                        logicalSourceName,
                                                        physicalSourceName);
 }
-std::string BenchmarkSourceDescriptor::toString() { return "BenchmarkSourceDescriptor"; }
+std::string BenchmarkSourceDescriptor::toString() const { return "BenchmarkSourceDescriptor"; }
 
-bool BenchmarkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool BenchmarkSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<BenchmarkSourceDescriptor>()) {
         return false;
     }
@@ -77,6 +77,7 @@ size_t BenchmarkSourceDescriptor::getMemoryAreaSize() const { return memoryAreaS
 uint64_t BenchmarkSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
 uint64_t BenchmarkSourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
+
 uint64_t BenchmarkSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
 
 GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
