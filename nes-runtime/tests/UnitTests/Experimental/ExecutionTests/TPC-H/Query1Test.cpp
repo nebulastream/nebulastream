@@ -147,7 +147,7 @@ TEST_P(Query1Test, tpchQ1) {
     auto selection = std::make_shared<Selection>(lessThanExpression1);
     scan.setChild(selection);
 
-    /**
+    /*
      *
      * group by
         l_returnflag,

@@ -58,8 +58,11 @@ uint32_t NautilusExecutablePipelineStage::close(PipelineExecutionContext&, Worke
     return 0;
 }
 
-uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
-    // nop as we don't need this function in nautilus
+uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext) {
+    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &pipelineExecutionContext);
+    auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    physicalOperatorPipeline->getRootOperator()->terminate(ctx);
     return 0;
 }
 
