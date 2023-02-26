@@ -42,6 +42,9 @@ namespace NES::Benchmark {
         static void TearDownTestCase() { NES_INFO("Tear down E2EBenchmarkConfigPerRunTest test class."); }
     };
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigPerRun::toString() is correct by testing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest) {
         std::stringstream oss;
         E2EBenchmarkConfigPerRun defaultConfigPerRun;
@@ -60,6 +63,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(defaultString, expectedString);
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigPerRun::generateAllConfigsPerRunTest() is correct by parsing from a yaml file and
+     * comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
 
         Yaml::Node yamlConfig;
@@ -104,6 +111,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(allE2EBenchmarkPerRun[2].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 3, input2: 2, input3: 1");
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigPerRun::getStrLogicalSrcToNumberOfPhysicalSrcTest() is correct by
+     * comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
         std::stringstream expectedString;
         E2EBenchmarkConfigPerRun configPerRun;
@@ -112,6 +123,10 @@ namespace NES::Benchmark {
         ASSERT_EQ(configPerRun.getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 2, input2: 1, some other source: 23456");
     }
 
+    /**
+     * @brief Testing if E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSourcesTest() is correct by parsing a yaml file
+     * and comparing against a hardcoded truth
+     */
     TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest) {
 
         Yaml::Node yamlConfig;
