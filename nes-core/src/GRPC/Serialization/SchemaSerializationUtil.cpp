@@ -51,7 +51,7 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
     for (auto serializedField : serializedSchema.fields()) {
         auto fieldName = serializedField.name();
         // de-serialize data type
-        auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.mutable_type());
+        auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
         deserializedSchema->addField(fieldName, type);
     }
 

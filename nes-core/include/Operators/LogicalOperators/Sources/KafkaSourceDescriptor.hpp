@@ -96,8 +96,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
      * @return
      */
     uint64_t getKafkaConnectTimeout() const;
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
-    std::string toString() override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 

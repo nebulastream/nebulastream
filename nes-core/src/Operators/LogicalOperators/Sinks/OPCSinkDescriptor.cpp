@@ -40,7 +40,7 @@ SinkDescriptorPtr OPCSinkDescriptor::create(std::string url, UA_NodeId nodeId, s
         OPCSinkDescriptor(std::move(url), std::move(nodeId), std::move(user), std::move(password)));
 }
 
-std::string OPCSinkDescriptor::toString() { return "OPCSinkDescriptor()"; }
+std::string OPCSinkDescriptor::toString() const { return "OPCSinkDescriptor()"; }
 
 bool OPCSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<OPCSinkDescriptor>()) {

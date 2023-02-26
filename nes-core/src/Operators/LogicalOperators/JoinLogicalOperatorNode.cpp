@@ -40,7 +40,7 @@ std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
+Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() const { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) {
 
@@ -206,6 +206,8 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
+    return OriginIdAssignmentOperator::getOutputOriginIds();
+}
 
 }// namespace NES

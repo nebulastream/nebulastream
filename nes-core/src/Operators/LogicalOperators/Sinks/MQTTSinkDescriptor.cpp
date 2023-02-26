@@ -77,7 +77,7 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                                 numberOfOrigins);
 }
 
-std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }
+std::string MQTTSinkDescriptor::toString() const { return "MQTTSinkDescriptor()"; }
 
 bool MQTTSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<MQTTSinkDescriptor>()) {

@@ -31,7 +31,7 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
     * @brief Returns the expression of this map operator
     * @return FieldAssignmentExpressionNodePtr
     */
-    FieldAssignmentExpressionNodePtr getMapExpression();
+    FieldAssignmentExpressionNodePtr getMapExpression() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:

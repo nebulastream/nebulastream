@@ -47,13 +47,13 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param other
      * @return true if equal, else false
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
     /**
      * @brief creates a string representation of the NetworkSourceDescriptor
      * @return the string representation
      */
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief getter for the nes partition

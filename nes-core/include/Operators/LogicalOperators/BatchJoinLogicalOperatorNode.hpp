@@ -35,7 +35,7 @@ class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     * @brief get join definition.
     * @return LogicalJoinDefinition
     */
-    Join::Experimental::LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
+    Join::Experimental::LogicalBatchJoinDefinitionPtr getBatchJoinDefinition() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;

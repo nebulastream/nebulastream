@@ -24,6 +24,7 @@ WindowOperatorNode::WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr con
       windowDefinition(windowDefinition) {}
 
 Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
-std::vector<OriginId> WindowOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+
+std::vector<OriginId> WindowOperatorNode::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 
 }// namespace NES

@@ -38,7 +38,7 @@ std::string BatchJoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() {
+Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() const {
     return batchJoinDefinition;
 }
 

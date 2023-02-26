@@ -47,7 +47,7 @@ std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
+SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() const { return sourceDescriptor; }
 
 bool SourceLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&) {
     inputSchema = sourceDescriptor->getSchema();
@@ -86,6 +86,6 @@ void SourceLogicalOperatorNode::inferInputOrigins() {
     // Data sources have no input origins.
 }
 
-std::vector<OriginId> SourceLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+std::vector<OriginId> SourceLogicalOperatorNode::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 
 }// namespace NES

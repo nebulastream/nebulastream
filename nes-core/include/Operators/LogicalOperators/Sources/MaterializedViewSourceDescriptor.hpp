@@ -36,14 +36,14 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
      * @brief Provides the string representation of the materialized view source
      * @return the string representation of the materialized view source
      */
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief Equality method to compare two source descriptors stored as shared_ptr
      * @param other the source descriptor to compare against
      * @return true if type, schema, and memory area are equal
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
     /**
     * @brief returns the materialized view id

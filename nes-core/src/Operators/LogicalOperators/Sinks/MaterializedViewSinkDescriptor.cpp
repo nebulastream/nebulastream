@@ -31,7 +31,7 @@ MaterializedViewSinkDescriptor::create(uint64_t viewId, FaultToleranceType::Valu
         MaterializedViewSinkDescriptor(viewId, faultToleranceType, numberOfOrigins));
 }
 
-std::string MaterializedViewSinkDescriptor::toString() { return "MaterializedViewSinkDescriptor"; }
+std::string MaterializedViewSinkDescriptor::toString() const { return "MaterializedViewSinkDescriptor"; }
 
 bool MaterializedViewSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<MaterializedViewSinkDescriptor>()) {
@@ -45,5 +45,5 @@ FaultToleranceType::Value MaterializedViewSinkDescriptor::getFaultToleranceType(
 
 uint64_t MaterializedViewSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
-uint64_t MaterializedViewSinkDescriptor::getViewId() { return viewId; }
+uint64_t MaterializedViewSinkDescriptor::getViewId() const { return viewId; }
 }// namespace NES::Experimental::MaterializedView

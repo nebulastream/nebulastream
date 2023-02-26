@@ -118,7 +118,8 @@ uint64_t KafkaSourceDescriptor::getKafkaConnectTimeout() const { return kafkaCon
 KafkaSourceTypePtr KafkaSourceDescriptor::getSourceConfigPtr() const { return kafkaSourceType; }
 
 const std::string& KafkaSourceDescriptor::getGroupId() const { return groupId; }
-bool KafkaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+
+bool KafkaSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<KafkaSourceDescriptor>()) {
         return false;
     }
@@ -128,7 +129,7 @@ bool KafkaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         && getSchema()->equals(other->getSchema()) && kafkaSourceType->equal(otherKafkaSource->getSourceConfigPtr());
 }
 
-std::string KafkaSourceDescriptor::toString() { return "KafkaSourceDescriptor()"; }
+std::string KafkaSourceDescriptor::toString() const { return "KafkaSourceDescriptor()"; }
 
 SourceDescriptorPtr KafkaSourceDescriptor::copy() {
     auto copy = KafkaSourceDescriptor::create(schema->copy(),

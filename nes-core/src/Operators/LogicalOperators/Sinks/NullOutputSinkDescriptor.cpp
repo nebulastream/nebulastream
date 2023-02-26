@@ -24,7 +24,8 @@ SinkDescriptorPtr NullOutputSinkDescriptor::create(FaultToleranceType::Value fau
     return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor(faultToleranceType, numberOfOrigins));
 }
 
-std::string NullOutputSinkDescriptor::toString() { return "NullOutputSinkDescriptor()"; }
+std::string NullOutputSinkDescriptor::toString() const { return "NullOutputSinkDescriptor()"; }
+
 bool NullOutputSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<NullOutputSinkDescriptor>(); }
 
 }// namespace NES

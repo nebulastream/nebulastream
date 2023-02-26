@@ -140,8 +140,8 @@ const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     return path;
 }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() { return inputFields; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
 
-const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() { return outputFields; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
 
 }// namespace NES::InferModel

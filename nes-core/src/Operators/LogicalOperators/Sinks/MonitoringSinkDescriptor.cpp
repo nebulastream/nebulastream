@@ -28,7 +28,7 @@ SinkDescriptorPtr MonitoringSinkDescriptor::create(Monitoring::MetricCollectorTy
         MonitoringSinkDescriptor(collectorType, faultToleranceType, numberOfOrigins));
 }
 
-std::string MonitoringSinkDescriptor::toString() { return "MonitoringSinkDescriptor()"; }
+std::string MonitoringSinkDescriptor::toString() const { return "MonitoringSinkDescriptor()"; }
 bool MonitoringSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<MonitoringSinkDescriptor>(); }
 
 Monitoring::MetricCollectorType MonitoringSinkDescriptor::getCollectorType() const { return collectorType; }

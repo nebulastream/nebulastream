@@ -120,7 +120,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     uint64_t getNumberOfOrigins() const;
 
-    [[nodiscard]] std::string toString() override;
+    [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
     /**

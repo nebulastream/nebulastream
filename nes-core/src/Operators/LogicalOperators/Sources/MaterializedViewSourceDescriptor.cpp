@@ -26,9 +26,9 @@ SourceDescriptorPtr MaterializedViewSourceDescriptor::create(const SchemaPtr& sc
     return std::make_shared<MaterializedViewSourceDescriptor>(
         MaterializedViewSourceDescriptor(std::move(schema), std::move(viewId)));
 }
-std::string MaterializedViewSourceDescriptor::toString() { return "MaterializedViewSourceDescriptor"; }
+std::string MaterializedViewSourceDescriptor::toString() const { return "MaterializedViewSourceDescriptor"; }
 
-bool MaterializedViewSourceDescriptor::equal(SourceDescriptorPtr const& other) {
+bool MaterializedViewSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
     if (!other->instanceOf<MaterializedViewSourceDescriptor>()) {
         return false;
     }

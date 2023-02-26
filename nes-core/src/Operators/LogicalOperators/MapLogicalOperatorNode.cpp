@@ -23,7 +23,7 @@ namespace NES {
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), mapExpression(mapExpression) {}
 
-FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
+FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() const { return mapExpression; }
 
 bool MapLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;

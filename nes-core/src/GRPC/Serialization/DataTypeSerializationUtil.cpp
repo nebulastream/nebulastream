@@ -66,18 +66,19 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     return serializedDataType;
 }
 
-DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType* serializedDataType) {
-    NES_TRACE2("DataTypeSerializationUtil:: de-serialized {}", serializedDataType->DebugString());
-    if (serializedDataType->type() == SerializableDataType_Type_UNDEFINED) {
+
+DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType) {
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType.DebugString());
+    if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED) {
         return DataTypeFactory::createUndefined();
     }
-    if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+    if (serializedDataType.type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
-    } else if (serializedDataType->type() == SerializableDataType_Type_TEXT) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_TEXT) {
         return DataTypeFactory::createText();
-    } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
-        serializedDataType->details().UnpackTo(&integerDetails);
+        serializedDataType.details().UnpackTo(&integerDetails);
         if (integerDetails.bits() == 64) {
             if (integerDetails.lowerbound() == 0) {
                 return DataTypeFactory::createUInt64();
@@ -86,19 +87,19 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
             }
         }
         return DataTypeFactory::createInteger(integerDetails.bits(), integerDetails.lowerbound(), integerDetails.upperbound());
-    } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_FLOAT) {
         auto floatDetails = SerializableDataType_FloatDetails();
-        serializedDataType->details().UnpackTo(&floatDetails);
+        serializedDataType.details().UnpackTo(&floatDetails);
         if (floatDetails.bits() == 32) {
             return DataTypeFactory::createFloat();
         } else {
             return DataTypeFactory::createDouble();
         }
-    } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_BOOLEAN) {
         return DataTypeFactory::createBoolean();
-    } else if (serializedDataType->type() == SerializableDataType_Type_CHAR) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
-    } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {
+    } else if (serializedDataType.type() == SerializableDataType_Type_ARRAY) {
         return deserializeArrayType(serializedDataType);
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
@@ -106,13 +107,13 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     return nullptr;
 }
 
-std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(SerializableDataType* serializedDataType) {
+std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(const SerializableDataType& serializedDataType) {
     // for arrays get additional information from the SerializableDataType_ArrayDetails
     auto arrayDetails = SerializableDataType_ArrayDetails();
-    serializedDataType->details().UnpackTo(&arrayDetails);
+    serializedDataType.details().UnpackTo(&arrayDetails);
 
     // get component data type
-    auto componentType = deserializeDataType(arrayDetails.release_componenttype());
+    auto componentType = deserializeDataType(arrayDetails.componenttype());
     return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
 }
 
@@ -150,23 +151,22 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const Value
     return serializedDataValue;
 }
 
-ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataValue* serializedDataValue) {
+ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableDataValue& serializedDataValue) {
     // de-serialize data value
-    NES_TRACE2("DataTypeSerializationUtil:: de-serialized {}", serializedDataValue->DebugString());
-    const auto& dataValue = serializedDataValue->value();
+    NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataValue.DebugString());
+    const auto& dataValue = serializedDataValue.value();
     if (dataValue.Is<SerializableDataValue_BasicValue>()) {
         auto serializedBasicValue = SerializableDataValue_BasicValue();
         dataValue.UnpackTo(&serializedBasicValue);
 
-        auto* const type = serializedBasicValue.release_type();
-        auto const dataTypePtr = deserializeDataType(type);
+        auto const dataTypePtr = deserializeDataType(serializedBasicValue.type());
         return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
     }
     if (dataValue.Is<SerializableDataValue_ArrayValue>()) {
         auto serializedArrayValue = SerializableDataValue_ArrayValue();
         dataValue.UnpackTo(&serializedArrayValue);
 
-        auto dataTypePtr = deserializeArrayType(serializedArrayValue.release_type());
+        auto dataTypePtr = deserializeArrayType(serializedArrayValue.type());
 
         // copy values from serializedArrayValue to array values
         std::vector<std::string> values{};
@@ -175,8 +175,7 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(SerializableDataVal
         }
         return DataTypeFactory::createArrayValueFromContainerType(std::move(dataTypePtr), std::move(values));
     }
-    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: "
-                            + serializedDataValue->DebugString());
+    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
     return nullptr;
 }
 

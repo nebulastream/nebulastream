@@ -86,13 +86,13 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getInputFields();
+    const std::vector<ExpressionItemPtr>& getInputFields() const;
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<ExpressionItemPtr>& getOutputFields();
+    const std::vector<ExpressionItemPtr>& getOutputFields() const;
 
   private:
     /**

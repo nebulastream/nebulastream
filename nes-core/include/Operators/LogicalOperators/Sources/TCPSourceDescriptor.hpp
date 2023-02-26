@@ -39,9 +39,9 @@ class TCPSourceDescriptor : public SourceDescriptor {
      * @param other
      * @return true if they are the same
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
-    std::string toString() override;
+    std::string toString() const override;
 
     SourceDescriptorPtr copy() override;
 

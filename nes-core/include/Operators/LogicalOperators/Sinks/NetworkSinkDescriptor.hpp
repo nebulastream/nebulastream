@@ -52,7 +52,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @brief returns the string representation of the network sink
      * @return the string representation
      */
-    std::string toString() override;
+    std::string toString() const override;
 
     /**
      * @brief equal method for the NetworkSinkDescriptor
@@ -89,7 +89,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @brief getter for unique network sink descriptor id
      * @return id
      */
-    uint64_t getUniqueNetworkSinkDescriptorId();
+    uint64_t getUniqueNetworkSinkDescriptorId() const;
 
     /**
      * @brief getter for fault-tolerance type
