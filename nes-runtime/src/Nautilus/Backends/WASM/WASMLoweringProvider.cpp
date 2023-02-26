@@ -176,7 +176,7 @@ void WASMLoweringProvider::generateWASM(const std::shared_ptr<IR::Operations::Fu
                 args.push_back(BinaryenTypeInt64());
                 argExpression = BinaryenLocalGet(wasm, localVariablesIndex, BinaryenTypeInt64());
             } else {
-                //int8 & int16 need to be i32
+                //int8 & int16 need to be i32, as WebAssembly only supports i32 & i64
                 args.push_back(BinaryenTypeInt32());
                 argExpression = BinaryenLocalGet(wasm, localVariablesIndex, BinaryenTypeInt32());
             }
