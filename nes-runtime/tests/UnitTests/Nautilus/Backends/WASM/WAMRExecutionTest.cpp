@@ -13,9 +13,8 @@
 */
 
 //#include <Nautilus/Backends/WASM/WASMCompilationBackend.hpp>
-#include <Nautilus/Backends/WASM/WASMCompiler.hpp>
-#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 #include <API/Schema.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -23,15 +22,16 @@
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#include <Nautilus/Backends/WASM/WASMCompiler.hpp>
+#include <Nautilus/Backends/WASM/WASMRuntime.hpp>
 //#include <Nautilus/Backends/WASM/WAMRExecutionEngine.hpp>
 #include "Execution/Expressions/WriteFieldExpression.hpp"
 #include "Execution/Operators/Relational/Map.hpp"
@@ -71,7 +71,7 @@ class WAMRExecutionTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
         //provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        uint32_t bufferSize = 1024 * 1024;
+        uint32_t bufferSize = 1024 * 1024 * 1024;
         bm = std::make_shared<Runtime::BufferManager>(bufferSize, 5);
         wc = std::make_shared<Runtime::WorkerContext>(0, bm, 3);
         //backend = std::make_shared<Nautilus::Backends::WASM::WASMCompilationBackend>();
@@ -178,8 +178,8 @@ TEST_F(WAMRExecutionTest, selectionTest) {
     auto buffer = bm->getBufferBlocking();
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity()/2; i++) {
-        dynamicBuffer[i]["f1"].write((int64_t) i);
-        dynamicBuffer[i]["f2"].write((int64_t) (i+2));
+        dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+        dynamicBuffer[i]["f2"].write((int64_t) i);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
     //NES_INFO("DYNA: " << buffer.getNumberOfTuples())
@@ -215,7 +215,7 @@ TEST_F(WAMRExecutionTest, selectionTest) {
     //timer.snapshot("Trace Generation");
     auto ir = irCreationPhase.apply(executionTrace);
     //timer.snapshot("Nautilus IR Generation");
-    NES_DEBUG(ir->toString())
+    //NES_DEBUG(ir->toString())
     auto loweringProvider = std::make_unique<Nautilus::Backends::WASM::WASMCompiler>();
     auto loweringResult = loweringProvider->lower(ir);
     loweringResult->setArgs(wc, mpeCtx, std::make_shared<Runtime::TupleBuffer>(buffer));
@@ -317,17 +317,13 @@ TEST_F(WAMRExecutionTest, mapTest) {
     timer.pause();
     NES_INFO("WASMExecutionTest " << timer)
     NES_INFO("BufferSize " << mpeCtx->buffers.size())
-    NES_INFO("TupleBuffers " << engine->getTupleBuffers().size())
+    NES_INFO("Tuples " << mpeCtx->buffers[0].getNumberOfTuples())
     auto resultBuffer = mpeCtx->buffers[0];
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
         //NES_INFO(resultDynamicBuffer[i]["f1"].read<int64_t>())
         NES_INFO(resultDynamicBuffer[i]["f2"].read<int64_t>())
     }
-}
-
-TEST_F(WAMRExecutionTest, memoryTest) {
-
 }
 
 }// namespace NES::Nautilus

@@ -42,7 +42,7 @@ std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<
         NES_THROW_RUNTIME_ERROR("Generated pre-optimized wasm is incorrect!");
     }
     //BinaryenModulePrint(wasm);
-    BinaryenModulePrintStackIR(wasm, false);
+    //BinaryenModulePrintStackIR(wasm, false);
     NES_INFO("------ Optimized WASM ------")
     //BinaryenModuleOptimize(wasm);
     //BinaryenModulePrintStackIR(wasm, false);

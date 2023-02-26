@@ -25,19 +25,18 @@ namespace NES::Nautilus::Backends::WASM {
 struct BufferInfo {
     std::shared_ptr<Runtime::TupleBuffer> tupleBuffer;
     uint64_t memoryIndex = 0;
-    bool copied = false;
-    BufferInfo(std::shared_ptr<Runtime::TupleBuffer> tb, uint64_t index, bool cp)
-        : tupleBuffer(std::move(tb)), memoryIndex(index), copied(cp){};
+    BufferInfo(std::shared_ptr<Runtime::TupleBuffer> tb, uint64_t index)
+        : tupleBuffer(std::move(tb)), memoryIndex(index) {};
     BufferInfo() = default;
 };
 
 class WASMRuntime {
   public:
-    explicit WASMRuntime(std::shared_ptr<WASMExecutionContext>  ctx) : context(std::move(ctx)) {};
+    explicit WASMRuntime(std::shared_ptr<WASMExecutionContext> ctx) : context(std::move(ctx)) {};
     void setup();
-    int32_t run();
+    void run();
     void close();
-    std::vector<BufferInfo> getTupleBuffers() { return tupleBuffers; }
+    std::unordered_map<std::shared_ptr<Runtime::TupleBuffer>, int64_t> getTupleBuffers() { return tupleBuffers; }
 
   private:
     std::shared_ptr<WASMExecutionContext> context;
@@ -48,8 +47,8 @@ class WASMRuntime {
     wasmtime::Config config;
     std::shared_ptr<wasmtime::Module> pyModule = nullptr;
     std::shared_ptr<wasmtime::Func> execute = nullptr;
-    std::vector<BufferInfo> tupleBuffers;
-    //std::unordered_map<BufferInfo> tupleB;
+    std::unordered_map<std::shared_ptr<Runtime::TupleBuffer>, int64_t> tupleBuffers;
+    std::shared_ptr<Runtime::TupleBuffer> lastTupleBuffer = nullptr;
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
     const std::string proxyFunctionModule = "ProxyFunction";

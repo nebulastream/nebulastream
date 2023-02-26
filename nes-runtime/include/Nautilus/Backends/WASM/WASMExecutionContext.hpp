@@ -13,23 +13,23 @@
 */
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMEXECUTIONCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_BACKENDS_WASM_WASMEXECUTIONCONTEXT_HPP_
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <Runtime/WorkerContext.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus::Backends::WASM {
 
 class WASMExecutionContext {
   public:
-    WASMExecutionContext(size_t bl, char qb[]) : binaryLength(bl) {
-        queryBinary = qb;
-    };
-    size_t getBinaryLength() const { return binaryLength; }
+    WASMExecutionContext(size_t bl, char qb[]) : binaryLength(bl) { queryBinary = qb; };
+    [[nodiscard]] size_t getBinaryLength() const { return binaryLength; }
     char* getQueryBinary() { return queryBinary; }
-    void setArgs(Runtime::WorkerContextPtr wc, Runtime::Execution::PipelineExecutionContextPtr pc, std::shared_ptr<Runtime::TupleBuffer> tb) {
+    void setArgs(Runtime::WorkerContextPtr wc,
+                 Runtime::Execution::PipelineExecutionContextPtr pc,
+                 std::shared_ptr<Runtime::TupleBuffer> tb) {
         workerContext = std::move(wc);
         pipelineExeContext = std::move(pc);
         tupleBuffer = std::move(tb);
@@ -43,6 +43,6 @@ class WASMExecutionContext {
     char* queryBinary;
 };
 
-}
+}// namespace NES::Nautilus::Backends::WASM
 
 #endif

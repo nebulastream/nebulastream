@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include "Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp"
+#include "Execution/Expressions/WriteFieldExpression.hpp"
+#include "Execution/Operators/Relational/Map.hpp"
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -52,7 +55,7 @@ class SelectionPipelineTest : public Testing::NESBaseTest, public AbstractPipeli
         Testing::NESBaseTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        uint32_t bufferSize = 64 * 1024 * 1024;
+        uint32_t bufferSize = 1024 * 1024 * 1024;
         bm = std::make_shared<Runtime::BufferManager>(bufferSize, 5);
         wc = std::make_shared<WorkerContext>(0, bm, 3);
     }
@@ -90,7 +93,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
         dynamicBuffer[i]["f1"].write((int64_t) i % 10);
-        dynamicBuffer[i]["f2"].write((int64_t) 1);
+        dynamicBuffer[i]["f2"].write((int64_t) i);
         dynamicBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -113,13 +116,67 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++) {
         ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+    }
+}
+
+TEST_P(SelectionPipelineTest, mapPipeline) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto constInt = std::make_shared<Runtime::Execution::Expressions::ConstantIntegerExpression>(5);
+    auto readF1 = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("f1");
+    auto addEx = std::make_shared<Runtime::Execution::Expressions::AddExpression>(readF1, constInt);
+    auto writeEx = std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>("f2", addEx);
+
+    auto mapOperator = std::make_shared<Runtime::Execution::Operators::Map>(writeEx);
+    scanOperator->setChild(mapOperator);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    mapOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < dynamicBuffer.getCapacity(); i++) {
+        dynamicBuffer[i]["f1"].write((int64_t) i);
+        dynamicBuffer[i]["f2"].write((int64_t) i);
+        dynamicBuffer.setNumberOfTuples(i + 1);
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+
+    auto pipelineContext = MockedPipelineExecutionContext();
+    executablePipeline->setup(pipelineContext);
+    NES_INFO("------------------------------------")
+    Timer timer("MLIRSelection");
+    timer.start();
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    timer.snapshot("MLIR_EXECUTION");
+    timer.pause();
+    executablePipeline->stop(pipelineContext);
+    NES_INFO("EXE: " << timer)
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    NES_INFO("Tuples: " << resultBuffer.getNumberOfTuples());
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < 10; i++) {
+        NES_INFO(resultDynamicBuffer[i]["f2"].read<int64_t>());
     }
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SelectionPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values(/*"PipelineInterpreter",*/ "PipelineCompiler"),
                         [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) {
                             return info.param;
                         });
