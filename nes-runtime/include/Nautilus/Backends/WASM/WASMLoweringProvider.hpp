@@ -47,6 +47,9 @@
 
 namespace NES::Nautilus::Backends::WASM {
 
+/**
+ * @brief This lowering provider translates Nautilus IR to WebAssembly binary code
+ */
 class WASMLoweringProvider {
     using BinaryenExpressions = Mapping<std::string, BinaryenExpressionRef>;
     using RelooperBlocks = Mapping<std::string, RelooperBlockRef>;
@@ -135,7 +138,7 @@ class WASMLoweringProvider {
     /**
      * Set the max size of the result array holding the generated WASM binary code
      */
-    static constexpr size_t outputSize = 2048;
+    static constexpr size_t OUTPUT_SIZE = 2048;
     /**
      * Function arguments and locals share the same index space in Webassembly. When creating new locals, we need to track
      * the index.

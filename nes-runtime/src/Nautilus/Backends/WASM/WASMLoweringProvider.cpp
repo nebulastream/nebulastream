@@ -39,8 +39,8 @@ std::pair<size_t, char*> WASMLoweringProvider::lower(const std::shared_ptr<IR::I
     }
     BinaryenModuleOptimize(wasm);
     BinaryenModulePrintStackIR(wasm, false);
-    static char result[outputSize];
-    auto wasmLength = BinaryenModuleWrite(wasm, result, outputSize);
+    static char result[OUTPUT_SIZE];
+    auto wasmLength = BinaryenModuleWrite(wasm, result, OUTPUT_SIZE);
     return std::make_pair(wasmLength, result);
 }
 
