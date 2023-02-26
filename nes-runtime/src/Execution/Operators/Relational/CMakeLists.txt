@@ -15,6 +15,11 @@ add_subdirectory(Join)
 add_source_files(nes-runtime
         Map.cpp
         Selection.cpp
+        BatchAggregation.cpp
+        BatchAggregationScan.cpp
+        BatchAggregationHandler.cpp
+        BatchKeyedAggregation.cpp
+        BatchKeyedAggregationHandler.cpp
         )
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     add_source_files(nes-runtime
