@@ -169,13 +169,13 @@ ExternalProvider::~ExternalProvider() {
     preAllocatedBuffers.clear();
 }
 
-bool ExternalProvider::isStarted() const {
-    return started;
-}
+bool ExternalProvider::isStarted() const { return started; }
 
 void ExternalProvider::waitUntilStarted() {
     std::unique_lock lock(mutexStartProvider);
-    cvStartProvider.wait(lock, [this] { return this->isStarted(); });
+    cvStartProvider.wait(lock, [this] {
+        return this->isStarted();
+    });
 }
 
 }// namespace NES::Benchmark::DataProvision
