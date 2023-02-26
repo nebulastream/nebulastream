@@ -28,6 +28,8 @@ add_source_files(nes-core
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
         InferModelOperatorHandler.cpp
+        JavaUdfLogicalOperator.cpp
+        WindowJavaUdfLogicalOperatorNode.cpp
 )
 
 add_subdirectory(CEP)

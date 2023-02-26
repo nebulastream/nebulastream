@@ -67,10 +67,8 @@
 #include <API/Windowing.hpp>
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Util/JavaUdfDescriptorBuilder.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
@@ -79,7 +77,6 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -511,6 +508,25 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfMap);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUdfMap->equal(deserializedOperator));
+    }
+
+    {
+        auto windowType = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
+                                                        Windowing::TimeMeasure(10));
+        auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
+        auto f1 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key1")->as<FieldAccessExpressionNode>();
+        auto f2 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key2")->as<FieldAccessExpressionNode>();
+        std::vector<FieldAccessExpressionNodePtr> onKey = {f1, f2};
+        uint64_t allowedLateness = 1000;
+        OriginId originId = 42;
+
+        auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
+        auto javaUdfWindow = LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(javaUdfDescriptor,
+                                                                                        windowType, distChar,
+                                                                                        onKey, allowedLateness, originId);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfWindow);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(javaUdfWindow->equal(deserializedOperator));
     }
 
     {

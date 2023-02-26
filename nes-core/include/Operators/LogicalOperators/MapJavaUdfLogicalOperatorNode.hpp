@@ -16,13 +16,9 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/JavaUdfLogicalOperator.hpp>
 
 namespace NES {
-
-namespace Catalogs::UDF {
-class JavaUdfDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
-}// namespace Catalogs::UDF
 
 /**
  * Logical operator node for a map operation which uses a Java UDF.
@@ -30,7 +26,7 @@ using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
  * The operation completely replaces the stream tuple based on the result of the Java UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
-class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
+class MapJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
   public:
     /**
      * Construct a MapUdfLogicalOperatorNode.
@@ -38,24 +34,6 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @param id The ID of the operator.
      */
     MapJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
-
-    /**
-     * Getter for the Java UDF descriptor.
-     * @return The descriptor of the Java UDF used in the map operation.
-     */
-    Catalogs::UDF::JavaUdfDescriptorPtr getJavaUdfDescriptor() const;
-
-    /**
-     * @see LogicalUnaryOperatorNode#inferSchema
-     *
-     * Sets the output schema contained in the JavaUdfDescriptor as the output schema of the operator.
-     */
-    bool inferSchema(Optimizer::TypeInferencePhaseContext& typeInferencePhaseContext) override;
-
-    /**
-     * @see LogicalOperatorNode#inferStringSignature
-     */
-    void inferStringSignature() override;
 
     /**
      * @see Node#toString
@@ -78,10 +56,6 @@ class MapJavaUdfLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @see Node#isIdentical
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
-
-  private:
-    const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
 };
-using MapJavaUdfLogicalOperatorNodePtr = std::shared_ptr<MapJavaUdfLogicalOperatorNode>;
 }// namespace NES
 #endif// NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_MAPJAVAUDFLOGICALOPERATORNODE_HPP_
