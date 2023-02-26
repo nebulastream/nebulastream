@@ -25,6 +25,15 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class SerializableExpression;
 class SerializableExpression_GeographyFieldsAccessExpression;
+class SerializableExpression_ConstantValueExpression;
+class SerializableExpression_FieldAccessExpression;
+class SerializableExpression_FieldRenameExpression;
+class SerializableExpression_FieldAssignmentExpression;
+class SerializableExpression_WhenExpression;
+class SerializableExpression_CaseExpression;
+class SerializableExpression_FunctionExpression;
+
+
 
 /**
  * @brief The ExpressionSerializationUtil offers functionality to serialize and de-serialize expression nodes to the

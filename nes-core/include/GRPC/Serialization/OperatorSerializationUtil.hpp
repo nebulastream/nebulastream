@@ -32,6 +32,14 @@ class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
 class SerializableOperator_BatchJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
+class SerializableOperator_MapDetails;
+class SerializableOperator_InferModelDetails;
+class SerializableOperator_MapJavaUdfDetails;
+class SerializableOperator_CEPIterationDetails;
+class SerializableOperator_ProjectionDetails;
+class SerializableOperator_FilterDetails;
+class SerializableOperator_UnionDetails;
+class SerializableOperator_BroadcastDetails;
 
 
 /**
@@ -314,7 +322,6 @@ class OperatorSerializationUtil {
     deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails);
 
 };
-
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_GRPC_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_

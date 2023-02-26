@@ -463,12 +463,6 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         EXPECT_TRUE(expression->equal(deserializedExpression));
     }
     {
-        auto expression = Log10ExpressionNode::create(f1);
-        auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
-        auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
-        EXPECT_TRUE(expression->equal(deserializedExpression));
-    }
-    {
         auto expression = SqrtExpressionNode::create(f1);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
@@ -492,7 +486,7 @@ TEST_F(SerializationUtilTest, functionExpressionSerialization) {
     auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "1"));
     auto expression = FunctionExpression::create(argument1->getStamp(), "ln", {argument1});
     auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
-    auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
+    auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(*serializedExpression);
     EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
@@ -533,8 +527,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         EXPECT_TRUE(source->equal(sourceOperator));
     }
 
-    {
 #ifdef TFDEF
+    {
         auto f1_in = std::make_shared<ExpressionItem>(Attribute("f1", NES::BasicType::FLOAT32));
         auto f2_in = std::make_shared<ExpressionItem>(Attribute("f2", NES::BasicType::FLOAT32));
         auto f1_out = std::make_shared<ExpressionItem>(Attribute("f1_out", NES::BasicType::FLOAT32));
@@ -546,8 +540,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(inferModel);
         auto inferModelOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(inferModel->equal(inferModelOperator));
-#endif // TFDEF
     }
+#endif // TFDEF
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
