@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.12](https://github.com/nebulastream/nebulastream/tree/v0.5.12) (2023-02-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.11...v0.5.12)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace Sleeps with Future in Benchmark Tests [\#3550](https://github.com/nebulastream/nebulastream/issues/3550)
+
 ## [v0.5.11](https://github.com/nebulastream/nebulastream/tree/v0.5.11) (2023-02-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.10...v0.5.11)
