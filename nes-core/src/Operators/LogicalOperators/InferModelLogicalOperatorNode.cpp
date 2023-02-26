@@ -53,7 +53,9 @@ OperatorNodePtr InferModelLogicalOperatorNode::copy() {
 bool InferModelLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<InferModelLogicalOperatorNode>()) {
         auto inferModelOperator = rhs->as<InferModelLogicalOperatorNode>();
-        return model == inferModelOperator->model;
+        auto thisDeployedModelPath = this->getDeployedModelPath();
+        auto rhsDeployedModelPath = inferModelOperator->getDeployedModelPath();
+        return thisDeployedModelPath == rhsDeployedModelPath;
     }
     return false;
 }
@@ -134,8 +136,12 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
 
 const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
-    int idx = model.find_last_of('/');
-    std::string path = model.substr(idx);
+    auto idx = model.find_last_of('/');
+    auto path = model;
+    if (idx != std::string::npos) {
+        path = model.substr(idx + 1);
+    }
+
     path = std::filesystem::temp_directory_path().string() + "/" + path;
     return path;
 }

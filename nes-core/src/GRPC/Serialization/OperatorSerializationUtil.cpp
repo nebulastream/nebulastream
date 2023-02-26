@@ -82,7 +82,6 @@
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <SerializableOperator.pb.h>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <GRPC/Serialization/UdfSerializationUtil.hpp>
@@ -149,11 +148,12 @@ namespace NES {
             serializedOperator.mutable_details()->PackFrom(mapDetails);
 
         } else if (operatorNode->instanceOf<InferModel::InferModelLogicalOperatorNode>()) {
+            #ifdef TFDEF
             // serialize infer model
             NES_TRACE("OperatorSerializationUtil:: serialize to InferModel::InferModelLogicalOperatorNode");
             auto inferModelDetails = serializeInferModelOperator(*operatorNode->as<InferModel::InferModelLogicalOperatorNode>());
             serializedOperator.mutable_details()->PackFrom(inferModelDetails);
-
+            #endif // TFDEF
         } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
             // serialize CEPIteration operator
             NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
@@ -447,7 +447,8 @@ namespace NES {
                                                             sourceDetails.sourceoriginid());
     }
 
-    SerializableOperator_FilterDetails OperatorSerializationUtil::serializeFilterOperator(const FilterLogicalOperatorNode& filterOperator) {
+    SerializableOperator_FilterDetails
+    OperatorSerializationUtil::serializeFilterOperator(const FilterLogicalOperatorNode& filterOperator) {
         auto filterDetails = SerializableOperator_FilterDetails();
         ExpressionSerializationUtil::serializeExpression(filterOperator.getPredicate(),
                                                          filterDetails.mutable_predicate());
@@ -462,7 +463,7 @@ namespace NES {
 
 
     SerializableOperator_ProjectionDetails
-    serializeProjectionOperator(const ProjectionLogicalOperatorNode& projectionOperator) {
+    OperatorSerializationUtil::serializeProjectionOperator(const ProjectionLogicalOperatorNode& projectionOperator) {
         auto projectionDetail = SerializableOperator_ProjectionDetails();
         for (auto& exp : projectionOperator.getExpressions()) {
             auto* mutableExpression = projectionDetail.mutable_expression()->Add();
@@ -472,7 +473,8 @@ namespace NES {
         return projectionDetail;
     }
 
-    LogicalUnaryOperatorNodePtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails) {
+    LogicalUnaryOperatorNodePtr
+    OperatorSerializationUtil::deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails) {
         // serialize and append children if the node has any
         std::vector<ExpressionNodePtr> exps;
         for (auto serializedExpression : projectionDetails.expression()) {
@@ -499,13 +501,15 @@ namespace NES {
     }
 
 
-    SerializableOperator_MapDetails serializeMapOperator(const MapLogicalOperatorNode& mapOperator) {
+    SerializableOperator_MapDetails
+    OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperatorNode& mapOperator) {
         auto mapDetails = SerializableOperator_MapDetails();
         ExpressionSerializationUtil::serializeExpression(mapOperator.getMapExpression(), mapDetails.mutable_expression());
         return mapDetails;
     }
 
-    auto deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails) {
+    LogicalUnaryOperatorNodePtr
+    OperatorSerializationUtil::deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails) {
         auto fieldAssignmentExpression = ExpressionSerializationUtil::deserializeExpression(mapDetails.expression());
         return LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(),
                 Util::getNextOperatorId());
@@ -1355,7 +1359,7 @@ namespace NES {
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&opcSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(opcSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(opcSerializedSourceDescriptor.sourceschema());
         char* ident = (char*) UA_malloc(sizeof(char) * opcSerializedSourceDescriptor.identifier().length() + 1);
         memcpy(ident, opcSerializedSourceDescriptor.identifier().data(), opcSerializedSourceDescriptor.identifier().length());
         ident[opcSerializedSourceDescriptor.identifier().length()] = '\0';
@@ -1884,7 +1888,6 @@ namespace NES {
 
     SerializableOperator_InferModelDetails
     OperatorSerializationUtil::serializeInferModelOperator(const InferModel::InferModelLogicalOperatorNode& inferModelOperator) {
-        #ifdef TFDEF
             // serialize infer model operator
             NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperatorNode");
             auto inferModelDetails = SerializableOperator_InferModelDetails();
@@ -1906,8 +1909,6 @@ namespace NES {
             inferModelDetails.set_mlfilecontent(bytes);
 
             return inferModelDetails;
-
-        #endif //TFDEF
     }
 
     LogicalUnaryOperatorNodePtr
@@ -1936,7 +1937,7 @@ namespace NES {
     }
 
     SerializableOperator_CEPIterationDetails
-    serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator) {
+    OperatorSerializationUtil::serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator) {
         auto iterationDetails = SerializableOperator_CEPIterationDetails();
         iterationDetails.set_miniteration(iterationOperator.getMinIterations());
         iterationDetails.set_maxiteration(iterationOperator.getMaxIterations());
@@ -1945,21 +1946,22 @@ namespace NES {
     }
 
     LogicalUnaryOperatorNodePtr
-    deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails) {
+    OperatorSerializationUtil::deserializeCEPIterationOperator(const SerializableOperator_CEPIterationDetails& cepIterationDetails) {
         auto maxIteration = cepIterationDetails.maxiteration();
         auto minIteration = cepIterationDetails.miniteration();
         return LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration, Util::getNextOperatorId());
     }
 
     SerializableOperator_MapJavaUdfDetails
-    serializeMapJavaUdfOperator(const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode) {
+    OperatorSerializationUtil::serializeMapJavaUdfOperator(const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode) {
         auto mapJavaUdfDetails = SerializableOperator_MapJavaUdfDetails();
         UdfSerializationUtil::serializeJavaUdfDescriptor(*mapJavaUdfOperatorNode.getJavaUdfDescriptor(),
                                                          *mapJavaUdfDetails.mutable_javaudfdescriptor());
         return mapJavaUdfDetails;
     }
 
-    auto deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
+    LogicalUnaryOperatorNodePtr
+    OperatorSerializationUtil::deserializeMapJavaUdfOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUdfDetails) {
         auto javaUdfDescriptor = UdfSerializationUtil::deserializeJavaUdfDescriptor(mapJavaUdfDetails.javaudfdescriptor());
         return LogicalOperatorFactory::createMapJavaUdfLogicalOperator(javaUdfDescriptor);
     }
