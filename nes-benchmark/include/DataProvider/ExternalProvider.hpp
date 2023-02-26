@@ -103,6 +103,11 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment* buffer) override;
 
+    /**
+     * @brief waits until the external provider has started
+     */
+    void waitUntilStarted();
+
   private:
     /**
      * @brief generates data based on predefinedIngestionRates
@@ -113,6 +118,8 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator;
     folly::MPMCQueue<TupleBufferHolder> bufferQueue;
     std::atomic<bool> started = false;
+    std::mutex mutexStartProvider;
+    std::condition_variable cvStartProvider;
     std::thread generatorThread;
     std::vector<uint64_t> predefinedIngestionRates;
 };

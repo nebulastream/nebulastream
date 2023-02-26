@@ -51,6 +51,9 @@ void ExternalProvider::stop() {
 }
 
 void ExternalProvider::generateData() {
+
+    std::unique_lock lock(mutexStartProvider);
+
     // calculate the number of buffers to produce per working time delta and append to the queue
     // note that the predefined ingestion rates represent the number of buffers to be produced per second,
     // so we multiply them with the working time delta and ingest the resulting number of buffers as quickly as possible into the system,
@@ -64,6 +67,11 @@ void ExternalProvider::generateData() {
     auto ingestionRateIndex = 0L;
 
     started = true;
+
+    // Manual unlocking is done before notifying, to avoid waking up the waiting thread only to block again
+    // (see notify_one for details). Taken from https://en.cppreference.com/w/cpp/thread/condition_variable
+    lock.unlock();
+    cvStartProvider.notify_one();
 
     // continue producing buffers as long as the generator is running
     while (started) {
@@ -161,6 +169,13 @@ ExternalProvider::~ExternalProvider() {
     preAllocatedBuffers.clear();
 }
 
-bool ExternalProvider::isStarted() const { return started; }
+bool ExternalProvider::isStarted() const {
+    return started;
+}
+
+void ExternalProvider::waitUntilStarted() {
+    std::unique_lock lock(mutexStartProvider);
+    cvStartProvider.wait(lock, [this] { return this->isStarted(); });
+}
 
 }// namespace NES::Benchmark::DataProvision
