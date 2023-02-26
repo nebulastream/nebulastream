@@ -24,7 +24,6 @@ namespace NES::Benchmark::DataProvision {
  */
 auto constexpr workingTimeDeltaInMillSeconds = 10;
 
-
 class ExternalProvider;
 using ExternalProviderPtr = std::shared_ptr<ExternalProvider>;
 
