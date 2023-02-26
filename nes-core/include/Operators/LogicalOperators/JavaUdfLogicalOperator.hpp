@@ -75,7 +75,6 @@ public:
 
     private:
         const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
-
 };
 
 } // NES

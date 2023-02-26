@@ -53,9 +53,7 @@ OperatorNodePtr InferModelLogicalOperatorNode::copy() {
 bool InferModelLogicalOperatorNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<InferModelLogicalOperatorNode>()) {
         auto inferModelOperator = rhs->as<InferModelLogicalOperatorNode>();
-        auto thisDeployedModelPath = this->getDeployedModelPath();
-        auto rhsDeployedModelPath = inferModelOperator->getDeployedModelPath();
-        return thisDeployedModelPath == rhsDeployedModelPath;
+        return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
     }
     return false;
 }

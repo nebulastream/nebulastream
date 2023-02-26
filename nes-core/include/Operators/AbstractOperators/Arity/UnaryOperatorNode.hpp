@@ -82,7 +82,7 @@ class UnaryOperatorNode : public virtual OperatorNode {
      * @brief Gets the input origin ids  from the input stream
      * @return std::vector<OriginId>
      */
-    std::vector<OriginId> getInputOriginIds()const;
+    std::vector<OriginId> getInputOriginIds() const;
 
     /**
      * @brief Gets the output origin ids from this operator
