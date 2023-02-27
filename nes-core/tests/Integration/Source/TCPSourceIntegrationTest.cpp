@@ -43,7 +43,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
      * @brief Set up test cases, starts a TCP server before all tests are run
      */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("TCPSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TCPSourceIntegrationTest test class.");
     }
 
@@ -71,7 +71,7 @@ class TCPSourceIntegrationTest : public Testing::NESBaseTest {
         uint8_t counter = 0;
         while (sockfd == 0 && counter < 10) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
-            NES_TRACE("Retrieved sockfd: " << sockfd << " on try: " << counter);
+            NES_TRACE("Retrieved sockfd: " << sockfd << " on try: " << std::to_string(counter));
             counter++;
         }
         if (sockfd == 0) {

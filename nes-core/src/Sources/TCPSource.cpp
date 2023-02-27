@@ -176,8 +176,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             //if size of received data is not 0 (no data received), push received data to circular buffer
             else if (bufferSizeReceived != 0) {
-                NES_TRACE("TCPSOURCE::fillBuffer: bytes send: " << bufferSizeReceived << ".");
-                NES_TRACE("TCPSOURCE::fillBuffer: print current buffer: " << messageBuffer << ".");
+                NES_DEBUG("TCPSOURCE::fillBuffer: bytes send: " << bufferSizeReceived << ".");
+                NES_DEBUG("TCPSOURCE::fillBuffer: print current buffer: " << messageBuffer << ".");
                 //push the received data into the circularBuffer
                 circularBuffer.push(messageBuffer, bufferSizeReceived);
             }
@@ -227,7 +227,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     //when receiving buffer size from socket, we need to check that the buffer was actually popped during the last run, otherwise,
                     //we loose the transmitted size and obtain bytes from the tuple that weren't meant to transmit the size.
                     //This might happen if the size of the tuple was sent and popped, but we only received half of the tuple
-                    //then we won't overwrite the tupleSize but try again to pop the next message.
+                    //then we won't overwärite the tupleSize but try again to pop the next message.
                     if (popped) {
                         try {
                             NES_DEBUG("TCPSOURCE::fillBuffer: obtain socket buffer size");
@@ -240,14 +240,14 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                             //if we successfully obtained the tuple size from the buffer convert bufferSizeFromSocket to an integer and delete the char*
                             if (popped) {
                                 inputTupleSize = std::stoi(messageBuffer);
-                                NES_TRACE("TCPSOURCE::fillBuffer: socket buffer size is: " << inputTupleSize);
+                                NES_DEBUG("TCPSOURCE::fillBuffer: socket buffer size is: " << inputTupleSize);
                             }
+                            delete[] messageBuffer;
                         } catch (const std::exception& e) {
                             NES_ERROR("TCPSource::fillBuffer: Failed to retrieve the tupleSize from Message Buffer. Error: "
                                       << e.what());
                             throw e;
                         }
-                        delete[] messageBuffer;
                     }
                     //allocate the messageBuffer for one tuple with the new tupleSize
                     messageBuffer = new char[inputTupleSize];
