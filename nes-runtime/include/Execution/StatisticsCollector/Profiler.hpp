@@ -74,9 +74,9 @@ class Profiler {
     static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
 
     int fileDescriptor;
-    struct perf_event_attr pe;
+    struct perf_event_attr pe{};
     std::map<perf_hw_id,uint64_t> eventToIdMap;
-    char buf[4096];
+    char buf[4096]{};
     struct read_format* rfPtr = reinterpret_cast<read_format*>(buf);
 };
 

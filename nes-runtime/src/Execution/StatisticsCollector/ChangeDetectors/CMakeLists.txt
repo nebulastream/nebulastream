@@ -10,12 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(ChangeDetectors)
 add_source_files(nes-runtime
-                StatisticsCollector.cpp
-                Statistic.cpp
-                PipelineSelectivity.cpp
-                PipelineRuntime.cpp
-                CollectorTrigger.cpp
-                Profiler.cpp
-                BranchMisses.cpp)
+                ChangeDetector.cpp
+                ChangeDetectorWrapper.cpp
+                ListNode.cpp
+                List.cpp
+                Adwin.cpp)

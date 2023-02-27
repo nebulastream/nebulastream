@@ -13,6 +13,7 @@ limitations under the License.
 */
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution {
 
@@ -20,12 +21,15 @@ void PipelineSelectivity::collect() {
     auto numberOfInputTuples = nautilusExecutablePipelineStage->getNumberOfInputTuples();
     auto numberOfOutputTuples = nautilusExecutablePipelineStage->getNumberOfOutputTuples();
 
+    auto selectivity = 0.0;
     if(numberOfInputTuples != 0){
-        auto selectivity = (double) numberOfOutputTuples / numberOfInputTuples;
+        selectivity = (double) numberOfOutputTuples / numberOfInputTuples;
         std::cout << "PipelineSelectivity " << selectivity << std::endl;
-    }
 
-    // Todo: call change detector
+        if (changeDetectorWrapper->insertValue(selectivity)){
+            std::cout << "Change detected" << std::endl;
+        }
+    }
 
 }
 
@@ -33,7 +37,10 @@ std::string PipelineSelectivity::getType() const {
     return "PipelineSelectivity";
 }
 
-PipelineSelectivity::PipelineSelectivity(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId)
-    : nautilusExecutablePipelineStage(nautilusExecutablePipelineStage), pipelineId(pipelineId) {}
+PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
+                                         uint64_t pipelineId)
+    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
+      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)), pipelineId(pipelineId) {}
 
 } // namespace NES::Runtime::Execution

@@ -1,6 +1,8 @@
 //
 // Created by Juliane on 13.01.2023.
 //
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -15,8 +17,8 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
+#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
@@ -127,7 +129,10 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
 
     auto pipelineId = pipelineContext.getPipelineID();
 
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(nautilusExecutablePipelineStage, pipelineId);
+    auto adwin = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
     pipelineSelectivity->collect();
     auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage, pipelineId);
     pipelineRuntime->collect();
