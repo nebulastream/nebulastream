@@ -39,6 +39,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
     uint64_t getNumberOfInputTuples();
+    uint64_t getNumberOfOutputTuples();
     uint64_t getRuntimePerBuffer();
 
     /**
@@ -48,6 +49,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
 
   private:
     uint64_t numberOfInputTuples;
+    uint64_t numberOfOutputTuples;
     uint64_t runtimePerBuffer;
 
   protected:

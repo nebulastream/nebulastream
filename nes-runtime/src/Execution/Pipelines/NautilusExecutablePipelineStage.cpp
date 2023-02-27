@@ -49,6 +49,7 @@ ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTuple
     auto runtimeEnd = std::chrono::high_resolution_clock::now();
     auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
     runtimePerBuffer = duration.count();
+    numberOfOutputTuples = pipelineExecutionContext.getNumberOfEmittedTuples();
 
     return ExecutionResult::Finished;
 }
@@ -74,6 +75,10 @@ uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
 
 uint64_t NautilusExecutablePipelineStage::getNumberOfInputTuples(){
     return numberOfInputTuples;
+}
+
+uint64_t NautilusExecutablePipelineStage::getNumberOfOutputTuples(){
+    return numberOfOutputTuples;
 }
 
 uint64_t NautilusExecutablePipelineStage::getRuntimePerBuffer(){

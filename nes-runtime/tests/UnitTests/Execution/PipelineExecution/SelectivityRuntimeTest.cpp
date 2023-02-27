@@ -11,12 +11,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -130,7 +130,7 @@ TEST_P(SelectivityRuntimeTest, selectivityTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     std::cout << "Number of input tuples: " << nautilusExecutablePipelineStage->getNumberOfInputTuples() << std::endl;
-    std::cout << "Number of emitted tuples: " << pipelineContext.getNumberOfEmittedTuples() << std::endl;
+    std::cout << "Number of output tuples: " << nautilusExecutablePipelineStage->getNumberOfOutputTuples() << std::endl;
     std::cout << "Runtime per buffer: " << nautilusExecutablePipelineStage->getRuntimePerBuffer()  << " microseconds" << std::endl;
 
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
