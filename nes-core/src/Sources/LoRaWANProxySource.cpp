@@ -196,12 +196,24 @@ std::optional<Runtime::TupleBuffer> LoRaWANProxySource::receiveData() {
                     for (const auto& queryResponse : output.responses()) {
                         auto id = queryResponse.id();
                         auto query = sourceConfig->getSerializedQueries()->at(runningQueries[id]);
-                        auto resultType = query->resulttype();
                         //TODO: actually use the resulttype
-                        auto result = queryResponse.response();
+                        auto resultArray = queryResponse.response();
                         auto tupCount = buffer.getNumberOfTuples();
-                        for (size_t i = 0; i < resultType.size(); ++i) {
-                            buffer[tupCount][i].write<int8_t>(result.at(i)[0]);
+                        for (int i = 0; i < resultArray.size(); ++i) {
+                            auto result = resultArray[i];
+                            auto bufferCell = buffer[tupCount][i];
+                            if (result.has__int8()) bufferCell.write<int8_t>(result._int8());
+                            if (result.has__int16()) bufferCell.write<int16_t>(result._int16());
+                            if (result.has__int32()) bufferCell.write<int32_t>(result._int32());
+                            if (result.has__int64()) bufferCell.write<int64_t>(result._int64());
+
+                            if (result.has__uint8()) bufferCell.write<u_int8_t>(result._uint8());
+                            if (result.has__uint16()) bufferCell.write<u_int16_t>(result._uint16());
+                            if (result.has__uint32()) bufferCell.write<u_int32_t>(result._uint32());
+                            if (result.has__uint64()) bufferCell.write<u_int64_t>(result._uint64());
+
+                            if (result.has__float()) bufferCell.write<float_t>(result._float());
+                            if (result.has__double()) bufferCell.write<float_t>(result._double());
                         }
                         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
                     }

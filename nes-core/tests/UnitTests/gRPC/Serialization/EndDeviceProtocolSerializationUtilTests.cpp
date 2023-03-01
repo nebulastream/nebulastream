@@ -82,88 +82,101 @@ class EndDeviceProtocolSerializationUtilTests : public Testing::NESBaseTest {
 TEST_F(EndDeviceProtocolSerializationUtilTests, ConstantValue) {
     // Test constant Value serialisation. Right now we only support 8bit numbers, so we only test those.
     // This should be changed in later versions
-    auto int8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 0)));
+    auto int8 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::UINT8, std::to_string(0)));
 
-    std::string ser_int8 = EndDeviceProtocolSerializationUtil::serializeConstantValue(int8);
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeConstantValue(int8, actual.mutable_function());
 
-    EXPECT_TRUE(ser_int8 == "\0\0\0"s);
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__uint8(0);
+    EXPECT_EQ(expected.function(0).instruction(), ExpressionInstructions::CONST);
+    EXPECT_EQ(expected.function(1)._uint8(), 0);
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, FieldAccess) {
     auto fax = FieldAccessExpressionNode::create("x");
     auto fay = FieldAccessExpressionNode::create("y");
 
-    auto registers = std::make_shared<std::vector<std::string>>(1, "x");
+    auto registers = std::vector<std::string>(1, "x");
 
-    auto expected = intsToString({ExpressionInstructions::VAR, 0});
-    EXPECT_EQ(EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fax, registers), expected);
+    MapOperation expected;
 
-    EXPECT_THROW(auto ignored = EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fay, registers),
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::VAR);
+    expected.mutable_function()->Add()->set__uint8(0);
+
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fax, registers, actual.mutable_function());
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+
+    actual.clear_function();
+    EXPECT_THROW(EndDeviceProtocolSerializationUtil::serializeFieldAccessExpression(fay, registers, actual.mutable_function()),
                  EndDeviceProtocolSerializationUtil::UnsupportedEDSerialisationException);
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, Arithmetic) {
     //Test serialization of arithmetic operators.
     //First set up Query
-    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 2)));
-    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 10)));
+    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(2)));
+    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(10)));
     auto add = AddExpressionNode::create(left, right);
 
     //Set up registers
-    auto registers = std::make_shared<std::vector<std::string>>();
+    auto registers = std::vector<std::string>();
 
-    //Serialize
-    auto res = EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(add, registers);
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeArithmeticalExpression(add, registers, actual.mutable_function());
 
     //build expected string
-    auto expected = intsToString({ExpressionInstructions::CONST,
-                                  DataTypes::INT8,
-                                  2,
-                                  ExpressionInstructions::CONST,
-                                  DataTypes::INT8,
-                                  10,
-                                  ExpressionInstructions::ADD});
-
-    EXPECT_EQ(res, expected);
+    //Serialize
+    MapOperation expected;
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int8(2);
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int8(10);
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::ADD);
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, Logical) {
-    auto registers = std::make_shared<std::vector<std::string>>(std::vector<std::string>{"x", "y"});
+    auto registers = std::vector<std::string>(std::vector<std::string>{"x", "y"});
 
-    auto left1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, "\x12"s));
+    auto left1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(12)));
     auto right1 = FieldAccessExpressionNode::create("x");
     auto eq = EqualsExpressionNode::create(left1, right1);
     auto neg = NegateExpressionNode::create(eq);
 
     auto left2 = FieldAccessExpressionNode::create("y");
-    auto right2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, "\x01"));
+    auto right2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(1)));
     auto gt = GreaterExpressionNode::create(left2, right2);
 
     auto bor = OrExpressionNode::create(neg, gt);
 
-    auto expected = intsToString({ExpressionInstructions::CONST,
-                                  DataTypes::INT8,
-                                  0x12,
-                                  ExpressionInstructions::VAR,
-                                  0,
-                                  ExpressionInstructions::EQ,
-                                  ExpressionInstructions::NOT,
-                                  ExpressionInstructions::VAR,
-                                  1,
-                                  ExpressionInstructions::CONST,
-                                  DataTypes::INT8,
-                                  0x01,
-                                  ExpressionInstructions::GT,
-                                  ExpressionInstructions::OR});
+    MapOperation expected;
+    auto expected_function = expected.mutable_function();
+    expected_function->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected_function->Add()->set__int8(12);
+    expected_function->Add()->set_instruction(ExpressionInstructions::VAR);
+    expected_function->Add()->set__uint8(0);
+    expected_function->Add()->set_instruction(ExpressionInstructions::EQ);
+    expected_function->Add()->set_instruction(ExpressionInstructions::NOT);
+    expected_function->Add()->set_instruction(ExpressionInstructions::VAR);
+    expected_function->Add()->set__uint8(1);
+    expected_function->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected_function->Add()->set__int8(1);
+    expected_function->Add()->set_instruction(ExpressionInstructions::GT);
+    expected_function->Add()->set_instruction(ExpressionInstructions::OR);
 
-    auto res = EndDeviceProtocolSerializationUtil::serializeLogicalExpression(bor, registers);
-    EXPECT_EQ(res, expected);
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeLogicalExpression(bor, registers, actual.mutable_function());
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, MapOperation) {
     //set up query. Note that we do a field access read
     auto left = FieldAccessExpressionNode::create("var");
-    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::string(1, 10)));
+    auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(10)));
     auto add = AddExpressionNode::create(left, right);
 
     //set up mapexpression. Note that we save result to a new variable, which should be reflected as a new field in the register-map
@@ -173,56 +186,60 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, MapOperation) {
     auto map = LogicalOperatorFactory::createMapOperator(mapexpr);
 
     //set up registers with pre-defined "var" there for the field access
-    auto registers = std::make_shared<std::vector<std::string>>();
-    registers->push_back("var");
+    auto registers = std::vector<std::string>();
+    registers.emplace_back("var");
 
     //serialize
-    auto ser_map = EndDeviceProtocolSerializationUtil::serializeMapOperator(map, registers);
+    MapOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeMapOperator(map, registers, &actual);
 
-    //build expected expression...
-    auto expected_instructions = intsToString(
-        {ExpressionInstructions::VAR, 0, ExpressionInstructions::CONST, DataTypes::INT8, 10, ExpressionInstructions::ADD});
+    //build expected map operation
+    MapOperation expected;
 
-    //... and MapOperation
-    auto expected_map = MapOperation();
-    expected_map.set_attribute(1);
-    expected_map.mutable_function()->set_instructions(expected_instructions);
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::VAR);
+    expected.mutable_function()->Add()->set__uint8(0);
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_function()->Add()->set__int8(10);
+    expected.mutable_function()->Add()->set_instruction(ExpressionInstructions::ADD);
+    expected.set_attribute(1);
 
-    //compare fields
-    EXPECT_EQ(ser_map->attribute(), expected_map.attribute());
-    EXPECT_EQ(ser_map->function().instructions(), expected_map.function().instructions());
-
-    EXPECT_EQ(registers->at(1), "x");
+    //compare
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
+    EXPECT_EQ(registers[1], "x");
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, FilterOperation) {
     //build expression and filter operator
-    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, "\x08"s));
+    auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT8, std::to_string(8)));
     auto right = FieldAccessExpressionNode::create("var");
     auto lt = LessExpressionNode::create(left, right);
     auto filter = LogicalOperatorFactory::createFilterOperator(lt);
 
-    auto registers = std::make_shared<std::vector<std::string>>();
-    registers->push_back("var");
+    auto registers = std::vector<std::string>();
+    registers.emplace_back("var");
 
-    auto ser_filter = EndDeviceProtocolSerializationUtil::serializeFilterOperator(filter, registers);
+    FilterOperation actual;
+    EndDeviceProtocolSerializationUtil::serializeFilterOperator(filter, registers, &actual);
 
     //build expected protobuf
-    auto expected_expr = intsToString(
-        {ExpressionInstructions::CONST, DataTypes::INT8, 8, ExpressionInstructions::VAR, 0, ExpressionInstructions::LT});
-    auto expected_filter = FilterOperation();
-    expected_filter.mutable_predicate()->set_instructions(expected_expr);
 
-    EXPECT_EQ(ser_filter->predicate().instructions(), expected_filter.predicate().instructions());
+    FilterOperation expected;
+    expected.mutable_predicate()->Add()->set_instruction(ExpressionInstructions::CONST);
+    expected.mutable_predicate()->Add()->set__int8(8);
+    expected.mutable_predicate()->Add()->set_instruction(ExpressionInstructions::VAR);
+    expected.mutable_predicate()->Add()->set__uint8(0);
+    expected.mutable_predicate()->Add()->set_instruction(ExpressionInstructions::LT);
+
+    EXPECT_EQ(expected.DebugString(), actual.DebugString());
 }
 
 TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
 
-    auto expected = EndDeviceProtocol::Query();
+    EndDeviceProtocol::Query expected;
     auto op = expected.mutable_operations()->Add();
     op->mutable_map()->set_attribute(0);
-    op->mutable_map()->mutable_function()->set_instructions(intsToString({ExpressionInstructions::VAR, 0}));
-
+    op->mutable_map()->mutable_function()->Add()->set_instruction(ExpressionInstructions::VAR);
+    op->mutable_map()->mutable_function()->Add()->set__uint8(0);
 
     auto schema = Schema::create()->addField("x", BasicType::INT8);
     auto loraSourceType = LoRaWANProxySourceType::create();
@@ -231,78 +248,17 @@ TEST_F(EndDeviceProtocolSerializationUtilTests, QueryPlan) {
     auto logicalSource = LogicalSource::create("default_logical", schema);
 
     auto query = TestQuery::from(loraDesc).map(Attribute("x") = Attribute("x")).sink(NullOutputSinkDescriptor::create());
-    auto actual = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(query.getQueryPlan());
+    auto actual = EndDeviceProtocolSerializationUtil::serializeQueryPlanToEndDevice(query.getQueryPlan(), loraSourceType);
 
-    EXPECT_EQ(actual->operations(0).map().attribute(), expected.operations(0).map().attribute());
-    EXPECT_EQ(actual->operations(0).map().function().instructions(), expected.operations(0).map().function().instructions());
+    EXPECT_EQ(expected.DebugString(), actual->DebugString());
 
-    EXPECT_EQ(query.getQueryPlan()->getOperatorByType<MapLogicalOperatorNode>().size(),0);
+
+    EXPECT_EQ(query.getQueryPlan()->getOperatorByType<MapLogicalOperatorNode>().size(),1);
     EXPECT_EQ(query.getQueryPlan()->getSourceOperators().size(), 1);
     EXPECT_EQ(query.getQueryPlan()->getSinkOperators().size(), 1);
     EXPECT_TRUE(query.getQueryPlan()->getSourceOperators().at(0)->getSourceDescriptor()->equal(loraDesc));
     EXPECT_TRUE(query.getQueryPlan()->getSinkOperators().at(0)->getSinkDescriptor()->instanceOf<NullOutputSinkDescriptor>());
 }
 
-//std::string serializeNumeric(std::variant<int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,float_t,double_t> in){
-//    size_t size;
-//    const char * source;
-//    std::string res;
-//    switch (in.index()) {
-//        case 0: break;
-//        case 1:{
-//            size = sizeof(int8_t);
-//            source = reinterpret_cast<const char*>(std::get<int8_t>(in));
-//            break;
-//        }
-//        case 2:{
-//            size = sizeof(uint8_t);
-//            source = reinterpret_cast<const char*>(std::get<uint8_t>(in));
-//            break;
-//        }
-//        case 3: {
-//            size = sizeof(int16_t);
-//            source = reinterpret_cast<const char*>(std::get<int16_t>(in));
-//            break;
-//        }
-//        case 4: {
-//            size = sizeof(uint16_t);
-//            source = reinterpret_cast<const char*>(std::get<uint16_t>(in));
-//            break;
-//        }
-//        case 5: {
-//            size = sizeof(int32_t);
-//            source = reinterpret_cast<const char*>(std::get<int32_t>(in));
-//            break;
-//        }
-//        case 6: {
-//            size = sizeof(uint32_t);
-//            source = reinterpret_cast<const char*>(std::get<uint32_t>(in));
-//            break;
-//        }
-//        case 7:{
-//            size = sizeof(int64_t);
-//            source = reinterpret_cast<const char*>(std::get<int64_t>(in));
-//            break;
-//        }
-//        case 8:{
-//            size = sizeof(uint64_t);
-//            source = reinterpret_cast<const char*>(std::get<uint64_t>(in));
-//            break;
-//        }
-//        case 9:{
-//            size = sizeof(float_t);
-//            source = reinterpret_cast<const char*>(std::get<float_t>(in));
-//            break;
-//        }
-//        case 10: {
-//            size = sizeof(int64_t);
-//            source = reinterpret_cast<const char*>(std::get<int64_t>(in));
-//            break;
-//        }
-//    }
-//    res.assign(&source[0], &source[0]+size);
-//
-//    return res;
-//
-//}
+
 }// namespace NES

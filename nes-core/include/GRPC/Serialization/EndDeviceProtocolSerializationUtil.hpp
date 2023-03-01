@@ -46,27 +46,28 @@ class EndDeviceProtocolSerializationUtil {
         UnsupportedEDSerialisationException()
             : std::runtime_error("Can't serialize this node, since the ED does not support it."){};
     };
-    using EDRegistersPtr = std::shared_ptr<std::vector<std::string>>;
+    using EDRegistersRef = std::vector<std::string>&;
     using EDMapOperation = EndDeviceProtocol::MapOperation;
     using EDFilterOperation = EndDeviceProtocol::FilterOperation;
     using EDWindowOperation = EndDeviceProtocol::WindowOperation;
     using EDOperation = EndDeviceProtocol::Operation;
     using EDQuery = EndDeviceProtocol::Query;
+    using EDQueryPtr = std::shared_ptr<EDQuery>;
     using EDData = EndDeviceProtocol::Data;
-    using EDDataVector = std::vector<EDData>;
-    [[nodiscard]] static EDQuery serializeQueryPlanToEndDevice(QueryPlanPtr QP, LoRaWANProxySourceTypePtr st);
+    using EDDataVector = google::protobuf::RepeatedPtrField<EDData>;
+    [[nodiscard]] static EDQueryPtr serializeQueryPlanToEndDevice(QueryPlanPtr QP, LoRaWANProxySourceTypePtr st);
 
-    [[nodiscard]] static EDDataVector serializeConstantValue(ExpressionNodePtr cnode);
+    static void serializeConstantValue(ExpressionNodePtr cnode, EDDataVector*);
 
-    [[nodiscard]] static EDDataVector serializeArithmeticalExpression(ExpressionNodePtr, EDRegistersPtr);
-    [[nodiscard]] static EDDataVector serializeLogicalExpression(ExpressionNodePtr, EDRegistersPtr);
-    [[nodiscard]] static EDDataVector serializeFieldAccessExpression(ExpressionNodePtr, EDRegistersPtr);
-    [[nodiscard]] static EDDataVector serializeExpression(ExpressionNodePtr, EDRegistersPtr);
-    static void serializeMapOperator(NodePtr, EDRegistersPtr, EDMapOperation*);
-    static void serializeFilterOperator(NodePtr, EDRegistersPtr, EDFilterOperation*);
-    static void serializeWindowOperator(NodePtr, EDRegistersPtr, EDWindowOperation*);
-    static void serializeOperator(NodePtr, EDRegistersPtr, EDOperation*);
-    [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions);
+    static void serializeArithmeticalExpression(ExpressionNodePtr, EDRegistersRef, EDDataVector*);
+    static void serializeLogicalExpression(ExpressionNodePtr, EDRegistersRef, EDDataVector*);
+    static void serializeFieldAccessExpression(ExpressionNodePtr, EDRegistersRef, EDDataVector*);
+    static void serializeExpression(ExpressionNodePtr, EDRegistersRef, EDDataVector*);
+    static void serializeMapOperator(NodePtr, EDRegistersRef, EDMapOperation*);
+    static void serializeFilterOperator(NodePtr, EDRegistersRef, EDFilterOperation*);
+    static void serializeWindowOperator(NodePtr, EDRegistersRef, EDWindowOperation*);
+    static void serializeOperator(NodePtr, EDRegistersRef, EDOperation*);
+    [[nodiscard]] static std::string asString(EndDeviceProtocol::ExpressionInstructions*);
 
   private:
     static DefaultPhysicalTypeFactory physicalFactory;

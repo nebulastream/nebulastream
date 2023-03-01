@@ -34,12 +34,16 @@ enum ExpressionInstructions {
 message Data {
   oneof data{
     ExpressionInstructions instruction = 1;
-    uint32 _uint8_32 = 2;
-    uint64 _uint64 = 3;
-    sint32 _int8_32 = 4;
-    sint64 _int64 = 5;
-    float _float = 6;
-    double _double = 7;
+    uint32 _uint8 = 2;
+    uint32 _uint16 = 3;
+    uint32 _uint32 = 4;
+    uint64 _uint64 = 5;
+    sint32 _int8 = 6;
+    sint32 _int16 = 7;
+    sint32 _int32 = 8;
+    sint64 _int64 = 9;
+    float _float = 10;
+    double _double = 11;
   }
 }
 
