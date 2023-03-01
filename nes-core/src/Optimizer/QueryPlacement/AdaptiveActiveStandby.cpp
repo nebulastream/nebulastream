@@ -1084,6 +1084,9 @@ std::map<TopologyNodeId, double> AdaptiveActiveStandby::getCandidatePlacementsGr
             score += output * distance;
         }
 
+        // score only contains partial network cost which has not yet been weighted
+        score *= networkCostWeight;
+
         // over-utilization penalty
         score += calculateOverUtilizationPenalty(candidateNode, primaryOperator);
 
