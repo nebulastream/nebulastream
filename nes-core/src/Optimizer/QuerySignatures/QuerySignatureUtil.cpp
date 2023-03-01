@@ -43,6 +43,8 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <z3++.h>
 
@@ -673,56 +675,71 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
-    //Compute the expression for window time key
-    auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
-    auto timeCharacteristic = windowType->getTimeCharacteristic();
-    z3::expr windowTimeKeyVal(*context);
-    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else {
-        NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
-    }
-    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
-    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
-
-    //Compute the expression for window size and slide
-    auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
-    uint64_t length = 0;
-    uint64_t slide = 0;
-    if (windowType->isTumblingWindow()) {
-        auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
-        length = tumblingWindow->getSize().getTime() * multiplier;
-        slide = length;
-    } else if (windowType->isSlidingWindow()) {
-        auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
-        length = slidingWindow->getSize().getTime() * multiplier;
-        slide = slidingWindow->getSlide().getTime() * multiplier;
-    } else {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
-    }
-    auto windowTimeSizeVar = context->int_const("window-time-size");
-    z3::expr windowTimeSizeVal = context->int_val(length);
-    auto windowTimeSlideVar = context->int_const("window-time-slide");
-    z3::expr windowTimeSlideVal = context->int_val(slide);
-    auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
-    auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
-
-    //FIXME: when count based window is implemented #1383
-    //    auto windowCountSizeVar = context->int_const("window-count-size");
-
-    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-    Z3_ast expressionArray[] = {windowKeyExpression,
-                                windowTimeKeyExpression,
-                                windowTimeSlideExpression,
-                                windowTimeSizeExpression};
+    std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
-    if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
-    } else {
-        //TODO: as part of #1377
-        NES_NOT_IMPLEMENTED();
+    //Compute the expression for window time key
+    if(windowDefinition->getWindowType()->isSlidingWindow() || windowDefinition->getWindowType()->isTumblingWindow()) {
+        windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
+        auto timeCharacteristic = windowType->asTimeBasedWindowType(windowDefinition->getWindowType())->getTimeCharacteristic();
+        z3::expr windowTimeKeyVal(*context);
+        if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::EventTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+        } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+            windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+        } else {
+            NES_ERROR2("QuerySignatureUtil: Cant serialize window Time Characteristic");
+        }
+        auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+        auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+
+        //Compute the expression for window size and slide
+        auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
+        uint64_t length = 0;
+        uint64_t slide = 0;
+        if (windowType->isTumblingWindow()) {
+            auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
+            length = tumblingWindow->getSize().getTime() * multiplier;
+            slide = length;
+        } else if (windowType->isSlidingWindow()) {
+            auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType);
+            length = slidingWindow->getSize().getTime() * multiplier;
+            slide = slidingWindow->getSlide().getTime() * multiplier;
+        } else {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
+        }
+        auto windowTimeSizeVar = context->int_const("window-time-size");
+        z3::expr windowTimeSizeVal = context->int_val(length);
+        auto windowTimeSlideVar = context->int_const("window-time-slide");
+        z3::expr windowTimeSlideVal = context->int_val(slide);
+        auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
+        auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
+
+        //FIXME: when count based window is implemented #1383
+        //    auto windowCountSizeVar = context->int_const("window-count-size");
+
+        //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
+        Z3_ast expressionArray[] = {windowKeyExpression,
+                                    windowTimeKeyExpression,
+                                    windowTimeSlideExpression,
+                                    windowTimeSizeExpression};
+
+        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+            windowExpressions[windowKey] =
+                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
+    } else { // for Threshold Window
+        Z3_ast expressionArray[] = {windowKeyExpression};
+
+        if (windowExpressions.find(windowKey) == windowExpressions.end()) {
+            windowExpressions[windowKey] =
+                std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 1, expressionArray)));
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
     }
 
     //FIXME: change the logic here as part of #1377
