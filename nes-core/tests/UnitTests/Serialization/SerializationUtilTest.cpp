@@ -16,6 +16,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
@@ -77,6 +78,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
+#include <API/QueryAPI.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -633,6 +635,44 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
+    }
+
+    {
+        auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
+        auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
+        auto watermarkAssignerDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                API::Milliseconds(0), timeBasedWindowType->getTimeCharacteristic()->getTimeUnit());
+
+        auto watermarkAssignerOperator = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkAssignerDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(watermarkAssignerOperator);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(watermarkAssignerOperator->equal(deserializedOperator));
+    }
+
+    {
+        auto watermarkAssignerDescriptor = Windowing::IngestionTimeWatermarkStrategyDescriptor::create();
+        auto watermarkAssignerOperator = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkAssignerDescriptor);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(watermarkAssignerOperator);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(watermarkAssignerOperator->equal(deserializedOperator));
+    }
+
+    {
+        auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
+        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
+        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+        auto windowDefinition =
+                Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                           windowType,
+                                                           Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                           triggerPolicy,
+                                                           triggerAction,
+                                                           0);
+        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));
     }
 
     // threshold window operator
