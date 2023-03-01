@@ -1676,6 +1676,80 @@ double AdaptiveActiveStandby::executeILPStrategy(const std::vector<OperatorNodeP
                           nodeUtilizationMap);
     }
 
+    // 3. calculate the network cost (= sum over all operators (output of operator * distance of nodes))
+    auto cost_net = z3Context->int_val(0);  // initialize the network cost with 0
+
+    for (const auto& [operatorId, position] : operatorDistanceMap) {
+        OperatorNodePtr operatorNode = operatorMapILP[operatorId]->as<OperatorNode>();
+        if (operatorNode->getParents().empty()) {
+            continue;
+        }
+
+        // loop over downstream operators and compute network cost
+        for (const auto& downStreamOperator : operatorNode->getParents()) {
+            OperatorId downStreamOperatorId = downStreamOperator->as_if<OperatorNode>()->getId();
+            // only consider relevant nodes
+            if (operatorMapILP.find(downStreamOperatorId) != operatorMapILP.end()) {
+
+                auto distance = position - operatorDistanceMap.find(downStreamOperatorId)->second;
+                NES_DEBUG("distance: " << operatorId << " " << distance);
+
+                double output = getOperatorOutput(operatorNode);
+
+                cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
+            }
+        }
+    }
+    NES_DEBUG("cost_net: " << cost_net);
+
+    // 4. calculate the node over-utilization penalties
+    auto overUtilizationPenalty = z3Context->int_val(0);   // initialize the over-utilization cost with 0
+    for (auto const& [topologyId, utilization] : nodeUtilizationMap) {
+        std::string overUtilizationId = "S" + std::to_string(topologyId);
+        // an integer expression of the slack
+        auto currentOverUtilization = z3Context->int_const(overUtilizationId.c_str());
+
+        // obtain the available slot in the current node
+        auto topologyNode = topology->findNodeWithId(topologyId);
+        int availableSlots = topologyNode->getAvailableResources();
+
+        opt.add(currentOverUtilization >= 0);   // we only penalize over-utilization, hence its value should be >= 0.
+        opt.add(utilization - currentOverUtilization <= availableSlots);    // formula for the over-utilization
+
+        overUtilizationPenalty = overUtilizationPenalty + currentOverUtilization;
+    }
+
+    auto weightOverUtilization = z3Context->real_val(std::to_string(overUtilizationPenaltyWeight).c_str());
+    auto weightNetwork = z3Context->real_val(std::to_string(networkCostWeight/z3ScaleDistances).c_str());
+
+    // 5. optimize ILP problem and print solution
+    opt.minimize(weightNetwork * cost_net + weightOverUtilization * overUtilizationPenalty);
+
+    // 6. check if a solution was found
+    if (z3::sat != opt.check()) {
+        NES_ERROR("AdaptiveActiveStandby: ILP Solver failed.");
+        return failure;
+    }
+
+    // 7. get the model to retrieve the optimization solution
+    auto z3Model = opt.get_model();
+    auto score = z3Model.eval(weightNetwork * cost_net + weightOverUtilization * overUtilizationPenalty).get_decimal_string(10);
+    NES_DEBUG("AdaptiveActiveStandby: ILP model: \n" << z3Model);
+    NES_DEBUG("AdaptiveActiveStandby: ILP Solver found solution with cost: " << score);
+
+    // 8. fill up the candidate maps according to the model
+    for (auto const& [topologyString, P] : placementVariables) {
+        if (z3Model.eval(P).get_numeral_int() == 1) {// means we place the operator in the node
+            int operatorId = std::stoi(topologyString.substr(0, topologyString.find(KEY_SEPARATOR)));
+            int topologyNodeId = std::stoi(topologyString.substr(topologyString.find(KEY_SEPARATOR) + 1));
+            OperatorNodePtr operatorNode = operatorMapILP[operatorId];
+
+            if (isSecondary(operatorNode)) {
+                pinSecondaryOperator(operatorId, topologyNodeId);
+                NES_DEBUG("AdaptiveActiveStandby: ILP solution: op " << operatorId << " -> node " << topologyNodeId);
+            }
+        }
+    }
 
     return std::stod(score);
 }
