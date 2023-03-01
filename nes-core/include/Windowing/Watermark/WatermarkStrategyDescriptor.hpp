@@ -67,8 +67,8 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     */
     template<class WatermarkStrategyType>
     std::shared_ptr<WatermarkStrategyType> as() const {
-        if (instanceOf<WatermarkStrategyType>()) {
-            return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
+        if (instanceOf<const WatermarkStrategyType>()) {
+            return std::dynamic_pointer_cast<const WatermarkStrategyType>(this->shared_from_this());
         }
         throw std::bad_cast();
     }

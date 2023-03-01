@@ -1808,8 +1808,9 @@ namespace NES {
             SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails) {
         NES_TRACE("OperatorSerializationUtil:: serialize watermark strategy ");
 
-        if (auto eventTimeWatermarkStrategyDescriptor =
-                watermarkStrategyDescriptor.as<const Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        if (watermarkStrategyDescriptor.instanceOf<const Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+            auto eventTimeWatermarkStrategyDescriptor =
+                    watermarkStrategyDescriptor.as<const Windowing::EventTimeWatermarkStrategyDescriptor>();
             auto serializedWatermarkStrategyDescriptor =
                     SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
             ExpressionSerializationUtil::serializeExpression(eventTimeWatermarkStrategyDescriptor->getOnField(),
@@ -1818,7 +1819,7 @@ namespace NES {
                     eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime());
             serializedWatermarkStrategyDescriptor.set_multiplier(eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
             watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
-        } else if (watermarkStrategyDescriptor.as<const Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        } else if (watermarkStrategyDescriptor.instanceOf<const Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
             auto serializedWatermarkStrategyDescriptor =
                     SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor();
             watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
