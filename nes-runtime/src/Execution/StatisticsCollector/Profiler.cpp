@@ -59,7 +59,12 @@ void Profiler::stopProfiling() {
 }
 
 uint64_t Profiler::getEventId(perf_hw_id event) {
-    return eventToIdMap[event];
+    if (eventToIdMap.contains(event)){
+        return eventToIdMap[event];
+    } else {
+        NES_THROW_RUNTIME_ERROR("Event not registered");
+    }
+
 }
 
 uint64_t Profiler::getCount(uint64_t eventId) const {

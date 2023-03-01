@@ -24,6 +24,11 @@ namespace NES::Runtime::Execution {
  */
 class PipelineRuntime : public Statistic {
   public:
+    /**
+     * @brief Initialize to collect the runtime of a pipeline with pipelineId.
+     * @param nautilusExecutablePipelineStage
+     * @param pipelineId id of the pipeline.
+     */
     PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
     void collect() override;
 

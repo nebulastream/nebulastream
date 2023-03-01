@@ -11,11 +11,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution {
+
+PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
+                                         uint64_t pipelineId)
+    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
+      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)), pipelineId(pipelineId) {}
 
 void PipelineSelectivity::collect() {
     auto numberOfInputTuples = nautilusExecutablePipelineStage->getNumberOfInputTuples();
@@ -36,11 +43,5 @@ void PipelineSelectivity::collect() {
 std::string PipelineSelectivity::getType() const {
     return "PipelineSelectivity";
 }
-
-PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
-                                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
-                                         uint64_t pipelineId)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)), pipelineId(pipelineId) {}
 
 } // namespace NES::Runtime::Execution

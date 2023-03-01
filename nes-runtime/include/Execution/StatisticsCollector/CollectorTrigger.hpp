@@ -34,7 +34,7 @@ class CollectorTrigger {
 
     /**
     * @brief Get the type of trigger.
-    * @return triggerType
+    * @return TriggerType
     */
     TriggerType getTriggerType();
 

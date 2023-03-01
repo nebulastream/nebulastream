@@ -21,17 +21,17 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief Implements a statistic that collects the runtime of a pipeline.
+ * @brief Implements a statistic that collects the branch misses of an operator.
  */
 class BranchMisses : public Statistic {
   public:
+    /**
+    * @brief Initialize to collect the branch misses of an operator.
+    * @param profiler instance of profiler that measures the cache misses.
+    */
     BranchMisses(Profiler profiler);
     void collect() override;
 
-    /**
-    * @brief Get the pipelineId of the pipeline for which the runtime is collected.
-    * @return pipelineId
-    */
     std::string getType() const override;
 
     void startProfiling();
