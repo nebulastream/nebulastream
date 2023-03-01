@@ -22,14 +22,9 @@
 
 namespace NES::Nautilus::Backends::WASM {
 
-struct BufferInfo {
-    std::shared_ptr<Runtime::TupleBuffer> tupleBuffer;
-    uint64_t memoryIndex = 0;
-    BufferInfo(std::shared_ptr<Runtime::TupleBuffer> tb, uint64_t index)
-        : tupleBuffer(std::move(tb)), memoryIndex(index) {};
-    BufferInfo() = default;
-};
-
+/**
+ * @brief The WebAssembly execution engine using wasmtime
+ */
 class WASMRuntime {
   public:
     explicit WASMRuntime(std::shared_ptr<WASMExecutionContext> ctx) : context(std::move(ctx)) {};
@@ -49,9 +44,11 @@ class WASMRuntime {
     std::shared_ptr<wasmtime::Func> execute = nullptr;
     std::unordered_map<std::shared_ptr<Runtime::TupleBuffer>, int64_t> tupleBuffers;
     std::shared_ptr<Runtime::TupleBuffer> lastTupleBuffer = nullptr;
+    bool enablePythonUDF = false;
 
     const char* cpythonFilePath = "/home/victor/wanes-engine/python/python3.11.wasm";
-    const std::string proxyFunctionModule = "ProxyFunction";
+    const std::string proxyFunctionModuleName = "ProxyFunction";
+    const std::string pythonModuleName = "cpython";
     const std::string functionName = "execute";
     std::string parseWATFile(const char* fileName);
     void prepareCPython();

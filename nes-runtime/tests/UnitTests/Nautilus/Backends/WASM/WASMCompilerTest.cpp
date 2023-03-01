@@ -328,10 +328,11 @@ TEST_F(WASMCompilerTest, loopFunctionTest) {
     wasmCompiler->lower(ir);
 }
 
-Value<> memRefExpression(Value<Int32> y) {
-    Value<Int32> x = y;
+Value<> memRefExpression(Value<UInt64> y) {
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(nullptr)));
     Runtime::Execution::RecordBuffer recordBuffer = Runtime::Execution::RecordBuffer(memRef);
+    recordBuffer.setNumRecords(y);
+    recordBuffer.setNumRecords((uint64_t)10);
     /*
     memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     if (y == 9) {
@@ -342,8 +343,8 @@ Value<> memRefExpression(Value<Int32> y) {
 }
 
 TEST_F(WASMCompilerTest, memRefExpressionTest) {
-    Value<Int32> tempx = 6;
-    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createInt32Stamp());
+    Value<UInt64> tempx = (uint64_t) 6;
+    tempx.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createUInt64Stamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([tempx]() {
         return memRefExpression(tempx);
     });

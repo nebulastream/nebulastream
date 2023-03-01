@@ -57,8 +57,6 @@ void WASMRuntime::setup() {
     engine = std::make_shared<Engine>(std::move(config));
     linker = std::make_shared<Linker>(*engine);
     store = std::make_shared<Store>(*engine);
-    //auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
-    //pyModule = std::make_shared<Module>(Module::compile(*engine, pyWat).unwrap());
 
     auto isPreOpened = wasiConfig->preopen_dir("/home/victor/wanes-engine/python", ".");
     if (!isPreOpened) {
@@ -71,15 +69,19 @@ void WASMRuntime::setup() {
     store->context().set_wasi(std::move(*wasiConfig)).unwrap();
     linker->define_wasi().unwrap();
 
+    if (enablePythonUDF) {
+        auto pyWat = parseWATFile("/home/victor/wanes-engine/python/python3.11.wat");
+        pyModule = std::make_shared<Module>(Module::compile(*engine, pyWat).unwrap());
+        prepareCPython();
+    }
     allocateBufferProxy();
     host_NES__Runtime__TupleBuffer__getBuffer();
     host_NES__Runtime__TupleBuffer__getBufferSize();
     host_NES__Runtime__TupleBuffer__getNumberOfTuples();
     host_NES__Runtime__TupleBuffer__setNumberOfTuples();
     host_emitBufferProxy();
-
-    //prepareCPython();
-    auto handCodedWat = parseWATFile("/home/victor/queries/map_optimized.wat");
+    
+    auto handCodedWat = parseWATFile("/home/victor/queries/tmp_opt.wat");
     Span query{(uint8_t*) context->getQueryBinary(), context->getBinaryLength()};
     //auto module = Module::compile(*engine, query).unwrap();
     auto module = Module::compile(*engine, handCodedWat).unwrap();
@@ -89,7 +91,6 @@ void WASMRuntime::setup() {
     //Pre-copy buffer into WASM linear memory
     if (context->tupleBuffer != nullptr) {
         auto mem = std::get<Memory>(*instance.get(*store, "memory"));
-        //auto bufferInfo = BufferInfo(context->tupleBuffer, 0);
         auto buffer = context->tupleBuffer->getBuffer();
         auto bufferSize = context->tupleBuffer->getBufferSize();
         std::copy(buffer, buffer + bufferSize, mem.data(*store).data());
@@ -103,7 +104,6 @@ void WASMRuntime::run() {
     ExternRef externref2(context->workerContext);
     ExternRef externref3(context->tupleBuffer);
     std::vector<Val> params{ externref1, externref2, externref3 };
-    //std::vector<Val> params{ (int64_t)1, (int64_t)2, (int64_t)3 };
     auto results = execute->call(*store, params).unwrap();
     if (!results.empty()) {
         auto res = *results[0].externref();
@@ -123,94 +123,103 @@ void WASMRuntime::close() {
 }
 
 void WASMRuntime::allocateBufferProxy() {
-    auto res = linker->func_new(proxyFunctionModule, "allocateBufferProxy", FuncType({ValKind::ExternRef}, {ValKind::ExternRef}),
+    auto res = linker->func_new(proxyFunctionModuleName,
+                                "allocateBufferProxy",
+                                FuncType({ValKind::ExternRef}, {ValKind::ExternRef}),
                                 [&](auto, auto params, auto results) {
-                                    ExternRef er = *params[0].externref();
-                                    auto workerContext = std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(er.data());
-                                    auto tbuffer = workerContext->allocateTupleBuffer();
-                                    auto tb = std::make_shared<Runtime::TupleBuffer>(tbuffer);
-                                    int64_t index = tupleBuffers[lastTupleBuffer] + (int64_t)lastTupleBuffer->getBufferSize();
-                                    tupleBuffers.emplace(tb, index);
-                                    lastTupleBuffer = tb;
-                                    ExternRef res(tb);
-                                    results[0] = res;
+                                    auto workerContextRef = *params[0].externref();
+                                    auto workerContextPtr =
+                                        std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(workerContextRef.data());
+                                    auto tupleBuffer = workerContextPtr->allocateTupleBuffer();
+                                    auto tupleBufferPtr = std::make_shared<Runtime::TupleBuffer>(tupleBuffer);
+                                    int64_t index = tupleBuffers[lastTupleBuffer] + (int64_t) lastTupleBuffer->getBufferSize();
+                                    tupleBuffers.emplace(tupleBufferPtr, index);
+                                    lastTupleBuffer = tupleBufferPtr;
+                                    ExternRef result(tupleBufferPtr);
+                                    results[0] = result;
                                     return std::monostate();
                                 });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__getBuffer() {
-    auto res = linker->func_new(proxyFunctionModule,
+    auto res = linker->func_new(proxyFunctionModuleName,
                                 "NES__Runtime__TupleBuffer__getBuffer",
                                 FuncType({ValKind::ExternRef}, {ValKind::I64}),
                                 [&](auto, auto params, auto results) {
-                                    ExternRef er = *params[0].externref();
-                                    auto tb = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
-                                    Val value(tupleBuffers[tb]);
-                                    results[0] = value;
+                                    ExternRef tupleBufferRef = *params[0].externref();
+                                    auto tupleBufferPtr =
+                                        std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(tupleBufferRef.data());
+                                    Val result(tupleBuffers[tupleBufferPtr]);
+                                    results[0] = result;
                                     return std::monostate();
                                 });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__getBufferSize() {
-    auto res = linker->func_new(proxyFunctionModule,
+    auto res = linker->func_new(proxyFunctionModuleName,
                                 "NES__Runtime__TupleBuffer__getBufferSize",
                                 FuncType({ValKind::I32}, {ValKind::I64}),
                                 [](auto, auto params, auto results) {
-                                    ExternRef er = *params[0].externref();
-                                    auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
-                                    auto bufferSize = tupleBuffer->getBufferSize();
-                                    Val value((int64_t)bufferSize);
-                                    results[0] = value;
+                                    ExternRef tupleBufferRef = *params[0].externref();
+                                    auto tupleBufferPtr =
+                                        std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(tupleBufferRef.data());
+                                    auto bufferSize = tupleBufferPtr->getBufferSize();
+                                    Val result((int64_t) bufferSize);
+                                    results[0] = result;
                                     return std::monostate();
                                 });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__getNumberOfTuples() {
-    auto res = linker->func_new(proxyFunctionModule,
+    auto res = linker->func_new(proxyFunctionModuleName,
                                 "NES__Runtime__TupleBuffer__getNumberOfTuples",
                                 FuncType({ValKind::ExternRef}, {ValKind::I64}),
                                 [](auto, auto params, auto results) {
-                                    ExternRef er = *params[0].externref();
-                                    auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
+                                    ExternRef tupleBufferRef = *params[0].externref();
+                                    auto tupleBuffer =
+                                        std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(tupleBufferRef.data());
                                     auto numTuples = tupleBuffer->getNumberOfTuples();
-                                    Val value((int64_t)numTuples);
-                                    results[0] = value;
+                                    Val result((int64_t) numTuples);
+                                    results[0] = result;
                                     return std::monostate();
                                 });
 }
 
 void WASMRuntime::host_NES__Runtime__TupleBuffer__setNumberOfTuples() {
-    auto res = linker->func_new(proxyFunctionModule,
+    auto res = linker->func_new(proxyFunctionModuleName,
                                 "NES__Runtime__TupleBuffer__setNumberOfTuples",
                                 FuncType({ValKind::ExternRef, ValKind::I64}, {}),
                                 [](auto, auto params, auto) {
-                                    ExternRef er = *params[0].externref();
+                                    ExternRef tupleBufferRef = *params[0].externref();
                                     auto numTuples = params[1].i64();
-                                    auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(er.data());
-                                    tupleBuffer->setNumberOfTuples((uint64_t)numTuples);
+                                    auto tupleBufferPtr =
+                                        std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(tupleBufferRef.data());
+                                    tupleBufferPtr->setNumberOfTuples((uint64_t) numTuples);
                                     return std::monostate();
                                 });
 }
 
 void WASMRuntime::host_emitBufferProxy() {
-    auto res = linker->func_new(proxyFunctionModule,
-                                "emitBufferProxy",
-                                FuncType({ValKind::ExternRef, ValKind::ExternRef, ValKind::ExternRef}, {}),
-                                [&](auto caller, auto params, auto) {
-                                    Memory memory = std::get<Memory>(*caller.get_export("memory"));
-                                    ExternRef erWcCtx = *params[0].externref();
-                                    ExternRef erPipelineCtx = *params[1].externref();
-                                    ExternRef erTBCtx = *params[2].externref();
-                                    auto wcCtx = std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(erWcCtx.data());
-                                    auto pipelineContext = std::any_cast<std::shared_ptr<Runtime::Execution::PipelineExecutionContext>>(erPipelineCtx.data());
-                                    auto tupleBuffer = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(erTBCtx.data());
-                                    uint64_t index = (int64_t)tupleBuffers[tupleBuffer];
-                                    tupleBuffer->setBuffer(memory.data(*store).data() + index);
-                                    if (tupleBuffer->getNumberOfTuples() != 0) {
-                                        pipelineContext->emitBuffer(*tupleBuffer, *wcCtx);
-                                    }
-                                    return std::monostate();
-                                });
+    auto res = linker->func_new(
+        proxyFunctionModuleName,
+        "emitBufferProxy",
+        FuncType({ValKind::ExternRef, ValKind::ExternRef, ValKind::ExternRef}, {}),
+        [&](auto caller, auto params, auto) {
+            Memory memory = std::get<Memory>(*caller.get_export("memory"));
+            ExternRef workerContextRef = *params[0].externref();
+            ExternRef pipelineContextRef = *params[1].externref();
+            ExternRef tupleBufferRef = *params[2].externref();
+            auto workerContextPtr = std::any_cast<std::shared_ptr<Runtime::WorkerContext>>(workerContextRef.data());
+            auto pipelineContextPtr =
+                std::any_cast<std::shared_ptr<Runtime::Execution::PipelineExecutionContext>>(pipelineContextRef.data());
+            auto tupleBufferPtr = std::any_cast<std::shared_ptr<Runtime::TupleBuffer>>(tupleBufferRef.data());
+            uint64_t index = (int64_t) tupleBuffers[tupleBufferPtr];
+            tupleBufferPtr->setBuffer(memory.data(*store).data() + index);
+            if (tupleBufferPtr->getNumberOfTuples() != 0) {
+                pipelineContextPtr->emitBuffer(*tupleBufferPtr, *workerContextPtr);
+            }
+            return std::monostate();
+        });
 }
 
 void WASMRuntime::prepareCPython() {
@@ -218,12 +227,10 @@ void WASMRuntime::prepareCPython() {
      * This host function overwrites the WASI function args_sizes_get which is called by the cpython wasm interpreter.
      * With this, we "trick" cpython into thinking that we have at least 1 function argument.
      */
-    auto argsSizesGet = linker->func_new("cpython",
+    auto argsSizesGet = linker->func_new(pythonModuleName,
                                         "args_sizes_get",
                                         FuncType({ValKind::I32, ValKind::I32}, {ValKind::I32}),
-                                        [](auto caller, auto params, auto results) {
-                                            (void) caller;
-                                            (void) params;
+                                        [](auto, auto, auto results) {
                                             results[0] = 0;
                                             return std::monostate();
                                         });
@@ -231,12 +238,10 @@ void WASMRuntime::prepareCPython() {
     /**
      * Same as for args_sizes_get.
      */
-    auto argsGet = linker->func_new("cpython",
+    auto argsGet = linker->func_new(pythonModuleName,
                                    "args_get",
                                    FuncType({ValKind::I32, ValKind::I32}, {ValKind::I32}),
-                                   [](auto caller, auto params, auto results) {
-                                       (void) caller;
-                                       (void) params;
+                                   [](auto, auto, auto results) {
                                        results[0] = 0;
                                        return std::monostate();
                                    });
@@ -244,19 +249,17 @@ void WASMRuntime::prepareCPython() {
     /**
      * This host function is called before python is invoked. It writes the arguments into a args file, which the python UDF
      * then accesses.
-     * For now allow UDFs with two arguments of type i32...
+     * For now allow UDFs with two arguments of type i32... TODO: Extend for n args
      */
-    auto prepareArgs = linker->func_new("cpython",
+    auto prepareArgs = linker->func_new(pythonModuleName,
                                        "prepare_args",
-                                       FuncType({ValKind::I32, ValKind::I32}, {}),
-                                       [](auto caller, auto params, auto results) {
-                                           (void) caller;
-                                           (void) results;
-                                           auto param0 = params[0].i32();
-                                           auto param1 = params[1].i32();
+                                       FuncType({ValKind::I64, ValKind::I64}, {}),
+                                       [](auto, auto params, auto) {
+                                           auto arg0 = params[0].i64();
+                                           auto arg1 = params[1].i64();
                                            std::ofstream file("/home/victor/wanes-engine/python/args.txt");
                                            if (file.is_open()) {
-                                               file << param0 << " " << param1;
+                                               file << arg0 << " " << arg1;
                                                file.close();
                                            } else {
                                                NES_ERROR("Python args file could not be opened")
@@ -266,10 +269,7 @@ void WASMRuntime::prepareCPython() {
     /**
      * This function actually calls the cpython wasm interpreter and executes a python UDF
      */
-    auto prepareCPython = linker->func_new("cpython", "cpython", FuncType({}, {ValKind::I32}), [&](auto caller, auto params, auto results) {
-        (void) caller;
-        (void) params;
-        (void) results;
+    auto prepareCPython = linker->func_new(pythonModuleName, "cpython", FuncType({}, {ValKind::I64}), [&](auto, auto, auto results) {
         auto pyInstance = linker->instantiate(*store, *pyModule).unwrap();
         auto pyExecute = std::get<Func>(*pyInstance.get(*store, "_start"));
         auto funcResult = pyExecute.call(*store, {}).unwrap();
@@ -277,7 +277,8 @@ void WASMRuntime::prepareCPython() {
         std::string res;
         if (file.is_open()) {
             getline(file, res);
-            results[0] = stoi(res);
+            Val result((int64_t)std::stoi(res));
+            results[0] = result;
             file.close();
         } else {
             NES_ERROR("Python args file could not be opened");

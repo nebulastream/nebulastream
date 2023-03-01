@@ -26,10 +26,11 @@ WASMCompiler::WASMCompiler() = default;
 std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<IR::IRGraph>& ir) {
     NES_INFO("Starting WASM lowering")
     wasm = BinaryenModuleCreate();
+    BinaryenSetDebugInfo(true);
     BinaryenSetColorsEnabled(true);
     BinaryenFeatures features = BinaryenFeatureAll();
     BinaryenModuleSetFeatures(wasm, features);
-    BinaryenSetOptimizeLevel(2);
+    BinaryenSetOptimizeLevel(4);
 
     relooper = RelooperCreate(wasm);
     consumed.clear();
@@ -41,10 +42,10 @@ std::shared_ptr<WASMExecutionContext> WASMCompiler::lower(const std::shared_ptr<
     if (!BinaryenModuleValidate(wasm)) {
         NES_THROW_RUNTIME_ERROR("Generated pre-optimized wasm is incorrect!");
     }
-    //BinaryenModulePrint(wasm);
+    BinaryenModulePrint(wasm);
     //BinaryenModulePrintStackIR(wasm, false);
     NES_INFO("------ Optimized WASM ------")
-    //BinaryenModuleOptimize(wasm);
+    BinaryenModuleOptimize(wasm);
     //BinaryenModulePrintStackIR(wasm, false);
     static char result[2048];
     auto wasmLength = BinaryenModuleWrite(wasm, result, 2048);
@@ -77,10 +78,10 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
                 argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeFloat32());
             }
         } else if (inputArg->getStamp()->isAddress()) {
-            //args.push_back(BinaryenTypeExternref());
-            //argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeExternref());
-            args.push_back(BinaryenTypeInt64());
-            argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeInt64());
+            args.push_back(BinaryenTypeExternref());
+            argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeExternref());
+            //args.push_back(BinaryenTypeInt64());
+            //argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeInt64());
         } else {
             args.push_back(BinaryenTypeInt64());
             argExpression = BinaryenLocalGet(wasm, localsIndex, BinaryenTypeInt64());
@@ -104,6 +105,9 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
     }
     BinaryenType arguments = BinaryenTypeCreate(argsArray.get(), funcArgsIndex);
 
+    // Add another i32 local for the Relooper algorithm
+    localVariables.setValue("relooper_var", BinaryenTypeInt32());
+
     /**
      * Extract variables and set them as locals
      */
@@ -113,7 +117,6 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
         varArray[numLocalsTypes] = mapping.second;
         numLocalsTypes++;
     }
-
     /**
      * TODO: We could skip this and just add all of them
      * Adding imports for proxy functions here
@@ -128,7 +131,6 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::FunctionOp
         BinaryenAddFunctionImport(wasm, proxyName.c_str(), proxyFunctionModule, proxyName.c_str(), params, returnType);
         types.push_back(returnType);
     }
-    //BinaryenAddTable(wasm, "table", 10, 10, BinaryenTypeExternref());
     /**
      * Memory stuff here, extract it later on
      */
@@ -279,7 +281,6 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddressOpe
                                 BinaryenExpressions& expressions) {
     auto x = addressOp->toString();
     auto y = expressions.size();
-    NES_INFO("HERE!!!")
     NES_INFO(x)
 }
 
@@ -290,7 +291,20 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::LoadOperat
 
     auto loadExpression = BinaryenLoad(wasm, 8, true, 0, 0, BinaryenTypeInt64(), ptr, memoryName);
     consumed.emplace(addressId, ptr);
-    expressions.setValue(loadOpId, loadExpression);
+
+    localVariables.setUniqueValue(loadOpId, BinaryenTypeInt64()); //TODO Derive return type from loadOp
+    ++localsIndex;
+    auto localSet =
+        BinaryenLocalSet(wasm,
+                         localsIndex,
+                         loadExpression);
+    auto localGet =
+        BinaryenLocalGet(wasm,
+                         localsIndex,
+                         BinaryenTypeInt64());
+    expressions.setValue(loadOpId + "_set", localSet);
+    expressions.setValue(loadOpId, localGet);
+    consumed.emplace(loadOpId, localGet);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::StoreOperation>& storeOp,
@@ -356,6 +370,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::AddOperati
     consumed.emplace(addOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(addOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(addOp->getIdentifier(), addExpression);
+    consumed.emplace(addOp->getIdentifier(), addExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::SubOperation>& subOp, BinaryenExpressions& expressions) {
@@ -375,6 +390,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::SubOperati
     consumed.emplace(subOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(subOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(subOp->getIdentifier(), subExpression);
+    consumed.emplace(subOp->getIdentifier(), subExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::MulOperation>& mulOp, BinaryenExpressions& expressions) {
@@ -394,6 +410,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::MulOperati
     consumed.emplace(mulOp->getLeftInput()->getIdentifier(), left);
     consumed.emplace(mulOp->getRightInput()->getIdentifier(), right);
     expressions.setValue(mulOp->getIdentifier(), mulExpression);
+    consumed.emplace(mulOp->getIdentifier(), mulExpression);
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::DivOperation>& divOp, BinaryenExpressions& expressions) {
@@ -427,28 +444,47 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::ProxyCallO
     std::vector<BinaryenExpressionRef> paramExpressions;
 
     for (const auto& arg : args) {
-        if (false && proxyCallName == "allocateBufferProxy") {
-            auto tmp = expressions.getValue(arg->getIdentifier());
-            paramsAndReturnType.push_back(BinaryenTypeExternref());
-        } else if (false && proxyCallName == "emitBufferProxy") {
-
-        } else {
-            auto paramType = getBinaryenType(arg->getStamp());
-            paramsAndReturnType.push_back(paramType);
-        }
+        auto paramType = getBinaryenType(arg->getStamp());
+        paramsAndReturnType.push_back(paramType);
         auto argId = arg->getIdentifier();
         auto argExpression = expressions.getValue(argId);
         paramExpressions.push_back(argExpression);
         consumed.emplace(argId, argExpression);
     }
-
-    auto returnType = getBinaryenType(proxyCallOp->getStamp());
-
+    // getBuffer is a special case. The stamp is an address, but we need to return an i64, which is the position
+    // of the buffer in WASMs linear memory
+    BinaryenType returnType;
+    if (proxyCallOp->getFunctionSymbol() == "NES__Runtime__TupleBuffer__getBuffer") {
+        returnType = BinaryenTypeInt64();
+    } else {
+        returnType = getBinaryenType(proxyCallOp->getStamp());
+    }
     paramsAndReturnType.push_back(returnType);
+
     auto proxyCall = BinaryenCall(wasm, proxyCallName.c_str(), paramExpressions.data(), paramExpressions.size(), returnType);
 
     proxyFunctions.setUniqueValue(proxyCallName, paramsAndReturnType);
-    expressions.setValue(proxyCallId, proxyCall);
+
+    // If a proxy function returns something, save it as a local to avoid redundant function calls.
+    // Set (proxyCallId, local.get), so if subsequent expressions require the result from the proxy function, they
+    // use local.get instead of call <proxy_function_name>
+    if (returnType != BinaryenTypeNone()) {
+        localVariables.setUniqueValue(proxyCallId, returnType);
+        auto localSet =
+            BinaryenLocalSet(wasm,
+                             localsIndex,
+                             proxyCall);
+        auto localGet =
+            BinaryenLocalGet(wasm,
+                             localsIndex,
+                             returnType);
+        ++localsIndex;
+        expressions.setValue(proxyCallId + "_set", localSet);
+        expressions.setValue(proxyCallId, localGet);
+        consumed.emplace(proxyCallId, localGet);
+    } else {
+        expressions.setValue(proxyCallId, proxyCall);
+    }
 }
 
 void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::CompareOperation>& compareOp,
@@ -608,6 +644,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::BranchOper
             localsIndex++;
         }
         blockArgs.setValue(nextTrueArguments[i]->getIdentifier(), localGet);
+        consumed.emplace(nextTrueArguments[i]->getIdentifier(), localGet);
     }
     blockLinking.emplace_back(
         std::make_tuple(currentBlock->getIdentifier(), branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), nullptr));
@@ -662,6 +699,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::IfOperatio
             }
         }
         trueBlockArgs.setValue(nextTrue[i]->getIdentifier(), localGet);
+        consumed.emplace(nextTrue[i]->getIdentifier(), localGet);
     }
 
     auto currentFalse = ifOp->getFalseBlockInvocation().getArguments();
@@ -696,6 +734,7 @@ void WASMCompiler::generateWASM(const std::shared_ptr<IR::Operations::IfOperatio
             }
         }
         falseBlockArgs.setValue(nextFalse[i]->getIdentifier(), localGet);
+        consumed.emplace(nextFalse[i]->getIdentifier(), localGet);
     }
     generateBody(expressions);
     generateBasicBlock(ifOp->getTrueBlockInvocation(), trueBlockArgs);
@@ -743,7 +782,8 @@ BinaryenType WASMCompiler::getBinaryenType(const IR::Types::StampPtr& stampPtr) 
         return BinaryenTypeInt32();
     } else {
         //pointer
-        return BinaryenTypeInt64();
+        //return BinaryenTypeInt64();
+        return BinaryenTypeExternref();
     }
 }
 
@@ -761,7 +801,7 @@ BinaryenExpressionRef WASMCompiler::generateCFG() {
             RelooperAddBranch(relooperBlocks.getValue(fromBlock), relooperBlocks.getValue(toBlock), nullptr, nullptr);
         }
     }
-    return RelooperRenderAndDispose(relooper, relooperBlocks[0].second, 0);
+    return RelooperRenderAndDispose(relooper, relooperBlocks[0].second, localVariables.size() - 1);
 }
 
 }// namespace NES::Nautilus::Backends::WASM
