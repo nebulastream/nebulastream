@@ -18,4 +18,5 @@ add_source_files(nes-runtime
                 PipelineRuntime.cpp
                 CollectorTrigger.cpp
                 Profiler.cpp
-                BranchMisses.cpp)
+                BranchMisses.cpp
+                CacheMisses.cpp)

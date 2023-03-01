@@ -11,8 +11,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ConstantIntegerExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -27,6 +25,9 @@ limitations under the License.
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
+#include <Execution/StatisticsCollector/CacheMisses.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
@@ -323,7 +324,7 @@ TEST_P(StatisticsCollectorTest, testProfiler) {
 }
 
 /**
- * @brief test the statistics branch and cache
+ * @brief test the statistics branch misses and cache misses
  */
 TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -384,9 +385,10 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     std::vector<perf_hw_id> events;
     events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
     events.push_back(PERF_COUNT_HW_CACHE_MISSES);
-    Profiler profiler = Profiler(events);
+    auto profiler = std::make_shared<Profiler>(events);
 
-    auto branchMisses = std::make_shared<BranchMisses>(profiler);
+    auto branchMisses = std::make_unique<BranchMisses>(profiler);
+    auto cacheMisses = std::make_unique<CacheMisses>(profiler);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     //statisticsCollector->addStatistic(std::move(branchMisses));
@@ -396,6 +398,7 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
         branchMisses->startProfiling();
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
         branchMisses->collect();
+        cacheMisses->collect();
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 

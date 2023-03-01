@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_CACHEMISSES_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_CACHEMISSES_HPP_
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
@@ -21,15 +21,15 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 /**
- * @brief Implements a statistic that collects the branch misses of an operator.
+ * @brief Implements a statistic that collects the cache misses of an operator.
  */
-class BranchMisses : public Statistic {
+class CacheMisses : public Statistic {
   public:
     /**
-    * @brief Initialize to collect the branch misses of an operator.
-    * @param profiler instance of profiler that measures the cache misses.
+    * @brief Initialize to collect the cache misses of an operator.
+    * @param profiler instance of profiler that measures the branch misses.
     */
-    BranchMisses(std::shared_ptr<Profiler> profiler);
+    CacheMisses(std::shared_ptr<Profiler> profiler);
     void collect() override;
 
     std::string getType() const override;
@@ -42,4 +42,4 @@ class BranchMisses : public Statistic {
 };
 
 }// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_BRANCHMISSES_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_CACHEMISSES_HPP_

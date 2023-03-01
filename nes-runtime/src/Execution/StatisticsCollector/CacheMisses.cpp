@@ -13,25 +13,25 @@ limitations under the License.
 */
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Execution/StatisticsCollector/BranchMisses.hpp>
+#include <Execution/StatisticsCollector/CacheMisses.hpp>
 
 namespace NES::Runtime::Execution {
 
-BranchMisses::BranchMisses(std::shared_ptr<Profiler> profiler) : profiler(profiler) {
-    eventId = profiler->getEventId(PERF_COUNT_HW_BRANCH_MISSES);
+CacheMisses::CacheMisses(std::shared_ptr<Profiler> profiler) : profiler(profiler) {
+    eventId = profiler->getEventId(PERF_COUNT_HW_CACHE_MISSES);
 }
 
-void BranchMisses::collect(){
+void CacheMisses::collect(){
     profiler->stopProfiling();
 
-    std::cout << "BranchMisses: " << profiler->getCount(eventId) << std::endl;
+    std::cout << "Cache Misses: " << profiler->getCount(eventId) << std::endl;
 }
 
-std::string BranchMisses::getType() const {
-    return "BranchMisses";
+std::string CacheMisses::getType() const {
+    return "CacheMisses";
 }
 
-void BranchMisses::startProfiling() {
+void CacheMisses::startProfiling() {
     profiler->startProfiling();
 }
 
