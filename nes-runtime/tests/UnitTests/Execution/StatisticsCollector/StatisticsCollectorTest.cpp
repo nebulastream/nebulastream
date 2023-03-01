@@ -127,8 +127,10 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
 
-    auto adwin = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
+    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
 
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
@@ -137,7 +139,7 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
 
     // initialize statistics pipeline selectivity and pipeline runtime
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage, pipelineId);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
@@ -224,8 +226,10 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
         }
     }
 
-    auto adwin = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
+    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
 
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
@@ -236,7 +240,7 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     auto pipelineId = pipelineContext.getPipelineID();
 
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(nautilusExecutablePipelineStage, pipelineId);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, pipelineId);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     statisticsCollector->addStatistic(std::move(pipelineSelectivity));
@@ -382,13 +386,18 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
+    auto adwinBranch = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapperBranch = std::make_unique<ChangeDetectorWrapper>(std::move(adwinBranch));
+    auto adwinCache = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapperCache = std::make_unique<ChangeDetectorWrapper>(std::move(adwinCache));
+
     std::vector<perf_hw_id> events;
     events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
     events.push_back(PERF_COUNT_HW_CACHE_MISSES);
     auto profiler = std::make_shared<Profiler>(events);
 
-    auto branchMisses = std::make_unique<BranchMisses>(profiler);
-    auto cacheMisses = std::make_unique<CacheMisses>(profiler);
+    auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler);
+    auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     //statisticsCollector->addStatistic(std::move(branchMisses));

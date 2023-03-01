@@ -22,7 +22,8 @@ PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> 
                                          std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                                          uint64_t pipelineId)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)), pipelineId(pipelineId) {}
+      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)),
+      pipelineId(pipelineId) {}
 
 void PipelineSelectivity::collect() {
     auto numberOfInputTuples = nautilusExecutablePipelineStage->getNumberOfInputTuples();

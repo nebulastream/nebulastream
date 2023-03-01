@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 
 namespace NES::Runtime::Execution {
 /**
@@ -29,7 +30,9 @@ class PipelineRuntime : public Statistic {
      * @param nautilusExecutablePipelineStage
      * @param pipelineId id of the pipeline.
      */
-    PipelineRuntime(std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage, uint64_t pipelineId);
+    PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                    std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
+                    uint64_t pipelineId);
     void collect() override;
 
     /**
@@ -40,6 +43,7 @@ class PipelineRuntime : public Statistic {
     std::string getType() const override;
 
   private:
+    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
     const uint64_t pipelineId;
 };

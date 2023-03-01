@@ -18,6 +18,7 @@ limitations under the License.
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 
 namespace NES::Runtime::Execution {
 /**
@@ -29,7 +30,7 @@ class CacheMisses : public Statistic {
     * @brief Initialize to collect the cache misses of an operator.
     * @param profiler instance of profiler that measures the branch misses.
     */
-    CacheMisses(std::shared_ptr<Profiler> profiler);
+    CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler);
     void collect() override;
 
     std::string getType() const override;
@@ -37,6 +38,7 @@ class CacheMisses : public Statistic {
     void startProfiling();
 
   private:
+    std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     std::shared_ptr<Profiler> profiler;
     uint64_t eventId;
 };
