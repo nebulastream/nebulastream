@@ -70,7 +70,7 @@ class QuerySignature {
     static QuerySignaturePtr create(z3::ExprPtr&& conditions,
                                     std::vector<std::string>&& columns,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions);
+                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions, z3::expr_vector&& containmentFOL);
 
     /**
      * @brief Get the conditions
@@ -90,6 +90,8 @@ class QuerySignature {
      */
     const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaFieldToExprMaps();
 
+    z3::expr_vector& getContainmentFOL();
+
     /**
      * @brief Get the window definitions
      * @return map of window definitions
@@ -100,7 +102,8 @@ class QuerySignature {
     QuerySignature(z3::ExprPtr&& conditions,
                    std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                   std::map<std::string, z3::ExprPtr>&& windowsExpressions);
+                   std::map<std::string, z3::ExprPtr>&& windowsExpressions,
+                   z3::expr_vector&& containmentFOL);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
@@ -114,6 +117,7 @@ class QuerySignature {
      */
     std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
+    z3::expr_vector containmentFOL;
 };
 }// namespace NES::Optimizer
 

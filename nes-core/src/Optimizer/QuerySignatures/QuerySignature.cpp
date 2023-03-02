@@ -20,19 +20,21 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
                                          std::vector<std::string>&& columns,
                                          std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
+                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions, z3::expr_vector&& containmentFOL) {
     return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions),
                                                            std::move(columns),
                                                            std::move(schemaFieldToExprMaps),
-                                                           std::move(windowsExpressions)));
+                                                           std::move(windowsExpressions),
+                                                           std::move(containmentFOL)));
 }
 
 QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
                                std::vector<std::string>&& columns,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                               std::map<std::string, z3::ExprPtr>&& windowsExpressions)
+                               std::map<std::string, z3::ExprPtr>&& windowsExpressions,
+                               z3::expr_vector&& containmentFOL)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
-      windowsExpressions(std::move(windowsExpressions)) {}
+      windowsExpressions(std::move(windowsExpressions)), containmentFOL(std::move(containmentFOL)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
@@ -43,4 +45,9 @@ const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions(
 const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
     return schemaFieldToExprMaps;
 }
+
+z3::expr_vector& QuerySignature::getContainmentFOL() {
+    return containmentFOL;
+}
+
 }// namespace NES::Optimizer

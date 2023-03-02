@@ -84,6 +84,11 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
              Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor),
              Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor)),
          Optimizer::ContainmentType::LEFT_SIG_CONTAINED},
+        //Sig1 contains Sig2 //todo: left sig contains right sig is wrong need to change signature creation for this to work properly
+        /*{std::tuple<Query, Query>(
+             Query::from("car").map(Attribute("value") = 40).sink(printSinkDescriptor),
+             Query::from("car").map(Attribute("value") = 40).project(Attribute("value")).sink(printSinkDescriptor)),
+         Optimizer::ContainmentType::RIGHT_SIG_CONTAINED},*/
         //No containment due to different transformations
         {std::tuple<Query, Query>(Query::from("car")
                                       .map(Attribute("value") = 40)
@@ -223,7 +228,37 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
                                       .equalsTo(Attribute("id"))
                                       .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                                       .sink(printSinkDescriptor)),
-         Optimizer::ContainmentType::NO_CONTAINMENT}};
+         Optimizer::ContainmentType::NO_CONTAINMENT},/*
+        //
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .filter(Attribute("value") < 5)
+                                      .joinWith(Query::from("bike"))
+                                      .where(Attribute("id1"))
+                                      .equalsTo(Attribute("id"))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .joinWith(Query::from("bike"))
+                                      .where(Attribute("id1"))
+                                      .equalsTo(Attribute("id"))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .filter(Attribute("value") < 5)
+                                      .sink(printSinkDescriptor)),
+         Optimizer::NO_CONTAINMENT},
+        //
+        {std::tuple<Query, Query>(Query::from("car")
+                                      .joinWith(Query::from("bike"))
+                                      .where(Attribute("id1"))
+                                      .equalsTo(Attribute("id"))
+                                      .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+                                      .sink(printSinkDescriptor),
+                                  Query::from("car")
+                                      .joinWith(Query::from("bike"))
+                                      .where(Attribute("id1"))
+                                      .equalsTo(Attribute("id"))
+                                      .window(SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000), Milliseconds(1000)))
+                                      .sink(printSinkDescriptor)),
+         Optimizer::EQUALITY}*/};
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -254,7 +289,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
  * @brief tests if the correct containment relationship is returned by the signature containment util
  */
 TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
-    std::vector<Optimizer::ContainmentType> resultList;
+    uint16_t counter = 0;
     for (auto entry : containmentCasesMixed) {
         auto queries = get<0>(entry);
         QueryPlanPtr queryPlanSQPQuery = get<0>(queries).getQueryPlan();
@@ -279,6 +314,8 @@ TEST_F(QueryContainmentIdentificationTest, testContainmentIdentification) {
         Optimizer::ContainmentType containment =
             signatureContainmentUtil->checkContainment(sqpSink->getZ3Signature(), newSink->getZ3Signature());
         NES_TRACE("Z3SignatureBasedContainmentBasedCompleteQueryMergerRule: containment: " << magic_enum::enum_name(containment));
+        NES_TRACE("Query pairing number: " << counter);
         ASSERT_EQ(containment, get<1>(entry));
+        counter++;
     }
 }
