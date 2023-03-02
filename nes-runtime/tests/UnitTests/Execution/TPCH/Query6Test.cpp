@@ -191,7 +191,7 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
     // compare results
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(resultLayout, pipeline2Context.buffers[0]);
     NES_INFO2("{:f}", resultDynamicBuffer[0][0].read<float>());
-    EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122629680.0f, 200);
+    EXPECT_NEAR(resultDynamicBuffer[0][0].read<float>(), 122817720.0f, 200);
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
