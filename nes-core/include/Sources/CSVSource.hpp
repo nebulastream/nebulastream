@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>

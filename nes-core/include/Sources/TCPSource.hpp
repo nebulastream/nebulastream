@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>

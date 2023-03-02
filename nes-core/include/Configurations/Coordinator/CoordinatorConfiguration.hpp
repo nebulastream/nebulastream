@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
