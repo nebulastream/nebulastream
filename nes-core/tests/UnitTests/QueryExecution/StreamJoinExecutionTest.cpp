@@ -17,7 +17,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Util/TestUtils.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution {
 

@@ -11,17 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NesBaseTest.hpp>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/Identifiers.hpp>
+#include <NesBaseTest.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 

@@ -15,6 +15,7 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cstdio>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>

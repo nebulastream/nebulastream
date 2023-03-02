@@ -19,13 +19,11 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <NesBaseTest.hpp>
-#include <REST/ServerTypes.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/MetricValidator.hpp>
-#include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
 #include <cstdint>
 #include <gtest/gtest.h>

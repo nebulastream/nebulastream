@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -34,7 +35,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
-
+namespace NES {
 class MaterializedViewTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
@@ -219,3 +220,4 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Test finished");
 }
+}// namespace NES

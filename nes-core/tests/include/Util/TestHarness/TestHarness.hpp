@@ -15,19 +15,12 @@
 #ifndef NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_CORE_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
-#include <API/QueryAPI.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Services/QueryService.hpp>
-#include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
+
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Services/QueryService.hpp>
 #include <filesystem>
-#include <gtest/gtest.h>
 #include <type_traits>
 #include <utility>
 
@@ -35,6 +28,9 @@
  * @brief This test harness wrap query deployment test in our test framework.
  */
 namespace NES {
+
+class CSVSourceType;
+using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 
 /// Create compile-time tests that allow checking a specific function's type for a specific function by calling
 ///     [function-name]CompilesFromType<Return Type, Types of arguments, ...>

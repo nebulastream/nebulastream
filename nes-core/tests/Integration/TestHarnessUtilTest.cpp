@@ -11,19 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <gtest/gtest.h>//
-
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <gmock/gmock-matchers.h>
+#include <gtest/gtest.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <gmock/gmock.h>
-
-#pragma clang diagnostic pop
-#include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES {
 
 using namespace Configurations;

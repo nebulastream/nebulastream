@@ -16,6 +16,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -31,7 +32,6 @@
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
@@ -59,7 +59,8 @@ using namespace std;
 
 namespace NES {
 using Runtime::TupleBuffer;
-
+class QueryParsingService;
+using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 32 * 1024;
 

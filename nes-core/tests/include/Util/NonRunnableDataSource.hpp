@@ -1,0 +1,74 @@
+//
+// Created by pgrulich on 02.03.23.
+//
+
+#ifndef NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#define NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+
+namespace NES {
+
+class NonRunnableDataSource : public NES::DefaultSource {
+  public:
+    explicit NonRunnableDataSource(const SchemaPtr& schema,
+                                   const Runtime::BufferManagerPtr& bufferManager,
+                                   const Runtime::QueryManagerPtr& queryManager,
+                                   uint64_t numbersOfBufferToProduce,
+                                   uint64_t gatheringInterval,
+                                   OperatorId operatorId,
+                                   OriginId originId,
+                                   size_t numSourceLocalBuffers,
+                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+        : DefaultSource(schema,
+                        bufferManager,
+                        queryManager,
+                        numbersOfBufferToProduce,
+                        gatheringInterval,
+                        operatorId,
+                        originId,
+                        numSourceLocalBuffers,
+                        successors) {
+        wasGracefullyStopped = NES::Runtime::QueryTerminationType::HardStop;
+    }
+
+    void runningRoutine() override {
+        open();
+        completedPromise.set_value(canTerminate.get_future().get());
+        close();
+    }
+
+    bool stop(Runtime::QueryTerminationType termination) override {
+        canTerminate.set_value(true);
+        return NES::DefaultSource::stop(termination);
+    }
+
+    Runtime::MemoryLayouts::DynamicTupleBuffer getBuffer() { return allocateBuffer(); }
+
+    void emitBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+        auto buf = buffer.getBuffer();
+        DataSource::emitWorkFromSource(buf);
+    }
+
+  private:
+    std::promise<bool> canTerminate;
+};
+
+DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
+                                      const Runtime::BufferManagerPtr& bufferManager,
+                                      const Runtime::QueryManagerPtr& queryManager,
+                                      OperatorId operatorId,
+                                      OriginId originId,
+                                      size_t numSourceLocalBuffers,
+                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<NonRunnableDataSource>(schema,
+                                                   bufferManager,
+                                                   queryManager,
+                                                   /*bufferCnt*/ 1,
+                                                   /*frequency*/ 1000,
+                                                   operatorId,
+                                                   originId,
+                                                   numSourceLocalBuffers,
+                                                   successors);
+}
+}
+
+#endif//NES_NES_CORE_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

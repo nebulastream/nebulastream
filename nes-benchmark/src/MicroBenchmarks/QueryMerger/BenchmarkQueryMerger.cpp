@@ -30,6 +30,7 @@
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <Version/version.hpp>
 #include <fstream>

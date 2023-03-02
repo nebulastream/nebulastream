@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>

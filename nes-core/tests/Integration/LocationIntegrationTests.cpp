@@ -12,20 +12,18 @@
     limitations under the License.
 */
 
-#include <iostream>
-
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
-#include <Configurations/WorkerConfigurationKeys.hpp>
-#include <Configurations/WorkerPropertyKeys.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NesBaseTest.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Spatial/DataTypes/GeoLocation.hpp>
@@ -38,13 +36,12 @@
 #include <Spatial/Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Spatial/Mobility/WorkerMobilityHandler.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/Experimental/S2Utilities.hpp>
 #include <Util/Experimental/SpatialType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
+#include <iostream>
 
 using std::map;
 using std::string;
