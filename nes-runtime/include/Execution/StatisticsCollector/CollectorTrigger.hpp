@@ -30,7 +30,9 @@ class CollectorTrigger {
     * @brief creates a trigger of a certain type.
     * @param triggerType type of the trigger.
     */
-    explicit CollectorTrigger(TriggerType triggerType);
+    CollectorTrigger(TriggerType triggerType);
+
+    CollectorTrigger(TriggerType triggerType, uint64_t id);
 
     /**
     * @brief Get the type of trigger.
@@ -38,10 +40,13 @@ class CollectorTrigger {
     */
     TriggerType getTriggerType();
 
+    uint64_t getId();
+
     std::string getTypeAsString();
 
   private:
     TriggerType triggerType;
+    uint64_t id;
 
 };
 

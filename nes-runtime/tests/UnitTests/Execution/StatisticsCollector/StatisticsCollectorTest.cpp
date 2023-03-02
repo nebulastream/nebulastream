@@ -153,8 +153,8 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
 
     // create a statistics collector and add the statistics to its list
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    statisticsCollector->addStatistic(std::move(pipelineSelectivity));
-    statisticsCollector->addStatistic(std::move(pipelineRuntime));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
 
     ASSERT_EQ(pipelineContext.buffers.size(), 3);
     auto resultBuffer = pipelineContext.buffers[0];
@@ -243,10 +243,10 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, pipelineId);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    statisticsCollector->addStatistic(std::move(pipelineSelectivity));
-    statisticsCollector->addStatistic(std::move(pipelineRuntime));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
 
-    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger);
+    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
@@ -488,9 +488,9 @@ TEST_P(StatisticsCollectorTest, changeDetection) {
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    statisticsCollector->addStatistic(std::move(pipelineSelectivity));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
 
-    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger);
+    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {

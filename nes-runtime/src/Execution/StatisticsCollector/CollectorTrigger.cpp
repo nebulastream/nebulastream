@@ -15,10 +15,16 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-CollectorTrigger::CollectorTrigger(TriggerType triggerType) : triggerType(triggerType) {}
+CollectorTrigger::CollectorTrigger(TriggerType triggerType) : triggerType(triggerType), id(0) {}
+
+CollectorTrigger::CollectorTrigger(TriggerType triggerType, uint64_t id) : triggerType(triggerType), id(id) {};
 
 TriggerType CollectorTrigger::getTriggerType() {
     return triggerType;
+}
+
+uint64_t CollectorTrigger::getId() {
+    return id;
 }
 
 std::string CollectorTrigger::getTypeAsString() {

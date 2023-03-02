@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/StatisticsCollector/CollectorTrigger.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
@@ -73,15 +74,15 @@ uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
     return 0;
 }
 
-uint64_t NautilusExecutablePipelineStage::getNumberOfInputTuples(){
+uint64_t NautilusExecutablePipelineStage::getNumberOfInputTuples() const{
     return numberOfInputTuples;
 }
 
-uint64_t NautilusExecutablePipelineStage::getNumberOfOutputTuples(){
+uint64_t NautilusExecutablePipelineStage::getNumberOfOutputTuples() const{
     return numberOfOutputTuples;
 }
 
-uint64_t NautilusExecutablePipelineStage::getRuntimePerBuffer(){
+uint64_t NautilusExecutablePipelineStage::getRuntimePerBuffer() const{
     return runtimePerBuffer;
 }
 

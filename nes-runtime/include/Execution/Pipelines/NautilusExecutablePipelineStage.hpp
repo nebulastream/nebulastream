@@ -38,9 +38,9 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
     uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    uint64_t getNumberOfInputTuples();
-    uint64_t getNumberOfOutputTuples();
-    uint64_t getRuntimePerBuffer();
+    [[nodiscard]] uint64_t getNumberOfInputTuples() const;
+    uint64_t getNumberOfOutputTuples() const;
+    uint64_t getRuntimePerBuffer() const;
 
     /**
      * @deprecated This method will be removed as it is not applicable to the new compilation backend.
@@ -48,9 +48,9 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
     std::string getCodeAsString() override;
 
   private:
-    uint64_t numberOfInputTuples;
-    uint64_t numberOfOutputTuples;
-    uint64_t runtimePerBuffer;
+    uint64_t numberOfInputTuples{};
+    uint64_t numberOfOutputTuples{};
+    uint64_t runtimePerBuffer{};
 
   protected:
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;

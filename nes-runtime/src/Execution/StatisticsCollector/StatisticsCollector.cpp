@@ -13,40 +13,37 @@ limitations under the License.
 */
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/CollectorTrigger.hpp>
-#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
-#include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/Statistic.hpp>
 #include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <string>
 
 namespace NES::Runtime::Execution {
 
-void StatisticsCollector::addStatistic(std::shared_ptr<Statistic> statistic) {
-    listOfStatistics.push_back(statistic);
+void StatisticsCollector::addStatistic(uint64_t id, std::shared_ptr<Statistic> statistic){
+    if (idToStatisticMap.find(id) == idToStatisticMap.end()){
+        idToStatisticMap.insert(std::make_pair(id,std::vector<std::shared_ptr<Statistic>>{statistic}));
+    } else {
+        idToStatisticMap[id].push_back(statistic);
+    }
 }
 
 void StatisticsCollector::updateStatisticsHandler(CollectorTrigger trigger) {
-
     TriggerType type = trigger.getTriggerType();
-    std::string statisticType;
-    for (const auto& stat : listOfStatistics) {
-        statisticType = stat->getType();
-        if(type == Execution::PipelineStatisticsTrigger){
-            if (statisticType == "PipelineSelectivity" ){
-                stat->collect();
-                //auto pipelineSelectivity = std::dynamic_pointer_cast<PipelineSelectivity>(stat);
-                //pipelineSelectivity->collect();
-            } else if (statisticType == "PipelineRuntime" ){
-                auto pipelineRuntime = std::dynamic_pointer_cast<PipelineRuntime>(stat);
-                pipelineRuntime->collect();
+    uint64_t id = trigger.getId();
+
+    if (id != 0) {
+        auto statisticsMapEntry = idToStatisticMap.find(id);
+
+        if (statisticsMapEntry != idToStatisticMap.end()) {
+            if (type == Execution::PerformanceStartTrigger){
+                auto perfStatistics = std::dynamic_pointer_cast<BranchMisses>(statisticsMapEntry->second[0]);
+                perfStatistics->startProfiling();
+                return;
+            } else if (type == Execution::PipelineStatisticsTrigger || type == Execution::PerformanceEndTrigger) {
+                for (std::shared_ptr<Statistic> statistic : statisticsMapEntry->second) {
+                    statistic->collect();
+                }
             }
-            break ;
-        } else if (type == Execution::PerformanceStartTrigger && statisticType == "PerformanceStatistics") {
-            auto perfStatistics = std::dynamic_pointer_cast<BranchMisses>(stat);
-            perfStatistics->startProfiling();
-            break ;
-        } else if (type == Execution::PerformanceEndTrigger && statisticType == "PerformanceStatistics") {
-            stat->collect();
         }
     }
 }

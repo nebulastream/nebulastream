@@ -28,13 +28,13 @@ class StatisticsCollector {
     /**
      * @brief Constructor for the StatisticsCollector.
      */
-    StatisticsCollector() : listOfStatistics(){};
+    StatisticsCollector() : idToStatisticMap(){};
 
     /**
      * @brief Adds a statistic that should be collected to the list of statistics.
      * @param statistic that should be collected.
      */
-    void addStatistic(std::shared_ptr<Statistic> statistic);
+    void addStatistic(uint64_t id, std::shared_ptr<Statistic> statistic);
 
     /**
      * @brief Handles different triggers that trigger the collection of a statistic.
@@ -43,7 +43,7 @@ class StatisticsCollector {
     void updateStatisticsHandler(CollectorTrigger trigger);
 
   private:
-    std::vector<std::shared_ptr<Statistic>> listOfStatistics;
+    std::map<uint64_t,std::vector<std::shared_ptr<Statistic>>> idToStatisticMap;
 };
 
 }// namespace NES::Runtime::Execution
