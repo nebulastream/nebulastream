@@ -79,17 +79,17 @@ class SignatureContainmentUtil {
      * else we indicate that the attribute is involved in the projection as attributeStingName == true
      * all FOL are added to the projectionCondition vector
      * @param signature Query signature to extract conditions from
-     * @param projectionCondition z3 expression vector to add conditions to
+     * @param projectionFOL z3 expression vector to add conditions to
      */
-    void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionCondition);
+    void createProjectionCondition(const QuerySignaturePtr& signature, z3::expr_vector& projectionFOL);
 
     /**
      * @brief creates conditions for checking window containment:
      * all FOL are added to the projectionCondition vector
      * @param signature Query signature to extract conditions from
-     * @param windowCondition z3 expression vector to add conditions to
+     * @param windowFOL z3 expression vector to add conditions to
      */
-    void createWindowCondition(const QuerySignaturePtr& signature, z3::expr_vector& windowCondition);
+    void createWindowCondition(const QuerySignaturePtr& signature, z3::expr_vector& windowFOL);
 
     /**
      * @brief check for filter containment as follows:
@@ -104,7 +104,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    //ContainmentType checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for window containment as follows:
@@ -119,7 +119,7 @@ class SignatureContainmentUtil {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
+    //ContainmentType checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions and non negated conditions is unsatisfiable
@@ -128,8 +128,8 @@ class SignatureContainmentUtil {
      * @param condition condition that will just be added to the solver as it is
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool containmentConditionsUnsatisfied(const z3::expr_vector& negatedCondition,
-                              const z3::expr_vector& condition);
+    bool containmentConditionsUnsatisfied( z3::expr_vector& negatedCondition,
+                               z3::expr_vector& condition);
 
     /**
      * @brief checks if the combination (combined via &&) of negated conditions is unsatisfiable
@@ -138,8 +138,8 @@ class SignatureContainmentUtil {
      * @param rightConditions condition that will be negated
      * @return true if the combination of the given conditions is unsatisfiable, false otherwise
      */
-    bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions,
-                                          const z3::expr_vector& rightConditions);
+    /*bool equalityConditionsUnsatisfied(const z3::expr_vector& leftConditions,
+                                          const z3::expr_vector& rightConditions);*/
 
     /**
      * @brief Reset z3 solver
