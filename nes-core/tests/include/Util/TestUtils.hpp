@@ -18,21 +18,15 @@
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/Identifiers.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <REST/ServerTypes.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <Spatial/DataTypes/Waypoint.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <chrono>
-#include <cpr/cpr.h>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -47,6 +41,14 @@ using namespace std::string_literals;
 
 namespace NES {
 static const char* BASE_URL = "http://127.0.0.1:";
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+namespace Runtime {
+class NodeEngine;
+using NodeEnginePtr = std::shared_ptr<NodeEngine>;
+}// namespace Runtime
 
 /**
  * @brief this is a util class for the tests

@@ -12,30 +12,27 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Services/QueryService.hpp>
+#include <Sinks/Mediums//KafkaSink.hpp>
+#include <Sources/KafkaSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <cppkafka/cppkafka.h>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <string>
 #include <thread>
-
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
-#include <Sources/KafkaSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-
-#include <Services/QueryService.hpp>
-#include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
-
-#include <cppkafka/cppkafka.h>
 
 #ifndef OPERATORID
 #define OPERATORID 1

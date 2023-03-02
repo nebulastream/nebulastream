@@ -40,6 +40,7 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <fstream>
 #include <iostream>

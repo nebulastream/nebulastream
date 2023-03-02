@@ -16,13 +16,9 @@
 
 #include <Exceptions/ErrorListener.hpp>
 #include <TestWithErrorHandling.hpp>
-#include <BorrowedPort.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <BorrowedPort.hpp>
 #include <filesystem>
-#include <future>
-#include <gtest/gtest.h>
-#include <thread>
-#include <typeinfo>
 
 #define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
     if (!(node)->instanceOf<instance>()) {                                                                                       \

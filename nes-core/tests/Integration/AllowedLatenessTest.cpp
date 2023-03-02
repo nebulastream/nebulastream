@@ -21,6 +21,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <Topology/Topology.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 

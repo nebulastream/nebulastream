@@ -13,6 +13,21 @@
 */
 
 #include <Util/TestUtils.hpp>
+#include <Common/Identifiers.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Spatial/DataTypes/Waypoint.hpp>
+#include <Util/Subprocess/Subprocess.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <chrono>
+#include <cpr/cpr.h>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <memory>
+#include <nlohmann/json.hpp>
+
 
 namespace NES {
 

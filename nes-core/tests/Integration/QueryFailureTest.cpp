@@ -23,12 +23,9 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <NesBaseTest.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <API/QueryAPI.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger//Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <Util/TestUtils.hpp>
-#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
