@@ -44,7 +44,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -59,7 +59,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()
                      ->addField("id", BasicType::UINT32)
                      ->addField("value", BasicType::UINT64)

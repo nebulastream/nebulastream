@@ -46,7 +46,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling {
 
   public:
     Optimizer::OriginIdInferencePhasePtr originIdInferenceRule;
@@ -60,7 +60,7 @@ class OriginIdInferencePhaseTest : public Testing::TestWithErrorHandling<testing
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         Catalogs::Source::SourceCatalogPtr sourceCatalog =

@@ -24,7 +24,7 @@
 #include <google/protobuf/text_format.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <nes-grpc/UdfCatalogService.pb.h>
+#include <UdfCatalogService.pb.h>
 #include <nlohmann/json.hpp>
 #include <oatpp/web/protocol/http/Http.hpp>
 

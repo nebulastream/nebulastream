@@ -22,7 +22,7 @@
 using namespace std;
 namespace NES {
 
-class PapiProfilerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class PapiProfilerTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

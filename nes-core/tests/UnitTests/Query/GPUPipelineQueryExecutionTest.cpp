@@ -57,12 +57,12 @@ using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GPUQueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);
         testSchemaMultipleFields = Schema::create()
                                        ->addField("test$id", BasicType::INT64)

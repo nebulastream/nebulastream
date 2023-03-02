@@ -101,10 +101,10 @@ TEST_P(MemoryAccessCompilationTest, memScanFunctionTest) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
-INSTANTIATE_TEST_CASE_P(testMemoryCompilation,
+INSTANTIATE_TEST_CASE_P(testLoopCompilation,
                         MemoryAccessCompilationTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
+                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
                         [](const testing::TestParamInfo<MemoryAccessCompilationTest::ParamType>& info) {
                             return info.param;
                         });

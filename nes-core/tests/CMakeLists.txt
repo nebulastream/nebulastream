@@ -13,32 +13,24 @@
 
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
-if (CMAKE_CROSSCOMPILING)
-    set(CMAKE_ARGS_CROSS -DCMAKE_BUILD_TYPE=Release
-            -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-llvm.cmake
-            -DBoost_NO_SYSTEM_PATHS=TRUE
-            -DBoost_INCLUDE_DIR=/opt/sysroots/aarch64-linux-gnu/usr/include/
-            -DBoost_LIBRARY_DIR=/opt/sysroots/aarch64-linux-gnu/usr/lib/
-            )
-else ()
-    set(CMAKE_ARGS_CROSS "")
-endif ()
 
 # Copy Test Data --------------------------------------------------------------
-file(COPY test_data DESTINATION .)
+file(COPY test_data DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Nes Utils for Test Suite --------------------------------
 
-add_library(nes-tests INTERFACE)
-target_include_directories(nes-tests INTERFACE ${GTEST_INCLUDE_DIRS} "../include")
+add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
+        "src/Util/TestHarness/TestHarness.cpp"
+        "src/Util/TestHarness/TestHarnessWorkerConfiguration.cpp"
+        "src/Util/TestUtils.cpp"
+        )
+target_include_directories(nes-core-test-util PUBLIC "./include")
 
-target_include_directories(nes-tests INTERFACE "${CMAKE_BINARY_DIR}")
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
+target_link_libraries(nes-core-test-util PUBLIC nes nes-test-util)
 
 if (CODE_COVERAGE)
     target_code_coverage(nes AUTO)
@@ -325,7 +317,7 @@ add_nes_integration_test(lambda-source-integration-test "Integration/Source/Lamb
 
 ### Pattern Query Plan Tests ###
 add_executable(pattern-query-plan-tests "UnitTests/Services/PatternParsingServiceTest.cpp")
-target_link_libraries(pattern-query-plan-tests nes-tests)
+target_link_libraries(pattern-query-plan-tests nes-core-test-util)
 add_test(NAME pattern-query-plan-tests COMMAND pattern-query-plan-tests)
 
 # SimplePatternTest
@@ -388,7 +380,7 @@ endif ()
 
 add_nes_unit_test(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
 #add_executable(nemo-placement-test "UnitTests/Optimizer/QueryPlacement/NemoPlacementTest.cpp")
-#target_link_libraries(nemo-placement-test nes-tests)
+#target_link_libraries(nemo-placement-test nes-core-test-util)
 #add_test(NAME nemo-placement-test COMMAND nemo-placement-test)
 
 ### Thread Naming Test ###
@@ -409,7 +401,7 @@ add_nes_unit_test(syntactic-query-validation-test "UnitTests/Optimizer/QueryVali
 
 ### Semantic Query Validation Test ###
 add_nes_unit_test(semantic-query-validation-test "UnitTests/Optimizer/QueryValidation/SemanticQueryValidationTest.cpp")
-#target_link_libraries(semantic-query-validation-test nes-tests)
+#target_link_libraries(semantic-query-validation-test nes-core-test-util)
 #add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-test)
 
 ### Operator To FOL Util Test ###
@@ -666,31 +658,31 @@ add_nes_integration_test(query-failure-test "Integration/QueryFailureTest.cpp")
 
 ### NES Coordinator Test
 add_executable(nes-coordinator-test "UnitTests/Components/NesCoordinatorTest.cpp")
-target_link_libraries(nes-coordinator-test nes-tests)
+target_link_libraries(nes-coordinator-test nes-core-test-util)
 add_test(NAME nes-coordinator-test COMMAND nes-coordinator-test)
 
 ### Location Integration Test ###
 add_nes_integration_test(location-integration-tests "Integration/LocationIntegrationTests.cpp")
-target_link_libraries(location-integration-tests nes-tests)
+target_link_libraries(location-integration-tests nes-core-test-util)
 
 add_subdirectory(UnitTests/QueryExecution)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
-target_link_libraries(e2e-coordinator-single-worker-test nes-tests)
+target_link_libraries(e2e-coordinator-single-worker-test nes-core-test-util)
 add_test(NAME e2e-coordinator-single-worker-test COMMAND e2e-coordinator-single-worker-test)
 set_tests_properties(e2e-coordinator-single-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-single-worker-test nesCoordinator nesWorker)
 
 add_executable(e2e-coordinator-multi-worker-test "E2e/E2ECoordinatorMultiWorkerTest.cpp")
-target_link_libraries(e2e-coordinator-multi-worker-test nes-tests)
+target_link_libraries(e2e-coordinator-multi-worker-test nes-core-test-util)
 add_test(NAME e2e-coordinator-multi-worker-test COMMAND e2e-coordinator-multi-worker-test)
 set_tests_properties(e2e-coordinator-multi-worker-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-worker-test nesCoordinator nesWorker)
 
 add_executable(e2e-coordinator-multi-query-test "E2e/E2ECoordinatorMultiQueryTest.cpp")
-target_link_libraries(e2e-coordinator-multi-query-test nes-tests)
+target_link_libraries(e2e-coordinator-multi-query-test nes-core-test-util)
 add_test(NAME e2e-coordinator-multi-query-test COMMAND e2e-coordinator-multi-query-test)
 set_tests_properties(e2e-coordinator-multi-query-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)

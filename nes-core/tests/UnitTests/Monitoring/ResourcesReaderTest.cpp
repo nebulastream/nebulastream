@@ -31,7 +31,7 @@
 
 namespace NES {
 
-class ResourcesReaderTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ResourcesReaderTest : public Testing::TestWithErrorHandling {
   public:
     Monitoring::AbstractSystemResourcesReaderPtr resourcesReader;
 
@@ -42,7 +42,7 @@ class ResourcesReaderTest : public Testing::TestWithErrorHandling<testing::Test>
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         resourcesReader = Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader();
     }
 };

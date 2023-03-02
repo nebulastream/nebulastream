@@ -21,7 +21,7 @@
 
 namespace NES {
 
-class LocationUnitTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LocationUnitTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);

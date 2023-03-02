@@ -35,7 +35,7 @@
 
 namespace NES {
 
-class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -50,7 +50,7 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }

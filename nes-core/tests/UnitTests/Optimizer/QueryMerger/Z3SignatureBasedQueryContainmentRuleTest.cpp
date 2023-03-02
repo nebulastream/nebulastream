@@ -58,9 +58,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry {
     std::string mergedQueryPlan;
 };
 
-class Z3SignatureBasedBottomUpQueryContainmentRuleTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
-      public testing::WithParamInterface<std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>> {
+class Z3SignatureBasedBottomUpQueryContainmentRuleTest : public Testing::TestWithErrorHandling,       
+							 public testing::WithParamInterface<std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>> {
 
   public:
     SchemaPtr schema;

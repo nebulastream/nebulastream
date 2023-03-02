@@ -30,7 +30,7 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class ThresholdWindowQueryExecutionTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
+    : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -39,7 +39,7 @@ class ThresholdWindowQueryExecutionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
@@ -48,7 +48,7 @@ class ThresholdWindowQueryExecutionTest
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

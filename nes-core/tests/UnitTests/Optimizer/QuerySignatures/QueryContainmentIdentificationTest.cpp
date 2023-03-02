@@ -54,7 +54,7 @@ class QueryContainmentTestEntry {
     Optimizer::ContainmentType containmentType;
 };
 
-class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling<testing::Test>,
+class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling,
                                            public testing::WithParamInterface<std::vector<QueryContainmentTestEntry>> {
 
   public:
@@ -72,6 +72,7 @@ class QueryContainmentIdentificationTest : public Testing::TestWithErrorHandling
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)

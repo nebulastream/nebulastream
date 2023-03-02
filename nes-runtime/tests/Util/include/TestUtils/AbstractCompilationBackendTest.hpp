@@ -48,6 +48,7 @@ class AbstractCompilationBackendTest : public ::testing::WithParamInterface<std:
         auto dumpHelper = DumpHelper::create("", true, false, "");
         return compiler->compile(ir, options, dumpHelper);
     }
+    std::unique_ptr<Nautilus::Backends::Executable> prepare(std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace);
 };
 }// namespace NES::Nautilus
 

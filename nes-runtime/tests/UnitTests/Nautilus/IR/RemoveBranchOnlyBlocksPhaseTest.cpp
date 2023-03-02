@@ -174,7 +174,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch) {
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
-Value<> doubleVerticalDiamondInTrueBranch_2() {
+Value<> doubleVerticalDiamondInTrueBranch() {
     Value agg = Value(0);
     if (agg < 50) {
         if (agg < 40) {
@@ -205,7 +205,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch) {
     createCorrectBlock(correctBlocks, "5", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "6", {"8"}, {"9"});
     createCorrectBlock(correctBlocks, "9", {"5", "6", "2"}, {});
-    auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch_2);
+    auto ir = createTraceAndApplyPhases(&doubleVerticalDiamondInTrueBranch);
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
@@ -273,10 +273,10 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp) {
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testLoopCompilation,
                         RemoveBranchOnlyBlocksPhaseTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
+                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
                         [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType>& info) {
                             return info.param;
                         });

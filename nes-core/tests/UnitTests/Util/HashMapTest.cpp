@@ -29,7 +29,7 @@
 #endif
 
 namespace NES {
-class HashMapTest : public Testing::TestWithErrorHandling<testing::Test> {
+class HashMapTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashMapTest.log", NES::LogLevel::LOG_DEBUG);
@@ -39,7 +39,7 @@ class HashMapTest : public Testing::TestWithErrorHandling<testing::Test> {
     static void TearDownTestCase() { NES_INFO("HashMapTest test class TearDownTestCase."); }
 
     void SetUp() {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>();
     }
 

@@ -84,7 +84,7 @@ using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SerializationUtilTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before any test in this class are executed. */

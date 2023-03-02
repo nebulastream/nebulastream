@@ -42,7 +42,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
+class OPCSinkTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 

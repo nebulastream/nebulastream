@@ -1145,10 +1145,10 @@ TEST_P(StructuredControlFlowPhaseTest, 23_DetectCountedLoopsWithEqualInCompariso
 
 // Tests all registered compilation backends.
 // To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
-auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(testLoopCompilation,
                         StructuredControlFlowPhaseTest,
-                        ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
+                        ::testing::ValuesIn(Backends::CompilationBackendRegistry::getPluginNames().begin(),
+                                            Backends::CompilationBackendRegistry::getPluginNames().end()),
                         [](const testing::TestParamInfo<StructuredControlFlowPhaseTest::ParamType>& info) {
                             return info.param;
                         });

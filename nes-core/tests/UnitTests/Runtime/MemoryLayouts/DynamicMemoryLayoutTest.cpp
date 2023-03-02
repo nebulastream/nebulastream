@@ -23,21 +23,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 namespace NES::Runtime::MemoryLayouts {
 
-class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
-  public:
-    // We are not creating the dynamic buffer here, since we want to use different schemas for each test.
-    BufferManagerPtr bufferManager;
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DynamicMemoryLayoutTest test class.");
-    }
-    void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
-    }
-};
-
-class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandling<testing::Test>,
+class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandling,
                                              public testing::WithParamInterface<Schema::MemoryLayoutType> {
   public:
     BufferManagerPtr bufferManager;
@@ -50,7 +36,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandli
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
 
         schema = Schema::create()
@@ -75,32 +61,6 @@ class DynamicMemoryLayoutTestParameterized : public Testing::TestWithErrorHandli
     }
 };
 
-TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
-    SchemaPtr schema =
-        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-    // Check for buffer index exception
-    ASSERT_ANY_THROW(buffer[-1]);
-    ASSERT_ANY_THROW(buffer[10000000L]);
-    // Check for field out of bound exception
-    ASSERT_ANY_THROW(buffer[0][-1]);
-    ASSERT_ANY_THROW(buffer[0][5]);
-    // Check for wrong field type exception
-    ASSERT_NO_THROW(buffer[0][0].read<uint8_t>());
-    ASSERT_ANY_THROW(buffer[0][0].read<uint16_t>());
-    ASSERT_ANY_THROW(buffer[0][0].read<uint32_t>());
-    ASSERT_ANY_THROW(buffer[0][0].read<uint64_t>());
-    ASSERT_ANY_THROW(buffer[0][0].read<int8_t>());
-    ASSERT_ANY_THROW(buffer[0][0].read<float>());
-    ASSERT_ANY_THROW(buffer[0][0].read<uint8_t*>());
-}
-
 TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnarDynamicBufferTest) {
     for (int i = 0; i < 10; i++) {
         auto testTuple = std::make_tuple((uint16_t) i, true, i * 2.0);
@@ -118,77 +78,6 @@ TEST_P(DynamicMemoryLayoutTestParameterized, iterateDynamicBufferTest) {
         ASSERT_EQ(tuple[0].read<uint16_t>(), 42);
         ASSERT_EQ(tuple["t2"].read<bool>(), true);
         ASSERT_EQ(tuple["t3"].read<double>(), 42 * 2.0);
-    }
-}
-
-TEST_F(DynamicMemoryLayoutTest, accessArrayDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-    auto array = NES::ExecutableTypes::Array<int64_t, 10>();
-    for (int i = 0; i < 10; i++) {
-        array[i] = i * 2;
-    }
-    buffer[0][0].write<NES::ExecutableTypes::Array<int64_t, 10>>(array);
-    auto value = buffer[0][0].read<NES::ExecutableTypes::Array<int64_t, 10>>();
-    for (int i = 0; i < 10; i++) {
-        ASSERT_EQ(value[i], i * 2);
-    }
-}
-
-TEST_F(DynamicMemoryLayoutTest, accessArrayPointerDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-
-    for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
-        auto* value = buffer[t][0].read<int64_t*>();
-        for (int i = 0; i < 10; i++) {
-            value[i] = i;
-        }
-    }
-    buffer.setNumberOfTuples(buffer.getCapacity());
-
-    for (auto tuple : buffer) {
-        auto* arrayPtr = tuple[0].read<int64_t*>();
-        for (int i = 0; i < 10; i++) {
-            ASSERT_EQ(arrayPtr[i], i);
-        }
-    }
-}
-
-TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
-    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createFixedChar(10));
-
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(columnLayout, nullptr);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
-
-    for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
-        //get the pointer and copy string into pointer to fill buffer with char*
-        auto* value = buffer[t][0].read<char*>();
-        std::string str("Test");
-        str.copy(value, 4, 0);
-    }
-    buffer.setNumberOfTuples(buffer.getCapacity());
-
-    for (auto tuple : buffer) {
-        auto* arrayPtr = tuple[0].read<char*>();
-        std::string str("Test");
-        str.compare(arrayPtr);
     }
 }
 

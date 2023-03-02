@@ -27,7 +27,7 @@ using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
 using OriginId = uint64_t;
 
-class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

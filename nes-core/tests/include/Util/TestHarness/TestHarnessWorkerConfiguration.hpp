@@ -38,50 +38,36 @@ class TestHarnessWorkerConfiguration {
   public:
     enum class TestHarnessWorkerSourceType : int8_t { CSVSource, MemorySource, LambdaSource, NonSource };
 
-    static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId) {
-        return std::make_shared<TestHarnessWorkerConfiguration>(
-            TestHarnessWorkerConfiguration(std::move(workerConfiguration), TestHarnessWorkerSourceType::NonSource, workerId));
-    }
+    static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId);
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration,
                                                     std::string logicalSourceName,
                                                     std::string physicalSourceName,
                                                     TestHarnessWorkerSourceType sourceType,
-                                                    uint32_t workerId) {
-        return std::make_shared<TestHarnessWorkerConfiguration>(TestHarnessWorkerConfiguration(std::move(workerConfiguration),
-                                                                                               std::move(logicalSourceName),
-                                                                                               std::move(physicalSourceName),
-                                                                                               sourceType,
-                                                                                               workerId));
-    }
+                                                    uint32_t workerId);
 
-    void setQueryStatusListener(const NesWorkerPtr& nesWorker) { this->nesWorker = nesWorker; }
+    void setQueryStatusListener(const NesWorkerPtr& nesWorker);
 
-    const WorkerConfigurationPtr& getWorkerConfiguration() const { return workerConfiguration; }
-    TestHarnessWorkerSourceType getSourceType() const { return sourceType; }
-    PhysicalSourceTypePtr getPhysicalSourceType() const { return physicalSource; }
-    void setPhysicalSourceType(PhysicalSourceTypePtr physicalSource) { this->physicalSource = physicalSource; }
-    const std::vector<uint8_t*>& getRecords() const { return records; }
-    void addRecord(uint8_t* record) { records.push_back(record); }
-    uint32_t getWorkerId() const { return workerId; }
-    const std::string& getLogicalSourceName() const { return logicalSourceName; }
-    const std::string& getPhysicalSourceName() const { return physicalSourceName; }
-    const NesWorkerPtr& getNesWorker() const { return nesWorker; }
+    const WorkerConfigurationPtr& getWorkerConfiguration() const;
+    TestHarnessWorkerSourceType getSourceType() const;
+    PhysicalSourceTypePtr getPhysicalSourceType() const;
+    void setPhysicalSourceType(PhysicalSourceTypePtr physicalSource);
+    const std::vector<uint8_t*>& getRecords() const;
+    void addRecord(uint8_t* record);
+    uint32_t getWorkerId() const;
+    const std::string& getLogicalSourceName() const ;
+    const std::string& getPhysicalSourceName() const ;
+    const NesWorkerPtr& getNesWorker() const;
 
   private:
     TestHarnessWorkerConfiguration(WorkerConfigurationPtr workerConfiguration,
                                    std::string logicalSourceName,
                                    std::string physicalSourceName,
                                    TestHarnessWorkerSourceType sourceType,
-                                   uint32_t workerId)
-        : workerConfiguration(std::move(workerConfiguration)), logicalSourceName(std::move(logicalSourceName)),
-          physicalSourceName(std::move(physicalSourceName)), sourceType(sourceType), workerId(workerId){};
-
+                                   uint32_t workerId);
     TestHarnessWorkerConfiguration(WorkerConfigurationPtr workerConfiguration,
                                    TestHarnessWorkerSourceType sourceType,
-                                   uint32_t workerId)
-        : workerConfiguration(std::move(workerConfiguration)), sourceType(sourceType), workerId(workerId){};
-
+                                   uint32_t workerId);
     WorkerConfigurationPtr workerConfiguration;
     std::string logicalSourceName;
     std::string physicalSourceName;

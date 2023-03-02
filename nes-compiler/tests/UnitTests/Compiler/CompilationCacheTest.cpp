@@ -27,7 +27,7 @@
 #include <memory>
 namespace NES::Compiler {
 
-class CompilationCacheTest : public Testing::TestWithErrorHandling<testing::Test> {
+class CompilationCacheTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -37,7 +37,7 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling<testing::Test
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup CompilationCacheTest test case.");
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();

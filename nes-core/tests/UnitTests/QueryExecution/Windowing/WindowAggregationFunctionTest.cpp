@@ -33,7 +33,7 @@ const static uint64_t recordsPerBuffer = 100;
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
 class WindowAggregationFunctionTest
-    : public Testing::TestWithErrorHandling<testing::Test>,
+    : public Testing::TestWithErrorHandling,
       public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -42,7 +42,7 @@ class WindowAggregationFunctionTest
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
 
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
@@ -53,7 +53,7 @@ class WindowAggregationFunctionTest
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

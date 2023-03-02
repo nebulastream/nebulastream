@@ -27,10 +27,7 @@ class GlobalSliceStaging;
  * tumbling and sliding window aggregations.
  */
 class GlobalSliceMergingHandler : public Runtime::Execution::OperatorHandler,
-                                  public detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false> {
-    using inherited0 = detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false>;
-    using inherited1 = Runtime::Reconfigurable;
-
+                                  public ::NES::detail::virtual_enable_shared_from_this<GlobalSliceMergingHandler, false> {
   public:
     /**
      * @brief Constructor for the GlobalSliceMergingHandler

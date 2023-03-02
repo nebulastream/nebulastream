@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <TestWithErrorHandling.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <algorithm>
@@ -23,7 +24,7 @@
 using namespace std;
 namespace NES {
 
-class NonBlockingMonotonicSeqQueueTest : public testing::Test {
+class NonBlockingMonotonicSeqQueueTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

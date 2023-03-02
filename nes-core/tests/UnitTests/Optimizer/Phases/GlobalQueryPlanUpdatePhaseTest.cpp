@@ -42,7 +42,7 @@
 
 namespace NES {
 
-class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
@@ -58,7 +58,7 @@ class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);

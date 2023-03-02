@@ -43,7 +43,7 @@ static constexpr auto TEST_FILE_BODY = "/*\n"
                                        "*/\n"
                                        "int mul(int x, int y) { return x * y; }";
 
-class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class JITCompilerTest : public Testing::TestWithErrorHandling {
   public:
     uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */
@@ -54,7 +54,7 @@ class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         std::cout << "Setup JITCompilerTest test case." << std::endl;
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();

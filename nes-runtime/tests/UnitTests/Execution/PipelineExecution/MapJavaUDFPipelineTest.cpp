@@ -31,6 +31,7 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 

@@ -54,7 +54,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class NemoPlacementTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -72,7 +72,7 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup NemoPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

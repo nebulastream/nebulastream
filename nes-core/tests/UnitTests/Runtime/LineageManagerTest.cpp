@@ -24,7 +24,7 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 21;
 
-class LineageManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LineageManagerTest : public Testing::TestWithErrorHandling {
 
   protected:
     /* Will be called before any test in this class are executed. */

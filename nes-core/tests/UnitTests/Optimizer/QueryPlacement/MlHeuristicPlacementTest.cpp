@@ -44,7 +44,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
@@ -61,7 +61,7 @@ class MlHeuristicPlacementTest : public Testing::TestWithErrorHandling<testing::
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup MlHeuristicPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

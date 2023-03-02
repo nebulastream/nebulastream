@@ -1,0 +1,105 @@
+//
+// Created by pgrulich on 02.03.23.
+//
+
+#ifndef NES_NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHMFIXEDVECTOR_HPP_
+#define NES_NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHMFIXEDVECTOR_HPP_
+
+#include <fcntl.h>
+#include <filesystem>
+#include <fstream>
+#include <sys/mman.h>
+#include <sys/stat.h>
+namespace NES::Testing::detail {
+
+template<typename T>
+class ShmFixedVector {
+    struct Metadata {
+        std::atomic<uint32_t> refCnt;
+        std::atomic<uint64_t> currentIndex;
+    };
+
+  public:
+    explicit ShmFixedVector(const std::string& name, size_t capacity)
+        : name(name), mmapSize(sizeof(T) * capacity + sizeof(Metadata)), capacity(capacity), created(false) {}
+
+    void open() {
+        while (true) {
+            shmemFd = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRWXU);
+            if (shmemFd >= 0) {
+                fchmod(shmemFd, S_IRWXU);
+                created = true;
+            } else if (errno == EEXIST) {
+                shmemFd = shm_open(name.c_str(), O_RDWR, S_IRWXU);
+                if (shmemFd < 0 && errno == ENOENT) {
+                    continue;
+                }
+            }
+            break;
+        }
+        if (shmemFd == -1) {
+            std::cerr << "cannot create shared area: " << strerror(errno) << std::endl;
+        }
+        NES_ASSERT2_FMT(shmemFd != -1, "cannot create shared area: " << strerror(errno));
+        if (created) {
+            auto ret = ftruncate(shmemFd, mmapSize) == 0;
+            if (!ret) {
+                std::cerr << "cannot ftruncate shared area: " << strerror(errno) << std::endl;
+            }
+            NES_ASSERT(ret, "cannot create shared area");
+        } else {
+            while (!std::filesystem::exists(std::filesystem::temp_directory_path() / "nes.tests.begin")) {
+            }
+        }
+        mem = reinterpret_cast<uint8_t*>(mmap(nullptr, mmapSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmemFd, 0));
+        if (mem == MAP_FAILED) {
+            std::cerr << "cannot create shared area: " << strerror(errno) << std::endl;
+        }
+        NES_ASSERT(mem != MAP_FAILED, "cannot create shared area");
+        metadata = reinterpret_cast<Metadata*>(mem);
+        vectorData = reinterpret_cast<T*>(mem + sizeof(Metadata));
+        if (created) {
+            metadata->refCnt.store(1);
+            metadata->currentIndex.store(0);
+            auto filePath = std::filesystem::temp_directory_path() / "nes.tests.begin";
+            std::ofstream file;
+            file.open(filePath);
+            NES_ASSERT2_FMT(file.good(), "cannot open file " << filePath);
+            file.close();
+        } else {
+            metadata->refCnt.fetch_add(1);
+        }
+    }
+
+    ~ShmFixedVector() {
+        bool doCleanup = metadata->refCnt.fetch_sub(1) == 1;
+        NES_ASSERT(0 == munmap(mem, mmapSize), "Cannot munmap");
+        NES_ASSERT(0 == close(shmemFd), "Cannot close");
+        if (doCleanup) {
+            if (0 == shm_unlink(name.c_str())) {
+                // no process has the shared memory segment open
+                std::filesystem::remove_all(std::filesystem::temp_directory_path() / "nes.tests.begin");
+            }
+        }
+    }
+
+    T* data() { return vectorData; }
+
+    T& operator[](size_t index) { return vectorData[index]; }
+
+    uint64_t getNextIndex() { return metadata->currentIndex.fetch_add(1) % capacity; }
+
+    [[nodiscard]] bool isCreated() const { return created; }
+
+  private:
+    std::string name;
+    int shmemFd;
+    size_t mmapSize;
+    size_t capacity;
+    uint8_t* mem;
+    T* vectorData;
+    Metadata* metadata;
+    bool created;
+};
+}// namespace NES::Testing::detail
+#endif//NES_NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHMFIXEDVECTOR_HPP_

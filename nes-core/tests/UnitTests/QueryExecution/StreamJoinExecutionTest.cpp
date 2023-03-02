@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution {
 
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
 
-class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
                                      public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -34,7 +34,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
@@ -43,7 +43,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling<testi
     void TearDown() override {
         NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test case.");
         EXPECT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

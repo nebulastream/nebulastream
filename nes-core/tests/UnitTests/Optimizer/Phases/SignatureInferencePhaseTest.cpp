@@ -39,7 +39,7 @@
 
 namespace NES::Optimizer {
 
-class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
@@ -49,7 +49,7 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testin
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 };
