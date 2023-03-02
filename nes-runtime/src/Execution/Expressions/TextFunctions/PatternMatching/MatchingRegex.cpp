@@ -55,11 +55,15 @@ Value<> MatchingRegex::execute(NES::Nautilus::Record& record) const {
     Value<> midValue = midSubExpression->execute(record);
     Value<> rightValue = rightSubExpression->execute(record);
 
-    return FunctionCall<>("regex_match",
-                          regex_match,
-                          leftValue.as<Text>()->getReference(),
-                          midValue.as<Text>()->getReference(),
-                          rightValue.as<Boolean>());
+    if (leftValue->isType<Text>() && midValue->isType<Text>() && rightValue->isType<Boolean>()) {
+        return FunctionCall<>("regex_match",
+                              regex_match,
+                              leftValue.as<Text>()->getReference(),
+                              midValue.as<Text>()->getReference(),
+                              rightValue.as<Boolean>());
+    }else{
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text and a Boolean for case sensitive pattern matching.");
+    }
 }
 
 }// namespace NES::Runtime::Execution::Expressions

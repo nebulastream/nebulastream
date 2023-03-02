@@ -56,11 +56,16 @@ Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the right sub expression and retrieve the value.
     Value<> rightValue = rightSubExpression->execute(record);
 
-    return FunctionCall<>("regexReplace",
-                          regexReplace,
-                          leftValue.as<Text>()->getReference(),
-                          midValue.as<Text>()->getReference(),
-                          rightValue.as<Text>()->getReference());
+    if (leftValue->isType<Text>() && midValue->isType<Text>() && rightValue->isType<Text>()) {
+
+        return FunctionCall<>("regexReplace",
+                              regexReplace,
+                              leftValue.as<Text>()->getReference(),
+                              midValue.as<Text>()->getReference(),
+                              rightValue.as<Text>()->getReference());
+    }else{
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments of type Text.");
+    }
 }
 
 }// namespace NES::Runtime::Execution::Expressions
