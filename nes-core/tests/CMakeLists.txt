@@ -258,6 +258,12 @@ add_nes_unit_test(spatial-expression-node-test "UnitTests/Operators/SpatialExpre
 # GeographyExpressionNodeTest
 add_nes_unit_test(geography-expression-node-test "UnitTests/Operators/GeographyExpressionNodeTest.cpp")
 
+### Spatial Datatype Tests ###
+add_nes_unit_test(circle-datatype-tests "UnitTests/Spatial/DataTypes/CircleTest.cpp")
+add_nes_unit_test(point-datatype-tests "UnitTests/Spatial/DataTypes/PointTest.cpp")
+add_nes_unit_test(polygon-datatype-tests "UnitTests/Spatial/DataTypes/PolygonTest.cpp")
+add_nes_unit_test(rectangle-datatype-tests "UnitTests/Spatial/DataTypes/RectangleTest.cpp")
+
 
 # QueryPlanIteratorTest
 add_nes_unit_test(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
