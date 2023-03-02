@@ -60,7 +60,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryPlacementTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
@@ -77,7 +77,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup QueryPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

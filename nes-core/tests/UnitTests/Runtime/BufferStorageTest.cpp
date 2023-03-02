@@ -24,14 +24,14 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 5;
 
-class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
+class BufferStorageTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Runtime::BufferStoragePtr bufferStorage;
 
   protected:
     virtual void SetUp() {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
         bufferStorage = std::make_shared<Runtime::BufferStorage>();
     }

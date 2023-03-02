@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
@@ -36,7 +36,7 @@ class ColumnarMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
 };

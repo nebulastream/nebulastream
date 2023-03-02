@@ -27,7 +27,7 @@
 
 using namespace NES;
 
-class GlobalQueryPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GlobalQueryPlanTest : public Testing::TestWithErrorHandling {
 
   public:
     static void SetUpTestCase() {

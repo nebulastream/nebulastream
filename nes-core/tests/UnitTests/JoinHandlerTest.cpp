@@ -42,7 +42,7 @@
 #include <vector>
 
 namespace NES {
-class JoinHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {
+class JoinHandlerTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);

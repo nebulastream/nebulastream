@@ -25,6 +25,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
@@ -34,7 +35,7 @@ namespace NES::Runtime::Execution {
 class ScanEmitPipelineTest : public Testing::NESBaseTest, public AbstractPipelineExecutionTest {
   public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider;
+    ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 

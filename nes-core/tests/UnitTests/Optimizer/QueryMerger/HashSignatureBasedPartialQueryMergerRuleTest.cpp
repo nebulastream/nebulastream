@@ -39,7 +39,7 @@
 
 using namespace NES;
 
-class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class HashSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;

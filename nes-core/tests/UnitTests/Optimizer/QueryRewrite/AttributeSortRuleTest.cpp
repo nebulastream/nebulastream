@@ -28,7 +28,7 @@
 
 using namespace NES;
 
-class AttributeSortRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class AttributeSortRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -41,7 +41,7 @@ class AttributeSortRuleTest : public Testing::TestWithErrorHandling<testing::Tes
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };

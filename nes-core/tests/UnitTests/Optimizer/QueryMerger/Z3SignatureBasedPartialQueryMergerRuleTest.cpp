@@ -50,7 +50,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -65,7 +65,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)

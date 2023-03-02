@@ -26,7 +26,7 @@
 #endif
 
 namespace NES {
-class ThreadNamingTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ThreadNamingTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);

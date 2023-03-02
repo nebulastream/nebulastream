@@ -41,7 +41,7 @@
 
 using namespace NES;
 
-class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::Test> {
+class QuerySignatureUtilTests : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -59,7 +59,7 @@ class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);

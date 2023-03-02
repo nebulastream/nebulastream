@@ -18,8 +18,8 @@
 namespace NES::Runtime::Execution::Operators {
 class CollectOperator : public ExecutableOperator {
   public:
-    CollectOperator() {}
-    void execute(ExecutionContext&, Record& record) const override { records.emplace_back(record); }
+    CollectOperator() = default;
+    void execute(ExecutionContext&, Record& record) const override;
     mutable std::vector<Record> records;
 };
 

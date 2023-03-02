@@ -39,7 +39,7 @@
 using namespace std;
 namespace NES {
 
-class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalOperatorNodeTest.log", NES::LogLevel::LOG_DEBUG);
@@ -47,7 +47,7 @@ class LogicalOperatorNodeTest : public Testing::TestWithErrorHandling<testing::T
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

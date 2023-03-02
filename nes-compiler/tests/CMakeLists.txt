@@ -12,14 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Google Testing Framework ----------------------------------------------------
-include(ExternalProject)
-
-add_nes_unit_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
-
-add_nes_unit_test(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
-
-add_nes_unit_test(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
+add_compiler_unit_test(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp"
+        "UnitTests/Compiler/SharedLibraryTest.cpp"
+        "UnitTests/Compiler/CompilationCacheTest.cpp")
 

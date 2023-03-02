@@ -11,5 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(nautilus-symbolic-tracing-test "SymbolicTracingTest.cpp")
-add_nes_runtime_test(nautilus-tag-creation-test "TagCreationTest.cpp")
+add_nes_runtime_test(nautilus-tracing-test "SymbolicTracingTest.cpp" "TagCreationTest.cpp")

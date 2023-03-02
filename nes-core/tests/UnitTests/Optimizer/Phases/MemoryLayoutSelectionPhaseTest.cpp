@@ -48,7 +48,7 @@ using NES::Runtime::TupleBuffer;
 
 namespace NES {
 
-class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -58,7 +58,7 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()

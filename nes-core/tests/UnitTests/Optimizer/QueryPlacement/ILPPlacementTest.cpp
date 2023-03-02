@@ -52,7 +52,7 @@ using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ILPPlacementTest : public Testing::TestWithErrorHandling {
 
   protected:
     z3::ContextPtr z3Context;
@@ -69,7 +69,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup ILPPlacementTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

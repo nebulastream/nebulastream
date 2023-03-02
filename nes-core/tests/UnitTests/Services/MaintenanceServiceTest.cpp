@@ -29,7 +29,7 @@
 #include <iostream>
 
 using namespace NES;
-class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class MaintenanceServiceTest : public Testing::TestWithErrorHandling {
   public:
     NES::Experimental::MaintenanceServicePtr maintenanceService;
     TopologyPtr topology;
@@ -43,7 +43,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("Setup MaintenanceService test case.");
         topology = Topology::create();
         std::map<std::string, std::any> properties;

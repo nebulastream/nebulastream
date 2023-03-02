@@ -39,7 +39,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class OPCSourceTest : public Testing::TestWithErrorHandling {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

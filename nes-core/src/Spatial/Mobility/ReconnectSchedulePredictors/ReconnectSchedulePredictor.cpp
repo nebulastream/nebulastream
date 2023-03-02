@@ -61,7 +61,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::ReconnectSched
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr
-NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create(
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::create([[maybe_unused]]
     [[maybe_unused]] const NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration) {
 #ifdef S2DEF
     return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor>(configuration);

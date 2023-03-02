@@ -31,7 +31,7 @@
 
 using namespace NES;
 
-class SyntaxBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class SyntaxBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandling {
 
   public:
     SchemaPtr schema;
@@ -44,7 +44,7 @@ class SyntaxBasedPartialQueryMergerRuleTest : public Testing::TestWithErrorHandl
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 };

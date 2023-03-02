@@ -31,7 +31,7 @@
 
 using namespace NES;
 
-class QueryPlanBuilderTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryPlanBuilderTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */

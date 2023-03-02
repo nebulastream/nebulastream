@@ -31,7 +31,7 @@ using namespace NES;
 /*
  * This test checks for the correctness of the pattern queries created by the NESPL Parsing Service.
  */
-class PatternParsingServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class PatternParsingServiceTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */

@@ -63,7 +63,7 @@
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryExecutionTest : public Testing::TestWithErrorHandling {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -71,7 +71,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         // create test input buffer
         windowSchema = Schema::create()
                            ->addField("test$key", BasicType::INT64)
@@ -110,7 +110,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

@@ -29,7 +29,7 @@
 
 using namespace NES;
 
-class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
+class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling {
 
   public:
     /* Will be called before a test is executed. */

@@ -12,5 +12,4 @@
 # limitations under the License.
 
 
-add_nes_runtime_test(nautilus-remove-br-only-blocks-phase-test "RemoveBranchOnlyBlocksPhaseTest.cpp")
-add_nes_runtime_test(nautilus-structured-control-flow-phase-test "StructuredControlFlowPhaseTest.cpp")
+add_nes_runtime_test(nautilus-phase-tests "RemoveBranchOnlyBlocksPhaseTest.cpp" "StructuredControlFlowPhaseTest.cpp")

@@ -14,7 +14,7 @@ message(STATUS "Building benchmarks...")
 
 function(add_nes_benchmarks TARGET_NAME FILE_PATH)
     add_executable(${TARGET_NAME} ${FILE_PATH})
-    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-tests)
+    target_link_libraries(${TARGET_NAME} nes nes-benchmark ${GBENCHMARK_LIBRARIES} nes-core-test-util)
     message(STATUS "Added benchmark ${TARGET_NAME}")
 endfunction()
 

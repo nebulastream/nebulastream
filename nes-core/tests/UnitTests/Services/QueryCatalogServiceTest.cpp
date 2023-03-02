@@ -33,7 +33,7 @@ using namespace Catalogs::Query;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryCatalogServiceTest : public Testing::TestWithErrorHandling {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
@@ -45,7 +45,7 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::T
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogServiceTest test case.");
         auto cppCompiler = Compiler::CPPCompiler::create();

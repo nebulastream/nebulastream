@@ -18,25 +18,13 @@
 #include <vector>
 #ifndef NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_MOKEDPIPELINECONTEXT_HPP_
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TESTUTILS_MOKEDPIPELINECONTEXT_HPP_
-namespace NES {
+
+namespace NES::Runtime::Execution {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
-    explicit MockedPipelineExecutionContext(std::vector<Runtime::Execution::OperatorHandlerPtr> handlers = {})
-        : PipelineExecutionContext(
-            -1,// mock pipeline id
-            0, // mock query id
-            nullptr,
-            1,
-            [this](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            [this](Runtime::TupleBuffer& buffer) {
-                this->buffers.emplace_back(std::move(buffer));
-            },
-            handlers){
-            // nop
-        };
-    std::vector<Runtime::TupleBuffer> buffers;
+    explicit MockedPipelineExecutionContext(OperatorHandlerPtr handler);
+    explicit MockedPipelineExecutionContext();
+    std::vector<TupleBuffer> buffers;
 };
 }// namespace NES
 

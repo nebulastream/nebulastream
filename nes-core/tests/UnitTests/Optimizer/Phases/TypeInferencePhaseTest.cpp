@@ -58,7 +58,7 @@ using namespace NES::Windowing;
 
 namespace NES {
 
-class TypeInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
+class TypeInferencePhaseTest : public Testing::TestWithErrorHandling {
   public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     /* Will be called before any test in this class are executed. */

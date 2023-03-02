@@ -35,7 +35,7 @@ namespace NES {
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
+class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling {
   public:
     Runtime::NodeEnginePtr engine;
 
@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
     }
 
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         auto workerConfiguration = WorkerConfiguration::create();
@@ -62,7 +62,7 @@ class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
         ASSERT_TRUE(engine->stop());
         engine.reset();
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 };
 
