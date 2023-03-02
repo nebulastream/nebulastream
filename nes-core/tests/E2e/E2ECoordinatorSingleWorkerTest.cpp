@@ -866,12 +866,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
                                           TestUtils::enableThreadLocalWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-
+    //TODO : without logicaStreamName$Attribute (qualifiied att names) the Nautilus query fails with the error: attr. does not exits
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ABS_Front_Wheel_Press\") > 20)))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ABS_Front_Wheel_Press\") > 20UL)))";
     ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
