@@ -22,6 +22,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BenchmarkUtils.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Benchmark::DataGeneration {
 

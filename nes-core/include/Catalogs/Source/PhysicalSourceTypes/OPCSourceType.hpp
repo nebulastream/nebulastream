@@ -17,6 +17,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <map>
 #include <string>
 

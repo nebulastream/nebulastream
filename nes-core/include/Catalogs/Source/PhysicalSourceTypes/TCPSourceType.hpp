@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <sys/socket.h>
 

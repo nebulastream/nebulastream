@@ -25,6 +25,7 @@ class thread_pool;
 class periodic_worker;
 }// namespace spdlog::details
 
+
 namespace NES {
 
 namespace detail {

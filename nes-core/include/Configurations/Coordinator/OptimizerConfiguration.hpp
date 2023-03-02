@@ -15,7 +15,7 @@
 #define NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Configs.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <iostream>
@@ -24,9 +24,7 @@
 #include <thread>
 #include <utility>
 
-namespace NES {
-
-namespace Configurations {
+namespace NES::Configurations {
 
 /**
  * @brief ConfigOptions for Coordinator
@@ -138,7 +136,6 @@ class OptimizerConfiguration : public BaseConfiguration {
     }
 };
 
-}// namespace Configurations
 }// namespace NES
 
 #endif// NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_

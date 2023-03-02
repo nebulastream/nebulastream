@@ -14,8 +14,8 @@
 
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-
 namespace NES {
 
 BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,

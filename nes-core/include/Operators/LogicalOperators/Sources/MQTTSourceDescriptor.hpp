@@ -18,7 +18,6 @@
 #ifdef ENABLE_MQTT_BUILD
 
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES {
