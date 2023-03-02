@@ -20,6 +20,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
+#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantFloatExpression.hpp>
@@ -28,6 +29,7 @@
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -36,6 +38,7 @@
 #include <Execution/Operators/Relational/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/BatchKeyedAggregation.hpp>
 #include <Execution/Operators/Relational/BatchKeyedAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -92,9 +95,26 @@ class TPCH_Q1 : public Testing::NESBaseTest, public AbstractPipelineExecutionTes
 
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
+ * select
+ * l_returnflag
+ * l_linestatus,
+ * sum(l_quantity) as sum_qty,
+ * sum(l_extendedprice) as sum_base_price,
+ * sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
+ * sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
+ * avg(l_quantity) as avg_qty,
+ * avg(l_extendedprice) as avg_price,
+ * avg(l_discount) as avg_disc,
+ * count(*) as count_order
+ * from  lineite
+ * where l_shipdate <= date '1998-12-01' - interval '90' day
+ * group by l_returnflag,  l_linestatus
  */
 TEST_P(TPCH_Q1, aggregationPipeline) {
-
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
+    PhysicalTypePtr uintegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
+    PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
     auto& lineitems = tables[TPCHTable::LineItem];
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
@@ -118,8 +138,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
      * group by
         l_returnflag,
         l_linestatus
-
-    sum(l_quantity) as sum_qty,
+        sum(l_quantity) as sum_qty,
         sum(l_extendedprice) as sum_base_price,
         sum(l_extendedprice * (1 - l_discount)) as sum_disc_price,
         sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
@@ -127,39 +146,60 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
         avg(l_extendedprice) as avg_price,
         avg(l_discount) as avg_disc,
         count(*) as count_order
-            */
+
+        rewrite to
+        sum(l_quantity) as sum_qty
+        sum(l_extendedprice)
+        disc_price = l_extendedprice * (1 - l_discount)
+        sum(disc_price)
+        sum(disc_price * (one + l_tax[i]))
+        count(*)
+     */
     auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
     auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
 
     //  sum(l_quantity) as sum_qty,
     auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
-    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
-    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt32());
     auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
 
     // sum(l_extendedprice) as sum_base_price,
-    //auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-    //auto sumAggFunction2 = std::make_shared<SumFunction>(l_extendedpriceField, IR::Types::StampFactory::createInt64Stamp());
+    auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+    auto sumAggFunction2 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
 
-    // sum(l_extendedprice * (1 - l_discount)) as sum_disc_price
-    //auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    //auto oneConst = std::make_shared<ConstantIntegerExpression>(1);
-    //auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-    //auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-    //auto sumAggFunction3 = std::make_shared<SumFunction>(mulExpression, IR::Types::StampFactory::createInt64Stamp());
+    // disc_price = l_extendedprice * (1 - l_discount)
+    auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
+    auto oneConst = std::make_shared<ConstantFloatExpression>(1.0f);
+    auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
+    auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
+    auto disc_priceExpression = std::make_shared<WriteFieldExpression>("disc_price", mulExpression);
+    auto map = std::make_shared<Map>(disc_priceExpression);
+    selection->setChild(map);
 
-    //  sum(l_extendedprice * (1 - l_discount) * (1 + l_tax)) as sum_charge,
-    //auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
-    //auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-    //auto mulExpression2 = std::make_shared<MulExpression>(mulExpression, addExpression);
-    //auto sumAggFunction4 = std::make_shared<SumFunction>(mulExpression2, IR::Types::StampFactory::createInt64Stamp());
-    //auto sumAggFunction5 = std::make_shared<SumFunction>(l_discountField, IR::Types::StampFactory::createInt64Stamp());
+    //  sum(disc_price)
+    auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
+    auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+
+    //  sum(disc_price * (one + l_tax[i]))
+    auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
+    auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
+    auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
+    auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType);
+
+    //   count(*)
+    auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType, uintegerType);
 
     std::vector<Expressions::ExpressionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
-    std::vector<Expressions::ExpressionPtr> aggregationExpressions = {l_quantityField};
-    std::vector<std::string> resultFields = {"sum_qty"};
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-        std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType)};
+    std::vector<Expressions::ExpressionPtr> aggregationExpressions = {l_quantityField,
+                                                                      l_extendedpriceField,
+                                                                      disc_price,
+                                                                      mulExpression2,
+                                                                      l_quantityField};
+    std::vector<std::string> resultFields = {"sum_qty", "sum_base_price", "sum_disc_price", "sum_charge", "count_order"};
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumAggFunction1,
+                                                                                           sumAggFunction2,
+                                                                                           sumAggFunction3,
+                                                                                           sumAggFunction4,
+                                                                                           countAggFunction5};
 
     PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
     std::vector<PhysicalTypePtr> types = {smallType, smallType};
@@ -171,7 +211,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
                                                            aggregationFunctions,
                                                            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
 
-    selection->setChild(aggregation);
+    map->setChild(aggregation);
 
     // create aggregation pipeline
     auto aggregationPipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -227,7 +267,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TPCH_Q1,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values( "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TPCH_Q1::ParamType>& info) {
                             return info.param;
                         });

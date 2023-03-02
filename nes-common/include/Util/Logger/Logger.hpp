@@ -234,7 +234,8 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
-        throw Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace));                                             \
+        const std::source_location __location = std::source_location::current();                                                 \
+        throw Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace), std::move(__location));                      \
     } while (0)
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
