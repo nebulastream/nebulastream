@@ -30,7 +30,7 @@ ExtractingRegex::ExtractingRegex(const NES::Runtime::Execution::Expressions::Exp
 * If multiple text sequences, would match the given regex pattern the idx parameter can be used to select a match.
 * @param text TextValue*
 * @param regex TextValue*
-* @param idx result index
+* @param idx result index as Integer
 * @return TextValue*
 */
 TextValue* regexExtract(TextValue* text, TextValue* reg, int idx) {
@@ -52,57 +52,62 @@ Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the right sub expression and retrieve the value.
     Value rightValue = rightSubExpression->execute(record);
 
-    if (rightValue->isType<Int8>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<Int8>());
-    } else if (rightValue->isType<Int16>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<Int16>());
-    } else if (rightValue->isType<Int32>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<Int32>());
-    } else if (rightValue->isType<Int64>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<Int64>());
-    } else if (rightValue->isType<UInt8>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<UInt8>());
-    } else if (rightValue->isType<UInt16>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<UInt16>());
-    } else if (rightValue->isType<UInt32>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<UInt32>());
-    } else if (rightValue->isType<UInt64>()) {
-        return FunctionCall<>("regexExtract",
-                              regexExtract,
-                              leftValue.as<Text>()->getReference(),
-                              midValue.as<Text>()->getReference(),
-                              rightValue.as<UInt64>());
-    } else {
-        // If no type was applicable we throw an exception.
-        NES_THROW_RUNTIME_ERROR("This expression is only defined on a numeric input argument that is of type Integer.");
+    if (leftValue->isType<Text>() &&midValue->isType<Text>()) {
+
+        if (rightValue->isType<Int8>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<Int8>());
+        } else if (rightValue->isType<Int16>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<Int16>());
+        } else if (rightValue->isType<Int32>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<Int32>());
+        } else if (rightValue->isType<Int64>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<Int64>());
+        } else if (rightValue->isType<UInt8>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<UInt8>());
+        } else if (rightValue->isType<UInt16>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<UInt16>());
+        } else if (rightValue->isType<UInt32>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<UInt32>());
+        } else if (rightValue->isType<UInt64>()) {
+            return FunctionCall<>("regexExtract",
+                                  regexExtract,
+                                  leftValue.as<Text>()->getReference(),
+                                  midValue.as<Text>()->getReference(),
+                                  rightValue.as<UInt64>());
+        } else {
+            // If no type was applicable we throw an exception.
+            NES_THROW_RUNTIME_ERROR("Idx only defined on a numeric input argument that is of type Integer.");
+        }
+    }else {
+        NES_THROW_RUNTIME_ERROR("This expression is only defined for inputs of type Text and an index as Integer.");
     }
 }
 

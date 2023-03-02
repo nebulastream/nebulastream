@@ -48,10 +48,15 @@ Value<> SearchingRegex::execute(NES::Nautilus::Record& record) const {
     // Evaluate the right sub expression and retrieve the value.
     Value<> rightValue = rightSubExpression->execute(record);
 
-    return FunctionCall<>("regex_search",
-                          regex_search,
-                          leftValue.as<Text>()->getReference(),
-                          rightValue.as<Text>()->getReference());
+    if (leftValue->isType<Text>() && rightValue->isType<Text>()) {
+
+        return FunctionCall<>("regex_search",
+                              regex_search,
+                              leftValue.as<Text>()->getReference(),
+                              rightValue.as<Text>()->getReference());
+    } else {
+        NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments of type Text.");
+    }
 }
 
 }// namespace NES::Runtime::Execution::Expressions
