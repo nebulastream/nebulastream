@@ -25,16 +25,23 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
 
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
     make -j`nproc --ignore=2`
+
+    cd ./nes-benchmark 
+    ./e2e-benchmark-main --logPath=logger.log --configPath=../../nes-benchmark/config-examples/E2EConfigs/dailyBenchmarks/filter_one_source.yaml
+    #./e2e-benchmark-main --logPath=logger.log --configPath=../../nes-benchmark/config-examples/E2EConfigs/dailyBenchmarks/window_one_source.yaml
     
-    cd /nebulastream/benchmark/scripts
-    apt-get install python3-pip -y && pip3 install --user argparse datetime matplotlib pandas seaborn numpy
-    echo "Executing python script at $(date)..."
-    echo "python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}"
-    python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}
+    ./e2e-benchmark-main --logPath=logger.log --configPath=../../nes-benchmark/config-examples/E2EConfigs/dailyBenchmarks/map_one_source.yaml
+    pwd
+
+    timestamp=$(date +%Y%m%d%H%M%S)
+    mkdir /nebulastream/results/
+    mkdir /nebulastream/results/$timestamp/
+    mv *.csv /nebulastream/results/$timestamp/
+
     result=$?
-    rm -rf /nebulastream/build
+    rm -rf /nebulastream/build 
     exit $result
 else
     exec $@

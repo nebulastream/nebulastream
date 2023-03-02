@@ -1,9 +1,10 @@
 name: NES Benchmark
 
+# A benchmark should be triggered, whenever a new version is released or when the workflow is manually dispatched
 on:
-  schedule:
-    # executes every day at 1:15 am
-    - cron: '15 1 * * *'
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       trigger-value:
@@ -13,7 +14,6 @@ on:
 
 jobs:
   benchmark-scheduled-job:
-    if: false
     runs-on: [self-hosted, linux, X64, Benchmark]
     timeout-minutes: 60
     steps:
@@ -22,46 +22,20 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
-      - name: Fetch git history
-        run: |
-          git fetch --prune --unshallow --tags
       - name: Run benchmarks
         run: |
-          docker run --name ${{ github.run_id }}_benchmark_scheduled -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_benchmark_version -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
       - name: Push Benchmarks to pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
-          publish_dir: ./benchmark/scripts
-          destination_dir: private/benchmark/
+          personal_token:  ${{ secrets.CI_TOKEN }}
+          publish_dir: results
+          destination_dir: benchmark/
           exclude_assets: '*.py,*.so'
           keep_files: true
-          external_repository: nebulastream/nes-server
+          external_repository: nebulastream/benchmark-data
           publish_branch: master
       - name: docker cleanup
         if: ${{ always() }}
         run: |
-          docker rm -f ${{ github.run_id }}_benchmark_scheduled
-
-
-  benchmark-triggered-job:
-    if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
-    runs-on: [self-hosted, linux, X64, Benchmark]
-    timeout-minutes: 60
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-      - name: Fetch git history
-        run: |
-          git fetch --prune --unshallow --tags
-      - name: Run benchmarks
-        run: |
-          docker run --name ${{ github.run_id }}_benchmark_triggered -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -m Run-with-docker -ba  e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eMap.yaml           e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eWindow.yaml          e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eJoin.yaml  e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eProjection.yaml e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eSelection.yaml ' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
-          cp -R $GITHUB_WORKSPACE/benchmark/scripts/*.csv /tmp/benchmarks/.
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_benchmark_triggered
+          docker rm -f ${{ github.run_id }}_benchmark_version
