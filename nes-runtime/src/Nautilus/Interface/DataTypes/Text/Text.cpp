@@ -14,11 +14,12 @@
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Execution/Expressions/PatternMatching/MatchingRegex.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <memory>
 #include <cstring>
 #include <iostream>
+#include <memory>
+#include <regex>
 #include <string>
 
 namespace NES::Nautilus {
@@ -152,7 +153,9 @@ Value<UInt32> Text::position(Value<Text>& other) const {
 TextValue* textReplace(const TextValue* text, const TextValue* source, const TextValue* target) {
     uint32_t p = textPosition(text, source);
     if (p == 0) {
-        NES_THROW_RUNTIME_ERROR("no match sourcetext in text");
+        auto resultText = TextValue::create(text->length());
+        std::memcpy(resultText->str(), text->c_str(), text->length());
+        return resultText;
     }
     uint32_t startIndex = p - 1;
     uint32_t len = text->length() - source->length() + target->length();
@@ -357,35 +360,39 @@ TextValue* lrTrim(const TextValue* text) {
     return resultText;
 }
 
-bool textSimilarTo(const TextValue* text,  TextValue* pattern) {
-    auto leftExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("left");
-    auto midExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("mid");
-    auto rightExpression= std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("right");
-
-    auto record = Record({{"left", text},{"mid", pattern}, {"right", (Boolean) false}});
-    return std::make_shared<Runtime::Execution::Expressions::MatchingRegex>
-        (leftExpression, midExpression, rightExpression)
-            ->execute(record);
+bool textSimilarTo(const TextValue* text, TextValue* pattern) {
+    std::string target = std::string(text->c_str(), text->length());
+    NES_DEBUG("Received the following source string " <<  target );
+    std::string strPattern = std::string(pattern->str(), pattern->length());
+    NES_DEBUG("Received the following source string " <<  strPattern );
+    std::regex regexPattern(strPattern);
+    return std::regex_match(target,  regexPattern);
 }
 
 const Value<Boolean> Text::similarTo(Value<Text>& pattern) const {
     return FunctionCall<>("textSimilarTo", textSimilarTo, rawReference, pattern.value->rawReference);
 }
 
-bool textLike(const TextValue* text,  TextValue* pattern, Boolean iCase) {
-    auto leftExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("left");
-    auto midExpression = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("mid");
-    auto rightExpression= std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>("right");
-
+bool textLike(const TextValue* text, TextValue* pattern, Boolean iCase) {
+    NES_DEBUG("Checking in textLike if " << text->c_str() << " and" << pattern << " are a match." );
     auto addWildchar = textReplace(pattern, TextValue::create("_"), TextValue::create("."));
     auto addWildcard = textReplace(addWildchar, TextValue::create("%"), TextValue::create(".*?"));
     auto addStartChar = textConcat(TextValue::create("^"), addWildcard);
     auto likeRegex = textConcat(addStartChar, TextValue::create("$"));
 
-    auto record = Record({{"left", text}, {"mid", likeRegex}, {"right", iCase}});
-    return std::make_shared<Runtime::Execution::Expressions::MatchingRegex>
-        (leftExpression, midExpression, rightExpression)
-            ->execute(record);
+    std::string target = std::string(text->c_str(), text->length());
+    NES_DEBUG("Received the following source string " <<  target);
+    std::string strPattern = std::string(likeRegex->c_str(), likeRegex->length());
+    NES_DEBUG("Received the following source string " <<  strPattern);
+    // LIKE and GLOB adoption requires syntax conversion functions
+    // would make regex case in sensitive for ILIKE
+    if (iCase.getValue()) {
+        std::regex regexPattern(strPattern, std::regex::icase);
+        return std::regex_match(target,  regexPattern);
+    } else {
+        std::regex regexPattern(strPattern);
+        return std::regex_match(target,  regexPattern);
+    }
 }
 
 const Value<Boolean> Text::like(Value<Text>& pattern) const {
