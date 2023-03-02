@@ -53,7 +53,7 @@ Polygon::Polygon(std::vector<double> coords) {
 
 Point Polygon::getVertex(int i) {
     size_t idx = i;
-    if (idx > 0 && idx < coordinates.size()) {
+    if (idx >= 0 && idx < coordinates.size()) {
         return coordinates[idx];
     } else {
         NES_ERROR("Polygon::getVertex(): Invalid index access in coordinates: " + std::to_string(idx));

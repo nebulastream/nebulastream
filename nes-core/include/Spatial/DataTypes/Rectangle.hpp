@@ -68,7 +68,7 @@ class Rectangle {
      * @brief accessor method to return latitudeHigh of the north-east point
      * @return latitudeHigh of the north-east point
      */
-    double getLatitudeHigh() const { return low.getLatitude(); }
+    double getLatitudeHigh() const { return high.getLatitude(); }
 
     /**
      * @brief accessor method to return longitudeHigh of the north-east point
