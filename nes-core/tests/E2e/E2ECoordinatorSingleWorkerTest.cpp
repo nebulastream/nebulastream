@@ -843,7 +843,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
               "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",UINT64))->"
+              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",INT32))->"  //TODO I changed that to i32 to prevent failure because of different data types
               "addField(createField(\\\"ECU_Side_StanD\\\",UINT64))->"
               "addField(createField(\\\"Longitude\\\",FLOAT64))->"
               "addField(createField(\\\"Latitude\\\",FLOAT64))->"
@@ -856,7 +856,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm.csv"),
+                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //TODO I created a new file to open and close the threshold window
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -871,7 +871,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ABS_Front_Wheel_Press\") > 20UL)))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") > 20UL)))";
     ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
