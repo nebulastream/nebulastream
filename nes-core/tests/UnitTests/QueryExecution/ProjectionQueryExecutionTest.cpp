@@ -53,12 +53,13 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling<testi
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    int numberOfTuples = 10;
+    for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(1);
         buf[recordIndex][2].write<int64_t>(42);
     }
-    buf.setNumberOfTuples(10);
+    buf.setNumberOfTuples(numberOfTuples);
 }
 
 TEST_P(ProjectionQueryExecutionTest, projectField) {
@@ -82,7 +83,7 @@ TEST_P(ProjectionQueryExecutionTest, projectField) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10u);
-    for (uint32_t recordIndex = 0u; recordIndex < 10u; ++recordIndex) {
+    for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
     }
     ASSERT_TRUE(executionEngine->stopQuery(plan));
