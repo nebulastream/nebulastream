@@ -29,6 +29,7 @@ if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireT
 # parallel test
 if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestParallelism=${NesTestParallelism}; fi
 if [ -z "${NesBuildParallelism}" ]; then NesBuildParallelism="8"; else NesBuildParallelism=${NesBuildParallelism}; fi
+echo "BUILD DIR =$BuildDir"
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
 echo "Test Parallelism=$NesTestParallelism"
@@ -38,7 +39,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_TF=1 -DNES_USE_S2=1 ..
+    cmake -B $BuildDir -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_TF=1 -DNES_USE_S2=1 ..
     make -j$NesBuildParallelism
 
     # Check if build was successful
