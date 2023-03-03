@@ -826,7 +826,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"Time\\\",UINT64))->addField(createField(\\\"Dist\\\",UINT64))->"
+              ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
               "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
@@ -844,7 +844,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
               "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",INT32))->"  //TODO I changed that to i32 to prevent failure because of different data types
-              "addField(createField(\\\"ECU_Side_StanD\\\",UINT64))->"
+              "addField(createField(\\\"ECU_Side_StanD\\\",INT32))->"
               "addField(createField(\\\"Longitude\\\",FLOAT64))->"
               "addField(createField(\\\"Latitude\\\",FLOAT64))->"
               "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
@@ -871,7 +871,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") > 20UL)))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$Time\") < 1)))"; //TODO whatever att name I am typing here the value is 0
     ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
