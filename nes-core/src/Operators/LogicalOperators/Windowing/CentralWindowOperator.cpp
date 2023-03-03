@@ -84,7 +84,8 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
 
     //Construct output schema
     outputSchema->clear();
-
+    // TODO: I exculded the threshold window here if we catch the point where the threshold window is assigned as a Global window we may can remove the changes
+    // the reason for the adjustment: ktm$start and ktm$end are not found
     if (!windowDefinition->getWindowType()->isThresholdWindow()) {
         outputSchema =
             outputSchema
@@ -105,7 +106,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
                 AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
         }
     }
-    /** For the treshold window we create the outputschema elsewhere*/
+
     return true;
 }
 

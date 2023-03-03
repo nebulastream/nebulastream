@@ -856,7 +856,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //TODO I created a new file to open and close the threshold window
+                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //I created a new file to open and close a threshold window
                                           TestUtils::physicalSourceName("test_stream"),
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -866,12 +866,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
                                           TestUtils::enableThreadLocalWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    //TODO : without logicaStreamName$Attribute (qualifiied att names) the Nautilus query fails with the error: attr. does not exits
+    //TODO : without logicalStreamName$Attribute (qualified att names) the Nautilus query fails with the error: attr. does not exits
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$Time\") < 1)))"; //TODO whatever att name I am typing here the value is 0
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") < 1)))"; //TODO whatever att name I am typing here, all received values in the record are 0 that prevents right now testing the threshold window as it either never opens or never closes
     ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
