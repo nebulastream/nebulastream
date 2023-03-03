@@ -491,6 +491,10 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         auto aggregationResultFieldName =
+            //TODO: we get an error here : Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is requested
+            //because our result schema is empty, I excluded threshold window from the output schema creation in the GlobalWindowOperator as
+            // this caused another error: attr does not exit (for agg fields)
+            //Thus, here we now get only Avg, Min, etc. as resultfieldname but that does not affact things further so far.
             thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + aggregation->getTypeAsString();
         aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
         /** check if the aggregation is not of type Count
