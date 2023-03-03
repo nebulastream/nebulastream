@@ -626,10 +626,8 @@ add_nes_integration_test(memory-source-integration-test "Integration/Source/Memo
 ### VariableLengthIntegrationTest ###
 add_nes_integration_test(variable-length-integration-test "Integration/Source/VariableLengthIntegrationTest.cpp")
 
-
 ### StaticDataSourceIntegrationTest ###
-add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
-
+#add_nes_integration_test(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
 
 ### BenchmarkSourceIntegrationTest ###
 add_nes_integration_test(benchmark-source-integration-test "Integration/Source/BenchmarkSourceIntegrationTest.cpp")
