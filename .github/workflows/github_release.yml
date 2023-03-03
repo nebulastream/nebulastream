@@ -62,10 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [X64, arm64]
-        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-22_04]
-        exclude:
-          - arch: arm64
-            osversion: ubuntu-18_04
+        osversion: [ubuntu-20_04, ubuntu-22_04]
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
