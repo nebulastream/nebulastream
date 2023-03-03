@@ -35,7 +35,6 @@ then
     errorCode=$?
     if [ $errorCode -ne 0 ];
     then
-      rm -rf ./*
       if [ "$RequireBuild" = "true" ];
       then
         echo "Required Build Failed"     
