@@ -78,7 +78,7 @@ Runtime::MemoryLayouts::DynamicTupleBuffer fillBuffer(const std::string& csvFile
     std::ifstream inputFile(fullPath);
     std::istream_iterator<std::string> beginIt(inputFile);
     std::istream_iterator<std::string> endIt;
-    auto  tupleCount = 0;
+    auto tupleCount = 0;
     for (auto it = beginIt; it != endIt; ++it) {
         std::string line = *it;
         parser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);

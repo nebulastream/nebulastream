@@ -305,8 +305,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical source
-    std::string source =
-        R"(Schema::create()->addField(createField("var", UINT32));)";
+    std::string source = R"(Schema::create()->addField(createField("var", UINT32));)";
     crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("KAFKASOURCETEST:: Coordinator started successfully");
 
@@ -330,8 +329,8 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("KAFKASOURCETEST: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"("));)";
+    string query =
+        R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -345,12 +344,11 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|stream$var:UINT32|\n"
-        "+----------------------------------------------------+\n"
-        "|6|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|stream$var:UINT32|\n"
+                             "+----------------------------------------------------+\n"
+                             "|6|\n"
+                             "+----------------------------------------------------+";
 
     NES_INFO("TCPSourceIntegrationTest: content=" << content);
     NES_INFO("TCPSourceIntegrationTest: expContent=" << expectedContent);

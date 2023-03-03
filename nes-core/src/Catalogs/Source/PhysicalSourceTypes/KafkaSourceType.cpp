@@ -148,13 +148,13 @@ KafkaSourceType::KafkaSourceType()
                                                                 1,
                                                                 "Numbers of events pulled from the queue overall")),
 
-      batchSize(Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
-                                                                      1,
-                                                                      "Numbers of events pulled from the queue per pull request")),
+      batchSize(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::BATCH_SIZE,
+                                                                1,
+                                                                "Numbers of events pulled from the queue per pull request")),
       inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
                                                                                            Configurations::InputFormat::JSON,
-                                                                                           "input data format"))
-{
+                                                                                           "input data format")) {
     NES_INFO("KafkaSourceType: Init source config object with default values.");
 }
 
