@@ -58,6 +58,7 @@ then
       # timeout after 240 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
+      cd /build_dir
       timeout 60m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
