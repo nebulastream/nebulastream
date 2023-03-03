@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.13](https://github.com/nebulastream/nebulastream/tree/v0.5.13) (2023-03-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.12...v0.5.13)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add JSON to current Kafka source [\#3474](https://github.com/nebulastream/nebulastream/issues/3474)
+
+#### Operators 
+
+- Old Jointests compatibility with new StreamJoin [\#3395](https://github.com/nebulastream/nebulastream/issues/3395)
+
 ## [v0.5.12](https://github.com/nebulastream/nebulastream/tree/v0.5.12) (2023-02-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.11...v0.5.12)
