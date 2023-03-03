@@ -28,7 +28,7 @@ class Frame {
     V getValue(K key) {
         auto value = frameMap.find(key);
         if (value == frameMap.end()) {
-            throw Exceptions::RuntimeException("Key " + key + " dose not exists in frame.");
+            throw Exceptions::RuntimeException("Key " + key + " does not exists in frame.");
         }
         return value->second;
     }

@@ -47,6 +47,6 @@ class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Recon
     }
 };
 
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif// NES_CORE_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_

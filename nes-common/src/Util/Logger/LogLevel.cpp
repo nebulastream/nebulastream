@@ -14,7 +14,6 @@
 
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <string>
 
 namespace NES {
 /**
@@ -23,4 +22,4 @@ namespace NES {
  * @return string of value
  */
 std::basic_string_view<char> getLogName(LogLevel value) { return magic_enum::enum_name(value); }
-}
+}// namespace NES
