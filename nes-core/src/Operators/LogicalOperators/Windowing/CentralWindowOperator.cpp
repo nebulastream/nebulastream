@@ -85,23 +85,27 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     //Construct output schema
     outputSchema->clear();
 
-    outputSchema =
-        outputSchema
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-            ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
+    if (!windowDefinition->getWindowType()->isThresholdWindow()) {
+        outputSchema =
+            outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
 
-    if (windowDefinition->isKeyed()) {
-        // infer the data type of the key field.
-        auto keyList = windowDefinition->getKeys();
-        for (auto& key : keyList) {
-            key->inferStamp(typeInferencePhaseContext, inputSchema);
-            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
+        if (windowDefinition->isKeyed()) {
+            // infer the data type of the key field.
+            auto keyList = windowDefinition->getKeys();
+            for (auto& key : keyList) {
+                key->inferStamp(typeInferencePhaseContext, inputSchema);
+                outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
+            }
+        }
+        for (auto& agg : windowAggregation) {
+            NES_INFO("Add the following field to the output schema of the GlobalWindow" << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
+            outputSchema->addField(
+                AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
         }
     }
-    for (auto& agg : windowAggregation) {
-        outputSchema->addField(
-            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
-    }
+    /** For the treshold window we create the outputschema elsewhere*/
     return true;
 }
 
