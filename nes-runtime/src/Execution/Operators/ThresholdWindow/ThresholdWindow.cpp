@@ -79,10 +79,13 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
 
 void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     // Evaluate the threshold condition
+    NES_INFO("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
+    NES_INFO("Execute ThresholdWindow for received record " << record.numberOfFields())
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
+        NES_INFO("Execute ThresholdWindow for valid predicate " << val)
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
@@ -107,6 +110,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
+                    NES_INFO("Write back result for" << aggregationResultFieldIdentifiers[i].c_str())
                     resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }

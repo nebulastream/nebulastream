@@ -93,6 +93,7 @@ ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
         return lowerFunctionExpression(functionExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {
         auto value = constantValue->getConstantValue();
+        //TODO fix here that all constant integers are parsed to i32
         if (constantValue->getStamp()->isInteger()) {
             auto integerValue = std::stoi(value->as<BasicValue>()->value);
             return std::make_shared<Runtime::Execution::Expressions::ConstantInteger32Expression>(integerValue);
