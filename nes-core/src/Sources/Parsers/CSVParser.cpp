@@ -55,7 +55,6 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
         NES_TRACE("Current value is: " << values[j]);
         writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount, bufferManager);
     }
-    tupleBuffer.setNumberOfTuples(tupleCount + 1);
     return true;
 }
 }// namespace NES

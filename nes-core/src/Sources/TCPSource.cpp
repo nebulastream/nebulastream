@@ -227,7 +227,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     //when receiving buffer size from socket, we need to check that the buffer was actually popped during the last run, otherwise,
                     //we loose the transmitted size and obtain bytes from the tuple that weren't meant to transmit the size.
                     //This might happen if the size of the tuple was sent and popped, but we only received half of the tuple
-                    //then we won't overwärite the tupleSize but try again to pop the next message.
+                    //then we won't overwrite the tupleSize but try again to pop the next message.
                     if (popped) {
                         try {
                             NES_DEBUG("TCPSOURCE::fillBuffer: obtain socket buffer size");
