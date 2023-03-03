@@ -53,12 +53,13 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling<testing::T
 };
 
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+    int numberOfTuples = 10;
+    for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
         buf[recordIndex][0].write<int64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(1);
         buf[recordIndex][2].write<int64_t>(42);
     }
-    buf.setNumberOfTuples(10);
+    buf.setNumberOfTuples(numberOfTuples);
 }
 
 // P1 = Source1 -> filter1
@@ -71,12 +72,10 @@ TEST_P(MergeQueryExecutionTest, mergeQuery) {
                       ->addField("test$value", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(schema);
 
-    auto result = Schema::create()
-                      ->addField("test$id", BasicType::INT64);
+    auto result = Schema::create()->addField("test$id", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(result, /*expected buffers*/ 2);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-    //    auto query1 = TestQuery::from(testSchema);
     auto query1 = TestQuery::from(testSourceDescriptor);
     query1 = query1.filter(Attribute("id") < 5);
 
@@ -95,10 +94,10 @@ TEST_P(MergeQueryExecutionTest, mergeQuery) {
     testSink->waitTillCompleted();
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 2u);
 
-    for(auto i = 0; i< 2; i++){
+    for (uint64_t i = 0; i < testSink->getNumberOfResultBuffers(); i++) {
         auto resultBuffer = testSink->getResultBuffer(i);
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+        for (uint32_t recordIndex = 0u; recordIndex < resultBuffer.getNumberOfTuples(); ++recordIndex) {
             EXPECT_EQ(resultBuffer[recordIndex][0].read<int64_t>(), recordIndex);
         }
     }
