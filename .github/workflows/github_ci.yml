@@ -196,7 +196,7 @@ jobs:
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
-          build_dir=/tmp/nes-build_${RUNNER_NAME}_${RUNNER_OS}
+          build_dir="/tmp/nes-build_$RUNNER_NAME_$RUNNER_OS"
           echo $build_dir
           mkdir -p $build_dir
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -eNesBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
