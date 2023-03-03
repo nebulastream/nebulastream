@@ -85,15 +85,14 @@ KafkaSource::KafkaSource(SchemaPtr schema,
         case Configurations::InputFormat::JSON:
             inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
             break;
-        default:
-            break;
+        default: break;
     }
 }
 
 KafkaSource::~KafkaSource() {
     NES_INFO("Kafka source " << topic << " partition/group=" << groupId << " produced=" << bufferProducedCnt
-              << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
-              << " failedFullPollCnt=" << failedFullPollCnt);
+                             << " batchSize=" << batchSize << " successFullPollCnt=" << successFullPollCnt
+                             << " failedFullPollCnt=" << failedFullPollCnt);
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
@@ -116,7 +115,6 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
     }
     return tupleBuffer.getBuffer();
 }
-
 
 bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
 
@@ -151,8 +149,10 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
                         return true;
                     }
                     inputParser->writeInputTupleToTupleBuffer(std::string(message.get_payload()),
-                                                              tupleCount, tupleBuffer,
-                                                              schema, localBufferManager);
+                                                              tupleCount,
+                                                              tupleBuffer,
+                                                              schema,
+                                                              localBufferManager);
                     tupleCount++;
                 } else {
                     // FIXME: how to handle messages that are of size > tupleBufferCapacity
@@ -177,7 +177,6 @@ bool KafkaSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBu
     tupleBuffer.setNumberOfTuples(tupleCount);
     return true;
 }
-
 
 std::string KafkaSource::toString() const {
     std::stringstream ss;
