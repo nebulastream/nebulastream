@@ -650,6 +650,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // handle if threshold window
+        //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
             if (operatorNode->as<WindowOperatorNode>()->getWindowDefinition()->getWindowType()->isThresholdWindow()) {
                 NES_INFO("Lower ThresholdWindow");
                 auto thresholdWindowPhysicalOperator =

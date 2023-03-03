@@ -93,7 +93,9 @@ ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
         return lowerFunctionExpression(functionExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {
         auto value = constantValue->getConstantValue();
-        //TODO fix here that all constant integers are parsed to i32
+        //TODO fix here that all constant integers are parsed to i32 (there already is an issue #3062)
+        // furthermore, we need to thing how we deal with the condition of matching data types at all
+        // so expression right now only work if we lower here to the data type of the corresponding field in the schema
         if (constantValue->getStamp()->isInteger()) {
             auto integerValue = std::stoi(value->as<BasicValue>()->value);
             return std::make_shared<Runtime::Execution::Expressions::ConstantInteger32Expression>(integerValue);
