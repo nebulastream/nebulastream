@@ -38,7 +38,7 @@ class ChannelId {
     const NesPartition nesPartition;
     const uint32_t threadId;
 };
-}// namespace NES
+}// namespace NES::Network
 
 namespace fmt {
 template<>

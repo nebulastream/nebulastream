@@ -214,7 +214,7 @@ class NonBlockingMonotonicSeqQueue {
             // append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
             if (!nextBlock) {
-                throw Exceptions::RuntimeException("The next block dose not exists. This should not happen here.");
+                throw Exceptions::RuntimeException("The next block dose not exist. This should not happen here.");
             }
             // move to the next block
             currentBlock = nextBlock;
