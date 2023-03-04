@@ -29,7 +29,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     openjdk-8-jdk
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
-    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ jammy main' \
     && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update
 RUN apt install -y cmake
 
