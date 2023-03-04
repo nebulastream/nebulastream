@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-// clang-format: off
-// clang-format: on
+
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <NesBaseTest.hpp>
@@ -137,5 +136,5 @@ INSTANTIATE_TEST_CASE_P(testProjectionQueries,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
                                           QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<ProjectionQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });
