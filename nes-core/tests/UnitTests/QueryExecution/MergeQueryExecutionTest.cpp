@@ -109,5 +109,5 @@ INSTANTIATE_TEST_CASE_P(testMergeQueries,
                         MergeQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<MergeQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
+                            return std::string(magic_enum::enum_name(info.param));
                         });
