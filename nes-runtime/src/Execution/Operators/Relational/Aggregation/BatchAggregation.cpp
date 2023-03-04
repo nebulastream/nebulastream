@@ -1,7 +1,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Relational/BatchAggregation.hpp>
-#include <Execution/Operators/Relational/BatchAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
