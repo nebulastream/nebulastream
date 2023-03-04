@@ -20,10 +20,10 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <optional>
 
 namespace NES::Runtime::Execution::Operators {
 

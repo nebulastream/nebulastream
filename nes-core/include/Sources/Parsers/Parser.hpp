@@ -18,7 +18,7 @@
 
 namespace NES {
 
-namespace  Runtime::MemoryLayouts{
+namespace Runtime::MemoryLayouts {
 class DynamicTupleBuffer;
 }
 

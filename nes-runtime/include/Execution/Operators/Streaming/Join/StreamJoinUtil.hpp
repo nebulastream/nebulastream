@@ -16,9 +16,9 @@
 
 #include <cerrno>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
-#include <cstring>
 #include <sys/mman.h>
 
 namespace NES {

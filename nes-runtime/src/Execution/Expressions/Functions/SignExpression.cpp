@@ -59,7 +59,8 @@ Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateSign", calculateSign, subValue.as<Double>());
     } else {
         // Throw an exception if no type is applicable
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 }// namespace NES::Runtime::Execution::Expressions

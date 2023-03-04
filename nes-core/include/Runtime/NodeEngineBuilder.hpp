@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 #define NES_CORE_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 namespace Compiler {

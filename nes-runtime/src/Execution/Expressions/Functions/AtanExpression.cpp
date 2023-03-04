@@ -40,7 +40,8 @@ Value<> AtanExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateAtanDouble", calculateAtanDouble, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Double or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AtanExpression>> atanFunction("atan");

@@ -17,8 +17,8 @@
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-#include <utility>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES {
 FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName)

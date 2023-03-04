@@ -16,8 +16,8 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 
 #include <Common/Identifiers.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Exceptions/RuntimeException.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -78,7 +78,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
         auto size = operatorHandlers.size();
         if (index >= size) {
             throw Exceptions::RuntimeException("PipelineExecutionContext: operator handler at index " + std::to_string(index)
-                                    + " is not registered");
+                                               + " is not registered");
         }
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }

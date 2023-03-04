@@ -14,8 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 namespace NES {
 
 DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};

@@ -54,7 +54,8 @@ Value<> GammaExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateGamma", calculateGamma, leftValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<GammaExpression>> gammaFunction("gamma");

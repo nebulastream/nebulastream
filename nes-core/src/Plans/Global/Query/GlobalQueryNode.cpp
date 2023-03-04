@@ -13,8 +13,8 @@
 */
 
 #include <Operators/OperatorNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <utility>
 

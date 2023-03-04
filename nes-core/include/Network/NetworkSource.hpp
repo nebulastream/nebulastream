@@ -22,7 +22,7 @@
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Runtime{
+namespace NES::Runtime {
 class BaseEvent;
 }
 namespace NES::Network {

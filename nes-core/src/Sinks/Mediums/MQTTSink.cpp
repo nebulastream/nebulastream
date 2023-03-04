@@ -13,8 +13,8 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -19,11 +20,10 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Runtime/Events.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <chrono>
 #include <atomic>
+#include <chrono>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution {

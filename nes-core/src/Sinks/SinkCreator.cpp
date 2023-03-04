@@ -14,8 +14,8 @@
 
 #include <Common/Identifiers.hpp>
 #include <Network/NetworkSink.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

@@ -13,8 +13,8 @@
 */
 
 #include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <utility>
