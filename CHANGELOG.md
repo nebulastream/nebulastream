@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.15](https://github.com/nebulastream/nebulastream/tree/v0.5.15) (2023-03-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.14...v0.5.15)
+
+**Implemented enhancements:**
+
+- \[TASK\] Cleanup includes to reduce compilation time [\#3546](https://github.com/nebulastream/nebulastream/issues/3546)
+
 ## [v0.5.14](https://github.com/nebulastream/nebulastream/tree/v0.5.14) (2023-03-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.13...v0.5.14)
