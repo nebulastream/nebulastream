@@ -25,9 +25,13 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libopencv-dev \
     libopencv4.5-java \
     libopencv4.5d-jni \
-    cmake \
     software-properties-common \
     openjdk-8-jdk
+
+RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+    && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' \
+    && apt update && apt install -y kitware-archive-keyring && rm /etc/apt/trusted.gpg.d/kitware.gpg && apt update
+RUN apt install -y cmake
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
