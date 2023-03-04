@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.14](https://github.com/nebulastream/nebulastream/tree/v0.5.14) (2023-03-04)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.13...v0.5.14)
+
+#### Build Management
+
+- Remove ubuntu 18 x64, ubuntu 20 arm, and coverage pipeline. [\#3564](https://github.com/nebulastream/nebulastream/issues/3564)
+
 ## [v0.5.13](https://github.com/nebulastream/nebulastream/tree/v0.5.13) (2023-03-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.12...v0.5.13)
