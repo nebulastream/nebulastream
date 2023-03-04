@@ -13,9 +13,9 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
-#include <sstream>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <sstream>
 
 namespace NES::Windowing {
 

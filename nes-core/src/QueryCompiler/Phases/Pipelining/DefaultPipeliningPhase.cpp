@@ -23,8 +23,8 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

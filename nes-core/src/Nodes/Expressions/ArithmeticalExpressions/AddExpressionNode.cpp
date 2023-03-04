@@ -14,8 +14,8 @@
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 namespace NES {
 
 AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};

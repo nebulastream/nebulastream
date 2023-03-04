@@ -56,7 +56,8 @@ Value<> Log10Expression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateLog10", calculateLog10, subValue.as<Double>());
     } else {
         // If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log10Expression>> log10Expression("log10");

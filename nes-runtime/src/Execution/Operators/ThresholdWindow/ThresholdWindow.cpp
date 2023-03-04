@@ -70,8 +70,7 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
                                  const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
                                  const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
                                  uint64_t operatorHandlerIndex)
-    : predicateExpression(std::move(predicateExpression)),
-      aggregatedFieldAccessExpressions(aggregatedFieldAccessExpressions),
+    : predicateExpression(std::move(predicateExpression)), aggregatedFieldAccessExpressions(aggregatedFieldAccessExpressions),
       aggregationResultFieldIdentifiers(aggregationResultFieldIdentifiers), minCount(minCount),
       operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {
     NES_ASSERT(this->aggregationFunctions.size() == this->aggregationResultFieldIdentifiers.size(),

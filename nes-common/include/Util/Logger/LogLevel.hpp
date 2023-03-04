@@ -15,8 +15,8 @@
 #ifndef NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
 #define NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
 #include <cstdint>
-#include <type_traits>
 #include <string_view>
+#include <type_traits>
 namespace NES {
 /**
  * @brief Indicators for a log level following the priority of log messages.

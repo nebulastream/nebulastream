@@ -41,7 +41,8 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const {
         return FunctionCall<>("calculateAbs", calculateAbs, subValue.as<Double>());
 
     } else {
-        throw Exceptions::NotImplementedException("This expression is only defined on a numeric input argument that is ether Float or Double.");
+        throw Exceptions::NotImplementedException(
+            "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
 

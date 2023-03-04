@@ -19,8 +19,8 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhaseContext.hpp>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 namespace NES {
 

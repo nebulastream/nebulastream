@@ -51,10 +51,10 @@
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 #include <utility>
 #include <variant>

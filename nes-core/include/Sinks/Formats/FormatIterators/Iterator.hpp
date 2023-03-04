@@ -17,9 +17,9 @@
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Exceptions/NotImplementedException.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatType.hpp>
-#include <Exceptions/NotImplementedException.hpp>
 namespace NES {
 
 class Iterator {

@@ -15,10 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
 
+#include <Network/EventBufferMessage.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Events.hpp>
-#include <Network/EventBufferMessage.hpp>
 
 namespace NES::Network::detail {
 

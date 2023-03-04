@@ -16,8 +16,8 @@
 #define NES_CORE_INCLUDE_NODES_NODE_HPP_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace NES {
 

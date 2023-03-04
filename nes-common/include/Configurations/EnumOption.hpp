@@ -68,7 +68,7 @@ void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
 
     if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
         std::stringstream ss;
-        for(const auto& name: magic_enum::enum_names<EnumType>()){
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
@@ -83,7 +83,7 @@ void EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std:
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
         std::stringstream ss;
-        for(const auto& name: magic_enum::enum_names<EnumType>()){
+        for (const auto& name : magic_enum::enum_names<EnumType>()) {
             ss << name;
         }
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());

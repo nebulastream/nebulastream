@@ -227,8 +227,6 @@ class DataBufferMessage {
     uint32_t const numOfChildren;
 };
 
-
-
 }// namespace Messages
 }// namespace Network
 }// namespace NES

@@ -189,7 +189,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
     TopologyManagerServicePtr topologyManagerService;
     ErrorHandlerPtr errorHandler;
 };
-}// namespace REST
+}// namespace REST::Controller
 }// namespace NES
 
 #include OATPP_CODEGEN_END(ApiController)

@@ -33,44 +33,47 @@
 #define NEARGYE_MAGIC_ENUM_FORMAT_HPP
 
 #if !defined(__cpp_lib_format)
-#  error "Format is not supported"
+#error "Format is not supported"
 #endif
 
 #include "magic_enum.hpp"
 
 #if !defined(MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT)
-#  define MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT true
-#  define MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
-#endif // MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT
+#define MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT true
+#define MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
+#endif// MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT
 
 namespace magic_enum::customize {
-  // customize enum to enable/disable automatic std::format
-  template <typename E>
-  constexpr bool enum_format_enabled() noexcept {
+// customize enum to enable/disable automatic std::format
+template<typename E>
+constexpr bool enum_format_enabled() noexcept {
     return MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT;
-  }
-} // magic_enum::customize
+}
+}// namespace magic_enum::customize
 
 #include <format>
 
-template <typename E>
-struct std::formatter<E, std::enable_if_t<std::is_enum_v<E> && magic_enum::customize::enum_format_enabled<E>(), char>> : std::formatter<std::string_view, char> {
-  auto format(E e, format_context& ctx) {
-    static_assert(std::is_same_v<char, string_view::value_type>, "formatter requires string_view::value_type type same as char.");
-    using D = std::decay_t<E>;
+template<typename E>
+struct std::formatter<E, std::enable_if_t<std::is_enum_v<E> && magic_enum::customize::enum_format_enabled<E>(), char>>
+    : std::formatter<std::string_view, char> {
+    auto format(E e, format_context& ctx) {
+        static_assert(std::is_same_v<char, string_view::value_type>,
+                      "formatter requires string_view::value_type type same as char.");
+        using D = std::decay_t<E>;
 
-    if constexpr (magic_enum::detail::supported<D>::value) {
-      if (const auto name = magic_enum::enum_name<D, magic_enum::as_flags<magic_enum::detail::is_flags_v<D>>>(e); !name.empty()) {
-        return std::formatter<std::string_view, char>::format(std::string_view{name.data(), name.size()}, ctx);
-      }
+        if constexpr (magic_enum::detail::supported<D>::value) {
+            if (const auto name = magic_enum::enum_name<D, magic_enum::as_flags<magic_enum::detail::is_flags_v<D>>>(e);
+                !name.empty()) {
+                return std::formatter<std::string_view, char>::format(std::string_view{name.data(), name.size()}, ctx);
+            }
+        }
+        return std::formatter<std::string_view, char>::format(std::to_string(magic_enum::enum_integer<D>(e)), ctx);
     }
-    return std::formatter<std::string_view, char>::format(std::to_string(magic_enum::enum_integer<D>(e)), ctx);
-  }
 };
 
 #if defined(MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE)
-#  undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT
-#  undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
-#endif // MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
+#undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT
+#undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
+#endif// MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 
-#endif // NEARGYE_MAGIC_ENUM_FORMAT_HPP
+#endif// NEARGYE_MAGIC_ENUM_FORMAT_HPP

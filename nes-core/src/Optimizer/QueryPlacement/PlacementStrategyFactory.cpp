@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/RuntimeException.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -19,7 +20,6 @@
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
-#include <Exceptions/RuntimeException.hpp>
 #include <Util/PlacementStrategy.hpp>
 
 namespace NES::Optimizer {

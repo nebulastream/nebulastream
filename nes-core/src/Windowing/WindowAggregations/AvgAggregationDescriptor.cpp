@@ -13,10 +13,10 @@
 */
 #include <API/Expressions/Expressions.hpp>
 #include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <utility>
 
