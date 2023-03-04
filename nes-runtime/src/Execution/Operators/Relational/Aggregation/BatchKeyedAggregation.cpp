@@ -14,8 +14,8 @@
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/BatchKeyedAggregation.hpp>
-#include <Execution/Operators/Relational/BatchKeyedAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>

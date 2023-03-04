@@ -31,9 +31,9 @@
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/BatchAggregation.hpp>
-#include <Execution/Operators/Relational/BatchAggregationHandler.hpp>
-#include <Execution/Operators/Relational/BatchAggregationScan.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>

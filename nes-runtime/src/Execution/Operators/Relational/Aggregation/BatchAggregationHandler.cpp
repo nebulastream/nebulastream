@@ -1,4 +1,4 @@
-#include <Execution/Operators/Relational/BatchAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators {

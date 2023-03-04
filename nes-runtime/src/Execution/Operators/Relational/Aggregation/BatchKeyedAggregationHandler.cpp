@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Execution/Operators/Relational/BatchKeyedAggregationHandler.hpp>
+#include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
