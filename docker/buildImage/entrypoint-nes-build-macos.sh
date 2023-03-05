@@ -16,10 +16,8 @@
 #quit if command returns non-zero code
 #set -e
 
-RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+build_dir=$1
 echo $build_dir
-mkdir -p $build_dir
 
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
