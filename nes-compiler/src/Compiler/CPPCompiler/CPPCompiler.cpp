@@ -125,6 +125,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
     const std::lock_guard<std::mutex> fileLock(sourceFile->getFileMutex());
 
     std::stringstream compilerCall;
+    compilerCall << "ccache ";
     compilerCall << runtimePathConfig.clangBinaryPath << " ";
     for (const auto& arg : flags.getFlags()) {
         compilerCall << arg << " ";
