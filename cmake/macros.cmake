@@ -195,6 +195,7 @@ endmacro(get_nes_log_level_value NES_LOGGING_VALUE)
 
 function(download_file url filename)
     message("Download: ${url}")
+    file(REMOVE ${filename})
     if (NOT EXISTS ${filename})
         set(CURRENT_ITERATION "0")
         set(MAX_RETRIES "3")
