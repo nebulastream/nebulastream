@@ -247,7 +247,7 @@ jobs:
           build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.arch }}"
           echo $build_dir
           mkdir -p $build_dir
-          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh $build_dir
+          $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
