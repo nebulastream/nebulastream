@@ -31,8 +31,10 @@ echo "Build dir=$build_dir"
 if [ $# -eq 0 ]
 then
     # Build NES
-    cmake --fresh -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-    cmake --build "$build_dir" -j4
+    mkdir -p /nebulastream/build
+    cd /nebulastream/build
+    cmake --fresh -B "$build_dir/" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
+    cmake --build "$build_dir/" -j4
     # Check if build was successful
     errorCode=$?
     ccache -s
