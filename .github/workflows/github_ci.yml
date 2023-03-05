@@ -203,11 +203,12 @@ jobs:
         run: |
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-test.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-test.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_test
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
