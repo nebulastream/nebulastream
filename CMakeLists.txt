@@ -50,6 +50,8 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER "Build FLOUNDER Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
+option(USE_CCACHE "USE CCACHE" ON)
+set(CCACHE_DIR "$HOME/.cache/ccache" CACHE STRING "ccache cache dir")
 # TODO #3351 Do not enable Kafka by default
 option(NES_USE_KAFKA "Build with Kafka support" ON)
 
@@ -205,6 +207,7 @@ if (NOT APPLE)
 endif ()
 
 include(cmake/Sanitizers.cmake)
+include(cmake/UseCCache.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
