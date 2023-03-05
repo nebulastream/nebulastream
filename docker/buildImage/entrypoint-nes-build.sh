@@ -37,7 +37,7 @@ if [ $# -eq 0 ]; then
   cmake --build /build_dir -j$NesBuildParallelism
   # Check if build was successful
   errorCode=$?
-  ccache -s -v
+  ccache -s
   if [ $errorCode -ne 0 ]; then
     rm -rf /nebulastream/build
     if [ "$RequireBuild" = "true" ]; then
