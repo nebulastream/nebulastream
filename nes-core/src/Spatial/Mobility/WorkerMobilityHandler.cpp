@@ -187,16 +187,19 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
     //todo #3027: trigger replacement and migration of operators
 
     bool success = coordinatorRpcClient->replaceParent(currentParentId, newParentId);
-    if (!success) {
+    if (success) {
+        //update locally saved information about parent
+        currentParentId = newParentId;
+    } else {
         NES_WARNING("WorkerMobilityHandler::replaceParent() failed to replace oldParent=" << currentParentId
                                                                                           << " with newParentId=" << newParentId);
+        //todo: #3572 query coordinator for actual parent to recover from faulty state
     }
+
     NES_DEBUG("NesWorker::replaceParent() success=" << success);
 
     nodeEngine->stopBufferingAllData();
 
-    //update locally saved information about parent
-    currentParentId = newParentId;
     return success;
 }
 
