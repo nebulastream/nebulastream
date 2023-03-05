@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.16](https://github.com/nebulastream/nebulastream/tree/v0.5.16) (2023-03-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.15...v0.5.16)
+
+**Implemented enhancements:**
+
+- \[TASK\] Migrate Projection Test to nautilus query execution test [\#3552](https://github.com/nebulastream/nebulastream/issues/3552)
+
 ## [v0.5.15](https://github.com/nebulastream/nebulastream/tree/v0.5.15) (2023-03-04)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.14...v0.5.15)
