@@ -17,7 +17,7 @@
 #set -e
 
 build_dir=$1
-echo $build_dir
+
 
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
@@ -27,13 +27,12 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 if [ -z "${RequireTest}" ]; then RequireTest="false"; else RequireTest=${RequireTest}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
+echo "Build dir=$build_dir"
 if [ $# -eq 0 ]
 then
     # Build NES
-    mkdir -p build
-    cd build
-    cmake --fresh -B $build_dir -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-    cmake --build $build_dir -j4
+    cmake --fresh -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
+    cmake --build "$build_dir" -j4
     # Check if build was successful
     errorCode=$?
     ccache -s
