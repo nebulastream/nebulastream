@@ -51,7 +51,7 @@ Polygon::Polygon(std::vector<double> coords) {
     boundingRectangle = Rectangle(minLat, minLng, maxLat, maxLng);
 }
 
-Point Polygon::getVertex(int i) {
+Point Polygon::getVertex(int32_t i) {
     size_t idx = i;
     if (idx >= 0 && idx < coordinates.size()) {
         return coordinates[idx];
