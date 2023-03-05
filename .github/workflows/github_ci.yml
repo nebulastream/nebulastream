@@ -190,7 +190,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: Build Binaries
+      - name: Build Nebulastream
         if: github.event_name != 'workflow_dispatch'
         run: |
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
