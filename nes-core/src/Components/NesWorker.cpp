@@ -187,6 +187,16 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    if (withConnect && locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+        workerMobilityHandler =
+            std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
+                                                                                          coordinatorRpcClient,
+                                                                                          nodeEngine,
+                                                                                          mobilityConfig);
+        //FIXME: currently the worker mobility handler will only work with exactly one parent
+        workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
+    }
+
     if (workerConfig->enableStatisticOuput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
@@ -315,16 +325,6 @@ bool NesWorker::connect() {
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
-
-        if (locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
-            workerMobilityHandler =
-                std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
-                                                                                              coordinatorRpcClient,
-                                                                                              nodeEngine,
-                                                                                              mobilityConfig);
-            //FIXME: currently the worker mobility handler will only work with exactly one parent
-            workerMobilityHandler->start(std::vector<uint64_t>({workerConfig->parentId.getValue()}));
-        }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         if (!configPhysicalSources.empty()) {
