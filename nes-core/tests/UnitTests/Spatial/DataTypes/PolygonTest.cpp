@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Polygon.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -75,10 +75,8 @@ TEST_F(PolygonTest, testPolygonDatatype) {
     auto pointInside = Point(29.386844738083383, 79.4592465137537);
     auto pointInside1 = Point(29.390722779483202, 79.45436689251822);
     auto pointOutside = Point(29.354226572424423, 79.47221005281747);
-    auto rectangleInside = Rectangle(29.38949962608978, 79.45333492508487,
-                                     29.391490746626044, 79.45564162483768);
-    auto rectangleOutside = Rectangle(29.37000238301592, 79.46573058288895,
-                                      29.37306909298983, 79.47092333954178);
+    auto rectangleInside = Rectangle(29.38949962608978, 79.45333492508487, 29.391490746626044, 79.45564162483768);
+    auto rectangleOutside = Rectangle(29.37000238301592, 79.46573058288895, 29.37306909298983, 79.47092333954178);
 
     // test predicates
     EXPECT_TRUE(polygon.contains(pointInside));
@@ -92,7 +90,7 @@ TEST_F(PolygonTest, testPolygonDatatype) {
 
     // test accessor methods
     for (size_t itr = 0; itr < coords.size() && itr + 1 < coords.size(); itr = itr + 2) {
-        Point p = Point(coords[itr], coords[itr+1]);
+        Point p = Point(coords[itr], coords[itr + 1]);
         Point p1 = polygon.getVertex(itr / 2);
         EXPECT_TRUE(p == p1);
     }
