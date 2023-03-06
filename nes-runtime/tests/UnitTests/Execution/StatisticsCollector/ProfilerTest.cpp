@@ -45,7 +45,7 @@ class ProfilerTest : public Testing::NESBaseTest {
 /**
  * @brief test the profiler
  */
-TEST_F(ProfilerTest, scanRowLayoutBuffer) {
+TEST_F(ProfilerTest, testProfiler) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
