@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <NesBaseTest.hpp>
 #include <Spatial/DataTypes/Point.hpp>
 #include <Spatial/DataTypes/Rectangle.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
