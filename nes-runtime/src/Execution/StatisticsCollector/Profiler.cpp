@@ -17,6 +17,10 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
+Profiler::Profiler (){
+    fileDescriptor = -1;
+};
+
 Profiler::Profiler (std::vector<perf_hw_id> events){
     fileDescriptor = -1;
 
@@ -57,6 +61,35 @@ void Profiler::stopProfiling() {
     ioctl(fileDescriptor, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     read(fileDescriptor, buf, sizeof(buf));
 }
+
+uint64_t Profiler::addEvent(perf_hw_id event){
+    memset(&pe, 0, sizeof(pe));
+    pe.type = PERF_TYPE_HARDWARE;
+    pe.config = event; // specify event e.g., branch misses or cache misses
+    pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // for multiple events
+    pe.size = sizeof(pe);
+    pe.disabled = 1;
+
+    // only profile on user level
+    pe.exclude_kernel = 1;
+    pe.exclude_hv = 1;
+
+    int eventFileDescriptor = perf_event_open(&pe, 0, -1, fileDescriptor, 0);
+    if (eventFileDescriptor == -1) {
+        NES_THROW_RUNTIME_ERROR("Error opening perf event");
+    }
+
+    eventToIdMap[event] = 0;
+    ioctl(eventFileDescriptor, PERF_EVENT_IOC_ID, &eventToIdMap[event]);
+
+    if (fileDescriptor == -1){
+        // use one filedescriptor for a group of events
+        fileDescriptor = eventFileDescriptor;
+    }
+
+    return eventToIdMap[event];
+}
+
 
 uint64_t Profiler::getEventId(perf_hw_id event) {
     if (eventToIdMap.contains(event)){

@@ -35,6 +35,11 @@ class Profiler {
   public:
     /**
      * @brief Constructor for the profiler.
+     */
+    Profiler();
+
+    /**
+     * @brief Constructor for the profiler.
      * @param events vector of events that should be profiled.
      */
     Profiler(std::vector<perf_hw_id> events);
@@ -50,11 +55,18 @@ class Profiler {
     void stopProfiling();
 
     /**
+     * @brief Add an event for the profiler to measure.
+     * @param event e.g., PERF_COUNT_HW_CACHE_MISSES.
+     * @return id of event.
+     */
+    uint64_t addEvent(perf_hw_id event);
+
+    /**
      * @brief Get the id that the profiler assigned the event to.
      * @param event e.g., PERF_COUNT_HW_CACHE_MISSES.
      * @return id of event.
      */
-    uint64_t getEventId(perf_hw_id event) ;
+    uint64_t getEventId(perf_hw_id event);
 
     /**
      * @brief Get the count of the event, e.g., number of branch misses, number of cache misses.

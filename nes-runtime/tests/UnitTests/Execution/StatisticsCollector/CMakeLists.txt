@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_nes_runtime_test(runtime-statistics-collector-test "StatisticsCollectorTest.cpp")
+add_nes_runtime_test(runtime-profiler-test "ProfilerTest.cpp")
