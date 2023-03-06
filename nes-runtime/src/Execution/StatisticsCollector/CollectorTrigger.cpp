@@ -27,12 +27,4 @@ uint64_t CollectorTrigger::getId() {
     return id;
 }
 
-std::string CollectorTrigger::getTypeAsString() {
-    if (triggerType == PipelineStatisticsTrigger) {
-        return "PipelineTrigger";
-    } else {
-        return "Unknown Trigger";
-    }
-}
-
 } // namespace NES::Runtime::Execution

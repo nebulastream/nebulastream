@@ -42,12 +42,14 @@ ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTuple
     auto recordBuffer = RecordBuffer(bufferRef);
 
     numberOfInputTuples = inputTupleBuffer.getNumberOfTuples();
+    if (profiler != nullptr) profiler->startProfiling();
     auto runtimeStart = std::chrono::high_resolution_clock::now();
 
     physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
     physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
 
     auto runtimeEnd = std::chrono::high_resolution_clock::now();
+    if (profiler != nullptr) profiler->stopProfiling();
     auto duration = duration_cast<std::chrono::microseconds>(runtimeEnd - runtimeStart);
     runtimePerBuffer = duration.count();
     numberOfOutputTuples = pipelineExecutionContext.getNumberOfEmittedTuples();
@@ -84,6 +86,10 @@ uint64_t NautilusExecutablePipelineStage::getNumberOfOutputTuples() const{
 
 uint64_t NautilusExecutablePipelineStage::getRuntimePerBuffer() const{
     return runtimePerBuffer;
+}
+
+void NautilusExecutablePipelineStage::setProfiler(std::shared_ptr<Profiler> profilerPtr){
+    profiler = std::move(profilerPtr);
 }
 
 std::string NautilusExecutablePipelineStage::getCodeAsString() { return "<no_code>"; }

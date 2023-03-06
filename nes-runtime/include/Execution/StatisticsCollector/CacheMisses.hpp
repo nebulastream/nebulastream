@@ -35,8 +35,6 @@ class CacheMisses : public Statistic {
 
     std::string getType() const override;
 
-    void startProfiling();
-
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     std::shared_ptr<Profiler> profiler;

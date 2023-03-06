@@ -20,12 +20,10 @@ namespace NES::Runtime::Execution {
 CacheMisses::CacheMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
       profiler(profiler) {
-    eventId = profiler->getEventId(PERF_COUNT_HW_CACHE_MISSES);
+    eventId = profiler->addEvent(PERF_COUNT_HW_CACHE_MISSES);
 }
 
 void CacheMisses::collect(){
-    profiler->stopProfiling();
-
     auto cacheMisses = profiler->getCount(eventId);
     std::cout << "Cache Misses: " << cacheMisses << std::endl;
 
@@ -37,10 +35,6 @@ void CacheMisses::collect(){
 
 std::string CacheMisses::getType() const {
     return "CacheMisses";
-}
-
-void CacheMisses::startProfiling() {
-    profiler->startProfiling();
 }
 
 } // namespace NES::Runtime::Execution

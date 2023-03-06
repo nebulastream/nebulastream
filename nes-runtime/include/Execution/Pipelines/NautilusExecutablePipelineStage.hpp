@@ -14,6 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
+#include <Execution/StatisticsCollector/Profiler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -41,6 +42,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
     [[nodiscard]] uint64_t getNumberOfInputTuples() const;
     uint64_t getNumberOfOutputTuples() const;
     uint64_t getRuntimePerBuffer() const;
+    void setProfiler(std::shared_ptr<Profiler> profiler);
 
     /**
      * @deprecated This method will be removed as it is not applicable to the new compilation backend.
@@ -51,6 +53,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
     uint64_t numberOfInputTuples{};
     uint64_t numberOfOutputTuples{};
     uint64_t runtimePerBuffer{};
+    std::shared_ptr<Profiler> profiler;
 
   protected:
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;

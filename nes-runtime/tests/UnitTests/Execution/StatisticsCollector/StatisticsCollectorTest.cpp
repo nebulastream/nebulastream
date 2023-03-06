@@ -266,68 +266,6 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
 }
 
 /**
- * @brief test the profiler
- */
-TEST_P(StatisticsCollectorTest, testProfiler) {
-
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::INT64);
-    schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto equalsExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, readF2);
-    auto selectionOperator = Operators::Selection(equalsExpression);
-    auto collector = std::make_shared<Operators::CollectOperator>();
-    selectionOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
-    std::vector<Record> recordBuffer = std::vector<Record>();
-
-    for (int i = 0; i < 10; ++i) {
-        recordBuffer.push_back(Record({{"f1", Value<>(10)}, {"f2", Value<>(5)}}));
-    }
-
-    std::vector<perf_hw_id> events;
-    events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
-    events.push_back(PERF_COUNT_HW_CACHE_MISSES);
-
-    auto profiler = Profiler(events);
-    uint64_t branchMissesId = profiler.getEventId(PERF_COUNT_HW_BRANCH_MISSES);
-    uint64_t cacheMissesId = profiler.getEventId(PERF_COUNT_HW_CACHE_MISSES);
-    const char *fileName = "profilerTestOutput.txt";
-
-    for (Record record : recordBuffer) {
-        profiler.startProfiling();
-
-        selectionOperator.execute(ctx, record);
-
-        profiler.stopProfiling();
-
-        ASSERT_NE(profiler.getCount(branchMissesId), 0);
-        ASSERT_NE(profiler.getCount(cacheMissesId), 0);
-        profiler.writeToOutputFile(fileName);
-    }
-
-    ASSERT_EQ(collector->records.size(), 10);
-
-    std::ifstream file(fileName);
-    std::string line;
-    if (file.is_open()) {
-        int64_t count = 0;
-        while (std::getline(file, line)) {
-            std::cout << line << std::endl;
-            ++count;
-        }
-        file.close();
-        remove(fileName);
-        ASSERT_EQ(count, events.size() * 10);
-    } else {
-        NES_THROW_RUNTIME_ERROR("Can not open file");
-    }
-}
-
-/**
  * @brief test the statistics branch misses and cache misses
  */
 TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
@@ -391,23 +329,21 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     auto adwinCache = std::make_unique<Adwin>(0.001, 4);
     auto changeDetectorWrapperCache = std::make_unique<ChangeDetectorWrapper>(std::move(adwinCache));
 
-    std::vector<perf_hw_id> events;
-    events.push_back(PERF_COUNT_HW_BRANCH_MISSES);
-    events.push_back(PERF_COUNT_HW_CACHE_MISSES);
-    auto profiler = std::make_shared<Profiler>(events);
-
+    auto profiler = std::make_shared<Profiler>();
+    nautilusExecutablePipelineStage->setProfiler(profiler);
     auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler);
     auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    //statisticsCollector->addStatistic(std::move(branchMisses));
+    statisticsCollector->addStatistic(pipelineContext.getPipelineID(), std::move(branchMisses));
+    statisticsCollector->addStatistic(pipelineContext.getPipelineID(), std::move(cacheMisses));
+
+    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineContext.getPipelineID());
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
-        branchMisses->startProfiling();
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        branchMisses->collect();
-        cacheMisses->collect();
+        statisticsCollector->updateStatisticsHandler(pipelineStatisticsTrigger);
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 

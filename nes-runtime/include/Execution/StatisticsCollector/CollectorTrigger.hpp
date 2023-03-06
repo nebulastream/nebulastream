@@ -18,7 +18,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-enum TriggerType { PipelineStatisticsTrigger, PerformanceStartTrigger, PerformanceEndTrigger};
+enum TriggerType { PipelineStatisticsTrigger, ProfilerStartTrigger};
 
 /**
  * @brief Implements triggers for the collection of the statistics. Are handled by the StatisticsCollector.
@@ -32,6 +32,11 @@ class CollectorTrigger {
     */
     CollectorTrigger(TriggerType triggerType);
 
+    /**
+    * @brief creates a trigger of a certain type.
+    * @param triggerType type of the trigger.
+     * @param id id of the pipeline.
+    */
     CollectorTrigger(TriggerType triggerType, uint64_t id);
 
     /**
@@ -41,8 +46,6 @@ class CollectorTrigger {
     TriggerType getTriggerType();
 
     uint64_t getId();
-
-    std::string getTypeAsString();
 
   private:
     TriggerType triggerType;
