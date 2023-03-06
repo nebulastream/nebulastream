@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.17](https://github.com/nebulastream/nebulastream/tree/v0.5.17) (2023-03-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.16...v0.5.17)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add test for spatial datatypes [\#3562](https://github.com/nebulastream/nebulastream/issues/3562)
+
 ## [v0.5.16](https://github.com/nebulastream/nebulastream/tree/v0.5.16) (2023-03-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.15...v0.5.16)
