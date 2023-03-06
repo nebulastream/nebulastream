@@ -18,11 +18,9 @@ limitations under the License.
 namespace NES::Runtime::Execution {
 
 PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
-                                 std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
-                                 uint64_t pipelineId)
+                                 std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      nautilusExecutablePipelineStage(nautilusExecutablePipelineStage),
-      pipelineId(pipelineId) {}
+      nautilusExecutablePipelineStage(nautilusExecutablePipelineStage) {}
 
 void PipelineRuntime::collect() {
     auto runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();

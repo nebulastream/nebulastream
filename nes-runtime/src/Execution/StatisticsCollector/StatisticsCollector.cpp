@@ -35,14 +35,8 @@ void StatisticsCollector::updateStatisticsHandler(CollectorTrigger trigger) {
         auto statisticsMapEntry = idToStatisticMap.find(id);
 
         if (statisticsMapEntry != idToStatisticMap.end()) {
-            if (type == Execution::ProfilerStartTrigger){
-                auto perfStatistics = std::dynamic_pointer_cast<BranchMisses>(statisticsMapEntry->second[0]);
-                perfStatistics->startProfiling();
-                return;
-            } else if (type == Execution::PipelineStatisticsTrigger) {
-                for (std::shared_ptr<Statistic> statistic : statisticsMapEntry->second) {
-                    statistic->collect();
-                }
+            for (std::shared_ptr<Statistic> statistic : statisticsMapEntry->second) {
+                statistic->collect();
             }
         }
     }

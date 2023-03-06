@@ -26,26 +26,17 @@ namespace NES::Runtime::Execution {
 class PipelineRuntime : public Statistic {
   public:
     /**
-     * @brief Initialize to collect the runtime of a pipeline with pipelineId.
+     * @brief Initialize statistic to collect the runtime of a pipeline.
      * @param nautilusExecutablePipelineStage
-     * @param pipelineId id of the pipeline.
      */
     PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
-                    std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
-                    uint64_t pipelineId);
+                    std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
     void collect() override;
-
-    /**
-    * @brief Get the pipelineId of the pipeline for which the runtime is collected.
-    * @return pipelineId
-    */
-    uint64_t getPipelineID() const { return this->pipelineId; }
     std::string getType() const override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
-    const uint64_t pipelineId;
 };
 
 }// namespace NES::Runtime::Execution

@@ -138,8 +138,8 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
     auto pipelineId = pipelineContext.getPipelineID();
 
     // initialize statistics pipeline selectivity and pipeline runtime
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, pipelineId);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
@@ -239,8 +239,8 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
 
     auto pipelineId = pipelineContext.getPipelineID();
 
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, pipelineId);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
@@ -421,7 +421,7 @@ TEST_P(StatisticsCollectorTest, changeDetection) {
 
     auto pipelineId = pipelineContext.getPipelineID();
 
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, pipelineId);
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
 
     auto statisticsCollector = std::make_unique<StatisticsCollector>();
     statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));

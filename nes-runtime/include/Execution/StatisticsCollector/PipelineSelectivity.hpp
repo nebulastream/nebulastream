@@ -25,22 +25,18 @@ namespace NES::Runtime::Execution {
  */
 class PipelineSelectivity : public Statistic {
   public:
-    PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
-                        std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
-                        uint64_t pipelineId);
-    void collect() override;
-
     /**
-    * @brief Get the pipelineId of the pipeline for which the selectivity is collected.
-    * @return pipelineId
-    */
-    uint64_t getPipelineID() const { return this->pipelineId; }
+     * @brief Initialize statistic to collect the selectivity of a pipeline.
+     * @param nautilusExecutablePipelineStage
+     */
+    PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                        std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
+    void collect() override;
     std::string getType() const override;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
-    const uint64_t pipelineId;
 };
 
 }// namespace NES::Runtime::Execution
