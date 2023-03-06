@@ -242,7 +242,7 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
     auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
 
-    auto statisticsCollector = std::make_unique<StatisticsCollector>();
+    auto statisticsCollector = std::make_shared<StatisticsCollector>();
     statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
     statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
 
@@ -251,7 +251,7 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (TupleBuffer buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        statisticsCollector->updateStatisticsHandler(pipelineStatisticsTrigger);
+        nautilusExecutablePipelineStage->stop(statisticsCollector);
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 

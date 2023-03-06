@@ -76,6 +76,13 @@ uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext&) {
     return 0;
 }
 
+uint32_t NautilusExecutablePipelineStage::stop(std::shared_ptr<StatisticsCollector> statisticsCollector){
+    auto collectorTrigger = CollectorTrigger(PipelineStatisticsTrigger);
+    statisticsCollector->updateStatisticsHandler(collectorTrigger);
+    return 0;
+}
+
+
 uint64_t NautilusExecutablePipelineStage::getNumberOfInputTuples() const{
     return numberOfInputTuples;
 }

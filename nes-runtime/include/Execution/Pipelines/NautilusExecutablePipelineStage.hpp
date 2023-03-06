@@ -14,8 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
-#include <Execution/StatisticsCollector/Profiler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/StatisticsCollector/Profiler.hpp>
+#include <Execution/StatisticsCollector/StatisticsCollector.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -38,6 +39,7 @@ class NautilusExecutablePipelineStage : public ExecutablePipelineStage {
                             WorkerContext& workerContext) override;
     uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t stop(std::shared_ptr<StatisticsCollector> statisticsCollector);
 
     [[nodiscard]] uint64_t getNumberOfInputTuples() const;
     uint64_t getNumberOfOutputTuples() const;
