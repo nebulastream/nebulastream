@@ -38,11 +38,14 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
       * @param providerMode
       * @param preAllocatedBuffers
       * @param ingestionRateGenerator
+      * @param throwException: If this is set to true, then exceptions are thrown instead of warnings. There is one exception thrown
+      * if the buffer can not be written to the queue. Another one is thrown, if the data could not been generated fast enough
       */
     ExternalProvider(uint64_t id,
                      DataProviderMode providerMode,
                      std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator);
+                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+                     bool throwException = true);
 
     /**
      * @brief destructor
@@ -107,6 +110,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void waitUntilStarted();
 
+    /**
+     * @brief sets new value for throwException
+     * @param throwException
+     */
+    void setThrowException(bool throwException);
+
   private:
     /**
      * @brief generates data based on predefinedIngestionRates
@@ -121,6 +130,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::condition_variable cvStartProvider;
     std::thread generatorThread;
     std::vector<uint64_t> predefinedIngestionRates;
+    bool throwException;
 };
 }// namespace NES::Benchmark::DataProvision
 
