@@ -13,12 +13,13 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantInteger32Expression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/FactorialExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
@@ -106,17 +107,24 @@ ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
     } else if (auto functionExpression = expressionNode->as_if<FunctionExpression>()) {
         return lowerFunctionExpression(functionExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {
-        auto value = constantValue->getConstantValue();
-        if (constantValue->getStamp()->isInteger()) {
-            auto integerValue = std::stoi(value->as<BasicValue>()->value);
-            return std::make_shared<Runtime::Execution::Expressions::ConstantInteger32Expression>(integerValue);
-        } else {
-            NES_NOT_IMPLEMENTED();
-        }
+        return lowerConstantExpression(constantValue);
     } else if (auto fieldAccess = expressionNode->as_if<FieldAccessExpressionNode>()) {
         return std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldAccess->getFieldName());
     }
     NES_NOT_IMPLEMENTED();
+}
+
+Runtime::Execution::Expressions::ExpressionPtr
+ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& constantExpression) {
+    auto value = constantExpression->getConstantValue();
+    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantExpression->getStamp());
+    physicalType.i
+    if (constantExpression->getStamp()->isInteger()) {
+        constantExpression->getStamp()->as<DataType::>() auto integerValue = std::stoi(value->as<BasicValue>()->value);
+        return std::make_shared<Runtime::Execution::Expressions::ConstantValueExpression<int32_t>>(integerValue);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Expressions::Expression>

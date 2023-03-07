@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGER32EXPRESSION_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGER32EXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -23,13 +23,14 @@ namespace NES::Runtime::Execution::Expressions {
  * @brief This expression returns a specific constant integer value.
  * TODO #3062 add support for constant of different integer ranges.
  */
-class ConstantInteger32Expression : public Expression {
+template<typename T>
+class ConstantValueExpression : public Expression {
   public:
-    ConstantInteger32Expression(int32_t integerValue);
+    ConstantValueExpression(T value);
     Value<> execute(Record& record) const override;
 
   private:
-    const int32_t integerValue;
+    const T value;
 };
 
 }// namespace NES::Runtime::Execution::Expressions

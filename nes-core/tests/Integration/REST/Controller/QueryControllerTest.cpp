@@ -176,6 +176,8 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    workerConfiguration->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
@@ -212,6 +214,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    workerConfiguration->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
@@ -278,6 +282,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    workerConfiguration->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
@@ -291,7 +297,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < (uint32_t)42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -331,6 +337,8 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
+    workerConfiguration->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     coordinatorConfig->worker = *(workerConfiguration);
     coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
     ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
@@ -341,7 +349,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < (uint32_t)42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -385,6 +393,8 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
 
     auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->coordinatorPort = *rpcCoordinatorPort;
+    workerConfiguration->queryCompiler.queryCompilerType =
+        QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     workerConfiguration->physicalSources.add(physicalSource);
     coordinatorConfig->worker = *(workerConfiguration);
@@ -397,7 +407,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
 
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < (uint32_t)42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
