@@ -145,6 +145,8 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
 
@@ -198,6 +200,8 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
 
@@ -249,6 +253,8 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
 
@@ -295,6 +301,8 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
 
@@ -341,6 +349,8 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
 
@@ -389,6 +399,8 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+        // We do not want to throw an exception in our test environment regarding timing
+        externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->stop();
 
         auto& generatorThread = externalProviderDefault->getGeneratorThread();

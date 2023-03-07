@@ -18,9 +18,9 @@ namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    DataProviderMode providerMode,
                                    std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator)
+                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator, bool throwException)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers),
-      ingestionRateGenerator(std::move(ingestionRateGenerator)) {
+      ingestionRateGenerator(std::move(ingestionRateGenerator)), throwException(throwException) {
     predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();
 
     uint64_t maxIngestionRateValue = *(std::max_element(predefinedIngestionRates.begin(), predefinedIngestionRates.end()));
@@ -101,16 +101,14 @@ void ExternalProvider::generateData() {
             bufferHolder.bufferToHold = wrapBuffer;
 
             if (!bufferQueue.write(std::move(bufferHolder))) {
-                NES_THROW_RUNTIME_ERROR("The queue is too small! This should not happen!");
+                NES_ERROR_OR_THROW_RUNTIME(throwException, "The queue is too small! This should not happen!");
             }
 
             // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
             if (lastSecond != currentSecond) {
-                if ((buffersToProducePerWorkingTimeDelta =
-                         predefinedIngestionRates[ingestionRateIndex % predefinedIngestionRates.size()] * workingTimeDeltaInSec)
-                    == 0) {
-                    buffersToProducePerWorkingTimeDelta = 1;
-                }
+                auto nextIndex = ingestionRateIndex % predefinedIngestionRates.size();
+                buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[nextIndex] * workingTimeDeltaInSec;
+                buffersToProducePerWorkingTimeDelta = std::max(1.0, buffersToProducePerWorkingTimeDelta);
 
                 lastSecond = currentSecond;
                 ingestionRateIndex++;
@@ -125,7 +123,7 @@ void ExternalProvider::generateData() {
         auto nextPeriodStartTime = periodStartTime + workingTimeDeltaInMillSeconds;
 
         if (nextPeriodStartTime < currentTime) {
-            NES_THROW_RUNTIME_ERROR("The generator cannot produce data fast enough!");
+            NES_ERROR_OR_THROW_RUNTIME(throwException, "The generator cannot produce data fast enough!");
         }
 
         while (currentTime < nextPeriodStartTime) {
@@ -177,5 +175,6 @@ void ExternalProvider::waitUntilStarted() {
         return this->isStarted();
     });
 }
+void ExternalProvider::setThrowException(bool throwException) { this->throwException = throwException; }
 
 }// namespace NES::Benchmark::DataProvision

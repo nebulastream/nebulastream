@@ -242,6 +242,15 @@ struct LogCaller<LogLevel::LOG_WARNING> {
         throw Exceptions::NotImplementedException("not implemented");                                                            \
     } while (0)
 
+#define NES_ERROR_OR_THROW_RUNTIME(THROW_EXCEPTION, ...)                                                                         \
+    do {                                                                                                                         \
+        if((THROW_EXCEPTION)) {                                                                                                  \
+            NES_THROW_RUNTIME_ERROR(__VA_ARGS__);                                                                                \
+        } else {                                                                                                                 \
+            NES_ERROR(__buffer.str());                                                                                           \
+        }                                                                                                                        \
+    } while (0)
+
 }// namespace NES
 
 #endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
