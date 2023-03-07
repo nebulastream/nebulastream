@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.18](https://github.com/nebulastream/nebulastream/tree/v0.5.18) (2023-03-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.17...v0.5.18)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Worker Mobility handler starts with potentially uninitialized parent at coordinator side, cannot recover [\#3571](https://github.com/nebulastream/nebulastream/issues/3571)
+
 ## [v0.5.17](https://github.com/nebulastream/nebulastream/tree/v0.5.17) (2023-03-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.16...v0.5.17)
