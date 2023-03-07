@@ -187,7 +187,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
-    if (withConnect && locationProvider && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
+    if (withConnect && locationProvider
+        && locationProvider->getSpatialType() == NES::Spatial::Experimental::SpatialType::MOBILE_NODE) {
         workerMobilityHandler =
             std::make_shared<NES::Spatial::Mobility::Experimental::WorkerMobilityHandler>(locationProvider,
                                                                                           coordinatorRpcClient,
