@@ -73,9 +73,9 @@ class StatisticsCollectorTest : public testing::Test, public AbstractPipelineExe
 };
 
 /**
- * @brief test the statistics selectivity and runtime
+ * @brief test the statistic selectivity
  */
-TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
+TEST_P(StatisticsCollectorTest, selectivityTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -113,16 +113,24 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
     distVector.push_back(std::uniform_int_distribution<int64_t>(0, 10));
     distVector.push_back(std::uniform_int_distribution<int64_t>(8, 10));
 
+    std::vector<double> selectivity(3,0.0);
+    uint64_t numberOfTuplesPerBuffer = 500;
+
     for (int j = 0; j < 3; ++j) {
         auto buffer = bm->getBufferBlocking();
         bufferVector.push_back(buffer);
         auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
-        for (uint64_t i = 0; i < 500; i++) {
+        uint64_t tupleCount = 0;
+        for (uint64_t i = 0; i < numberOfTuplesPerBuffer; i++) {
             int64_t randomNumber = distVector[j](rng);
+            if (randomNumber > 2 && randomNumber < 9){
+                tupleCount++;
+            }
             dynamicBuffer[i]["f1"].write(randomNumber);
             dynamicBuffer[i]["f2"].write((int64_t) 1);
             dynamicBuffer.setNumberOfTuples(i + 1);
         }
+        selectivity[j] = (double) tupleCount / numberOfTuplesPerBuffer;
     }
 
     auto executablePipeline = provider->create(pipeline);
@@ -130,32 +138,22 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
 
     auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
     auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
-    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
 
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto pipelineId = pipelineContext.getPipelineID();
-
     // initialize statistics pipeline selectivity and pipeline runtime
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (TupleBuffer buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+    for (size_t i = 0; i < bufferVector.size(); i++) {
+        nautilusExecutablePipelineStage->execute(bufferVector[i], pipelineContext, *wc);
 
-        // collect the statistics
+        // collect the selectivity
         pipelineSelectivity->collect();
-        pipelineRuntime->collect();
+        ASSERT_EQ(selectivity[i], pipelineSelectivity->getSelectivity());
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
-
-    // create a statistics collector and add the statistics to its list
-    auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
 
     ASSERT_EQ(pipelineContext.buffers.size(), 3);
     auto resultBuffer = pipelineContext.buffers[0];
@@ -167,17 +165,10 @@ TEST_P(StatisticsCollectorTest, collectSelectivityRuntime) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        StatisticsCollectorTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
-                        [](const testing::TestParamInfo<StatisticsCollectorTest::ParamType>& info) {
-                            return info.param;
-                        });
-
 /**
- * @brief trigger statistics
+ * @brief test the statistic runtime
  */
-TEST_P(StatisticsCollectorTest, triggerStatistics) {
+TEST_P(StatisticsCollectorTest, runtimeTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -227,32 +218,24 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
         }
     }
 
-    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
-    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
-    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
-
     auto executablePipeline = provider->create(pipeline);
     auto pipelineContext = MockedPipelineExecutionContext();
+
+    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
 
     std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
-    auto pipelineId = pipelineContext.getPipelineID();
-
-    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
-
-    auto statisticsCollector = std::make_shared<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
-    statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
-
-    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineId);
+    // initialize statistic pipeline runtime
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (TupleBuffer buffer : bufferVector) {
+    for (auto& buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        nautilusExecutablePipelineStage->stop(statisticsCollector);
+
+        // collect the statistics
+        pipelineRuntime->collect();
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -269,7 +252,7 @@ TEST_P(StatisticsCollectorTest, triggerStatistics) {
 /**
  * @brief test the statistics branch misses and cache misses
  */
-TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
+TEST_P(StatisticsCollectorTest, branchAndCacheMissesTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -335,16 +318,11 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
     auto branchMisses = std::make_unique<BranchMisses>(std::move(changeDetectorWrapperBranch), profiler);
     auto cacheMisses = std::make_unique<CacheMisses>(std::move(changeDetectorWrapperCache), profiler);
 
-    auto statisticsCollector = std::make_unique<StatisticsCollector>();
-    statisticsCollector->addStatistic(pipelineContext.getPipelineID(), std::move(branchMisses));
-    statisticsCollector->addStatistic(pipelineContext.getPipelineID(), std::move(cacheMisses));
-
-    auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineContext.getPipelineID());
-
     nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (TupleBuffer buffer : bufferVector) {
+    for (auto& buffer : bufferVector) {
         nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
-        statisticsCollector->updateStatisticsHandler(pipelineStatisticsTrigger);
+        branchMisses->collect();
+        cacheMisses->collect();
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -353,15 +331,107 @@ TEST_P(StatisticsCollectorTest, collectBranchCacheMisses) {
 
     auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
-        //ASSERT_EQ(resultDynamicBuffer[i]["f1"].read<int64_t>(), 5);
-        //ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+        ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
+        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 9);
+        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
 
 /**
- * @brief test change detection
+ * @brief test the trigger of statistics
  */
-TEST_P(StatisticsCollectorTest, changeDetection) {
+TEST_P(StatisticsCollectorTest, triggerStatisticsTest) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    // create pipeline
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readField1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto constantInt = std::make_shared<Expressions::ConstantIntegerExpression>(2);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readField1, constantInt);
+    auto selectionOperator = std::make_shared<Operators::Selection>(greaterThanExpression);
+    scanOperator->setChild(selectionOperator);
+
+    auto constantInt2 = std::make_shared<Expressions::ConstantIntegerExpression>(9);
+    auto lessThanExpression = std::make_shared<Expressions::LessThanExpression>(readField1, constantInt2);
+    auto selectionOperator2 = std::make_shared<Operators::Selection>(lessThanExpression);
+    selectionOperator->setChild(selectionOperator2);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    selectionOperator2->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    std::vector<TupleBuffer> bufferVector;
+    std::vector<std::uniform_int_distribution<int64_t>> distVector;
+
+    // generate values in random order
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    distVector.push_back(std::uniform_int_distribution<int64_t>(2, 8));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(0, 10));
+    distVector.push_back(std::uniform_int_distribution<int64_t>(8, 10));
+
+    for (int j = 0; j < 3; ++j) {
+        auto buffer = bm->getBufferBlocking();
+        bufferVector.push_back(buffer);
+        auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+        for (uint64_t i = 0; i < 500; i++) {
+            int64_t randomNumber = distVector[j](rng);
+            dynamicBuffer[i]["f1"].write(randomNumber);
+            dynamicBuffer[i]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+    }
+
+    auto adwinSelectivity = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwinSelectivity));
+    auto adwinRuntime = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapperRuntime = std::make_unique<ChangeDetectorWrapper>(std::move(adwinRuntime));
+
+    auto executablePipeline = provider->create(pipeline);
+    auto pipelineContext = MockedPipelineExecutionContext();
+
+    std::shared_ptr<ExecutablePipelineStage> executablePipelineStage = std::move(executablePipeline);
+    auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
+
+    auto pipelineId = pipelineContext.getPipelineID();
+
+    auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
+
+    // create a statistics collector and add the statistics to its list
+    auto statisticsCollector = std::make_shared<StatisticsCollector>();
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineSelectivity));
+    statisticsCollector->addStatistic(pipelineId, std::move(pipelineRuntime));
+
+    nautilusExecutablePipelineStage->setup(pipelineContext);
+    for (auto& buffer : bufferVector) {
+        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+        nautilusExecutablePipelineStage->stop(statisticsCollector);
+    }
+    nautilusExecutablePipelineStage->stop(pipelineContext);
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 3);
+    auto resultBuffer = pipelineContext.buffers[0];
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, resultBuffer);
+    for (uint64_t i = 0; i < resultBuffer.getNumberOfTuples(); i++) {
+        ASSERT_GT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 2);
+        ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 9);
+        ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
+    }
+}
+
+/**
+ * @brief test change detection with Adwin
+ */
+TEST_P(StatisticsCollectorTest, changeDetectionAdwinTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -430,7 +500,7 @@ TEST_P(StatisticsCollectorTest, changeDetection) {
     auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (TupleBuffer buffer : bufferVector) {
+    for (auto& buffer : bufferVector) {
         for (int i = 0; i < 100; ++i) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             statisticsCollector->updateStatisticsHandler(pipelineStatisticsTrigger);
@@ -449,9 +519,9 @@ TEST_P(StatisticsCollectorTest, changeDetection) {
 }
 
 /**
- * @brief test change detection
+ * @brief test change detection with SeqDrift2
  */
-TEST_P(StatisticsCollectorTest, changeDetectionSeqDrift) {
+TEST_P(StatisticsCollectorTest, changeDetectionSeqDriftTest) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -520,7 +590,7 @@ TEST_P(StatisticsCollectorTest, changeDetectionSeqDrift) {
     auto pipelineStatisticsTrigger = CollectorTrigger(Execution::PipelineStatisticsTrigger, pipelineId);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
-    for (TupleBuffer buffer : bufferVector) {
+    for (auto& buffer : bufferVector) {
         for (int i = 0; i < 100; ++i) {
             nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
             statisticsCollector->updateStatisticsHandler(pipelineStatisticsTrigger);
@@ -537,5 +607,12 @@ TEST_P(StatisticsCollectorTest, changeDetectionSeqDrift) {
         ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
+
+INSTANTIATE_TEST_CASE_P(testIfCompilation,
+                        StatisticsCollectorTest,
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        [](const testing::TestParamInfo<StatisticsCollectorTest::ParamType>& info) {
+                            return info.param;
+                        });
 
 }

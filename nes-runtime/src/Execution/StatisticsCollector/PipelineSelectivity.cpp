@@ -21,13 +21,13 @@ namespace NES::Runtime::Execution {
 PipelineSelectivity::PipelineSelectivity(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
                                          std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)) {}
+      nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)),
+      selectivity(0.0){}
 
 void PipelineSelectivity::collect() {
     auto numberOfInputTuples = nautilusExecutablePipelineStage->getNumberOfInputTuples();
     auto numberOfOutputTuples = nautilusExecutablePipelineStage->getNumberOfOutputTuples();
 
-    auto selectivity = 0.0;
     if(numberOfInputTuples != 0){
         selectivity = (double) numberOfOutputTuples / numberOfInputTuples;
         std::cout << "PipelineSelectivity " << selectivity << std::endl;
@@ -37,6 +37,10 @@ void PipelineSelectivity::collect() {
         }
     }
 
+}
+
+double PipelineSelectivity::getSelectivity(){
+    return selectivity;
 }
 
 std::string PipelineSelectivity::getType() const {

@@ -33,10 +33,12 @@ class PipelineSelectivity : public Statistic {
                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
     void collect() override;
     std::string getType() const override;
+    double getSelectivity();
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
+    double selectivity;
 };
 
 }// namespace NES::Runtime::Execution
