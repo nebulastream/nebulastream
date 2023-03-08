@@ -42,7 +42,7 @@ class Adwin : public ChangeDetector {
      * @param value
      * @return
      */
-    bool insertValue(double &value) override;
+    bool insertValue(double& value) override;
 
     /**
      * @brief Get estimated mean.
@@ -57,7 +57,7 @@ class Adwin : public ChangeDetector {
      * @brief Create new bucket for new element.
      * @param value
      */
-    void insertElement(const double &value);
+    void insertElement(const double& value);
 
     /**
      * @brief Compress buckets: when there are MAXBUCKETS+1 buckets of size 2^i, merge the two oldest buckets.
@@ -78,7 +78,7 @@ class Adwin : public ChangeDetector {
      * @param u1 average of W1
      * @return true, if observed average in both subwindows differs more than threshold
      */
-    bool cutExpression(int n0, int n1, const double &u0, const double &u1);
+    bool cutExpression(int n0, int n1, const double& u0, const double& u1);
 
     /**
      * @brief Delete buckets to reduce window size.

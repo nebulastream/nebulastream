@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution {
 class ChangeDetector{
 
   public:
-    virtual bool insertValue(double &value) = 0;
+    virtual bool insertValue(double& value) = 0;
     virtual ~ChangeDetector() = default;
 
 };

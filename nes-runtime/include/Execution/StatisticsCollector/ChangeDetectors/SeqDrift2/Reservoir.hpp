@@ -25,9 +25,9 @@ class Reservoir{
     Reservoir(int sampleSize, int blockSize);
     void addElement(double value);
     double get(int index);
-    double getSampleMean();
-    int getSize();
-    double getTotal();
+    double getSampleMean() const;
+    int getSize() const;
+    double getTotal() const;
     void setSampleSize(int sampleSize);
     void clear();
     void copy(Reservoir& source);

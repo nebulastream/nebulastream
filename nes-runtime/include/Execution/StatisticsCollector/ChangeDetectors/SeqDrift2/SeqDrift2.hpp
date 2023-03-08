@@ -36,7 +36,7 @@ class SeqDrift2 : public ChangeDetector {
      * @param inputValue numerical value
      * @return true, if change was detected.
      */
-    bool insertValue(double &value) override;
+    bool insertValue(double& value) override;
     double getEstimation();
 
   private:

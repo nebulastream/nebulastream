@@ -26,18 +26,18 @@
 namespace NES::Runtime::Execution {
 
 List::List(int maxBucketSize): maxBucketSize(maxBucketSize){
-    head = NULL;
-    tail = NULL;
+    head = nullptr;
+    tail = nullptr;
     count = 0;
     addToHead();
 }
 
 List::~List(){
-    while (head != NULL) removeFromHead();
+    while (head != nullptr) removeFromHead();
 }
 
 void List::addToHead(){
-    ListNode *temp = new ListNode(maxBucketSize);
+    auto* temp = new ListNode(maxBucketSize);
 
     if (head) {
         temp->next = head;
@@ -49,7 +49,7 @@ void List::addToHead(){
 }
 
 void List::addToTail(){
-    ListNode *temp = new ListNode(maxBucketSize);
+    auto* temp = new ListNode(maxBucketSize);
     if (tail) {
         temp->prev = tail;
         tail->next = temp;
@@ -63,10 +63,10 @@ void List::removeFromHead(){
     ListNode* temp;
     temp = head;
     head = head->next;
-    if (head != NULL) {
-        head->prev = NULL;
+    if (head != nullptr) {
+        head->prev = nullptr;
     } else {
-        tail = NULL;
+        tail = nullptr;
     }
     count--;
     delete temp;
@@ -76,10 +76,10 @@ void List::removeFromTail(){
     ListNode* temp;
     temp = tail;
     tail = tail->prev;
-    if (tail == NULL)
-        head = NULL;
+    if (tail == nullptr)
+        head = nullptr;
     else
-        tail->next=NULL;
+        tail->next = nullptr;
     count--;
     delete temp;
 }

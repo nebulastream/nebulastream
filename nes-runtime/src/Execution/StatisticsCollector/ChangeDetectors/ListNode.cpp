@@ -30,8 +30,8 @@ ListNode::ListNode(int maxSize):
     size(0),
     sum(maxSize + 1, 0.0),
     variance(maxSize + 1, 0.0),
-    next(NULL),
-    prev(NULL)
+    next(nullptr),
+    prev(nullptr)
 {}
 
 void ListNode::addBack(const double &value, const double &var) {

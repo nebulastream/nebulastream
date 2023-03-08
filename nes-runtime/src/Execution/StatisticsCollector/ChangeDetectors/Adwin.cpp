@@ -27,10 +27,10 @@
 namespace NES::Runtime::Execution {
 
 static int bucketSize(int Row){
-  return (int) pow(2,Row);
+    return (int) pow(2,Row);
 }
 
-Adwin::Adwin(double delta, int M):bucketList(M),MINTCLOCK(1),MINLENGTHWINDOW(16),DELTA(delta),MAXBUCKETS(M){
+Adwin::Adwin(double delta, int M) : bucketList(M),MINTCLOCK(1),MINLENGTHWINDOW(16),DELTA(delta),MAXBUCKETS(M){
     mintTime = 0;
     mintClock = MINTCLOCK;
     mdblError = 0;
@@ -43,13 +43,13 @@ Adwin::Adwin(double delta, int M):bucketList(M),MINTCLOCK(1),MINLENGTHWINDOW(16)
     numberOfBuckets = 0;
 }
 
-bool Adwin::insertValue(double &value){
+bool Adwin::insertValue(double& value){
     insertElement(value);
     compressBuckets();
     return checkDrift();
 }
 
-void Adwin::insertElement(const double &value){
+void Adwin::insertElement(const double& value){
     windowSize++;
     bucketList.head->addBack(value,0.0);
     numberOfBuckets++;
@@ -74,7 +74,7 @@ void Adwin::compressBuckets(){
         // if the row is full, merge buckets
         if (k == MAXBUCKETS + 1) {
             nextNode = cursor->next;
-            if (nextNode == NULL) { // if no bucket at the end of list, add new tail
+            if (nextNode == nullptr) { // if no bucket at the end of list, add new tail
                 bucketList.addToTail();
                 nextNode = cursor->next;
                 lastBucketIndex++;
@@ -95,7 +95,7 @@ void Adwin::compressBuckets(){
         cursor = cursor->next;
         i++;
 
-    } while (cursor != NULL);
+    } while (cursor != nullptr);
 }
 
 bool Adwin::checkDrift(){
@@ -144,14 +144,14 @@ bool Adwin::checkDrift(){
 
                 nodeCursor = nodeCursor->prev;
                 i--;
-            } while (!quit && nodeCursor != NULL);
+            } while (!quit && nodeCursor != nullptr);
         }//End While
     }//End if
 			   
     return change;
 }
 
-bool Adwin::cutExpression(int N0, int N1, const double &u0, const double &u1){
+bool Adwin::cutExpression(int N0, int N1, const double& u0, const double& u1){
     auto n0 = double(N0);
     auto n1 = double(N1);
     auto n  = double(windowSize); // length of window windowSize
@@ -202,7 +202,7 @@ double Adwin::getEstimation() const{
 void Adwin::print() const{
     ListNode* it;
     it = bucketList.tail;
-    if (it == NULL) printf(" It NULL");
+    if (it == nullptr) printf(" It NULL");
 
     int i = lastBucketIndex;
     do {
@@ -212,7 +212,7 @@ void Adwin::print() const{
         printf("\n");
         it = it->prev;
         i--;
-    } while (it != NULL);
+    } while (it != nullptr);
 }
 
 } // namespace NES::Runtime::Execution

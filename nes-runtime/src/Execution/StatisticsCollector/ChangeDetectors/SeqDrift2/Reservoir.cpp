@@ -18,7 +18,7 @@ limitations under the License.
 
 namespace NES::Runtime::Execution {
 
-Reservoir::Reservoir(int sampleSize, int blockSize):size(0),
+Reservoir::Reservoir(int sampleSize, int blockSize) : size(0),
       total(0),
       //blockSize(blockSize),
       instanceCount(0),
@@ -37,7 +37,7 @@ void Reservoir::addElement(double value) { // reservoir sampling from the reposi
         std::mt19937 rng(rd());
         auto dist = std::uniform_int_distribution<int64_t>(0, (instanceCount + 1));
         auto pos = dist(rng);
-        std::cout << "position: " << " pos: " << pos << std::endl;
+        std::cout << "position: " << position << " pos: " << pos << std::endl;
         if(position < sampleSize) {
             total = total - repository.get(position);
             repository.addAt(value, position);
@@ -51,15 +51,15 @@ double Reservoir::get(int index) {
     return repository.get(index);
 }
 
-double Reservoir::getSampleMean() {
+double Reservoir::getSampleMean() const {
     return total / size;
 }
 
-int Reservoir::getSize() {
+int Reservoir::getSize() const {
     return size;
 }
 
-double Reservoir::getTotal() {
+double Reservoir::getTotal() const {
     return total;
 }
 

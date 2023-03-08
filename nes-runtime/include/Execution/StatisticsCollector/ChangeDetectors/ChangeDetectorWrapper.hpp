@@ -24,7 +24,7 @@ class ChangeDetectorWrapper{
 
   public:
     explicit ChangeDetectorWrapper(std::unique_ptr<ChangeDetector> changeDetector);
-    bool insertValue(double &value);
+    bool insertValue(double& value);
 
   private:
     std::unique_ptr<ChangeDetector> changeDetector;
