@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.19](https://github.com/nebulastream/nebulastream/tree/v0.5.19) (2023-03-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.18...v0.5.19)
+
+#### Build Management
+
+- Leverage CCache and reuse build files [\#3574](https://github.com/nebulastream/nebulastream/issues/3574)
+
 ## [v0.5.18](https://github.com/nebulastream/nebulastream/tree/v0.5.18) (2023-03-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.17...v0.5.18)
