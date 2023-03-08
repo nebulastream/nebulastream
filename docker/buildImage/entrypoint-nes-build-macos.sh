@@ -29,11 +29,10 @@ echo "Required Test Failed=$RequireTest"
 echo "Build dir=$build_dir"
 
 # Build NES
-mkdir -p build
-cd build
+# We use ccache to reuse intermediate build files across ci runs.
 ccache -s
-cmake --fresh -B "$build_dir/" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_USE_CCACHE=1 -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 ..
-cmake --build "$build_dir/" -j4
+cmake --fresh -B "$build_dir/" -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_USE_CCACHE=1 -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_USE_TF=1 -DNES_USE_S2=1 .
+cmake --build "$build_dir/" -j8
 # Check if build was successful
 errorCode=$?
 ccache -s
