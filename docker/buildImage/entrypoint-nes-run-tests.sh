@@ -26,11 +26,11 @@ if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireT
 echo "Required Test Failed=$RequireTest"
 if [ $# -eq 0 ]; then
   # If build was successful we execute the tests
-  # timeout after 240 minutes
+  # timeout after 90 minutes
   # We don't want to rely on the github-action timeout, because
   # this would fail the job in any case.
   cd /build_dir
-  timeout 60m make test_debug
+  timeout 90m make test_debug
   errorCode=$?
   if [ $errorCode -ne 0 ]; then
     rm -rf /nebulastream/build
