@@ -25,7 +25,8 @@ using namespace NES;
 using Runtime::TupleBuffer;
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::QueryCompilerOptions::DumpMode::NONE;
-class MergeQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test>,
+
+class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
                                 public ::testing::WithParamInterface<QueryCompilation::QueryCompilerOptions::QueryCompiler> {
   public:
     static void SetUpTestCase() {
@@ -34,7 +35,7 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling<testing::T
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
         executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
     }
@@ -43,7 +44,7 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling<testing::T
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
-        Testing::TestWithErrorHandling<testing::Test>::TearDown();
+        Testing::TestWithErrorHandling::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

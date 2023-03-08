@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,7 +15,7 @@ include(ExternalProject)
 
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
-add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+add_compile_definitions(TEST_DATA_DIRECTORY= "${CMAKE_CURRENT_BINARY_DIR}/test_data/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 #-------------------------------##############----------------------------------
@@ -26,6 +25,7 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/TestHarness/TestHarness.cpp"
         "src/Util/TestHarness/TestHarnessWorkerConfiguration.cpp"
         "src/Util/TestUtils.cpp"
+        "src/Util/TestPhaseProvider.cpp"
         )
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
@@ -207,7 +207,7 @@ add_nes_unit_test(logical-expression-test "UnitTests/Query/LogicalExpressionTest
 
 
 ### QueryExecutionTest ###
-add_nes_unit_test(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
+add_nes_unit_test(legacy-query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 
 
 ### GPUPipelineQueryExecutionTest ###
