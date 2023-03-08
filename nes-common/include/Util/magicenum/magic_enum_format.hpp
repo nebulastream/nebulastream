@@ -1,3 +1,4 @@
+// clang-format off
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
 // | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
@@ -76,4 +77,5 @@ struct std::formatter<E, std::enable_if_t<std::is_enum_v<E> && magic_enum::custo
 #undef MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 #endif// MAGIC_ENUM_DEFAULT_ENABLE_ENUM_FORMAT_AUTO_DEFINE
 
-#endif// NEARGYE_MAGIC_ENUM_FORMAT_HPP
+#endif// NEARGYE_MAGIC_ENUM_FORMAT_HPP                                                                                           \
+// clang-format on

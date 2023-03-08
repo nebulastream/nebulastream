@@ -1,3 +1,4 @@
+// clang-format off
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
 // | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
@@ -88,3 +89,4 @@ template<typename... Es>
 }// namespace magic_enum
 
 #endif// NEARGYE_MAGIC_ENUM_FUSE_HPP
+// clang-format on

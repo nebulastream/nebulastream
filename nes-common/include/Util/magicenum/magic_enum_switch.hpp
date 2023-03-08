@@ -1,3 +1,4 @@
+// clang-format off
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
 // | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
@@ -194,3 +195,4 @@ template<typename T>
 struct std::common_type<magic_enum::detail::nonesuch, T> : magic_enum::detail::identity<T> {};
 
 #endif// NEARGYE_MAGIC_ENUM_SWITCH_HPP
+// clang-format on

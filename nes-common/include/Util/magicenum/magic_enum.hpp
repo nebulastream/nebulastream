@@ -1,3 +1,4 @@
+// clang-format off
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
 // | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
@@ -1587,3 +1588,4 @@ constexpr E& operator^=(E& lhs, E rhs) noexcept {
 #endif
 
 #endif// NEARGYE_MAGIC_ENUM_HPP
+// clang-format on
