@@ -42,9 +42,9 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
       * if the buffer can not be written to the queue. Another one is thrown, if the data could not been generated fast enough
       */
     ExternalProvider(uint64_t id,
-                     DataProviderMode providerMode,
-                     std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+                     const DataProviderMode providerMode,
+                     const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                     const IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
                      bool throwException = true);
 
     /**

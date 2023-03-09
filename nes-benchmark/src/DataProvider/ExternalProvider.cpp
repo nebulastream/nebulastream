@@ -16,9 +16,9 @@
 
 namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
-                                   DataProviderMode providerMode,
-                                   std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator, bool throwException)
+                                   const DataProviderMode providerMode,
+                                   const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+                                   const IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator, bool throwException)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers),
       ingestionRateGenerator(std::move(ingestionRateGenerator)), throwException(throwException) {
     predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();
@@ -107,8 +107,7 @@ void ExternalProvider::generateData() {
             // for the next second, recalculate the number of buffers to produce based on the next predefined ingestion rate
             if (lastSecond != currentSecond) {
                 auto nextIndex = ingestionRateIndex % predefinedIngestionRates.size();
-                buffersToProducePerWorkingTimeDelta = predefinedIngestionRates[nextIndex] * workingTimeDeltaInSec;
-                buffersToProducePerWorkingTimeDelta = std::max(1.0, buffersToProducePerWorkingTimeDelta);
+                buffersToProducePerWorkingTimeDelta = std::max(1.0, predefinedIngestionRates[nextIndex] * workingTimeDeltaInSec);
 
                 lastSecond = currentSecond;
                 ingestionRateIndex++;

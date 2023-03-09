@@ -145,7 +145,9 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
@@ -200,7 +202,9 @@ namespace NES::Benchmark::DataProvision {
         ASSERT_FALSE(createdBuffers.empty());
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
@@ -253,7 +257,9 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
@@ -301,7 +307,9 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
@@ -349,7 +357,9 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->start();
         waitForExternalProviderStartup(*externalProviderDefault);
@@ -399,7 +409,9 @@ namespace NES::Benchmark::DataProvision {
         }
 
         auto externalProviderDefault = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
-        // We do not want to throw an exception in our test environment regarding timing
+        /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
+         * failing tests due to the CI being overwhelmed
+         */
         externalProviderDefault->setThrowException(/* throwException */ false);
         externalProviderDefault->stop();
 
