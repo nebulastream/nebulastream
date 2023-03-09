@@ -18,7 +18,7 @@ namespace NES::Benchmark::DataProvision {
 ExternalProvider::ExternalProvider(uint64_t id,
                                    const DataProviderMode providerMode,
                                    const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                                   const IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator, bool throwException)
+                                   IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator, bool throwException)
     : DataProvider(id, providerMode), preAllocatedBuffers(preAllocatedBuffers),
       ingestionRateGenerator(std::move(ingestionRateGenerator)), throwException(throwException) {
     predefinedIngestionRates = this->ingestionRateGenerator->generateIngestionRates();

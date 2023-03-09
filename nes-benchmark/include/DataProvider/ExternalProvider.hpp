@@ -44,7 +44,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     ExternalProvider(uint64_t id,
                      const DataProviderMode providerMode,
                      const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     const IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
                      bool throwException = true);
 
     /**
