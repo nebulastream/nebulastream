@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.5.25](https://github.com/nebulastream/nebulastream/tree/v0.5.25) (2023-03-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.24...v0.5.25)
+
+**Implemented enhancements:**
+
+- \[TASK\] Fix Coverage Issues [\#3523](https://github.com/nebulastream/nebulastream/issues/3523)
+
+## [v0.5.24](https://github.com/nebulastream/nebulastream/tree/v0.5.24) (2023-03-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.23...v0.5.24)
+
 ## [v0.5.23](https://github.com/nebulastream/nebulastream/tree/v0.5.23) (2023-03-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.22...v0.5.23)
