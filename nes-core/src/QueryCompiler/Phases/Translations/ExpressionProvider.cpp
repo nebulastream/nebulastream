@@ -24,7 +24,9 @@
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
+#include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/NegateExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/OrExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -39,7 +41,9 @@
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
@@ -69,6 +73,16 @@ ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
         auto leftNautilusExpression = lowerExpression(greaterNode->getLeft());
         auto rightNautilusExpression = lowerExpression(greaterNode->getRight());
         return std::make_shared<Runtime::Execution::Expressions::GreaterThanExpression>(leftNautilusExpression,
+                                                                                        rightNautilusExpression);
+    } else if (auto greaterEqualsNode = expressionNode->as_if<GreaterEqualsExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(greaterEqualsNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(greaterEqualsNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::GreaterEqualsExpression>(leftNautilusExpression,
+                                                                                        rightNautilusExpression);
+    } else if (auto lessEqualsNode = expressionNode->as_if<LessEqualsExpressionNode>()) {
+        auto leftNautilusExpression = lowerExpression(lessEqualsNode->getLeft());
+        auto rightNautilusExpression = lowerExpression(lessEqualsNode->getRight());
+        return std::make_shared<Runtime::Execution::Expressions::LessEqualsExpression>(leftNautilusExpression,
                                                                                         rightNautilusExpression);
     } else if (auto negateNode = expressionNode->as_if<NegateExpressionNode>()) {
         auto child = lowerExpression(negateNode->getChildren()[0]->as<ExpressionNode>());
