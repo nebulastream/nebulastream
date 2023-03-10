@@ -51,7 +51,7 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
 }
 
 void ZmqSink::setup() { connect(); };
-void ZmqSink::shutdown() {};
+void ZmqSink::shutdown(){};
 
 ZmqSink::~ZmqSink() {
     NES_DEBUG("ZmqSink::~ZmqSink: destructor called");
