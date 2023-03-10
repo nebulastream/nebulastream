@@ -18,4 +18,6 @@ add_source_files(nes-runtime
         GreaterThanExpression.cpp
         NegateExpression.cpp
         OrExpression.cpp
+        LessEqualsExpression.cpp
+        GreaterEqualsExpression.cpp
         )

@@ -12,23 +12,25 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
-#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
+#ifndef NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
+#define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 /**
-    * @brief This expressions returns a Boolean values that is the negation of subExpression.
+ * @brief This expression returns true if leftSubExpression is less then rightSubExpression.
  */
-class NegateExpression : public Expression {
+class LessEqualsExpression : public Expression {
   public:
-    NegateExpression(ExpressionPtr subExpression);
+    LessEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) const override;
 
   private:
-    const ExpressionPtr subExpression;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
+
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEQUALSEXPRESSION_HPP_
