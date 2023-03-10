@@ -38,6 +38,26 @@ class TupleBufferHolder {
      */
     TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
 
+    /**
+          * @brief equal sign operator via a reference
+          * @param other
+          * @return
+          */
+    TupleBufferHolder& operator=(const TupleBufferHolder& other) {
+        bufferToHold = other.bufferToHold;
+        return *this;
+    }
+
+    /**
+          * @brief
+          * @param other
+          * @return
+          */
+    TupleBufferHolder& operator=(TupleBufferHolder&& other) {
+        bufferToHold = std::move(other.bufferToHold);
+        return *this;
+    }
+
     Runtime::TupleBuffer bufferToHold;
 };
 }// namespace NES::Benchmark::DataProvision
