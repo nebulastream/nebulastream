@@ -38,7 +38,6 @@ class TupleBufferHolder {
      */
     TupleBufferHolder(TupleBufferHolder&& rhs) noexcept : bufferToHold(std::move(rhs.bufferToHold)) {}
 
-  private:
     Runtime::TupleBuffer bufferToHold;
 };
 }// namespace NES::Benchmark::DataProvision
