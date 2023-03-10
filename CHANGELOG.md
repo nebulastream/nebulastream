@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.26](https://github.com/nebulastream/nebulastream/tree/v0.5.26) (2023-03-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.25...v0.5.26)
+
+### Bug Fixes 🐛
+
+- \[BUG\] ExternalProviderTest throws exception [\#3577](https://github.com/nebulastream/nebulastream/issues/3577)
+
 ## [v0.5.25](https://github.com/nebulastream/nebulastream/tree/v0.5.25) (2023-03-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.24...v0.5.25)
