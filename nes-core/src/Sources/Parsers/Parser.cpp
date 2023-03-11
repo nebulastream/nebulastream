@@ -160,8 +160,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
             strcpy(value, inputString.c_str());
         }
     } catch (const std::exception& e) {
-        NES_ERROR(
-            "Failed to convert inputString to desired NES data type. Error: " << e.what());
+        NES_ERROR("Failed to convert inputString to desired NES data type. Error: " << e.what());
     }
 }
 
