@@ -26,6 +26,8 @@ add_library(nes-core-test-util SHARED "src/Util/DummySink.cpp"
         "src/Util/TestHarness/TestHarnessWorkerConfiguration.cpp"
         "src/Util/TestUtils.cpp"
         "src/Util/TestPhaseProvider.cpp"
+        "src/Util/NonRunnableDataSource.cpp"
+        "src/Util/TestExecutionEngine.cpp"
         )
 target_include_directories(nes-core-test-util PUBLIC "./include")
 
