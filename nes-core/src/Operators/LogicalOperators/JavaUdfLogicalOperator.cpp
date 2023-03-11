@@ -99,11 +99,8 @@ namespace NES {
 
     bool JavaUdfLogicalOperator::equal(const NodePtr &other) const {
         // Explicit check here, so the cast using as throws no exception.
-        if (!other->instanceOf<JavaUdfLogicalOperator>()) {
-            return false;
-        }
-
-        return *javaUdfDescriptor == *other->as<JavaUdfLogicalOperator>()->javaUdfDescriptor;
+        return other->instanceOf<JavaUdfLogicalOperator>() &&
+                *javaUdfDescriptor == *other->as<JavaUdfLogicalOperator>()->javaUdfDescriptor;
     }
 
     bool JavaUdfLogicalOperator::isIdentical(const NodePtr &other) const {

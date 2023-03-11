@@ -15,18 +15,16 @@
 #ifndef NES_WINDOWJAVAUDFLOGICALOPERATORNODE_HPP
 #define NES_WINDOWJAVAUDFLOGICALOPERATORNODE_HPP
 
-#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/JavaUdfLogicalOperator.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
 
-    /**
-     * Logical operator node for a window operation which uses a Java UDF.
-     *
-     * The operation completely replaces the stream tuple based on the result of the Java UDF method. Therefore, the output schema is
-     * determined by the UDF method signature.
-     */
+/**
+ * Logical operator node for a window operation which uses a Java UDF.
+ *
+ * The operation completely replaces the stream tuple based on the result of the Java UDF method. Therefore, the output schema is
+ * determined by the UDF method signature.
+ */
 class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
   public:
     /**
@@ -40,30 +38,30 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
      * @param id
      */
     WindowJavaUdfLogicalOperatorNode(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                     Windowing::WindowTypePtr windowType,
-                                     Windowing::DistributionCharacteristicPtr distributionType,
-                                     std::vector<FieldAccessExpressionNodePtr> onKey,
-                                     uint64_t allowedLateness, OriginId originId, OperatorId id);
+                                     const Windowing::WindowTypePtr windowType,
+                                     const Windowing::DistributionCharacteristicPtr distributionType,
+                                     const std::vector<FieldAccessExpressionNodePtr> onKey,
+                                     const uint64_t allowedLateness, const OriginId originId, const OperatorId id);
 
     /**
-     * @see Node#toString
+     * @brief To string method for the current node.
+     * @return string
      */
     std::string toString() const override;
 
     /**
-     * @see OperatorNode#copy
+     * @brief Create a shallow copy of the operator by copying its operator properties but not its children or parent operator tree.
+     * @return shallow copy of the operator
      */
     OperatorNodePtr copy() override;
 
     /**
-     * @see Node#equal
-     *
      * Two WindowJavaUdfLogicalOperatorNode are equal when the JavaUdfDescriptor are equal.
      */
     bool equal(const NodePtr &rhs) const override;
 
     /**
-     * @see Node#isIdentical
+     * @brief overrides the isIdentical from Node
      */
     bool isIdentical(const NodePtr &rhs) const override;
 
