@@ -100,11 +100,11 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
                 outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
             }
         }
-        for (auto& agg : windowAggregation) {
-            NES_INFO("Add the following field to the output schema of the GlobalWindow" << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
-            outputSchema->addField(
-                AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
-        }
+    }
+    for (auto& agg : windowAggregation) {
+        NES_INFO("Add the following field to the output schema of the GlobalWindow" << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
+        outputSchema->addField(
+            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
 
     return true;
