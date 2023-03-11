@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.27](https://github.com/nebulastream/nebulastream/tree/v0.5.27) (2023-03-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.26...v0.5.27)
+
+### Bug Fixes 🐛
+
+- \[Bug\] TCP Source integration test [\#3325](https://github.com/nebulastream/nebulastream/issues/3325)
+
 ## [v0.5.26](https://github.com/nebulastream/nebulastream/tree/v0.5.26) (2023-03-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.25...v0.5.26)
