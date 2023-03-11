@@ -16,6 +16,7 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 namespace NES {
 
