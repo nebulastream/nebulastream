@@ -54,6 +54,10 @@ namespace NES {
                                 byteCodeList.end(),
                                 byteCodeList.size(),
                                 [&stringHash, &charArrayHashHelper](std::size_t h, Catalogs::UDF::JavaUdfByteCodeList::value_type v) {
+                                    /* It is not possible to hash unordered_map directly in C++, this will be
+                                     * investigated in issue #3584
+                                     */
+
                                     auto& className = v.first;
                                     h = h * 31 + stringHash(className);
                                     auto& byteCode = v.second;
