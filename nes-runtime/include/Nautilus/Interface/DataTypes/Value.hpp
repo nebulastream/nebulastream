@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+#include <utility>
 namespace NES::Nautilus {
 
 Tracing::ValueRef createNextValueReference(IR::Types::StampPtr&& stamp);
