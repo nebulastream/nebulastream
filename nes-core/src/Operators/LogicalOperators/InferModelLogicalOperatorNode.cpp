@@ -136,6 +136,8 @@ const std::string& InferModelLogicalOperatorNode::getModel() const { return mode
 const std::string InferModelLogicalOperatorNode::getDeployedModelPath() const {
     auto idx = model.find_last_of('/');
     auto path = model;
+
+    // If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
     if (idx != std::string::npos) {
         path = model.substr(idx + 1);
     }

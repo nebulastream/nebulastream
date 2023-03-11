@@ -18,8 +18,10 @@
 namespace NES {
     WindowJavaUdfLogicalOperatorNode::WindowJavaUdfLogicalOperatorNode(
             const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-            Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType,
-            std::vector<FieldAccessExpressionNodePtr> onKey, uint64_t allowedLateness, OriginId originId, OperatorId id)
+            const Windowing::WindowTypePtr windowType,
+            const Windowing::DistributionCharacteristicPtr distributionType,
+            const std::vector<FieldAccessExpressionNodePtr> onKey,
+            const uint64_t allowedLateness, const OriginId originId, const OperatorId id)
             : OperatorNode(id), JavaUdfLogicalOperator(javaUdfDescriptor, id), windowType(windowType),
             distributionType(distributionType), onKey(onKey), allowedLateness(allowedLateness), originId(originId) {}
 
@@ -42,16 +44,12 @@ namespace NES {
         for (auto [key, value] : properties) {
             copy->addProperty(key, value);
         }
-
         return copy;
     }
 
     bool WindowJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
         // Explicit check here, so the cast using as throws no exception.
-        if (!other->instanceOf<WindowJavaUdfLogicalOperatorNode>()) {
-            return false;
-        }
-        return JavaUdfLogicalOperator::equal(other);
+        return other->instanceOf<WindowJavaUdfLogicalOperatorNode>() && JavaUdfLogicalOperator::equal(other);
     }
 
     bool WindowJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
