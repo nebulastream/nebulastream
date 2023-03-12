@@ -44,8 +44,7 @@ class WindowAggregationFunctionTest
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
         sourceSchema = Schema::create()->addField("test$ts", BasicType::UINT64)->addField("test$value", BasicType::INT64);
     }
 
@@ -60,7 +59,7 @@ class WindowAggregationFunctionTest
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down WindowAggregationFunctionTest test class."); }
 
     SchemaPtr sourceSchema;
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 
     void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf, uint64_t ts) {
         for (int64_t recordIndex = 0; recordIndex < (int64_t) recordsPerBuffer; recordIndex++) {
