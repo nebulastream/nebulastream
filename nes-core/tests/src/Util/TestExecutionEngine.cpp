@@ -14,8 +14,6 @@
 
 #include <Util/NonRunnableDataSource.hpp>
 #include <Util/TestExecutionEngine.hpp>
-#include <Util/TestPhaseProvider.hpp>
-#include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 
 namespace NES::Testing {
