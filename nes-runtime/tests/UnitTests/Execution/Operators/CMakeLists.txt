@@ -17,3 +17,4 @@ add_subdirectory(Streaming)
 
 add_nes_runtime_test(runtime-scan-operator-test "ScanOperatorTest.cpp")
 add_nes_runtime_test(runtime-emit-operator-test "EmitOperatorTest.cpp")
+add_nes_runtime_test(runtime-out-of-order-test "OutOfOrderOperatorTest.cpp")
