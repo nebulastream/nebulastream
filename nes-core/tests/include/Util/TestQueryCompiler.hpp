@@ -132,7 +132,7 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
 /// utility method necessary if one wants to write a test that uses a mocked sink using a test sink descriptor
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
-    auto phaseProvider = std::make_shared<TestPhaseProvider>();
+    auto phaseProvider = std::make_shared<Testing::TestPhaseProvider>();
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
