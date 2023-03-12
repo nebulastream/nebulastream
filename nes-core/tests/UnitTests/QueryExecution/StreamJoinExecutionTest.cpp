@@ -36,7 +36,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
         NES_INFO("QueryExecutionTest: Setup StreamJoinQueryExecutionTest test class.");
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -49,7 +49,7 @@ class StreamJoinQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("QueryExecutionTest: Tear down StreamJoinQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema) {

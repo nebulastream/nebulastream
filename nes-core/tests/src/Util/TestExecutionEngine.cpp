@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/TestExecutionEngine.hpp>
 #include <Util/NonRunnableDataSource.hpp>
+#include <Util/TestExecutionEngine.hpp>
 
 namespace NES::Testing {
 
@@ -47,11 +47,11 @@ TestExecutionEngine::TestExecutionEngine(QueryCompilation::QueryCompilerOptions:
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 }
 
-auto TestExecutionEngine::createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer) {
+std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer) {
     return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine);
 }
 
-shared_ptr<TestSourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
+std::shared_ptr<TestUtils::TestSourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
     return std::make_shared<TestUtils::TestSourceDescriptor>(
         inputSchema,
         [&](OperatorId id,
@@ -80,7 +80,8 @@ std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> TestExecutionEngine::su
     return nodeEngine->getQueryManager()->getQueryExecutionPlan(queryPlan->getQueryId());
 }
 
-int TestExecutionEngine::getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, uint32_t source) {
+std::shared_ptr<NonRunnableDataSource>
+TestExecutionEngine::getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, uint32_t source) {
     NES_ASSERT(!plan->getSources().empty(), "Query plan has no sources ");
     return std::dynamic_pointer_cast<NonRunnableDataSource>(plan->getSources()[source]);
 }
@@ -105,4 +106,4 @@ bool TestExecutionEngine::stop() { return nodeEngine->stop(); }
 
 Runtime::BufferManagerPtr TestExecutionEngine::getBufferManager() const { return nodeEngine->getBufferManager(); }
 
-}// namespace NES
+}// namespace NES::Testing

@@ -37,7 +37,7 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -50,18 +50,20 @@ class MergeQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down MergeQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+        int numberOfTuples = 10;
+        for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
+            buf[recordIndex][0].write<int64_t>(recordIndex);
+            buf[recordIndex][1].write<int64_t>(1);
+            buf[recordIndex][2].write<int64_t>(42);
+        }
+        buf.setNumberOfTuples(numberOfTuples);
+    }
+
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    int numberOfTuples = 10;
-    for (int recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
-        buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(1);
-        buf[recordIndex][2].write<int64_t>(42);
-    }
-    buf.setNumberOfTuples(numberOfTuples);
-}
+
 
 // P1 = Source1 -> filter1
 // P2 = Source2 -> filter2

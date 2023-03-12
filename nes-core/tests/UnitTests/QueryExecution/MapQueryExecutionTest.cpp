@@ -39,7 +39,7 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = this->GetParam();
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -52,16 +52,18 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("MapQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            buf[recordIndex][0].write<int64_t>(recordIndex);
+            buf[recordIndex][1].write<int64_t>(1);
+        }
+        buf.setNumberOfTuples(10);
+    }
+
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        buf[recordIndex][0].write<int64_t>(recordIndex);
-        buf[recordIndex][1].write<int64_t>(1);
-    }
-    buf.setNumberOfTuples(10);
-}
+
 
 TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);

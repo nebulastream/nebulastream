@@ -41,7 +41,7 @@ class ThresholdWindowQueryExecutionTest
     void SetUp() override {
         Testing::TestWithErrorHandling::SetUp();
         auto queryCompiler = QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER;
-        executionEngine = std::make_shared<TestExecutionEngine>(queryCompiler, dumpMode);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(queryCompiler, dumpMode);
     }
 
     /* Will be called before a test is executed. */
@@ -54,7 +54,7 @@ class ThresholdWindowQueryExecutionTest
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down ThresholdWindowQueryExecutionTest test class."); }
 
-    std::shared_ptr<TestExecutionEngine> executionEngine;
+    std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
 
 template<typename T>

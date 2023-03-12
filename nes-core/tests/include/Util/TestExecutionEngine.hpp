@@ -53,8 +53,10 @@
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/NonRunnableDataSource.hpp>
 
 namespace NES::Testing {
+class NonRunnableDataSource;
 
 /**
  * @brief A simple stand alone query execution engine for testing.
@@ -62,14 +64,15 @@ namespace NES::Testing {
 class TestExecutionEngine {
   public:
     TestExecutionEngine(QueryCompilation::QueryCompilerOptions::QueryCompiler compiler);
-    auto createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
-    
+
+    std::shared_ptr<TestSink> createDataSink(SchemaPtr outputSchema, uint32_t expectedBuffer = 1);
+
     template<class Type>
     auto createCollectSink(SchemaPtr outputSchema) {
         return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine);
     }
 
-    auto createDataSource(SchemaPtr inputSchema);
+    std::shared_ptr<TestUtils::TestSourceDescriptor> createDataSource(SchemaPtr inputSchema);
 
     std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> submitQuery(QueryPlanPtr queryPlan);
 
