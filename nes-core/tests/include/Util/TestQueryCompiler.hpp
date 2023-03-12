@@ -26,109 +26,7 @@
 #include <Util/TestPhaseProvider.hpp>
 #include <utility>
 
-namespace NES {
-
-namespace TestUtils {
-
-class TestSourceDescriptor : public SourceDescriptor {
-  public:
-    TestSourceDescriptor(
-        SchemaPtr schema,
-        std::function<DataSourcePtr(OperatorId,
-                                    OriginId,
-                                    SourceDescriptorPtr,
-                                    Runtime::NodeEnginePtr,
-                                    size_t,
-                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
-        : SourceDescriptor(std::move(std::move(schema))), createSourceFunction(std::move(std::move(createSourceFunction))) {}
-
-    DataSourcePtr create(OperatorId operatorId,
-                         OriginId originId,
-                         SourceDescriptorPtr sourceDescriptor,
-                         Runtime::NodeEnginePtr nodeEngine,
-                         size_t numSourceLocalBuffers,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-        return createSourceFunction(operatorId,
-                                    originId,
-                                    std::move(std::move(sourceDescriptor)),
-                                    std::move(std::move(nodeEngine)),
-                                    numSourceLocalBuffers,
-                                    std::move(std::move(successors)));
-    }
-
-    [[nodiscard]] std::string toString() const override { return std::string(); }
-    [[nodiscard]] bool equal(SourceDescriptorPtr const&) const override { return false; }
-    SourceDescriptorPtr copy() override { return NES::SourceDescriptorPtr(); }
-
-  private:
-    std::function<DataSourcePtr(OperatorId,
-                                OriginId,
-                                SourceDescriptorPtr,
-                                Runtime::NodeEnginePtr,
-                                size_t,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
-        createSourceFunction;
-};
-
-class TestSinkDescriptor : public SinkDescriptor {
-  public:
-    explicit TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
-    DataSinkPtr getSink() { return sink; }
-    ~TestSinkDescriptor() override = default;
-    std::string toString() const override { return std::string(); }
-    bool equal(SinkDescriptorPtr const&) override { return false; }
-
-  private:
-    DataSinkPtr sink;
-};
-
-class TestSinkProvider : public QueryCompilation::DataSinkProvider {
-  public:
-    DataSinkPtr lower(OperatorId sinkId,
-                      SinkDescriptorPtr sinkDescriptor,
-                      SchemaPtr schema,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                      size_t numOfProducers) override {
-        if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
-            auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
-            return testSinkDescriptor->getSink();
-        }
-        return DataSinkProvider::lower(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
-    }
-};
-
-class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
-  public:
-    explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options)
-        : QueryCompilation::DefaultDataSourceProvider(std::move(std::move(options))){};
-    DataSourcePtr lower(OperatorId operatorId,
-                        OriginId originId,
-                        SourceDescriptorPtr sourceDescriptor,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override {
-        if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
-            auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
-            return testSourceDescriptor->create(operatorId,
-                                                originId,
-                                                sourceDescriptor,
-                                                nodeEngine,
-                                                compilerOptions->getNumSourceLocalBuffers(),
-                                                successors);
-        }
-        return DefaultDataSourceProvider::lower(operatorId, originId, sourceDescriptor, nodeEngine, successors);
-    }
-};
-
-class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
-  public:
-    QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) override {
-        auto sinkProvider = std::make_shared<TestSinkProvider>();
-        auto sourceProvider = std::make_shared<TestSourceProvider>(options);
-        return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
-    }
-};
+namespace NES::TestUtils {
 
 /// utility method necessary if one wants to write a test that uses a mocked sink using a test sink descriptor
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
@@ -139,7 +37,6 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider, jitCompiler);
 }
 
-}// namespace TestUtils
 }// namespace NES
 
 #endif// NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_

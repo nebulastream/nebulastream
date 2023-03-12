@@ -18,6 +18,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <utility>
@@ -62,8 +64,6 @@ class MapQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
-
-
 
 TEST_P(MapQueryExecutionTest, MapQueryArithmetic) {
     auto schema = Schema::create()->addField("test$id", BasicType::INT64)->addField("test$one", BasicType::INT64);

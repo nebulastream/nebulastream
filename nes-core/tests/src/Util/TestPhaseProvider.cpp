@@ -11,7 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CORE_TESTS_SRC_UTIL_TESTPHASEPROVIDER_HPP_
-#define NES_NES_CORE_TESTS_SRC_UTIL_TESTPHASEPROVIDER_HPP_
+#include <Util/TestPhaseProvider.hpp>
+#include <Util/TestSinkProvider.hpp>
+#include <Util/TestSourceProvider.hpp>
 
-#endif//NES_NES_CORE_TESTS_SRC_UTIL_TESTPHASEPROVIDER_HPP_
+namespace NES::TestUtils {
+QueryCompilation::LowerToExecutableQueryPlanPhasePtr
+TestPhaseProvider::createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) {
+    auto sinkProvider = std::make_shared<TestUtils::TestSinkProvider>();
+    auto sourceProvider = std::make_shared<TestUtils::TestSourceProvider>(options);
+    return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
+}
+}// namespace NES
