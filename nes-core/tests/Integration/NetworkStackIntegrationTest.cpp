@@ -49,6 +49,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestQuery.hpp>
 #include <Util/TestQueryCompiler.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <gtest/gtest.h>

@@ -14,6 +14,9 @@
 
 #include <Util/NonRunnableDataSource.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestPhaseProvider.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 
 namespace NES::Testing {
 
@@ -51,7 +54,7 @@ std::shared_ptr<TestSink> TestExecutionEngine::createDataSink(SchemaPtr outputSc
     return std::make_shared<TestSink>(expectedBuffer, outputSchema, nodeEngine);
 }
 
-std::shared_ptr<TestUtils::TestSourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
+std::shared_ptr<SourceDescriptor> TestExecutionEngine::createDataSource(SchemaPtr inputSchema) {
     return std::make_shared<TestUtils::TestSourceDescriptor>(
         inputSchema,
         [&](OperatorId id,

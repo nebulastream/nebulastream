@@ -17,6 +17,8 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
+#include <Util/TestSinkDescriptor.hpp>
+#include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <iostream>
 #include <utility>
@@ -62,8 +64,6 @@ class ProjectionQueryExecutionTest : public Testing::TestWithErrorHandling,
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
 };
-
-
 
 TEST_P(ProjectionQueryExecutionTest, projectField) {
     auto schema = Schema::create()

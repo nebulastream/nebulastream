@@ -57,6 +57,7 @@
 
 namespace NES::Testing {
 class NonRunnableDataSource;
+class TestSourceDescriptor;
 
 /**
  * @brief A simple stand alone query execution engine for testing.
@@ -72,7 +73,7 @@ class TestExecutionEngine {
         return std::make_shared<CollectTestSink<Type>>(outputSchema, nodeEngine);
     }
 
-    std::shared_ptr<TestUtils::TestSourceDescriptor> createDataSource(SchemaPtr inputSchema);
+    std::shared_ptr<SourceDescriptor> createDataSource(SchemaPtr inputSchema);
 
     std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> submitQuery(QueryPlanPtr queryPlan);
 
