@@ -20,6 +20,8 @@
 #include <fstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 namespace NES::Testing::detail {
 
 template<typename T>

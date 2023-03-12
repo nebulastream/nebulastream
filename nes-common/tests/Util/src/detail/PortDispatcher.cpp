@@ -21,6 +21,7 @@
 #if defined(__linux__)
 #include <pwd.h>
 #endif
+#include <sys/types.h>
 
 namespace NES::Testing::detail {
 

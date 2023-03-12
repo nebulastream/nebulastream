@@ -23,6 +23,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Util/TestPhaseProvider.hpp>
 #include <utility>
 
 namespace NES {
