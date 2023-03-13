@@ -137,8 +137,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::Co
         auto fieldExpr = DataTypeToZ3ExprUtil::createForField(fieldName, field->getDataType(), context)->getExpr();
         fieldToZ3ExprMap[fieldName] = fieldExpr;
     }
-    z3::expr_vector createSourceFOL(*context);
-    createContainmentSchemaInformation(fieldToZ3ExprMap, context, createSourceFOL);
     auto updatedSchemaFieldToExprMaps = {fieldToZ3ExprMap};
 
     //Create an equality expression for example: <logical source name>.logicalSourceName == "<logical source name>"
@@ -796,42 +794,50 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
         }
     }
 
+    std::vector<ExpressionNodePtr> onFields;
+    std::vector<std::basic_string<char>> onFieldNames;
+    std::vector<ExpressionNodePtr> asFields;
+    std::vector<std::basic_string<char>> asFieldNames;
     //FIXME: change the logic here as part of #1377
     //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
     z3::sort sort = context->int_sort();
-    assert(windowDefinition->getWindowAggregation().size() == 1);
-    auto windowAggregation = windowDefinition->getWindowAggregation()[0];
-    switch (windowAggregation->getType()) {
-        case Windowing::WindowAggregationDescriptor::Type::Count: {
-            aggregate = z3::function("Count", sort, sort);
-            break;
+    for (auto windowAggregation : windowDefinition->getWindowAggregation()) {
+        switch (windowAggregation->getType()) {
+            case Windowing::WindowAggregationDescriptor::Type::Count: {
+                aggregate = z3::function("Count", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Max: {
+                aggregate = z3::function("Max", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Min: {
+                aggregate = z3::function("Min", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Sum: {
+                aggregate = z3::function("Sum", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Avg: {
+                aggregate = z3::function("Avg", sort, sort);
+                break;
+            }
+            case Windowing::WindowAggregationDescriptor::Type::Median: {
+                aggregate = z3::function("Median", sort, sort);
+                break;
+            }
+            default: {
+                NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
+            }
         }
-        case Windowing::WindowAggregationDescriptor::Type::Max: {
-            aggregate = z3::function("Max", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Min: {
-            aggregate = z3::function("Min", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Sum: {
-            aggregate = z3::function("Sum", sort, sort);
-            break;
-        }
-        case Windowing::WindowAggregationDescriptor::Type::Avg: {
-            aggregate = z3::function("Avg", sort, sort);
-            break;
-        }
-        default: NES_FATAL_ERROR2("QuerySignatureUtil: could not cast aggregation type");
+        // Get the expression for on field and update the column values
+        onFields.push_back(windowAggregation->on());
+        onFieldNames.push_back(windowAggregation->on()->as<FieldAccessExpressionNode>()->getFieldName());
+        asFields.push_back(windowAggregation->as());
+        asFieldNames.push_back(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName());
     }
-
-    // Get the expression for on field and update the column values
-    auto onField = windowAggregation->on();
-    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
-    auto asField = windowAggregation->as();
-    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
-
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
 
@@ -850,8 +856,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
             } else if (originalAttributeName == "count") {
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate()));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
-            } else if (originalAttributeName == asFieldName) {
-                auto fieldExpr = schemaFieldToExprMap[onFieldName];
+            } else if (std::find(asFieldNames.begin(), asFieldNames.end(), originalAttributeName) != asFieldNames.end()) {
+                auto fieldExpr = schemaFieldToExprMap[originalAttributeName];
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
             } else {

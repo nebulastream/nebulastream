@@ -25,6 +25,11 @@ class expr;
 using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
+namespace NES {
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+}// namespace NES
+
 namespace NES::Optimizer {
 
 class QuerySignature;
@@ -70,7 +75,9 @@ class QuerySignature {
     static QuerySignaturePtr create(z3::ExprPtr&& conditions,
                                     std::vector<std::string>&& columns,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions, z3::expr_vector&& containmentFOL);
+                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions,
+                                    std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
+                                    std::map<std::string, SchemaPtr>&& sourceSchemas);
 
     /**
      * @brief Get the conditions
@@ -98,12 +105,16 @@ class QuerySignature {
      */
     const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
+    const std::map<std::string, size_t>& getNumberOfWindowAggregatesPerWindow() const;
+    const std::map<std::string, SchemaPtr>& getSourceSchemas() const;
+
   private:
     QuerySignature(z3::ExprPtr&& conditions,
                    std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                    std::map<std::string, z3::ExprPtr>&& windowsExpressions,
-                   z3::expr_vector&& containmentFOL);
+                   std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
+                   std::map<std::string, SchemaPtr>&& sourceSchemas);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
@@ -117,7 +128,8 @@ class QuerySignature {
      */
     std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
-    z3::expr_vector containmentFOL;
+    std::map<std::string, size_t> numberOfWindowAggregatesPerWindow;
+    std::map<std::string, SchemaPtr> sourceSchemas;
 };
 }// namespace NES::Optimizer
 
