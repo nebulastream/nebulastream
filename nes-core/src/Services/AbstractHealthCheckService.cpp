@@ -45,7 +45,7 @@ void AbstractHealthCheckService::stopHealthCheck() {
 }
 
 void AbstractHealthCheckService::addNodeToHealthCheck(TopologyNodePtr node) {
-    NES_DEBUG2("HealthCheckService: adding node with id  {}", node->getId());
+    NES_DEBUG2("HealthCheckService: adding node with id {}", node->getId());
     auto exists = nodeIdToTopologyNodeMap.contains(node->getId());
     if (exists) {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << node->getId());
@@ -58,7 +58,7 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
     if (!exists) {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to remove a node that does not exists id=" << node->getId());
     }
-    NES_DEBUG2("HealthCheckService: removing node with id  {}", node->getId());
+    NES_DEBUG2("HealthCheckService: removing node with id {}", node->getId());
     nodeIdToTopologyNodeMap.erase(node->getId());
 }
 

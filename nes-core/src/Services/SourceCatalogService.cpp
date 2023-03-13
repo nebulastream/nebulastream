@@ -40,7 +40,7 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
     }
 
     if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
-        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource logical source does not exist  {}", logicalSourceName);
+        NES_ERROR2("SourceCatalogService::RegisterPhysicalSource logical source does not exist {}", logicalSourceName);
         return false;
     }
 

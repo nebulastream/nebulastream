@@ -94,8 +94,8 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
 
-    NES_DEBUG2("Converting Schema:  {}", schema->toString());
-    NES_DEBUG2("Define Struct :  {}", structName);
+    NES_DEBUG2("Converting Schema: {}", schema->toString());
+    NES_DEBUG2("Define Struct : {}", structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
@@ -135,7 +135,7 @@ bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
 }
 
 bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
-    NES_DEBUG2("CCodeGenerator: Generating code for scan with inputSchema  {}", inputSchema->toString());
+    NES_DEBUG2("CCodeGenerator: Generating code for scan with inputSchema {}", inputSchema->toString());
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
@@ -203,7 +203,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
-        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}", varDeclInputTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}", varDeclInputTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
         NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
@@ -435,7 +435,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
             commonStamp = commonStamp->join(field->getStamp());
         }
     }
-    NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor:  {}", commonStamp->toString());
+    NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor: {}", commonStamp->toString());
     if (commonStamp->isInteger()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
@@ -681,7 +681,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
 
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
-        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}",
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}",
                    varDeclResultTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 

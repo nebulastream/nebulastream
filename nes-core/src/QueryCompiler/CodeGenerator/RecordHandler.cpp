@@ -20,9 +20,9 @@ RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler
 
 void RecordHandler::registerAttribute(const std::string& name, ExpressionStatementPtr variableAccessStatement) {
     if (hasAttribute(name)) {
-        NES_DEBUG2("RecordHandler: replace attribute with name  {}", name);
+        NES_DEBUG2("RecordHandler: replace attribute with name {}", name);
     } else {
-        NES_DEBUG2("RecordHandler: place new attribute with name  {}", name);
+        NES_DEBUG2("RecordHandler: place new attribute with name {}", name);
     }
     this->statementMap[name] = std::move(variableAccessStatement);
 }
