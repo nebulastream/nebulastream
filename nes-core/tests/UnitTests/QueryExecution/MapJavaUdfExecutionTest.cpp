@@ -48,11 +48,12 @@ class MapJavaUdfQueryExecutionTest : public testing::Test {
     static void TearDownTestCase() { NES_DEBUG("MapJavaUdfQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
-    std::string path =  "/home/amichalke/workspace/nebulastream-tmp/cmake-build-debug/nes-runtime/tests/testData/JavaUdfTestData/";
     std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
 };
 
-
+/**
+ * This helper function fills a buffer with test data
+ */
 void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         buf[recordIndex][0].write<int32_t>(recordIndex);
@@ -60,6 +61,9 @@ void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buf) {
     buf.setNumberOfTuples(10);
 }
 
+/**
+ * This helper function creates a JVM and returns the JNIEnv.
+ */
 void createJVM(JavaVM* jvm, JNIEnv** env) {
     JavaVMInitArgs args {};
     std::vector<std::string> opt {"-verbose:jni", "-verbose:class"};
@@ -114,7 +118,7 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     std::vector<char> serializedInstance = {};
     auto byteCodeList = std::unordered_map<std::string, std::vector<char>>();
     for (auto &className : classNames) {
-        auto buffer = loadClassFileIntoBuffer(path, className);
+        auto buffer = loadClassFileIntoBuffer(testDataPath, className);
         byteCodeList.insert(std::make_pair(className, buffer));
     }
 
