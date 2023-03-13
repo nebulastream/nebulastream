@@ -38,7 +38,7 @@ JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition
                                          AbstractJoinHandlerPtr joinHandler)
     : joinDefinition(std::move(joinDefinition)), joinHandler(std::move(joinHandler)), resultSchema(std::move(resultSchema)) {
     NES_DEBUG2("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr "
-              "joinHandler)");
+               "joinHandler)");
 }
 
 LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinDefinition; }

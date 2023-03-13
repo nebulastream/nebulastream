@@ -101,7 +101,10 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
         }
     }
     buffer.setNumberOfTuples(tupleCnt);
-    NES_TRACE2("Source: id={} Generated buffer with {} / {}", operatorId, buffer.getNumberOfTuples(), schema->getSchemaSizeInBytes());
+    NES_TRACE2("Source: id={} Generated buffer with {} / {}",
+               operatorId,
+               buffer.getNumberOfTuples(),
+               schema->getSchemaSizeInBytes());
     return buffer.getBuffer();
 }
 

@@ -168,11 +168,13 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
 
         if (!node) {
             NES_ERROR2("MinimumResourceConsumption: Can not schedule the operator. No free resource available capacity is={}",
-                      sinkNode->getRemainingCpuCapacity());
+                       sinkNode->getRemainingCpuCapacity());
             throw std::runtime_error("Can not schedule the operator. No free resource available.");
         }
 
-        NES_DEBUG2("MinimumResourceConsumption: suitable placement for operator {} is {}", targetOperator->toString(), node->toString());
+        NES_DEBUG2("MinimumResourceConsumption: suitable placement for operator {} is {}",
+                   targetOperator->toString(),
+                   node->toString());
 
         NES_DEBUG2("MinimumResourceConsumption: Transforming New Operator into legacy operator");
         OperatorPtr legacyOperator = translator->transform(targetOperator);
@@ -181,7 +183,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         // new execution node rather add operator to existing node.
         if (executionPlanPtr->hasVertex(node->getId())) {
 
-            NES_DEBUG2("MinimumResourceConsumption: node {} was already used by other deployment", node->toString() );
+            NES_DEBUG2("MinimumResourceConsumption: node {} was already used by other deployment", node->toString());
 
             const ExecutionNodePtr existingExecutionNode = executionPlanPtr->getExecutionNode(node->getId());
 
@@ -193,7 +195,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
             existingExecutionNode->addOperatorId(targetOperator->getId());
         } else {
 
-            NES_DEBUG2("MinimumResourceConsumption: create new execution node  {}",  node->toString());
+            NES_DEBUG2("MinimumResourceConsumption: create new execution node  {}", node->toString());
 
             stringstream operatorName;
             operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
@@ -245,7 +247,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         sinkNode->reduceCpuCapacity(1);
     } else {
         NES_ERROR2("MinimumResourceConsumption: Can not schedule the operator. No free resource available capacity is={}",
-                  sinkNode->getRemainingCpuCapacity());
+                   sinkNode->getRemainingCpuCapacity());
         throw std::runtime_error("Can not schedule the operator. No free resource available.");
     }
 }

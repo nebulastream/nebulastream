@@ -55,13 +55,13 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
         for (uint64_t i = 0; i < numberOfBuffers; i++) {
             std::string copyString = bufferContent.substr(0, contentSize);
             bufferContent = bufferContent.substr(contentSize, bufferContent.length() - contentSize);
-            NES_TRACE2("TextFormat::getData: copy string={} new content={}",  copyString, bufferContent);
+            NES_TRACE2("TextFormat::getData: copy string={} new content={}", copyString, bufferContent);
             auto buf = this->bufferManager->getBufferBlocking();
             std::copy(copyString.begin(), copyString.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentSize);
             buffers.push_back(buf);
         }
-        NES_TRACE2("TextFormat::getData: successfully copied buffer= {}",  numberOfBuffers);
+        NES_TRACE2("TextFormat::getData: successfully copied buffer= {}", numberOfBuffers);
     } else {
         NES_TRACE2("TextFormat::getData: content fits in one buffer");
         auto buf = this->bufferManager->getBufferBlocking();

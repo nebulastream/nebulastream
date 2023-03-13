@@ -52,7 +52,7 @@ uint32_t CompiledExecutablePipelineStage::setup(Runtime::Execution::PipelineExec
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != NotInitialized) {
         NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is already initialized."
-                        "It is not allowed to call setup multiple times.");
+                         "It is not allowed to call setup multiple times.");
         return -1;
     }
     currentExecutionStage = Initialized;
@@ -63,7 +63,7 @@ uint32_t CompiledExecutablePipelineStage::start(Runtime::Execution::PipelineExec
     const std::lock_guard<std::mutex> lock(executionStageLock);
     if (currentExecutionStage != Initialized) {
         NES_FATAL_ERROR2("CompiledExecutablePipelineStage: The pipeline stage, is not initialized."
-                        "It is not allowed to call start if setup was not called.");
+                         "It is not allowed to call start if setup was not called.");
         return -1;
     }
     NES_DEBUG2("CompiledExecutablePipelineStage: Start compiled executable pipeline stage");
@@ -90,8 +90,8 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {
         NES_DEBUG2("CompiledExecutablePipelineStage:execute The pipeline stage, was not correctly initialized and started. You "
-                  "must first "
-                  "call setup and start.");
+                   "must first "
+                   "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
         return ExecutionResult::Error;

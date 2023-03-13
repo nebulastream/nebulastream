@@ -47,7 +47,7 @@ void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecuti
 
 void KeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                             Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop KeyedSliceMergingOperatorHandler: {}",  queryTerminationType);
+    NES_DEBUG2("stop KeyedSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {

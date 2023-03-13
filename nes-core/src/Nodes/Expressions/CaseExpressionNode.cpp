@@ -77,7 +77,7 @@ void CaseExpressionNode::setChildren(std::vector<ExpressionNodePtr> const& whenE
 
 std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
     if (children.size() < 2) {
-        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}",  children.size());
+        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}", children.size());
     }
     std::vector<ExpressionNodePtr> whenChildren;
     for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter) {
@@ -89,7 +89,7 @@ std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const {
 
 ExpressionNodePtr CaseExpressionNode::getDefaultExp() const {
     if (children.size() <= 1) {
-        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}",  children.size());
+        NES_FATAL_ERROR2("A case expression always should have at least two children, but it had: {}", children.size());
     }
     return (*(children.end() - 1))->as<ExpressionNode>();
 }

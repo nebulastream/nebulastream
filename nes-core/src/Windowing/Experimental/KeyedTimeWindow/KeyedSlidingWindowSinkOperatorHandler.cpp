@@ -48,7 +48,7 @@ void KeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineEx
 
 void KeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                  Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop KeyedSlidingWindowSinkOperatorHandler: {}",  queryTerminationType);
+    NES_DEBUG2("stop KeyedSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
 KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* windowTriggerTask) {

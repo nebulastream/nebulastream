@@ -45,7 +45,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
 
                 //check health
-                NES_TRACE2("NesCoordinator::healthCheck: checking node= {}",  destAddress);
+                NES_TRACE2("NesCoordinator::healthCheck: checking node= {}", destAddress);
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_TRACE2("NesCoordinator::healthCheck: node={} is alive", destAddress);

@@ -74,7 +74,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
         try {
             placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
         } catch (...) {
-            NES_ERROR2("QueryService: Unknown placement strategy name:  {}",  placementStrategyName);
+            NES_ERROR2("QueryService: Unknown placement strategy name:  {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
@@ -86,7 +86,7 @@ QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& querySt
             return queryId;
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR2("QueryService:  {}",  std::string(exc.what()));
+        NES_ERROR2("QueryService:  {}", std::string(exc.what()));
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
@@ -121,7 +121,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         try {
             placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
         } catch (...) {
-            NES_ERROR2("QueryService: Unknown placement strategy name:  {}",  placementStrategyName);
+            NES_ERROR2("QueryService: Unknown placement strategy name:  {}", placementStrategyName);
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
@@ -133,7 +133,7 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             return queryId;
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR2("QueryService:  {}",  std::string(exc.what()));
+        NES_ERROR2("QueryService:  {}", std::string(exc.what()));
         auto emptyQueryPlan = QueryPlan::create();
         emptyQueryPlan->setQueryId(queryId);
         queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);

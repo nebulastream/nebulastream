@@ -125,7 +125,9 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 nlohmann::json MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId) {
     nlohmann::json metricsJson;
     if (!enableMonitoring) {
-        NES_ERROR2("MonitoringManager: Requesting monitoring data for node {} failed. Monitoring is disabled, returning empty object", nodeId);
+        NES_ERROR2(
+            "MonitoringManager: Requesting monitoring data for node {} failed. Monitoring is disabled, returning empty object",
+            nodeId);
         return metricsJson;
     }
 
@@ -231,8 +233,9 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
             NES_ERROR2("MonitoringManager: Query {} :: {} failed to start in time.", queryId, monitoringStream);
         }
     } else {
-        NES_ERROR2("MonitoringManager: Failed to deploy monitoring query. Queries are still running and could not be stopped for {}",
-                  monitoringStream);
+        NES_ERROR2(
+            "MonitoringManager: Failed to deploy monitoring query. Queries are still running and could not be stopped for {}",
+            monitoringStream);
     }
     return queryId;
 }
@@ -266,13 +269,13 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
         NES_INFO2("MonitoringManager: Stopping query {} for {}", queryId, metricType);
         if (queryService->validateAndQueueStopQueryRequest(queryId)) {
             if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
-                NES_INFO2("MonitoringManager: Query {}::{} terminated", queryId , metricType);
+                NES_INFO2("MonitoringManager: Query {}::{} terminated", queryId, metricType);
             } else {
-                NES_ERROR2("MonitoringManager: Failed to stop query {}::{}", queryId , metricType);
+                NES_ERROR2("MonitoringManager: Failed to stop query {}::{}", queryId, metricType);
                 success = false;
             }
         } else {
-            NES_ERROR2("MonitoringManager: Failed to validate query {}::{}", queryId , metricType);
+            NES_ERROR2("MonitoringManager: Failed to validate query {}::{}", queryId, metricType);
             success = false;
         }
     }
@@ -305,10 +308,12 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seco
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_TRACE2("checkStoppedOrTimeout: check query status for {}", queryId);
         if (catalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
-            NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped",  queryId);
+            NES_TRACE2("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
-        NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}", queryId, catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
+        NES_DEBUG2("checkStoppedOrTimeout: status not reached for {} as status is={}",
+                   queryId,
+                   catalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
     NES_TRACE2("checkStoppedOrTimeout: expected status not reached within set timeout");

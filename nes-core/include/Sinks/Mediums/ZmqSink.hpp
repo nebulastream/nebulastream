@@ -85,6 +85,6 @@ struct formatter<NES::ZmqSink> : formatter<std::string> {
         return format_to(ctx.out(), "{} {}", zmq_sink.getHost(), zmq_sink.getPort());
     }
 };
-} //namespace fmt
+}//namespace fmt
 
 #endif// NES_CORE_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

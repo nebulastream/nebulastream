@@ -108,14 +108,15 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
     //Check if left input schema was identified
     if (!leftInputSchema) {
         NES_ERROR2("JoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
-                  leftJoinKeyName);
+                   leftJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 
     //Check if right input schema was identified
     if (!rightInputSchema) {
-        NES_ERROR2("JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : {}",
-                  rightJoinKeyName);
+        NES_ERROR2(
+            "JoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : {}",
+            rightJoinKeyName);
         throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 

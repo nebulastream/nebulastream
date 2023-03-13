@@ -49,7 +49,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         code << "}" << std::endl;
         code << "}" << std::endl;
 
-        NES_DEBUG2("QueryParsingService : generated code= {}",  code.str());
+        NES_DEBUG2("QueryParsingService : generated code= {}", code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", false, false, false, false);
         auto result = jitCompiler->compile(std::move(request));
@@ -66,10 +66,10 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         return std::make_shared<Schema>(query);
 
     } catch (std::exception& exc) {
-        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {}",  queryCodeSnippet);
+        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {}", queryCodeSnippet);
         throw;
     } catch (...) {
-        NES_ERROR2("QueryParsingService : Failed to create the query from input code string:  {}",  queryCodeSnippet);
+        NES_ERROR2("QueryParsingService : Failed to create the query from input code string:  {}", queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
 }
@@ -90,23 +90,23 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 
         std::string sourceName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
         sourceName = sourceName.substr(7, sourceName.find(')') - 7);
-        NES_DEBUG2(" QueryParsingService: source name =  {}",  sourceName);
+        NES_DEBUG2(" QueryParsingService: source name =  {}", sourceName);
 
         std::string newQuery = queryCodeSnippet;
         // add return statement in front of input query
         newQuery = Util::replaceFirst(newQuery, "Query::from", "return Query::from");
 
-        NES_DEBUG2("QueryParsingService: parsed query =  {}",  newQuery);
+        NES_DEBUG2("QueryParsingService: parsed query =  {}", newQuery);
         code << newQuery << std::endl;
         code << "}" << std::endl;
         code << "}" << std::endl;
-        NES_DEBUG2("QueryParsingService: query code \n {}",  code.str());
+        NES_DEBUG2("QueryParsingService: query code \n {}", code.str());
         auto sourceCode = std::make_unique<Compiler::SourceCode>("cpp", code.str());
         auto request = Compiler::CompilationRequest::create(std::move(sourceCode), "query", true, false, false, false);
         auto result = jitCompiler->compile(std::move(request));
         auto compiled_code = result.get().getDynamicObject();
         if (!code) {
-            NES_ERROR2("Compilation of query code failed! Code:  {}",  code.str());
+            NES_ERROR2("Compilation of query code failed! Code:  {}", code.str());
         }
 
         using CreateQueryFunctionPtr = Query (*)();
@@ -119,7 +119,9 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 
         return query.getQueryPlan();
     } catch (std::exception& exc) {
-        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {} {}",  queryCodeSnippet, exc.what());
+        NES_ERROR2("QueryParsingService: Failed to create the query from input code string:  {} {}",
+                   queryCodeSnippet,
+                   exc.what());
         throw;
     } catch (...) {
         NES_ERROR2("QueryParsingService: Failed to create the query from input code string: {}", queryCodeSnippet);
@@ -138,14 +140,14 @@ QueryPlanPtr QueryParsingService::createPatternFromCodeString(const std::string&
         antlr4::CommonTokenStream tokens(&lexer);
         Parsers::NesCEPParser parser(&tokens);
         Parsers::NesCEPParser::QueryContext* tree = parser.query();
-        NES_DEBUG2("QueryParsingService: ANTLR created the following AST from pattern string  {}",  tree->toStringTree(&parser));
+        NES_DEBUG2("QueryParsingService: ANTLR created the following AST from pattern string  {}", tree->toStringTree(&parser));
 
         NES_DEBUG2("QueryParsingService: Parse the AST into a query plan");
         Parsers::NesCEPQueryPlanCreator queryPlanCreator;
         //The ParseTreeWalker performs a walk on the given AST starting at the root and going down recursively with depth-first search
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
-        NES_DEBUG2("PatternParsingService: created the query from AST  {}",  queryPlan->toString());
+        NES_DEBUG2("PatternParsingService: created the query from AST  {}", queryPlan->toString());
         return queryPlan;
     }
 }

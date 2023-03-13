@@ -59,7 +59,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
         auto buffer = wctx.allocateTupleBuffer();
         auto task = buffer.getBuffer<WindowTriggerTask>();
         // we trigger the completion of all windows that end between startSlice and <= endSlice.
-        NES_DEBUG2("Deploy window trigger task for slice  ( {}-{})",  window.startTs,  window.endTs);
+        NES_DEBUG2("Deploy window trigger task for slice  ( {}-{})", window.startTs, window.endTs);
         task->windowStart = window.startTs;
         task->windowEnd = window.endTs;
         task->sequenceNumber = window.sequenceNumber;
@@ -70,7 +70,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
 
 void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                       Runtime::Execution::PipelineExecutionContextPtr ctx) {
-    NES_DEBUG2("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : {}",  queryTerminationType);
+    NES_DEBUG2("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto global = globalSliceStore.lock();
         NES_ASSERT(global, "Global slice store is invalid. This should not happen in a graceful stop.");
@@ -79,7 +79,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationT
             auto buffer = ctx->getBufferManager()->getBufferBlocking();
             auto task = buffer.getBuffer<WindowTriggerTask>();
             // we trigger the completion of all windows that end between startSlice and <= endSlice.
-            NES_DEBUG2("Deploy window trigger task for slice  ( {}-{})",  window.startTs,  window.endTs);
+            NES_DEBUG2("Deploy window trigger task for slice  ( {}-{})", window.startTs, window.endTs);
             task->windowStart = window.startTs;
             task->windowEnd = window.endTs;
             task->sequenceNumber = window.sequenceNumber;

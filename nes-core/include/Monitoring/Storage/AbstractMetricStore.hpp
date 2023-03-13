@@ -17,9 +17,9 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Monitoring/Storage/MetricStoreType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <unordered_map>
-#include <Util/Logger/Logger.hpp>
 #include <vector>
 
 namespace NES::Monitoring {

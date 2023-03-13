@@ -34,7 +34,7 @@ bool OperatorNode::hasMultipleChildrenOrParents() {
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
     //has multiple parent operator
     bool hasMultipleParent = (!getParents().empty()) && getParents().size() > 1;
-    NES_DEBUG2("OperatorNode: has multiple children {} or has multiple parent {}",  hasMultipleChildren, hasMultipleParent);
+    NES_DEBUG2("OperatorNode: has multiple children {} or has multiple parent {}", hasMultipleChildren, hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
 }
 

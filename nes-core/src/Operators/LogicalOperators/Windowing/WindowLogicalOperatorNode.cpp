@@ -65,7 +65,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
     }
     // infer the default input and output schema
     NES_DEBUG2("WindowLogicalOperatorNode: TypeInferencePhase: infer types for window operator with input schema {}",
-              inputSchema->toString());
+               inputSchema->toString());
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();

@@ -84,7 +84,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
                 sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
-                    NES_DEBUG2("Deploy merge task for slice {} with {} buffers.",  slice->getEnd(),  numberOfBuffers);
+                    NES_DEBUG2("Deploy merge task for slice {} with {} buffers.", slice->getEnd(), numberOfBuffers);
                     auto buffer = wctx.allocateTupleBuffer();
                     auto task = buffer.getBuffer<SliceMergeTask>();
                     task->startSlice = slice->getStart();
@@ -92,7 +92,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
                     buffer.setNumberOfTuples(1);
                     ctx.dispatchBuffer(buffer);
                 } else {
-                    NES_DEBUG2("Slice {} is empty. Don't deploy merge task.",  slice->getEnd());
+                    NES_DEBUG2("Slice {} is empty. Don't deploy merge task.", slice->getEnd());
                 }
             }
         }
@@ -110,7 +110,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::Pi
 void KeyedThreadLocalPreAggregationOperatorHandler::stop(
     Runtime::QueryTerminationType queryTerminationType,
     Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
-    NES_DEBUG2("stop ThreadLocalPreAggregationWindowHandler: {}",  queryTerminationType);
+    NES_DEBUG2("stop ThreadLocalPreAggregationWindowHandler: {}", queryTerminationType);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto sliceStaging = this->weakSliceStaging.lock();
         NES_ASSERT(sliceStaging, "Slice staging is invalid. This should not happen for graceful stop.");
@@ -122,7 +122,10 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
                     sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
                 if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                     if (numberOfBuffers != 0) {
-                        NES_DEBUG2("Deploy merge task for slice ({}-{}) with {} buffers.", slice->getStart(), slice->getEnd(), numberOfBuffers);
+                        NES_DEBUG2("Deploy merge task for slice ({}-{}) with {} buffers.",
+                                   slice->getStart(),
+                                   slice->getEnd(),
+                                   numberOfBuffers);
                         auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
                         auto task = buffer.getBuffer<SliceMergeTask>();
                         task->startSlice = slice->getStart();
@@ -130,7 +133,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
                         buffer.setNumberOfTuples(1);
                         pipelineExecutionContext->dispatchBuffer(buffer);
                     } else {
-                        NES_DEBUG2("Slice {} is empty. Don't deploy merge task.",  slice->getEnd());
+                        NES_DEBUG2("Slice {} is empty. Don't deploy merge task.", slice->getEnd());
                     }
                 }
             }

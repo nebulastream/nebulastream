@@ -39,16 +39,16 @@ ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryI
 ExecutionNode::ExecutionNode(const TopologyNodePtr& physicalNode) : id(physicalNode->getId()), topologyNode(physicalNode) {}
 
 bool ExecutionNode::hasQuerySubPlans(QueryId queryId) {
-    NES_DEBUG2("ExecutionNode : Checking if a query sub plan exists with id  {}",  queryId);
+    NES_DEBUG2("ExecutionNode : Checking if a query sub plan exists with id  {}", queryId);
     return mapOfQuerySubPlans.find(queryId) != mapOfQuerySubPlans.end();
 }
 
 std::vector<QueryPlanPtr> ExecutionNode::getQuerySubPlans(QueryId queryId) {
     if (hasQuerySubPlans(queryId)) {
-        NES_DEBUG2("ExecutionNode : Found query sub plan with id  {}",  queryId);
+        NES_DEBUG2("ExecutionNode : Found query sub plan with id  {}", queryId);
         return mapOfQuerySubPlans[queryId];
     }
-    NES_WARNING2("ExecutionNode : Unable to find query sub plan with id {}",  queryId);
+    NES_WARNING2("ExecutionNode : Unable to find query sub plan with id {}", queryId);
     return {};
 }
 
@@ -57,7 +57,7 @@ bool ExecutionNode::removeQuerySubPlans(QueryId queryId) {
         NES_DEBUG2("ExecutionNode: Successfully removed query sub plan and released the resources");
         return true;
     }
-    NES_WARNING2("ExecutionNode: Not able to remove query sub plan with id : {}",  queryId);
+    NES_WARNING2("ExecutionNode: Not able to remove query sub plan with id : {}", queryId);
     return false;
 }
 
@@ -116,12 +116,13 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
 
 bool ExecutionNode::addNewQuerySubPlan(QueryId queryId, const QueryPlanPtr& querySubPlan) {
     if (hasQuerySubPlans(queryId)) {
-        NES_DEBUG2("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id :  {}",  queryId);
+        NES_DEBUG2("ExecutionNode: Adding a new entry to the collection of query sub plans after assigning the id :  {}",
+                   queryId);
         std::vector<QueryPlanPtr> querySubPlans = mapOfQuerySubPlans[queryId];
         querySubPlans.push_back(querySubPlan);
         mapOfQuerySubPlans[queryId] = querySubPlans;
     } else {
-        NES_DEBUG2("ExecutionNode: Creating a new entry of query sub plans and assigning to the id :  {}",  queryId);
+        NES_DEBUG2("ExecutionNode: Creating a new entry of query sub plans and assigning to the id :  {}", queryId);
         std::vector<QueryPlanPtr> querySubPlans{querySubPlan};
         mapOfQuerySubPlans[queryId] = querySubPlans;
     }
@@ -135,7 +136,7 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
         NES_DEBUG2("ExecutionNode: Updated the query sub plan with id : {} to the collection of query sub plans", queryId);
         return true;
     }
-    NES_DEBUG2("ExecutionNode: Not able to find query sub plan with id : {} creating a new entry",  queryId);
+    NES_DEBUG2("ExecutionNode: Not able to find query sub plan with id : {} creating a new entry", queryId);
     return false;
 }
 

@@ -75,7 +75,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            numberOfBuffersPerEpoch,
                            std::move(workerToCoreMapping)),
       taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY)) {
-    NES_DEBUG2("QueryManger: use dynamic mode with numThreads= {}",  numThreads);
+    NES_DEBUG2("QueryManger: use dynamic mode with numThreads= {}", numThreads);
 }
 
 MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
@@ -98,7 +98,10 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            std::move(workerToCoreMapping)),
       numberOfQueues(numberOfQueues), numberOfThreadsPerQueue(numberOfThreadsPerQueue) {
 
-    NES_DEBUG2("QueryManger: use static mode for numberOfQueues={} numThreads={} numberOfThreadsPerQueue=", numberOfQueues, numThreads, numberOfThreadsPerQueue);
+    NES_DEBUG2("QueryManger: use static mode for numberOfQueues={} numThreads={} numberOfThreadsPerQueue=",
+               numberOfQueues,
+               numThreads,
+               numberOfThreadsPerQueue);
     if (numberOfQueues * numberOfThreadsPerQueue != numThreads) {
         NES_THROW_RUNTIME_ERROR("number of queues and threads have to match");
     }
@@ -134,7 +137,7 @@ uint64_t AbstractQueryManager::getNumberOfBuffersPerEpoch() const { return numbe
 AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 
 bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
-    NES_DEBUG2("startThreadPool: setup thread pool for nodeEngineId= {}  with numThreads= {}",  nodeEngineId,  numThreads);
+    NES_DEBUG2("startThreadPool: setup thread pool for nodeEngineId= {}  with numThreads= {}", nodeEngineId, numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
@@ -159,7 +162,7 @@ bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
 uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
 
 bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
-    NES_DEBUG2("startThreadPool: setup thread pool for nodeId= {}  with numThreads= {}",  nodeEngineId,  numThreads);
+    NES_DEBUG2("startThreadPool: setup thread pool for nodeId= {}  with numThreads= {}", nodeEngineId, numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
@@ -291,7 +294,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid) {
-                NES_WARNING2("Query {} was already removed or never deployed",  qepId);
+                NES_WARNING2("Query {} was already removed or never deployed", qepId);
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
@@ -306,7 +309,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
             }
             // we need to think if we wanna remove this after a soft stop
             //            queryToStatisticsMap.erase(qepId);
-            NES_DEBUG2("AbstractQueryManager: removed running QEP  {}",  qepId);
+            NES_DEBUG2("AbstractQueryManager: removed running QEP  {}", qepId);
             break;
         }
         default: {

@@ -46,7 +46,7 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanP
     const std::vector<NESTopologyEntryPtr> sourceNodePtrs = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodePtrs.empty()) {
-        NES_ERROR2("HighAvailabilityStrategy: Unable to find the target source:  {}",  sourceName);
+        NES_ERROR2("HighAvailabilityStrategy: Unable to find the target source:  {}", sourceName);
         throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 
@@ -76,7 +76,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
     uint64_t linkRedundency = 2;
 
     NES_INFO2("HighAvailabilityStrategy: Find paths between source nodes and sink node such that the nodes on the paths are"
-             "connected with {} number of redundant links.", linkRedundency);
+              "connected with {} number of redundant links.",
+              linkRedundency);
     vector<vector<NESTopologyEntryPtr>> placementPaths;
 
     for (NESTopologyEntryPtr sourceNode : sourceNodes) {
@@ -111,13 +112,13 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 }
 
                 NES_DEBUG2("HighAvailabilityStrategy: If no non-common node exists with current path then skip to compare with "
-                          "next path.");
+                           "next path.");
                 if (pathINodeIndex > path_i.size() || pathINodeIndex > path_j.size()) {
                     continue;
                 }
 
                 NES_DEBUG2("HighAvailabilityStrategy: Construct a map with key as the nodes of the current path and value as the "
-                          "number of times the node occurred in other paths");
+                           "number of times the node occurred in other paths");
                 for (uint64_t idx = pathINodeIndex; idx < path_i.size(); idx++) {
                     auto node_i = path_i[idx];
                     const auto itr = find_if(path_j.begin(), path_j.end(), [node_i](NESTopologyEntryPtr node_j) {
@@ -139,9 +140,10 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
             uint64_t totalWeight = 0;
             vector<NESTopologyEntryPtr> commonPath = {sourceNode};
             NES_DEBUG2("HighAvailabilityStrategy: Iterate over the computed map and identify the nodes with sufficient number of"
-                      " occurrence in other paths");
+                       " occurrence in other paths");
             for (auto itr = nodeCountMap.rbegin(); itr != nodeCountMap.rend(); itr++) {
-                NES_DEBUG2("HighAvailabilityStrategy: Check if the node on the path is shared by atleast {} paths.", linkRedundency);
+                NES_DEBUG2("HighAvailabilityStrategy: Check if the node on the path is shared by atleast {} paths.",
+                           linkRedundency);
                 if (itr->second >= linkRedundency - 1) {
                     commonPath.push_back(itr->first);
                     totalWeight++;
@@ -235,7 +237,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 break;
             }
 
-            NES_INFO2("HighAvailabilityStrategy: Find if next target operator already placed on one of the nodes of current path");
+            NES_INFO2(
+                "HighAvailabilityStrategy: Find if next target operator already placed on one of the nodes of current path");
 
             //find if the next target operator already placed
             bool isAlreadyPlaced = false;

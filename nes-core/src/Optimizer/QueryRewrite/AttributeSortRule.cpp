@@ -64,7 +64,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
 }
 
 NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::ExpressionNodePtr expression) {
-    NES_DEBUG2("Sorting attributed for input expression  {}",  expression->toString());
+    NES_DEBUG2("Sorting attributed for input expression  {}", expression->toString());
     if (expression->instanceOf<NES::LogicalExpressionNode>()) {
         return sortAttributesInLogicalExpressions(expression);
     }
@@ -85,7 +85,7 @@ NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::Expres
 }
 
 ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression) {
-    NES_DEBUG2("Create Z3 expression for arithmetical expression  {}",  expression->toString());
+    NES_DEBUG2("Create Z3 expression for arithmetical expression  {}", expression->toString());
     if (expression->instanceOf<NES::AddExpressionNode>()) {
         auto addExpressionNode = expression->as<NES::AddExpressionNode>();
 
@@ -266,7 +266,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
 }
 
 ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression) {
-    NES_DEBUG2("Create Z3 expression node for logical expression  {}",  expression->toString());
+    NES_DEBUG2("Create Z3 expression node for logical expression  {}", expression->toString());
     if (expression->instanceOf<AndExpressionNode>()) {
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto left = andExpressionNode->getLeft();

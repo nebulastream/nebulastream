@@ -129,7 +129,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
         }
         executionNode->updateQuerySubPlans(queryId, querysubplans);
     }
-    NES_DEBUG2("MlHeuristicStrategy: Updated Global Execution Plan : \n {}",  globalExecutionPlan->getAsString());
+    NES_DEBUG2("MlHeuristicStrategy: Updated Global Execution Plan : \n {}", globalExecutionPlan->getAsString());
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
@@ -138,7 +138,8 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
 
     NES_DEBUG2("MlHeuristicStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG2("MlHeuristicStrategy: Get the topology node for source operator {} placement.",pinnedUpStreamOperator->toString());
+        NES_DEBUG2("MlHeuristicStrategy: Get the topology node for source operator {} placement.",
+                   pinnedUpStreamOperator->toString());
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
@@ -202,7 +203,7 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
 
     if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
 
-        NES_DEBUG2("MlHeuristicStrategy: Place operatorNode");
+        NES_DEBUG2("MlHeuristicStrategy: Place {}", operatorNode);
         if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
             || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE2("MlHeuristicStrategy: Received an NAry operator for placement.");
@@ -210,8 +211,9 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
             NES_TRACE2("MlHeuristicStrategy: Get the topology nodes where child operators are placed.");
             std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
             if (childTopologyNodes.empty()) {
-                NES_WARNING2("MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
-                            "placed.");
+                NES_WARNING2(
+                    "MlHeuristicStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are "
+                    "placed.");
                 return;
             }
 
@@ -222,8 +224,9 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                 candidateTopologyNode = topology->findCommonAncestor(childTopologyNodes);
             }
             if (!candidateTopologyNode) {
-                NES_ERROR2("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: {}",
-                          operatorNode->getId());
+                NES_ERROR2("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, "
+                           "operatorId: {}",
+                           operatorNode->getId());
                 topology->print();
                 throw Exceptions::RuntimeException(
                     "MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
@@ -327,7 +330,8 @@ void MlHeuristicStrategy::identifyPinningLocation(QueryId queryId,
                 //FIXME: we are considering only one root node currently
                 candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
                 if (candidateTopologyNode->getAvailableResources() > 0) {
-                    NES_DEBUG2("MlHeuristicStrategy: Found NES node for placing the operators with id : {}", candidateTopologyNode->getId());
+                    NES_DEBUG2("MlHeuristicStrategy: Found NES node for placing the operators with id : {}",
+                               candidateTopologyNode->getId());
                     break;
                 }
             }

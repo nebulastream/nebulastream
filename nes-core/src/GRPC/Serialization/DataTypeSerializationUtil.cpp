@@ -146,7 +146,7 @@ SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const Value
         // 4. serialize basic type
         serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     }
-    NES_TRACE2("DataTypeSerializationUtil:: serialized {} as {} ",  valueType->toString(), serializedDataValue->DebugString());
+    NES_TRACE2("DataTypeSerializationUtil:: serialized {} as {} ", valueType->toString(), serializedDataValue->DebugString());
     return serializedDataValue;
 }
 

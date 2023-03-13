@@ -69,7 +69,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Optimizer::TypeInfer
     } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         return true;
     }
-    NES_ERROR2("EventTimeWaterMark is using a non existing field  {}",  fieldName);
+    NES_ERROR2("EventTimeWaterMark is using a non existing field  {}", fieldName);
     throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
 }
 

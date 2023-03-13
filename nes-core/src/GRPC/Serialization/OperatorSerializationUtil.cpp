@@ -285,7 +285,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         }
     }
 
-    NES_DEBUG2("OperatorSerializationUtil:: serialize {} to {}", operatorNode->toString(), serializedOperator.details().type_url());
+    NES_DEBUG2("OperatorSerializationUtil:: serialize {} to {}",
+               operatorNode->toString(),
+               serializedOperator.details().type_url());
     return serializedOperator;
 }
 
@@ -495,7 +497,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
         unaryOperator->setInputOriginIds(originIds);
     }
-    NES_TRACE2("OperatorSerializationUtil:: de-serialize {} to {}",  serializedOperator.DebugString(), operatorNode->toString());
+    NES_TRACE2("OperatorSerializationUtil:: de-serialize {} to {}", serializedOperator.DebugString(), operatorNode->toString());
     return operatorNode;
 }
 
@@ -845,7 +847,8 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                   Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
-            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}", serializedTimeCharacterisitc.DebugString());
+            NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
+                             serializedTimeCharacterisitc.DebugString());
         }
     } else if (serializedWindowType.Is<SerializableOperator_WindowDetails_ThresholdWindow>()) {
         auto serializedThresholdWindow = SerializableOperator_WindowDetails_ThresholdWindow();
@@ -864,23 +867,23 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
         // We change it to `Complete' which is the default used in `Query::window' and `Query::windowByKey'.
         // TODO This logic should be revisited when #2884 is fixed.
         NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
-                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset");
+                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Unset");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
         NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
-                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
+                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete");
         distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining) {
         NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
-                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
+                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Combining);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing) {
         NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
-                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
+                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Slicing");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Slicing);
     } else if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
         NES_DEBUG2("OperatorSerializationUtil::deserializeWindowOperator: "
-                  "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
+                   "SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging");
         distChar = std::make_shared<Windowing::DistributionCharacteristic>(Windowing::DistributionCharacteristic::Merging);
     } else {
         NES_NOT_IMPLEMENTED();
@@ -989,7 +992,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
                                                   Windowing::TimeMeasure(serializedSlidingWindow.slide()));
         } else {
             NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
-                            serializedTimeCharacterisitc.DebugString());
+                             serializedTimeCharacterisitc.DebugString());
         }
     } else {
         NES_FATAL_ERROR2("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
@@ -1073,7 +1076,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         // serialize zmq source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor");
         auto zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
         auto zmqSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor();
         zmqSerializedSourceDescriptor.set_host(zmqSourceDescriptor->getHost());
@@ -1087,7 +1090,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
         // serialize MQTT source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         //init serializable source config
         auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
@@ -1124,7 +1127,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
         // serialize opc source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor");
         auto opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         auto opcSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSourceDescriptor->getNodeId().identifier.string.length + 1);
@@ -1147,7 +1150,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
         // serialize TCP source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
         //init serializable source config
         auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
@@ -1198,7 +1201,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
         // serialize network source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
         auto monitoringSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor();
         auto metricCollectorType = monitoringSourceDescriptor->getMetricCollectorType();
@@ -1210,7 +1213,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         // serialize network source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
         auto networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
         const auto nodeLocation = networkSourceDescriptor->getNodeLocation();
@@ -1232,7 +1235,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         // serialize default source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
         defaultSerializedSourceDescriptor.set_sourcegatheringinterval(defaultSourceDescriptor->getSourceGatheringIntervalCount());
@@ -1244,7 +1247,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         // serialize binary source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor");
         auto binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         auto binarySerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor();
         binarySerializedSourceDescriptor.set_filepath(binarySourceDescriptor->getFilePath());
@@ -1255,7 +1258,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         // serialize csv source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         // init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();
@@ -1282,7 +1285,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         // serialize sense source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor");
         auto senseSourceDescriptor = sourceDescriptor->as<SenseSourceDescriptor>();
         auto senseSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor();
         senseSerializedSourceDescriptor.set_udfs(senseSourceDescriptor->getUdfs());
@@ -1293,7 +1296,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
         // serialize logical source descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
         auto logicalSourceDescriptor = sourceDescriptor->as<LogicalSourceDescriptor>();
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
@@ -1315,7 +1318,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
 SourceDescriptorPtr
 OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails) {
     // de-serialize source details and all its properties to a SourceDescriptor
-    NES_TRACE2("OperatorSerializationUtil:: de-serialized SourceDescriptor id={}",  serializedSourceDetails->DebugString());
+    NES_TRACE2("OperatorSerializationUtil:: de-serialized SourceDescriptor id={}", serializedSourceDetails->DebugString());
     const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
 
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableZMQSourceDescriptor>()) {
@@ -1505,7 +1508,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         // serialize print sink descriptor
         auto printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails->set_faulttolerancemode(static_cast<uint64_t>(printSinkDescriptor->getFaultToleranceType()));
@@ -1513,7 +1516,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         auto nullSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor();
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails->set_faulttolerancemode(static_cast<uint64_t>(nullSinkDescriptor->getFaultToleranceType()));
@@ -1521,7 +1524,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor");
         auto zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor();
         serializedSinkDescriptor.set_port(zmqSinkDescriptor->getPort());
@@ -1533,7 +1536,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
         // serialize Monitoring sink descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor");
         auto monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
         serializedSinkDescriptor.set_collectortype(monitoringSinkDescriptor->getCollectorType());
@@ -1545,7 +1548,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         // serialize opc sink descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor");
         auto opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         auto opcSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor();
         char* ident = (char*) UA_malloc(sizeof(char) * opcSinkDescriptor->getNodeId().identifier.string.length + 1);
@@ -1566,7 +1569,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
         // serialize MQTT sink descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
+                   "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         auto mqttSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         mqttSerializedSinkDescriptor.set_address(mqttSinkDescriptor->getAddress());
@@ -1585,7 +1588,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
         //set details of NesPartition
@@ -1614,7 +1617,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         // serialize file sink descriptor. The file sink has different types which have to be set correctly
         NES_TRACE2("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableFileSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableFileSinkDescriptor");
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
 
@@ -1638,7 +1641,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         sinkDetails->set_numberoforiginids(numberOfOrigins);
     } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_TRACE2("OperatorSerializationUtil:: serialized MaterializedViewSinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
+                   "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
         auto materializedViewSinkDescriptor =
             sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();

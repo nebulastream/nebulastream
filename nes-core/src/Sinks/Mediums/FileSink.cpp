@@ -51,7 +51,7 @@ FileSink::FileSink(SinkFormatPtr format,
             NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
         }
     }
-    NES_DEBUG2("FileSink: open file= {}",  filePath);
+    NES_DEBUG2("FileSink: open file= {}", filePath);
     if (!outputFile.is_open()) {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
@@ -78,7 +78,10 @@ void FileSink::shutdown() {}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE2("FileSink: getSchema medium {} format {} and mode {}", toString(), sinkFormat->toString(), this->getAppendAsString());
+    NES_TRACE2("FileSink: getSchema medium {} format {} and mode {}",
+               toString(),
+               sinkFormat->toString(),
+               this->getAppendAsString());
 
     if (!inputBuffer) {
         NES_ERROR2("FileSink::writeData input buffer invalid");
@@ -111,11 +114,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         NES_TRACE2("FileSink::getData: schema already written");
     }
 
-    NES_TRACE2("FileSink::getData: write data to file= {}",  filePath);
+    NES_TRACE2("FileSink::getData: write data to file= {}", filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
     for (auto& buffer : dataBuffers) {
-        NES_TRACE2("FileSink::getData: write buffer of size  {}",  buffer.getNumberOfTuples());
+        NES_TRACE2("FileSink::getData: write buffer of size  {}", buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == NES_FORMAT) {
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());

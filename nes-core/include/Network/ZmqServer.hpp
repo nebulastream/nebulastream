@@ -161,7 +161,10 @@ template<>
 struct formatter<NES::Network::ZmqServer> : formatter<std::string> {
     auto format(const NES::Network::ZmqServer& zmq, format_context& ctx) -> decltype(ctx.out()) {
         return format_to(ctx.out(),
-                         "Hostname: {} requested Port:{} number of network threads: {}", zmq.getHostname(), zmq.getRequestedPort(), zmq.getNumOfThreads());
+                         "Hostname: {} requested Port:{} number of network threads: {}",
+                         zmq.getHostname(),
+                         zmq.getRequestedPort(),
+                         zmq.getNumOfThreads());
     }
 };
 }// namespace fmt

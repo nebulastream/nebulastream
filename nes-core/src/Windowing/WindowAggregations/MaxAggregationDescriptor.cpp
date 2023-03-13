@@ -40,7 +40,7 @@ WindowAggregationPtr MaxAggregationDescriptor::create(FieldAccessExpressionNodeP
 WindowAggregationPtr MaxAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}",  keyExpression->toString());
+        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));

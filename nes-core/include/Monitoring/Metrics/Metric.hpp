@@ -19,7 +19,6 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <nlohmann/json.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Monitoring {
 

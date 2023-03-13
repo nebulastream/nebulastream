@@ -43,7 +43,7 @@ void GlobalSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecut
 
 void GlobalSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                              Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop GlobalSliceMergingOperatorHandler: {}",  queryTerminationType);
+    NES_DEBUG2("stop GlobalSliceMergingOperatorHandler: {}", queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSliceMergingOperatorHandler::createGlobalSlice(SliceMergeTask* sliceMergeTask) {

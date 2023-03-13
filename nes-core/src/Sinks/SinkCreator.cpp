@@ -349,7 +349,7 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
                           UA_NodeId nodeId,
                           std::string user,
                           std::string password) {
-    NES_DEBUG2("plz fix me {}",  querySubPlanId);
+    NES_DEBUG2("plz fix me {}", querySubPlanId);
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<OPCSink>(format, nodeEngine->getQueryManager(), url, nodeId, user, password, queryId, querySubPlanId);
 }

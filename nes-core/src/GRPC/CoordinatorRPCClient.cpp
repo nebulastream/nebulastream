@@ -163,7 +163,9 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address,
 
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_DEBUG2("CoordinatorRPCClient::registerPhysicalSources: got {}"
-              " physical sources to register for worker with id {}", physicalSources.size(), workerId);
+               " physical sources to register for worker with id {}",
+               physicalSources.size(),
+               workerId);
 
     RegisterPhysicalSourcesRequest request;
     request.set_workerid(workerId);
@@ -187,7 +189,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
 }
 
 bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath) {
-    NES_DEBUG2("CoordinatorRPCClient: registerLogicalSource {} with path{}",  logicalSourceName, filePath);
+    NES_DEBUG2("CoordinatorRPCClient: registerLogicalSource {} with path{}", logicalSourceName, filePath);
 
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
@@ -268,7 +270,10 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
 }
 
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
-    NES_DEBUG2("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}", oldParentId, newParentId, workerId);
+    NES_DEBUG2("CoordinatorRPCClient: replaceParent oldParentId={} newParentId={} workerId={}",
+               oldParentId,
+               newParentId,
+               workerId);
 
     ReplaceParentRequest request;
     request.set_childid(workerId);

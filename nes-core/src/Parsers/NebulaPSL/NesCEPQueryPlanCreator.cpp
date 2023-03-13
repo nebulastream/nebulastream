@@ -41,7 +41,7 @@ void NesCEPQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* co
 }
 
 void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt) {
-    NES_DEBUG2("NesCEPQueryPlanCreator : exitEventElem: found a stream source  {}",  cxt->getStart()->getText());
+    NES_DEBUG2("NesCEPQueryPlanCreator : exitEventElem: found a stream source  {}", cxt->getStart()->getText());
     //create sources pair, e.g., <identifier,SourceName>
     pattern.addSource(std::make_pair(sourceCounter, cxt->getStart()->getText()));
     this->lastSeenSourcePtr = sourceCounter;
@@ -52,7 +52,7 @@ void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* cxt)
 }
 
 void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext* context) {
-    NES_DEBUG2("NesCEPQueryPlanCreator : exitOperatorRule: create a node for the operator  {}",  context->getText());
+    NES_DEBUG2("NesCEPQueryPlanCreator : exitOperatorRule: create a node for the operator  {}", context->getText());
     //create Operator node and set attributes with context information
     NebulaPSLOperatorNode node = NebulaPSLOperatorNode(nodeId);
     node.setParentNodeId(-1);
@@ -66,7 +66,7 @@ void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext*
 }
 
 void NesCEPQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* context) {
-    NES_DEBUG2("NesCEPQueryPlanCreator : exitInputStream: replace alias with streamName  {}",  context->getText());
+    NES_DEBUG2("NesCEPQueryPlanCreator : exitInputStream: replace alias with streamName  {}", context->getText());
     std::string sourceName = context->getStart()->getText();
     std::string aliasName = context->getStop()->getText();
     //replace alias in the list of sources with actual sources name
@@ -94,7 +94,7 @@ void NesCEPQueryPlanCreator::exitWhereExp(NesCEPParser::WhereExpContext* context
 
 // WITHIN clause
 void NesCEPQueryPlanCreator::exitInterval(NesCEPParser::IntervalContext* cxt) {
-    NES_DEBUG2("NesCEPQueryPlanCreator : exitInterval:  {}",  cxt->getText());
+    NES_DEBUG2("NesCEPQueryPlanCreator : exitInterval:  {}", cxt->getText());
     // get window definitions
     std::string timeUnit = cxt->intervalType()->getText();
     int32_t time = std::stoi(cxt->getStart()->getText());
@@ -144,7 +144,9 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     timeOperatorNode.setLeftChildId(lastSeenSourcePtr);
     if (context->LBRACKET()) {    // context contains []
         if (context->D_POINTS()) {//e.g., A[2:10] means that we expect at least 2 and maximal 10 occurrences of A
-            NES_DEBUG2("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: {} and Max {}", context->iterMin()->INT()->getText(), context->iterMin()->INT()->getText());
+            NES_DEBUG2("NesCEPQueryPlanCreator : enterQuantifiers: Times with Min: {} and Max {}",
+                       context->iterMin()->INT()->getText(),
+                       context->iterMin()->INT()->getText());
             timeOperatorNode.setMinMax(
                 std::make_pair(stoi(context->iterMin()->INT()->getText()), stoi(context->iterMax()->INT()->getText())));
         } else {// e.g., A[2] means that we except exact 2 occurrences of A
@@ -168,8 +170,10 @@ void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryC
     auto leftExpressionNode = NES::Attribute(this->currentLeftExp).getExpressionNode();
     auto rightExpressionNode = NES::Attribute(this->currentRightExp).getExpressionNode();
     NES::ExpressionNodePtr expression;
-    NES_DEBUG2("NesCEPQueryPlanCreator: exitBinaryComparisonPredicate: add filters {} {} {}", this->currentLeftExp, comparisonOperator,
-              this->currentRightExp)
+    NES_DEBUG2("NesCEPQueryPlanCreator: exitBinaryComparisonPredicate: add filters {} {} {}",
+               this->currentLeftExp,
+               comparisonOperator,
+               this->currentRightExp)
 
     if (comparisonOperator == "<") {
         expression = NES::LessExpressionNode::create(leftExpressionNode, rightExpressionNode);
@@ -232,7 +236,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
                 auto sourceName = pattern.getSources().at(operatorNode->second.getLeftChildId());
                 queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
                 NES_DEBUG2("NesCEPQueryPlanCreater: createQueryFromPatternList: add times operator{}",
-                          pattern.getSources().at(operatorNode->second.getLeftChildId()))
+                           pattern.getSources().at(operatorNode->second.getLeftChildId()))
 
                 queryPlan = QueryPlanBuilder::addMap(Attribute("Count") = 1, queryPlan);
 
@@ -376,7 +380,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
     // find left (query) and right branch (subquery) of binary operator
     //left query plan
     NES_DEBUG2("NesCEPQueryPlanCreater: addBinaryOperatorToQueryPlan: create subqueryLeft from {}",
-              pattern.getSources().at(it->second.getLeftChildId()))
+               pattern.getSources().at(it->second.getLeftChildId()))
     auto leftSourceName = pattern.getSources().at(it->second.getLeftChildId());
     auto rightSourceName = pattern.getSources().at(it->second.getRightChildId());
     // if queryPlan is empty
@@ -451,7 +455,9 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 else {
                     sourceNameLeft = sourceNameLeft + "$" + timestamp;
                 }
-                NES_DEBUG2("NesCEPQueryPlanCreater: ExpressionItem for Left Source {} and ExpressionItem for Right Source {}", sourceNameLeft, sourceNameRight);
+                NES_DEBUG2("NesCEPQueryPlanCreater: ExpressionItem for Left Source {} and ExpressionItem for Right Source {}",
+                           sourceNameLeft,
+                           sourceNameRight);
                 //create filter expression and add it to queryPlan
                 leftQueryPlan =
                     QueryPlanBuilder::addFilter(Attribute(sourceNameLeft) < Attribute(sourceNameRight), leftQueryPlan);

@@ -65,7 +65,7 @@ TCPSource::TCPSource(SchemaPtr schema,
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         fieldName = field->getName();
-        NES_TRACE2("TCPSOURCE:: Schema keys are:  {}",  fieldName);
+        NES_TRACE2("TCPSOURCE:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
@@ -94,10 +94,10 @@ void TCPSource::open() {
     NES_TRACE2("TCPSource::connected: Trying to create socket.");
     if (sockfd < 0) {
         sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
-        NES_TRACE2("Socket created with  {}",  sockfd);
+        NES_TRACE2("Socket created with  {}", sockfd);
     }
     if (sockfd < 0) {
-        NES_ERROR2("TCPSource::connected: Failed to create socket. Error: {}",  strerror(errno));
+        NES_ERROR2("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
         connection = -1;
         return;
     }
@@ -110,7 +110,9 @@ void TCPSource::open() {
         htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
 
     if (connection < 0) {
-        NES_TRACE2("Try connecting to server: {}:{}", sourceConfig->getSocketHost()->getValue(), sourceConfig->getSocketPort()->getValue());
+        NES_TRACE2("Try connecting to server: {}:{}",
+                   sourceConfig->getSocketHost()->getValue(),
+                   sourceConfig->getSocketPort()->getValue());
         connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
     }
     if (connection < 0) {
@@ -121,7 +123,7 @@ void TCPSource::open() {
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
-    NES_DEBUG2("TCPSource  {}: receiveData ",  this->toString());
+    NES_DEBUG2("TCPSource  {}: receiveData ", this->toString());
     auto tupleBuffer = allocateBuffer();
     NES_DEBUG2("TCPSource buffer allocated ");
     try {
@@ -143,7 +145,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG2("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}",  tuplesThisPass,  tupleSize);
+    NES_DEBUG2("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
 
     //init tuple count for buffer
     uint64_t tupleCount = 0;
@@ -257,7 +259,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                     break;
             }
 
-            NES_TRACE2("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'",  popped);
+            NES_TRACE2("TCPSOURCE::fillBuffer: Successfully prepared tuples? '{}'", popped);
             //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
             if (inputTupleSize != 0 && popped) {
                 std::string buf(messageBuffer, inputTupleSize);

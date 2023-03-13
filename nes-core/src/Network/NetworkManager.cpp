@@ -74,8 +74,9 @@ uint16_t NetworkManager::getServerDataPort() const { return server->getServerPor
 bool NetworkManager::registerSubpartitionConsumer(const NesPartition& nesPartition,
                                                   const NodeLocation& senderLocation,
                                                   const DataEmitterPtr& emitter) const {
-    NES_DEBUG2("NetworkManager: Registering SubpartitionConsumer: {} from {}", nesPartition.toString(),
-                                                                   senderLocation.getHostname());
+    NES_DEBUG2("NetworkManager: Registering SubpartitionConsumer: {} from {}",
+               nesPartition.toString(),
+               senderLocation.getHostname());
     NES_ASSERT2_FMT(emitter, "invalid network source " << nesPartition.toString());
     return partitionManager->registerSubpartitionConsumer(nesPartition, senderLocation, emitter);
 }

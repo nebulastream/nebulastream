@@ -239,7 +239,12 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                 const QueryFailureNotification* request,
                                                 QueryFailureNotificationReply* reply) {
     try {
-        NES_ERROR2("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: {} subplan: {} Id of worker: {} Reason for failure: {}",request->queryid(), request->subqueryid(), request->workerid(), request->errormsg());
+        NES_ERROR2("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: {} subplan: {} Id of "
+                   "worker: {} Reason for failure: {}",
+                   request->queryid(),
+                   request->subqueryid(),
+                   request->workerid(),
+                   request->errormsg());
 
         NES_ASSERT2_FMT(!request->errormsg().empty(),
                         "Cannot fail query without error message " << request->queryid() << " subplan: " << request->subqueryid()
@@ -270,7 +275,9 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
                                                     const EpochBarrierPropagationNotification* request,
                                                     EpochBarrierPropagationReply* reply) {
     try {
-        NES_INFO2("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp  {} and querySubPlanId {}", request->timestamp(), request->queryid());
+        NES_INFO2("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp  {} and querySubPlanId {}",
+                  request->timestamp(),
+                  request->queryid());
         this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
         reply->set_success(true);
         return Status::OK;
@@ -300,7 +307,9 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
     try {
         NES_ERROR2("CoordinatorRPCServer::sendErrors: failure message received."
-                    "Id of worker: {} Reason for failure: {}", request->workerid(), request->errormsg());
+                   "Id of worker: {} Reason for failure: {}",
+                   request->workerid(),
+                   request->errormsg());
         // TODO implement here what happens with received Error Messages
         reply->set_success(true);
         return Status::OK;
@@ -331,7 +340,9 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
-    NES_INFO2("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}", querySubPlanId, sharedQueryId)
+    NES_INFO2("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}",
+              querySubPlanId,
+              sharedQueryId)
 
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SoftStopTriggered);
@@ -386,7 +397,10 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     auto coordinates = request->waypoint().geolocation();
     auto timestamp = request->waypoint().timestamp();
     NES_DEBUG2("Coordinator received location update from node with id {} which reports [{}, {}] at TS {}",
-              request->workerid() , coordinates.lat() ,coordinates.lng(), timestamp);
+               request->workerid(),
+               coordinates.lat(),
+               coordinates.lng(),
+               timestamp);
     //todo #2862: update coordinator trajectory prediction
     auto geoLocation = NES::Spatial::DataTypes::Experimental::GeoLocation(coordinates);
     if (!topologyManagerService->updateGeoLocation(request->workerid(), std::move(geoLocation))) {

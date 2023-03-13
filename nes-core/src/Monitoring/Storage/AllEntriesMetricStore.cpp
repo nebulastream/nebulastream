@@ -41,7 +41,10 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
-    NES_TRACE2("AllEntriesMetricStore: Adding metrics for {} with type {}: {}", nodeId, toString(metric->getMetricType()), NES::Monitoring::asJson(metric));
+    NES_TRACE2("AllEntriesMetricStore: Adding metrics for {} with type {}: {}",
+               nodeId,
+               toString(metric->getMetricType()),
+               NES::Monitoring::asJson(metric));
     TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));

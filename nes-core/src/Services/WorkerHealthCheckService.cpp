@@ -36,7 +36,7 @@ WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coord
 }
 
 void WorkerHealthCheckService::startHealthCheck() {
-    NES_DEBUG2("WorkerHealthCheckService::startHealthCheck worker id= {}",  id);
+    NES_DEBUG2("WorkerHealthCheckService::startHealthCheck worker id= {}", id);
     isRunning = true;
     NES_DEBUG2("start health checking on worker");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
@@ -44,7 +44,7 @@ void WorkerHealthCheckService::startHealthCheck() {
         NES_TRACE2("NesWorker: start health checking");
         auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
         while (isRunning) {
-            NES_TRACE2("NesWorker::healthCheck for worker id=  {}",  coordinatorRpcClient->getId());
+            NES_TRACE2("NesWorker::healthCheck for worker id=  {}", coordinatorRpcClient->getId());
 
             bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
             if (isAlive) {
@@ -63,7 +63,7 @@ void WorkerHealthCheckService::startHealthCheck() {
         }
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
         shutdownRPC->set_value(true);
-        NES_DEBUG2("NesWorker::healthCheck: stop health checking id= {}",  id);
+        NES_DEBUG2("NesWorker::healthCheck: stop health checking id= {}", id);
     }));
 }
 
