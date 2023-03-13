@@ -40,11 +40,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                                          const Runtime::NodeEnginePtr& nodeEngine,
                                                          const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
                                                          size_t numOfProducers) {
-    NES_DEBUG2("Convert sink  {}",  operatorId);
+    NES_DEBUG2("Convert sink  {}", operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
-        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating print sink {}",  schema->toString());
+        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         return createTextPrintSink(schema,
                                    querySubPlan->getQueryId(),
@@ -57,7 +57,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
-        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}",  schema->toString());
+        NES_DEBUG2("ConvertLogicalToPhysicalSink: Creating nulloutput sink {}", schema->toString());
         return createNullOutputSink(querySubPlan->getQueryId(),
                                     querySubPlan->getQuerySubPlanId(),
                                     nodeEngine,
@@ -154,8 +154,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-        NES_INFO2(
-            "ConvertLogicalToPhysicalSink: Creating Binary file sink for format={}", fileSinkDescriptor->getSinkFormatAsString());
+        NES_INFO2("ConvertLogicalToPhysicalSink: Creating Binary file sink for format={}",
+                  fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
                                      querySubPlan->getQueryId(),

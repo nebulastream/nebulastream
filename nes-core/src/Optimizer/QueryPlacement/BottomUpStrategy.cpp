@@ -73,7 +73,8 @@ void BottomUpStrategy::pinOperators(QueryId queryId,
 
     NES_DEBUG2("BottomUpStrategy: Get the all source operators for performing the placement.");
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG2("BottomUpStrategy: Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
+        NES_DEBUG2("BottomUpStrategy: Get the topology node for source operator {} placement.",
+                   pinnedUpStreamOperator->toString());
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
@@ -112,7 +113,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         return;
     }
 
-    NES_DEBUG2("BottomUpStrategy: Place  {}",  operatorNode->toString());
+    NES_DEBUG2("BottomUpStrategy: Place  {}", operatorNode->toString());
     if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
         || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE2("BottomUpStrategy: Received an NAry operator for placement.");
@@ -150,7 +151,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
                 candidateTopologyNode = pinnedSinkOperatorLocation;
             } else {
                 NES_ERROR2("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
-                          "placed.");
+                           "placed.");
                 throw Exceptions::RuntimeException(
                     "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                     "placed.");
@@ -171,8 +172,8 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
             //FIXME: we are considering only one root node currently
             candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
             if (candidateTopologyNode->getAvailableResources() > 0) {
-                NES_DEBUG2(
-                    "BottomUpStrategy: Found NES node for placing the operators with id : {}", candidateTopologyNode->getId());
+                NES_DEBUG2("BottomUpStrategy: Found NES node for placing the operators with id : {}",
+                           candidateTopologyNode->getId());
                 break;
             }
         }

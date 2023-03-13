@@ -40,7 +40,9 @@ WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
 
 Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* reply) {
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
-    NES_DEBUG2("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}", queryPlan->getQueryId(), queryPlan->toString());
+    NES_DEBUG2("WorkerRPCServer::RegisterQuery: got request for queryId: {} plan={}",
+               queryPlan->getQueryId(),
+               queryPlan->toString());
     bool success = 0;
     try {
         success = nodeEngine->registerQueryInNodeEngine(queryPlan);
@@ -134,7 +136,9 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 
 Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
     try {
-        NES_ERROR2("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {} and a queryId {}", request->timestamp(), request->queryid());
+        NES_ERROR2("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {} and a queryId {}",
+                   request->timestamp(),
+                   request->queryid());
         reply->set_success(true);
         nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;

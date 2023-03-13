@@ -32,7 +32,8 @@ DistributedWindowRule::DistributedWindowRule(Configurations::OptimizerConfigurat
       windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold) {
     if (performDistributedWindowOptimization) {
         NES_DEBUG2("Create DistributedWindowRule with distributedWindowChildThreshold: {} distributedWindowCombinerThreshold: {}",
-                                                                                        windowDistributionChildrenThreshold, windowDistributionCombinerThreshold);
+                   windowDistributionChildrenThreshold,
+                   windowDistributionCombinerThreshold);
     } else {
         NES_DEBUG2("Disable DistributedWindowRule");
     }
@@ -44,7 +45,7 @@ DistributeWindowRulePtr DistributedWindowRule::create(Configurations::OptimizerC
 
 QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG2("DistributedWindowRule: Apply DistributedWindowRule.");
-    NES_DEBUG2("DistributedWindowRule::apply: plan before replace {}",  queryPlan->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: plan before replace {}", queryPlan->toString());
     if (!performDistributedWindowOptimization) {
         return queryPlan;
     }
@@ -53,22 +54,22 @@ QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
         /**
          * @end
          */
-        NES_DEBUG2("DistributedWindowRule::apply: found {} window operators", windowOps.size() );
+        NES_DEBUG2("DistributedWindowRule::apply: found {} window operators", windowOps.size());
         for (auto& windowOp : windowOps) {
-            NES_DEBUG2("DistributedWindowRule::apply: window operator  {}",  windowOp->toString());
+            NES_DEBUG2("DistributedWindowRule::apply: window operator  {}", windowOp->toString());
 
             if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
                 && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
                 createDistributedWindowOperator(windowOp, queryPlan);
             } else {
                 createCentralWindowOperator(windowOp);
-                NES_DEBUG2("DistributedWindowRule::apply: central op \n {}",  queryPlan->toString());
+                NES_DEBUG2("DistributedWindowRule::apply: central op \n {}", queryPlan->toString());
             }
         }
     } else {
         NES_DEBUG2("DistributedWindowRule::apply: no window operator in query");
     }
-    NES_DEBUG2("DistributedWindowRule::apply: plan after replace {}",  queryPlan->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: plan after replace {}", queryPlan->toString());
     return queryPlan;
 }
 
@@ -92,7 +93,8 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
 
     //if window has more than 4 edges, we introduce a combiner
 
-    NES_DEBUG2("DistributedWindowRule::apply: introduce distributed window operator for window {}", logicalWindowOperator->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: introduce distributed window operator for window {}",
+               logicalWindowOperator->toString());
     auto windowDefinition = logicalWindowOperator->getWindowDefinition();
     auto triggerPolicy = windowDefinition->getTriggerPolicy();
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -122,12 +124,15 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                                triggerActionComplete,
                                                                allowedLateness);
     }
-    NES_DEBUG2("DistributedWindowRule::apply: created logical window definition for computation operator{}", windowDef->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: created logical window definition for computation operator{}",
+               windowDef->toString());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
 
     //replace logical window op with window computation operator
-    NES_DEBUG2("DistributedWindowRule::apply: newNode={} old node={}", windowComputationOperator->toString(), logicalWindowOperator->toString());
+    NES_DEBUG2("DistributedWindowRule::apply: newNode={} old node={}",
+               windowComputationOperator->toString(),
+               logicalWindowOperator->toString());
     if (!logicalWindowOperator->replace(windowComputationOperator)) {
         NES_FATAL_ERROR2("DistributedWindowRule:: replacement of window operator failed.");
     }
@@ -163,7 +168,7 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                            allowedLateness);
         }
         NES_DEBUG2("DistributedWindowRule::apply: created logical window definition for slice merger operator {}",
-                  windowDef->toString());
+                   windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
         finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
 
@@ -173,7 +178,7 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
 
     //adding slicer
     for (auto& child : windowChildren) {
-        NES_DEBUG2("DistributedWindowRule::apply: process child  {}",  child->toString());
+        NES_DEBUG2("DistributedWindowRule::apply: process child  {}", child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation[0]->copy();
@@ -197,7 +202,8 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
                                                            triggerActionSlicing,
                                                            allowedLateness);
         }
-        NES_DEBUG2("DistributedWindowRule::apply: created logical window definition for slice operator {}",  windowDef->toString());
+        NES_DEBUG2("DistributedWindowRule::apply: created logical window definition for slice operator {}",
+                   windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
         child->insertBetweenThisAndParentNodes(sliceOp);
     }

@@ -33,7 +33,7 @@ std::string Iterator::dataJson() {
             jsonObject[fieldName] = fieldValue;
         }
     } catch (nlohmann::json::exception& jsonException) {
-        NES_ERROR2("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values {}",  jsonException.what());
+        NES_ERROR2("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values {}", jsonException.what());
         return "";
     }
     return jsonObject.dump();

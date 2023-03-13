@@ -200,7 +200,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
 
             if (!node) {
                 NES_ERROR2("MinimumEnergyConsumption: Can not schedule the operator. No free resource available capacity is={}",
-                          sinkNode->getRemainingCpuCapacity());
+                           sinkNode->getRemainingCpuCapacity());
                 throw std::runtime_error("Can not schedule the operator. No free resource available.");
             }
 
@@ -218,7 +218,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 existingExecutionNode->addOperator(legacyOperator->copy());
             } else {
 
-                NES_DEBUG2("MinimumEnergyConsumption: create new execution node  {}",  node->toString());
+                NES_DEBUG2("MinimumEnergyConsumption: create new execution node  {}", node->toString());
 
                 stringstream operatorName;
                 operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";

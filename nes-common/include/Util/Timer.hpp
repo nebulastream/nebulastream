@@ -150,7 +150,10 @@ class Timer {
         return str;
     };
 
-    friend std::string printString(Timer t){
+    /**
+     * @brief returns Timer as a String
+     */
+    friend std::string printString(Timer t) {
         std::stringstream string;
         string << "overall runtime: " << t.getPrintTime() << getTimeUnitString();
         for (auto& s : t.getSnapshots()) {

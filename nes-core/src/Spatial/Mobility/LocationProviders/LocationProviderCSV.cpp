@@ -43,7 +43,7 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     std::string timeString;
     std::basic_string<char> delimiter = {','};
 
-    NES_DEBUG2("Started csv location source at {}",  startTime)
+    NES_DEBUG2("Started csv location source at {}", startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
@@ -97,7 +97,8 @@ void LocationProviderCSV::loadMovementSimulationDataFromCsv() {
     }
     NES_DEBUG2("read {} waypoints from csv", waypoints.size());
     NES_DEBUG2("first timestamp is {}, last timestamp is {}",
-                                    waypoints.front().getTimestamp().value(), waypoints.back().getTimestamp().value());
+               waypoints.front().getTimestamp().value(),
+               waypoints.back().getTimestamp().value());
     //set first csv entry as the next waypoint
 }
 

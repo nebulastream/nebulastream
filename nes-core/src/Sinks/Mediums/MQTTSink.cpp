@@ -94,17 +94,17 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     // Print received Tuple Buffer for debugging purposes.
     auto layout = Runtime::MemoryLayouts::RowLayout::create(sinkFormat->getSchemaPtr(), inputBuffer.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
-    NES_TRACE2("MQTTSink::writeData {}",  buffer.toString(sinkFormat->getSchemaPtr()));
+    NES_TRACE2("MQTTSink::writeData {}", buffer.toString(sinkFormat->getSchemaPtr()));
 
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             if (formattedTuple == "") {
-                NES_ERROR2("MQTTSink:: Error during tuple creation from tuple buffer:  {}",  formattedTuple);
+                NES_ERROR2("MQTTSink:: Error during tuple creation from tuple buffer:  {}", formattedTuple);
                 continue;
             }
-            NES_TRACE2("MQTTSink::writeData Sending Payload:  {}",  formattedTuple);
+            NES_TRACE2("MQTTSink::writeData Sending Payload:  {}", formattedTuple);
             client->sendPayload(formattedTuple);
             std::this_thread::sleep_for(minDelayBetweenSends);
         }
@@ -116,7 +116,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             return false;
         }
     } catch (const mqtt::exception& ex) {
-        NES_ERROR2("MQTTSink::writeData: Error during writeData in MQTT sink: {}",  ex.what());
+        NES_ERROR2("MQTTSink::writeData: Error during writeData in MQTT sink: {}", ex.what());
         return false;
     }
     updateWatermarkCallback(inputBuffer);
@@ -152,11 +152,11 @@ bool MQTTSink::connect() {
                                 .automatic_reconnect(true)
                                 .finalize();
             // Connect to the MQTT broker
-            NES_DEBUG2("MQTTSink::connect: connect to address= {}",  address);
+            NES_DEBUG2("MQTTSink::connect: connect to address= {}", address);
             client->connect(connOpts);
             connected = true;
         } catch (const mqtt::exception& ex) {
-            NES_ERROR2("MQTTSink::connect:   {}",  ex.what());
+            NES_ERROR2("MQTTSink::connect:   {}", ex.what());
         }
     }
     if (connected) {
@@ -175,7 +175,7 @@ bool MQTTSink::disconnect() {
     } else {
         NES_DEBUG2("MQTTSink::disconnect NOT connected");
     }
-    NES_TRACE2("MQTTSink::disconnect: connected value is {}",  connected);
+    NES_TRACE2("MQTTSink::disconnect: connected value is {}", connected);
     return !connected;
 }
 

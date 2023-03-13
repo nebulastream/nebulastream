@@ -49,7 +49,9 @@ bool UnionLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext&
     }
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema)) {
-        NES_ERROR2("Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ", leftInputSchema->toString(), rightInputSchema->toString());
+        NES_ERROR2("Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
+                   leftInputSchema->toString(),
+                   rightInputSchema->toString());
         throw TypeInferenceException("Found Schema mismatch for left and right schema types. Left schema "
                                      + leftInputSchema->toString() + " and Right schema " + rightInputSchema->toString());
     }

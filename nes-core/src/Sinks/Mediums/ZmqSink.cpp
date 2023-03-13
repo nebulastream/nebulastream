@@ -47,7 +47,7 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
-    NES_DEBUG2("ZmqSink: Init ZMQ Sink to {}:{}", host,port);
+    NES_DEBUG2("ZmqSink: Init ZMQ Sink to {}:{}", host, port);
 }
 
 void ZmqSink::setup() { connect(); };
@@ -108,7 +108,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
 
             } catch (const zmq::error_t& ex) {
                 if (ex.num() != ETERM) {
-                    NES_ERROR2("ZmqSink: schema write  {}",  ex.what());
+                    NES_ERROR2("ZmqSink: schema write  {}", ex.what());
                 }
             }
             schemaWritten = true;
@@ -119,7 +119,9 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         NES_DEBUG2("ZmqSink::getData: schema already written");
     }
 
-    NES_DEBUG2("ZmqSink: writes buffer with tupleCnt ={} watermark={}", inputBuffer.getNumberOfTuples(), inputBuffer.getWatermark());
+    NES_DEBUG2("ZmqSink: writes buffer with tupleCnt ={} watermark={}",
+               inputBuffer.getNumberOfTuples(),
+               inputBuffer.getWatermark());
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {// XXX: Is it actually our intention to iterate over buffers until no exception is thrown?
         try {
@@ -150,7 +152,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR2("ZmqSink:  {}",  ex.what());
+                NES_ERROR2("ZmqSink:  {}", ex.what());
             }
         }
     }
@@ -171,7 +173,7 @@ std::string ZmqSink::toString() const {
 bool ZmqSink::connect() {
     if (!connected) {
         try {
-            NES_DEBUG2("ZmqSink: connect to address= {}  port= {}",  host,  port);
+            NES_DEBUG2("ZmqSink: connect to address= {}  port= {}", host, port);
             auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
             socket.connect(address.c_str());
             connected = true;
@@ -179,7 +181,7 @@ bool ZmqSink::connect() {
             // recv() throws ETERM when the zmq context is destroyed,
             //  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM) {
-                NES_ERROR2("ZmqSink:  {}",  ex.what());
+                NES_ERROR2("ZmqSink:  {}", ex.what());
             }
         }
     }

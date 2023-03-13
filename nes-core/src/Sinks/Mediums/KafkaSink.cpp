@@ -48,7 +48,7 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
     config->set("metadata.broker.list", brokers.c_str());
 
     connect();
-    NES_DEBUG2("KAFKASINK: Init KAFKA SINK to brokers  {} , topic  {}",  brokers,  topic);
+    NES_DEBUG2("KAFKASINK: Init KAFKA SINK to brokers  {} , topic  {}", brokers, topic);
 }
 
 KafkaSink::~KafkaSink() {}

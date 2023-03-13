@@ -44,7 +44,7 @@ void GlobalSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineE
 
 void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                   Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG2("stop GlobalSlidingWindowSinkOperatorHandler: {}",  queryTerminationType);
+    NES_DEBUG2("stop GlobalSlidingWindowSinkOperatorHandler: {}", queryTerminationType);
 }
 
 GlobalSlicePtr GlobalSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {

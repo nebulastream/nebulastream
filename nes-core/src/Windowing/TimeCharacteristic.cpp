@@ -30,7 +30,7 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeU
 TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, const TimeUnit& unit) {
     auto keyExpression = fieldValue.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}",  keyExpression->toString());
+        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());

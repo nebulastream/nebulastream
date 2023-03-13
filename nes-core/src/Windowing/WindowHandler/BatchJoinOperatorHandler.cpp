@@ -43,8 +43,8 @@ BatchJoinOperatorHandler::BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr
     : batchJoinDefinition(std::move(batchJoinDefinition)), batchJoinHandler(std::move(batchJoinHandler)),
       resultSchema(std::move(resultSchema)) {
     NES_DEBUG2("BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema, "
-              "AbstractBatchJoinHandlerPtr "
-              "batchJoinHandler)");
+               "AbstractBatchJoinHandlerPtr "
+               "batchJoinHandler)");
 }
 
 LogicalBatchJoinDefinitionPtr BatchJoinOperatorHandler::getBatchJoinDefinition() { return batchJoinDefinition; }
@@ -61,8 +61,8 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
     NES_ASSERT(this->buildPipelineID != 0, "BatchJoinOperatorHandler: The Build Pipeline is not registered at start().");
     NES_ASSERT(this->probePipelineID != 0, "BatchJoinOperatorHandler: The Probe Pipeline is not registered at start().");
 
-    NES_DEBUG2(
-        "BatchJoinOperatorHandler::start: Analyzing pipeline. # predecessors of pipeline: {}", context->getPredecessors().size());
+    NES_DEBUG2("BatchJoinOperatorHandler::start: Analyzing pipeline. # predecessors of pipeline: {}",
+               context->getPredecessors().size());
     if (context->getPipelineID() == this->buildPipelineID) {
         NES_DEBUG2("BatchJoinOperatorHandler: Identified build pipeline by ID.");
         NES_ASSERT(context->getPredecessors().size() >= 1,
@@ -83,12 +83,12 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         for (auto buildPredecessor : this->buildPredecessors) {
             if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&(buildPredecessor))) {
                 NES_DEBUG2("BatchJoinOperatorHandler: Found Build Source in predecessors of Build pipeline. "
-                          "Starting it now.");
+                           "Starting it now.");
                 sourcePredecessor->lock()->onEvent(event);
             } else if (const auto* pipelinePredecessor =
                            std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&(buildPredecessor))) {
                 NES_DEBUG2("BatchJoinOperatorHandler: Found Pipeline in predecessors of Build pipeline. "
-                          "Forwarding the start source event now.");
+                           "Forwarding the start source event now.");
                 pipelinePredecessor->lock()->onEvent(event);
             }
         }

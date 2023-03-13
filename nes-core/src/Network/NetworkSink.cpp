@@ -100,8 +100,7 @@ void NetworkSink::setup() {
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG2("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId,
-                                                querySubPlanId);
+    NES_DEBUG2("NetworkSink: shutdown() called {} queryId {} qepsubplan {}", nesPartition.toString(), queryId, querySubPlanId);
     networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
@@ -119,7 +118,10 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
             workerContext.createStorage(nesPartition);
-            NES_DEBUG2("NetworkSink: reconfigure() stored channel on {} Thread {} ref cnt {}", nesPartition.toString(), Runtime::NesThread::getId(), task.getUserData<uint32_t>());
+            NES_DEBUG2("NetworkSink: reconfigure() stored channel on {} Thread {} ref cnt {}",
+                       nesPartition.toString(),
+                       Runtime::NesThread::getId(),
+                       task.getUserData<uint32_t>());
             break;
         }
         case Runtime::HardEndOfStream: {
@@ -197,7 +199,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
                             "Cannot remove network channel " << nesPartition.toString());
-            NES_DEBUG2("NetworkSink: reconfigure() released channel on {} Thread {}", nesPartition.toString(), Runtime::NesThread::getId());
+            NES_DEBUG2("NetworkSink: reconfigure() released channel on {} Thread {}",
+                       nesPartition.toString(),
+                       Runtime::NesThread::getId());
         }
     }
 }
@@ -217,8 +221,8 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     }
 }
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
-    NES_DEBUG2(
-        "NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}", this->uniqueNetworkSinkDescriptorId);
+    NES_DEBUG2("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
+               this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage
     onEvent(event);
 }

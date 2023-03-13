@@ -106,10 +106,11 @@ class ExecutablePipelineStage {
 namespace fmt {
 template<>
 struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string> {
-    auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx) -> decltype(ctx.out()) {
+    auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx)
+        -> decltype(ctx.out()) {
         return format_to(ctx.out(), "{}", ex_pipeline_stage.getArity());
     }
 };
-} //namespace fmt
+}//namespace fmt
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_

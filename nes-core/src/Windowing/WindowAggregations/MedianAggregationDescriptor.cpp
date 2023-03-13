@@ -38,7 +38,7 @@ WindowAggregationPtr MedianAggregationDescriptor::create(FieldAccessExpressionNo
 WindowAggregationPtr MedianAggregationDescriptor::on(ExpressionItem onField) {
     auto keyExpression = onField.getExpressionNode();
     if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}",  keyExpression->toString());
+        NES_ERROR2("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));

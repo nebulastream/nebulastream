@@ -61,7 +61,7 @@ LambdaSource::LambdaSource(
 }
 
 std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
-    NES_TRACE2("LambdaSource::receiveData called on operatorId= {}",  operatorId);
+    NES_TRACE2("LambdaSource::receiveData called on operatorId= {}", operatorId);
     using namespace std::chrono_literals;
 
     auto buffer = allocateBuffer();
@@ -74,8 +74,10 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE2("LambdaSource: Current buffer content {}",  buffer.toString(schema));
-    NES_TRACE2("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}", buffer.getNumberOfTuples(), rawBuffer.getOriginId());
+    NES_TRACE2("LambdaSource: Current buffer content {}", buffer.toString(schema));
+    NES_TRACE2("LambdaSource: ReceiveData filled buffer with tuples={}, outOrgID={}",
+               buffer.getNumberOfTuples(),
+               rawBuffer.getOriginId());
 
     return rawBuffer;
 }

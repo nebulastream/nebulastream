@@ -69,7 +69,7 @@ DataSource::DataSource(SchemaPtr pSchema,
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), kFilter(std::make_unique<KalmanFilter>()) {
     this->kFilter->setDefaultValues();
-    NES_DEBUG2("DataSource  {} : Init Data Source with schema  {}",  operatorId,  schema->toString());
+    NES_DEBUG2("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
     // TODO enable this exception -- currently many UTs are designed to assume empty executableSuccessors
@@ -104,7 +104,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
-            NES_DEBUG2("push task for queueid= {} successor= ", queueId/*, &successor*/);
+            NES_DEBUG2("push task for queueid= {} successor= ", queueId /*, &successor*/);
             queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }
@@ -118,12 +118,12 @@ SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() NES_NOEXCEPT(false) {
     NES_ASSERT(running == false, "Data source destroyed but thread still running... stop() was not called");
-    NES_DEBUG2("DataSource {}: Destroy Data Source.",  operatorId);
+    NES_DEBUG2("DataSource {}: Destroy Data Source.", operatorId);
     executableSuccessors.clear();
 }
 
 bool DataSource::start() {
-    NES_DEBUG2("DataSource  {} : start source",  operatorId);
+    NES_DEBUG2("DataSource  {} : start source", operatorId);
     std::promise<bool> prom;
     std::unique_lock lock(startStopMutex);
     bool expected = false;
@@ -133,7 +133,7 @@ bool DataSource::start() {
         return false;
     } else {
         type = getType();
-        NES_DEBUG2("DataSource {}: Spawn thread",  operatorId);
+        NES_DEBUG2("DataSource {}: Spawn thread", operatorId);
         auto expected = false;
         if (wasStarted.compare_exchange_strong(expected, true)) {
             thread = std::make_shared<std::thread>([this, &prom]() {
@@ -156,7 +156,7 @@ bool DataSource::start() {
 #endif
                 prom.set_value(true);
                 runningRoutine();
-                NES_DEBUG2("DataSource {}: runningRoutine is finished",  operatorId);
+                NES_DEBUG2("DataSource {}: runningRoutine is finished", operatorId);
             });
         }
     }
@@ -212,7 +212,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         return true;
     }
 
-    NES_DEBUG2("DataSource {}: Stop called and source is {}", operatorId,  (running ? "running" : "not running"));
+    NES_DEBUG2("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
     bool expected = true;
 
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
@@ -222,16 +222,16 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
 
     try {
         if (!running.compare_exchange_strong(expected, false)) {
-            NES_DEBUG2("DataSource {} was not running, retrieving future now...",  operatorId);
+            NES_DEBUG2("DataSource {} was not running, retrieving future now...", operatorId);
             auto expected = false;
             if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true)) {
                 NES_ASSERT2_FMT(detail::waitForFuture(completedPromise.get_future(), 60s),
                                 "Cannot complete future to stop source " << operatorId);
             }
-            NES_DEBUG2("DataSource {} was not running, future retrieved",  operatorId);
+            NES_DEBUG2("DataSource {} was not running, future retrieved", operatorId);
             return true;// it's ok to return true because the source is stopped
         } else {
-            NES_DEBUG2("DataSource {} was running, retrieving future now...",  operatorId);
+            NES_DEBUG2("DataSource {} was running, retrieving future now...", operatorId);
             auto expected = false;
             NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
                                 && detail::waitForFuture(completedPromise.get_future(), 10min),
@@ -275,7 +275,7 @@ void DataSource::close() {
         // inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);
         NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
-        NES_DEBUG2("DataSource  {} : Data Source add end of stream. Gracefully=  {}",  operatorId,  queryTerminationType);
+        NES_DEBUG2("DataSource  {} : Data Source add end of stream. Gracefully=  {}", operatorId, queryTerminationType);
         endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
         bufferManager->destroy();
@@ -307,7 +307,7 @@ void DataSource::runningRoutine() {
             queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
         }
     }
-    NES_DEBUG2("DataSource {} end runningRoutine",  operatorId);
+    NES_DEBUG2("DataSource {} end runningRoutine", operatorId);
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
@@ -322,7 +322,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
             "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers",  numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
     }
     open();
 
@@ -360,11 +360,17 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (100));
-        NES_TRACE2("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}", startPeriod, endPeriod, nextPeriodStartTime);
+        NES_TRACE2("DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
+                   startPeriod,
+                   endPeriod,
+                   nextPeriodStartTime);
 
         //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
         if (nextPeriodStartTime < endPeriod) {
-            NES_ERROR2("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}", nextPeriodStartTime, endPeriod);
+            NES_ERROR2(
+                "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}",
+                nextPeriodStartTime,
+                endPeriod);
             //            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
             //                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
         }
@@ -377,10 +383,18 @@ void DataSource::runningRoutineWithIngestionRate() {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
-        NES_DEBUG2("DataSource: Done with period {} and overall buffers={} sleepCnt={} startPeriod={} endPeriod={} nextPeriodStartTime={} curTime={}", curPeriod++, processedOverallBufferCnt, sleepCnt, startPeriod , endPeriod, nextPeriodStartTime, curTime);
+        NES_DEBUG2("DataSource: Done with period {} and overall buffers={} sleepCnt={} startPeriod={} endPeriod={} "
+                   "nextPeriodStartTime={} curTime={}",
+                   curPeriod++,
+                   processedOverallBufferCnt,
+                   sleepCnt,
+                   startPeriod,
+                   endPeriod,
+                   nextPeriodStartTime,
+                   curTime);
     }//end of while
     close();
-    NES_DEBUG2("DataSource {} end running",  operatorId);
+    NES_DEBUG2("DataSource {} end running", operatorId);
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
@@ -390,10 +404,11 @@ void DataSource::runningRoutineWithGatheringInterval() {
 
     NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId, getType(), gatheringInterval.count());
     if (numBuffersToProcess == 0) {
-        NES_DEBUG2("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
-                  "the source is empty");
+        NES_DEBUG2(
+            "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+            "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers",  numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
     }
     open();
     uint64_t cnt = 0;
@@ -407,7 +422,15 @@ void DataSource::runningRoutineWithGatheringInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_TRACE2("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} operatorId={} orgID={}", operatorId, getType(), toString(), buf.getNumberOfTuples() , cnt, this->operatorId, this->operatorId);
+                NES_TRACE2("DataSource produced buffer {} type= {} string={}: Received Data: {} tuples iteration= {} "
+                           "operatorId={} orgID={}",
+                           operatorId,
+                           getType(),
+                           toString(),
+                           buf.getNumberOfTuples(),
+                           cnt,
+                           this->operatorId,
+                           this->operatorId);
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
@@ -418,12 +441,16 @@ void DataSource::runningRoutineWithGatheringInterval() {
                 emitWorkFromSource(buf);
                 ++cnt;
             } else {
-                NES_DEBUG2("DataSource {}: stopping cause of invalid buffer",  operatorId);
+                NES_DEBUG2("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
-                NES_DEBUG2("DataSource {}: Thread going to terminating with graceful exit.",  operatorId);
+                NES_DEBUG2("DataSource {}: Thread going to terminating with graceful exit.", operatorId);
             }
         } else {
-            NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than numBuffersToProcess={} now return", operatorId, cnt, numBuffersToProcess);
+            NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
+                       "numBuffersToProcess={} now return",
+                       operatorId,
+                       cnt,
+                       numBuffersToProcess);
             running = false;
         }
         NES_TRACE2("DataSource {} : Data Source finished processing iteration {}", operatorId, cnt);
@@ -435,7 +462,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
     }
     close();
 
-    NES_DEBUG2("DataSource {} end running",  operatorId);
+    NES_DEBUG2("DataSource {} end running", operatorId);
 }
 
 void DataSource::runningRoutineAdaptiveGatheringInterval() {
@@ -445,10 +472,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
 
     NES_DEBUG2("DataSource {}: Running Data Source of type={} interval={}", operatorId, getType(), gatheringInterval.count());
     if (numBuffersToProcess == 0) {
-        NES_DEBUG2("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
-                  "the source is empty");
+        NES_DEBUG2(
+            "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+            "the source is empty");
     } else {
-        NES_DEBUG2("DataSource: the user specify to produce {} buffers",  numBuffersToProcess);
+        NES_DEBUG2("DataSource: the user specify to produce {} buffers", numBuffersToProcess);
     }
 
     this->kFilter->setGatheringInterval(this->gatheringInterval);
@@ -474,12 +502,20 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                     NES_TRACE2("DataSource new sourceGatheringInterval = {}ms", this->gatheringInterval.count());
                 }
 
-                NES_TRACE2("DataSource produced buffer{} type={} string={}: Received Data:{} tuples iteration={} operatorId={} orgID={}", operatorId, getType(), toString(), buf.getNumberOfTuples(), cnt, this->operatorId, this->operatorId);
+                NES_TRACE2(
+                    "DataSource produced buffer{} type={} string={}: Received Data:{} tuples iteration={} operatorId={} orgID={}",
+                    operatorId,
+                    getType(),
+                    toString(),
+                    buf.getNumberOfTuples(),
+                    cnt,
+                    this->operatorId,
+                    this->operatorId);
 
                 if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
                     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-                    NES_TRACE2("DataSource produced buffer content= {}",  buffer.toString(schema));
+                    NES_TRACE2("DataSource produced buffer content= {}", buffer.toString(schema));
                 }
 
                 emitWorkFromSource(buf);
@@ -487,13 +523,17 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
             } else {
                 NES_ERROR2("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
-                NES_DEBUG2("DataSource {}: Thread terminating after graceful exit.",  operatorId);
+                NES_DEBUG2("DataSource {}: Thread terminating after graceful exit.", operatorId);
             }
         } else {
-            NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than numBuffersToProcess={} now return", operatorId, cnt, numBuffersToProcess);
+            NES_DEBUG2("DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
+                       "numBuffersToProcess={} now return",
+                       operatorId,
+                       cnt,
+                       numBuffersToProcess);
             running = false;
         }
-        NES_DEBUG2("DataSource  {} : Data Source finished processing iteration  {}",  operatorId,  cnt);
+        NES_DEBUG2("DataSource  {} : Data Source finished processing iteration  {}", operatorId, cnt);
     }
 
     // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
@@ -502,11 +542,11 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     }
 
     close();
-    NES_DEBUG2("DataSource {} end running",  operatorId);
+    NES_DEBUG2("DataSource {} end running", operatorId);
 }
 
 bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) {
-    NES_DEBUG2("DataSource::injectEpochBarrier received timestamp  {} with queryId  {}",  epochBarrier,  queryId);
+    NES_DEBUG2("DataSource::injectEpochBarrier received timestamp  {} with queryId  {}", epochBarrier, queryId);
     return queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
 }
 
@@ -533,13 +573,13 @@ Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
 }
 
 void DataSource::onEvent(Runtime::BaseEvent& event) {
-    NES_DEBUG2("DataSource::onEvent(event) called. operatorId: {}",  this->operatorId);
+    NES_DEBUG2("DataSource::onEvent(event) called. operatorId: {}", this->operatorId);
     // no behaviour needed, call onEvent of direct ancestor
     DataEmitter::onEvent(event);
 }
 
 void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
-    NES_DEBUG2("DataSource::onEvent(event, wrkContext) called. operatorId:  {}",  this->operatorId);
+    NES_DEBUG2("DataSource::onEvent(event, wrkContext) called. operatorId:  {}", this->operatorId);
     onEvent(event);
 }
 

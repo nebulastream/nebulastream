@@ -59,7 +59,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     };
 
     auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
-    NES_DEBUG2("CSVSource: Opening path=[ {} ] real path=[{}]",  filePath,  (path ? path.get() : "<INVALID>"));
+    NES_DEBUG2("CSVSource: Opening path=[ {} ] real path=[{}]", filePath, (path ? path.get() : "<INVALID>"));
 
     if (path == nullptr) {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
@@ -69,7 +69,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     if (!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
     }
-    NES_DEBUG2("CSVSource: Opening path {}",  path.get());
+    NES_DEBUG2("CSVSource: Opening path {}", path.get());
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");
@@ -79,7 +79,12 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     this->loopOnFile = csvSourceType->getNumberOfBuffersToProduce()->getValue() == 0;
 
-    NES_DEBUG2("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={} loopOnFile={}", this->tupleSize, this->gatheringInterval.count(), this->numBuffersToProcess , this->numberOfTuplesToProducePerBuffer, this->loopOnFile);
+    NES_DEBUG2("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={} loopOnFile={}",
+               this->tupleSize,
+               this->gatheringInterval.count(),
+               this->numBuffersToProcess,
+               this->numberOfTuplesToProducePerBuffer,
+               this->loopOnFile);
 
     this->fileEnded = false;
 
@@ -93,10 +98,10 @@ CSVSource::CSVSource(SchemaPtr schema,
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_TRACE2("CSVSource::receiveData called on  {}",  operatorId);
+    NES_TRACE2("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
-    NES_TRACE2("CSVSource::receiveData filled buffer with tuples= {}",  buffer.getNumberOfTuples());
+    NES_TRACE2("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
@@ -170,7 +175,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE2("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
-    NES_TRACE2("CSVSource::fillBuffer: read produced buffer=  {}",  Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_TRACE2("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

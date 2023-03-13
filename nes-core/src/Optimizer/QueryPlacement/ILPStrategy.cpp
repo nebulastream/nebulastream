@@ -175,7 +175,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             }
         }
     }
-    NES_DEBUG2("cost_net:  {}",  cost_net.to_string());
+    NES_DEBUG2("cost_net:  {}", cost_net.to_string());
 
     // 4. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
@@ -210,7 +210,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
     // At this point, we already get the solution.
     // 7. Get the model to retrieve the optimization solution.
     auto z3Model = opt.get_model();
-    NES_DEBUG2("ILPStrategy:model: {}",  z3Model.to_string());
+    NES_DEBUG2("ILPStrategy:model: {}", z3Model.to_string());
     NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
 
     // 7. Pick the solution which has placement decision of 1, i.e., the ILP decide to place the operator in that node
@@ -229,7 +229,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
     NES_INFO2("Solver found solution with cost: {}", z3Model.eval(cost_net).get_decimal_string(4));
     for (auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap) {
-        NES_INFO2("Operator {} is executed on Topology Node {}",  operatorNode->toString(), topologyNode->toString());
+        NES_INFO2("Operator {} is executed on Topology Node {}", operatorNode->toString(), topologyNode->toString());
     }
 
     // 8. Pin the operators based on ILP solution.

@@ -28,7 +28,7 @@
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
 void NES::TensorflowAdapter::initializeModel(std::string model) {
-    NES_DEBUG2("INITIALIZING MODEL:  {}",  model);
+    NES_DEBUG2("INITIALIZING MODEL:  {}", model);
 
     std::ifstream input(model, std::ios::in | std::ios::binary);
 

@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 
-#include <ostream>
 #include <Util/Logger/Logger.hpp>
+#include <ostream>
 #include <stdint.h>
 
 namespace NES::Runtime {
@@ -47,6 +47,6 @@ struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string> {
         }
     }
 };
-} //namespace fmt
+}//namespace fmt
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

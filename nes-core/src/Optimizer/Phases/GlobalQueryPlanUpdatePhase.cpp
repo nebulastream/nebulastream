@@ -107,13 +107,13 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     NES_INFO2("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
                     queryCatalogService->updateQueryStatus(queryId, QueryStatus::Optimizing, "");
 
-                    NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}",  queryId);
+                    NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
                     queryPlan = typeInferencePhase->execute(queryPlan);
 
-                    NES_DEBUG2("QueryProcessingService: Performing query choose memory layout phase:  {}",  queryId);
+                    NES_DEBUG2("QueryProcessingService: Performing query choose memory layout phase:  {}", queryId);
                     setMemoryLayoutPhase->execute(queryPlan);
 
-                    NES_DEBUG2("QueryProcessingService: Performing Query rewrite phase for query:  {}",  queryId);
+                    NES_DEBUG2("QueryProcessingService: Performing Query rewrite phase for query:  {}", queryId);
                     queryPlan = queryRewritePhase->execute(queryPlan);
 
                     if (!queryPlan) {
@@ -124,7 +124,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                     queryPlan = typeInferencePhase->execute(queryPlan);
 
-                    NES_DEBUG2("QueryProcessingService: Compute Signature inference phase for query:  {}",  queryId);
+                    NES_DEBUG2("QueryProcessingService: Compute Signature inference phase for query:  {}", queryId);
                     signatureInferencePhase->execute(queryPlan);
 
                     NES_INFO2("Before {}", queryPlan->toString());
@@ -159,13 +159,13 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     }
 
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
-                    NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}",  queryId);
+                    NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
                     globalQueryPlan->addQueryPlan(queryPlan);
                 } catch (std::exception const& ex) {
                     throw;
                 }
             } else {
-                NES_ERROR2("QueryProcessingService: Received unhandled request type  {}",  nesRequest->toString());
+                NES_ERROR2("QueryProcessingService: Received unhandled request type  {}", nesRequest->toString());
                 NES_WARNING2("QueryProcessingService: Skipping to process next request.");
                 continue;
             }
@@ -177,7 +177,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
         NES_DEBUG2("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {
-        NES_ERROR2("GlobalQueryPlanUpdatePhase: Exception occurred while updating global query plan with:  {}",  ex.what());
+        NES_ERROR2("GlobalQueryPlanUpdatePhase: Exception occurred while updating global query plan with:  {}", ex.what());
         throw GlobalQueryPlanUpdateException("GlobalQueryPlanUpdatePhase: Exception occurred while updating Global Query Plan");
     }
 }

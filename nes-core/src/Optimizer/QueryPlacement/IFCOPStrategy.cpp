@@ -280,7 +280,7 @@ void IFCOPStrategy::initiateTopologyNodeIdToIndexMap() {
     auto topologyIterator = DepthFirstNodeIterator(topology->getRoot());
     uint32_t topoIdx = 0;
     for (auto topoItr = topologyIterator.begin(); topoItr != NES::DepthFirstNodeIterator::end(); ++topoItr) {
-        NES_DEBUG2("IFCOP::DEBUG:: topoid= {}",  (*topoItr)->as<TopologyNode>()->getId());
+        NES_DEBUG2("IFCOP::DEBUG:: topoid= {}", (*topoItr)->as<TopologyNode>()->getId());
         topologyNodeIdToIndexMap.insert({(*topoItr)->as<TopologyNode>()->getId(), topoIdx});
         topoIdx++;
     }

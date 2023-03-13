@@ -70,13 +70,13 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto stamp = fieldReadExpression->getStamp();
-        NES_DEBUG2("TranslateToLegacyPhase: Translate FieldAccessExpressionNode:  {}",  expression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate FieldAccessExpressionNode:  {}", expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
     } else if (expression->instanceOf<WhenExpressionNode>()) {
         auto whenExpression = expression->as<WhenExpressionNode>();
         auto legacyLeft = transformExpression(whenExpression->getLeft());
         auto legacyRight = transformExpression(whenExpression->getRight());
-        NES_DEBUG2("TranslateToLegacyPhase: Translate WhenExpressionNode:  {}",  whenExpression->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate WhenExpressionNode:  {}", whenExpression->toString());
         return WhenPredicate(legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<CaseExpressionNode>()) {
         auto caseExpressionNode = expression->as<CaseExpressionNode>();
@@ -85,7 +85,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             whenExprs.push_back(transformExpression(elem));
         }
         auto legacyDefault = transformExpression(caseExpressionNode->getDefaultExp());
-        NES_DEBUG2("TranslateToLegacyPhase: Translate CaseExpressionNode:  {}",  caseExpressionNode->toString());
+        NES_DEBUG2("TranslateToLegacyPhase: Translate CaseExpressionNode:  {}", caseExpressionNode->toString());
         return CasePredicate(whenExprs, legacyDefault).copy();
     } else if (expression->instanceOf<FunctionExpression>()) {
         // Translate function expressions to legacy expressions in old query compiler.
@@ -100,7 +100,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
             return UnaryPredicate(UnaryOperatorType::LOG_OP, legacyChild).copy();
         }
     }
-    NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this expression node: {}", expression->toString());
+    NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this expression node: {}",
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }
@@ -175,7 +176,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
     NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: {}",
-                    expression->toString());
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
 }
 
@@ -227,11 +228,13 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(con
         auto const negateExpressionNode = expression->as<NegateExpressionNode>();
         (void) negateExpressionNode;
         NES_FATAL_ERROR2("TranslateToLegacyPhase: Unary expressions not supported in "
-                        "legacy expressions: {}", expression->toString());
+                         "legacy expressions: {}",
+                         expression->toString());
         NES_NOT_IMPLEMENTED();
     }
     NES_FATAL_ERROR2("TranslateToLegacyPhase: No transformation implemented for this "
-                    "logical expression node: {}",expression->toString());
+                     "logical expression node: {}",
+                     expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }

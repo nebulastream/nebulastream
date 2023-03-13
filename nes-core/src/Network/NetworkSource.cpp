@@ -172,11 +172,15 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                              waitTime,
                                                                              retryTimes);
             if (channel == nullptr) {
-                NES_DEBUG2("NetworkSource: reconfigure() cannot get event channel {} on Thread {}", nesPartition.toString(), Runtime::NesThread::getId());
+                NES_DEBUG2("NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
+                           nesPartition.toString(),
+                           Runtime::NesThread::getId());
                 return;// partition was deleted on the other side of the channel.. no point in waiting for a channel
             }
             workerContext.storeEventOnlyChannel(nesPartition.getOperatorId(), std::move(channel));
-            NES_DEBUG2("NetworkSource: reconfigure() stored event-channel {} Thread {}", nesPartition.toString(), Runtime::NesThread::getId());
+            NES_DEBUG2("NetworkSource: reconfigure() stored event-channel {} Thread {}",
+                       nesPartition.toString(),
+                       Runtime::NesThread::getId());
             break;
         }
         case Runtime::Destroy: {
@@ -201,7 +205,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     }
     if (isTermination) {
         workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
-        NES_DEBUG2("NetworkSource: reconfigure() released channel on {} Thread {}", nesPartition.toString(), Runtime::NesThread::getId());
+        NES_DEBUG2("NetworkSource: reconfigure() released channel on {} Thread {}",
+                   nesPartition.toString(),
+                   Runtime::NesThread::getId());
     }
 }
 
@@ -227,7 +233,8 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         }
     }
     if (Runtime::QueryTerminationType::Invalid != terminationType) {
-        NES_DEBUG2("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer {}", nesPartition.toString());
+        NES_DEBUG2("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer {}",
+                   nesPartition.toString());
         networkManager->unregisterSubpartitionConsumer(nesPartition);
         bool expected = true;
         if (running.compare_exchange_strong(expected, false)) {

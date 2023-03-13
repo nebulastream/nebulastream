@@ -75,13 +75,16 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
     NES_INFO2("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (const auto& sourceNode : sourceNodes) {
-        NES_TRACE2("Topology: Finding all paths between the source node {} and a set of destination nodes", sourceNode->toString());
+        NES_TRACE2("Topology: Finding all paths between the source node {} and a set of destination nodes",
+                   sourceNode->toString());
         std::map<uint64_t, TopologyNodePtr> mapOfUniqueNodes;
         TopologyNodePtr startNodeOfGraph = find(sourceNode, destinationNodes, mapOfUniqueNodes);
         NES_TRACE2("Topology: Validate if all destination nodes reachable");
         for (const auto& destinationNode : destinationNodes) {
             if (mapOfUniqueNodes.find(destinationNode->getId()) == mapOfUniqueNodes.end()) {
-                NES_ERROR2("Topology: Unable to find path between source node {} and destination node{}", sourceNode->toString(), destinationNode->toString());
+                NES_ERROR2("Topology: Unable to find path between source node {} and destination node{}",
+                           sourceNode->toString(),
+                           destinationNode->toString());
                 return {};
             }
         }
@@ -89,7 +92,7 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<Topolog
         startNodesOfGraph.push_back(startNodeOfGraph);
     }
     NES_TRACE2("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of "
-              "the merged graph.");
+               "the merged graph.");
     return mergeSubGraphs(startNodesOfGraph);
 }
 
@@ -148,7 +151,7 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
                     }
 
                     NES_TRACE2("Topology: Compute cost by multiplying aggregate occurrence count with base multiplier and "
-                              "dividing the result by the number of nodes in the path.");
+                               "dividing the result by the number of nodes in the path.");
                     double cost = (occurrenceCount * BASE_MULTIPLIER) / family.size();
 
                     if (cost > maxCost) {
@@ -181,7 +184,7 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
                     TopologyNodePtr equivalentParentNode = mergedGraphNodeMap[selectedParent->getId()];
                     TopologyNodePtr equivalentChildNode = mergedGraphNodeMap[childNode->getId()];
                     NES_TRACE2("Topology: Add the existing node, with id same as new next parent, as parent to the existing node "
-                              "with id same as current child node");
+                               "with id same as current child node");
                     equivalentChildNode->addParent(equivalentParentNode);
                 } else {
                     NES_TRACE2("Topology: New next parent is not present in the new merged graph.");
@@ -204,7 +207,7 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
 std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePtr& startNode,
                                                             const TopologyNodePtr& destinationNode) {
     std::unique_lock lock(topologyLock);
-    NES_DEBUG2("Topology: Finding path between {} and {}", startNode->toString(),destinationNode->toString());
+    NES_DEBUG2("Topology: Finding path between {} and {}", startNode->toString(), destinationNode->toString());
 
     std::optional<TopologyNodePtr> result;
     std::vector<TopologyNodePtr> searchedNodes{destinationNode};
@@ -214,7 +217,7 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(const TopologyNodePt
         NES_DEBUG2("Topology: Found path between {} and {}", startNode->toString(), destinationNode->toString());
         return found;
     }
-    NES_WARNING2("Topology: Unable to find path between {} and {}",  startNode->toString(), destinationNode->toString());
+    NES_WARNING2("Topology: Unable to find path between {} and {}", startNode->toString(), destinationNode->toString());
     return result;
 }
 
@@ -313,7 +316,7 @@ std::string Topology::toString() {
     return topologyInfo.str();
 }
 
-void Topology::print() { NES_DEBUG2("Topology print:{}",  toString()); }
+void Topology::print() { NES_DEBUG2("Topology print:{}", toString()); }
 
 bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t grpcPort) {
     std::unique_lock lock(topologyLock);
@@ -327,7 +330,10 @@ bool Topology::nodeExistsWithIpAndPort(const std::string& ipAddress, uint32_t gr
     for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
         auto physicalNode = (*itr)->as<TopologyNode>();
         if (physicalNode->getIpAddress() == ipAddress && physicalNode->getGrpcPort() == grpcPort) {
-            NES_TRACE2("Topology: Found a physical node {} with ip {} and port {}", physicalNode->toString(), ipAddress, grpcPort);
+            NES_TRACE2("Topology: Found a physical node {} with ip {} and port {}",
+                       physicalNode->toString(),
+                       ipAddress,
+                       grpcPort);
             return true;
         }
     }
@@ -343,10 +349,10 @@ TopologyNodePtr Topology::findNodeWithId(uint64_t nodeId) {
     std::unique_lock lock(topologyLock);
     NES_INFO2("Topology: Finding a physical node with id {}", nodeId);
     if (indexOnNodeIds.find(nodeId) != indexOnNodeIds.end()) {
-        NES_DEBUG2("Topology: Found a physical node with id {}",  nodeId);
+        NES_DEBUG2("Topology: Found a physical node with id {}", nodeId);
         return indexOnNodeIds[nodeId];
     }
-    NES_WARNING2("Topology: Unable to find a physical node with id {}",  nodeId);
+    NES_WARNING2("Topology: Unable to find a physical node with id {}", nodeId);
     return nullptr;
 }
 
@@ -367,7 +373,7 @@ bool Topology::reduceResources(uint64_t nodeId, uint16_t amountToReduce) {
     std::unique_lock lock(topologyLock);
     NES_INFO2("Topology: Reduce {} resources from node with id {}", amountToReduce, nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
-        NES_WARNING2("Topology: Unable to find node with id {}",  nodeId);
+        NES_WARNING2("Topology: Unable to find node with id {}", nodeId);
         return false;
     }
     indexOnNodeIds[nodeId]->reduceResources(amountToReduce);
@@ -378,7 +384,7 @@ bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
     std::unique_lock lock(topologyLock);
     NES_INFO2("Topology: Increase {} resources from node with id {}", amountToIncrease, nodeId);
     if (indexOnNodeIds.find(nodeId) == indexOnNodeIds.end()) {
-        NES_WARNING2("Topology: Unable to find node with id {}",  nodeId);
+        NES_WARNING2("Topology: Unable to find node with id {}", nodeId);
         return false;
     }
     indexOnNodeIds[nodeId]->increaseResources(amountToIncrease);

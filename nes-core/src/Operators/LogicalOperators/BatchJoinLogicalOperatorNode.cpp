@@ -84,8 +84,9 @@ bool BatchJoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCont
 
     //Check if left input schema was identified
     if (!leftInputSchema) {
-        NES_ERROR2("BatchJoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
-                  buildJoinKeyName);
+        NES_ERROR2(
+            "BatchJoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : {}",
+            buildJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 

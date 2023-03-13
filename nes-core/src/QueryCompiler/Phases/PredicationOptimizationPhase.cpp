@@ -69,8 +69,9 @@ OperatorPipelinePtr PredicationOptimizationPhase::apply(OperatorPipelinePtr oper
             && !node->instanceOf<GeneratableOperators::GeneratableFilterOperator>()
             && !node->instanceOf<GeneratableOperators::GeneratableMapOperator>()
             && !node->instanceOf<GeneratableOperators::GeneratableProjectionOperator>()) {
-            NES_DEBUG2("PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: {}",
-                      node->toString());
+            NES_DEBUG2(
+                "PredicationOptimizationPhase: No predication applied. There is an unsupported operator in the pipeline: {}",
+                node->toString());
             return operatorPipeline;
         }
     }

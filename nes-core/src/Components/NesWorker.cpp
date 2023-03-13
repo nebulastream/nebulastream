@@ -124,9 +124,15 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG2("NesWorker: start with blocking {} coordinatorIp={} coordinatorPort={} localWorkerIp={} localWorkerRpcPort={} localWorkerZmqPort={} windowStrategy={}",
-              blocking, workerConfig->coordinatorIp.getValue(), workerConfig->coordinatorPort.getValue(), workerConfig->localWorkerIp.getValue(),
-              localWorkerRpcPort, workerConfig->dataPort.getValue(), workerConfig->queryCompiler.windowingStrategy);
+    NES_DEBUG2("NesWorker: start with blocking {} coordinatorIp={} coordinatorPort={} localWorkerIp={} localWorkerRpcPort={} "
+               "localWorkerZmqPort={} windowStrategy={}",
+               blocking,
+               workerConfig->coordinatorIp.getValue(),
+               workerConfig->coordinatorPort.getValue(),
+               workerConfig->localWorkerIp.getValue(),
+               localWorkerRpcPort,
+               workerConfig->dataPort.getValue(),
+               workerConfig->queryCompiler.windowingStrategy);
 
     NES_DEBUG2("NesWorker::start: start Runtime");
     auto expected = false;
@@ -150,7 +156,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         throw Exceptions::RuntimeException("NesWorker error while starting node engine");
     }
 
-    NES_DEBUG2("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}", rpcAddress, localWorkerRpcPort.load());
+    NES_DEBUG2("NesWorker: request startWorkerRPCServer for accepting messages for address={}: {}",
+               rpcAddress,
+               localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     if (workerConfig->nodeSpatialType.getValue() != NES::Spatial::Experimental::SpatialType::NO_LOCATION) {
@@ -168,7 +176,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
-    NES_DEBUG2("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}", rpcAddress, localWorkerRpcPort.load());
+    NES_DEBUG2("NesWorker: startWorkerRPCServer ready for accepting messages for address={}: {}",
+               rpcAddress,
+               localWorkerRpcPort.load());
 
     if (withConnect) {
         NES_DEBUG2("NesWorker: start with connect");
@@ -315,7 +325,7 @@ bool NesWorker::connect() {
     workerId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(workerId);
     if (successPRCRegister) {
-        NES_DEBUG2("NesWorker::registerWorker rpc register success with id {}",workerId);
+        NES_DEBUG2("NesWorker::registerWorker rpc register success with id {}", workerId);
         connected = true;
         nodeEngine->setNodeId(workerId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
@@ -391,7 +401,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     if (!success) {
-        NES_WARNING2("NesWorker::replaceParent() failed to replace oldParent={} with newParentId={}",  oldParentId, newParentId);
+        NES_WARNING2("NesWorker::replaceParent() failed to replace oldParent={} with newParentId={}", oldParentId, newParentId);
     }
     NES_DEBUG2("NesWorker::replaceParent() success={}", success);
     return success;
@@ -436,7 +446,10 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                     "Hard Stop called for query=" << queryId << " subQueryId=" << subQueryId
                                                   << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
-        NES_DEBUG2("NesWorker {} about to notify soft stop completion for query {} subPlan {}", getWorkerId(), queryId, subQueryId);
+        NES_DEBUG2("NesWorker {} about to notify soft stop completion for query {} subPlan {}",
+                   getWorkerId(),
+                   queryId,
+                   subQueryId);
         return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
         return true;// rpc to coordinator executed from async runner
@@ -480,7 +493,7 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
 bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
-    NES_DEBUG2("NesWorker::sendErrors worker {} going to send error={}",  workerId, errorMsg);
+    NES_DEBUG2("NesWorker::sendErrors worker {} going to send error={}", workerId, errorMsg);
     bool success = coordinatorRpcClient->sendErrors(workerId, errorMsg);
     NES_DEBUG2("NesWorker::sendErrors success={}", success);
     return success;

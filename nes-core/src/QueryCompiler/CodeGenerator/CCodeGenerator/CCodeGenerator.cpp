@@ -94,8 +94,8 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
 
-    NES_DEBUG2("Converting Schema:  {}",  schema->toString());
-    NES_DEBUG2("Define Struct :  {}",  structName);
+    NES_DEBUG2("Converting Schema:  {}", schema->toString());
+    NES_DEBUG2("Define Struct :  {}", structName);
 
     for (uint64_t i = 0; i < schema->getSize(); ++i) {
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
@@ -108,7 +108,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
         } else {
             NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
         }
-        NES_DEBUG2("Field {}: {} {}",i ,schema->get(i)->getDataType()->toString(), schema->get(i)->getName());
+        NES_DEBUG2("Field {}: {} {}", i, schema->get(i)->getDataType()->toString(), schema->get(i)->getName());
     }
     return structDeclarationTuple;
 }
@@ -135,7 +135,7 @@ bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
 }
 
 bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
-    NES_DEBUG2("CCodeGenerator: Generating code for scan with inputSchema  {}",  inputSchema->toString());
+    NES_DEBUG2("CCodeGenerator: Generating code for scan with inputSchema  {}", inputSchema->toString());
     context->inputSchema = outputSchema->copy();
     auto code = context->code;
     switch (context->arity) {
@@ -150,12 +150,16 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         }
         case PipelineContext::BinaryLeft: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
-            NES_DEBUG2("arity binaryleft generate scan for input={} output={}", inputSchema->toString(), outputSchema->toString());
+            NES_DEBUG2("arity binaryleft generate scan for input={} output={}",
+                       inputSchema->toString(),
+                       outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryRight: {
             code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
-            NES_DEBUG2("arity binaryright generate scan for input={} output={}", inputSchema->toString(), outputSchema->toString());
+            NES_DEBUG2("arity binaryright generate scan for input={} output={}",
+                       inputSchema->toString(),
+                       outputSchema->toString());
             break;
         }
     }
@@ -199,7 +203,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
-        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}",  varDeclInputTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}", varDeclInputTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclInputTupleStmt.copy());
     } else {
         NES_ERROR2("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
@@ -319,7 +323,9 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
             auto originalAttribute = fieldRenameExpression->getOriginalField();
             if (!recordHandler->hasAttribute(originalAttribute->getFieldName())) {
-                NES_FATAL_ERROR2("CCodeGenerator: projection: the original attribute {} is not registered so we can not access it.", originalAttribute->getFieldName());
+                NES_FATAL_ERROR2(
+                    "CCodeGenerator: projection: the original attribute {} is not registered so we can not access it.",
+                    originalAttribute->getFieldName());
             }
             // register the attribute with the new name in the record handler
             auto referenceToOriginalValue = recordHandler->getAttribute(originalAttribute->getFieldName());
@@ -328,7 +334,8 @@ bool CCodeGenerator::generateCodeForProjection(std::vector<ExpressionNodePtr> pr
             // it is a field access expression, so we just check if the record exists.
             auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
             if (!recordHandler->hasAttribute(fieldAccessExpression->getFieldName())) {
-                NES_FATAL_ERROR2("CCodeGenerator: projection: the attribute {} is not registered so we can not access it.", fieldAccessExpression->getFieldName());
+                NES_FATAL_ERROR2("CCodeGenerator: projection: the attribute {} is not registered so we can not access it.",
+                                 fieldAccessExpression->getFieldName());
             }
         }
     }
@@ -420,7 +427,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean()) {
             NES_ERROR2("CCodeGenerator::generateCodeForInferModel: inputted data type for tensorflow model not supported: {}",
-                      field->getStamp()->toString());
+                       field->getStamp()->toString());
         }
         if (!firstIter) {
             commonStamp = field->getStamp();
@@ -428,7 +435,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context,
             commonStamp = commonStamp->join(field->getStamp());
         }
     }
-    NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor:  {}",  commonStamp->toString());
+    NES_DEBUG2("CCodeGenerator::generateCodeForInferModel: Common stamp for input tensor:  {}", commonStamp->toString());
     if (commonStamp->isInteger()) {
         generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(
             DataTypeFactory::createBasicValue(UINT8, std::to_string(BasicPhysicalType::NativeType::INT_64)))));
@@ -582,7 +589,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     if (context->getInputSchema()->hasFieldName(field->getName())) {
                         // check if record handler has current field
                         if (!recordHandler->hasAttribute(field->getName())) {
-                            NES_FATAL_ERROR2("CCodeGenerator: field: {} is part of the output schema, but not registered in the record handler.", field->toString());
+                            NES_FATAL_ERROR2("CCodeGenerator: field: {} is part of the output schema, but not registered in the "
+                                             "record handler.",
+                                             field->toString());
                         }
 
                         std::string tmpVarName = "tmp_" + field->getName();
@@ -611,14 +620,17 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                     auto resultRecordFieldVariableDeclaration =
                         getVariableDeclarationForField(structDeclarationResultTuple, field);
                     if (!resultRecordFieldVariableDeclaration) {
-                        NES_FATAL_ERROR2("CCodeGenerator: Could not extract field {} from result record struct {}", field->toString(), structDeclarationResultTuple.getTypeName());
+                        NES_FATAL_ERROR2("CCodeGenerator: Could not extract field {} from result record struct {}",
+                                         field->toString(),
+                                         structDeclarationResultTuple.getTypeName());
                     }
 
                     // check if record handler has current field
                     if (!recordHandler->hasAttribute(field->getName())) {
                         NES_FATAL_ERROR2("CCodeGenerator: field: {}"
-                                        " is part of the output schema, "
-                                          "but not registered in the record handler.", field->toString());
+                                         " is part of the output schema, "
+                                         "but not registered in the record handler.",
+                                         field->toString());
                     }
 
                     // Get current field from record handler.
@@ -669,7 +681,8 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
 
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
-        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}",  varDeclResultTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is  {}",
+                   varDeclResultTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
@@ -686,15 +699,17 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
 
             auto resultRecordFieldVariableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, field);
             if (!resultRecordFieldVariableDeclaration) {
-                NES_FATAL_ERROR2("CodeGenerator: Could not extract field {} from result record struct {}", field->toString(),
-                                                                          structDeclarationResultTuple.getTypeName());
+                NES_FATAL_ERROR2("CodeGenerator: Could not extract field {} from result record struct {}",
+                                 field->toString(),
+                                 structDeclarationResultTuple.getTypeName());
             }
 
             // check if record handler has current field
             if (!recordHandler->hasAttribute(field->getName())) {
                 NES_FATAL_ERROR2("CCodeGenerator: field: {}"
-                                " is part of the output schema, "
-                                  "but not registered in the record handler.", field->toString());
+                                 " is part of the output schema, "
+                                 "but not registered in the record handler.",
+                                 field->toString());
             }
 
             // Get current field from record handler.
@@ -2919,7 +2934,10 @@ CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::Logical
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
                                          PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
-    NES_DEBUG2("join input={} aritiy={} out={}", context->inputSchema->toString(), context->arity, joinDef->getOutputSchema()->toString());
+    NES_DEBUG2("join input={} aritiy={} out={}",
+               context->inputSchema->toString(),
+               context->arity,
+               joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -3042,7 +3060,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = timeBasedWindowType->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
-            NES_DEBUG2("windowTimeStampFieldName bin right= {}",  windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin right= {}", windowTimeStampFieldName);
 
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightSourceType();
@@ -3061,7 +3079,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
         } else {
-            NES_DEBUG2("windowTimeStampFieldName bin left= {}",  windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin left= {}", windowTimeStampFieldName);
         }
 
         auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
@@ -3133,7 +3151,10 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                               PipelineContextPtr context,
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                               QueryCompilation::JoinBuildSideType buildSide) {
-    NES_DEBUG2("join input={} aritiy={} out={}", context->inputSchema->toString() , magic_enum::enum_name(buildSide), joinDef->getOutputSchema()->toString());
+    NES_DEBUG2("join input={} aritiy={} out={}",
+               context->inputSchema->toString(),
+               magic_enum::enum_name(buildSide),
+               joinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
 
@@ -3283,7 +3304,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
             }
             NES_ASSERT(found, " right schema does not contain a timestamp attribute");
         } else {
-            NES_DEBUG2("windowTimeStampFieldName bin left= {}",  windowTimeStampFieldName);
+            NES_DEBUG2("windowTimeStampFieldName bin left= {}", windowTimeStampFieldName);
         }
 
         auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);

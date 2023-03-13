@@ -52,7 +52,9 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
     NES_DEBUG2("", topology->toString());
 
     if (topology->nodeExistsWithIpAndPort(address, grpcPort)) {
-        NES_ERROR2("TopologyManagerService::registerWorker: node with address {} and grpc port {} already exists", address, grpcPort);
+        NES_ERROR2("TopologyManagerService::registerWorker: node with address {} and grpc port {} already exists",
+                   address,
+                   grpcPort);
         return INVALID_TOPOLOGY_NODE_ID;
     }
 
@@ -87,13 +89,13 @@ uint64_t TopologyManagerService::registerWorker(const std::string& address,
 }
 
 bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
-    NES_DEBUG2("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}",  nodeId);
+    NES_DEBUG2("TopologyManagerService::UnregisterNode: try to disconnect sensor with id  {}", nodeId);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
 
     if (!physicalNode) {
-        NES_ERROR2("CoordinatorActor: node with id not found  {}",  nodeId);
+        NES_ERROR2("CoordinatorActor: node with id not found  {}", nodeId);
         return false;
     }
 
@@ -111,13 +113,13 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
     NES_DEBUG2("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
     bool successTopology = topology->removePhysicalNode(physicalNode);
-    NES_DEBUG2("TopologyManagerService::UnregisterNode: success in topology is  {}",  successTopology);
+    NES_DEBUG2("TopologyManagerService::UnregisterNode: success in topology is  {}", successTopology);
 
     return successTopology;
 }
 
 bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG2("TopologyManagerService::addParent: childId= {}  parentId= {}",  childId,  parentId);
+    NES_DEBUG2("TopologyManagerService::addParent: childId= {}  parentId= {}", childId, parentId);
 
     if (childId == parentId) {
         NES_ERROR2("TopologyManagerService::AddParent: cannot add link to itself");
@@ -133,15 +135,15 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
 
     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
     if (!parentPhysicalNode) {
-        NES_ERROR2("TopologyManagerService::AddParent: sensorParent node {} does not exists",  parentId);
+        NES_ERROR2("TopologyManagerService::AddParent: sensorParent node {} does not exists", parentId);
         return false;
     }
-    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists",  parentId);
+    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists", parentId);
 
     auto children = parentPhysicalNode->getChildren();
     for (const auto& child : children) {
         if (child->as<TopologyNode>()->getId() == childId) {
-            NES_ERROR2("TopologyManagerService::AddParent: nodes {} and {} already exists",  childId, parentId);
+            NES_ERROR2("TopologyManagerService::AddParent: nodes {} and {} already exists", childId, parentId);
             return false;
         }
     }
@@ -156,7 +158,7 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
 }
 
 bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
-    NES_DEBUG2("TopologyManagerService::removeParent: childId= {}  parentId= {}",  childId,  parentId);
+    NES_DEBUG2("TopologyManagerService::removeParent: childId= {}  parentId= {}", childId, parentId);
 
     TopologyNodePtr childNode = topology->findNodeWithId(childId);
     if (!childNode) {
@@ -171,7 +173,7 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
         return false;
     }
 
-    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists",  parentId);
+    NES_DEBUG2("TopologyManagerService::AddParent: sensorParent node  {}  exists", parentId);
 
     std::vector<NodePtr> children = parentNode->getChildren();
     auto found = std::find_if(children.begin(), children.end(), [&childId](const NodePtr& node) {

@@ -59,7 +59,7 @@ ZmqSource::~ZmqSource() NES_NOEXCEPT(false) {
 }
 
 std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
-    NES_DEBUG2("ZMQSource: receiveData ",  this->toString());
+    NES_DEBUG2("ZMQSource: receiveData ", this->toString());
     if (connect()) {
         try {
 
@@ -76,13 +76,15 @@ std::optional<Runtime::TupleBuffer> ZmqSource::receiveData() {
             auto buffer = bufferManager->getBufferBlocking();
             buffer.setNumberOfTuples(static_cast<uint64_t*>(metadata.data())[0]);
             buffer.setWatermark(static_cast<uint64_t*>(metadata.data())[1]);
-            NES_DEBUG2("ZMQSource received #tups  {}  watermark= {}",  buffer.getNumberOfTuples(),  buffer.getWatermark());
+            NES_DEBUG2("ZMQSource received #tups  {}  watermark= {}", buffer.getNumberOfTuples(), buffer.getWatermark());
 
             // Receive payload
             // XXX: I guess we don't actually know the size here, it would be nice to be able to check that here
             zmq::mutable_buffer payload{buffer.getBuffer(), buffer.getBufferSize()};
             if (auto const receivedSize = socket.recv(payload); !receivedSize.has_value()) {
-                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}", buffer.getBufferSize(), receivedSize.has_value());
+                NES_ERROR2("ZMQSource: Error: Unexpected payload size. Expected: {} Received: {}",
+                           buffer.getBufferSize(),
+                           receivedSize.has_value());
                 return std::nullopt;
             } else {
                 NES_DEBUG2("ZMQSource: received buffer of size  {}", receivedSize.has_value());
@@ -118,7 +120,7 @@ bool ZmqSource::connect() {
             host = "*";
         }
         auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-        NES_DEBUG2("ZMQSOURCE use address {}",  address);
+        NES_DEBUG2("ZMQSOURCE use address {}", address);
         try {
             socket.set(zmq::sockopt::linger, 0);
             socket.bind(address.c_str());
@@ -144,7 +146,7 @@ bool ZmqSource::connect() {
 }
 
 bool ZmqSource::disconnect() {
-    NES_DEBUG2("ZmqSource::disconnect() connected={}",  connected);
+    NES_DEBUG2("ZmqSource::disconnect() connected={}", connected);
     if (connected) {
         // we put assert here because it d be called anyway from the shutdown method
         // that we commented out

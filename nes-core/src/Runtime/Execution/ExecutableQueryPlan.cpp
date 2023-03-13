@@ -208,19 +208,26 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             break;
         }
         case SoftEndOfStream: {
-            NES_DEBUG2("QueryExecutionPlan: soft stop request received for query plan {} sub plan {} left tokens = {}", queryId, querySubPlanId, numOfTerminationTokens);
+            NES_DEBUG2("QueryExecutionPlan: soft stop request received for query plan {} sub plan {} left tokens = {}",
+                       queryId,
+                       querySubPlanId,
+                       numOfTerminationTokens);
             if (numOfTerminationTokens.fetch_sub(1) == 1) {
                 auto expected = Execution::ExecutableQueryPlanStatus::Running;
                 if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Finished)) {
                     // if CAS fails - it means the query was already stopped or failed
-                    NES_DEBUG2("QueryExecutionPlan: query plan {} subplan {} is marked as (soft) stopped now", queryId, querySubPlanId);
+                    NES_DEBUG2("QueryExecutionPlan: query plan {} subplan {} is marked as (soft) stopped now",
+                               queryId,
+                               querySubPlanId);
                     qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                     queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
                                                           Execution::ExecutableQueryPlanStatus::Finished);
                     return;
                 }
             } else {
-                NES_DEBUG2("QueryExecutionPlan: query plan {} subplan {} was already marked as stopped now", queryId, querySubPlanId);
+                NES_DEBUG2("QueryExecutionPlan: query plan {} subplan {} was already marked as stopped now",
+                           queryId,
+                           querySubPlanId);
             }
             break;
         }
@@ -262,7 +269,7 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
                     "Cannot find source " << source->getOperatorId() << " in sub query plan " << querySubPlanId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << querySubPlanId << " = " << terminationType);
-    NES_DEBUG2("QEP {} Source {} is terminated; tokens left = {}", querySubPlanId,source->getOperatorId(), (tokensLeft - 1));
+    NES_DEBUG2("QEP {} Source {} is terminated; tokens left = {}", querySubPlanId, source->getOperatorId(), (tokensLeft - 1));
     // the following check is necessary because a data sources first emits an EoS marker and then calls this method.
     // However, it might happen that the marker is so fast that one possible execution is as follows:
     // 1) Data Source emits EoS marker
@@ -290,7 +297,7 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
                     "Cannot find pipeline " << pipeline->getPipelineId() << " in sub query plan " << querySubPlanId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Pipeline was last termination token for " << querySubPlanId);
-    NES_DEBUG2("QEP {} Pipeline {} is terminated; tokens left = {}",  querySubPlanId, pipeline->getPipelineId(), (tokensLeft - 1));
+    NES_DEBUG2("QEP {} Pipeline {} is terminated; tokens left = {}", querySubPlanId, pipeline->getPipelineId(), (tokensLeft - 1));
     // the same applies here for the pipeline
     if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP =

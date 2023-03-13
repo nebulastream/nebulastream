@@ -150,7 +150,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG2("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}",  tuplesThisPass,  tupleSize);
+    NES_DEBUG2("MQTTSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
 
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -168,7 +168,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                 // Using try_consume_message_for(), because it is non-blocking.
                 auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
                 if (message) {// Check if message was received correctly (not nullptr)
-                    NES_TRACE2("Client consume message: '{}'", message->get_payload_str() );
+                    NES_TRACE2("Client consume message: '{}'", message->get_payload_str());
                     receivedMessageString = message->get_payload_str();
                     if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString,
                                                                    tupleCount,
@@ -178,8 +178,9 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
                         NES_ERROR2("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_DEBUG2("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}"
-                                                                                              , tupleCount, tuplesThisPass);
+                    NES_DEBUG2("MQTTSource::fillBuffer: Tuples processed for current buffer: {} / {}",
+                               tupleCount,
+                               tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
                     NES_WARNING2("MQTTSource::fillBuffer: Not connected anymore!");
@@ -256,7 +257,7 @@ bool MQTTSource::connect() {
         }
 
         if (connected) {
-            NES_DEBUG2("MQTTSource::connect: Connection established with topic: {}",  topic);
+            NES_DEBUG2("MQTTSource::connect: Connection established with topic: {}", topic);
             NES_DEBUG2("MQTTSource::connect: connected");
         } else {
             NES_DEBUG2("MQTTSource::connect: NOT connected");
@@ -266,7 +267,7 @@ bool MQTTSource::connect() {
 }
 
 bool MQTTSource::disconnect() {
-    NES_DEBUG2("MQTTSource::disconnect connected={}",  connected);
+    NES_DEBUG2("MQTTSource::disconnect connected={}", connected);
     if (connected) {
         // If we're here, the client was almost certainly disconnected.
         // But we check, just to make sure.

@@ -62,7 +62,7 @@ int main(int argc, const char* argv[]) {
         try {
             std::rethrow_exception(std::current_exception());
         } catch (std::exception& ex) {
-            NES_ERROR2("{}",ex.what());
+            NES_ERROR2("{}", ex.what());
         }
         return 1;
     }

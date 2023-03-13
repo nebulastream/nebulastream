@@ -20,12 +20,12 @@
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <set>
 #include <unordered_map>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

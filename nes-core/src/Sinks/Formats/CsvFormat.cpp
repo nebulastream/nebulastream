@@ -65,7 +65,9 @@ std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& input
             std::string contentWithSingleBufferSize = bufferContent.substr(0, buf.getBufferSize());
             bufferContent = bufferContent.substr(buf.getBufferSize(), bufferContent.length() - buf.getBufferSize());
             NES_TRACE2("CsvFormat::getData: add following content to buffer ={}"
-                       "\nRemaining content for next buffer ={}", contentWithSingleBufferSize, bufferContent);
+                       "\nRemaining content for next buffer ={}",
+                       contentWithSingleBufferSize,
+                       bufferContent);
             NES_ASSERT(contentWithSingleBufferSize.size() == buf.getBufferSize(),
                        "CsvFormat: Content size is not equal to buffer size and will waste space in a buffer.");
             std::copy(contentWithSingleBufferSize.begin(), contentWithSingleBufferSize.end(), buf.getBuffer());
@@ -77,9 +79,9 @@ std::vector<Runtime::TupleBuffer> CsvFormat::getData(Runtime::TupleBuffer& input
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(bufferContent.size());
         buffers.push_back(buf);
-        NES_DEBUG2("CsvFormat::getData: successfully copied buffer= {}",  numberOfBuffers);
+        NES_DEBUG2("CsvFormat::getData: successfully copied buffer= {}", numberOfBuffers);
     } else {
-        NES_TRACE2("CsvFormat::getData: content fits in one buffer = {}",  bufferContent);
+        NES_TRACE2("CsvFormat::getData: content fits in one buffer = {}", bufferContent);
         auto buf = this->bufferManager->getBufferBlocking();
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(contentSize);

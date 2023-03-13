@@ -43,24 +43,24 @@ OPCSink::OPCSink(SinkFormatPtr format,
                  QuerySubPlanId querySubPlanId)
     : SinkMedium(std::move(format), queryManager, queryId, querySubPlanId), connected(false), url(url), nodeId(nodeId),
       user(std::move(std::move(user))), password(std::move(password)), retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {
-    NES_DEBUG2("OPCSINK   {} : Init OPC Sink to  {}  . {}",  this,  url);
+    NES_DEBUG2("OPCSINK   {} : Init OPC Sink to  {}  . {}", this, url);
 }
 
 OPCSink::~OPCSink() {
     NES_DEBUG2("OPCSink::~OPCSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG2("OPCSink   {} : Destroy OPC Sink",  this);
+        NES_DEBUG2("OPCSink   {} : Destroy OPC Sink", this);
     } else {
         NES_ASSERT2_FMT(false, "OPCSink  " << this << ": Destroy OPC Sink failed because it could not be disconnected");
     }
-    NES_DEBUG2("OPCSink   {} : Destroy OPC Sink",  this);
+    NES_DEBUG2("OPCSink   {} : Destroy OPC Sink", this);
 }
 
 bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG2("OPCSINK::writeData()   {}",  this);
-    NES_DEBUG2("OPCSINK::writeData url:  {} .",  url);
+    NES_DEBUG2("OPCSINK::writeData()   {}", this);
+    NES_DEBUG2("OPCSINK::writeData url:  {} .", url);
     if (connect()) {
 
         /* Read current value of attribute, also necessary to get the type information of the node */
@@ -98,15 +98,15 @@ bool OPCSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         auto* var = new UA_Variant;
         UA_Client_readValueAttribute(client, nodeId, var);
         if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val)) {
-            NES_DEBUG2("OPCSINK::writeData: New value is:  {}",  *(UA_Int32*) var->data);
+            NES_DEBUG2("OPCSINK::writeData: New value is:  {}", *(UA_Int32*) var->data);
         } else {
             NES_ERROR2("OPCSINK::writeData: Node does not exist or is not a scalar.");
             return false;
         }
         UA_delete(var, var->type);
 
-        NES_DEBUG2("OPCSOURCE::receiveData()   {} : got buffer ",  this);
-        NES_DEBUG2("OPCSINK::writeData() UA_StatusCode is:  {}",  std::hex << retval);
+        NES_DEBUG2("OPCSOURCE::receiveData()   {} : got buffer ", this);
+        NES_DEBUG2("OPCSINK::writeData() UA_StatusCode is:  {}", std::hex << retval);
 
     } else {
         NES_ERROR2("OPCSOURCE::receiveData(): Not connected!");
@@ -138,16 +138,16 @@ bool OPCSink::connect() {
 
     if (!connected) {
 
-        NES_DEBUG2("OPCSINK::connect(): was !conncect now connect  {} : connected",  this);
+        NES_DEBUG2("OPCSINK::connect(): was !conncect now connect  {} : connected", this);
         retval = UA_Client_connect(client, url.c_str());
         NES_DEBUG2("OPCSINK::connect(): connected without user or password");
-        NES_DEBUG2("OPCSINK::connect(): use address  {}",  url);
+        NES_DEBUG2("OPCSINK::connect(): use address  {}", url);
 
         if (retval != UA_STATUSCODE_GOOD) {
 
             UA_Client_delete(client);
             connected = false;
-            NES_ERROR2("OPCSINK::connect(): ERROR with Status Code: {} OPCSINK {}: set connected false", retval , this);
+            NES_ERROR2("OPCSINK::connect(): ERROR with Status Code: {} OPCSINK {}: set connected false", retval, this);
         } else {
 
             connected = true;
@@ -155,15 +155,15 @@ bool OPCSink::connect() {
     }
 
     if (connected) {
-        NES_DEBUG2("OPCSINK::connect():   {} : connected",  this);
+        NES_DEBUG2("OPCSINK::connect():   {} : connected", this);
     } else {
-        NES_DEBUG2("Exception: OPCSINK::connect():   {} : NOT connected",  this);
+        NES_DEBUG2("Exception: OPCSINK::connect():   {} : NOT connected", this);
     }
     return connected;
 }
 
 bool OPCSink::disconnect() {
-    NES_DEBUG2("OPCSink::disconnect() connected= {}",  connected);
+    NES_DEBUG2("OPCSink::disconnect() connected= {}", connected);
     if (connected) {
 
         NES_DEBUG2("OPCSINK::disconnect() disconnect client");
@@ -173,9 +173,9 @@ bool OPCSink::disconnect() {
         connected = false;
     }
     if (!connected) {
-        NES_DEBUG2("OPCSINK::disconnect()   {} : disconnected",  this);
+        NES_DEBUG2("OPCSINK::disconnect()   {} : disconnected", this);
     } else {
-        NES_DEBUG2("OPCSINK::disconnect()   {} : NOT disconnected",  this);
+        NES_DEBUG2("OPCSINK::disconnect()   {} : NOT disconnected", this);
     }
     return !connected;
 }

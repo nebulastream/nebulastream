@@ -47,7 +47,7 @@ std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG2("SenseSource::receiveData called");
     auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
-    NES_DEBUG2("SenseSource::receiveData filled buffer with tuples={}",  buf.getNumberOfTuples());
+    NES_DEBUG2("SenseSource::receiveData filled buffer with tuples={}", buf.getNumberOfTuples());
     return buf;
 }
 

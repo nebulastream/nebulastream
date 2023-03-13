@@ -73,7 +73,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     } else {
         operatorType = "UNDEFINED";
     }
-    NES_DEBUG2("UtilityFunctions: operatorType =  {}",  operatorType);
+    NES_DEBUG2("UtilityFunctions: operatorType =  {}", operatorType);
     return operatorType;
 }
 
@@ -89,7 +89,7 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         return;
     }
 
-    NES_DEBUG2("UtilityFunctions::getChildren : children size =  {}",  children.size());
+    NES_DEBUG2("UtilityFunctions::getChildren : children size =  {}", children.size());
     for (const NodePtr& child : children) {
         // Create a node JSON object for the current operator
         nlohmann::json node;

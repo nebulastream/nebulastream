@@ -38,7 +38,7 @@
 namespace NES {
 
 QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName) {
-    NES_DEBUG2("QueryPlanBuilder: create query plan for input source  {}",  sourceName);
+    NES_DEBUG2("QueryPlanBuilder: create query plan for input source  {}", sourceName);
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
     auto queryPlanPtr = QueryPlan::create(sourceOperator);
     queryPlanPtr->setSourceConsumed(sourceName);
@@ -204,7 +204,7 @@ NES::QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(NES::Operat
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(NES::ExpressionNodePtr expression,
                                                                              std::string side) {
     if (!expression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR2("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}",  side, expression->toString());
+        NES_ERROR2("Query: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
     return expression->as<FieldAccessExpressionNode>();

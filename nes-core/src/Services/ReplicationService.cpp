@@ -56,7 +56,7 @@ std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(
     if (sharedQueryPlan) {
         return sharedQueryPlan->getQueryPlan()->getSourceOperators();
     }
-    NES_ERROR2("ReplicationService: no shared query plan found for the queryId  {}",  queryId);
+    NES_ERROR2("ReplicationService: no shared query plan found for the queryId  {}", queryId);
     return {};
 }
 
@@ -69,7 +69,7 @@ std::vector<TopologyNodePtr> ReplicationService::getPhysicalSources(SourceLogica
 bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const {
     std::unique_lock lock(replicationServiceMutex);
     this->saveEpochBarrier(queryId, epochBarrier);
-    NES_DEBUG2("ReplicationService: send timestamp  {} to sources with queryId  {}",  epochBarrier,  queryId);
+    NES_DEBUG2("ReplicationService: send timestamp  {} to sources with queryId  {}", epochBarrier, queryId);
     std::vector<SourceLogicalOperatorNodePtr> sources = getLogicalSources(queryId);
     if (!sources.empty()) {
         for (auto& sourceOperator : sources) {
@@ -83,15 +83,15 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                     std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
                     success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, rpcAddress);
                     NES_ASSERT(success, false);
-                    NES_DEBUG2("ReplicationService: success= {}",  success);
+                    NES_DEBUG2("ReplicationService: success= {}", success);
                 }
                 return success;
             } else {
-                NES_ERROR2("ReplicationService: no physical sources found for the queryId  {}",  queryId);
+                NES_ERROR2("ReplicationService: no physical sources found for the queryId  {}", queryId);
             }
         }
     } else {
-        NES_ERROR2("ReplicationService: no sources found for the queryId  {}",  queryId);
+        NES_ERROR2("ReplicationService: no sources found for the queryId  {}", queryId);
     }
     return false;
 }

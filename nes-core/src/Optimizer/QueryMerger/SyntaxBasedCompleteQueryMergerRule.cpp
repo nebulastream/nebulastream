@@ -33,7 +33,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
     std::vector<QueryPlanPtr> queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
     if (queryPlansToAdd.empty()) {
         NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
-                    " Skipping the Syntax Based Equal Query Merger Rule.");
+                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
@@ -109,7 +109,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(const QueryPlanPtr& 
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
         NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Not matched as number of sources in target and address query plans are "
-                    "different.");
+                     "different.");
         return false;
     }
 
@@ -135,7 +135,7 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(const OperatorNodePtr&
             return true;
         }
         NES_WARNING2("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
-                    "sources in target and address query plans are different.");
+                     "sources in target and address query plans are different.");
         return false;
     }
 

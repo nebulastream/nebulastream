@@ -156,7 +156,8 @@ NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::getNextReconnectPoi
                    <= currentDistFromParent) {
             //if the next scheduled parent is closer than the current parent, reconnect to the current parent
             reconnectSchedule.value().removeNextReconnect();
-            NES_DEBUG2("popped reconnect from schedule, remaining schedule size {}", reconnectSchedule.value().getReconnectVector().size());
+            NES_DEBUG2("popped reconnect from schedule, remaining schedule size {}",
+                       reconnectSchedule.value().getReconnectVector().size());
             return nextScheduledReconnect.value();
         }
     }

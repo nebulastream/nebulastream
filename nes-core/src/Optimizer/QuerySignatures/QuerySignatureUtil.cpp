@@ -52,7 +52,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                                                       const OperatorNodePtr& operatorNode) {
 
     try {
-        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator  {}",  operatorNode->toString());
+        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator  {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->isUnaryOperator()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
@@ -344,7 +344,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(const z3::Co
     auto filterExpr = filterExprAndFieldMap->getExpr();
 
     NES_TRACE2("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
-              "children signatures");
+               "children signatures");
     //Fetch the signature of only children and get the column values
     auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
 

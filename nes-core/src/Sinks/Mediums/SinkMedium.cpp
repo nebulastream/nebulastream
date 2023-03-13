@@ -129,13 +129,13 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
     if (terminationType != Runtime::QueryTerminationType::Invalid) {
-        NES_DEBUG2("Got EoS on Sink  {}",  toString());
+        NES_DEBUG2("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
-            NES_DEBUG2("Sink [ {} ] is completed with  {}",  toString(),  terminationType);
+            NES_DEBUG2("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }
 }
