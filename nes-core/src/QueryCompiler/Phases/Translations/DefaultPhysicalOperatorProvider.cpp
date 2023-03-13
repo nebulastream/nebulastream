@@ -639,7 +639,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n {}", plan->toString());
+    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan before\n{}", plan->toString());
     if (windowOperator->getInputOriginIds().empty()) {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
@@ -701,7 +701,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
-    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n {}", plan->toString());
+    NES_DEBUG2("DefaultPhysicalOperatorProvider::lowerWindowOperator: Plan after\n{}", plan->toString());
 }
 
 }// namespace NES::QueryCompilation

@@ -63,7 +63,7 @@ QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
                 createDistributedWindowOperator(windowOp, queryPlan);
             } else {
                 createCentralWindowOperator(windowOp);
-                NES_DEBUG2("DistributedWindowRule::apply: central op\n {}", queryPlan->toString());
+                NES_DEBUG2("DistributedWindowRule::apply: central op\n{}", queryPlan->toString());
             }
         }
     } else {
