@@ -96,7 +96,7 @@ KafkaSource::~KafkaSource() {
 }
 
 std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
-    NES_DEBUG2("TCPSource  {}: receiveData.", this);
+    NES_DEBUG2("TCPSource receiveData.");
     NES_DEBUG2("TCPSource buffer allocated.");
     if (!connect()) {
         return std::nullopt;
@@ -110,7 +110,7 @@ std::optional<Runtime::TupleBuffer> KafkaSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR2("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: " << e.what());
+        NES_ERROR2("KafkaSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();

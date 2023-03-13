@@ -96,8 +96,7 @@ void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&
             solver.add(*(qsp->getConditions()));
             std::stringstream s;
             s << solver;
-            std::string solverString = s.str();
-            NES_INFO2("{}", solverString);
+            NES_INFO2("{}", s.str());
             // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
             if (solver.check() == z3::unsat) {
                 auto predicateStr = filterOp->getPredicate()->toString();
