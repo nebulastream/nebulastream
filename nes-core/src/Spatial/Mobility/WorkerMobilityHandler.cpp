@@ -191,7 +191,9 @@ bool NES::Spatial::Mobility::Experimental::WorkerMobilityHandler::triggerReconne
         //update locally saved information about parent
         currentParentId = newParentId;
     } else {
-        NES_WARNING2("WorkerMobilityHandler::replaceParent() failed to replace oldParent={} with newParentId={}.", currentParentId, newParentId);
+        NES_WARNING2("WorkerMobilityHandler::replaceParent() failed to replace oldParent={} with newParentId={}.",
+                     currentParentId,
+                     newParentId);
         //todo: #3572 query coordinator for actual parent to recover from faulty state
     }
 

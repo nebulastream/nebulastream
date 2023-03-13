@@ -138,8 +138,9 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            NES_ERROR2(
-                "SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping {}", e.what());
+            NES_ERROR2("SignatureEqualityUtil: Exception occurred while performing equality check among "
+                       "queryIdAndCatalogEntryMapping {}",
+                       e.what());
         }
         return false;
     }
