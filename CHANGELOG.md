@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.28](https://github.com/nebulastream/nebulastream/tree/v0.5.28) (2023-03-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.27...v0.5.28)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add additional logical expressions to Nautilus [\#3553](https://github.com/nebulastream/nebulastream/issues/3553)
+
 ## [v0.5.27](https://github.com/nebulastream/nebulastream/tree/v0.5.27) (2023-03-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.26...v0.5.27)
