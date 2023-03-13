@@ -77,7 +77,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
-    NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan : \n {}", globalExecutionPlan->getAsString());
+    NES_DEBUG2("QueryPlacementPhase: Update Global Execution Plan:\n {}", globalExecutionPlan->getAsString());
     return success;
 }
 
