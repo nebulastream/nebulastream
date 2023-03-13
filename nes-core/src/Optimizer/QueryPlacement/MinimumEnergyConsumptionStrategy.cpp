@@ -206,7 +206,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
 
             if (executionPlanPtr->hasVertex(node->getId())) {
 
-                NES_DEBUG2("MinimumEnergyConsumption: node {} was already used by other deployment", ode->toString());
+                NES_DEBUG2("MinimumEnergyConsumption: node {} was already used by other deployment", node->toString());
 
                 const ExecutionNodePtr existingExecutionNode = executionPlanPtr->getExecutionNode(node->getId());
 
@@ -218,7 +218,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 existingExecutionNode->addOperator(legacyOperator->copy());
             } else {
 
-                NES_DEBUG2("MinimumEnergyConsumption: create new execution node  {}", node->toString());
+                NES_DEBUG2("MinimumEnergyConsumption: create new execution node {}", node->toString());
 
                 stringstream operatorName;
                 operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";

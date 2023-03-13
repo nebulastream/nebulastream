@@ -56,7 +56,7 @@ QueryPlanPtr DistributedWindowRule::apply(QueryPlanPtr queryPlan) {
          */
         NES_DEBUG2("DistributedWindowRule::apply: found {} window operators", windowOps.size());
         for (auto& windowOp : windowOps) {
-            NES_DEBUG2("DistributedWindowRule::apply: window operator  {}", windowOp->toString());
+            NES_DEBUG2("DistributedWindowRule::apply: window operator {}", windowOp->toString());
 
             if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
                 && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
@@ -178,7 +178,7 @@ void DistributedWindowRule::createDistributedWindowOperator(const WindowOperator
 
     //adding slicer
     for (auto& child : windowChildren) {
-        NES_DEBUG2("DistributedWindowRule::apply: process child  {}", child->toString());
+        NES_DEBUG2("DistributedWindowRule::apply: process child {}", child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
         auto sliceCreationWindowAggregation = windowAggregation[0]->copy();

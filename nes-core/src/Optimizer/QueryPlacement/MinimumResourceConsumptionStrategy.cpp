@@ -195,7 +195,7 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
             existingExecutionNode->addOperatorId(targetOperator->getId());
         } else {
 
-            NES_DEBUG2("MinimumResourceConsumption: create new execution node  {}", node->toString());
+            NES_DEBUG2("MinimumResourceConsumption: create new execution node {}", node->toString());
 
             stringstream operatorName;
             operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";

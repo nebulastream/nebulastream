@@ -46,7 +46,7 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanP
     const std::vector<NESTopologyEntryPtr> sourceNodePtrs = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodePtrs.empty()) {
-        NES_ERROR2("HighAvailabilityStrategy: Unable to find the target source:  {}", sourceName);
+        NES_ERROR2("HighAvailabilityStrategy: Unable to find the target source: {}", sourceName);
         throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 

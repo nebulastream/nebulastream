@@ -113,7 +113,7 @@ void BottomUpStrategy::identifyPinningLocation(QueryId queryId,
         return;
     }
 
-    NES_DEBUG2("BottomUpStrategy: Place  {}", operatorNode->toString());
+    NES_DEBUG2("BottomUpStrategy: Place {}", operatorNode->toString());
     if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
         || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE2("BottomUpStrategy: Received an NAry operator for placement.");

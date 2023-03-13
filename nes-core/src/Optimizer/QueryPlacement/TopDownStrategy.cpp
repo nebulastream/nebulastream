@@ -116,7 +116,7 @@ void TopDownStrategy::identifyPinningLocation(QueryId queryId,
     }
 
     if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
-        NES_DEBUG2("TopDownStrategy: Place  {}", operatorNode->toString());
+        NES_DEBUG2("TopDownStrategy: Place {}", operatorNode->toString());
         if ((operatorNode->hasMultipleChildrenOrParents() || operatorNode->instanceOf<SourceLogicalOperatorNode>())
             && !operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
 
