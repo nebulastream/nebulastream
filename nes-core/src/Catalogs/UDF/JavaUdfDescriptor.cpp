@@ -33,9 +33,6 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
     if (methodName.empty()) {
         throw UdfException("The method name of a Java UDF must not be empty");
     }
-    if (serializedInstance.empty()) {
-        throw UdfException("The serialized instance of a Java UDF must not be empty");
-    }
     if (inputClassName.empty()) {
         throw UdfException("The class name of the UDF method input type must not be empty.");
     }

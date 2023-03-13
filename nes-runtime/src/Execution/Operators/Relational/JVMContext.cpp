@@ -46,6 +46,10 @@ inline void jniErrorCheck(jint rc) {
 void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs& args) {
     std::lock_guard<std::mutex> lock(mutex);
     if (!created) {
+        // JNI_CreateJavaVM may lead to a segfault in some debuggers (e.g. CLion) but it is not a bug in the code.
+        // It can be stepped over without any issues.
+        // "HotSpot JVM uses SIGSEGV extensively for its own purposes under the hood"
+        // https://youtrack.jetbrains.com/issue/CPP-16002/CLion-debugging-of-JVM-JNI-debug-mode-segmentation-faults
         jvm = nullptr;
         jint rc = JNI_CreateJavaVM(&jvm, (void**) env, &args);
         jniErrorCheck(rc);
@@ -88,5 +92,5 @@ JVMContext::~JVMContext() {
         jniErrorCheck(rc);
     }
 }
-};    // namespace NES::Runtime::Execution::Operators
+}; // namespace NES::Runtime::Execution::Operators
 #endif//ENABLE_JNI
