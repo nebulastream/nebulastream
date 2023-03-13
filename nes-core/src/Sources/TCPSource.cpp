@@ -197,7 +197,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         inputTupleSize = sizeUntilSearchToken(sourceConfig->getTupleSeparator()->getValue());
                         // allocate buffer with size of tuple
                         messageBuffer = new char[inputTupleSize];
-                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.", inputTupleSize);
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                                   inputTupleSize);
                         NES_DEBUG2("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
                         //copy and delete tuple from circularBuffer, delete tuple separator
                         popped = popGivenNumberOfValues(inputTupleSize, true);
@@ -213,7 +214,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                         inputTupleSize = sourceConfig->getSocketBufferSize()->getValue();
                         //allocate buffer with tupleSize
                         messageBuffer = new char[inputTupleSize];
-                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.", inputTupleSize);
+                        NES_DEBUG2("TCPSOURCE::fillBuffer: Pop Bytes from Circular Buffer to obtain Tuple of size: '{}'.",
+                                   inputTupleSize);
                         NES_DEBUG2("TCPSOURCE::fillBuffer: current circular buffer size: '{}'.", circularBuffer.size());
                         //copy and delete tuple from circularBuffer
                         popped = popGivenNumberOfValues(inputTupleSize, false);
@@ -246,7 +248,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
                             delete[] messageBuffer;
                         } catch (const std::exception& e) {
                             NES_ERROR2("TCPSource::fillBuffer: Failed to retrieve the tupleSize from Message Buffer. Error: {}",
-                                      e.what());
+                                       e.what());
                             throw e;
                         }
                     }
