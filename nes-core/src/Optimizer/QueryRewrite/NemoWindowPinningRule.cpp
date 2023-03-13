@@ -55,7 +55,7 @@ NemoWindowPinningRulePtr NemoWindowPinningRule::create(Configurations::Optimizer
 
 QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG2("NemoWindowPinningRule: Apply NemoWindowPinningRule.");
-    NES_DEBUG2("NemoWindowPinningRule::apply: plan before replace \n {}", queryPlan->toString());
+    NES_DEBUG2("NemoWindowPinningRule::apply: plan before replace\n {}", queryPlan->toString());
     if (!performDistributedWindowOptimization) {
         return queryPlan;
     }
@@ -77,13 +77,13 @@ QueryPlanPtr NemoWindowPinningRule::apply(QueryPlanPtr queryPlan) {
                 }
             } else {
                 createCentralWindowOperator(windowOp);
-                NES_DEBUG2("NemoWindowPinningRule::apply: central op \n {}", queryPlan->toString());
+                NES_DEBUG2("NemoWindowPinningRule::apply: central op\n {}", queryPlan->toString());
             }
         }
     } else {
         NES_DEBUG2("NemoWindowPinningRule::apply: no window operator in query");
     }
-    NES_DEBUG2("NemoWindowPinningRule::apply: plan after replace \n {}", queryPlan->toString());
+    NES_DEBUG2("NemoWindowPinningRule::apply: plan after replace\n {}", queryPlan->toString());
     return queryPlan;
 }
 
@@ -117,7 +117,7 @@ void NemoWindowPinningRule::pinWindowOperators(const WindowOperatorNodePtr& wind
             }
         }
     }
-    NES_DEBUG2("DistributedWindowRule: Plan after \n {}", queryPlan->toString());
+    NES_DEBUG2("DistributedWindowRule: Plan after\n {}", queryPlan->toString());
 }
 
 std::unordered_map<uint64_t, std::vector<WatermarkAssignerLogicalOperatorNodePtr>>
