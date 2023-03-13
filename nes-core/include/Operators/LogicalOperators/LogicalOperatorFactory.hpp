@@ -216,13 +216,13 @@ class LogicalOperatorFactory {
 
     /**
      * @brief Create a new WindowJavaUdfLogicalOperatorNode.
-     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
-     * @param id The operator ID.
-     * @param allowedLateness
-     * @param originId
-     * @param onKey
+     * @param javaUdfDescriptor
      * @param windowType
      * @param distributionType
+     * @param onKey
+     * @param allowedLateness
+     * @param originId
+     * @param id
      * @return A logical operator node which encapsulates the Java UDF for a window UDF.
      */
     static LogicalUnaryOperatorNodePtr

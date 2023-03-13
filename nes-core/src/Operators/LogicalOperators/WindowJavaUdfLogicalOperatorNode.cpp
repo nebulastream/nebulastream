@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
+#include <sstream>
 
 
 namespace NES {
@@ -68,4 +69,4 @@ namespace NES {
     OriginId WindowJavaUdfLogicalOperatorNode::getOriginId() const { return originId; }
 
     bool WindowJavaUdfLogicalOperatorNode::isKeyed() const { return !onKey.empty(); }
-} // NES
+} // namespace NES

@@ -16,7 +16,6 @@
 #define NES_CORE_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTOR_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <memory>
 namespace NES {
 
@@ -70,10 +69,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     };
     template<class SourceType>
     bool instanceOf() {
-        if (dynamic_cast<SourceType*>(this)) {
-            return true;
-        };
-        return false;
+        return const_cast<const SourceDescriptor*>(this)->instanceOf<const SourceType>();
     };
 
     /**
@@ -86,15 +82,11 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
-        NES_FATAL_ERROR("SourceDescriptor: We performed an invalid cast");
-        throw std::bad_cast();
+        throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
     }
     template<class SourceType>
     std::shared_ptr<SourceType> as() {
-        if (instanceOf<SourceType>()) {
-            return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
+        return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor*>(this)->as<const SourceType>());
     }
 
     /**

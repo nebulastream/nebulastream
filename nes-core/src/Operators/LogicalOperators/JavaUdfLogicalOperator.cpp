@@ -17,6 +17,7 @@
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Operators/LogicalOperators/JavaUdfLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <numeric>
 
 

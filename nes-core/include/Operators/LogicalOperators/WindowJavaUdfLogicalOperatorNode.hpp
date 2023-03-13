@@ -109,6 +109,6 @@ private:
     OriginId originId;
 };
 
-} // NES
+} // namespace NES
 
 #endif //NES_WINDOWJAVAUDFLOGICALOPERATORNODE_HPP
