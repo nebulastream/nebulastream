@@ -19,7 +19,7 @@
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns true if leftSubExpression is less then rightSubExpression.
+ * @brief This expression returns true if leftSubExpression is less or equals then rightSubExpression.
  */
 class LessEqualsExpression : public Expression {
   public:
