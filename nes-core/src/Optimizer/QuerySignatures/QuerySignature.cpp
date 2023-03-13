@@ -20,21 +20,26 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
                                          std::vector<std::string>&& columns,
                                          std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions, z3::expr_vector&& containmentFOL) {
+                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions,
+                                         std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
+                                         std::map<std::string, SchemaPtr>&& sourceSchemas) {
     return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions),
                                                            std::move(columns),
                                                            std::move(schemaFieldToExprMaps),
                                                            std::move(windowsExpressions),
-                                                           std::move(containmentFOL)));
+                                                           std::move(numberOfWindowAggregatesPerWindow),
+                                                           std::move(sourceSchemas)));
 }
 
 QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
                                std::vector<std::string>&& columns,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                                std::map<std::string, z3::ExprPtr>&& windowsExpressions,
-                               z3::expr_vector&& containmentFOL)
+                               std::map<std::string, size_t>&& numberOfWindowAggregatesPerWindow,
+                               std::map<std::string, SchemaPtr>&& sourceSchemas)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
-      windowsExpressions(std::move(windowsExpressions)), containmentFOL(std::move(containmentFOL)) {}
+      windowsExpressions(std::move(windowsExpressions)),
+      numberOfWindowAggregatesPerWindow(std::move(numberOfWindowAggregatesPerWindow)), sourceSchemas(std::move(sourceSchemas)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
@@ -45,9 +50,9 @@ const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions(
 const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
     return schemaFieldToExprMaps;
 }
-
-z3::expr_vector& QuerySignature::getContainmentFOL() {
-    return containmentFOL;
+const std::map<std::string, size_t>& QuerySignature::getNumberOfWindowAggregatesPerWindow() const {
+    return numberOfWindowAggregatesPerWindow;
 }
+const std::map<std::string, SchemaPtr>& QuerySignature::getSourceSchemas() const { return sourceSchemas; }
 
 }// namespace NES::Optimizer

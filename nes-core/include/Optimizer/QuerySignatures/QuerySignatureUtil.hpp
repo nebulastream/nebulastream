@@ -129,9 +129,6 @@ class QuerySignatureUtil {
     createQuerySignatureForInferModel(const z3::ContextPtr& context,
                                       const InferModel::InferModelLogicalOperatorNodePtr& inferModelOperator);
 #endif// TFDEF
-    static void createContainmentSchemaInformation(std::map<string, ExprPtr>& fieldToZ3ExprMap,
-                                                   const z3::ContextPtr& context,
-                                                   z3::expr_vector& createSourceFOL);
 };
 }// namespace NES::Optimizer
 
