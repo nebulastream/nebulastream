@@ -226,7 +226,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
                 }
             }
         }
-        NES_DEBUG2("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is:  {}", commonStamp->toString());
+        NES_DEBUG2("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
         if (commonStamp->isUndefined()) {
             throw InvalidQueryException("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types "
                                         "cannot be mixed as input to the tensorflow model.");
