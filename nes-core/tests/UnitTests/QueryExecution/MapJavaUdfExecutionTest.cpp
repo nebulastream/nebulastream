@@ -148,10 +148,3 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-
-/*INSTANTIATE_TEST_CASE_P(testJavaMapUDFQueries,
-                        MapJavaUdfQueryExecutionTest,
-                        ::testing::Values(),
-                        [](const testing::TestParamInfo<MapJavaUdfQueryExecutionTest::ParamType>& info) {
-                            return magic_enum::enum_flags_name(info.param);
-                        });*/
