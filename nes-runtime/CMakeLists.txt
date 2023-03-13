@@ -162,6 +162,8 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+# Define map java udf utils class file
+add_compile_definitions(JAVA_UDF_UTILS="${CMAKE_CURRENT_BINARY_DIR}/test_data/JavaUdfTestData/MapJavaUdfUtils.class")
 
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)

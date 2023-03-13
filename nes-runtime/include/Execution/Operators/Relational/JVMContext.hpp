@@ -51,8 +51,13 @@ class JVMContext {
      */
     void destroyJVM();
 
+    /**
+     * @brief Returns true if the JVM has been created.
+     */
+    [[nodiscard]] bool isJVMCreated() const { return created; }
+
   private:
-    JVMContext(){};
+    JVMContext() = default;
     ~JVMContext();
     JVMContext(JVMContext const&) = delete;
     void operator=(JVMContext const&) = delete;
@@ -63,7 +68,7 @@ class JVMContext {
     bool created = false;
 
     std::mutex mutex;
-    JavaVM* jvm;
+    JavaVM* jvm{};
 };
 
 };    // namespace NES::Runtime::Execution::Operators
