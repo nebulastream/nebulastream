@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#ifdef ENABLE_JNI
+
 #include <API/Schema.hpp>
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -152,3 +154,5 @@ TEST_F(MapJavaUdfQueryExecutionTest, MapJavaUdf) {
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
+
+#endif // ENABLE_JNI
