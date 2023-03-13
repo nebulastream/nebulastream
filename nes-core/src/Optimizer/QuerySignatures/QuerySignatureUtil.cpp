@@ -52,7 +52,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
                                                                       const OperatorNodePtr& operatorNode) {
 
     try {
-        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator  {}", operatorNode->toString());
+        NES_DEBUG2("QuerySignatureUtil: Creating query signature for operator {}", operatorNode->toString());
         auto children = operatorNode->getChildren();
         if (operatorNode->isUnaryOperator()) {
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
