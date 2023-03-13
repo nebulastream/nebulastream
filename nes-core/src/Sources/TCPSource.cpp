@@ -135,7 +135,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
         delete[] messageBuffer;
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}", e.what());
+        NES_ERROR2("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();
@@ -177,8 +177,8 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
             }
             //if size of received data is not 0 (no data received), push received data to circular buffer
             else if (bufferSizeReceived != 0) {
-                NES_DEBUG2("TCPSOURCE::fillBuffer: bytes send: {}", bufferSizeReceived << ".");
-                NES_DEBUG2("TCPSOURCE::fillBuffer: print current buffer: {}", messageBuffer << ".");
+                NES_DEBUG2("TCPSOURCE::fillBuffer: bytes send: {}.", bufferSizeReceived);
+                NES_DEBUG2("TCPSOURCE::fillBuffer: print current buffer: {}.", messageBuffer);
                 //push the received data into the circularBuffer
                 circularBuffer.push(messageBuffer, bufferSizeReceived);
             }

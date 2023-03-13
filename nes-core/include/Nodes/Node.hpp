@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_NODES_NODE_HPP_
 #define NES_CORE_INCLUDE_NODES_NODE_HPP_
 
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 #include <string>
 #include <vector>
