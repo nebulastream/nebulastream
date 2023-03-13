@@ -32,7 +32,7 @@
 #ifdef USE_FLOUNDER
 #include <Experimental/Flounder/FlounderPipelineCompilerBackend.hpp>
 #endif
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
@@ -189,7 +189,7 @@ TEST_P(YSBTest, ysbSelectionCampain) {
     /*
      *   campaing_id = 0
      */
-    auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
+    auto campaing_0 = std::make_shared<ConstantValueExpression>(0);
     auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
     auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
     auto selection = std::make_shared<Selection>(equalsExpression);
@@ -248,7 +248,7 @@ TEST_P(YSBTest, ysbTumblingWindow) {
     /*
      *   campaing_id = 0
      */
-    auto campaing_0 = std::make_shared<ConstantIntegerExpression>(0);
+    auto campaing_0 = std::make_shared<ConstantValueExpression>(0);
     auto readCampaignId = std::make_shared<ReadFieldExpression>("campaign_id");
     auto equalsExpression = std::make_shared<EqualsExpression>(readCampaignId, campaing_0);
     auto selection = std::make_shared<Selection>(equalsExpression);

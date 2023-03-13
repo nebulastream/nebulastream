@@ -102,55 +102,29 @@ class IntInvocationPlugin : public InvocationPlugin {
     };
 
     std::optional<Value<>> CastTo(const Value<>& inputValue, const TypeIdentifier* targetType) const override {
-        auto& intValue = static_cast<const Int&>(inputValue.getValue());
+        auto& intValue = inputValue->staticCast<Int>();
         if (targetType->isType<Int16>()) {
-            int16_t val = intValue.getRawInt();
+            auto val = (int16_t) intValue.getRawInt();
             return Value<>(std::make_unique<Int16>(val));
         } else if (targetType->isType<Int32>()) {
-            int32_t val = intValue.getRawInt();
+            auto val = (int32_t) intValue.getRawInt();
             return Value<>(std::make_unique<Int32>(val));
         } else if (targetType->isType<Int64>()) {
-            int64_t val = intValue.getRawInt();
+            auto val = (int64_t) intValue.getRawInt();
             return Value<>(std::make_unique<Int64>(val));
+        } else if (targetType->isType<UInt8>()) {
+            auto val = (uint8_t) intValue.getRawInt();
+            return Value<>(std::make_unique<UInt8>(val));
+        } else if (targetType->isType<UInt16>()) {
+            auto val = (uint16_t) intValue.getRawInt();
+            return Value<>(std::make_unique<UInt16>(val));
+        } else if (targetType->isType<UInt32>()) {
+            auto val = (uint32_t) intValue.getRawInt();
+            return Value<>(std::make_unique<UInt32>(val));
+        } else if (targetType->isType<UInt64>()) {
+            auto val = (uint64_t) intValue.getRawInt();
+            return Value<>(std::make_unique<UInt64>(val));
         }
-
-        /*
-        auto& leftValue = left.getValue();
-        auto inputStamp = TraceableType::asTraceableType(leftValue).getType();
-
-        if (!inputStamp->isInteger() || !stamp->isInteger()) {
-            // this method only performs int to int casts.
-            return std::nullopt;
-        }
-        auto sourceStamp = cast<IR::Types::IntegerStamp>(inputStamp);
-        auto targetStamp = cast<IR::Types::IntegerStamp>(stamp.get());
-
-        if (sourceStamp->getBitWidth() == IR::Types::IntegerStamp::I8) {
-            switch (targetStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I16: return performIntCast<Int8, Int16>(leftValue);
-                case IR::Types::IntegerStamp::I32: return performIntCast<Int8, Int32>(leftValue);
-                case IR::Types::IntegerStamp::I64: return performIntCast<Int8, Int64>(leftValue);
-                default: {
-                    NES_THROW_RUNTIME_ERROR("Invalid cast from " << sourceStamp->toString() << " to " << targetStamp->toString());
-                }
-            }
-        } else if (sourceStamp->getBitWidth() == IR::Types::IntegerStamp::I16) {
-            switch (targetStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I32: return performIntCast<Int16, Int32>(leftValue);
-                case IR::Types::IntegerStamp::I64: return performIntCast<Int16, Int64>(leftValue);
-                default: {
-                    NES_THROW_RUNTIME_ERROR("Invalid cast from " << sourceStamp->toString() << " to " << targetStamp->toString());
-                }
-            }
-        } else if (sourceStamp->getBitWidth() == IR::Types::IntegerStamp::I32) {
-            switch (targetStamp->getBitWidth()) {
-                case IR::Types::IntegerStamp::I64: return performIntCast<Int32, Int64>(leftValue);
-                default: {
-                    NES_THROW_RUNTIME_ERROR("Invalid cast from " << sourceStamp->toString() << " to " << targetStamp->toString());
-                }
-            }
-        }
-         */
         return std::nullopt;
     }
 

@@ -15,24 +15,36 @@
 #define NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <type_traits>
 
 namespace NES::Runtime::Execution::Expressions {
 
 /**
- * @brief This expression returns a specific constant integer value.
- * TODO #3062 add support for constant of different integer ranges.
+ * @brief This expression returns a specific constant values.
  */
 template<typename T>
+    requires std::is_integral_v<T> || std::is_floating_point_v<T>
 class ConstantValueExpression : public Expression {
   public:
-    ConstantValueExpression(T value);
+    explicit ConstantValueExpression(T value);
     Value<> execute(Record& record) const override;
 
   private:
     const T value;
 };
 
+using ConstantInt8ValueExpression = ConstantValueExpression<int8_t>;
+using ConstantInt16ValueExpression = ConstantValueExpression<int16_t>;
+using ConstantInt32ValueExpression = ConstantValueExpression<int32_t>;
+using ConstantInt64ValueExpression = ConstantValueExpression<int64_t>;
+using ConstantUInt8ValueExpression = ConstantValueExpression<uint8_t>;
+using ConstantUInt16ValueExpression = ConstantValueExpression<uint16_t>;
+using ConstantUInt32ValueExpression = ConstantValueExpression<uint32_t>;
+using ConstantUInt64ValueExpression = ConstantValueExpression<uint64_t>;
+using ConstantFloatValueExpression = ConstantValueExpression<float>;
+using ConstantDoubleValueExpression = ConstantValueExpression<double>;
+using ConstantBooleanValueExpression = ConstantValueExpression<bool>;
+
 }// namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTINTEGER32EXPRESSION_HPP_
+#endif// NES_RUNTIME_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTEXPRESSION_HPP_
