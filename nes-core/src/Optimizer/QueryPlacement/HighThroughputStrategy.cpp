@@ -50,7 +50,7 @@ HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery,
     const vector<NESTopologyEntryPtr> sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodes.empty()) {
-        NES_ERROR2("HighThroughput: Unable to find the target source:  {}", sourceName);
+        NES_ERROR2("HighThroughput: Unable to find the target source: {}", sourceName);
         throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 

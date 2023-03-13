@@ -683,7 +683,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
                                                                      const OperatorNodePtr& operatorNode,
                                                                      const ExecutionNodePtr& executionNode) {
 
-    NES_DEBUG2("BasePlacementStrategy: Get candidate query plan for the operator {} on execution node with id{}",
+    NES_DEBUG2("BasePlacementStrategy: Get candidate query plan for the operator {} on execution node with id {}",
                operatorNode->toString(),
                executionNode->getId());
 

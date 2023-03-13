@@ -175,7 +175,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId queryId,
             }
         }
     }
-    NES_DEBUG2("cost_net:  {}", cost_net.to_string());
+    NES_DEBUG2("cost_net: {}", cost_net.to_string());
 
     // 4. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
