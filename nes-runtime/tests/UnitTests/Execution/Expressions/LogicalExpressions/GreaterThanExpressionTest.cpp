@@ -35,7 +35,7 @@ class GreaterThanExpressionTest : public Testing::NESBaseTest {
 TEST_F(GreaterThanExpressionTest, signedIntegers) {
     auto expression = BinaryExpressionWrapper<GreaterThanExpression>();
 
-// equal values
+    // equal values
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) 42));
@@ -61,7 +61,7 @@ TEST_F(GreaterThanExpressionTest, signedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
-// positive case
+    // positive case
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) -4));
@@ -87,7 +87,7 @@ TEST_F(GreaterThanExpressionTest, signedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
-// negative case
+    // negative case
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) -2), Value<Int8>((int8_t) 4));
@@ -132,7 +132,7 @@ TEST_F(GreaterThanExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)42), Value<UInt32>((uint32_t)42));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 42));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -158,7 +158,7 @@ TEST_F(GreaterThanExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)42), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 4));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -184,7 +184,7 @@ TEST_F(GreaterThanExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)2), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 2), Value<UInt32>((uint32_t) 4));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -195,7 +195,6 @@ TEST_F(GreaterThanExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-
 
 TEST_F(GreaterThanExpressionTest, FloatingPoints) {
     auto expression = BinaryExpressionWrapper<GreaterThanExpression>();
@@ -232,18 +231,17 @@ TEST_F(GreaterThanExpressionTest, FloatingPoints) {
     // negative case
     // float
     {
-        auto resultValue = expression.eval(Value<Float>((float)  1.8), Value<Float>((float) 2.3));
+        auto resultValue = expression.eval(Value<Float>((float) 1.8), Value<Float>((float) 2.3));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // double
     {
-        auto resultValue = expression.eval(Value<Double>((double)  1.8), Value<Double>((double) 2.3));
+        auto resultValue = expression.eval(Value<Double>((double) 1.8), Value<Double>((double) 2.3));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-
 
 }// namespace NES::Runtime::Execution::Expressions
