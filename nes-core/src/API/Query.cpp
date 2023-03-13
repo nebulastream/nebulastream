@@ -247,7 +247,7 @@ Query& Query::as(const std::string& newSourceName) {
 
 Query& Query::unionWith(const Query& subQuery) {
     NES_DEBUG2("Query: unionWith the subQuery to current query");
-    this->queryPlan = QueryPlanBuilder::addUnionOperator(this->queryPlan, subQuery.getQueryPlan());
+    this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQuery.getQueryPlan());
     return *this;
 }
 
@@ -256,8 +256,8 @@ Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (INNER_JOIN) to Join Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::INNER_JOIN;
-    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
                                                         onRightKey,
@@ -268,7 +268,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
 Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
     NES_DEBUG2("Query: add Batch Join Operator to Query");
-    this->queryPlan = QueryPlanBuilder::addBatchJoinOperator(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
+    this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
     return *this;
 }
 
@@ -277,8 +277,8 @@ Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
-    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
                                                         onRightKey,
@@ -292,8 +292,8 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG2("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT;
-    this->queryPlan = QueryPlanBuilder::addJoinOperator(this->queryPlan,
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan,
                                                         subQueryRhs.getQueryPlan(),
                                                         onLeftKey,
                                                         onRightKey,
@@ -304,13 +304,19 @@ Query& Query::seqWith(const Query& subQueryRhs,
 
 Query& Query::orWith(const Query& subQueryRhs) {
     NES_DEBUG2("Query: finally we translate the OR into a union OP ");
-    this->queryPlan = QueryPlanBuilder::addUnionOperator(this->queryPlan, subQueryRhs.getQueryPlan());
+    this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQueryRhs.getQueryPlan());
     return *this;
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     NES_DEBUG2("Query: add filter operator to query");
     this->queryPlan = QueryPlanBuilder::addFilter(filterExpression, this->queryPlan);
+    return *this;
+}
+
+Query& Query::mapJavaUdf(const Catalogs::UDF::JavaUdfDescriptorPtr descriptor) {
+    NES_DEBUG2("Query: add map operator to query");
+    this->queryPlan = QueryPlanBuilder::addMapJavaUdf(descriptor, this->queryPlan);
     return *this;
 }
 

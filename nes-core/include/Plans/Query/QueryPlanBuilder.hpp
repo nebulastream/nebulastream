@@ -71,12 +71,20 @@ class QueryPlanBuilder {
     static NES::QueryPlanPtr addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan);
 
     /**
+     * @brief: Map java udf according to the java method given in the descriptor.
+     * @param descriptor as java udf descriptor
+     * @param queryPlan the queryPlan the map is added to
+     * @return the updated queryPlanPtr
+     */
+    static NES::QueryPlanPtr addMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan);
+
+    /**
     * @brief UnionOperator to combine two query plans
     * @param leftQueryPlan the left query plan to combine by the union
     * @param rightQueryPlan the right query plan to combine by the union
     * @return the updated queryPlan combining left and rightQueryPlan with union
     */
-    static NES::QueryPlanPtr addUnionOperator(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan);
+    static NES::QueryPlanPtr addUnion(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan);
 
     /**
      * @brief This methods add the join operator to a query
@@ -88,7 +96,7 @@ class QueryPlanBuilder {
      * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addJoinOperator(NES::QueryPlanPtr leftQueryPlan,
+    static NES::QueryPlanPtr addJoin(NES::QueryPlanPtr leftQueryPlan,
                                              NES::QueryPlanPtr rightQueryPlan,
                                              NES::ExpressionItem onLeftKey,
                                              NES::ExpressionItem onRightKey,
@@ -104,7 +112,7 @@ class QueryPlanBuilder {
      * @param onBuildKey key attribute of the right source
      * @return the updated queryPlan
      */
-    static NES::QueryPlanPtr addBatchJoinOperator(NES::QueryPlanPtr leftQueryPlan,
+    static NES::QueryPlanPtr addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
                                                   NES::QueryPlanPtr rightQueryPlan,
                                                   NES::ExpressionItem onProbeKey,
                                                   NES::ExpressionItem onBuildKey);
