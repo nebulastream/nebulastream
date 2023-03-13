@@ -146,7 +146,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_DEBUG2("LogicalSourceExpansionRule: Plan after\n {}", queryPlan->toString());
+    NES_DEBUG2("LogicalSourceExpansionRule: Plan after\n{}", queryPlan->toString());
     return queryPlan;
 }
 

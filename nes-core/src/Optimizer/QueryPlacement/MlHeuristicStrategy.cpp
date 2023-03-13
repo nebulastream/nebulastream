@@ -129,7 +129,7 @@ void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
         }
         executionNode->updateQuerySubPlans(queryId, querysubplans);
     }
-    NES_DEBUG2("MlHeuristicStrategy: Updated Global Execution Plan:\n {}", globalExecutionPlan->getAsString());
+    NES_DEBUG2("MlHeuristicStrategy: Updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
