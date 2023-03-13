@@ -814,7 +814,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunn
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdWindowFileOutputKTMUseCase) {
     NES_INFO(" start coordinator");
-    std::string testFile = "ktm-results.csv";
+    std::string testFile = getTestResourceFolder() / "ktm-results.csv";
+    NES_INFO("testFile = " << testFile);
     remove(testFile.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
