@@ -35,7 +35,7 @@ class EqualsExpressionTest : public Testing::NESBaseTest {
 TEST_F(EqualsExpressionTest, signedIntegers) {
     auto expression = BinaryExpressionWrapper<EqualsExpression>();
 
-// equal values
+    // equal values
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) 42));
@@ -61,7 +61,7 @@ TEST_F(EqualsExpressionTest, signedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
-// larger case
+    // larger case
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) 42), Value<Int8>((int8_t) -4));
@@ -87,7 +87,7 @@ TEST_F(EqualsExpressionTest, signedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
-// smaller case
+    // smaller case
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t) -2), Value<Int8>((int8_t) 4));
@@ -132,7 +132,7 @@ TEST_F(EqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)42), Value<UInt32>((uint32_t)42));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 42));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -158,7 +158,7 @@ TEST_F(EqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)42), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 42), Value<UInt32>((uint32_t) 4));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -184,7 +184,7 @@ TEST_F(EqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }// Int32
     {
-        auto resultValue = expression.eval(Value<UInt32>((uint32_t)2), Value<UInt32>((uint32_t) 4));
+        auto resultValue = expression.eval(Value<UInt32>((uint32_t) 2), Value<UInt32>((uint32_t) 4));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -195,7 +195,6 @@ TEST_F(EqualsExpressionTest, UnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-
 
 TEST_F(EqualsExpressionTest, FloatingPoints) {
     auto expression = BinaryExpressionWrapper<EqualsExpression>();
@@ -232,18 +231,17 @@ TEST_F(EqualsExpressionTest, FloatingPoints) {
     // smaller case
     // float
     {
-        auto resultValue = expression.eval(Value<Float>((float)  1.8), Value<Float>((float) 2.3));
+        auto resultValue = expression.eval(Value<Float>((float) 1.8), Value<Float>((float) 2.3));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 
     // double
     {
-        auto resultValue = expression.eval(Value<Double>((double)  1.8), Value<Double>((double) 2.3));
+        auto resultValue = expression.eval(Value<Double>((double) 1.8), Value<Double>((double) 2.3));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-
 
 }// namespace NES::Runtime::Execution::Expressions
