@@ -48,10 +48,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     };
     template<class SinkType>
     bool instanceOf() {
-        if (dynamic_cast<SinkType*>(this)) {
-            return true;
-        };
-        return false;
+        return const_cast<const SinkDescriptor*>(this)->instanceOf<const SinkType>();
     };
 
     /**
@@ -86,10 +83,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     }
     template<class SinkType>
     std::shared_ptr<SinkType> as() {
-        if (instanceOf<SinkType>()) {
-            return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-        }
-        throw std::bad_cast();
+        return std::const_pointer_cast<SinkType>(const_cast<const SinkDescriptor*>(this)->as<const SinkType>());
     }
 
     virtual std::string toString() const = 0;
