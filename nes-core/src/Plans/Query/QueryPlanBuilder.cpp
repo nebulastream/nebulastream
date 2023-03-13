@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -69,6 +70,13 @@ QueryPlanPtr QueryPlanBuilder::addFilter(NES::ExpressionNodePtr const& filterExp
     return queryPlan;
 }
 
+NES::QueryPlanPtr QueryPlanBuilder::addMapJavaUdf(Catalogs::UDF::JavaUdfDescriptorPtr const& descriptor, NES::QueryPlanPtr queryPlan) {
+    NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
+    auto op = LogicalOperatorFactory::createMapJavaUdfLogicalOperator(descriptor);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr const& mapExpression, NES::QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add map operator to query plan");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
@@ -79,14 +87,14 @@ QueryPlanPtr QueryPlanBuilder::addMap(NES::FieldAssignmentExpressionNodePtr cons
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addUnionOperator(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan) {
+QueryPlanPtr QueryPlanBuilder::addUnion(NES::QueryPlanPtr leftQueryPlan, NES::QueryPlanPtr rightQueryPlan) {
     NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query plan");
     OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addJoinOperator(NES::QueryPlanPtr leftQueryPlan,
+QueryPlanPtr QueryPlanBuilder::addJoin(NES::QueryPlanPtr leftQueryPlan,
                                                NES::QueryPlanPtr rightQueryPlan,
                                                ExpressionItem onLeftKey,
                                                ExpressionItem onRightKey,
@@ -134,7 +142,7 @@ QueryPlanPtr QueryPlanBuilder::addJoinOperator(NES::QueryPlanPtr leftQueryPlan,
     return leftQueryPlan;
 }
 
-NES::QueryPlanPtr QueryPlanBuilder::addBatchJoinOperator(NES::QueryPlanPtr leftQueryPlan,
+NES::QueryPlanPtr QueryPlanBuilder::addBatchJoin(NES::QueryPlanPtr leftQueryPlan,
                                                          NES::QueryPlanPtr rightQueryPlan,
                                                          ExpressionItem onProbeKey,
                                                          ExpressionItem onBuildKey) {
