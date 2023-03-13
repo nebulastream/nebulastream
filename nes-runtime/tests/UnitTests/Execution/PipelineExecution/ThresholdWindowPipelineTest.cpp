@@ -20,7 +20,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -88,7 +88,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithSum) {
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Sum";
 
@@ -167,7 +167,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithCount) {
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Count";
 
@@ -247,7 +247,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMin) {
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Min";
 
@@ -326,7 +326,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithMax) {
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Max";
 
@@ -405,7 +405,7 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto one = std::make_shared<Expressions::ConstantIntegerExpression>(1);
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
     auto aggregationResultFieldName = "test$Avg";
 

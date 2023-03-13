@@ -15,9 +15,11 @@
 namespace NES::Runtime::Execution::Expressions {
 
 template<typename T>
+    requires std::is_integral_v<T> || std::is_floating_point_v<T>
 ConstantValueExpression<T>::ConstantValueExpression(T value) : value(value) {}
 
 template<typename T>
+    requires std::is_integral_v<T> || std::is_floating_point_v<T>
 Value<> ConstantValueExpression<T>::execute(Record&) const {
     return Value<>(value);
 }
@@ -31,6 +33,7 @@ template class ConstantValueExpression<uint16_t>;
 template class ConstantValueExpression<uint32_t>;
 template class ConstantValueExpression<uint64_t>;
 template class ConstantValueExpression<float>;
+template class ConstantValueExpression<bool>;
 template class ConstantValueExpression<double>;
 
 }// namespace NES::Runtime::Execution::Expressions

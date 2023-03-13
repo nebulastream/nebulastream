@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -76,7 +76,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantIntegerExpression>(5);
+    auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);

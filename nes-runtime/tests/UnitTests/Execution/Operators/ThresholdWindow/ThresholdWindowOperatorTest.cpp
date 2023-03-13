@@ -18,7 +18,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -59,7 +59,7 @@ class ThresholdWindowOperatorTest : public Testing::NESBaseTest {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
     // Attribute(f1) > 42, sum(f2)
 
@@ -114,7 +114,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
     // Attribute(f1) > 42, sum(f2)
 
@@ -167,7 +167,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue) {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
     // Attribute(f1) > 42, sum(f2)
 
@@ -216,7 +216,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse) 
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Min";
@@ -270,7 +270,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Max";
@@ -324,7 +324,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Avg";
@@ -378,7 +378,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
 TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Count";
@@ -435,7 +435,7 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readF3 = std::make_shared<Expressions::ReadFieldExpression>("f3");
     auto readF4 = std::make_shared<Expressions::ReadFieldExpression>("f4");
-    auto fortyTwo = std::make_shared<Expressions::ConstantIntegerExpression>(42);
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
     // Attribute(f1) > 42, sum(f2)
 
