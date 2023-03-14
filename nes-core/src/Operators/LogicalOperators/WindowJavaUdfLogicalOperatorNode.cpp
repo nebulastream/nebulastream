@@ -17,26 +17,31 @@
 
 
 namespace NES {
-    WindowJavaUdfLogicalOperatorNode::WindowJavaUdfLogicalOperatorNode(
-            const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-            const Windowing::WindowTypePtr windowType,
-            const Windowing::DistributionCharacteristicPtr distributionType,
-            const std::vector<FieldAccessExpressionNodePtr> onKey,
-            const uint64_t allowedLateness, const OriginId originId, const OperatorId id)
-            : OperatorNode(id), JavaUdfLogicalOperator(javaUdfDescriptor, id), windowType(windowType),
-            distributionType(distributionType), onKey(onKey), allowedLateness(allowedLateness), originId(originId) {}
+WindowJavaUdfLogicalOperatorNode::WindowJavaUdfLogicalOperatorNode(
+        const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
+        const Windowing::WindowTypePtr windowType,
+        const Windowing::DistributionCharacteristicPtr distributionType,
+        const std::vector<FieldAccessExpressionNodePtr> onKey,
+        const uint64_t allowedLateness, const OriginId originId, const OperatorId id)
+        : OperatorNode(id), JavaUdfLogicalOperator(javaUdfDescriptor, id), windowType(windowType),
+        distributionType(distributionType), onKey(onKey), allowedLateness(allowedLateness), originId(originId) {}
 
-    std::string WindowJavaUdfLogicalOperatorNode::toString() const {
-        std::stringstream ss;
-        ss << "WINDOW_JAVA_UDF(" << id << ")";
-        return ss.str();
-    }
+std::string WindowJavaUdfLogicalOperatorNode::toString() const {
+    std::stringstream ss;
+    ss << "WINDOW_JAVA_UDF(" << id << ")";
+    return ss.str();
+}
 
-    OperatorNodePtr WindowJavaUdfLogicalOperatorNode::copy() {
-        auto copy = std::make_shared<WindowJavaUdfLogicalOperatorNode>(this->getJavaUdfDescriptor(),
-                                                                       this->getWindowType(), this->getDistributionType(),
-                                                                       this->getKeys(), this->getAllowedLateness(),
-                                                                       this->getOriginId(), id);
+OperatorNodePtr WindowJavaUdfLogicalOperatorNode::copy() {
+    auto copy = std::make_shared<WindowJavaUdfLogicalOperatorNode>(this->getJavaUdfDescriptor(),
+                                                                   this->getWindowType(), this->getDistributionType(),
+                                                                   this->getKeys(), this->getAllowedLateness(),
+                                                                   this->getOriginId(), id);
+    return copyInternal(copy);
+}
+
+OperatorNodePtr WindowJavaUdfLogicalOperatorNode::copyInternal(
+        std::shared_ptr<WindowJavaUdfLogicalOperatorNode>& copy) {
         copy->setInputOriginIds(inputOriginIds);
         copy->setInputSchema(inputSchema);
         copy->setOutputSchema(outputSchema);
@@ -49,24 +54,23 @@ namespace NES {
     }
 
     bool WindowJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
-        // Explicit check here, so the cast using as throws no exception.
-        return other->instanceOf<WindowJavaUdfLogicalOperatorNode>() && JavaUdfLogicalOperator::equal(other);
-    }
+    return other->instanceOf<WindowJavaUdfLogicalOperatorNode>() && JavaUdfLogicalOperator::equal(other);
+}
 
-    bool WindowJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
-        return equal(other) && id == other->as<WindowJavaUdfLogicalOperatorNode>()->id;
-    }
+bool WindowJavaUdfLogicalOperatorNode::isIdentical(const NodePtr& other) const {
+    return equal(other) && id == other->as<WindowJavaUdfLogicalOperatorNode>()->id;
+}
 
-    Windowing::WindowTypePtr WindowJavaUdfLogicalOperatorNode::getWindowType() const { return windowType; }
+Windowing::WindowTypePtr WindowJavaUdfLogicalOperatorNode::getWindowType() const { return windowType; }
 
-    Windowing::DistributionCharacteristicPtr
-    WindowJavaUdfLogicalOperatorNode::getDistributionType() const { return distributionType; }
+Windowing::DistributionCharacteristicPtr
+WindowJavaUdfLogicalOperatorNode::getDistributionType() const { return distributionType; }
 
-    std::vector<FieldAccessExpressionNodePtr> WindowJavaUdfLogicalOperatorNode::getKeys() const { return onKey; }
+const std::vector<FieldAccessExpressionNodePtr>& WindowJavaUdfLogicalOperatorNode::getKeys() const { return onKey; }
 
-    uint64_t WindowJavaUdfLogicalOperatorNode::getAllowedLateness() const { return allowedLateness; }
+uint64_t WindowJavaUdfLogicalOperatorNode::getAllowedLateness() const { return allowedLateness; }
 
-    OriginId WindowJavaUdfLogicalOperatorNode::getOriginId() const { return originId; }
+OriginId WindowJavaUdfLogicalOperatorNode::getOriginId() const { return originId; }
 
-    bool WindowJavaUdfLogicalOperatorNode::isKeyed() const { return !onKey.empty(); }
+bool WindowJavaUdfLogicalOperatorNode::isKeyed() const { return !onKey.empty(); }
 } // namespace NES

@@ -45,7 +45,6 @@ OperatorNodePtr MapJavaUdfLogicalOperatorNode::copy() {
 }
 
 bool MapJavaUdfLogicalOperatorNode::equal(const NodePtr& other) const {
-    // Explicit check here, so the cast using as throws no exception.
     return other->instanceOf<MapJavaUdfLogicalOperatorNode>() && JavaUdfLogicalOperator::equal(other);
 }
 

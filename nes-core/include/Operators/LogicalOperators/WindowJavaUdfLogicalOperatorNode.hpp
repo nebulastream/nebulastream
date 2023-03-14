@@ -81,7 +81,7 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
      * @brief getter of all keys of this window
      * @return Vector of all key
      */
-    std::vector<FieldAccessExpressionNodePtr> getKeys() const;
+    const std::vector<FieldAccessExpressionNodePtr>& getKeys() const;
 
     /**
      * @brief getter of allowed lateness
@@ -102,10 +102,13 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
     bool isKeyed() const;
 
 private:
+    OperatorNodePtr copyInternal(std::shared_ptr<WindowJavaUdfLogicalOperatorNode>& copy);
+
     Windowing::WindowTypePtr windowType;
     Windowing::DistributionCharacteristicPtr distributionType;
     std::vector<FieldAccessExpressionNodePtr> onKey;
     uint64_t allowedLateness;
+
     OriginId originId;
 };
 

@@ -206,7 +206,7 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
+const std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() const {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
