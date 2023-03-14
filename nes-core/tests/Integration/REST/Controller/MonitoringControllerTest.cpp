@@ -328,7 +328,7 @@ TEST_F(MonitoringControllerTest, testGetMonitoringControllerStreams) {
     nlohmann::json jsons;
     ASSERT_NO_THROW(jsons = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from Get-Streams request: " << jsons);
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network_default", "wrapped_cpu_default", "memory_default", "disk_default"};
     bool check = MetricValidator::checkEntriesOfStream(expectedMonitoringStreams, jsons);
     ASSERT_TRUE(check);
     ASSERT_TRUE(waitForMonitoringQuery(coordinator, coordinatorConfig->restPort.getValue(), 5));
