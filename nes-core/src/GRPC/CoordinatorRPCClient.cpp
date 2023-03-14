@@ -26,6 +26,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <API/Schema.hpp>
 
 namespace NES {
 

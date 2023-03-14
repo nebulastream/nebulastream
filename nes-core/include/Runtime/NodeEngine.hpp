@@ -52,6 +52,9 @@ using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
 
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
+
+class MonitoringAgent;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 }//namespace Monitoring
 
 namespace Runtime {
