@@ -46,7 +46,7 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-    std::vector<OriginId> getOutputOriginIds() const override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;

@@ -441,9 +441,8 @@ namespace NES {
         return operatorNode;
     }
 
-    SerializableOperator_SourceDetails
-    OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNode& sourceOperator,
-                                                       bool isClientOriginated) {
+    SerializableOperator_SourceDetails OperatorSerializationUtil::serializeSourceOperator(
+            const SourceLogicalOperatorNode& sourceOperator, bool isClientOriginated) {
 
         auto sourceDetails = SerializableOperator_SourceDetails();
         auto sourceDescriptor = sourceOperator.getSourceDescriptor();
@@ -453,8 +452,8 @@ namespace NES {
         return sourceDetails;
     }
 
-    LogicalUnaryOperatorNodePtr
-    OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails) {
+    LogicalUnaryOperatorNodePtr OperatorSerializationUtil::deserializeSourceOperator(
+            const SerializableOperator_SourceDetails& sourceDetails) {
         auto sourceDescriptor = deserializeSourceDescriptor(sourceDetails);
         return LogicalOperatorFactory::createSourceOperator(sourceDescriptor, Util::getNextOperatorId(),
                                                             sourceDetails.sourceoriginid());
@@ -747,20 +746,20 @@ namespace NES {
         } else if (serializedWindowType.Is<SerializableOperator_SlidingWindow>()) {
             auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
             serializedWindowType.UnpackTo(&serializedSlidingWindow);
-            auto serializedTimeCharacterisitc = serializedSlidingWindow.timecharacteristic();
-            if (serializedTimeCharacterisitc.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
-                auto field = Attribute(serializedTimeCharacterisitc.field());
+            auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
+            if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
+                auto field = Attribute(serializedTimeCharacteristic.field());
                 window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createEventTime(field),
                                                       Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                       Windowing::TimeMeasure(serializedSlidingWindow.slide()));
-            } else if (serializedTimeCharacterisitc.type()
+            } else if (serializedTimeCharacteristic.type()
                        == SerializableOperator_TimeCharacteristic_Type_IngestionTime) {
                 window = Windowing::SlidingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
                                                       Windowing::TimeMeasure(serializedSlidingWindow.size()),
                                                       Windowing::TimeMeasure(serializedSlidingWindow.slide()));
             } else {
                 NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window time characteristic: "
-                                        << serializedTimeCharacterisitc.DebugString());
+                                        << serializedTimeCharacteristic.DebugString());
             }
         } else if (serializedWindowType.Is<SerializableOperator_ThresholdWindow>()) {
             auto serializedThresholdWindow = SerializableOperator_ThresholdWindow();

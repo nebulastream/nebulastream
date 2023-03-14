@@ -82,13 +82,13 @@ class UnaryOperatorNode : public virtual OperatorNode {
      * @brief Gets the input origin ids  from the input stream
      * @return std::vector<OriginId>
      */
-    std::vector<OriginId> getInputOriginIds() const;
+    const std::vector<OriginId> getInputOriginIds() const;
 
     /**
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    virtual std::vector<OriginId> getOutputOriginIds() const override;
+    virtual const std::vector<OriginId> getOutputOriginIds() const override;
 
   protected:
     SchemaPtr inputSchema;

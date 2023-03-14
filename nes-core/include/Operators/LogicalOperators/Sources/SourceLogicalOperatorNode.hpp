@@ -55,7 +55,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public Origin
     OperatorNodePtr copy() override;
     void setProjectSchema(SchemaPtr schema);
     void inferInputOrigins() override;
-    std::vector<OriginId> getOutputOriginIds() const override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

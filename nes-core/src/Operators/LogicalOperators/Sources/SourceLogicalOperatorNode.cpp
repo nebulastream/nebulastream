@@ -86,6 +86,6 @@ void SourceLogicalOperatorNode::inferInputOrigins() {
     // Data sources have no input origins.
 }
 
-std::vector<OriginId> SourceLogicalOperatorNode::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+const std::vector<OriginId> SourceLogicalOperatorNode::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
 
 }// namespace NES

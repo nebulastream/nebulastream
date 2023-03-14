@@ -41,14 +41,10 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     */
     template<class SinkType>
     bool instanceOf() const {
-        if (dynamic_cast<SinkType*>(this)) {
+        if (dynamic_cast<const SinkType*>(this)) {
             return true;
         };
         return false;
-    };
-    template<class SinkType>
-    bool instanceOf() {
-        return const_cast<const SinkDescriptor*>(this)->instanceOf<const SinkType>();
     };
 
     /**

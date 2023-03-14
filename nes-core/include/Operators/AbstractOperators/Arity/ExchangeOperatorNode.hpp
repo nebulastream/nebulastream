@@ -76,7 +76,7 @@ class ExchangeOperatorNode : public virtual OperatorNode {
      * @brief Gets the output origin ids from this operator
      * @return std::vector<OriginId>
      */
-    std::vector<OriginId> getOutputOriginIds() const override;
+    const std::vector<OriginId> getOutputOriginIds() const override;
 
   protected:
     SchemaPtr inputSchema;

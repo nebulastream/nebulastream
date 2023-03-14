@@ -826,11 +826,8 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessEx
     NES_TRACE2("ExpressionSerializationUtil:: de-serialize SerializableExpression_GeographyFieldsAccessExpression"
                "serialized expression to GeographyFieldsAccessExpressionNode");
 
-    auto latitude = serializedExpression.latitude();
-    auto longitude = serializedExpression.longitude();
-
-    auto latitudeExpression = FieldAccessExpressionNode::create(latitude.fieldname());
-    auto longitudeExpression = FieldAccessExpressionNode::create(longitude.fieldname());
+    auto latitudeExpression = FieldAccessExpressionNode::create(serializedExpression.latitude().fieldname());
+    auto longitudeExpression = FieldAccessExpressionNode::create(serializedExpression.longitude().fieldname());
 
     auto latitudeFieldAccessExpression = latitudeExpression->as<FieldAccessExpressionNode>();
     auto longitudeFieldAccessExpression = longitudeExpression->as<FieldAccessExpressionNode>();

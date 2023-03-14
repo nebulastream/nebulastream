@@ -62,11 +62,9 @@ public:
     virtual OperatorNodePtr copy() override = 0;
 
     /**
-     * @see Node#equal
-     *
      * Two MapUdfLogicalOperatorNode are equal when the wrapped JavaUdfDescriptor are equal.
      */
-    [[nodiscard]] bool equal(const NodePtr& other) const override;
+    [[nodiscard]] virtual bool equal(const NodePtr& other) const override;
 
     /**
      * @see Node#isIdentical

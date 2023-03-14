@@ -669,10 +669,27 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
                                                            triggerPolicy,
                                                            triggerAction,
                                                            0);
-        auto thresholdWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
+        auto tumblingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        EXPECT_TRUE(thresholdWindow->equal(deserializedOperator));
+        EXPECT_TRUE(tumblingWindow->equal(deserializedOperator));
+    }
+
+    {
+        auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("ts")), Seconds(10), Hours(200));
+        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
+        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+        auto windowDefinition =
+                Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                           windowType,
+                                                           Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                           triggerPolicy,
+                                                           triggerAction,
+                                                           0);
+        auto slidingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(slidingWindow->equal(deserializedOperator));
     }
 
     // threshold window operator

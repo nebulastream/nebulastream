@@ -93,7 +93,7 @@ namespace NES {
         }
 
         // set the derived input schema
-        // TODO: check if this corresponds to the schema of the parent operator
+        // TODO: check if this corresponds to the schema of the parent operator #3481
         javaUdfDescriptor->setInputSchema(inputSchema);
         return true;
     }
@@ -103,7 +103,6 @@ namespace NES {
     }
 
     bool JavaUdfLogicalOperator::equal(const NodePtr &other) const {
-        // Explicit check here, so the cast using as throws no exception.
         return other->instanceOf<JavaUdfLogicalOperator>() &&
                 *javaUdfDescriptor == *other->as<JavaUdfLogicalOperator>()->javaUdfDescriptor;
     }

@@ -59,7 +59,7 @@ std::vector<OriginId> BinaryOperatorNode::getRightInputOriginIds() { return righ
 
 void BinaryOperatorNode::setRightInputOriginIds(std::vector<OriginId> originIds) { this->rightInputOriginIds = originIds; }
 
-std::vector<OriginId> BinaryOperatorNode::getOutputOriginIds() const {
+const std::vector<OriginId> BinaryOperatorNode::getOutputOriginIds() const {
     std::vector<uint64_t> outputOriginIds = leftInputOriginIds;
     outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return outputOriginIds;

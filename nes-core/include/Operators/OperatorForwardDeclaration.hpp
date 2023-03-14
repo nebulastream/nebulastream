@@ -67,15 +67,6 @@ class JavaUdfDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 }// namespace Catalogs::UDF
 
-class MapJavaUdfLogicalOperatorNode;
-using MapJavaUdfLogicalOperatorNodePtr = std::shared_ptr<MapJavaUdfLogicalOperatorNode>;
-
-class WindowJavaUdfLogicalOperatorNode;
-using WindowJavaUdfLogicalOperatorNodePtr = std::shared_ptr<WindowJavaUdfLogicalOperatorNode>;
-
-class IterationLogicalOperatorNode;
-using IterationLogicalOperatorNodePtr = std::shared_ptr<IterationLogicalOperatorNode>;
-
 namespace InferModel {
 class InferModelLogicalOperatorNode;
 using InferModelLogicalOperatorNodePtr = std::shared_ptr<InferModelLogicalOperatorNode>;
