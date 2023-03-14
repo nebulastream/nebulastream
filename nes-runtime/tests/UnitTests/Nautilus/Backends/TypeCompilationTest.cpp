@@ -378,24 +378,70 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
     }
     {
         auto engine = compileCast(i16, ui64);
-        auto function = engine->getInvocableMember<int16_t, uint64_t, uint64_t>("execute");
+        auto function = engine->getInvocableMember<uint64_t, int16_t, uint64_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
     {
         auto engine = compileCast(i32, ui32);
-        auto function = engine->getInvocableMember<int32_t, uint32_t, uint32_t>("execute");
+        auto function = engine->getInvocableMember<uint32_t, int32_t, uint32_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
     {
         auto engine = compileCast(i32, i64);
-        auto function = engine->getInvocableMember<int32_t, int64_t, int64_t>("execute");
+        auto function = engine->getInvocableMember<int64_t, int32_t, int64_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
     {
         auto engine = compileCast(i64, ui64);
-        auto function = engine->getInvocableMember<int64_t, uint64_t, uint64_t>("execute");
+        auto function = engine->getInvocableMember<uint64_t, int64_t, uint64_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
+}
+
+TEST_P(TypeCompilationTest, castFloat) {
+    auto i16 = Value<Int16>((int16_t) 42);
+    auto i32 = Value<Int32>((int32_t) 42);
+    auto i64 = Value<Int64>((int64_t) 42);
+    auto floatV = Value<Float>(1.0f);
+    auto doubleV = Value<Double>(1.0);
+
+    {
+        auto engine = compileCast(floatV, doubleV);
+        auto function = engine->getInvocableMember<double, float, double>("execute");
+        auto res = function(42.f, 42.0);
+        ASSERT_EQ(res, 84.0);
+    }
+    {
+        auto engine = compileCast(i16, floatV);
+        auto function = engine->getInvocableMember<float, int16_t, float>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, doubleV);
+        auto function = engine->getInvocableMember<double, int16_t , double>("execute");
+        ASSERT_EQ(function(42, 42.f), 84.f);
+    }
+    {
+        auto engine = compileCast(i32, floatV);
+        auto function = engine->getInvocableMember<float, int32_t, float>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i32, doubleV);
+        auto function = engine->getInvocableMember<double, int32_t , double>("execute");
+        ASSERT_EQ(function(42, 42.f), 84.f);
+    }
+    {
+        auto engine = compileCast(i64, floatV);
+        auto function = engine->getInvocableMember<float, int64_t , float>("execute");
+        ASSERT_EQ(function(42, 42.f), 84.f);
+    }
+    {
+        auto engine = compileCast(i64, doubleV);
+        auto function = engine->getInvocableMember<double, int64_t , double>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+
 }
 
 // Tests all registered compilation backends.
