@@ -192,6 +192,70 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
         checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedSinkBuffer.getBuffer(), joinSchema->getSchemaSizeInBytes()));
 }
 
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("test1$f1_left", BasicType::UINT64)
+                                ->addField("test1$f2_left", BasicType::UINT64)
+                                ->addField("test1$timestamp", BasicType::UINT64)
+                                ->addField("test1$fieldForSum1", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("test2$f1_right", BasicType::UINT64)
+                                 ->addField("test2$f2_right", BasicType::UINT64)
+                                 ->addField("test2$timestamp", BasicType::UINT64)
+                                 ->addField("test2$fieldForSum2", BasicType::UINT64);
+
+    const auto joinFieldNameLeft = "test1$f2_left";
+    const auto joinFieldNameRight = "test2$f2_right";
+    const auto timeStampField = "timestamp";
+
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
+
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 20UL;
+    const std::string fileNameBuffersLeft("stream_join_left_withSum.csv");
+    const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
+
+    auto bufferManager = executionEngine->getBufferManager();
+    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftSchema), leftSchema, bufferManager);
+    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightSchema), rightSchema, bufferManager);
+
+    auto testSink = executionEngine->createDataSink(joinSchema);
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto testSourceDescriptorLeft = executionEngine->createDataSource(leftSchema);
+    auto testSourceDescriptorRight = executionEngine->createDataSource(rightSchema);
+
+    auto query = TestQuery::from(testSourceDescriptorLeft)
+                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                     .byKey(Attribute(joinFieldNameLeft))
+                     .apply(Sum(Attribute("test1$fieldForSum1")))
+                     .joinWith(TestQuery::from(testSourceDescriptorRight).window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                                   .byKey(Attribute(joinFieldNameRight))
+                                   .apply(Sum(Attribute("test2$fieldForSum2"))))
+                     .where(Attribute(joinFieldNameLeft))
+                     .equalsTo(Attribute(joinFieldNameRight))
+                     .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(windowSize)))
+                     .sink(testSinkDescriptor);
+
+    NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
+    auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
+    auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
+    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
+    ASSERT_TRUE(!!sourceLeft);
+    ASSERT_TRUE(!!sourceRight);
+
+    sourceLeft->emitBuffer(leftBuffer);
+    sourceRight->emitBuffer(rightBuffer);
+    testSink->waitTillCompleted();
+
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+    auto resultBuffer = testSink->getResultBuffer(0);
+
+    NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), joinSchema));
+
+}
+
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
                         ::testing::Values(QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
