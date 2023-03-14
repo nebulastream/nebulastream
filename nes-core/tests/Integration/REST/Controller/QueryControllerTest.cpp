@@ -82,7 +82,7 @@ TEST_F(QueryControllerTest, testSubmitQueryNoPlacement) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") <  (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                                  cpr::Header{{"Content-Type", "application/json"}},
                                  cpr::Body{request.dump()});
@@ -104,7 +104,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidPlacement) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") <  (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "FAST";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
                                  cpr::Header{{"Content-Type", "application/json"}},
@@ -126,7 +126,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidFaultToleranceType) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "EXTREME";
     auto future = cpr::PostAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/query/execute-query"},
@@ -149,7 +149,7 @@ TEST_F(QueryControllerTest, testSubmitQueryInvalidLineage) {
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t) 42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "ON_PAPER";
@@ -188,7 +188,7 @@ TEST_F(QueryControllerTest, testSubmitValidQuery) {
     ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -229,7 +229,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -297,7 +297,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlanNoSuchQueryId) {
     ASSERT_TRUE(success);
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -349,7 +349,7 @@ TEST_F(QueryControllerTest, testGetQueryPlan) {
 
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
@@ -407,7 +407,7 @@ TEST_F(QueryControllerTest, testGetQueryPlanNoSuchQueryId) {
 
     nlohmann::json request;
     request["userQuery"] =
-        R"(Query::from("default_logical").filter(Attribute("value") < (uint64_t)42).sink(PrintSinkDescriptor::create()); )";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     request["placement"] = "BottomUp";
     request["faultTolerance"] = "AT_MOST_ONCE";
     request["lineage"] = "IN_MEMORY";
