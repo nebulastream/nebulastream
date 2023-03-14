@@ -39,6 +39,19 @@ class TypeCompilationTest : public Testing::NESBaseTest, public AbstractCompilat
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down TypeCompilationTest test class."); }
+
+    Value<> implicitCastFunction(const Value<>& left, const Value<>& right) const { return left + right; }
+
+    auto compileCast(const Value<>& left, const Value<>& right) {
+        left.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, left->getType());
+        right.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, right->getType());
+        auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
+            Nautilus::Tracing::TraceContext::get()->addTraceArgument(left.ref);
+            Nautilus::Tracing::TraceContext::get()->addTraceArgument(right.ref);
+            return implicitCastFunction(left, right);
+        });
+        return prepare(executionTrace);
+    }
 };
 
 Value<> negativeIntegerTest() {
@@ -245,6 +258,144 @@ TEST_P(TypeCompilationTest, compileTextFunctionTest) {
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<int64_t, void*>("execute");
     ASSERT_EQ(function(listRef.get()), 4);
+}
+
+TEST_P(TypeCompilationTest, castInteger) {
+    Value<> i8 = Value<Int8>((int8_t) 42);
+    Value<> i16 = Value<Int16>((int16_t) 42);
+    Value<> i32 = Value<Int32>((int32_t) 42);
+    Value<> i64 = Value<Int64>((int64_t) 42);
+
+    {
+        auto engine = compileCast(i8, i16);
+        auto function = engine->getInvocableMember<int8_t, int16_t, int16_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i8, i32);
+        auto function = engine->getInvocableMember<int8_t, int32_t, int32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i8, i64);
+        auto function = engine->getInvocableMember<int8_t, int64_t, int64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, i32);
+        auto function = engine->getInvocableMember<int16_t, int32_t, int32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, i64);
+        auto function = engine->getInvocableMember<int16_t, int64_t, int64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i32, i64);
+        auto function = engine->getInvocableMember<int32_t, int64_t, int64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+}
+
+TEST_P(TypeCompilationTest, castUInteger) {
+    Value<> ui8 = Value<UInt8>((uint8_t) 42);
+    Value<> ui16 = Value<UInt16>((uint16_t) 42);
+    Value<> ui32 = Value<UInt32>((uint32_t) 42);
+    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+
+    {
+        auto engine = compileCast(ui8, ui16);
+        auto function = engine->getInvocableMember<uint8_t, uint16_t, uint16_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui8, ui32);
+        auto function = engine->getInvocableMember<uint8_t, int32_t, uint32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui8, ui64);
+        auto function = engine->getInvocableMember<uint8_t, int64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui16, ui32);
+        auto function = engine->getInvocableMember<uint16_t, uint32_t, uint32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui16, ui64);
+        auto function = engine->getInvocableMember<uint16_t, uint64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui32, ui64);
+        auto function = engine->getInvocableMember<uint32_t, uint64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+}
+
+
+TEST_P(TypeCompilationTest, castIntegerToUInteger) {
+    Value<> i8 = Value<Int8>((int8_t) 42);
+    Value<> i16 = Value<Int16>((int16_t) 42);
+    Value<> i32 = Value<Int32>((int32_t) 42);
+    Value<> i64 = Value<Int64>((int64_t) 42);
+    Value<> ui8 = Value<UInt8>((uint8_t) 42);
+    Value<> ui16 = Value<UInt16>((uint16_t) 42);
+    Value<> ui32 = Value<UInt32>((uint32_t) 42);
+    Value<> ui64 = Value<UInt64>((uint64_t) 42);
+    {
+        auto engine = compileCast(i8, ui8);
+        auto function = engine->getInvocableMember<int8_t, uint8_t, uint8_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i8, ui16);
+        auto function = engine->getInvocableMember<int8_t, uint16_t, uint16_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i8, ui32);
+        auto function = engine->getInvocableMember<int8_t, uint32_t, uint32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i8, ui64);
+        auto function = engine->getInvocableMember<int8_t, uint64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, ui16);
+        auto function = engine->getInvocableMember<int16_t, uint16_t, uint16_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, ui32);
+        auto function = engine->getInvocableMember<int16_t, uint32_t, uint32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i16, ui64);
+        auto function = engine->getInvocableMember<int16_t, uint64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i32, ui32);
+        auto function = engine->getInvocableMember<int32_t, uint32_t, uint32_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i32, i64);
+        auto function = engine->getInvocableMember<int32_t, int64_t, int64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(i64, ui64);
+        auto function = engine->getInvocableMember<int64_t, uint64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
 }
 
 // Tests all registered compilation backends.

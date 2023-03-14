@@ -623,8 +623,16 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CastOper
         auto inputIntegerStamp = cast<IR::Types::IntegerStamp>(inputStamp);
         auto outputIntegerStamp = cast<IR::Types::IntegerStamp>(outputStamp);
         auto mlirInput = frame.getValue(castOperation->getInput()->getIdentifier());
-        auto mlirCast = builder->create<mlir::arith::ExtSIOp>(getNameLoc("location"), getMLIRType(outputStamp), mlirInput);
-        frame.setValue(castOperation->getIdentifier(), mlirCast);
+        if (inputIntegerStamp->getBitWidth() == outputIntegerStamp->getBitWidth()) {
+            // we skip the cast if input bit width are the same.
+            frame.setValue(castOperation->getIdentifier(), mlirInput);
+        } else if (outputIntegerStamp->isSigned()) {
+            auto mlirCast = builder->create<mlir::arith::ExtSIOp>(getNameLoc("location"), getMLIRType(outputStamp), mlirInput);
+            frame.setValue(castOperation->getIdentifier(), mlirCast);
+        } else {
+            auto mlirCast = builder->create<mlir::arith::ExtUIOp>(getNameLoc("location"), getMLIRType(outputStamp), mlirInput);
+            frame.setValue(castOperation->getIdentifier(), mlirCast);
+        }
         return;
     } else if (inputStamp->isFloat() && outputStamp->isFloat()) {
         auto inputFloatStamp = cast<IR::Types::FloatStamp>(inputStamp);
