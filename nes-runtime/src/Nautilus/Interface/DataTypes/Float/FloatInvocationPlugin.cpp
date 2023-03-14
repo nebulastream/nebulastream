@@ -142,6 +142,12 @@ class FloatInvocationPlugin : public InvocationPlugin {
     }
 
     bool IsCastable(const Value<>& value, const TypeIdentifier* toType) const override {
+        // cast from float to double
+        if(isa<Float>(value.getValue()) && toType->isType<Double>()) {
+            return true;
+        }
+        // cast from int to float or double
+        if(isa<Int8>(value.getValue()) || isa<Int8>(value.getValue()) || isa<Int8>(value.getValue()) || isa<Int8>(value.getValue())||)
         return isa<Float>(value.getValue()) && toType->isType<Double>();
     }
 };
