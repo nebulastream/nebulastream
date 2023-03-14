@@ -862,7 +862,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
                                           TestUtils::logicalSourceName("ktm"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::enableNautilus(),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(3),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(4),
                                           TestUtils::sourceGatheringInterval(1),
                                           TestUtils::enableThreadLocalWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
