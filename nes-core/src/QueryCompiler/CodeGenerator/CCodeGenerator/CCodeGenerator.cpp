@@ -681,8 +681,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
             VariableDeclaration::create(tf->createUserDefinedType(structDeclarationResultTuple), "resultTuples");
 
         auto varDeclResultTupleStmt = VarDeclStatement(varDeclResultTuple);
-        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}",
-                   varDeclResultTupleStmt.getCode()->code_);
+        NES_DEBUG2("CCodeGenerator::generateCodeForEmit: varDeclResultTuple code is {}", varDeclResultTupleStmt.getCode()->code_);
         code->variableInitStmts.push_back(varDeclResultTupleStmt.copy());
 
         // Setting the start of all fields for col layout
