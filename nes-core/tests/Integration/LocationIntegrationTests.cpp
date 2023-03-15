@@ -16,7 +16,6 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -502,6 +501,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 TEST_F(LocationIntegrationTests, testMovementAfterStandStill) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -824,6 +824,8 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -897,6 +899,7 @@ TEST_F(LocationIntegrationTests, testReconnectingParentOutOfCoverage) {
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 =
         Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->nodeSpatialType.setValue(NES::Spatial::Experimental::SpatialType::MOBILE_NODE);
+    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->parentId.setValue(initialParentId);
     wrkConf1->mobilityConfiguration.nodeInfoDownloadRadius.setValue(20000);
     wrkConf1->mobilityConfiguration.nodeIndexUpdateThreshold.setValue(5000);
@@ -964,7 +967,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort.setValue(*rpcCoordinatorPort);
     coordinatorConfig->restPort.setValue(*restPort);
-    coordinatorConfig->restPort.setValue(*restPort);
 
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -979,8 +981,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBuffering) {
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
-
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
     auto stype = CSVSourceType::create();
@@ -1082,7 +1082,6 @@ TEST_F(LocationIntegrationTests, testSequenceWithBufferingMultiThread) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
 
-    wrkConf1->coordinatorPort.setValue(*rpcCoordinatorPort);
     wrkConf1->numWorkerThreads.setValue(4);
 
     auto stype = CSVSourceType::create();
