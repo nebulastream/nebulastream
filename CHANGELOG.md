@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.29](https://github.com/nebulastream/nebulastream/tree/v0.5.29) (2023-03-15)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.28...v0.5.29)
+
+### Miscellaneous Issues ✌️
+
+- Introduce spdlog syntax in src folder part one [\#3367](https://github.com/nebulastream/nebulastream/issues/3367)
+
 ## [v0.5.28](https://github.com/nebulastream/nebulastream/tree/v0.5.28) (2023-03-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.27...v0.5.28)
