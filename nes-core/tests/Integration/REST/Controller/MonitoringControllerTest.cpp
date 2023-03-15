@@ -122,7 +122,7 @@ TEST_F(MonitoringControllerTest, testStartMonitoring) {
     EXPECT_EQ(r.status_code, 200);
 
     //check if content of r contains valid information
-    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network_default", "wrapped_cpu_default", "memory_default", "disk_default"};
     nlohmann::json jsonsStart;
     ASSERT_NO_THROW(jsonsStart = nlohmann::json::parse(r.text));
     NES_INFO("MonitoringControllerTest - Received Data from GetStart request: " << jsonsStart.dump());
