@@ -26,41 +26,49 @@ namespace NES::Runtime::Execution::Operators {
 
 extern "C" void incrementCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called incrementCount: recordCount = " << handler->recordCount + 1);
     handler->recordCount++;
 }
 
 extern "C" void setIsWindowOpen(void* state, bool isWindowOpen) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called setIsWindowOpen: " << isWindowOpen);
     handler->isWindowOpen = isWindowOpen;
 }
 
 extern "C" bool getIsWindowOpen(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getIsWindowOpen: isWindowOpen = " << handler->isWindowOpen);
     return handler->isWindowOpen;
 }
 
 extern "C" uint64_t getRecordCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getRecordCount: recordCount = " << handler->recordCount);
     return handler->recordCount;
 }
 
 extern "C" void resetCount(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called resetCount");
     handler->recordCount = 0;
 }
 
 extern "C" void lockWindowHandler(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called lockWindowHandler");
     handler->mutex.lock();
 }
 
 extern "C" void unlockWindowHandler(void* state) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called unlockWindowHandler");
     handler->mutex.unlock();
 }
 
 extern "C" void* getAggregationValue(void* state, uint64_t i) {
     auto handler = (ThresholdWindowOperatorHandler*) state;
+    NES_TRACE("Called getAggregationValue: i = " << i);
     return (void*) handler->AggregationValues[i].get();
 }
 
@@ -78,14 +86,13 @@ ThresholdWindow::ThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr 
 }
 
 void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
-    // Evaluate the threshold condition
-    NES_INFO("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
+    NES_TRACE("Execute ThresholdWindow for received record " << record.getAllFields().begin()->c_str())
     // Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val) {
-        NES_INFO("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
+        NES_TRACE("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
             auto aggregatedValue = Value<Int64>((int64_t) 1);// default value to aggregate (i.e., for countAgg)
@@ -95,7 +102,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
             if (!isCountAggregation) {
                 aggregatedValue = aggregatedFieldAccessExpressions[i]->execute(record);
             }
-            NES_INFO("lift the following value to agg" << aggregatedValue);
+            NES_TRACE("lift the following value to agg" << aggregatedValue);
             aggregationFunctions[i]->lift(aggregationValueMemref, aggregatedValue);
         }
         FunctionCall("incrementCount", incrementCount, handler);
@@ -111,7 +118,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
-                    NES_INFO("Write back result for" << aggregationResultFieldIdentifiers[i].c_str() << "result: " << aggregationResult)
+                    NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str() << "result: " << aggregationResult)
                     resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }
