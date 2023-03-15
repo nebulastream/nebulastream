@@ -387,13 +387,18 @@ TEST_P(TypeCompilationTest, castIntegerToUInteger) {
         ASSERT_EQ(function(42, 42), 84);
     }
     {
-        auto engine = compileCast(i32, i64);
-        auto function = engine->getInvocableMember<int64_t, int32_t, int64_t>("execute");
+        auto engine = compileCast(i32, ui64);
+        auto function = engine->getInvocableMember<int64_t, int32_t, uint64_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
     {
         auto engine = compileCast(i64, ui64);
         auto function = engine->getInvocableMember<uint64_t, int64_t, uint64_t>("execute");
+        ASSERT_EQ(function(42, 42), 84);
+    }
+    {
+        auto engine = compileCast(ui8, i16);
+        auto function = engine->getInvocableMember<int16_t, uint8_t , int16_t>("execute");
         ASSERT_EQ(function(42, 42), 84);
     }
 }
