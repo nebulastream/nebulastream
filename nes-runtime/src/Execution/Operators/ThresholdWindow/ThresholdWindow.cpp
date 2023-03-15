@@ -84,7 +84,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
-    if (val.as<Boolean>().getValue()) { // without .as<Boolean>().getValue(), we enter here with 0
+    if (val) {
         NES_INFO("Execute ThresholdWindow for valid predicate " << val.getValue().toString())
         for (uint64_t i = 0; i < aggregationFunctions.size(); ++i) {
             auto aggregationValueMemref = FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
@@ -103,7 +103,7 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
         FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
     } else {
         auto isWindowOpen = FunctionCall("getIsWindowOpen", getIsWindowOpen, handler);
-        if (isWindowOpen.as<Boolean>().getValue()) { // without .as<Boolean>().getValue(), we enter here with 0
+        if (isWindowOpen) {
             auto recordCount = FunctionCall("getRecordCount", getRecordCount, handler);
             if (recordCount >= minCount) {
                 auto resultRecord = Record();
