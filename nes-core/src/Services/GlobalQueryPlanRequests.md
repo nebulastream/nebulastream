@@ -57,7 +57,13 @@ sequenceDiagram
     Executor ->> Query Catalog Service: Set status Failed
 ```
 
-What todo when undeployment failed?
+What todo when undeployment failed? Retry request n times and then fail 
+//todo update with appropriate status
+
+if entry not found, don't do anything global query plan
+if entry in global execution plan, remove it
+
+if failure for sqp, fail entire sqp
 
 <b>Update Request</b>
 
