@@ -41,7 +41,9 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
                                      const Windowing::WindowTypePtr windowType,
                                      const Windowing::DistributionCharacteristicPtr distributionType,
                                      const std::vector<FieldAccessExpressionNodePtr> onKey,
-                                     const uint64_t allowedLateness, const OriginId originId, const OperatorId id);
+                                     const uint64_t allowedLateness,
+                                     const OriginId originId,
+                                     const OperatorId id);
 
     /**
      * @brief To string method for the current node.
@@ -58,12 +60,12 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
     /**
      * Two WindowJavaUdfLogicalOperatorNode are equal when the JavaUdfDescriptor are equal.
      */
-    bool equal(const NodePtr &rhs) const override;
+    bool equal(const NodePtr& rhs) const override;
 
     /**
      * @brief overrides the isIdentical from Node
      */
-    bool isIdentical(const NodePtr &rhs) const override;
+    bool isIdentical(const NodePtr& rhs) const override;
 
     /**
      * @brief getter of the window type
@@ -101,7 +103,7 @@ class WindowJavaUdfLogicalOperatorNode : public JavaUdfLogicalOperator {
      */
     bool isKeyed() const;
 
-private:
+  private:
     OperatorNodePtr copyInternal(std::shared_ptr<WindowJavaUdfLogicalOperatorNode>& copy);
 
     Windowing::WindowTypePtr windowType;
@@ -112,6 +114,6 @@ private:
     OriginId originId;
 };
 
-} // namespace NES
+}// namespace NES
 
-#endif //NES_WINDOWJAVAUDFLOGICALOPERATORNODE_HPP
+#endif//NES_WINDOWJAVAUDFLOGICALOPERATORNODE_HPP

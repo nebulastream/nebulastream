@@ -15,8 +15,8 @@
 #ifndef NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 #define NES_CORE_INCLUDE_GRPC_SERIALIZATION_EXPRESSIONSERIALIZATIONUTIL_HPP_
 
-#include <memory>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -32,8 +32,6 @@ class SerializableExpression_FieldAssignmentExpression;
 class SerializableExpression_WhenExpression;
 class SerializableExpression_CaseExpression;
 class SerializableExpression_FunctionExpression;
-
-
 
 /**
  * @brief The ExpressionSerializationUtil offers functionality to serialize and de-serialize expression nodes to the
@@ -69,8 +67,8 @@ class ExpressionSerializationUtil {
     static ExpressionNodePtr deserializeLogicalExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeGeographyExpressions(const SerializableExpression& serializedExpression);
-    static ExpressionNodePtr
-    deserializeGeographyFieldAccessExpressions(const SerializableExpression_GeographyFieldsAccessExpression& serializedExpression);
+    static ExpressionNodePtr deserializeGeographyFieldAccessExpressions(
+        const SerializableExpression_GeographyFieldsAccessExpression& serializedExpression);
     static ExpressionNodePtr deserializeUdfCallExpressions(const SerializableExpression& serializedExpression);
 };
 }// namespace NES

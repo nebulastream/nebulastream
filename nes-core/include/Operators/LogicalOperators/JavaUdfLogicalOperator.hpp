@@ -20,8 +20,8 @@
 
 namespace NES {
 namespace Catalogs::UDF {
-    class JavaUdfDescriptor;
-    using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
+class JavaUdfDescriptor;
+using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 }// namespace Catalogs::UDF
 
 /**
@@ -29,14 +29,13 @@ namespace Catalogs::UDF {
  */
 class JavaUdfLogicalOperator : public LogicalUnaryOperatorNode {
 
-public:
+  public:
     /**
      * Construct a JavaUdfLogicalOperator.
      * @param javaUdfDescriptor The descriptor of the Java UDF used in the map operation.
      * @param id The ID of the operator.
      */
-    JavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                           OperatorId id);
+    JavaUdfLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id);
 
     /**
      * @see LogicalOperatorNode#inferStringSignature
@@ -71,10 +70,10 @@ public:
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
-    private:
-        const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
+  private:
+    const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor;
 };
 
-} // NES
+}// namespace NES
 
-#endif //NES_JAVAUDFLOGICALOPERATOR_HPP
+#endif//NES_JAVAUDFLOGICALOPERATOR_HPP
