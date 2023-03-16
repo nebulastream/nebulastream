@@ -66,7 +66,6 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     return serializedDataType;
 }
 
-
 DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType) {
     NES_TRACE("DataTypeSerializationUtil:: de-serialized " << serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED) {
@@ -175,7 +174,8 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableD
         }
         return DataTypeFactory::createArrayValueFromContainerType(std::move(dataTypePtr), std::move(values));
     }
-    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
+    NES_THROW_RUNTIME_ERROR(
+        "DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
     return nullptr;
 }
 

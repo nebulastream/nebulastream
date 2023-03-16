@@ -230,7 +230,8 @@ class LogicalOperatorFactory {
                                        Windowing::WindowTypePtr windowType,
                                        Windowing::DistributionCharacteristicPtr distributionType,
                                        std::vector<FieldAccessExpressionNodePtr> onKey,
-                                       uint64_t allowedLateness, OriginId originId,
+                                       uint64_t allowedLateness,
+                                       OriginId originId,
                                        OperatorId id = Util::getNextOperatorId());
 };
 

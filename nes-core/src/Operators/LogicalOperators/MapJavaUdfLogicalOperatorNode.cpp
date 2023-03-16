@@ -24,7 +24,6 @@ MapJavaUdfLogicalOperatorNode::MapJavaUdfLogicalOperatorNode(const Catalogs::UDF
                                                              OperatorId id)
     : OperatorNode(id), JavaUdfLogicalOperator(javaUdfDescriptor, id) {}
 
-
 std::string MapJavaUdfLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "MAP_JAVA_UDF(" << id << ")";

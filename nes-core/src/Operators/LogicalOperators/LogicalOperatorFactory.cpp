@@ -21,7 +21,6 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapJavaUdfLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
@@ -30,6 +29,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WindowJavaUdfLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -143,10 +143,16 @@ LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(const Catalogs::UDF::
                                                            Windowing::WindowTypePtr windowType,
                                                            Windowing::DistributionCharacteristicPtr distributionType,
                                                            std::vector<FieldAccessExpressionNodePtr> onKey,
-                                                           uint64_t allowedLateness, OriginId originId, OperatorId id) {
-    return std::make_shared<WindowJavaUdfLogicalOperatorNode>(javaUdfDescriptor, windowType, distributionType,
-                                                              onKey, allowedLateness, originId, id);
+                                                           uint64_t allowedLateness,
+                                                           OriginId originId,
+                                                           OperatorId id) {
+    return std::make_shared<WindowJavaUdfLogicalOperatorNode>(javaUdfDescriptor,
+                                                              windowType,
+                                                              distributionType,
+                                                              onKey,
+                                                              allowedLateness,
+                                                              originId,
+                                                              id);
 }
-
 
 }// namespace NES

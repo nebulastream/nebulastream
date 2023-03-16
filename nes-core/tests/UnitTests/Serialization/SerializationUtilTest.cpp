@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
@@ -65,6 +65,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <API/QueryAPI.hpp>
 #include <API/Windowing.hpp>
 #include <Nodes/Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
@@ -78,7 +79,6 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
-#include <API/QueryAPI.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -97,8 +97,7 @@ class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Tes
 TEST_F(SerializationUtilTest, dataTypeSerialization) {
 
     // serialize and deserialize int8
-    auto serializedInt8 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt8(), new SerializableDataType());
+    auto serializedInt8 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt8(), new SerializableDataType());
     auto deserializedInt8 = DataTypeSerializationUtil::deserializeDataType(*serializedInt8);
     EXPECT_TRUE(DataTypeFactory::createInt8()->isEquals(deserializedInt8));
 
@@ -513,8 +512,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        auto windowType = Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(),
-                                                        Windowing::TimeMeasure(10));
+        auto windowType =
+            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(10));
         auto distChar = Windowing::DistributionCharacteristic::createCompleteWindowType();
         auto f1 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key1")->as<FieldAccessExpressionNode>();
         auto f2 = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key2")->as<FieldAccessExpressionNode>();
@@ -524,8 +523,11 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
         auto javaUdfDescriptor = NES::Catalogs::UDF::JavaUdfDescriptorBuilder::createDefaultJavaUdfDescriptor();
         auto javaUdfWindow = LogicalOperatorFactory::createWindowJavaUdfLogicalOperator(javaUdfDescriptor,
-                                                                                        windowType, distChar,
-                                                                                        onKey, allowedLateness, originId);
+                                                                                        windowType,
+                                                                                        distChar,
+                                                                                        onKey,
+                                                                                        allowedLateness,
+                                                                                        originId);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(javaUdfWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(javaUdfWindow->equal(deserializedOperator));
@@ -553,13 +555,12 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto f2_out = std::make_shared<ExpressionItem>(Attribute("f2_out", NES::BasicType::FLOAT32));
         auto f3_out = std::make_shared<ExpressionItem>(Attribute("f3_out", NES::BasicType::FLOAT32));
 
-        auto inferModel = LogicalOperatorFactory::createInferModelOperator("test.file",
-                                                                           {f1_in, f2_in}, {f1_out, f2_out, f3_out});
+        auto inferModel = LogicalOperatorFactory::createInferModelOperator("test.file", {f1_in, f2_in}, {f1_out, f2_out, f3_out});
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(inferModel);
         auto inferModelOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(inferModel->equal(inferModelOperator));
     }
-#endif // TFDEF
+#endif// TFDEF
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
@@ -641,8 +642,9 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
         auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
         auto watermarkAssignerDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                API::Milliseconds(0), timeBasedWindowType->getTimeCharacteristic()->getTimeUnit());
+            Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+            API::Milliseconds(0),
+            timeBasedWindowType->getTimeCharacteristic()->getTimeUnit());
 
         auto watermarkAssignerOperator = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkAssignerDescriptor);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(watermarkAssignerOperator);
@@ -663,12 +665,12 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-                Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
-                                                           windowType,
-                                                           Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                           triggerPolicy,
-                                                           triggerAction,
-                                                           0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                       windowType,
+                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                       triggerPolicy,
+                                                       triggerAction,
+                                                       0);
         auto tumblingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -680,12 +682,12 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-                Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
-                                                           windowType,
-                                                           Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                           triggerPolicy,
-                                                           triggerAction,
-                                                           0);
+            Windowing::LogicalWindowDefinition::create({API::Sum(Attribute("test"))},
+                                                       windowType,
+                                                       Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                       triggerPolicy,
+                                                       triggerAction,
+                                                       0);
         auto slidingWindow = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);

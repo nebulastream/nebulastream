@@ -54,10 +54,10 @@
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
 #include <Nodes/Expressions/WhenExpressionNode.hpp>
-#include <SerializableExpression.pb.h>
-#include <Util/Logger/Logger.hpp>
-#include <SerializableOperator.pb.h>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <SerializableExpression.pb.h>
+#include <SerializableOperator.pb.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -166,9 +166,7 @@ SerializableExpression* ExpressionSerializationUtil::serializeExpression(const E
     return serializedExpression;
 }
 
-
-ExpressionNodePtr
-ExpressionSerializationUtil::deserializeExpression(const SerializableExpression& serializedExpression) {
+ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const SerializableExpression& serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: deserialize expression " << serializedExpression.details().type_url());
     // de-serialize expression
     // 1. check if the serialized expression is a logical expression
@@ -209,7 +207,7 @@ ExpressionSerializationUtil::deserializeExpression(const SerializableExpression&
             SerializableExpression_FieldRenameExpression serializedFieldRenameExpression;
             serializedExpression.details().UnpackTo(&serializedFieldRenameExpression);
             auto originalFieldAccessExpression =
-                    deserializeExpression(serializedFieldRenameExpression.originalfieldaccessexpression());
+                deserializeExpression(serializedFieldRenameExpression.originalfieldaccessexpression());
             if (!originalFieldAccessExpression->instanceOf<FieldAccessExpressionNode>()) {
                 NES_FATAL_ERROR2("ExpressionSerializationUtil: the original field access expression "
                                  "should be of type FieldAccessExpressionNode, but was a {}",
@@ -594,7 +592,6 @@ ExpressionSerializationUtil::deserializeArithmeticalExpressions(const Serializab
         auto left = deserializeExpression(serializedExpressionNode.left());
         auto right = deserializeExpression(serializedExpressionNode.right());
         return AddExpressionNode::create(left, right);
-
     }
     if (serializedExpression.details().Is<SerializableExpression_SubExpression>()) {
         // de-serialize SUB expression node.
@@ -688,14 +685,11 @@ ExpressionSerializationUtil::deserializeArithmeticalExpressions(const Serializab
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
         auto child = deserializeExpression(serializedExpressionNode.child());
         return SqrtExpressionNode::create(child);
-
     }
     return nullptr;
 }
 
-
-ExpressionNodePtr
-ExpressionSerializationUtil::deserializeLogicalExpressions(const SerializableExpression& serializedExpression) {
+ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(const SerializableExpression& serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: de-serialize logical expression" << serializedExpression.details().type_url());
     if (serializedExpression.details().Is<SerializableExpression_AndExpression>()) {
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as AND expression node.");
@@ -764,7 +758,6 @@ ExpressionSerializationUtil::deserializeLogicalExpressions(const SerializableExp
     }
     return nullptr;
 }
-
 
 ExpressionNodePtr
 ExpressionSerializationUtil::deserializeGeographyExpressions(const SerializableExpression& serializedExpression) {
@@ -835,8 +828,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeGeographyFieldAccessEx
     return GeographyFieldsAccessExpressionNode::create(latitudeFieldAccessExpression, longitudeFieldAccessExpression);
 }
 
-ExpressionNodePtr
-ExpressionSerializationUtil::deserializeUdfCallExpressions(const SerializableExpression& serializedExpression) {
+ExpressionNodePtr ExpressionSerializationUtil::deserializeUdfCallExpressions(const SerializableExpression& serializedExpression) {
     NES_DEBUG("ExpressionSerializationUtil:: de-serialize udf call expression" << serializedExpression.details().type_url());
     if (serializedExpression.details().Is<SerializableExpression_UdfCallExpression>()) {
         NES_TRACE("ExpressionSerializationUtil:: de-serialize udf call expression as UdfCallExpressionNode.");
