@@ -15,8 +15,8 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v29)
-set(LLVM_BINARY_VERSION v1)
-set(LLVM_VERSION 15)
+set(LLVM_BINARY_VERSION v2)
+set(LLVM_VERSION 16)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations

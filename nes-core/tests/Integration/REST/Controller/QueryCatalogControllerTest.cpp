@@ -68,16 +68,12 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     nlohmann::json jsonResponse;
     ASSERT_NO_THROW(jsonResponse = nlohmann::json::parse(r.text));
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("query string", queryPlan, "BottomUp");
     cpr::AsyncResponse future2 =
         cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future2.wait();
@@ -115,16 +111,12 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     ASSERT_TRUE(jsonResponse.empty());
 
     // create a query to add to query catalog service
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
 
     // when making a request for a query with a specific status after having submitted a query
     cpr::AsyncResponse future3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
@@ -162,16 +154,12 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     EXPECT_EQ(r2.status_code, 404l);
 
     //create a query and submit i to the queryCatalogService
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
     cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
@@ -227,16 +215,12 @@ TEST_F(QueryCatalogControllerTest, testGetRequestNumberOfBuffersNoAvailableStati
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
     // create a query and register with coordinator
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());)";
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto queryParsingService = QueryParsingService::create(jitCompiler);
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
     auto queryCatalogService = coordinator->getQueryCatalogService();
-    const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry("queryString", queryPlan, "BottomUp");
     coordinator->getGlobalQueryPlan()->createNewSharedQueryPlan(queryPlan);
 
     // when sending a getNumberOfProducedBuffers with 'queryId' specified and a query can be found but no buffers produced yet
