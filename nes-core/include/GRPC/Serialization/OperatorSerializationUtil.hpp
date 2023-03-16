@@ -58,7 +58,8 @@ class OperatorSerializationUtil {
      * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the modified serializableOperator
      */
-    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated = false);
+    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode,
+                                                  bool isClientOriginated = false);
 
     /**
      * @brief Deserializes the input SerializableOperator only
@@ -72,10 +73,11 @@ class OperatorSerializationUtil {
     * @brief Serializes an source operator and all its properties to a SerializableOperator_SourceDetails object.
     * @param sourceOperator The source operator node.
     * @param isClientOriginated Indicate if the source operator is originated from a client.
-    * @return SerializableOperator_SourceDetails serialized instance
+    * @param serializedOperator serialized instance of the operator
     */
-    static SerializableOperator_SourceDetails serializeSourceOperator(
-            const SourceLogicalOperatorNode& sourceOperator, bool isClientOriginated = false);
+    static void serializeSourceOperator(const SourceLogicalOperatorNode& sourceOperator,
+                                        SerializableOperator& serializedOperator,
+                                        bool isClientOriginated = false);
 
     /**
      * @brief Deserializes a source logical operator and all its properties to a SourceLogicalOperatorNode
@@ -88,9 +90,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a filter operator node and all its properties to a SerializableOperator_FilterDetails object.
      * @param filterOperator the FilterLogicalOperatorNode
-     * @return SerializableOperator_FilterDetails serialized instance of FilterLogicalOperatorNode
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_FilterDetails serializeFilterOperator(const FilterLogicalOperatorNode& filterOperator);
+    static void serializeFilterOperator(const FilterLogicalOperatorNode& filterOperator,
+                                        SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a SerializableOperator_FilterDetails and all its properties to a FilterLogicalOperatorNode
@@ -103,10 +106,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a projection operator node and all its properties to a SerializableOperator_ProjectionDetails
      * @param projectionOperator the ProjectionLogicalOperatorNode
-     * @return SerializableOperator_ProjectionDetails
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_ProjectionDetails serializeProjectionOperator(
-            const ProjectionLogicalOperatorNode& projectionOperator);
+    static void serializeProjectionOperator(const ProjectionLogicalOperatorNode& projectionOperator,
+                                            SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a projection operator node and all its properties to a ProjectionLogicalOperatorNodePtr
@@ -120,10 +123,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
      * @param sinkOperator The sink operator node.
-     * @param sinkDetails the serialized SerializableOperator_SinkDetails.
-     * @return SerializableOperator_SinkDetails serialized instance of SinkLogicalOperatorNode
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_SinkDetails serializeSinkOperator(const SinkLogicalOperatorNode& sinkOperator);
+    static void serializeSinkOperator(const SinkLogicalOperatorNode& sinkOperator,
+                                      SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -135,9 +138,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a map operator and all its properties to a SerializableOperator_MapDetails
      * @param mapOperator the map operator
-     * @return SerializableOperator_MapDetails serialized instance of MapLogicalOperatorNode
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_MapDetails serializeMapOperator(const MapLogicalOperatorNode& mapOperator);
+    static void serializeMapOperator(const MapLogicalOperatorNode& mapOperator,
+                                     SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a map operator and all its properties back to a MapLogicalOperatorNode
@@ -151,8 +155,10 @@ class OperatorSerializationUtil {
      * @brief Serializes an all window operator and all its properties to a SerializableOperator_WindowDetails object.
      * @param WindowLogicalOperatorNode The window operator node.
      * @param windowDetails the serialized SerializableOperator_WindowDetails.
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_WindowDetails serializeWindowOperator(const WindowOperatorNode& windowOperator);
+    static void serializeWindowOperator(const WindowOperatorNode& windowOperator,
+                                        SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_WindowDetails and all its properties back to a central window operatorNodePtr
@@ -166,9 +172,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes an all join operator and all its properties to a SerializableOperator_JoinDetails object.
      * @param JoinLogicalOperatorNodePtr The window operator node.
-     * @return SerializableOperator_JoinDetails serialized instance of JoinLogicalOperatorNode
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_JoinDetails serializeJoinOperator(const JoinLogicalOperatorNode& joinOperator);
+    static void serializeJoinOperator(const JoinLogicalOperatorNode& joinOperator,
+                                      SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_JoinDetails and all its properties back to a join operatorNodePtr
@@ -183,9 +190,10 @@ class OperatorSerializationUtil {
      * @brief Serializes an batch join operator and all its properties to a SerializableOperator_JoinDetails object.
      * @param BatchJoinLogicalOperatorNodePtr The window operator node.
      * @param batchJoinDetails the serialized SerializableOperator_BatchJoinDetails.
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_BatchJoinDetails serializeBatchJoinOperator(
-            const Experimental::BatchJoinLogicalOperatorNode& joinOperator);
+    static void serializeBatchJoinOperator(const Experimental::BatchJoinLogicalOperatorNode& joinOperator,
+                                           SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes the SerializableOperator_BatchJoinDetails and all its properties back to a join operatorNodePtr
@@ -234,9 +242,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes the watermarkAssigner operator
      * @param watermark assigner logical operator node
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_WatermarkStrategyDetails serializeWatermarkAssignerOperator(
-            const WatermarkAssignerLogicalOperatorNode& watermarkAssignerOperator);
+    static void serializeWatermarkAssignerOperator(const WatermarkAssignerLogicalOperatorNode& watermarkAssignerOperator,
+                                                   SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a watermarkAssigner operator
@@ -266,9 +275,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes an input schema
      * @param operatorNode node for which to serialize the input schema
-     * @param serializedOperator serialized instance of operator
+     * @param serializedOperator serialized instance of the operator
      */
-    static void serializeInputSchema(const OperatorNodePtr& operatorNode, SerializableOperator &serializedOperator);
+    static void serializeInputSchema(const OperatorNodePtr& operatorNode,
+                                     SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes an input schema
@@ -276,15 +286,15 @@ class OperatorSerializationUtil {
      * @param operatorNode LogicalOperatorNode for which to serialize the input schema
      */
     static void deserializeInputSchema(LogicalOperatorNodePtr operatorNode,
-                                       const SerializableOperator& serializedOperator);
+                                       SerializableOperator& serializedOperator);
 
     /**
      * @brief Serializes an inferModel logical operator
      * @param inferModel operator
-     * @param serializedOperator serialized operator
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_InferModelDetails serializeInferModelOperator(
-            const InferModel::InferModelLogicalOperatorNode& inferModel);
+    static void serializeInferModelOperator(const InferModel::InferModelLogicalOperatorNode& inferModel,
+                                            SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes an inferModel logical operator
@@ -297,10 +307,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a CEPIteration operator
      * @param iterationOperator
-     * @return SerializableOperator_CEPIterationDetails
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_CEPIterationDetails serializeCEPIterationOperator(
-            const IterationLogicalOperatorNode& iterationOperator);
+    static void serializeCEPIterationOperator(const IterationLogicalOperatorNode& iterationOperator,
+                                              SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a CEPIteration operator
@@ -313,10 +323,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a mapJavaUdf operator
      * @param mapJavaUdfOperatorNode
-     * @return SerializableOperator_MapJavaUdfDetails
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_MapJavaUdfDetails serializeMapJavaUdfOperator(
-            const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode);
+    static void serializeMapJavaUdfOperator(const MapJavaUdfLogicalOperatorNode& mapJavaUdfOperatorNode,
+                                            SerializableOperator& serializedOperator);
 
     /**
      * @brief deserializes a mapJavaUdf operator
@@ -329,10 +339,10 @@ class OperatorSerializationUtil {
     /**
      * @brief Serializes a windowJavaUdf operator
      * @param windowJavaUdfOperatorNode
-     * @return SerializableOperator_MapJavaUdfDetails
+     * @param serializedOperator serialized instance of the operator
      */
-    static SerializableOperator_JavaUdfWindowDetails serializeWindowJavaUdfOperator(
-            const WindowJavaUdfLogicalOperatorNode& windowJavaUdfOperatorNode);
+    static void serializeWindowJavaUdfOperator(const WindowJavaUdfLogicalOperatorNode& windowJavaUdfOperatorNode,
+                                               SerializableOperator& serializedOperator);
 
     /**
      * @brief Deserializes a windowJavaUdf operator
