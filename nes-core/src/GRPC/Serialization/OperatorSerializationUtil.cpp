@@ -832,7 +832,7 @@ namespace NES {
         } else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::IngestionTime) {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
         } else {
-            NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Characteristic");
+            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
         }
         if (windowType->isTumblingWindow()) {
             auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType);
@@ -848,7 +848,7 @@ namespace NES {
             slidingWindowDetails.set_slide(slidingWindow->getSlide().getTime());
             joinDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
         } else {
-            NES_ERROR2("OperatorSerializationUtil: Cant serialize window Time Type");
+            NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
         }
 
         auto* windowTrigger = joinDetails.mutable_triggerpolicy();
@@ -882,10 +882,7 @@ namespace NES {
             case Join::JoinActionType::LazyNestedLoopJoin: {
                 windowAction->set_type(SerializableOperator_JoinDetails_JoinTriggerAction_Type_LazyNestedLoop);
                 break;
-            case Windowing::WindowAggregationDescriptor::Median:
-                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
-                break;
-            
+            }
             default: {
                 NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not cast action type");
             }
