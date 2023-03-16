@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.31](https://github.com/nebulastream/nebulastream/tree/v0.5.31) (2023-03-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.30...v0.5.31)
+
+### Bug Fixes 🐛
+
+- \[BUG\] usage of standard ports in location integration tests [\#3591](https://github.com/nebulastream/nebulastream/issues/3591)
+
 ## [v0.5.30](https://github.com/nebulastream/nebulastream/tree/v0.5.30) (2023-03-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.29...v0.5.30)
