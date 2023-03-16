@@ -470,6 +470,83 @@ TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvg) {
     EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<int64_t>(), 25);
 }
 
+// This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
+TEST_P(ThresholdWindowPipelineTest, thresholdWindowWithAvgFloat) {
+    auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    scanSchema->addField("f1", BasicType::INT64);
+    scanSchema->addField("f2", BasicType::FLOAT32);
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto one = std::make_shared<Expressions::ConstantInt64ValueExpression>(1);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, one);
+    auto aggregationResultFieldName = "test$Avg";
+
+    DataTypePtr integerType = DataTypeFactory::createFloat();
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto integerPhysicalType = physicalTypeFactory.getPhysicalType(integerType);
+
+    auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerPhysicalType, integerPhysicalType);
+    aggFieldAccessExpressionsVector.emplace_back(readF2);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggVector.emplace_back(avgAgg);
+    auto thresholdWindowOperator = std::make_shared<Operators::ThresholdWindow>(greaterThanExpression,
+                                                                                0,
+                                                                                aggFieldAccessExpressionsVector,
+                                                                                resultFieldVector,
+                                                                                aggVector,
+                                                                                0);
+    scanOperator->setChild(thresholdWindowOperator);
+
+    auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    emitSchema->addField("test$Avg", BasicType::FLOAT32);
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    thresholdWindowOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(scanMemoryLayout, buffer);
+
+    // Fill buffer
+    dynamicBuffer[0]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[0]["f2"].write((float) 10.0);
+    dynamicBuffer[1]["f1"].write((int64_t) 2);// qualifies
+    dynamicBuffer[1]["f2"].write((float) 20.0);
+    dynamicBuffer[2]["f1"].write((int64_t) 3);// qualifies
+    dynamicBuffer[2]["f2"].write((float) 30.0);
+
+    // the last tuple closes the window
+    dynamicBuffer[3]["f1"].write((int64_t) 1);// does not qualify
+    dynamicBuffer[3]["f2"].write((float) 40.0);
+    dynamicBuffer.setNumberOfTuples(4);
+
+    auto executablePipeline = provider->create(pipeline);
+
+    auto avgAggregationValue = std::make_unique<Aggregation::AvgAggregationValue<int8_t>>();
+    aggValues.emplace_back(std::move(avgAggregationValue));
+    auto handler = std::make_shared<Operators::ThresholdWindowOperatorHandler>(std::move(aggValues));
+
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    executablePipeline->setup(pipelineContext);
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    executablePipeline->stop(pipelineContext);
+
+    EXPECT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
+
+    auto resultDynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(emitMemoryLayout, resultBuffer);
+    EXPECT_EQ(resultDynamicBuffer[0][aggregationResultFieldName].read<float>(), 25.0);
+}
+
 // TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ThresholdWindowPipelineTest,
