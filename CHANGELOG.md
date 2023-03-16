@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.30](https://github.com/nebulastream/nebulastream/tree/v0.5.30) (2023-03-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.29...v0.5.30)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add support for implicit numeric casts in nautilus [\#3578](https://github.com/nebulastream/nebulastream/issues/3578)
+
 ## [v0.5.29](https://github.com/nebulastream/nebulastream/tree/v0.5.29) (2023-03-15)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.28...v0.5.29)
