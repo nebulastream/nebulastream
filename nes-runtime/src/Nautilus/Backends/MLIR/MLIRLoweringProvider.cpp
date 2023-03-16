@@ -20,7 +20,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
 #include <mlir/Dialect/ControlFlow/IR/ControlFlowOps.h>
 #include <mlir/Dialect/Func/IR/FuncOps.h>
@@ -415,10 +415,11 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::SubOpera
     auto leftInput = frame.getValue(subIntOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(subIntOp->getRightInput()->getIdentifier());
     if (subIntOp->getStamp()->isFloat()) {
-        auto mlirSubOp = builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
-                                                             leftInput,
-                                                             rightInput,
-                                                             mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast));
+        auto mlirSubOp =
+            builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
+                                                leftInput,
+                                                rightInput,
+                                                mlir::LLVM::FastmathFlagsAttr::get(context, mlir::LLVM::FastmathFlags::fast));
         frame.setValue(subIntOp->getIdentifier(), mlirSubOp);
     } else {
         auto mlirSubOp = builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"), leftInput, rightInput);
@@ -503,9 +504,9 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ProxyCal
                                                        getMLIRType(proxyCallOp->getStamp()),
                                                        functionRef,
                                                        functionArgs);
-        frame.setValue(proxyCallOp->getIdentifier(), res.getResult(0));
+        frame.setValue(proxyCallOp->getIdentifier(), res.getResult());
     } else {
-        builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, functionArgs);
+        builder->create<mlir::LLVM::CallOp>(builder->getUnknownLoc(), mlir::TypeRange(), functionRef, functionArgs);
     }
 }
 

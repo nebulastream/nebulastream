@@ -33,6 +33,7 @@
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
+#include <vector>
 
 namespace NES::Nautilus::Tracing {
 

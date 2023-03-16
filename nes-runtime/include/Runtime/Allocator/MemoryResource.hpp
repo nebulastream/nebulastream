@@ -14,10 +14,10 @@
 
 #ifndef NES_NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
 #define NES_NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
-#ifdef __linux__
+
+#if __has_include(<memory_resource>)
 #include <memory_resource>
-#elif defined(__APPLE__)
-// TODO move non experimental when upgrading clang dep
+#elif __has_include(<experimental/memory_resource>)
 #include <experimental/memory_resource>
 namespace std {
 namespace pmr {

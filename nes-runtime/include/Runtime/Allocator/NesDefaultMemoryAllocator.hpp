@@ -25,8 +25,6 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
   public:
     explicit NesDefaultMemoryAllocator() = default;
 
-    ~NesDefaultMemoryAllocator() override = default;
-
   private:
     void* do_allocate(size_t bytes, size_t alignment) override;
 
