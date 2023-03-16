@@ -1,5 +1,20 @@
 # Changelog
 
+## [v0.5.32](https://github.com/nebulastream/nebulastream/tree/v0.5.32) (2023-03-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.31...v0.5.32)
+
+**Implemented enhancements:**
+
+- \[TASK\] Refactor serialization logic [\#3525](https://github.com/nebulastream/nebulastream/issues/3525)
+- Serialize/deserialize `WindowJavaUdfLogicalOperatorNode` to/from GRPC message [\#3512](https://github.com/nebulastream/nebulastream/issues/3512)
+- Implement `WindowJavaUdfLogicalOperatorNode` [\#3511](https://github.com/nebulastream/nebulastream/issues/3511)
+- Design GRPC message format for a window operator that executes a Java UDF on the window contents. [\#3510](https://github.com/nebulastream/nebulastream/issues/3510)
+
+### Bug Fixes 🐛
+
+- \[REFACTORING\] Code Duplicates in JoinDetails and WindowDetails [\#3204](https://github.com/nebulastream/nebulastream/issues/3204)
+
 ## [v0.5.31](https://github.com/nebulastream/nebulastream/tree/v0.5.31) (2023-03-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.30...v0.5.31)
