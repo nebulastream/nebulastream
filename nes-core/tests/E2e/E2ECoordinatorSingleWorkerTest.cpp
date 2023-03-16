@@ -872,8 +872,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
-    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") < 1)))"; //TODO whatever att name I am typing here, all received values in the record are 0 that prevents right now testing the threshold window as it either never opens or never closes
-    ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
+    ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") > 15)))";
+    ss << R"(.apply(Min(Attribute(\"ktm$ABS_Lean_Angle\"))->as(Attribute(\"ktm$Min\")), Avg(Attribute(\"ktm$ABS_Front_Wheel_Speed\"))->as(Attribute(\"ktm$Avg\")), Count()->as(Attribute(\"ktm$Count\"))))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
@@ -890,9 +890,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$start:INTEGER,ktm$end:INTEGER,ktm$avg_value_1:(Float),ktm$avg_value_2:("
-                             "Float),ktm$avg_value_3:(Float),ktm$count_value:INTEGER\n"
-                             "1543620000000,1543620001000,14.400000,0.800000,0.500000,2\n";
+    string expectedContent = "ktm$Min:(Float),ktm$Avg:(Float),ktm$Count:INTEGER\n"
+                             "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
