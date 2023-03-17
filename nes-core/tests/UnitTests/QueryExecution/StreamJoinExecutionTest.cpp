@@ -205,15 +205,37 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
                                  ->addField("test2$timestamp", BasicType::INT64)
                                  ->addField("test2$fieldForSum2", BasicType::INT64);
 
+    const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+            ->addField("test1test2$start", BasicType::INT64)
+            ->addField("test1test2$end", BasicType::INT64)
+            ->addField("test1test2$key", BasicType::INT64)
+
+            ->addField("test1$start", BasicType::INT64)
+            ->addField("test1$end", BasicType::INT64)
+            ->addField("test1$cnt", BasicType::INT64)
+            ->addField("test1$f1_left", BasicType::INT64)
+            ->addField("test1$f2_left", BasicType::INT64)
+            ->addField("test1$timestamp", BasicType::INT64)
+            ->addField("test1$fieldForSum1", BasicType::INT64)
+
+            ->addField("test2$start", BasicType::INT64)
+            ->addField("test2$end", BasicType::INT64)
+            ->addField("test2$cnt", BasicType::INT64)
+            ->addField("test2$f1_right", BasicType::INT64)
+            ->addField("test2$f2_right", BasicType::INT64)
+            ->addField("test2$timestamp", BasicType::INT64)
+            ->addField("test2$fieldForSum2", BasicType::INT64);
+
+
     const auto joinFieldNameLeft = "test1$f2_left";
     const auto joinFieldNameRight = "test2$f2_right";
     const auto timeStampField = "timestamp";
 
-//    const auto sinkSchema = Util::createJoinSchema(leftSchema, rightSchema, joinFieldNameLeft);
-    const auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+
+//    const auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
 
     // read values from csv file into one buffer for each join side and for one window
-    const auto windowSize = 20UL;
+    const auto windowSize = 10UL;
     const std::string fileNameBuffersLeft("stream_join_left_withSum.csv");
     const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
 
@@ -231,35 +253,26 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
 
 
     auto query = TestQuery::from(testSourceDescriptorLeft)
-                    .window(TumblingWindow::of(EventTime(Attribute("test1$fieldForSum1")), Milliseconds(windowSize)))
-                    .byKey(Attribute(joinFieldNameLeft))
-                    .apply(Sum(Attribute("test1$fieldForSum1"))->as(Attribute("test1$sum")))
-                    .project(Attribute("test1$sum"))
-                    .map(Attribute("test1$sum") = Attribute("test1$sum") * 1000L)
-                    .sink(testSinkDescriptor);
-
-
-//    auto query = TestQuery::from(testSourceDescriptorLeft)
-//                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-//                     .byKey(Attribute(joinFieldNameLeft))
-//                     .apply(Sum(Attribute("test1$fieldForSum1")))
-//                     .joinWith(TestQuery::from(testSourceDescriptorRight).window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
-//                                   .byKey(Attribute(joinFieldNameRight))
-//                                   .apply(Sum(Attribute("test2$fieldForSum2"))))
-//                     .where(Attribute(joinFieldNameLeft))
-//                     .equalsTo(Attribute(joinFieldNameRight))
-//                     .window(TumblingWindow::of(EventTime(Attribute("start")), Milliseconds(windowSize)))
-//                     .sink(testSinkDescriptor);
+                     .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                     .byKey(Attribute(joinFieldNameLeft))
+                     .apply(Sum(Attribute("test1$fieldForSum1")))
+                     .joinWith(TestQuery::from(testSourceDescriptorRight).window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                                   .byKey(Attribute(joinFieldNameRight))
+                                   .apply(Sum(Attribute("test2$fieldForSum2"))))
+                     .where(Attribute(joinFieldNameLeft))
+                     .equalsTo(Attribute(joinFieldNameRight))
+                     .window(TumblingWindow::of(EventTime(Attribute("test1$start")), Milliseconds(windowSize)))
+                     .sink(testSinkDescriptor);
 
     NES_INFO("Submitting query: " << query.getQueryPlan()->toString())
     auto queryPlan = executionEngine->submitQuery(query.getQueryPlan());
     auto sourceLeft = executionEngine->getDataSource(queryPlan, 0);
-//    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
+    auto sourceRight = executionEngine->getDataSource(queryPlan, 1);
     ASSERT_TRUE(!!sourceLeft);
-//    ASSERT_TRUE(!!sourceRight);
+    ASSERT_TRUE(!!sourceRight);
 
     sourceLeft->emitBuffer(leftBuffer);
-//    sourceRight->emitBuffer(rightBuffer);
+    sourceRight->emitBuffer(rightBuffer);
     testSink->waitTillCompleted();
 
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);

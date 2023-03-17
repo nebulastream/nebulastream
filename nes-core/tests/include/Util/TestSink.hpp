@@ -56,7 +56,7 @@ class TestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        //        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
+        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::printTupleBufferAsCSV(inputBuffer, getSchemaPtr()));
 
         resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {
