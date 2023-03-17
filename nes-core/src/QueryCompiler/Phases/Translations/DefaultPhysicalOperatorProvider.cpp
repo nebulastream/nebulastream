@@ -340,32 +340,35 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         auto timeStampFieldNameWithoutSourceName =
             timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
-        // Extracting here the left timestamp field name
-        auto leftSchema = joinOperator->getLeftInputSchema();
-        auto leftSourceNameQualifier = leftSchema->getSourceNameQualifier();
-        for (auto& field : leftSchema->fields) {
-            auto fieldName = field->getName();
-            auto fieldNameWithoutSourceName = fieldName.substr(leftSourceNameQualifier.size());
-            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
-                timeStampFieldNameLeft = fieldName;
-                break;
-            }
-        }
-
-        // Extracting here the right timestamp field name
+        // Extract the schema of the right side
         auto rightSchema = joinOperator->getRightInputSchema();
-        auto rightSourceNameQualifier = rightSchema->getSourceNameQualifier();
+        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+        bool found = false;
         for (auto& field : rightSchema->fields) {
-            auto fieldName = field->getName();
-            auto fieldNameWithoutSourceName = fieldName.substr(rightSourceNameQualifier.size());
-            if (fieldNameWithoutSourceName == timeStampFieldNameWithoutSourceName) {
-                timeStampFieldNameRight = fieldName;
-                break;
+            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                timeStampFieldNameRight = field->getName();
+                found = true;
             }
         }
+        NES_ASSERT(found, " right schema does not contain a timestamp attribute");
+
+        //Extract the schema of the right side
+        auto leftSchema = joinOperator->getLeftInputSchema();
+        //Extract the first field from right schema and trim it to find the schema qualifier for the right side
+        found = false;
+        for (auto& field : leftSchema->fields) {
+            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                timeStampFieldNameLeft = field->getName();
+                found = true;
+            }
+        }
+        NES_ASSERT(found, " left schema does not contain a timestamp attribute");
 
         NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                    "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+
+        NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft << " timeStampFieldNameRight: " << timeStampFieldNameRight);
+        NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
 
         auto windowSize = windowType->getSize().getTime();
         auto numSourcesLeft = joinOperator->getLeftInputOriginIds().size();
