@@ -120,7 +120,7 @@ bool JoinLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext& 
         throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
-    NES_DEBUG2("Binary infer left schema={} right schema={}", leftInputSchema->toString(), rightInputSchema->toString());
+    NES_DEBUG2("Binary infer \nleft schema={}\nright schema={}", leftInputSchema->toString(), rightInputSchema->toString());
     if (leftInputSchema->getSchemaSizeInBytes() == 0) {
         NES_ERROR2("JoinLogicalOperatorNode: left schema is emtpy");
         throw TypeInferenceException("JoinLogicalOperatorNode: Left input schema is not initialized.");

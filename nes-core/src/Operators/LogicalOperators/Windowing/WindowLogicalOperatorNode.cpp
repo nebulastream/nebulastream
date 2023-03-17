@@ -82,8 +82,7 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
         outputSchema =
             outputSchema
                 ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "cnt", UINT64));
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
     }
 
     if (windowDefinition->isKeyed()) {
@@ -99,6 +98,9 @@ bool WindowLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseContext
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
+
+    NES_DEBUG2("Outputschema for window={}", outputSchema->toString());
+
     return true;
 }
 
