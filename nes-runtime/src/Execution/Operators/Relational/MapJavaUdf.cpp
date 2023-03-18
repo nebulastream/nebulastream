@@ -139,6 +139,11 @@ extern "C" void startOrAttachVMWithByteList(void* state) {
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
     std::string utilsPath = std::string(JAVA_UDF_UTILS);
+    if (!dirExists(utilsPath)) {
+        NES_FATAL_ERROR("jarPath:" << utilsPath << " not valid!");
+        exit(EXIT_FAILURE);
+    }
+    NES_DEBUG("Using Java class path: " << utilsPath);
     JavaVMInitArgs args {};
     std::vector<std::string> opt {"-verbose:jni", "-verbose:class", "-Djava.class.path=" + utilsPath};
     std::vector<JavaVMOption> options;
@@ -199,6 +204,7 @@ extern "C" void* findInputClass(void* state) {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<MapJavaUdfOperatorHandler*>(state);
 
+    NES_DEBUG("handler->getInputClassName() " << handler->getInputClassName());
     jclass clazz = handler->getEnvironment()->FindClass(handler->getInputClassName().c_str());
     jniErrorCheck(handler->getEnvironment());
     return clazz;

@@ -85,7 +85,9 @@ void createJVM(JavaVM* jvm, JNIEnv** env) {
  */
 std::vector<char> loadClassFileIntoBuffer(const std::string& path, const std::string& className) {
     // Open the file
-    std::ifstream file(path + className + ".class", std::ios::binary);
+    std::string filename = path + className + ".class";
+    NES_DEBUG("Loading byte code from file: " << filename);
+    std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         return {};
     }

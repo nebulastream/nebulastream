@@ -50,11 +50,13 @@ void JVMContext::createOrAttachToJVM(JNIEnv** env, JavaVMInitArgs& args) {
         // It can be stepped over without any issues.
         // "HotSpot JVM uses SIGSEGV extensively for its own purposes under the hood"
         // https://youtrack.jetbrains.com/issue/CPP-16002/CLion-debugging-of-JVM-JNI-debug-mode-segmentation-faults
+        NES_DEBUG("Creating new JVM");
         jint rc = JNI_CreateJavaVM(&jvm, (void**) env, &args);
         jniErrorCheck(rc);
         created = true;
         attached = true;
     } else if (created && !attached) {
+        NES_DEBUG("Attaching to existing JVM");
         jint rc = jvm->AttachCurrentThread((void**) env, nullptr);
         jniErrorCheck(rc);
         attached = true;
@@ -75,6 +77,7 @@ void JVMContext::detachFromJVM() {
 void JVMContext::destroyJVM() {
     std::lock_guard<std::mutex> lock(mutex);
     if (created) {
+        NES_DEBUG("Destroying JVM");
         jint rc = jvm->DestroyJavaVM();
         jniErrorCheck(rc);
         created = false;
