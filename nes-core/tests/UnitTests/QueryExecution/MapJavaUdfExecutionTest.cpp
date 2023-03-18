@@ -50,7 +50,7 @@ class MapJavaUdfQueryExecutionTest : public testing::Test {
     static void TearDownTestCase() { NES_DEBUG("MapJavaUdfQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<TestExecutionEngine> executionEngine;
-    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData";
+    std::string testDataPath = std::string(TEST_DATA_DIRECTORY) + "/JavaUdfTestData/";
 };
 
 /**
