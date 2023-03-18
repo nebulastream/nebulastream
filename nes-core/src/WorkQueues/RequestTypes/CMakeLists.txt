@@ -18,4 +18,7 @@ add_source_files(nes-core
         MaintenanceRequest.cpp
         FailQueryRequest.cpp
         MigrateQueryRequest.cpp
+        CoordinatorActionRequest.cpp
+        StorageAccessHandle.cpp
+        TwoPhaseLockingStorageManager.cpp
         )

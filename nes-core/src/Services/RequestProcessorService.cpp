@@ -97,6 +97,7 @@ void RequestProcessorService::start() {
                 continue;
             }
 
+
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
             PlacementStrategy::Value placementStrategy;
             if (requests[0]->instanceOf<RunQueryRequest>()) {
