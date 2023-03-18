@@ -32,8 +32,7 @@ void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaU
         javaClass->set_byte_code(byteCode.data(), byteCode.size());
     }
     // Serialize the input and output schema.
-    SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getInputSchema(),
-                                             javaUdfDescriptorMessage.mutable_inputschema());
+    SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getInputSchema(), javaUdfDescriptorMessage.mutable_inputschema());
     SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getOutputSchema(),
                                              javaUdfDescriptorMessage.mutable_outputschema());
     // Serialize the input and output class names.

@@ -67,14 +67,10 @@ JavaUdfDescriptor::JavaUdfDescriptor(const std::string& className,
 }
 
 bool JavaUdfDescriptor::operator==(const JavaUdfDescriptor& other) const {
-    return className == other.className
-        && getMethodName() == other.getMethodName()
-        && inputSchema->equals(other.inputSchema, true)
-        && outputSchema->equals(other.outputSchema, true)
-        && serializedInstance == other.serializedInstance
-        && byteCodeList == other.byteCodeList
-        && inputClassName == other.inputClassName
-        && outputClassName == other.outputClassName;
+    return className == other.className && getMethodName() == other.getMethodName()
+        && inputSchema->equals(other.inputSchema, true) && outputSchema->equals(other.outputSchema, true)
+        && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList
+        && inputClassName == other.inputClassName && outputClassName == other.outputClassName;
 }
 
 void JavaUdfDescriptor::setInputSchema(const SchemaPtr& inputSchema) { JavaUdfDescriptor::inputSchema = inputSchema; }
