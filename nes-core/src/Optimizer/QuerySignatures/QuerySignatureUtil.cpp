@@ -41,10 +41,10 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/SlidingWindow.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <z3++.h>
 
@@ -678,7 +678,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     std::shared_ptr<Windowing::WindowType> windowType;
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     //Compute the expression for window time key
-    if(windowDefinition->getWindowType()->isSlidingWindow() || windowDefinition->getWindowType()->isTumblingWindow()) {
+    if (windowDefinition->getWindowType()->isSlidingWindow() || windowDefinition->getWindowType()->isTumblingWindow()) {
         windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         auto timeCharacteristic = windowType->asTimeBasedWindowType(windowDefinition->getWindowType())->getTimeCharacteristic();
         z3::expr windowTimeKeyVal(*context);
@@ -730,7 +730,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
             //TODO: as part of #1377
             NES_NOT_IMPLEMENTED();
         }
-    } else { // for Threshold Window
+    } else {// for Threshold Window
         Z3_ast expressionArray[] = {windowKeyExpression};
 
         if (windowExpressions.find(windowKey) == windowExpressions.end()) {

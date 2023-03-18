@@ -118,7 +118,8 @@ void ThresholdWindow::execute(ExecutionContext& ctx, Record& record) const {
                     auto aggregationValueMemref =
                         FunctionCall("getAggregationValue", getAggregationValue, handler, Value<UInt64>(i));
                     auto aggregationResult = aggregationFunctions[i]->lower(aggregationValueMemref);
-                    NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str() << "result: " << aggregationResult)
+                    NES_TRACE("Write back result for" << aggregationResultFieldIdentifiers[i].c_str()
+                                                      << "result: " << aggregationResult)
                     resultRecord.write(aggregationResultFieldIdentifiers[i], aggregationResult);
                     aggregationFunctions[i]->reset(aggregationValueMemref);
                 }

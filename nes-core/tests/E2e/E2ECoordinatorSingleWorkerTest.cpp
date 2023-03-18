@@ -826,45 +826,48 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
-              "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
-              "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
-              "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
-              "addField(createField(\\\"MMDD\\\",FLOAT64))->"
-              "addField(createField(\\\"HHMM\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
-              "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->"// 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
-              "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
-              "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",INT32))->"  //TODO I changed that to i32 to prevent failure because of different data types
-              "addField(createField(\\\"ECU_Side_StanD\\\",INT32))->"
-              "addField(createField(\\\"Longitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Latitude\\\",FLOAT64))->"
-              "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
+    schema
+        << "{\"logicalSourceName\" : \"ktm\",\"schema\" "
+           ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
+           "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
+           "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
+           "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
+           "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
+           "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
+           "addField(createField(\\\"MMDD\\\",FLOAT64))->"
+           "addField(createField(\\\"HHMM\\\",FLOAT64))->"
+           "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
+           "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
+           "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
+           "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->"// 13th col.
+           "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
+           "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
+           "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
+           "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
+           "addField(createField(\\\"ECU_Water_Temperature\\\",FLOAT64))->"
+           "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",INT32))->"//TODO I changed that to i32 to prevent failure because of different data types
+           "addField(createField(\\\"ECU_Side_StanD\\\",INT32))->"
+           "addField(createField(\\\"Longitude\\\",FLOAT64))->"
+           "addField(createField(\\\"Latitude\\\",FLOAT64))->"
+           "addField(createField(\\\"Altitude\\\",FLOAT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType("CSVSource"),
-                                          TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //I created a new file to open and close a threshold window
-                                          TestUtils::physicalSourceName("test_stream"),
-                                          TestUtils::logicalSourceName("ktm"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::enableNautilus(),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(4),
-                                          TestUtils::sourceGatheringInterval(1),
-                                          TestUtils::enableThreadLocalWindowing()});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType("CSVSource"),
+         TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
+                                      + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("ktm"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::enableNautilus(),
+         TestUtils::numberOfTuplesToProducePerBuffer(4),
+         TestUtils::sourceGatheringInterval(1),
+         TestUtils::enableThreadLocalWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     //TODO : without logicalStreamName$Attribute (qualified att names) the Nautilus query fails with the error: attr. does not exits
