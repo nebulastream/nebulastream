@@ -19,4 +19,5 @@ add_source_files(nes-runtime
                 CollectorTrigger.cpp
                 Profiler.cpp
                 BranchMisses.cpp
-                CacheMisses.cpp)
+                CacheMisses.cpp
+                Normalizer.cpp)

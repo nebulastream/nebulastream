@@ -12,26 +12,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Execution/StatisticsCollector/PipelineRuntime.hpp>
+#include <future>
+#include <utility>
 
 namespace NES::Runtime::Execution {
 
 PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
-                                 std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage)
-    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      nautilusExecutablePipelineStage(nautilusExecutablePipelineStage) {}
+                                 std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
+                                 uint64_t normalizationWindowSize)
+    : nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)),
+      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)){}
 
 void PipelineRuntime::collect() {
     auto runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
 
-    if(runtime != 0){
+    if (runtime != 0){
         std::cout << "PipelineRuntime " << runtime << " Microseconds" << std::endl;
-
-        //todo normalize runtime for change detection
-        /*if (changeDetectorWrapper->insertValue(runtime)){
-            std::cout << "Change detected" << std::endl;
-        }*/
+        normalizer.normalizeValue(runtime);
     }
 }
 

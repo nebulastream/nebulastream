@@ -16,7 +16,6 @@ limitations under the License.
 #define NES_RUNTIME_INCLUDE_EXECUTION_PROFILER_HPP_
 
 #include <asm/unistd.h>
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

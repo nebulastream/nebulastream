@@ -228,14 +228,16 @@ TEST_P(StatisticsCollectorTest, runtimeTest) {
     auto nautilusExecutablePipelineStage = std::dynamic_pointer_cast<NautilusExecutablePipelineStage>(executablePipelineStage);
 
     // initialize statistic pipeline runtime
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage, 5);
 
     nautilusExecutablePipelineStage->setup(pipelineContext);
     for (auto& buffer : bufferVector) {
-        nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
+        for (uint64_t i = 0; i < 100; i++) {
+            nautilusExecutablePipelineStage->execute(buffer, pipelineContext, *wc);
 
-        // collect the statistics
-        pipelineRuntime->collect();
+            // collect the statistics
+            pipelineRuntime->collect();
+        }
     }
     nautilusExecutablePipelineStage->stop(pipelineContext);
 
@@ -404,7 +406,7 @@ TEST_P(StatisticsCollectorTest, triggerStatisticsTest) {
     auto pipelineId = pipelineContext.getPipelineID();
 
     auto pipelineSelectivity = std::make_unique<PipelineSelectivity>(std::move(changeDetectorWrapper), nautilusExecutablePipelineStage);
-    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage);
+    auto pipelineRuntime = std::make_unique<PipelineRuntime>(std::move(changeDetectorWrapperRuntime), nautilusExecutablePipelineStage, 10);
 
     // create a statistics collector and add the statistics to its list
     auto statisticsCollector = std::make_shared<StatisticsCollector>();
