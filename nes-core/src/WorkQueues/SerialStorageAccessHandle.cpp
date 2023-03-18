@@ -22,16 +22,18 @@ std::shared_ptr<SerialStorageAccessHandle> SerialStorageAccessHandle::create(con
     return std::make_shared<SerialStorageAccessHandle>(topology);
 }
 
-TopologyHandle SerialStorageAccessHandle::getTopologyHandle() {
-    return {&*topology, UnlockDeleter()};
-}
 
 bool SerialStorageAccessHandle::requiresRollback() {
     return true;
 }
 
-/*
-QueryCatalogHandle SerialStorageAccessHandle::getQueryCatalogHandle() { return QueryCatalogHandle(); }
- */
+TopologyHandle SerialStorageAccessHandle::getTopologyHandle() {
+    return {&*topology, UnlockDeleter()};
+}
+
+QueryCatalogHandle SerialStorageAccessHandle::getQueryCatalogHandle() {
+    return {};
+}
+
 
 }
