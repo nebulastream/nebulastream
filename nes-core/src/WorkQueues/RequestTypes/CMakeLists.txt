@@ -18,4 +18,5 @@ add_source_files(nes-core
         MaintenanceRequest.cpp
         FailQueryRequest.cpp
         MigrateQueryRequest.cpp
+        AbstractRequest.cpp
         )
