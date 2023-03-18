@@ -128,7 +128,7 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                         size_t bufferSize,
                                         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-    NES_INFO("Lower node:" << operatorNode->toString() << "to NautilusOperator." );
+    NES_INFO("Lower node:" << operatorNode->toString() << "to NautilusOperator.");
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>()) {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
@@ -492,7 +492,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         NES_INFO("lowerThresholdWindow threshold window result schema: " << thresholdWindowResultSchema->toString());
         auto aggregationResultFieldName =
-        //TODO: we get an error here : Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is requested
+            //TODO: we get an error here : Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is requested
             //because our result schema is empty, I excluded threshold window from the output schema creation in the GlobalWindowOperator as
             // this caused another error: attr does not exit (for agg fields)
             //Thus, here we now get only Avg, Min, etc. as resultfieldname but that does not affact things further so far.

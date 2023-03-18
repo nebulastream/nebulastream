@@ -22,8 +22,8 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
+#include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
 
 #include <z3++.h>
 
@@ -74,10 +74,10 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         agg->inferStamp(typeInferencePhaseContext, inputSchema);
     }
 
-    if (windowDefinition->getWindowType()->isThresholdWindow()){
+    if (windowDefinition->getWindowType()->isThresholdWindow()) {
         auto windowType = Windowing::WindowType::asContentBasedWindowType(windowDefinition->getWindowType());
         windowType->inferStamp(inputSchema);
-    }else {
+    } else {
         auto windowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
         windowType->inferStamp(inputSchema);
     }
@@ -102,7 +102,8 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
         }
     }
     for (auto& agg : windowAggregation) {
-        NES_INFO("Add the following field to the output schema of the GlobalWindow" << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
+        NES_INFO("Add the following field to the output schema of the GlobalWindow"
+                 << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
         outputSchema->addField(
             AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
     }
