@@ -31,7 +31,9 @@ void UdfSerializationUtil::serializeJavaUdfDescriptor(const Catalogs::UDF::JavaU
         javaClass->set_class_name(className);
         javaClass->set_byte_code(byteCode.data(), byteCode.size());
     }
-    // Serialize schema.
+    // Serialize the input and output schema.
+    SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getInputSchema(),
+                                             javaUdfDescriptorMessage.mutable_inputschema());
     SchemaSerializationUtil::serializeSchema(javaUdfDescriptor.getOutputSchema(),
                                              javaUdfDescriptorMessage.mutable_outputschema());
     // Serialize the input and output class names.
@@ -52,13 +54,15 @@ UdfSerializationUtil::deserializeJavaUdfDescriptor(const JavaUdfDescriptorMessag
             {classDefinition.class_name(),
              Catalogs::UDF::JavaByteCode{classDefinition.byte_code().begin(), classDefinition.byte_code().end()}});
     }
-    // Deserialize the output schema.
+    // Deserialize the input and output schema.
+    auto inputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.inputschema());
     auto outputSchema = SchemaSerializationUtil::deserializeSchema(javaUdfDescriptorMessage.outputschema());
     // Create Java UDF descriptor.
     return Catalogs::UDF::JavaUdfDescriptor::create(javaUdfDescriptorMessage.udf_class_name(),
                                                     javaUdfDescriptorMessage.udf_method_name(),
                                                     serializedInstance,
                                                     javaUdfByteCodeList,
+                                                    inputSchema,
                                                     outputSchema,
                                                     javaUdfDescriptorMessage.input_class_name(),
                                                     javaUdfDescriptorMessage.output_class_name());

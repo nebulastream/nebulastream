@@ -56,6 +56,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                       const std::string& methodName,
                       const JavaSerializedInstance& serializedInstance,
                       const JavaUdfByteCodeList& byteCodeList,
+                      const SchemaPtr inputSchema,
                       const SchemaPtr outputSchema,
                       const std::string& inputClassName,
                       const std::string& outputClassName);
@@ -80,6 +81,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                        const std::string& methodName,
                                        const JavaSerializedInstance& serializedInstance,
                                        const JavaUdfByteCodeList& byteCodeList,
+                                       const SchemaPtr inputSchema,
                                        const SchemaPtr outputSchema,
                                        const std::string& inputClassName,
                                        const std::string& outputClassName) {
@@ -87,6 +89,7 @@ class JavaUdfDescriptor : public UdfDescriptor {
                                                    methodName,
                                                    serializedInstance,
                                                    byteCodeList,
+                                                   inputSchema,
                                                    outputSchema,
                                                    inputClassName,
                                                    outputClassName);
