@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.33](https://github.com/nebulastream/nebulastream/tree/v0.5.33) (2023-03-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.32...v0.5.33)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Threshold windows not working end-to-end [\#3554](https://github.com/nebulastream/nebulastream/issues/3554)
+
 ## [v0.5.32](https://github.com/nebulastream/nebulastream/tree/v0.5.32) (2023-03-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.31...v0.5.32)
