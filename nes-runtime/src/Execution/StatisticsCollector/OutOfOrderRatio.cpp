@@ -1,0 +1,44 @@
+/*
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include <Execution/StatisticsCollector/OutOfOrderRatio.hpp>
+#include <utility>
+
+namespace NES::Runtime::Execution {
+
+OutOfOrderRatio::OutOfOrderRatio(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper,
+                                 std::shared_ptr<Operators::OutOfOrderRatioOperatorHandler> outOfOrderOperatorHandler)
+    : changeDetectorWrapper(std::move(changeDetectorWrapper)),
+      outOfOrderOperatorHandler(outOfOrderOperatorHandler) {}
+
+void OutOfOrderRatio::collect() {
+    auto numRecords = outOfOrderOperatorHandler->numberOfRecords;
+    auto numOutOfOrderRecords = outOfOrderOperatorHandler->numberOfOutOfOrderRecords;
+
+    if(numRecords != 0){
+        auto outOfOrderRatio = (double) numOutOfOrderRecords / numRecords;
+        std::cout << "OutOfOrderRatio " << outOfOrderRatio << std::endl;
+
+        if (changeDetectorWrapper->insertValue(outOfOrderRatio)){
+            std::cout << "Change detected" << std::endl;
+        }
+    }
+
+}
+
+
+std::string OutOfOrderRatio::getType() const {
+    return "OutOfOrderRatio";
+}
+} // namespace NES::Runtime::Execution

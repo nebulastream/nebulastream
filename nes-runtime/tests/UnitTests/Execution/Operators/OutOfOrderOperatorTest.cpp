@@ -95,7 +95,6 @@ TEST_P(OutOfOrderOperatorTest, outOfOrderOperatorTest) {
         if (i % 10 == 0) {
             std::uniform_int_distribution<uint64_t> dist(999, (1000+i-1));
             auto randomNumber = (uint64_t) dist(mt);
-            //std::cout << "randNumber " << randomNumber << std::endl;
             dynamicBuffer[i]["time"].write((uint64_t) randomNumber);
             dynamicBuffer[i]["f1"].write((int64_t) i % 10);
             dynamicBuffer[i]["f2"].write((int64_t) 1);

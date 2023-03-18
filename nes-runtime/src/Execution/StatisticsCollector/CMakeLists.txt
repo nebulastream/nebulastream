@@ -20,4 +20,5 @@ add_source_files(nes-runtime
                 Profiler.cpp
                 BranchMisses.cpp
                 CacheMisses.cpp
+                OutOfOrderRatio.cpp
                 Normalizer.cpp)

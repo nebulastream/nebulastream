@@ -18,6 +18,8 @@ limitations under the License.
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/OutOfOrderRatio/OutOfOrderRatioOperator.hpp>
+#include <Execution/Operators/OutOfOrderRatio/OutOfOrderRatioOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -29,6 +31,7 @@ limitations under the License.
 #include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/SeqDrift2/SeqDrift2.hpp>
+#include <Execution/StatisticsCollector/OutOfOrderRatio.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
 #include <Execution/StatisticsCollector/PipelineSelectivity.hpp>
 #include <Execution/StatisticsCollector/Profiler.hpp>
@@ -336,6 +339,73 @@ TEST_P(StatisticsCollectorTest, branchAndCacheMissesTest) {
         ASSERT_LT(resultDynamicBuffer[i]["f1"].read<int64_t>(), 9);
         ASSERT_EQ(resultDynamicBuffer[i]["f2"].read<int64_t>(), 1);
     }
+}
+
+/**
+ * @brief test out-of-order ratio operator
+ */
+TEST_P(StatisticsCollectorTest, outOfOrderRatioTest) {
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("time", BasicType::UINT64);
+    schema->addField("f1", BasicType::INT64);
+    schema->addField("f2", BasicType::INT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
+
+    auto oufOfOrderMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto readTimestamp = std::make_shared<Expressions::ReadFieldExpression>("time");
+    auto outOfOrderRatioOperator = std::make_shared<Operators::OutOfOrderRatioOperator>(std::move(readTimestamp),0);
+    scanOperator->setChild(outOfOrderRatioOperator);
+
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
+    outOfOrderRatioOperator->setChild(emitOperator);
+
+    auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
+    pipeline->setRootOperator(scanOperator);
+
+    std::random_device rd;
+    std::mt19937 mt(rd());
+
+    auto buffer = bm->getBufferBlocking();
+    auto dynamicBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+    for (uint64_t i = 0; i < 100; i++) {
+        if (i % 10 == 0) {
+            std::uniform_int_distribution<uint64_t> dist(999, (1000+i-1));
+            auto randomNumber = (uint64_t) dist(mt);
+            dynamicBuffer[i]["time"].write((uint64_t) randomNumber);
+            dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+            dynamicBuffer[i]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        } else {
+            dynamicBuffer[i]["time"].write((uint64_t) (1000 + i));
+            dynamicBuffer[i]["f1"].write((int64_t) i % 10);
+            dynamicBuffer[i]["f2"].write((int64_t) 1);
+            dynamicBuffer.setNumberOfTuples(i + 1);
+        }
+    }
+
+    auto executablePipeline = provider->create(pipeline);
+
+    auto record = Record({{"time", Value<>(10)}});
+    auto handler = std::make_shared<Operators::OutOfOrderRatioOperatorHandler>(record);
+
+    auto adwin = std::make_unique<Adwin>(0.001, 4);
+    auto changeDetectorWrapper = std::make_unique<ChangeDetectorWrapper>(std::move(adwin));
+    auto outOfOrderRatio = std::make_shared<OutOfOrderRatio>(std::move(changeDetectorWrapper), handler);
+
+    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    executablePipeline->setup(pipelineContext);
+    executablePipeline->execute(buffer, pipelineContext, *wc);
+    executablePipeline->stop(pipelineContext);
+
+    outOfOrderRatio->collect();
+
+    ASSERT_EQ(pipelineContext.buffers.size(), 1);
+    auto resultBuffer = pipelineContext.buffers[0];
+    ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
 }
 
 /**
