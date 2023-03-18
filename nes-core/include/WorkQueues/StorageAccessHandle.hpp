@@ -34,13 +34,21 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 using TopologyHandle = ResourceHandle<Topology>;
 
-//class QueryCatalog;
-//using QueryCatalogHandle = std::unique_ptr<QueryCatalog>;
-/*
-using SourceCatalogHandle;
-using GlobalExecutionPlanHandle;
-using GlobalQueryPlanHandle;
- */
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+using QueryCatalogHandle = ResourceHandle<QueryCatalog>;
+
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+using SourceCatalogHandle = ResourceHandle<SourceCatalog>;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+using GlobalExecutionPlanHandle = ResourceHandle<GlobalExecutionPlan>;
+
+class GlobalQueryPlan;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
 
 class StorageAccessHandle;
 using StorageAccessHandlePtr = std::shared_ptr<StorageAccessHandle>;
@@ -76,28 +84,32 @@ class StorageAccessHandle {
      * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the query catalog.
      */
-    //virtual QueryCatalogHandle getQueryCatalogHandle() = 0;
+    virtual QueryCatalogHandle getQueryCatalogHandle() = 0;
 
     /**
      * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the source catalog.
      */
-    //virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
+    virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
 
     /**
      * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global execution plan.
      */
-    //virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
 
     /**
      * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global query plan.
      */
-    //virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
 
   protected:
     TopologyPtr topology;
+    QueryCatalogPtr queryCatalog;
+    SourceCatalogPtr sourceCatalog;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    GlobalQueryPlanPtr globalQueryPlan;
 };
 }
 

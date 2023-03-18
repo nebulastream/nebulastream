@@ -41,26 +41,25 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
      * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the query catalog.
      */
-    //QueryCatalogHandle getQueryCatalogHandle() override;
+    QueryCatalogHandle getQueryCatalogHandle() override;
 
     /**
      * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the source catalog.
      */
-    //virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
+    virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
 
     /**
      * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global execution plan.
      */
-    //virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
 
     /**
      * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global query plan.
      */
-    //virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
-
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
 };
 
 }
