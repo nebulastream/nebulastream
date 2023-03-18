@@ -44,7 +44,7 @@ PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryP
 }
 
 OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
-    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineCompiler");
+    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin("PipelineInterpreter");
 
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
