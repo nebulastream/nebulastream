@@ -253,7 +253,9 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
 /**
  * Tests the lift, combine, lower and reset functions of the Avg Aggregation
  */
-TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineAvg) {
+// TODO #3602 Disabled because this test checks that the output type is the same as the input type.
+// However, the average of two ints can be a float.
+TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg) {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
     auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
