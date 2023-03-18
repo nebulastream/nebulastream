@@ -23,7 +23,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_LIST_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_LIST_HPP_
 
-#include <Execution/StatisticsCollector/ChangeDetectors/ListNode.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin/ListNode.hpp>
 
 namespace NES::Runtime::Execution {
 

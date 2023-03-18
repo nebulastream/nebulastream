@@ -20,8 +20,8 @@
  *      MA 02110-1301, USA.
  */
 
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin/ListNode.hpp>
 #include <stdio.h>
-#include <Execution/StatisticsCollector/ChangeDetectors/ListNode.hpp>
 
 namespace NES::Runtime::Execution {
 

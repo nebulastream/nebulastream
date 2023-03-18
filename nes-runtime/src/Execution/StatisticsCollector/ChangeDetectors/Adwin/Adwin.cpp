@@ -20,9 +20,9 @@
  *      MA 02110-1301, USA.
  */
 
-#include <cstdio>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <cmath>
-#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
+#include <cstdio>
 
 namespace NES::Runtime::Execution {
 

@@ -23,7 +23,7 @@
 #ifndef NES_RUNTIME_INCLUDE_EXECUTION_ADWIN_HPP_
 #define NES_RUNTIME_INCLUDE_EXECUTION_ADWIN_HPP_
 
-#include <Execution/StatisticsCollector/ChangeDetectors/List.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin/List.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetector.hpp>
 
 namespace NES::Runtime::Execution {

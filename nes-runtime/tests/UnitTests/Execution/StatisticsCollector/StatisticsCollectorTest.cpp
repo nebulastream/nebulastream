@@ -26,7 +26,7 @@ limitations under the License.
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/StatisticsCollector/BranchMisses.hpp>
 #include <Execution/StatisticsCollector/CacheMisses.hpp>
-#include <Execution/StatisticsCollector/ChangeDetectors/Adwin.hpp>
+#include <Execution/StatisticsCollector/ChangeDetectors/Adwin/Adwin.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/ChangeDetectorWrapper.hpp>
 #include <Execution/StatisticsCollector/ChangeDetectors/SeqDrift2/SeqDrift2.hpp>
 #include <Execution/StatisticsCollector/PipelineRuntime.hpp>
@@ -36,7 +36,6 @@ limitations under the License.
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>

@@ -10,8 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Adwin)
-add_subdirectory(SeqDrift2)
 add_source_files(nes-runtime
-                ChangeDetector.cpp
-                ChangeDetectorWrapper.cpp)
+        Adwin.cpp
+        List.cpp
+        ListNode.cpp)
