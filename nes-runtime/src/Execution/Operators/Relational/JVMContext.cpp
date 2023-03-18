@@ -90,8 +90,8 @@ void JVMContext::destroyJVM() {
 JVMContext::~JVMContext() {
     std::lock_guard<std::mutex> lock(mutex);
     if (created) {
-        jint rc = jvm->DestroyJavaVM();
-        jniErrorCheck(rc);
+//        jint rc = jvm->DestroyJavaVM();
+//        jniErrorCheck(rc);
     }
 }
 }; // namespace NES::Runtime::Execution::Operators
