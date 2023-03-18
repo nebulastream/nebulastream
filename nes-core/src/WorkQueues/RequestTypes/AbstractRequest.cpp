@@ -12,6 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include <WorkQueues/RequestTypes/AbstractRequest.hpp>
+#include <WorkQueues/StorageAccessHandle.hpp>
 
 namespace NES {
 
@@ -24,7 +25,7 @@ void AbstractRequest::rollBack(std::exception& ex, StorageAccessHandlePtr storag
      * this allows us in the case of an mvcc storage handler to skip a rollback on a transaction specific access handler
      * if the versions it points to will not be used any further
      */
-    if (storageAccessHandle->requireseRollback()) {
+    if (storageAccessHandle->requiresRollback()) {
         //roll back changes
         //use info in exception to see where execution left of, so we know how much we have to roll back
     }

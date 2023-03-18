@@ -491,6 +491,9 @@ add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationPr
 
 ### Reconnect Schedule Predictor Test ###
 add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/ReconnectSchedulePredictorTest.cpp")
+
+### Serial Storage Access Handle Test ###
+add_nes_unit_test(serial-access-handle-tests "UnitTests/SerialAccessHandleTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")
