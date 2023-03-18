@@ -57,6 +57,12 @@ inline void jniErrorCheck(JNIEnv* env, const std::source_location& location = st
  */
 inline bool dirExists(const std::string& path) { return std::filesystem::exists(path.c_str()); }
 
+inline std::string convertJavaClassName(const std::string& className) {
+    auto copy = className;
+    std::replace(copy.begin(), copy.end(), '.', '/');
+    return copy;
+}
+
 /**
  * loads clases from the byteCodeList into the JVM
  * @param state operator handler state
@@ -72,7 +78,9 @@ extern "C" void loadClassesFromByteList(void* state, const std::unordered_map<st
         jbyte* jCode = handler->getEnvironment()->GetByteArrayElements(jData, nullptr);
         jniErrorCheck(handler->getEnvironment());
         std::memcpy(jCode, byteCode.data(), byteCode.size()); // copy the byte array into the JVM byte array
-        handler->getEnvironment()->DefineClass(className.c_str(), nullptr, jCode, (jint)byteCode.size());
+        // TODO Convert separators in classname from . to /
+        auto convertedClassName = handler->convertJavaClassName(className);
+        handler->getEnvironment()->DefineClass(convertedClassName.c_str(), nullptr, jCode, (jint)byteCode.size());
         jniErrorCheck(handler->getEnvironment());
         handler->getEnvironment()->ReleaseByteArrayElements(jData, jCode, JNI_ABORT);
         jniErrorCheck(handler->getEnvironment());

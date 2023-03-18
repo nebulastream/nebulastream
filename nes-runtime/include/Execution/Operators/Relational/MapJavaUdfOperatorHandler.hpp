@@ -53,9 +53,17 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
                                        SchemaPtr inputSchema,
                                        SchemaPtr outputSchema,
                                        const std::optional<std::string>& javaPath)
-        : className(className), methodName(methodName), inputClassName(inputClassName), outputClassName(outputClassName),
+        : className(convertJavaClassName(className)),
+          methodName(methodName),
+          inputClassName(convertJavaClassName(inputClassName)),
+          outputClassName(convertJavaClassName(outputClassName)),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
           outputSchema(outputSchema), javaPath(javaPath) {}
+    inline const std::string convertJavaClassName(const std::string& className) const {
+        auto copy = className;
+        std::replace(copy.begin(), copy.end(), '.', '/');
+        return copy;
+    }
 
     void start(PipelineExecutionContextPtr, StateManagerPtr, uint32_t) override {}
     void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
