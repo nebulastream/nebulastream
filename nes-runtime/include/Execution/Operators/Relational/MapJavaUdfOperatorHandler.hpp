@@ -58,7 +58,16 @@ class MapJavaUdfOperatorHandler : public OperatorHandler {
           inputClassName(convertJavaClassName(inputClassName)),
           outputClassName(convertJavaClassName(outputClassName)),
           byteCodeList(byteCodeList), serializedInstance(serializedInstance), inputSchema(inputSchema),
-          outputSchema(outputSchema), javaPath(javaPath) {}
+          outputSchema(adaptOutputSchema(outputSchema)), javaPath(javaPath) {}
+
+    inline SchemaPtr adaptOutputSchema(const SchemaPtr schema) {
+        for (auto& field : schema->fields) {
+            auto fieldName = field->getName();
+            field->setName("wind_turbines$" + fieldName);
+        }
+        return schema;
+    }
+
     inline const std::string convertJavaClassName(const std::string& className) const {
         auto copy = className;
         std::replace(copy.begin(), copy.end(), '.', '/');
