@@ -32,7 +32,8 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
         return false;
     }
     // The output schema of this operation is determined by the Java UDF.
-    outputSchema = javaUdfDescriptor->getOutputSchema();
+    outputSchema->clear();
+    outputSchema->copyFields(javaUdfDescriptor->getOutputSchema());
     //Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
@@ -43,7 +44,7 @@ bool MapJavaUdfLogicalOperatorNode::inferSchema(Optimizer::TypeInferencePhaseCon
     }
     // set the derived input schema
     // TODO: check if this corresponds to the schema of the parent operator
-    javaUdfDescriptor->setInputSchema(inputSchema);
+    javaUdfDescriptor->setInputSchema(inputSchema->copy());
     return true;
 }
 
