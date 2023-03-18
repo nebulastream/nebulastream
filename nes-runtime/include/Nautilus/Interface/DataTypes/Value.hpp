@@ -44,7 +44,7 @@ concept IsNotValueType = !
 std::is_base_of<BaseValue, T>::value;
 
 /**
- * @brief The Value class provides the elementary wrapper for any data value that inherents from Any.
+ * @brief The Value class provides the elementary wrapper for any data value that inherits from Any.
  * Value provides operator overloading and integrates with the tracing framework to track individual operations, e.g. ==, +, -.
  * @tparam ValueType
  */
