@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.34](https://github.com/nebulastream/nebulastream/tree/v0.5.34) (2023-03-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.33...v0.5.34)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Need to deserialize/serialize input schema in JavaUdfDescriptor [\#3481](https://github.com/nebulastream/nebulastream/issues/3481)
+
 ## [v0.5.33](https://github.com/nebulastream/nebulastream/tree/v0.5.33) (2023-03-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.32...v0.5.33)
