@@ -25,6 +25,7 @@
 #include <filesystem>
 #include <jni.h>
 #include <utility>
+#include <algorithm>
 #if not(defined(__APPLE__))
 #include <experimental/source_location>
 #endif
@@ -847,6 +848,8 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
             inputPojoPtr =
                 FunctionCall<>("createIntegerObject", createIntegerObject, handler, record.read(fieldName).as<Int32>());
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createUInt64())) {
+            inputPojoPtr = FunctionCall<>("createLongObject", createLongObject, handler, record.read(fieldName).as<UInt64>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
             inputPojoPtr = FunctionCall<>("createLongObject", createLongObject, handler, record.read(fieldName).as<Int64>());
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt16())) {
@@ -964,6 +967,9 @@ void MapJavaUdf::execute(ExecutionContext& ctx, Record& record) const {
             record.write(fieldName, val);
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt32())) {
             Value<> val = FunctionCall<>("getIntegerObjectValue", getIntegerObjectValue, handler, outputPojoPtr);
+            record.write(fieldName, val);
+        } else if (field->getDataType()->isEquals(DataTypeFactory::createUInt64())) {
+            Value<> val = FunctionCall<>("getLongObjectValue", getLongObjectValue, handler, outputPojoPtr);
             record.write(fieldName, val);
         } else if (field->getDataType()->isEquals(DataTypeFactory::createInt64())) {
             Value<> val = FunctionCall<>("getLongObjectValue", getLongObjectValue, handler, outputPojoPtr);
