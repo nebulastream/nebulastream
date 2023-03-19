@@ -1,12 +1,23 @@
 #include <WorkQueues/TwoPhaseLockingStorageAccessHandle.hpp>
+#include <utility>
 
 namespace NES {
 
-TwoPhaseLockingStorageAccessHandle::TwoPhaseLockingStorageAccessHandle(NES::TopologyPtr topology)
-    : StorageAccessHandle(topology) {}
+TwoPhaseLockingStorageAccessHandle::TwoPhaseLockingStorageAccessHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                       TopologyPtr topology,
+                                                                       QueryCatalogServicePtr queryCatalogService,
+                                                                       GlobalQueryPlanPtr globalQueryPlan,
+                                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                                       Catalogs::UDF::UdfCatalogPtr udfCatalog)
+    : StorageAccessHandle(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog) {}
 
-std::shared_ptr<TwoPhaseLockingStorageAccessHandle> TwoPhaseLockingStorageAccessHandle::create(TopologyPtr topology) {
-    return std::make_shared<TwoPhaseLockingStorageAccessHandle>(topology);
+std::shared_ptr<TwoPhaseLockingStorageAccessHandle> TwoPhaseLockingStorageAccessHandle::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                       TopologyPtr topology,
+                                                                       QueryCatalogServicePtr queryCatalogService,
+                                                                       GlobalQueryPlanPtr globalQueryPlan,
+                                                                       Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                                       Catalogs::UDF::UdfCatalogPtr udfCatalog) {
+    return std::make_shared<TwoPhaseLockingStorageAccessHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
 }
 
 bool TwoPhaseLockingStorageAccessHandle::requiresRollback() {
@@ -17,8 +28,8 @@ TopologyHandle TwoPhaseLockingStorageAccessHandle::getTopologyHandle() {
     return TopologyHandle(&*topology, UnlockDeleter(topologyMutex, std::try_to_lock));
 }
 
-QueryCatalogHandle TwoPhaseLockingStorageAccessHandle::getQueryCatalogHandle() {
-    return QueryCatalogHandle(&*queryCatalog, UnlockDeleter(queryCatalogMutex, std::try_to_lock));
+QueryCatalogServiceHandle TwoPhaseLockingStorageAccessHandle::getQueryCatalogHandle() {
+    return QueryCatalogServiceHandle(&*queryCatalogService, UnlockDeleter(queryCatalogMutex, std::try_to_lock));
 }
 
 SourceCatalogHandle TwoPhaseLockingStorageAccessHandle::getSourceCatalogHandle() {
@@ -32,4 +43,8 @@ GlobalExecutionPlanHandle TwoPhaseLockingStorageAccessHandle::getGlobalExecution
 GlobalQueryPlanHandle TwoPhaseLockingStorageAccessHandle::getGlobalQueryPlanHandle() {
     return NES::GlobalQueryPlanHandle(&*globalQueryPlan, UnlockDeleter(globalQueryPlanMutex, std::try_to_lock));
 }
+UdfCatalogHandle TwoPhaseLockingStorageAccessHandle::getUdfCatalogHandle() {
+    return NES::UdfCatalogHandle(&*udfCatalog, UnlockDeleter(udfCatalogMutex, std::try_to_lock));
+}
+
 }// namespace NES

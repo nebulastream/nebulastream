@@ -16,12 +16,26 @@
 #include <Topology/Topology.hpp>
 namespace NES {
 
-SerialStorageAccessHandle::SerialStorageAccessHandle(TopologyPtr topology) : StorageAccessHandle(topology) {}
+SerialStorageAccessHandle::SerialStorageAccessHandle(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                     TopologyPtr topology,
+                                                     QueryCatalogServicePtr queryCatalogService,
+                                                     GlobalQueryPlanPtr globalQueryPlan,
+                                                     Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                     Catalogs::UDF::UdfCatalogPtr udfCatalog)
+    : StorageAccessHandle(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog) {}
 
-std::shared_ptr<SerialStorageAccessHandle> SerialStorageAccessHandle::create(const TopologyPtr& topology) {
-    return std::make_shared<SerialStorageAccessHandle>(topology);
+std::shared_ptr<SerialStorageAccessHandle> SerialStorageAccessHandle::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                     TopologyPtr topology,
+                                                     QueryCatalogServicePtr queryCatalogService,
+                                                     GlobalQueryPlanPtr globalQueryPlan,
+                                                     Catalogs::Source::SourceCatalogPtr sourceCatalog,
+                                                     Catalogs::UDF::UdfCatalogPtr udfCatalog) {
+    return std::make_shared<SerialStorageAccessHandle>(globalExecutionPlan, topology, queryCatalogService, globalQueryPlan, sourceCatalog, udfCatalog);
 }
 
+GlobalExecutionPlanHandle SerialStorageAccessHandle::getGlobalExecutionPlanHandle() {
+    return NES::GlobalExecutionPlanHandle();
+}
 
 bool SerialStorageAccessHandle::requiresRollback() {
     return true;
@@ -31,19 +45,18 @@ TopologyHandle SerialStorageAccessHandle::getTopologyHandle() {
     return {&*topology, UnlockDeleter()};
 }
 
-QueryCatalogHandle SerialStorageAccessHandle::getQueryCatalogHandle() {
-    return {};
-}
-
-SourceCatalogHandle SerialStorageAccessHandle::getSourceCatalogHandle() {
-    return NES::SourceCatalogHandle();
-}
-
-GlobalExecutionPlanHandle SerialStorageAccessHandle::getGlobalExecutionPlanHandle() {
-    return NES::GlobalExecutionPlanHandle();
+QueryCatalogServiceHandle SerialStorageAccessHandle::getQueryCatalogHandle() {
+    return {&*queryCatalogService, UnlockDeleter()};
 }
 
 GlobalQueryPlanHandle SerialStorageAccessHandle::getGlobalQueryPlanHandle() {
-    return NES::GlobalQueryPlanHandle();
+    return {&*globalQueryPlan, UnlockDeleter()};
+}
+
+SourceCatalogHandle SerialStorageAccessHandle::getSourceCatalogHandle() {
+    return {&*sourceCatalog, UnlockDeleter()};
+}
+UdfCatalogHandle SerialStorageAccessHandle::getUdfCatalogHandle() {
+    return {&*udfCatalog, UnlockDeleter()};
 }
 }

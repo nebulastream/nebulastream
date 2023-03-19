@@ -9,15 +9,31 @@ namespace NES {
  */
 class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
   public:
-    TwoPhaseLockingStorageAccessHandle(TopologyPtr topology);
+    TwoPhaseLockingStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+                         TopologyPtr  topology,
+                         QueryCatalogServicePtr  queryCatalogService,
+                         GlobalQueryPlanPtr  globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(TopologyPtr topology);
+    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(GlobalExecutionPlanPtr  globalExecutionPlan,
+                         TopologyPtr  topology,
+                         QueryCatalogServicePtr  queryCatalogService,
+                         GlobalQueryPlanPtr  globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
     /**
      * Indicates that the storage handle requires a rollback because we perform serial operations on the actual data.
      * @return always true
      */
     bool requiresRollback() override;
+
+    /**
+     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the global execution plan.
+     */
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
 
     /**
      * Obtain a mutable topology handle. Throws an exception if the lock could not be acquired
@@ -29,7 +45,13 @@ class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
      * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the query catalog.
      */
-    QueryCatalogHandle getQueryCatalogHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogHandle() override;
+
+    /**
+     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the global query plan.
+     */
+    GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
 
     /**
      * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
@@ -38,24 +60,19 @@ class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
     SourceCatalogHandle getSourceCatalogHandle() override;
 
     /**
-     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the global execution plan.
+     * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the udf catalog.
      */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
-
-    /**
-     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the global query plan.
-     */
-    GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
+    UdfCatalogHandle getUdfCatalogHandle() override;
 
   private:
-    //todo: keep the mutexes here or in the class of the resource itself??
+    //todo: keep the mutexes here or in the class of the resource itself?
     std::mutex topologyMutex;
     std::mutex queryCatalogMutex;
     std::mutex sourceCatalogMutex;
     std::mutex globalExecutionPlanMutex;
     std::mutex globalQueryPlanMutex;
+    std::mutex udfCatalogMutex;
 };
 }
 #endif//NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
