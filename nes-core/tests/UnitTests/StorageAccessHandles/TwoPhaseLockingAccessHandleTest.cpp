@@ -11,23 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "NesBaseTest.hpp"
-#include "Topology/Topology.hpp"
-#include "WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp"
+#include <NesBaseTest.hpp>
+#include <Topology/Topology.hpp>
+#include <WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp>
 
-#include "Catalogs/Query/QueryCatalog.hpp"
-#include "Catalogs/Source/SourceCatalog.hpp"
-#include "Catalogs/UDF/UdfCatalog.hpp"
-#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
-#include "Plans/Global/Query/GlobalQueryPlan.hpp"
-#include "Services/QueryCatalogService.hpp"
-#include "Topology/TopologyNode.hpp"
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Topology/TopologyNode.hpp>
 
 namespace NES {
 class TwoPhaseLockingAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("2PLAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("TwoPhaseLockingAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TwoPhaseLockingAccessHandle test class.");
     }
 };
@@ -43,6 +43,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestResourceAccess) {
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
     auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
+
     ASSERT_EQ(topology.get(), twoPLAccessHandle->getTopologyHandle().get());
     ASSERT_EQ(topology->getRoot(), twoPLAccessHandle->getTopologyHandle()->getRoot());
 }
@@ -58,6 +59,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestLocking) {
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
     auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                          globalQueryPlan, sourceCatalog, udfCatalog);
+
     {
         //constructor acquires lock
         auto topologyHandle = twoPLAccessHandle->getTopologyHandle();
@@ -89,6 +91,7 @@ TEST_F(TwoPhaseLockingAccessHandleTest, TestConcurrentAccess) {
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
     auto twoPLAccessHandle  = TwoPhaseLockingStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                          globalQueryPlan, sourceCatalog, udfCatalog);
+
     std::vector<std::thread> threadList;
     for (size_t i = 0; i < numThreads; ++i) {
         threadList.emplace_back([&acquired, &acquiringMax, &twoPLAccessHandle]() {

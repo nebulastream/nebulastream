@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp"
-#include "Topology/Topology.hpp"
+#include <WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp>
+#include <Topology/Topology.hpp>
 #include <memory>
+
 namespace NES {
 
 SerialStorageAccessHandle::SerialStorageAccessHandle(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -56,6 +57,7 @@ GlobalQueryPlanHandle SerialStorageAccessHandle::getGlobalQueryPlanHandle() {
 SourceCatalogHandle SerialStorageAccessHandle::getSourceCatalogHandle() {
     return {&*sourceCatalog, UnlockDeleter()};
 }
+
 UdfCatalogHandle SerialStorageAccessHandle::getUdfCatalogHandle() {
     return {&*udfCatalog, UnlockDeleter()};
 }

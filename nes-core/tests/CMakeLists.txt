@@ -498,7 +498,7 @@ add_nes_unit_test(serial-access-handle-tests "UnitTests/StorageAccessHandles/Ser
 ### 2 Phase Lcoking Storage Access Handle Test ###
 add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/StorageAccessHandles/TwoPhaseLockingAccessHandleTest.cpp")
 
-### 2 Phase Lcoking Storage Access Handle Test ###
+### Unlock Deleter Test ###
 add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageAccessHandles/UnlockDeleterTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###

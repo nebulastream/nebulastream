@@ -13,19 +13,43 @@
 */
 #ifndef NES_UNLOCKDELETER_HPP
 #define NES_UNLOCKDELETER_HPP
+
 #include <mutex>
+
 namespace NES {
 
-//idea taken from:
-//https://stackoverflow.com/questions/23610561/return-locked-resource-from-class-with-automatic-unlocking#comment36245473_23610561
+/**
+ * This class holds a lock on the supplied mutex on only releases it when it is destructed. It can be supplied as a
+ * custom deleter to a unique pointer to guarantee thread safe access to the resource held by the pointer without
+ * freeing the resource when the pointer is destructed.
+ * idea taken from:
+ * https://stackoverflow.com/questions/23610561/return-locked-resource-from-class-with-automatic-unlocking#comment36245473_23610561
+ */
 class UnlockDeleter {
   public:
+    /**
+     * In case of serial access to the resource no mutex is needed and the destructor of the class will have no effect
+     */
     explicit UnlockDeleter();
 
+    /**
+     * Blocks until a lock on the mutex is acquired, then keeps the lock until the object is destructed
+     * @param mutex
+     */
     explicit UnlockDeleter(std::mutex& mutex);
 
+    /**
+     * Tries to acquire a lock on the mutex. On success, the lock lives until the object is destroyed.
+     * Throws an exception if no lock could be acquired.
+     * @param mutex
+     * @param tryToLock
+     */
     explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
 
+    /**
+     * The action called when the unique pointer is destroyed. We use a no op be cause we do NOT want to free the resource.
+     * @tparam T: The type of the resource
+     */
     template <typename T>
     void operator () (T*) const noexcept {
         // no-op

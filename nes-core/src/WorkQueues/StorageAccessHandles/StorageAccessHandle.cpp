@@ -11,8 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp"
+#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
 #include <utility>
+
 namespace NES {
 
 StorageAccessHandle::StorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
@@ -22,6 +23,6 @@ StorageAccessHandle::StorageAccessHandle(GlobalExecutionPlanPtr  globalExecution
                                          Catalogs::Source::SourceCatalogPtr  sourceCatalog,
                                          Catalogs::UDF::UdfCatalogPtr  udfCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)), sourceCatalog(std::move(sourceCatalog)),
-      udfCatalog(std::move(udfCatalog)) {}
+      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
+      sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)) {}
 }

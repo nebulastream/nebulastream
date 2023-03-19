@@ -13,11 +13,14 @@
 */
 #ifndef NES_SERIALSTORAGEACCESSHANDLE_HPP
 #define NES_SERIALSTORAGEACCESSHANDLE_HPP
-#include "StorageAccessHandle.hpp"
+
+#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
+
 namespace NES{
 
 /**
- * This class does not perform any locking before handing out a resource handle. Not thread safe!
+ * This class is intended for serial access and does not perform any locking before creating a resource handle.
+ * Not thread safe!
  */
 class SerialStorageAccessHandle : public StorageAccessHandle {
   public:
@@ -36,7 +39,7 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
     /**
-     * Indicates that the storage handle requires a rollback because we perform serial operations on the actual data.
+     * Indicates that the storage handle requires a rollback in case of failure because we perform serial operations on the actual data.
      * @return always true
      */
     bool requiresRollback() override;
@@ -77,7 +80,5 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
 };
-
 }
-
 #endif//NES_SERIALSTORAGEACCESSHANDLE_HPP
