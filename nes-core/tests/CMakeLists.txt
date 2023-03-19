@@ -493,13 +493,13 @@ add_nes_unit_test(location-provider-csv-unit-tests "UnitTests/Spatial/LocationPr
 add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/ReconnectSchedulePredictorTest.cpp")
 
 ### Serial Storage Access Handle Test ###
-add_nes_unit_test(serial-access-handle-tests "UnitTests/SerialAccessHandleTest.cpp")
+add_nes_unit_test(serial-access-handle-tests "UnitTests/StorageAccessHandles/SerialAccessHandleTest.cpp")
 
 ### 2 Phase Lcoking Storage Access Handle Test ###
-add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/TwoPLAccessHandleTest.cpp")
+add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/StorageAccessHandles/TwoPhaseLockingAccessHandleTest.cpp")
 
 ### 2 Phase Lcoking Storage Access Handle Test ###
-add_nes_unit_test(unlock-deleter-tests "UnitTests/UnlockDeleterTest.cpp")
+add_nes_unit_test(unlock-deleter-tests "UnitTests/StorageAccessHandles/UnlockDeleterTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")

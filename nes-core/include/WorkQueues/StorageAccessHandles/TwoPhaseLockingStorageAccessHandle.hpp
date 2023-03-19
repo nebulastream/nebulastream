@@ -11,24 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_SERIALSTORAGEACCESSHANDLE_HPP
-#define NES_SERIALSTORAGEACCESSHANDLE_HPP
-#include <WorkQueues/StorageAccessHandle.hpp>
-namespace NES{
+#ifndef NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
+#define NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
+#include "WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp"
+
+namespace NES {
 
 /**
- * This class does not perform any locking before handing out a resource handle. Not thread safe!
+ * Resource handles created by this class ensure that the resource is locked until the handle goes out of scope
  */
-class SerialStorageAccessHandle : public StorageAccessHandle {
+class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
   public:
-    SerialStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+    TwoPhaseLockingStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
                          QueryCatalogServicePtr  queryCatalogService,
                          GlobalQueryPlanPtr  globalQueryPlan,
                          Catalogs::Source::SourceCatalogPtr  sourceCatalog,
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<SerialStorageAccessHandle> create(GlobalExecutionPlanPtr  globalExecutionPlan,
+    static std::shared_ptr<TwoPhaseLockingStorageAccessHandle> create(GlobalExecutionPlanPtr  globalExecutionPlan,
                          TopologyPtr  topology,
                          QueryCatalogServicePtr  queryCatalogService,
                          GlobalQueryPlanPtr  globalQueryPlan,
@@ -40,6 +41,12 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
      * @return always true
      */
     bool requiresRollback() override;
+
+    /**
+     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the global execution plan.
+     */
+    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
 
     /**
      * Obtain a mutable topology handle. Throws an exception if the lock could not be acquired
@@ -54,30 +61,31 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
     QueryCatalogServiceHandle getQueryCatalogHandle() override;
 
     /**
-     * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the source catalog.
-     */
-    SourceCatalogHandle getSourceCatalogHandle() override;
-
-    /**
-     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the global execution plan.
-     */
-    GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() override;
-
-    /**
      * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
      * @return a handle to the global query plan.
      */
     GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
 
     /**
+     * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the source catalog.
+     */
+    SourceCatalogHandle getSourceCatalogHandle() override;
+
+    /**
      * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the udf catalog.
      */
     UdfCatalogHandle getUdfCatalogHandle() override;
+
+  private:
+    //todo: keep the mutexes here or in the class of the resource itself?
+    std::mutex topologyMutex;
+    std::mutex queryCatalogMutex;
+    std::mutex sourceCatalogMutex;
+    std::mutex globalExecutionPlanMutex;
+    std::mutex globalQueryPlanMutex;
+    std::mutex udfCatalogMutex;
 };
-
 }
-
-#endif//NES_SERIALSTORAGEACCESSHANDLE_HPP
+#endif//NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP

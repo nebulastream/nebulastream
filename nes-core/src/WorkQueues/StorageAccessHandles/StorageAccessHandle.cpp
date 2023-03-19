@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/StorageAccessHandle.hpp>
+#include "WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp"
 #include <utility>
 namespace NES {
 
