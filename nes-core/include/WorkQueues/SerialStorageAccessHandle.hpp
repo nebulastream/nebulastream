@@ -21,9 +21,19 @@ namespace NES{
  */
 class SerialStorageAccessHandle : public StorageAccessHandle {
   public:
-    SerialStorageAccessHandle(TopologyPtr topology);
+    SerialStorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+                         TopologyPtr  topology,
+                         QueryCatalogServicePtr  queryCatalogService,
+                         GlobalQueryPlanPtr  globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
-    static std::shared_ptr<SerialStorageAccessHandle> create(const TopologyPtr& topology);
+    static std::shared_ptr<SerialStorageAccessHandle> create(GlobalExecutionPlanPtr  globalExecutionPlan,
+                         TopologyPtr  topology,
+                         QueryCatalogServicePtr  queryCatalogService,
+                         GlobalQueryPlanPtr  globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
     /**
      * Indicates that the storage handle requires a rollback because we perform serial operations on the actual data.
@@ -41,7 +51,7 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
      * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the query catalog.
      */
-    QueryCatalogHandle getQueryCatalogHandle() override;
+    QueryCatalogServiceHandle getQueryCatalogHandle() override;
 
     /**
      * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
@@ -60,6 +70,12 @@ class SerialStorageAccessHandle : public StorageAccessHandle {
      * @return a handle to the global query plan.
      */
     GlobalQueryPlanHandle getGlobalQueryPlanHandle() override;
+
+    /**
+     * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the udf catalog.
+     */
+    UdfCatalogHandle getUdfCatalogHandle() override;
 };
 
 }

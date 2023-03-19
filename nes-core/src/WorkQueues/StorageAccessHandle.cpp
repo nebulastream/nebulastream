@@ -15,6 +15,13 @@
 #include <utility>
 namespace NES {
 
-StorageAccessHandle::StorageAccessHandle(TopologyPtr topology) : topology(std::move(topology)) {}
-
+StorageAccessHandle::StorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+                                         TopologyPtr  topology,
+                                         QueryCatalogServicePtr  queryCatalogService,
+                                         GlobalQueryPlanPtr  globalQueryPlan,
+                                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                                         Catalogs::UDF::UdfCatalogPtr  udfCatalog)
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
+      queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)), sourceCatalog(std::move(sourceCatalog)),
+      udfCatalog(std::move(udfCatalog)) {}
 }

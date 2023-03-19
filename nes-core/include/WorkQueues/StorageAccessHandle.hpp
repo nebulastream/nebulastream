@@ -22,11 +22,6 @@ namespace NES {
 //todo: currently we only have handle that allow reading and writing. but define also handles that allow only const operations
 
 class UnlockDeleter;
-
-/*
- * Resource handle idea taken from
- * https://stackoverflow.com/questions/23610561/return-locked-resource-from-class-with-automatic-unlocking#comment36245473_23610561
- */
 template<typename T>
 using ResourceHandle = std::unique_ptr<T, UnlockDeleter>;
 
@@ -34,13 +29,15 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 using TopologyHandle = ResourceHandle<Topology>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-using QueryCatalogHandle = ResourceHandle<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+using QueryCatalogServiceHandle = ResourceHandle<QueryCatalogService>;
 
+namespace Catalogs::Source {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-using SourceCatalogHandle = ResourceHandle<SourceCatalog>;
+}
+using SourceCatalogHandle = ResourceHandle<Catalogs::Source::SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -49,6 +46,13 @@ using GlobalExecutionPlanHandle = ResourceHandle<GlobalExecutionPlan>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 using GlobalQueryPlanHandle = ResourceHandle<GlobalQueryPlan>;
+
+namespace Catalogs::UDF {
+class UdfCatalog;
+using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
+}
+using UdfCatalogHandle = ResourceHandle<Catalogs::UDF::UdfCatalog>;
+
 
 class StorageAccessHandle;
 using StorageAccessHandlePtr = std::shared_ptr<StorageAccessHandle>;
@@ -64,7 +68,13 @@ class StorageAccessHandle {
      * Constructs a new storage access handle.
      * @param topology
      */
-    StorageAccessHandle(TopologyPtr topology);
+    StorageAccessHandle(GlobalExecutionPlanPtr  globalExecutionPlan,
+                         TopologyPtr  topology,
+                         QueryCatalogServicePtr  queryCatalogService,
+                         GlobalQueryPlanPtr  globalQueryPlan,
+                         Catalogs::Source::SourceCatalogPtr  sourceCatalog,
+                         Catalogs::UDF::UdfCatalogPtr  udfCatalog
+        );
 
     virtual ~StorageAccessHandle() = default;
 
@@ -73,6 +83,12 @@ class StorageAccessHandle {
      * @return
      */
     virtual bool requiresRollback() = 0;
+
+    /**
+     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the global execution plan.
+     */
+    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
 
     /**
      * Obtain a mutable topology handle. Throws an exception if the lock could not be acquired
@@ -84,7 +100,13 @@ class StorageAccessHandle {
      * Obtain a mutable query catalog handle. Throws an exception if the lock could not be acquired
      * @return a handle to the query catalog.
      */
-    virtual QueryCatalogHandle getQueryCatalogHandle() = 0;
+    virtual QueryCatalogServiceHandle getQueryCatalogHandle() = 0;
+
+    /**
+     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the global query plan.
+     */
+    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
 
     /**
      * Obtain a mutable source catalog handle. Throws an exception if the lock could not be acquired
@@ -93,23 +115,21 @@ class StorageAccessHandle {
     virtual SourceCatalogHandle getSourceCatalogHandle() = 0;
 
     /**
-     * Obtain a mutable global execution plan handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the global execution plan.
+     * Obtain a mutable udf catalog handle. Throws an exception if the lock could not be acquired
+     * @return a handle to the udf catalog.
      */
-    virtual GlobalExecutionPlanHandle getGlobalExecutionPlanHandle() = 0;
+    virtual UdfCatalogHandle getUdfCatalogHandle() = 0;
 
-    /**
-     * Obtain a mutable global query plan handle. Throws an exception if the lock could not be acquired
-     * @return a handle to the global query plan.
-     */
-    virtual GlobalQueryPlanHandle getGlobalQueryPlanHandle() = 0;
+    //todo: should workerrpcclient, optimizer configuration and queryconfiguration be be passed via storage access handl
+    //or better directly to the request?
 
   protected:
-    TopologyPtr topology;
-    QueryCatalogPtr queryCatalog;
-    SourceCatalogPtr sourceCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
+    TopologyPtr topology;
+    QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+    Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }
 
