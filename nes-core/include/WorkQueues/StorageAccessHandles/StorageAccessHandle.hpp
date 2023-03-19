@@ -14,15 +14,16 @@
 #ifndef NES_STORAGEACCESSHANDLE_HPP
 #define NES_STORAGEACCESSHANDLE_HPP
 
-#include "UnlockDeleter.hpp"
+#include <WorkQueues/StorageAccessHandles/UnlockDeleter.hpp>
 #include <memory>
 
 namespace NES {
 
-//todo: currently we only have handle that allow reading and writing. but define also handles that allow only const operations
+//todo #3610: currently we only have handle that allow reading and writing. but we should also define also handles that allow only const operations
 
 class UnlockDeleter;
 template<typename T>
+//on deletion, of the resource handle, the unlock deleter will only unlock the resource instead of freeing it
 using ResourceHandle = std::unique_ptr<T, UnlockDeleter>;
 
 class Topology;
@@ -59,8 +60,8 @@ using StorageAccessHandlePtr = std::shared_ptr<StorageAccessHandle>;
 
 /*
  * This class provides handles to access the coordinator storage layer.
- * This is an abstract class and its subclasses will have to provide the implementation to access the storage layer using
- * a certain concurrency control technique.
+ * This is an abstract class and its subclasses will have to provide the implementation to warrant safe concurrent
+ * access the storage layer.
  */
 class StorageAccessHandle {
   public:
@@ -120,9 +121,6 @@ class StorageAccessHandle {
      */
     virtual UdfCatalogHandle getUdfCatalogHandle() = 0;
 
-    //todo: should workerrpcclient, optimizer configuration and queryconfiguration be be passed via storage access handl
-    //or better directly to the request?
-
   protected:
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -132,5 +130,4 @@ class StorageAccessHandle {
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
 };
 }
-
 #endif//NES_STORAGEACCESSHANDLE_HPP

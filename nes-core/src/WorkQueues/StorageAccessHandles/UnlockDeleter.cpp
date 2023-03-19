@@ -11,18 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "WorkQueues/StorageAccessHandles/UnlockDeleter.hpp"
+#include <WorkQueues/StorageAccessHandles/UnlockDeleter.hpp>
 
 namespace NES {
-UnlockDeleter::UnlockDeleter() {}
+UnlockDeleter::UnlockDeleter() = default;
 
 UnlockDeleter::UnlockDeleter(std::mutex& mutex) : lock(mutex) {}
 
 UnlockDeleter::UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock) : lock{mutex, tryToLock} {
     if (!lock) {
-        //todo: write custom exception for this case
+        //todo #3611: write custom exception for this case
         throw std::exception();
     }
 }
-
-};
+}

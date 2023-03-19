@@ -17,10 +17,13 @@
 #include <exception>
 #include <memory>
 #include <vector>
+
 namespace NES {
+
 namespace Configurations {
 class OptimizerConfiguration;
 }
+
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class StorageAccessHandle;

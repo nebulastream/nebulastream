@@ -13,12 +13,13 @@
 */
 #ifndef NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
 #define NES_TWOPHASELOCKINGSTORAGEACCESSHANDLE_HPP
-#include "WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp"
+
+#include <WorkQueues/StorageAccessHandles/StorageAccessHandle.hpp>
 
 namespace NES {
 
 /**
- * Resource handles created by this class ensure that the resource is locked until the handle goes out of scope
+ * Resource handles created by this class ensure that the resource is locked until the handle goes out of scope.
  */
 class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
   public:
@@ -37,7 +38,7 @@ class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
                          Catalogs::UDF::UdfCatalogPtr  udfCatalog);
 
     /**
-     * Indicates that the storage handle requires a rollback because we perform serial operations on the actual data.
+     * Indicates that the storage handle requires a rollback in case of a failed operation because we perform operations on the actual resources.
      * @return always true
      */
     bool requiresRollback() override;
@@ -79,7 +80,7 @@ class TwoPhaseLockingStorageAccessHandle : public StorageAccessHandle {
     UdfCatalogHandle getUdfCatalogHandle() override;
 
   private:
-    //todo: keep the mutexes here or in the class of the resource itself?
+    //todo #3588: keep the mutexes here or in the class of the resource itself?
     std::mutex topologyMutex;
     std::mutex queryCatalogMutex;
     std::mutex sourceCatalogMutex;

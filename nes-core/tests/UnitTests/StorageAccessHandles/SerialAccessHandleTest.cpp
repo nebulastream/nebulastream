@@ -11,29 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "NesBaseTest.hpp"
-#include "Topology/Topology.hpp"
-#include "WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp"
+#include <NesBaseTest.hpp>
+#include <Topology/Topology.hpp>
+#include <WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp>
 
-#include "Catalogs/Query/QueryCatalog.hpp"
-#include "Catalogs/Source/SourceCatalog.hpp"
-#include "Catalogs/UDF/UdfCatalog.hpp"
-#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
-#include "Plans/Global/Query/GlobalQueryPlan.hpp"
-#include "Services/QueryCatalogService.hpp"
-#include "Topology/TopologyNode.hpp"
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Topology/TopologyNode.hpp>
 
 namespace NES {
-using SerialAccessHandlePtr = std::shared_ptr<SerialStorageAccessHandle>;
 class SerialAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SerialAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SerialAccessHandle test class.");
+        NES_INFO2("Setup SerialAccessHandle test class.");
     }
 };
 
 TEST_F(SerialAccessHandleTest, TestResourceAccess) {
+    //create access handle
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -44,6 +44,7 @@ TEST_F(SerialAccessHandleTest, TestResourceAccess) {
     auto udfCatalog = std::make_shared<Catalogs::UDF::UdfCatalog>();
     auto serialAccessHandle = SerialStorageAccessHandle::create(globalExecutionPlan, topology, queryCatalogService,
                                                                 globalQueryPlan, sourceCatalog, udfCatalog);
+
     ASSERT_EQ(topology.get(), serialAccessHandle->getTopologyHandle().get());
     ASSERT_EQ(topology->getRoot(), serialAccessHandle->getTopologyHandle()->getRoot());
 }
