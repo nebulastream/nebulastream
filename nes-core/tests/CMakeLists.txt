@@ -494,6 +494,12 @@ add_nes_unit_test(reconnect-schedule-predictor-tests "UnitTests/Spatial/Reconnec
 
 ### Serial Storage Access Handle Test ###
 add_nes_unit_test(serial-access-handle-tests "UnitTests/SerialAccessHandleTest.cpp")
+
+### 2 Phase Lcoking Storage Access Handle Test ###
+add_nes_unit_test(two-phase-locking-access-handle-tests "UnitTests/TwoPLAccessHandleTest.cpp")
+
+### 2 Phase Lcoking Storage Access Handle Test ###
+add_nes_unit_test(unlock-deleter-tests "UnitTests/UnlockDeleterTest.cpp")
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_nes_integration_test(multi-worker-test "Integration/MultiWorkerTest.cpp")

@@ -9,9 +9,9 @@ class UnlockDeleter {
   public:
     explicit UnlockDeleter();
 
-    explicit UnlockDeleter(std::mutex mutex);
+    explicit UnlockDeleter(std::mutex& mutex);
 
-    explicit UnlockDeleter(std::mutex mutex, std::try_to_lock_t adoptLock);
+    explicit UnlockDeleter(std::mutex& mutex, std::try_to_lock_t tryToLock);
 
     template <typename T>
     void operator () (T*) const noexcept {

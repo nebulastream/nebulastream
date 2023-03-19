@@ -35,5 +35,15 @@ QueryCatalogHandle SerialStorageAccessHandle::getQueryCatalogHandle() {
     return {};
 }
 
+SourceCatalogHandle SerialStorageAccessHandle::getSourceCatalogHandle() {
+    return NES::SourceCatalogHandle();
+}
 
+GlobalExecutionPlanHandle SerialStorageAccessHandle::getGlobalExecutionPlanHandle() {
+    return NES::GlobalExecutionPlanHandle();
+}
+
+GlobalQueryPlanHandle SerialStorageAccessHandle::getGlobalQueryPlanHandle() {
+    return NES::GlobalQueryPlanHandle();
+}
 }
