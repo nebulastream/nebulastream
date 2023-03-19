@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <WorkQueues/SerialStorageAccessHandle.hpp>
+#include "WorkQueues/StorageAccessHandles/SerialStorageAccessHandle.hpp"
+#include "Topology/Topology.hpp"
 #include <memory>
-#include <Topology/Topology.hpp>
 namespace NES {
 
 SerialStorageAccessHandle::SerialStorageAccessHandle(GlobalExecutionPlanPtr globalExecutionPlan,

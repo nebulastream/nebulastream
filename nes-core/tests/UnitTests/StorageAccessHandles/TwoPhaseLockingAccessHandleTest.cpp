@@ -1,17 +1,30 @@
-#include <NesBaseTest.hpp>
-#include <Topology/Topology.hpp>
-#include <WorkQueues/TwoPhaseLockingStorageAccessHandle.hpp>
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/UDF/UdfCatalog.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include "NesBaseTest.hpp"
+#include "Topology/Topology.hpp"
+#include "WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp"
+
+#include "Catalogs/Query/QueryCatalog.hpp"
+#include "Catalogs/Source/SourceCatalog.hpp"
+#include "Catalogs/UDF/UdfCatalog.hpp"
+#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
+#include "Plans/Global/Query/GlobalQueryPlan.hpp"
+#include "Services/QueryCatalogService.hpp"
+#include "Topology/TopologyNode.hpp"
 
 namespace NES {
-class TwoPLAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
+class TwoPhaseLockingAccessHandleTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("2PLAccessHandleTest.log", NES::LogLevel::LOG_DEBUG);
@@ -19,7 +32,7 @@ class TwoPLAccessHandleTest : public Testing::TestWithErrorHandling<testing::Tes
     }
 };
 
-TEST_F(TwoPLAccessHandleTest, TestResourceAccess) {
+TEST_F(TwoPhaseLockingAccessHandleTest, TestResourceAccess) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -34,7 +47,7 @@ TEST_F(TwoPLAccessHandleTest, TestResourceAccess) {
     ASSERT_EQ(topology->getRoot(), twoPLAccessHandle->getTopologyHandle()->getRoot());
 }
 
-TEST_F(TwoPLAccessHandleTest, TestLocking) {
+TEST_F(TwoPhaseLockingAccessHandleTest, TestLocking) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto topology = Topology::create();
     Catalogs::Query::QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -60,7 +73,7 @@ TEST_F(TwoPLAccessHandleTest, TestLocking) {
     thread->join();
 }
 
-TEST_F(TwoPLAccessHandleTest, TestConcurrentAccess) {
+TEST_F(TwoPhaseLockingAccessHandleTest, TestConcurrentAccess) {
     size_t numThreads = 20;
     size_t acquiringMax = 10;
     size_t acquired = 0;

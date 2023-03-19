@@ -1,4 +1,4 @@
-#include <WorkQueues/TwoPhaseLockingStorageAccessHandle.hpp>
+#include "WorkQueues/StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.hpp"
 #include <utility>
 
 namespace NES {

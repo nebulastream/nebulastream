@@ -14,8 +14,8 @@
 add_subdirectory(RequestTypes)
 add_source_files(nes-core
         RequestQueue.cpp
-        StorageAccessHandle.cpp
-        SerialStorageAccessHandle.cpp
-        UnlockDeleter.cpp
-        TwoPhaseLockingStorageAccessHandle.cpp
+        StorageAccessHandles/StorageAccessHandle.cpp
+        StorageAccessHandles/SerialStorageAccessHandle.cpp
+        StorageAccessHandles/UnlockDeleter.cpp
+        StorageAccessHandles/TwoPhaseLockingStorageAccessHandle.cpp
 )
