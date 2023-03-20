@@ -876,7 +876,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     ss << "{\"userQuery\" : ";
     ss << R"("Query::from(\"ktm\"))";
     ss << R"(.window(ThresholdWindow::of(Attribute(\"ktm$ECU_Oil_Temp_Sensor_Data\") > 15)))";
-    ss << R"(.apply(Min(Attribute(\"ktm$ABS_Lean_Angle\"))->as(Attribute(\"ktm$Min\")), Avg(Attribute(\"ktm$ABS_Front_Wheel_Speed\"))->as(Attribute(\"ktm$Avg\")), Count()->as(Attribute(\"ktm$Count\"))))";
+    ss << R"(.apply(Min(Attribute(\"ABS_Lean_Angle\")), Avg(Attribute(\"ABS_Front_Wheel_Speed\")), Count()))";
     ss << R"(.sink(FileSinkDescriptor::create(\")";
     ss << testFile;
     ss << R"(\", \"CSV_FORMAT\", \"APPEND\")))";
@@ -893,7 +893,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent = "ktm$Min:(Float),ktm$Avg:(Float),ktm$Count:INTEGER\n"
+    string expectedContent = "ktm$ABS_Lean_Angle:(Float),ktm$ABS_Front_Wheel_Speed:(Float),ktm$count:INTEGER\n"
                              "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));

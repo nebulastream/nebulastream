@@ -473,7 +473,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
     auto contentBasedWindowType = Windowing::ContentBasedWindowType::asContentBasedWindowType(
         thresholdWindowOperator->getOperatorHandler()->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-    NES_INFO("lowerThresholdWindow Predicate" << thresholdWindowType->getPredicate());
+    NES_INFO("lowerThresholdWindow Predicate" << thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
     auto minCount = thresholdWindowType->getMinimumCount();
 
@@ -491,12 +491,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
         auto thresholdWindowResultSchema =
             operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getOperatorHandler()->getResultSchema();
         NES_INFO("lowerThresholdWindow threshold window result schema: " << thresholdWindowResultSchema->toString());
-        auto aggregationResultFieldName =
-            //TODO: we get an error here : Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is requested
-            //because our result schema is empty, I excluded threshold window from the output schema creation in the GlobalWindowOperator as
-            // this caused another error: attr does not exit (for agg fields)
-            //Thus, here we now get only Avg, Min, etc. as resultfieldname but that does not affact things further so far.
-            thresholdWindowResultSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + aggregation->getTypeAsString();
+        auto aggregationResultFieldName = thresholdWindowResultSchema->get(i)->getName();
         aggregationResultFieldNames.emplace_back(aggregationResultFieldName);
         /** check if the aggregation is not of type Count
           *  count is treated different as does not agg onField but onTuple thus the onField for count should not be set to anything
