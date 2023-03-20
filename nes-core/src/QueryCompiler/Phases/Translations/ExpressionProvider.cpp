@@ -51,6 +51,7 @@ namespace NES::QueryCompilation {
 using namespace Runtime::Execution::Expressions;
 
 std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode) {
+    NES_INFO("Lower Expression " << expressionNode->toString())
     if (auto andNode = expressionNode->as_if<AndExpressionNode>()) {
         auto leftNautilusExpression = lowerExpression(andNode->getLeft());
         auto rightNautilusExpression = lowerExpression(andNode->getRight());
