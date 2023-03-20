@@ -242,4 +242,12 @@ std::string Util::updateSourceName(std::string queryPlanSourceConsumed, std::str
     return updatedSourceName;
 }
 
+bool Util::fft() {
+    return false;
+}
+
+bool Util::fftfreq() {
+    return false;
+}
+
 }// namespace NES
