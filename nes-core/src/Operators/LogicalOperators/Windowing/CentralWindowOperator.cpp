@@ -24,7 +24,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
-
+#include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <z3++.h>
 
 namespace NES {
@@ -85,7 +85,7 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
     //Construct output schema
     outputSchema->clear();
     /**
-     * For the threshold windwo we cannot pre-calulcate the window start and end, thus in the current version we ignores these output fields for
+     * For the threshold window we cannot pre-calculate the window start and end, thus in the current version we ignores these output fields for
      * threshold windows
      */
     if (!windowDefinition->getWindowType()->isThresholdWindow()) {
