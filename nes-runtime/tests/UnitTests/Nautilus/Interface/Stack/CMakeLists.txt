@@ -11,8 +11,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        BatchJoinBuild.cpp
-        BatchJoinHandler.cpp
-        BatchJoinProbe.cpp
-        )
+add_nes_runtime_test(nautilus-stack-test "StackTest.cpp")

@@ -13,8 +13,8 @@
 */
 
 
-#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
-#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
+#ifndef NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
+#define NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -24,15 +24,15 @@ namespace NES::Runtime::Execution::Operators {
 /**
  * @brief Batch Aggregation operator.
  */
-class BatchJoinBuild : public ExecutableOperator {
+class BatchJoinProbe : public ExecutableOperator {
   public:
     /**
      * @brief Creates a batch aggregation operator with a expression.
      */
-    BatchJoinBuild(uint64_t operatorHandlerIndex,
+    BatchJoinProbe(uint64_t operatorHandlerIndex,
                    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
                    const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Expressions::ExpressionPtr>& valueExpressions,
+                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
                    const std::vector<PhysicalTypePtr>& valueDataTypes,
                    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
@@ -43,7 +43,7 @@ class BatchJoinBuild : public ExecutableOperator {
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
-    const std::vector<Expressions::ExpressionPtr> valueExpressions;
+    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers;
     const std::vector<PhysicalTypePtr> valueDataTypes;
     const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     uint64_t keySize;
@@ -53,4 +53,4 @@ class BatchJoinBuild : public ExecutableOperator {
     void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
 }// namespace NES::Runtime::Execution::Operators
-#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
+#endif//NES_NES_RUNTIME_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_

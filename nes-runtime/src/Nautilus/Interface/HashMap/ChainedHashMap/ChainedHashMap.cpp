@@ -76,6 +76,14 @@ ChainedHashMap::Entry* ChainedHashMap::entryIndexToAddress(uint64_t entryIndex) 
 
 uint64_t ChainedHashMap::getCurrentSize() const { return currentSize; }
 
+void ChainedHashMap::insertPage(int8_t* page, uint64_t numberOfEntries) {
+    pages.emplace_back(page);
+    for (uint64_t i = 0; i < numberOfEntries; i++) {
+        auto entry = reinterpret_cast<Entry*>(page + i * entrySize);
+        insert(entry, entry->hash);
+    }
+}
+
 ChainedHashMap::~ChainedHashMap() {
     for (auto* page : pages) {
         allocator->deallocate(page, pageSize);
