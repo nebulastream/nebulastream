@@ -24,18 +24,21 @@ sequenceDiagram
             Executor ->> Undeployment Phase: Trigger undeployment of involved query operations
             Undeployment Phase -->> Executor: Successfully undeployed query
             Executor ->> Query Catalog Service: Set status Stopped
-        else Error1 
+        else Error1
             Global Query Plan -->> Executor: Query ID not found in SQP
             Undeployment Phase -->> Executor: Query ID not found in SQP
-        else Error2 
+        else Error2
             Global Query Plan -->> Executor: Could not remove Query Operators
             Undeployment Phase -->> Executor: Could not remove Query Operators
         end
-    else MarkedForHardStop || Stopped 
+    else MarkedForHardStop || Stopped
         Executor ->> Executor: Query already stopped, no further action needed
     else Error
-        Executor ->> Query Catalog Service: Set status MarkedForFailure
-        Executor ->> Request Queue: Add Fail Request
+        alt Retry n times
+            Executor ->> Executor: Retry Stop Request
+        else Error
+            Executor ->> Executor: Execute Fail Request
+        end
     end
 ```
 
@@ -48,22 +51,17 @@ sequenceDiagram
 
     Request Queue ->> Executor: Fail Query Request
     Executor ->> Request Queue: Remove Fail Request
-    Executor ->> Undeployment Phase: Trigger undeployment of involved <br> query operations with Failure Flag
+    Executor ->> Query Catalog Service: Set query status <br> to MarkedForFailure
+    Executor ->> Global Query Plan: Remove Query
+    Executor ->> Undeployment Phase: Trigger undeployment of involved <br> query operations (complete SQP) with Failure Flag
     alt ok
         Undeployment Phase -->> Executor: Succesfull undeployment
     else QueryUndeploymentException
         Undeployment Phase -->> Executor: Failed to undeploy query
+        Executor ->> Executor: Retry Undeployment Phase
     end
     Executor ->> Query Catalog Service: Set status Failed
 ```
-
-What todo when undeployment failed? Retry request n times and then fail 
-//todo update with appropriate status
-
-if entry not found, don't do anything global query plan
-if entry in global execution plan, remove it
-
-if failure for sqp, fail entire sqp
 
 <b>Update Request</b>
 
@@ -121,18 +119,30 @@ sequenceDiagram
     Executor ->> Query Catalog Service: Add Query, <br> set Status Registered
     Query Catalog Service -->> Executor: Successfully registered query
     Executor ->> Query Catalog Service: Set Status to Optimizing
-    Executor ->> Optimizer: Start Optimization Process: Type Inference Phase, Memory Layout Phase, <br> Query Rewrite Phase, Signature Inference Phase
-    Optimizer -->> Executor: Optimized Query Plan
+    Executor ->> Type Inference Phase:  call execute for current query Plan
+    Type Inference Phase -->> Executor: Query Plan
+    Executor ->> Memory Layout Phase: call execute for current query Plan
+    Memory Layout Phase -->> Executor: Query Plan
+    Executor ->> Rewrite Phase: call execute for current query Plan
+    Rewrite Phase -->> Executor: Query Plan
     Executor ->> Query Catalog Service: Add updated query plan
-    Executor ->> Global Execution Plan: Topology specific Query Rewrite Phase
-    Global Execution Plan -->> Executor: Topology specific Query Plan
-    Executor->>Query Catalog Service: Update query plan
-    Executor->>Executor: Execute Type Inference, <br> Origin Id Inference, <br> and Memory Layout Phases <br> for new query Plan
-    Executor->>Query Catalog Service: Update query plan <br> and set status to Deployed
+    Executor ->> Type Inference Phase: call execute for current query Plan
+    Type Inference Phase -->> Executor: Query Plan
+    Executor ->> Topology Specific Query Rewrite Phase: call execute for current query Plan
+    Topology Specific Query Rewrite Phase -->> Executor: Query Plan
+    Executor ->> Origin Id Inference Phase: call execute for current query Plan
+    Origin Id Inference Phase -->> Executor: Query Plan
+    Executor ->> Memory Layout Phase: call execute for current query Plan
+    Memory Layout Phase -->> Executor: Query Plan
+    Executor ->> Query Catalog Service: Update query plan
     Executor ->> Global Query Plan: Add query plan
-    Global Query Plan -->> Executor: Successfully added new Query
-    Executor ->> Query Catalog Service: Set Status to Running
-
+    Executor ->> Query Merger Phase: call execute for current Global Query Plan
+    Executor ->> Query Placement Phase: call execute for current SQP and strategy
+    Query Placement Phase -->> Executor: boolean with success
+    Executor ->> Query Deployment Phase: call execute for current SQP
+    Executor ->> Shared Query Plan: Set status to Deployed
+    
 ```
 Not sure if deployed is right?
 Error handling still mostly missing
+todo: add error handling and find out when query status is set to running
