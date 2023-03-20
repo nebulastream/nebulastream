@@ -367,7 +367,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
         NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
                    "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
 
-        NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft << " timeStampFieldNameRight: " << timeStampFieldNameRight);
+        NES_DEBUG("timeStampFieldNameLeft: " << timeStampFieldNameLeft
+                                             << " timeStampFieldNameRight: " << timeStampFieldNameRight);
         NES_DEBUG("leftSchema: " << leftSchema->toString() << " rightSchema: " << rightSchema->toString());
 
         auto windowSize = windowType->getSize().getTime();
