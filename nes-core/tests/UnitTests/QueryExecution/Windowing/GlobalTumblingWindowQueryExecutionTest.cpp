@@ -105,16 +105,16 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProject
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
     auto sinkSchema = Schema::create()
-            ->addField("test$start", BasicType::INT64)
-            ->addField("test$end", BasicType::INT64)
-            ->addField("test$sum", BasicType::INT64);
+                          ->addField("test$start", BasicType::INT64)
+                          ->addField("test$end", BasicType::INT64)
+                          ->addField("test$sum", BasicType::INT64);
     auto testSink = executionEngine->createDataSink(sinkSchema);
 
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     auto query = TestQuery::from(testSourceDescriptor)
-            .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
-            .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
-            .sink(testSinkDescriptor);
+                     .window(TumblingWindow::of(EventTime(Attribute("test$f1")), Milliseconds(5)))
+                     .apply(Sum(Attribute("test$f2", INT64))->as(Attribute("test$sum")))
+                     .sink(testSinkDescriptor);
 
     auto plan = executionEngine->submitQuery(query.getQueryPlan());
 
@@ -129,8 +129,8 @@ TEST_P(GlobalTumblingWindowQueryExecutionTest, testSimpleTumblingWindowNoProject
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL);// start
-    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL);// end
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL);  // start
+    EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL);  // end
     EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 100LL);// sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));

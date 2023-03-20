@@ -194,45 +194,43 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestCsvFiles) {
 
 TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     const auto leftInputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                     ->addField("test1$f1_left", BasicType::INT64)
+                                     ->addField("test1$f2_left", BasicType::INT64)
+                                     ->addField("test1$timestamp", BasicType::INT64)
+                                     ->addField("test1$fieldForSum1", BasicType::INT64);
+
+    const auto rightInputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                      ->addField("test2$f1_right", BasicType::INT64)
+                                      ->addField("test2$f2_right", BasicType::INT64)
+                                      ->addField("test2$timestamp", BasicType::INT64)
+                                      ->addField("test2$fieldForSum2", BasicType::INT64);
+
+    const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("test1test2$start", BasicType::INT64)
+                                ->addField("test1test2$end", BasicType::INT64)
+                                ->addField("test1test2$key", BasicType::INT64)
+
+                                ->addField("test1$start", BasicType::INT64)
+                                ->addField("test1$end", BasicType::INT64)
+                                ->addField("test1$cnt", BasicType::INT64)
                                 ->addField("test1$f1_left", BasicType::INT64)
                                 ->addField("test1$f2_left", BasicType::INT64)
                                 ->addField("test1$timestamp", BasicType::INT64)
-                                ->addField("test1$fieldForSum1", BasicType::INT64);
+                                ->addField("test1$fieldForSum1", BasicType::INT64)
 
-    const auto rightInputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$f1_right", BasicType::INT64)
-                                 ->addField("test2$f2_right", BasicType::INT64)
-                                 ->addField("test2$timestamp", BasicType::INT64)
-                                 ->addField("test2$fieldForSum2", BasicType::INT64);
-
-    const auto sinkSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-            ->addField("test1test2$start", BasicType::INT64)
-            ->addField("test1test2$end", BasicType::INT64)
-            ->addField("test1test2$key", BasicType::INT64)
-
-            ->addField("test1$start", BasicType::INT64)
-            ->addField("test1$end", BasicType::INT64)
-            ->addField("test1$cnt", BasicType::INT64)
-            ->addField("test1$f1_left", BasicType::INT64)
-            ->addField("test1$f2_left", BasicType::INT64)
-            ->addField("test1$timestamp", BasicType::INT64)
-            ->addField("test1$fieldForSum1", BasicType::INT64)
-
-            ->addField("test2$start", BasicType::INT64)
-            ->addField("test2$end", BasicType::INT64)
-            ->addField("test2$cnt", BasicType::INT64)
-            ->addField("test2$f1_right", BasicType::INT64)
-            ->addField("test2$f2_right", BasicType::INT64)
-            ->addField("test2$timestamp", BasicType::INT64)
-            ->addField("test2$fieldForSum2", BasicType::INT64);
-
+                                ->addField("test2$start", BasicType::INT64)
+                                ->addField("test2$end", BasicType::INT64)
+                                ->addField("test2$cnt", BasicType::INT64)
+                                ->addField("test2$f1_right", BasicType::INT64)
+                                ->addField("test2$f2_right", BasicType::INT64)
+                                ->addField("test2$timestamp", BasicType::INT64)
+                                ->addField("test2$fieldForSum2", BasicType::INT64);
 
     const auto joinFieldNameLeft = "test1$f2_left";
     const auto joinFieldNameRight = "test2$f2_right";
     const auto timeStampField = "timestamp";
 
-
-//    const auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
+    //    const auto sinkSchema = Schema::create()->addField("test$sum", BasicType::INT64);
 
     // read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 10UL;
@@ -240,10 +238,10 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     const std::string fileNameBuffersRight("stream_join_right_withSum.csv");
 
     auto bufferManager = executionEngine->getBufferManager();
-    auto leftBuffer = fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftInputSchema),
-                                 leftInputSchema, bufferManager);
-    auto rightBuffer = fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightInputSchema),
-                                  rightInputSchema, bufferManager);
+    auto leftBuffer =
+        fillBuffer(fileNameBuffersLeft, executionEngine->getBuffer(leftInputSchema), leftInputSchema, bufferManager);
+    auto rightBuffer =
+        fillBuffer(fileNameBuffersRight, executionEngine->getBuffer(rightInputSchema), rightInputSchema, bufferManager);
 
     auto testSink = executionEngine->createDataSink(sinkSchema);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
@@ -251,12 +249,12 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     auto testSourceDescriptorLeft = executionEngine->createDataSource(leftInputSchema);
     auto testSourceDescriptorRight = executionEngine->createDataSource(rightInputSchema);
 
-
     auto query = TestQuery::from(testSourceDescriptorLeft)
                      .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                      .byKey(Attribute(joinFieldNameLeft))
                      .apply(Sum(Attribute("test1$fieldForSum1")))
-                     .joinWith(TestQuery::from(testSourceDescriptorRight).window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
+                     .joinWith(TestQuery::from(testSourceDescriptorRight)
+                                   .window(TumblingWindow::of(EventTime(Attribute(timeStampField)), Milliseconds(windowSize)))
                                    .byKey(Attribute(joinFieldNameRight))
                                    .apply(Sum(Attribute("test2$fieldForSum2"))))
                      .where(Attribute(joinFieldNameLeft))
@@ -279,13 +277,12 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     NES_DEBUG("resultBuffer: " << NES::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
-
 }
 
 INSTANTIATE_TEST_CASE_P(testStreamJoinQueries,
                         StreamJoinQueryExecutionTest,
                         ::testing::Values(//QueryCompilation::QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER,
-                                          QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
+                            QueryCompilation::QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER),
                         [](const testing::TestParamInfo<StreamJoinQueryExecutionTest::ParamType>& info) {
                             return std::string(magic_enum::enum_name(info.param));
                         });
