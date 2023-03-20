@@ -84,29 +84,33 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
 
     //Construct output schema
     outputSchema->clear();
-    // TODO: I exculded the threshold window here if we catch the point where the threshold window is assigned as a Global window we may can remove the changes
-    // the reason for the adjustment: ktm$start and ktm$end are not found
+    /**
+     * For the threshold windwo we cannot pre-calulcate the window start and end, thus in the current version we ignores these output fields for
+     * threshold windows
+     */
     if (!windowDefinition->getWindowType()->isThresholdWindow()) {
         outputSchema =
             outputSchema
                 ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
                 ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
+    }
 
-        if (windowDefinition->isKeyed()) {
-            // infer the data type of the key field.
-            auto keyList = windowDefinition->getKeys();
-            for (auto& key : keyList) {
-                key->inferStamp(typeInferencePhaseContext, inputSchema);
-                outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
-            }
+    if (windowDefinition->isKeyed()) {
+        // infer the data type of the key field.
+        auto keyList = windowDefinition->getKeys();
+        for (auto& key : keyList) {
+            key->inferStamp(typeInferencePhaseContext, inputSchema);
+            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
+
     for (auto& agg : windowAggregation) {
-        NES_INFO("Add the following field to the output schema of the GlobalWindow"
-                 << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
-        outputSchema->addField(
-            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
-    }
+            NES_INFO("Add the following field to the output schema of the GlobalWindow"
+                     << agg->as()->as<FieldAccessExpressionNode>()->getFieldName());
+            outputSchema->addField(
+                AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
+    }//end for
+    NES_INFO("The final output schema is" << outputSchema->toString())
 
     return true;
 }
