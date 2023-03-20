@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.5.35](https://github.com/nebulastream/nebulastream/tree/v0.5.35) (2023-03-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.34...v0.5.35)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Join execution error [\#3560](https://github.com/nebulastream/nebulastream/issues/3560)
+
 ## [v0.5.34](https://github.com/nebulastream/nebulastream/tree/v0.5.34) (2023-03-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.5.33...v0.5.34)
