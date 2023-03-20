@@ -547,9 +547,10 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         NES_DEBUG("DataSource  {} : Data Source finished processing iteration  {}", operatorId, numberOfBuffersProduced);
     }
 
-    // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
-    if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
-        std::this_thread::sleep_for(gatheringInterval);
+        // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
+        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+            std::this_thread::sleep_for(gatheringInterval);
+        }
     }
 
     NES_DEBUG("DataSource {} call close", operatorId);
