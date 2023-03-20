@@ -239,11 +239,16 @@ void padVectorToSize(std::vector<T>& vector, size_t newSize, T newValue) {
 }
 
 /**
-* @brief hashes the key with murmur hash
- * @param key
- * @return calculated hash
- */
-uint64_t murmurHash(uint64_t key);
+* @brief Performs fft on a vector
+* @return true/false for now
+*/
+bool fft();
+
+/**
+* @brief Performs fftfreq on an FFT vector
+* @return true/false for now
+*/
+bool fftfreq();
 
 }// namespace NES::Util
 

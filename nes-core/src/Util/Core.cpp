@@ -220,4 +220,12 @@ std::string Util::trim(const std::string& str) {
     return str.substr(start, end - start + 1);
 }
 
+bool Util::fft() {
+    return false;
+}
+
+bool Util::fftfreq() {
+    return false;
+}
+
 }// namespace NES

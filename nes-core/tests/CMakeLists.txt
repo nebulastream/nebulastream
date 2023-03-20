@@ -53,6 +53,9 @@ add_nes_unit_test(udf-test "UnitTests/Catalogs/UDFCatalogTest.cpp" "UnitTests/Ca
 
 add_nes_unit_test(hashmap-test "UnitTests/Util/HashMapTest.cpp")
 
+# Add tests for fft functions from scipy
+add_nes_unit_test(fft-test "UnitTests/Util/FFTTest.cpp")
+
 
 ### Node Engine Tests ###
 add_nes_integration_test(node-engine-test "UnitTests/Runtime/NodeEngineTest.cpp")
