@@ -22,8 +22,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantFloatExpression.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
@@ -42,6 +41,7 @@
 #include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
@@ -103,8 +103,8 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
      *   l_shipdate >= date '1994-01-01'
      *   and l_shipdate < date '1995-01-01'
      */
-    auto const_1994_01_01 = std::make_shared<ConstantIntegerExpression>(19940101);
-    auto const_1995_01_01 = std::make_shared<ConstantIntegerExpression>(19950101);
+    auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
+    auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
     auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(const_1994_01_01, readShipdate);
     auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
@@ -115,14 +115,14 @@ TEST_P(TPCH_Q6, aggregationPipeline) {
 
     // l_discount between 0.06 - 0.01 and 0.06 + 0.01
     auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
-    auto const_0_05 = std::make_shared<ConstantFloatExpression>(0.04);
-    auto const_0_07 = std::make_shared<ConstantFloatExpression>(0.08);
+    auto const_0_05 = std::make_shared<ConstantFloatValueExpression>(0.04);
+    auto const_0_07 = std::make_shared<ConstantFloatValueExpression>(0.08);
     auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
     auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
     auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
 
     // l_quantity < 24
-    auto const_24 = std::make_shared<ConstantIntegerExpression>(24);
+    auto const_24 = std::make_shared<ConstantInt32ValueExpression>(24);
     auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
     auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
     auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);

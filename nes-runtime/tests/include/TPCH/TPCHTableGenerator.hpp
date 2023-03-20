@@ -8,6 +8,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <string>
 #include <unordered_map>
@@ -51,6 +52,8 @@ DSSType call_dbgen_mk(size_t idx, MKRetType (*mk_fn)(DSS_HUGE, DSSType* val, Arg
 }// namespace
 namespace NES {
 
+enum class TPCH_SCALE_FACTOR : uint8_t { F1, F0_1, F0_01 };
+
 class TPCHTableGenerator {
   public:
     const std::unordered_map<TPCHTable, std::string> tpch_table_names = {{TPCHTable::Part, "part"},
@@ -68,8 +71,8 @@ class TPCHTableGenerator {
                                           //  ->addField("c_address", BasicType::INT64)
                                           ->addField("c_nationkey", BasicType::INT32)
                                           //  ->addField("c_phone", BasicType::INT64)
-                                          ->addField("c_acctbal", BasicType::FLOAT32);
-    //->addField("c_mksegment", BasicType::INT64)
+                                          ->addField("c_acctbal", BasicType::FLOAT32)
+                                          ->addField("c_mksegment", BasicType::INT32);
     //->addField("c_comment", BasicType::INT64)
 
     const SchemaPtr ordersSchema = Schema::create()
@@ -84,6 +87,7 @@ class TPCHTableGenerator {
     //  ->addField("o_comment", BasicType::INT64);
 
     const SchemaPtr lineItemSchema = Schema::create()
+                                         ->addField("l_orderkey", BasicType::INT32)
                                          ->addField("l_partkey", BasicType::INT32)
                                          ->addField("l_suppkey", BasicType::INT32)
                                          ->addField("l_lcnt", BasicType::INT32)
@@ -195,13 +199,15 @@ class TPCHTableGenerator {
         */
         for (size_t row_idx = 0; row_idx < customer_count; row_idx++) {
             auto customer = call_dbgen_mk<customer_t>(row_idx + 1, mk_cust, TPCHTable::Customer);
+            // TODO fix mktsegment
+            int32_t mktsegment = std::strncmp(customer.mktsegment, "BUILDING", 8) == 0;
             customerBuilder.append(std::make_tuple((int32_t) customer.custkey,
                                                    //customer.name,
                                                    //customer.address,
                                                    (int32_t) customer.nation_code,
                                                    // customer.phone,
-                                                   convert_money(customer.acctbal)
-                                                   // customer.mktsegment,
+                                                   convert_money(customer.acctbal),
+                                                   (int32_t) mktsegment
                                                    //customer.comment
                                                    ));
         }
@@ -225,7 +231,8 @@ class TPCHTableGenerator {
 
             for (auto line_idx = 0; line_idx < order.lines; ++line_idx) {
                 const auto& lineitem = order.l[line_idx];
-                lineitemBuilder.append(std::make_tuple((int32_t) lineitem.partkey,
+                lineitemBuilder.append(std::make_tuple((int32_t) lineitem.okey,
+                                                       (int32_t) lineitem.partkey,
                                                        (int32_t) lineitem.suppkey,
                                                        (int32_t) lineitem.lcnt,
                                                        (int32_t) lineitem.quantity,

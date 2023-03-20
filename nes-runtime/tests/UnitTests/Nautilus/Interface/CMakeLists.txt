@@ -18,3 +18,4 @@ add_nes_runtime_test(nautilus-text-type-test "TextTypeTest.cpp")
 
 add_subdirectory(Hash)
 add_subdirectory(HashMap)
+add_subdirectory(Stack)
