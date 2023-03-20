@@ -15,7 +15,7 @@ if (NES_USE_CCACHE)
                 "fi\n"
                 "\n"
                 "export CCACHE_CPP2=true\n"
-                "exec \"${C_LAUNCHER}\" --dir \"${CCACHE_DIR}\"  \"${CMAKE_C_COMPILER}\" \"$@\"\n"
+                "exec \"${C_LAUNCHER}\"  \"${CMAKE_C_COMPILER}\" \"$@\"\n"
                 )
 
         file(WRITE "${CMAKE_BINARY_DIR}/launch-cxx" ""

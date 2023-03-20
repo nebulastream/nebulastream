@@ -23,8 +23,7 @@
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantFloatExpression.hpp>
-#include <Execution/Expressions/ConstantIntegerExpression.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
@@ -127,7 +126,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
      *
      *  1998-09-02
      */
-    auto const_1998_09_02 = std::make_shared<ConstantIntegerExpression>(19980831);
+    auto const_1998_09_02 = std::make_shared<ConstantInt32ValueExpression>(19980831);
     auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
     auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
     auto selection = std::make_shared<Selection>(lessThanExpression1);
@@ -168,7 +167,7 @@ TEST_P(TPCH_Q1, aggregationPipeline) {
 
     // disc_price = l_extendedprice * (1 - l_discount)
     auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-    auto oneConst = std::make_shared<ConstantFloatExpression>(1.0f);
+    auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
     auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
     auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
     auto disc_priceExpression = std::make_shared<WriteFieldExpression>("disc_price", mulExpression);

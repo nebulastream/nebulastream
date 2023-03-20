@@ -6,11 +6,13 @@ class StackRef {
   public:
     StackRef(const Value<MemRef>& stackRef, uint64_t entrySize);
     Value<MemRef> allocateEntry();
-    Value<UInt64> numberOfEntries();
+    Value<UInt64> getNumberOfEntries();
+    void setNumberOfEntries(Value<> val);
   private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> stackRef;
     uint64_t entrySize;
+    uint64_t entriesPerPage;
 };
 }// namespace NES::Nautilus::Interface
 

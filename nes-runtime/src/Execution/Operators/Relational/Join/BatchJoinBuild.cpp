@@ -25,15 +25,15 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getKeyedStateProxy(void* op, uint64_t workerId) {
-    auto handler = static_cast<BatchKeyedAggregationHandler*>(op);
-    return handler->getThreadLocalStore(workerId);
+void* getStackProxy(void* op, uint64_t workerId) {
+    auto handler = static_cast<BatchJoinHandler*>(op);
+    return handler->getThreadLocalState(workerId);
 }
 
-void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
-    auto handler = static_cast<BatchKeyedAggregationHandler*>(ss);
+void setupJoinBuildHandler(void* ss, void* ctx, uint64_t entrySize, uint64_t keySize, uint64_t valueSize) {
+    auto handler = static_cast<BatchJoinHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
-    handler->setup(*pipelineExecutionContext, keySize, valueSize);
+    handler->setup(*pipelineExecutionContext, entrySize, keySize, valueSize);
 }
 
 class LocalJoinBuildState : public Operators::OperatorState {
@@ -63,10 +63,12 @@ BatchJoinBuild::BatchJoinBuild(uint64_t operatorHandlerIndex,
 
 void BatchJoinBuild::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupHandler",
-                           setupHandler,
+    auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
+    Nautilus::FunctionCall("setupJoinBuildHandler",
+                           setupJoinBuildHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
+                           Value<UInt64>(entrySize),
                            Value<UInt64>(keySize),
                            Value<UInt64>(valueSize));
 }
@@ -77,11 +79,11 @@ void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const {
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto state = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerId());
-
-    auto chainedHM = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
+    auto state = Nautilus::FunctionCall("getStackProxy", getStackProxy, globalOperatorHandler, ctx.getWorkerId());
+    auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
+    auto stack = Interface::StackRef(state, entrySize);
     // 3. store the reference to the slice store in the local operator state.
-    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(chainedHM);
+    auto sliceStoreState = std::make_unique<LocalJoinBuildState>(stack);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
@@ -98,10 +100,39 @@ void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
+    // 5. create entry and store it in stack
     auto entry = stack.allocateEntry();
-    entry.store(hash);
+    // 5a. store hash value at next offset
+    auto hashPtr = (entry + sizeof(int64_t)).as<MemRef>();
+    hashPtr.store(hash);
 
-    .append(hash, keyValues, values);
+    // 5b. store key values
+    auto keyPtr = (hashPtr + sizeof(int64_t)).as<MemRef>();
+    storeKeys(keyValues, keyPtr);
+
+    // 5c. store value values
+    std::vector<Value<>> values;
+    for (const auto& exp : valueExpressions) {
+        values.emplace_back(exp->execute(record));
+    }
+    auto valuePtr = (keyPtr + keySize).as<MemRef>();
+    storeValues(values, valuePtr);
 }
+
+void BatchJoinBuild::storeKeys(std::vector<Value<>> keys, Value<MemRef> keyPtr) const {
+    for (size_t i = 0; i < keys.size(); i++) {
+        auto& key = keys[i];
+        keyPtr.store(key);
+        keyPtr = keyPtr + keyDataTypes[i]->size();
+    }
+}
+
+void BatchJoinBuild::storeValues(std::vector<Value<>> values, Value<MemRef> valuePtr) const {
+    for (size_t i = 0; i < values.size(); i++) {
+        auto& value = values[i];
+        valuePtr.store(value);
+        valuePtr = valuePtr + valueDataTypes[i]->size();
+    }
+}
+
 }// namespace NES::Runtime::Execution::Operators
