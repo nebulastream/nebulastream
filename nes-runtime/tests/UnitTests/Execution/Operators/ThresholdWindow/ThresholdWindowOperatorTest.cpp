@@ -521,4 +521,59 @@ TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations) {
     thresholdWindowOperator->terminate(ctx);
 }
 
+/**
+ * @brief Tests the threshold window operator with a sum aggregation.
+ */
+TEST_F(ThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest) {
+    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42.5);
+    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    // Attribute(f1) > 42, sum(f2)
+
+    auto aggregationResultFieldName = "sum";
+
+    auto physicalTypeFactory = DefaultPhysicalTypeFactory();
+    PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
+
+    auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType);
+    resultFieldVector.emplace_back(aggregationResultFieldName);
+    aggFieldAccessExpressionsVector.push_back(readF2);
+    aggVector.push_back(sumAgg);
+    auto thresholdWindowOperator = std::make_shared<ThresholdWindow>(greaterThanExpression,
+                                                                     0,
+                                                                     aggFieldAccessExpressionsVector,
+                                                                     resultFieldVector,
+                                                                     aggVector,
+                                                                     0);
+
+    auto collector = std::make_shared<CollectOperator>();
+    thresholdWindowOperator->setChild(collector);
+
+    auto sumAggregationValue = std::make_unique<Aggregation::SumAggregationValue<int64_t>>();
+    aggValues.emplace_back(std::move(sumAggregationValue));
+    auto handler = std::make_shared<ThresholdWindowOperatorHandler>(std::move(aggValues));
+    auto pipelineContext = MockedPipelineExecutionContext(handler);
+
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+
+    thresholdWindowOperator->setup(ctx);
+
+    auto recordTen = Record({{"f1", Value<>(10.75)}, {"f2", Value<>(1)}});
+    thresholdWindowOperator->execute(ctx, recordTen);
+    EXPECT_EQ(collector->records.size(), 0);
+
+    auto recordFifty = Record({{"f1", Value<>(50.25)}, {"f2", Value<>((int64_t) 2)}});
+    auto recordNinety = Record({{"f1", Value<>(90.35)}, {"f2", Value<>((int64_t) 3)}});
+    auto recordTwenty = Record({{"f1", Value<>(20.85)}, {"f2", Value<>((int64_t) 4)}});// closes the window
+    thresholdWindowOperator->execute(ctx, recordFifty);
+    thresholdWindowOperator->execute(ctx, recordNinety);
+    thresholdWindowOperator->execute(ctx, recordTwenty);
+    EXPECT_EQ(collector->records.size(), 1);
+    EXPECT_EQ(collector->records[0].numberOfFields(), 1);
+    EXPECT_EQ(collector->records[0].read(aggregationResultFieldName), 5);
+
+    thresholdWindowOperator->terminate(ctx);
+}
+
 }// namespace NES::Runtime::Execution::Operators
