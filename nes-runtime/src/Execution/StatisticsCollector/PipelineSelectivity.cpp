@@ -29,7 +29,7 @@ void PipelineSelectivity::collect() {
     auto numberOfOutputTuples = nautilusExecutablePipelineStage->getNumberOfOutputTuples();
 
     if(numberOfInputTuples != 0){
-        selectivity = (double) numberOfOutputTuples / numberOfInputTuples;
+        selectivity = (double) numberOfOutputTuples / (double) numberOfInputTuples;
         std::cout << "PipelineSelectivity " << selectivity << std::endl;
 
         if (changeDetectorWrapper->insertValue(selectivity)){
@@ -39,7 +39,7 @@ void PipelineSelectivity::collect() {
 
 }
 
-double PipelineSelectivity::getSelectivity(){
+double PipelineSelectivity::getSelectivity() const{
     return selectivity;
 }
 

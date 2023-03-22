@@ -34,11 +34,13 @@ class PipelineRuntime : public Statistic {
                     std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                     uint64_t normalizationWindowSize);
     void collect() override;
+    uint64_t getRuntime() const;
     std::string getType() const override;
 
   private:
     const std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage;
     Normalizer normalizer;
+    uint64_t runtime;
 };
 
 }// namespace NES::Runtime::Execution

@@ -23,15 +23,20 @@ PipelineRuntime::PipelineRuntime(std::unique_ptr<ChangeDetectorWrapper> changeDe
                                  std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage,
                                  uint64_t normalizationWindowSize)
     : nautilusExecutablePipelineStage(std::move(nautilusExecutablePipelineStage)),
-      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)){}
+      normalizer(normalizationWindowSize, std::move(changeDetectorWrapper)),
+      runtime(0){}
 
 void PipelineRuntime::collect() {
-    auto runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
+    runtime = nautilusExecutablePipelineStage->getRuntimePerBuffer();
 
     if (runtime != 0){
         std::cout << "PipelineRuntime " << runtime << " Microseconds" << std::endl;
         normalizer.normalizeValue(runtime);
     }
+}
+
+uint64_t PipelineRuntime::getRuntime() const{
+    return runtime;
 }
 
 std::string PipelineRuntime::getType() const {

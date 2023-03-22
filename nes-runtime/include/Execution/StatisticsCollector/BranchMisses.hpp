@@ -35,12 +35,13 @@ class BranchMisses : public Statistic {
 
     std::string getType() const override;
 
-    void startProfiling();
+    uint64_t getBranchMisses() const;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;
     std::shared_ptr<Profiler> profiler;
     uint64_t eventId;
+    uint64_t branchMisses;
 };
 
 }// namespace NES::Runtime::Execution

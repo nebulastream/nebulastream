@@ -33,7 +33,7 @@ class PipelineSelectivity : public Statistic {
                         std::shared_ptr<NautilusExecutablePipelineStage> nautilusExecutablePipelineStage);
     void collect() override;
     std::string getType() const override;
-    double getSelectivity();
+    double getSelectivity() const;
 
   private:
     std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper;

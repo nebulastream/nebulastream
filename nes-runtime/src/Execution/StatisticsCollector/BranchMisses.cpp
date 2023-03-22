@@ -19,18 +19,23 @@ namespace NES::Runtime::Execution {
 
 BranchMisses::BranchMisses(std::unique_ptr<ChangeDetectorWrapper> changeDetectorWrapper, std::shared_ptr<Profiler> profiler)
     : changeDetectorWrapper(std::move(changeDetectorWrapper)),
-      profiler(profiler) {
+      profiler(profiler),
+      branchMisses(0) {
     eventId = profiler->addEvent(PERF_COUNT_HW_BRANCH_MISSES);
 }
 
 void BranchMisses::collect(){
-    auto branchMisses = profiler->getCount(eventId);
+    branchMisses = profiler->getCount(eventId);
     std::cout << "BranchMisses: " << branchMisses << std::endl;
 
     //todo normalize branch misses for change detection
     /*if (changeDetectorWrapper->insertValue(branchMisses)){
             std::cout << "Change detected" << std::endl;
     }*/
+}
+
+uint64_t BranchMisses::getBranchMisses() const{
+    return branchMisses;
 }
 
 std::string BranchMisses::getType() const {
