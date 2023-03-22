@@ -226,11 +226,43 @@ class NemoPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
 /* Test query placement with bottom up strategy  */
 TEST_F(NemoPlacementTest, testBottomUpWithReplicationCentralWindow) {
+    uint64_t resources[11] = {15, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
     setupTopologyAndSourceCatalog(2, 10, 10);
     auto optimizerConfig = Configurations::OptimizerConfiguration();
     optimizerConfig.enableNemoPlacement = true;
     optimizerConfig.distributedWindowChildThreshold = 0;
     optimizerConfig.distributedWindowCombinerThreshold = 1000;
+
+    //run the placement
+    runNemoPlacement(optimizerConfig);
+
+    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+    NES_DEBUG("NemoPlacementTest: topology: \n" << topology->toString());
+    NES_DEBUG("NemoPlacementTest: query plan \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG("NemoPlacementTest: shared plan \n" << sharedQueryPlan->getQueryPlan()->toString());
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 11u);
+    for (const auto& executionNode : executionNodes) {
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(sharedQueryId);
+        if (executionNode->getId() == 1u) {
+            verifyChildrenOfType<SourceLogicalOperatorNode>(querySubPlans);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 10);
+        } else {
+            verifyChildrenOfType<CentralWindowOperator>(querySubPlans);
+            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+        }
+    }
+}
+
+/* Test query placement with bottom up strategy  */
+TEST_F(NemoPlacementTest, testTopDownWithReplicationCentralWindow) {
+    setupTopologyAndSourceCatalog(2, 10, 10);
+    auto optimizerConfig = Configurations::OptimizerConfiguration();
+    optimizerConfig.enableNemoPlacement = true;
+    optimizerConfig.distributedWindowChildThreshold = 0;
+    optimizerConfig.distributedWindowCombinerThreshold = 0;
 
     //run the placement
     runNemoPlacement(optimizerConfig);
