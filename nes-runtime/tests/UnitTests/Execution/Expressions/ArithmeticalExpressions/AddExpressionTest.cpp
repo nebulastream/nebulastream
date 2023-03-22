@@ -32,8 +32,18 @@ class AddExpressionTest : public Testing::NESBaseTest {
         NES_INFO("Setup AddExpressionTest test class.");
     }
 
+    /* Will be called before a test is executed. */
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        bm = std::make_shared<Runtime::BufferManager>();
+        wc = std::make_shared<Runtime::WorkerContext>(0, bm, 1024);
+        NES_DEBUG("Setup TextTypeTest test case.")
+    }
+
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down AddExpressionTest test class."); }
+    std::shared_ptr<Runtime::BufferManager> bm;
+    std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
 TEST_F(AddExpressionTest, addIntegers) {
@@ -112,12 +122,12 @@ TEST_F(AddExpressionTest, addTimeStamps) {
     long ms = 1666798551744;// Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
     NES_DEBUG(dur.count());
-    auto c1 = Value<TimeStamp>(TimeStamp((int64_t) dur.count()));
+    auto c1 = Value<TimeStamp>(TimeStamp((uint64_t) dur.count()));
     // TimeStamp
     {
-        auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp((int64_t) dur.count())),
-                                              Value<TimeStamp>(TimeStamp((int64_t) dur.count())));
-        ASSERT_EQ(resultValue.getValue().toString(), std::to_string(3333597103488));
+        auto resultValue = addExpression.eval(Value<TimeStamp>(TimeStamp((uint64_t) dur.count())),
+                                              Value<TimeStamp>(TimeStamp((uint64_t) dur.count())));
+        EXPECT_EQ(resultValue.as<TimeStamp>()->getMilliSeconds(), (uint64_t) 3333597103488);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<TimeStamp>());
     }
 }

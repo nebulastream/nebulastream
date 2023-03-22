@@ -14,12 +14,14 @@
 #ifndef NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
 #define NES_RUNTIME_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
 #include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus {
 /**
- * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
- */
+* @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
+*/
 class TimeStamp : public Any {
   public:
     static const inline auto type = TypeIdentifier::create<TimeStamp>();
@@ -34,6 +36,11 @@ class TimeStamp : public Any {
     * @param other the TimeStamp to add to this TimeStamp instance
     */
     AnyPtr add(const TimeStamp& other) const;
+    /**
+    * @brief Substraction of two TimeStamps, i.e., their milliseconds
+    * @param other the TimeStamp to substract to this TimeStamp instance
+    */
+    AnyPtr substract(const TimeStamp& other) const;
 
     /**
     * @brief Tests if this TimeStamp Value is equal to the other TimeSTamp Value
@@ -89,10 +96,44 @@ class TimeStamp : public Any {
     Value<> getYears();
 
     /**
-    * @brief Returns the TimeStamp in milliseconds
-    * @param other the other TimeStamp
+    * @brief Returns the TimeStamp value, i.e., the milliseconds
     */
     Value<> getValue();
+
+    /**
+    * @brief Returns the century of the TimeStamp
+    */
+    Value<> century();
+    /**
+    * @brief Returns The (English) name of the weekday
+    */
+
+    Value<Text> getWeekdayName();
+    /**
+    * @brief Returns The (English) name of the month
+    */
+
+    Value<Text> getMonthName();
+    /**
+    * @brief Returns the time difference between now and this timestamp (Subtract arguments: now - this timestamp)
+    */
+    Value<> age();
+
+    /**
+    * @brief Returns the time difference between the two timestamps (Subtract arguments: other date - this timestamp)
+    * @param other the other TimeStamp to substract from
+    */
+    Value<> difference(Value<TimeStamp>& other);
+
+    /**
+    * @brief Transforms a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds
+    * @param textValue the TimeStamp String in the format "YYYY-MM-DDTHH:MM:SS"
+    */
+    Value<UInt64> stringtomilliseconds(Value<Text> textValue);
+    /**
+    * @brief Changes a milliseconds into intervall
+    */
+    Value<Text> interval();
 
   private:
     Value<> milliseconds;
