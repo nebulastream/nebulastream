@@ -6,6 +6,7 @@
 #define NES_NES_RUNTIME_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_
 
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <API/Schema.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -146,8 +147,8 @@ class TPCHTableGenerator {
                                                                    {TPCHTable::Region, regionSchema}};
 
     std::unordered_map<TPCHTable, NES::Runtime::MemoryLayouts::MemoryLayoutPtr> layouts;
-    TPCHTableGenerator(const Runtime::BufferManagerPtr& bufferManager, float scale_factor)
-        : bufferManager(bufferManager), _scale_factor(scale_factor) {
+    TPCHTableGenerator(const Runtime::BufferManagerPtr& bufferManager, TPCH_SCALE_FACTOR scale_factor)
+        : bufferManager(bufferManager), scaleFactor(scale_factor) {
         for (auto& [table, schema] : tableSchemas) {
             layouts[table] = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         }
@@ -156,7 +157,16 @@ class TPCHTableGenerator {
     // ->addField("r_name", BasicType::INT32)
     //->addField("r_comment", BasicType::INT32);
 
+    auto getLocalScaleFactor() {
+        switch (scaleFactor) {
+            case TPCH_SCALE_FACTOR::F1: return 1.0f;
+            case TPCH_SCALE_FACTOR::F0_1: return 0.1f;
+            case TPCH_SCALE_FACTOR::F0_01: return 0.01f;
+        }
+    }
+
     auto generate() {
+        auto _scale_factor = getLocalScaleFactor();
         NES_ASSERT(_scale_factor < 1.0f || std::round(_scale_factor) == _scale_factor,
                    "Due to tpch_dbgen limitations, only scale factors less than one can have a fractional part.");
 
@@ -399,7 +409,7 @@ class TPCHTableGenerator {
 
   private:
     Runtime::BufferManagerPtr bufferManager;
-    float _scale_factor;
+    TPCH_SCALE_FACTOR scaleFactor;
 };
 
 }// namespace NES

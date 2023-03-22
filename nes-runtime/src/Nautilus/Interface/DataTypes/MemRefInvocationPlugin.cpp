@@ -22,17 +22,18 @@ class MemRefInvocationPlugin : public InvocationPlugin {
 
     std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const override {
         if (isa<MemRef>(left.getValue()) && (isa<Int64>(right.getValue()) || isa<UInt64>(right.getValue()))) {
+
             auto leftVal = cast<MemRef>(left.getValue());
             if (leftVal->value == nullptr) {
-                return Value<>(std::make_unique<MemRef>(nullptr));
+                return Value<>(std::make_shared<MemRef>(nullptr));
             }
 
             if (auto rightVal = cast_if<Int64>(&right.getValue())) {
                 int8_t* result = leftVal->value + rightVal->getValue();
-                return Value<>(std::make_unique<MemRef>(result));
+                return Value<>(std::make_shared<MemRef>(result));
             } else if (auto rightVal = cast_if<UInt64>(&right.getValue())) {
                 int8_t* result = leftVal->value + rightVal->getValue();
-                return Value<>(std::make_unique<MemRef>(result));
+                return Value<>(std::make_shared<MemRef>(result));
             }
         }
         return std::nullopt;

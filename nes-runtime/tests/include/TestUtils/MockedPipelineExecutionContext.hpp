@@ -36,6 +36,21 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             {std::move(handler)}){
             // nop
         };
+    explicit MockedPipelineExecutionContext(std::vector<Execution::OperatorHandlerPtr> handlers = {})
+        : PipelineExecutionContext(
+            -1,// mock pipeline id
+            0, // mock query id
+            nullptr,
+            1,
+            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            [this](TupleBuffer& buffer) {
+                this->buffers.emplace_back(std::move(buffer));
+            },
+            handlers){
+            // nop
+        };
     MockedPipelineExecutionContext()
         : PipelineExecutionContext(
             -1,// mock pipeline id

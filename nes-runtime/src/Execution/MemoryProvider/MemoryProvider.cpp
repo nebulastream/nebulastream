@@ -113,7 +113,7 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
 }
 
 bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                   Nautilus::Record::RecordFieldIdentifier fieldIndex) const {
+                                   const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const {
     if (projections.empty()) {
         return true;
     }
