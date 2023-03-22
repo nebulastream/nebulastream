@@ -535,6 +535,9 @@ add_nes_integration_test(concurrent-window-deployment-test "Integration/Concurre
 ### MultipleWindowsTest ###
 add_nes_integration_test(multi-window-test "Integration/MultipleWindowsTest.cpp")
 
+### DistributedWindowTest ###
+add_nes_integration_test(distributed-window-test "Integration/DistributedWindowTest.cpp")
+
 
 ### MultiJoinsTest ###
 add_nes_integration_test(multi-join-test "Integration/MultipleJoinsTest.cpp")

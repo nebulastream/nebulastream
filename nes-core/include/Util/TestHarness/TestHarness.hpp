@@ -271,6 +271,30 @@ class TestHarness {
     }
 
     /**
+     * @brief add a csv source to be used in the test and connect to parent with specific parent id
+     * @param logicalSourceName logical source name
+     * @param csvSourceType csv source type
+     * @param parentId id of the parent to connect
+     */
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
+                                                         const CSVSourceTypePtr& csvSourceType,
+                                                         uint64_t parentId,
+                                                         WorkerConfigurationPtr workerConfiguration) {
+        std::string physicalSourceName = getNextPhysicalSourceName();
+        auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
+        workerConfiguration->physicalSources.add(physicalSource);
+        workerConfiguration->parentId = parentId;
+        uint32_t workerId = getNextTopologyId();
+        auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
+                                                                                     logicalSourceName,
+                                                                                     physicalSourceName,
+                                                                                     TestHarnessWorkerConfiguration::CSVSource,
+                                                                                     workerId);
+        testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
+        return *this;
+    }
+
+    /**
       * @brief add a csv source to be used in the test
       * @param logicalSourceName logical source name
       * @param csvSourceType csv source type
@@ -289,6 +313,20 @@ class TestHarness {
     TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
+        workerConfiguration->parentId = parentId;
+        uint32_t workerId = getNextTopologyId();
+        auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
+        testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
+        return *this;
+    }
+
+    /**
+     * @brief add worker and connect to parent with specific parent id
+     * @param parentId id of the Test Harness worker to connect
+     * @param workerConfiguration the configuration of the worker
+     * Note: The parent id can not be greater than the current testharness worker id
+     */
+    TestHarness& attachWorkerToWorkerWithId(uint32_t parentId, WorkerConfigurationPtr workerConfiguration) {
         workerConfiguration->parentId = parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
