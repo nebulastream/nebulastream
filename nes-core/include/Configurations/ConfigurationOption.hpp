@@ -30,7 +30,7 @@ namespace NES::Configurations {
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
  */
-enum InputFormat { JSON, CSV };
+enum class InputFormat : int8_t { JSON, CSV };
 
 /**
  * NOTE: this is not related to the network stack at all. Do not mix it up.
@@ -40,7 +40,7 @@ enum InputFormat { JSON, CSV };
  * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
  * bytesUsedForSocketBufferSizeTransfer needs to be set
  */
-enum TCPDecideMessageSize { TUPLE_SEPARATOR, USER_SPECIFIED_BUFFER_SIZE, BUFFER_SIZE_FROM_SOCKET };
+enum class TCPDecideMessageSize : int8_t { TUPLE_SEPARATOR, USER_SPECIFIED_BUFFER_SIZE, BUFFER_SIZE_FROM_SOCKET };
 
 /**
  * @brief Template for a ConfigurationOption object

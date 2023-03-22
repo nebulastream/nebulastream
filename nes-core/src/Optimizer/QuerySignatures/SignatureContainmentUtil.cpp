@@ -35,7 +35,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
         auto conditions = leftSignature->getConditions();
         if (!conditions || !otherConditions) {
             NES_WARNING("SignatureContainmentUtil::checkContainment: Can't compare equality between null signatures");
-            return NO_CONTAINMENT;
+            return ContainmentType::NO_CONTAINMENT;
         }
         z3::expr_vector leftQueryProjectionConditions(*context);
         z3::expr_vector rightQueryProjectionConditions(*context);
@@ -69,13 +69,13 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
                 //check for filter containment
                 return checkFilterContainment(leftSignature, rightSignature);
             }
-            return RIGHT_SIG_CONTAINED;
+            return ContainmentType::RIGHT_SIG_CONTAINED;
         } else {
             //check if new query contained by SQP for projection containment identification
             //since we require equal sources to check for further containment relationships, we cannot check for filter nor window containment here
             if (conditionsUnsatisfied(leftQueryProjectionConditions, rightQueryProjectionConditions)) {
                 NES_TRACE("SignatureContainmentUtil::checkContainment: Sig2 contains Sig1.");
-                return LEFT_SIG_CONTAINED;
+                return ContainmentType::LEFT_SIG_CONTAINED;
             }
         }
     } catch (...) {
@@ -88,7 +88,7 @@ ContainmentType SignatureContainmentUtil::checkContainment(const QuerySignatureP
                       << e.what());
         }
     }
-    return NO_CONTAINMENT;
+    return ContainmentType::NO_CONTAINMENT;
 }
 
 ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySignaturePtr& leftSignature,
@@ -116,17 +116,17 @@ ContainmentType SignatureContainmentUtil::checkFilterContainment(const QuerySign
     if (conditionsUnsatisfied(leftQueryFilterConditions, rightQueryFilterConditions)) {
         if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: Equal filters.");
-            return EQUALITY;
+            return ContainmentType::EQUALITY;
         }
         NES_TRACE("SignatureContainmentUtil::checkContainment: left sig contains right sig for filters.");
-        return RIGHT_SIG_CONTAINED;
+        return ContainmentType::RIGHT_SIG_CONTAINED;
     } else {
         if (conditionsUnsatisfied(rightQueryFilterConditions, leftQueryFilterConditions)) {
             NES_TRACE("SignatureContainmentUtil::checkContainment: right sig contains left sig for filters.");
-            return LEFT_SIG_CONTAINED;
+            return ContainmentType::LEFT_SIG_CONTAINED;
         }
     }
-    return NO_CONTAINMENT;
+    return ContainmentType::NO_CONTAINMENT;
 }
 
 void SignatureContainmentUtil::createProjectionCondition(const QuerySignaturePtr& signature,

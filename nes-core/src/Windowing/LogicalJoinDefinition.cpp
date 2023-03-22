@@ -39,7 +39,7 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
     NES_ASSERT(this->triggerAction, "Invalid trigger action");
     NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
-    NES_ASSERT((this->joinType == INNER_JOIN || this->joinType == CARTESIAN_PRODUCT), "Invalid Join Type");
+    NES_ASSERT((this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
 LogicalJoinDefinitionPtr LogicalJoinDefinition::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,

@@ -21,6 +21,8 @@
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
+
 namespace NES {
 
 LambdaSource::LambdaSource(
@@ -48,12 +50,13 @@ LambdaSource::LambdaSource(
                       std::move(successors)),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG2("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));
-    if (this->gatheringMode == GatheringMode::INTERVAL_MODE || this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
+    if (this->gatheringMode == GatheringMode::Value::INTERVAL_MODE ||
+    this->gatheringMode == GatheringMode::Value::ADAPTIVE_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+    } else if (this->gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
-        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     this->sourceAffinity = sourceAffinity;
@@ -84,5 +87,5 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
 
-SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
+SourceType LambdaSource::getType() const { return SourceType::LAMBDA_SOURCE; }
 }// namespace NES

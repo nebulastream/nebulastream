@@ -25,6 +25,7 @@
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Experimental {
 
@@ -49,9 +50,9 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     if (!MigrationType::isValidMigrationType(type)) {
         NES_DEBUG2("MaintenanceService: MigrationType: {} is not a valid type. Type must be 1 (Restart), 2 (Migration with "
                    "Buffering) or 3 (Migration without Buffering)",
-                   type);
+                   magic_enum::enum_name(type));
         result.first = false;
-        result.second = "MigrationType: " + std::to_string(type)
+        result.second = "MigrationType: " + std::string(magic_enum::enum_name(type))
             + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
               "Buffering)";
         return result;

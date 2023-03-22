@@ -32,7 +32,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create(FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+    static SinkDescriptorPtr create(FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                                     uint64_t numberOfOrigins = 1);
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;

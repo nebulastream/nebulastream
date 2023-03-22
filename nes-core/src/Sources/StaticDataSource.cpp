@@ -56,7 +56,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       operatorId,
                       originId,
                       numSourceLocalBuffers,
-                      GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
+                      GatheringMode::Value::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
                       std::move(successors)),
       lateStart(lateStart), pathTableFile(pathTableFile) {
 
@@ -245,5 +245,5 @@ std::string StaticDataSource::toString() const {
     return ss.str();
 }
 
-NES::SourceType StaticDataSource::getType() const { return STATIC_DATA_SOURCE; }
+NES::SourceType StaticDataSource::getType() const { return SourceType::STATIC_DATA_SOURCE; }
 }// namespace NES::Experimental

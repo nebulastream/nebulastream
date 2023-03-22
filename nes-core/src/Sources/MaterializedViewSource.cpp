@@ -41,7 +41,7 @@ std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() { retu
 
 std::string MaterializedViewSource::toString() const { return Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG; };
 
-SourceType MaterializedViewSource::getType() const { return MATERIALIZEDVIEW_SOURCE; };
+SourceType MaterializedViewSource::getType() const { return SourceType::MATERIALIZEDVIEW_SOURCE; };
 
 uint64_t MaterializedViewSource::getViewId() const { return view->getId(); }
 

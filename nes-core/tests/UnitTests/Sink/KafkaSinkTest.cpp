@@ -72,7 +72,7 @@ class KafkaSinkTest : public Testing::NESBaseTest {
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
                          .build();
-        testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
+        testSchema = Schema::create()->addField("KEY", BasicType::UINT32)->addField("VALUE", BasicType::UINT32);
     }
 
     /* Will be called after a test is executed. */
@@ -113,7 +113,8 @@ class KafkaSinkTest : public Testing::NESBaseTest {
 */
 TEST_F(KafkaSinkTest, KafkaSinkInit) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1,
+                            FaultToleranceType::Value::NONE, 1);
 }
 
 /**
@@ -121,7 +122,8 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
 */
 TEST_F(KafkaSinkTest, KafkaSourcePrint) {
     auto kafkaSink =
-        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1, FaultToleranceType::NONE, 1);
+        createTextKafkaSink(testSchema, OPERATORID, OPERATORID, nodeEngine, 1, brokers, topic, 1,
+                            FaultToleranceType::Value::NONE, 1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";
 

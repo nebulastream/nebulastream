@@ -54,7 +54,7 @@ std::vector<Runtime::TupleBuffer> NesFormat::getData(Runtime::TupleBuffer& input
 
 std::string NesFormat::toString() { return "NES_FORMAT"; }
 
-FormatTypes NesFormat::getSinkFormat() { return NES_FORMAT; }
+FormatTypes NesFormat::getSinkFormat() { return FormatTypes::NES_FORMAT; }
 
 FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

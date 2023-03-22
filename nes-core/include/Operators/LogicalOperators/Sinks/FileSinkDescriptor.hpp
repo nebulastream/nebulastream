@@ -38,7 +38,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(std::string fileName,
                                     std::string sinkFormat,
                                     const std::string& append,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**

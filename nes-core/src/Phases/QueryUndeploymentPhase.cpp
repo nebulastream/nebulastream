@@ -100,9 +100,10 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
 
         Runtime::QueryTerminationType queryTerminationType;
 
-        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus || SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
+        if (SharedQueryPlanStatus::Value::Updated == sharedQueryPlanStatus ||
+            SharedQueryPlanStatus::Value::Stopped == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::HardStop;
-        } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
+        } else if (SharedQueryPlanStatus::Value::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
             NES_ERROR2("Unhandled request type {}", SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
@@ -120,7 +121,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
     }
 
     // activate below for async calls
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Stop);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Stop);
     NES_DEBUG2("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
     return true;
 }
@@ -151,7 +152,7 @@ bool QueryUndeploymentPhase::undeployQuery(QueryId queryId, const std::vector<Ex
 
         completionQueues[queueForExecutionNode] = 1;
     }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Unregister);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, RpcClientModes::Unregister);
     NES_DEBUG2("QueryDeploymentPhase: Finished stopping execution plan for query with Id {} success={}", queryId, result);
     return result;
 }

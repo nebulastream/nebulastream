@@ -21,7 +21,7 @@ ReturnStatement::ReturnStatement(StatementPtr statement) : statement(std::move(s
 
 StatementPtr ReturnStatement::create(const StatementPtr& statement) { return std::make_shared<ReturnStatement>(statement); }
 
-StatementType ReturnStatement::getStamentType() const { return RETURN_STMT; }
+StatementType ReturnStatement::getStamentType() const { return StatementType::RETURN_STMT; }
 
 CodeExpressionPtr ReturnStatement::getCode() const {
     std::stringstream stmt;

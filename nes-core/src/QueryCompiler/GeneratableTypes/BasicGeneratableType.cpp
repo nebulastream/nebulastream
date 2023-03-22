@@ -30,19 +30,19 @@ CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
 CodeExpressionPtr BasicGeneratableType::getCode() const {
 
     switch (type->nativeType) {
-        case BasicPhysicalType::INT_8: return std::make_shared<CodeExpression>("int8_t");
-        case BasicPhysicalType::UINT_8: return std::make_shared<CodeExpression>("uint8_t");
-        case BasicPhysicalType::INT_16: return std::make_shared<CodeExpression>("int16_t");
-        case BasicPhysicalType::UINT_16: return std::make_shared<CodeExpression>("uint16_t");
-        case BasicPhysicalType::INT_32: return std::make_shared<CodeExpression>("int32_t");
-        case BasicPhysicalType::UINT_32: return std::make_shared<CodeExpression>("uint32_t");
-        case BasicPhysicalType::INT_64: return std::make_shared<CodeExpression>("int64_t");
-        case BasicPhysicalType::UINT_64: return std::make_shared<CodeExpression>("uint64_t");
-        case BasicPhysicalType::FLOAT: return std::make_shared<CodeExpression>("float");
-        case BasicPhysicalType::DOUBLE: return std::make_shared<CodeExpression>("double");
-        case BasicPhysicalType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
-        case BasicPhysicalType::CHAR: return std::make_shared<CodeExpression>("char");
-        case BasicPhysicalType::TEXT: return std::make_shared<CodeExpression>("text");
+        case BasicPhysicalType::NativeType::INT_8: return std::make_shared<CodeExpression>("int8_t");
+        case BasicPhysicalType::NativeType::UINT_8: return std::make_shared<CodeExpression>("uint8_t");
+        case BasicPhysicalType::NativeType::INT_16: return std::make_shared<CodeExpression>("int16_t");
+        case BasicPhysicalType::NativeType::UINT_16: return std::make_shared<CodeExpression>("uint16_t");
+        case BasicPhysicalType::NativeType::INT_32: return std::make_shared<CodeExpression>("int32_t");
+        case BasicPhysicalType::NativeType::UINT_32: return std::make_shared<CodeExpression>("uint32_t");
+        case BasicPhysicalType::NativeType::INT_64: return std::make_shared<CodeExpression>("int64_t");
+        case BasicPhysicalType::NativeType::UINT_64: return std::make_shared<CodeExpression>("uint64_t");
+        case BasicPhysicalType::NativeType::FLOAT: return std::make_shared<CodeExpression>("float");
+        case BasicPhysicalType::NativeType::DOUBLE: return std::make_shared<CodeExpression>("double");
+        case BasicPhysicalType::NativeType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
+        case BasicPhysicalType::NativeType::CHAR: return std::make_shared<CodeExpression>("char");
+        case BasicPhysicalType::NativeType::TEXT: return std::make_shared<CodeExpression>("text");
         default:
             NES_THROW_RUNTIME_ERROR("BasicGeneratableType: it was not possible to generate code for this type: "
                                     + type->toString());

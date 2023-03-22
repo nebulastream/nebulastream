@@ -18,7 +18,7 @@
 #include <string>
 
 namespace NES::Monitoring {
-enum MetricCollectorType {
+enum class MetricCollectorType : int8_t {
     CPU_COLLECTOR,
     DISK_COLLECTOR,
     MEMORY_COLLECTOR,

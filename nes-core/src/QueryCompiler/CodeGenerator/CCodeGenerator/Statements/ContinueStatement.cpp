@@ -17,7 +17,7 @@
 #include <sstream>
 namespace NES::QueryCompilation {
 
-StatementType ContinueStatement::getStamentType() const { return CONTINUE_STMT; }
+StatementType ContinueStatement::getStamentType() const { return StatementType::CONTINUE_STMT; }
 
 CodeExpressionPtr ContinueStatement::getCode() const { return std::make_shared<CodeExpression>("continue;"); }
 

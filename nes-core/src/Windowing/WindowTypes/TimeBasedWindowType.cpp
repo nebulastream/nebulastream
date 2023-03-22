@@ -25,7 +25,7 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristi
     : timeCharacteristic(std::move(timeCharacteristic)) {}
 
 bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
-    if (timeCharacteristic->getType() == TimeCharacteristic::EventTime) {
+    if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->hasFieldName(fieldName);
         if (existingField) {

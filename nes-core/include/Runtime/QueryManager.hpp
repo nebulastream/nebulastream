@@ -67,7 +67,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     using inherited0 = NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>;
 
     using inherited1 = Reconfigurable;
-    enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
+    enum class QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
 
     AbstractQueryManager() = delete;
     AbstractQueryManager(const AbstractQueryManager&) = delete;
@@ -427,7 +427,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::vector<uint64_t> workerToCoreMapping;
     mutable std::recursive_mutex queryMutex;
 
-    std::atomic<QueryManagerStatus> queryManagerStatus{Created};
+    std::atomic<QueryManagerStatus> queryManagerStatus{QueryManagerStatus::Created};
 
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 

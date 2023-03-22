@@ -25,7 +25,7 @@ class VarDeclStatement : public ExpressionStatement {
 
     ~VarDeclStatement() noexcept override = default;
 
-    [[nodiscard]] StatementType getStamentType() const override { return VAR_DEC_STMT; }
+    [[nodiscard]] StatementType getStamentType() const override { return StatementType::VAR_DEC_STMT; }
 
     [[nodiscard]] CodeExpressionPtr getCode() const override;
 

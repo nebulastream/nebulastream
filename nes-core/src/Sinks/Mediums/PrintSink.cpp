@@ -41,7 +41,7 @@ PrintSink::PrintSink(SinkFormatPtr format,
 
 PrintSink::~PrintSink() = default;
 
-SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
+SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
 bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);

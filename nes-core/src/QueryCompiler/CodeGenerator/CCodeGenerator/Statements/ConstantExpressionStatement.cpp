@@ -19,7 +19,7 @@
 
 namespace NES::QueryCompilation {
 
-StatementType ConstantExpressionStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
+StatementType ConstantExpressionStatement::getStamentType() const { return StatementType::CONSTANT_VALUE_EXPR_STMT; }
 
 CodeExpressionPtr ConstantExpressionStatement::getCode() const { return constantValue->getCodeExpression(); }
 

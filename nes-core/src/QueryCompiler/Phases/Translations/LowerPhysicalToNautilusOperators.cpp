@@ -423,7 +423,7 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
                                             const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                             size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
-    NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
+    NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
@@ -436,7 +436,7 @@ LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperator
                                             const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
                                             size_t bufferSize) {
     auto schema = operatorNode->getOutputSchema();
-    NES_ASSERT(schema->getLayoutType() == Schema::ROW_LAYOUT, "Currently only row layout is supported");
+    NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
@@ -500,7 +500,7 @@ LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::Physi
           *  and we want that all vectors, i.e., aggregationFunctions, aggregationResultFieldNames, and aggregatedFieldAccesses
           *  have corresponding indexes. Thus, we add a null pointer as access field for count agg.
           */
-        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Count) {
+        if (aggregation->getType() != Windowing::WindowAggregationDescriptor::Type::Count) {
             auto aggregatedFieldAccess = expressionProvider->lowerExpression(aggregation->on());
             aggregatedFieldAccesses.emplace_back(aggregatedFieldAccess);
         } else {
@@ -547,22 +547,22 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
             auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
 
             switch (agg->getType()) {
-                case Windowing::WindowAggregationDescriptor::Avg:
+                case Windowing::WindowAggregationDescriptor::Type::Avg:
                     return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(physicalInputType,
                                                                                                      physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Count:
+                case Windowing::WindowAggregationDescriptor::Type::Count:
                     return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(physicalInputType,
                                                                                                        physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Max:
+                case Windowing::WindowAggregationDescriptor::Type::Max:
                     return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(physicalInputType,
                                                                                                      physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Min:
+                case Windowing::WindowAggregationDescriptor::Type::Min:
                     return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(physicalInputType,
                                                                                                      physicalFinalType);
-                case Windowing::WindowAggregationDescriptor::Median:
+                case Windowing::WindowAggregationDescriptor::Type::Median:
                     // TODO 3331: add median aggregation function
                     break;
-                case Windowing::WindowAggregationDescriptor::Sum: {
+                case Windowing::WindowAggregationDescriptor::Type::Sum: {
                     return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(physicalInputType,
                                                                                                      physicalFinalType);
                 }
@@ -580,123 +580,123 @@ LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
     // TODO 3468: Check if we can make this ugly nested switch case better
     switch (aggregationType) {
-        case Windowing::WindowAggregationDescriptor::Avg:
+        case Windowing::WindowAggregationDescriptor::Type::Avg:
             switch (basicType->nativeType) {
-                case BasicPhysicalType::INT_8:
+                case BasicPhysicalType::NativeType::INT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int8_t>>();
-                case BasicPhysicalType::INT_16:
+                case BasicPhysicalType::NativeType::INT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int16_t>>();
-                case BasicPhysicalType::INT_32:
+                case BasicPhysicalType::NativeType::INT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int32_t>>();
-                case BasicPhysicalType::INT_64:
+                case BasicPhysicalType::NativeType::INT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>>();
-                case BasicPhysicalType::UINT_8:
+                case BasicPhysicalType::NativeType::UINT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint8_t>>();
-                case BasicPhysicalType::UINT_16:
+                case BasicPhysicalType::NativeType::UINT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint16_t>>();
-                case BasicPhysicalType::UINT_32:
+                case BasicPhysicalType::NativeType::UINT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint32_t>>();
-                case BasicPhysicalType::UINT_64:
+                case BasicPhysicalType::NativeType::UINT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
-                case BasicPhysicalType::FLOAT:
+                case BasicPhysicalType::NativeType::FLOAT:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<float_t>>();
-                case BasicPhysicalType::DOUBLE:
+                case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
                 default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
             }
-        case Windowing::WindowAggregationDescriptor::Count:
+        case Windowing::WindowAggregationDescriptor::Type::Count:
             switch (basicType->nativeType) {
-                case BasicPhysicalType::INT_8:
+                case BasicPhysicalType::NativeType::INT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int8_t>>();
-                case BasicPhysicalType::INT_16:
+                case BasicPhysicalType::NativeType::INT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int16_t>>();
-                case BasicPhysicalType::INT_32:
+                case BasicPhysicalType::NativeType::INT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int32_t>>();
-                case BasicPhysicalType::INT_64:
+                case BasicPhysicalType::NativeType::INT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>>();
-                case BasicPhysicalType::UINT_8:
+                case BasicPhysicalType::NativeType::UINT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint8_t>>();
-                case BasicPhysicalType::UINT_16:
+                case BasicPhysicalType::NativeType::UINT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint16_t>>();
-                case BasicPhysicalType::UINT_32:
+                case BasicPhysicalType::NativeType::UINT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint32_t>>();
-                case BasicPhysicalType::UINT_64:
+                case BasicPhysicalType::NativeType::UINT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint64_t>>();
-                case BasicPhysicalType::FLOAT:
+                case BasicPhysicalType::NativeType::FLOAT:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<float_t>>();
-                case BasicPhysicalType::DOUBLE:
+                case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
                 default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
             }
-        case Windowing::WindowAggregationDescriptor::Max:
+        case Windowing::WindowAggregationDescriptor::Type::Max:
             switch (basicType->nativeType) {
-                case BasicPhysicalType::INT_8:
+                case BasicPhysicalType::NativeType::INT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int8_t>>();
-                case BasicPhysicalType::INT_16:
+                case BasicPhysicalType::NativeType::INT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int16_t>>();
-                case BasicPhysicalType::INT_32:
+                case BasicPhysicalType::NativeType::INT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int32_t>>();
-                case BasicPhysicalType::INT_64:
+                case BasicPhysicalType::NativeType::INT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>>();
-                case BasicPhysicalType::UINT_8:
+                case BasicPhysicalType::NativeType::UINT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint8_t>>();
-                case BasicPhysicalType::UINT_16:
+                case BasicPhysicalType::NativeType::UINT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint16_t>>();
-                case BasicPhysicalType::UINT_32:
+                case BasicPhysicalType::NativeType::UINT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint32_t>>();
-                case BasicPhysicalType::UINT_64:
+                case BasicPhysicalType::NativeType::UINT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint64_t>>();
-                case BasicPhysicalType::FLOAT:
+                case BasicPhysicalType::NativeType::FLOAT:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<float_t>>();
-                case BasicPhysicalType::DOUBLE:
+                case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
                 default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
             }
-        case Windowing::WindowAggregationDescriptor::Min:
+        case Windowing::WindowAggregationDescriptor::Type::Min:
             switch (basicType->nativeType) {
-                case BasicPhysicalType::INT_8:
+                case BasicPhysicalType::NativeType::INT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int8_t>>();
-                case BasicPhysicalType::INT_16:
+                case BasicPhysicalType::NativeType::INT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int16_t>>();
-                case BasicPhysicalType::INT_32:
+                case BasicPhysicalType::NativeType::INT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int32_t>>();
-                case BasicPhysicalType::INT_64:
+                case BasicPhysicalType::NativeType::INT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>>();
-                case BasicPhysicalType::UINT_8:
+                case BasicPhysicalType::NativeType::UINT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint8_t>>();
-                case BasicPhysicalType::UINT_16:
+                case BasicPhysicalType::NativeType::UINT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint16_t>>();
-                case BasicPhysicalType::UINT_32:
+                case BasicPhysicalType::NativeType::UINT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint32_t>>();
-                case BasicPhysicalType::UINT_64:
+                case BasicPhysicalType::NativeType::UINT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint64_t>>();
-                case BasicPhysicalType::FLOAT:
+                case BasicPhysicalType::NativeType::FLOAT:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<float_t>>();
-                case BasicPhysicalType::DOUBLE:
+                case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
                 default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
             }
-        case Windowing::WindowAggregationDescriptor::Sum:
+        case Windowing::WindowAggregationDescriptor::Type::Sum:
             switch (basicType->nativeType) {
-                case BasicPhysicalType::INT_8:
+                case BasicPhysicalType::NativeType::INT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int8_t>>();
-                case BasicPhysicalType::INT_16:
+                case BasicPhysicalType::NativeType::INT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int16_t>>();
-                case BasicPhysicalType::INT_32:
+                case BasicPhysicalType::NativeType::INT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int32_t>>();
-                case BasicPhysicalType::INT_64:
+                case BasicPhysicalType::NativeType::INT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>>();
-                case BasicPhysicalType::UINT_8:
+                case BasicPhysicalType::NativeType::UINT_8:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint8_t>>();
-                case BasicPhysicalType::UINT_16:
+                case BasicPhysicalType::NativeType::UINT_16:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint16_t>>();
-                case BasicPhysicalType::UINT_32:
+                case BasicPhysicalType::NativeType::UINT_32:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint32_t>>();
-                case BasicPhysicalType::UINT_64:
+                case BasicPhysicalType::NativeType::UINT_64:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint64_t>>();
-                case BasicPhysicalType::FLOAT:
+                case BasicPhysicalType::NativeType::FLOAT:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<float_t>>();
-                case BasicPhysicalType::DOUBLE:
+                case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
                 default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
             }

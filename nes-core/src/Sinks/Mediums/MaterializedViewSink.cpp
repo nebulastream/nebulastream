@@ -56,7 +56,7 @@ std::string MaterializedViewSink::toString() const {
     return ss.str();
 }
 
-SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
+SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return SinkMediumTypes::MATERIALIZED_VIEW_SINK; }
 
 uint64_t MaterializedViewSink::getViewId() const { return view->getId(); }
 }// namespace NES::Experimental::MaterializedView

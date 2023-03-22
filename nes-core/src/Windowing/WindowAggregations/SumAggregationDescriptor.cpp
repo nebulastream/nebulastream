@@ -24,11 +24,11 @@ namespace NES::Windowing {
 
 SumAggregationDescriptor::SumAggregationDescriptor(FieldAccessExpressionNodePtr field)
     : WindowAggregationDescriptor(std::move(field)) {
-    this->aggregationType = Sum;
+    this->aggregationType = Type::Sum;
 }
 SumAggregationDescriptor::SumAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
     : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
-    this->aggregationType = Sum;
+    this->aggregationType = Type::Sum;
 }
 
 WindowAggregationPtr SumAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,

@@ -23,6 +23,6 @@ WindowActionDescriptorPtr SliceCombinerTriggerActionDescriptor::create() {
 ActionType SliceCombinerTriggerActionDescriptor::getActionType() { return this->action; }
 
 SliceCombinerTriggerActionDescriptor::SliceCombinerTriggerActionDescriptor()
-    : BaseWindowActionDescriptor(SliceCombinerTriggerAction) {}
+    : BaseWindowActionDescriptor(ActionType::SliceCombinerTriggerAction) {}
 
 }// namespace NES::Windowing

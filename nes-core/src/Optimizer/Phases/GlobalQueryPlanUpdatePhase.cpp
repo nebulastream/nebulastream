@@ -90,12 +90,12 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 auto stopQueryRequest = nesRequest->as<StopQueryRequest>();
                 QueryId queryId = stopQueryRequest->getQueryId();
                 NES_INFO2("QueryProcessingService: Request received for stopping the query {}", queryId);
-                globalQueryPlan->removeQuery(queryId, RequestType::Stop);
+                globalQueryPlan->removeQuery(queryId, RequestType::Value::Stop);
             } else if (nesRequest->instanceOf<FailQueryRequest>()) {
                 auto failQueryRequest = nesRequest->as<FailQueryRequest>();
                 QueryId queryId = failQueryRequest->getQueryId();
                 NES_INFO2("QueryProcessingService: Request received for stopping the query {}", queryId);
-                globalQueryPlan->removeQuery(queryId, RequestType::Fail);
+                globalQueryPlan->removeQuery(queryId, RequestType::Value::Fail);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
                 auto runQueryRequest = nesRequest->as<RunQueryRequest>();
                 QueryId queryId = runQueryRequest->getQueryId();
@@ -105,7 +105,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
                     NES_INFO2("QueryProcessingService: Request received for optimizing and deploying of the query {}", queryId);
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Optimizing, "");
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Value::Optimizing, "");
 
                     NES_DEBUG2("QueryProcessingService: Performing Query type inference phase for query:  {}", queryId);
                     queryPlan = typeInferencePhase->execute(queryPlan);

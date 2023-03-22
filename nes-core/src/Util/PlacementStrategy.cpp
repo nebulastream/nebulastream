@@ -20,15 +20,15 @@ namespace NES {
 
 PlacementStrategy::Value PlacementStrategy::getFromString(const std::string placementStrategy) {
     if (placementStrategy == "BottomUp") {
-        return PlacementStrategy::BottomUp;
+        return PlacementStrategy::Value::BottomUp;
     } else if (placementStrategy == "TopDown") {
-        return PlacementStrategy::TopDown;
+        return PlacementStrategy::Value::TopDown;
     } else if (placementStrategy == "Manual") {
-        return PlacementStrategy::Manual;
+        return PlacementStrategy::Value::Manual;
     } else if (placementStrategy == "ILP") {
-        return PlacementStrategy::ILP;
+        return PlacementStrategy::Value::ILP;
     } else if (placementStrategy == "MlHeuristic") {
-        return PlacementStrategy::MlHeuristic;
+        return PlacementStrategy::Value::MlHeuristic;
         //    } else if (placementStrategy == "IFCOP") {
         //        return PlacementStrategy::IFCOP;
     } else {
@@ -38,12 +38,12 @@ PlacementStrategy::Value PlacementStrategy::getFromString(const std::string plac
 
 std::string PlacementStrategy::toString(const Value placementStrategy) {
     switch (placementStrategy) {
-        case PlacementStrategy::TopDown: return "TopDown";
-        case PlacementStrategy::BottomUp: return "BottomUp";
-        case PlacementStrategy::IFCOP: return "IFCOP";
-        case PlacementStrategy::ILP: return "ILP";
-        case PlacementStrategy::Manual: return "Manual";
-        case PlacementStrategy::MlHeuristic: return "MlHeuristic";
+        case PlacementStrategy::Value::TopDown: return "TopDown";
+        case PlacementStrategy::Value::BottomUp: return "BottomUp";
+        case PlacementStrategy::Value::IFCOP: return "IFCOP";
+        case PlacementStrategy::Value::ILP: return "ILP";
+        case PlacementStrategy::Value::Manual: return "Manual";
+        case PlacementStrategy::Value::MlHeuristic: return "MlHeuristic";
     }
 }
 

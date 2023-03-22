@@ -24,11 +24,11 @@ namespace NES::Windowing {
 
 MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field)
     : WindowAggregationDescriptor(std::move(field)) {
-    this->aggregationType = Min;
+    this->aggregationType = Type::Min;
 }
 MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
     : WindowAggregationDescriptor(std::move(field), std::move(asField)) {
-    this->aggregationType = Min;
+    this->aggregationType = Type::Min;
 }
 
 WindowAggregationPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField,

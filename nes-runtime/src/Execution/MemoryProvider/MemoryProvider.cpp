@@ -33,40 +33,40 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::BOOLEAN: {
+            case BasicPhysicalType::NativeType::BOOLEAN: {
                 return fieldReference.load<Nautilus::Boolean>();
             };
-            case BasicPhysicalType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8: {
                 return fieldReference.load<Nautilus::Int8>();
             };
-            case BasicPhysicalType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16: {
                 return fieldReference.load<Nautilus::Int16>();
             };
-            case BasicPhysicalType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32: {
                 return fieldReference.load<Nautilus::Int32>();
             };
-            case BasicPhysicalType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64: {
                 return fieldReference.load<Nautilus::Int64>();
             };
-            case BasicPhysicalType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8: {
                 return fieldReference.load<Nautilus::UInt8>();
             };
-            case BasicPhysicalType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16: {
                 return fieldReference.load<Nautilus::UInt16>();
             };
-            case BasicPhysicalType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32: {
                 return fieldReference.load<Nautilus::UInt32>();
             };
-            case BasicPhysicalType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64: {
                 return fieldReference.load<Nautilus::UInt64>();
             };
-            case BasicPhysicalType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT: {
                 return fieldReference.load<Nautilus::Float>();
             };
-            case BasicPhysicalType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE: {
                 return fieldReference.load<Nautilus::Double>();
             };
-            case BasicPhysicalType::TEXT: {
+            case BasicPhysicalType::NativeType::TEXT: {
                 auto childIndex = fieldReference.load<Nautilus::UInt32>();
                 auto variableSizeBuffer =
                     Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
@@ -94,7 +94,7 @@ Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::TEXT: {
+            case BasicPhysicalType::NativeType::TEXT: {
                 auto textValue = value.as<Nautilus::Text>();
                 auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
                                                          storeAssociatedTextValue,

@@ -36,7 +36,7 @@ using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
 }// namespace Configurations
 
-enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
+enum class PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
@@ -109,7 +109,7 @@ namespace Execution {
 class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
-enum OperatorHandlerType : uint8_t { WINDOW, CEP, JOIN, BATCH_JOIN, KEY_EVENT_TIME_WINDOW };
+enum class OperatorHandlerType : uint8_t { WINDOW, CEP, JOIN, BATCH_JOIN, KEY_EVENT_TIME_WINDOW };
 
 class ExecutablePipeline;
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;

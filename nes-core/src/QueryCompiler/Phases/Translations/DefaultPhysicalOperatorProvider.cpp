@@ -295,7 +295,7 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
 
-    if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+    if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
         // create join operator handler, to establish a common Runtime object for build and prob.
         auto joinOperatorHandler =
             Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
@@ -321,7 +321,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                                             joinOperator->getOutputSchema(),
                                                                             joinOperatorHandler);
         operatorNode->replace(joinSink);
-    } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+    } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
         using namespace Runtime::Execution::Operators;
 
         auto joinDefinition = joinOperator->getJoinDefinition();
@@ -503,7 +503,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
 
         PhysicalOperators::PhysicalKeyedSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
         PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
-        if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+        if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
             auto smOperatorHandler =
                 std::make_shared<Windowing::Experimental::KeyedSliceMergingOperatorHandler>(windowDefinition);
             preAggregationWindowHandler =
@@ -512,7 +512,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
                     windowOperator->getInputOriginIds(),
                     smOperatorHandler->getSliceStagingPtr());
             sliceMergingOperatorHandler = smOperatorHandler;
-        } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+        } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
             auto sliceStaging = std::make_shared<Runtime::Execution::Operators::KeyedSliceStaging>();
             sliceMergingOperatorHandler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>(sliceStaging);
             auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowDefinition->getWindowType());
@@ -569,7 +569,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
         // Create operator handlers for global windows
         PhysicalOperators::PhysicalGlobalSliceMergingOperator::WindowHandlerType sliceMergingOperatorHandler;
         PhysicalOperators::PhysicalGlobalThreadLocalPreAggregationOperator::WindowHandlerType preAggregationWindowHandler;
-        if (options->getQueryCompiler() == QueryCompilerOptions::DEFAULT_QUERY_COMPILER) {
+        if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::DEFAULT_QUERY_COMPILER) {
             auto smOperatorHandler =
                 std::make_shared<Windowing::Experimental::GlobalSliceMergingOperatorHandler>(windowDefinition);
             preAggregationWindowHandler =
@@ -578,7 +578,7 @@ void DefaultPhysicalOperatorProvider::lowerThreadLocalWindowOperator(const Query
                     windowOperator->getInputOriginIds(),
                     smOperatorHandler->getSliceStagingPtr());
             sliceMergingOperatorHandler = smOperatorHandler;
-        } else if (options->getQueryCompiler() == QueryCompilerOptions::NAUTILUS_QUERY_COMPILER) {
+        } else if (options->getQueryCompiler() == QueryCompilerOptions::QueryCompiler::NAUTILUS_QUERY_COMPILER) {
             auto sliceStaging = std::make_shared<Runtime::Execution::Operators::GlobalSliceStaging>();
             sliceMergingOperatorHandler =
                 std::make_shared<Runtime::Execution::Operators::GlobalSliceMergingHandler>(sliceStaging);
@@ -664,7 +664,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr& pl
             operatorNode->replace(thresholdWindowPhysicalOperator);
             return;
         }
-        if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
+        if (options->getWindowingStrategy() == QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL) {
             lowerThreadLocalWindowOperator(plan, operatorNode);
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator

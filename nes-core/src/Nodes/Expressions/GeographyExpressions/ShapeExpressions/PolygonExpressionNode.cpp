@@ -24,9 +24,9 @@ PolygonExpressionNode::PolygonExpressionNode(PolygonExpressionNode* other) : Sha
 }
 
 PolygonExpressionNode::PolygonExpressionNode(std::initializer_list<double> coords)
-    : ShapeExpressionNode(Polygon), coords(coords) {}
+    : ShapeExpressionNode(ShapeType::Polygon), coords(coords) {}
 
-PolygonExpressionNode::PolygonExpressionNode(std::vector<double> coords) : ShapeExpressionNode(Polygon), coords(coords) {}
+PolygonExpressionNode::PolygonExpressionNode(std::vector<double> coords) : ShapeExpressionNode(ShapeType::Polygon), coords(coords) {}
 
 ShapeExpressionNodePtr PolygonExpressionNode::create(std::initializer_list<double> coords) {
     return std::make_shared<PolygonExpressionNode>(coords);

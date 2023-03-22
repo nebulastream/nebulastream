@@ -41,7 +41,7 @@ class MigrationType {
     *         Suitable: reachable by all upstream nodes and can reach all downstream nodes of a query sub plan
     * Step 2: upstream node(s) are reconfigured to send data to the suitable alternative node(s)
     */
-    enum Value : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
+    enum class Value : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
 
     /**
      *

@@ -57,7 +57,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::PipeliningStrategy> pipeliningStrategy = {
         QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::OPERATOR_FUSION,
+        QueryCompilation::QueryCompilerOptions::PipeliningStrategy::OPERATOR_FUSION,
         "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
 
     /**
@@ -65,7 +65,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel> outputBufferOptimizationLevel = {
         QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
-        QueryCompilation::QueryCompilerOptions::ALL,
+        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::ALL,
         "Indicates the OutputBufferAllocationStrategy "
         "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
         "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"

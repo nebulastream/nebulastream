@@ -639,10 +639,10 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     Catalogs::Source::SourceCatalogPtr sourceCatalog =
         std::make_shared<Catalogs::Source::SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
-                                ->addField("id", NES::UINT64)
-                                ->addField("val", NES::UINT64)
-                                ->addField("X", NES::UINT64)
-                                ->addField("Y", NES::UINT64);
+                                ->addField("id", NES::BasicType::UINT64)
+                                ->addField("val", NES::BasicType::UINT64)
+                                ->addField("X", NES::BasicType::UINT64)
+                                ->addField("Y", NES::BasicType::UINT64);
     sourceCatalog->addLogicalSource("example", schema);
 
     std::map<std::string, std::any> properties;

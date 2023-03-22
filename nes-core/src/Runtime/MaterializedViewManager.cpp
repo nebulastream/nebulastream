@@ -49,7 +49,7 @@ MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t 
     std::unique_lock<std::mutex> lock(mutex);
     MaterializedViewPtr view = nullptr;
     if (!viewMap.contains(viewId)) {
-        if (type == TUPLE_VIEW) {
+        if (type == ViewType::TUPLE_VIEW) {
             view = TupleView::createTupleView(viewId);
             viewMap.insert(std::make_pair(viewId, view));
         } else {

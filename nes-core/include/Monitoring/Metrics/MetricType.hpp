@@ -22,7 +22,7 @@ namespace NES::Monitoring {
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
 */
-enum MetricType {
+enum class MetricType : int8_t {
     CpuMetric,
     DiskMetric,
     MemoryMetric,

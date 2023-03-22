@@ -31,7 +31,7 @@ class RequestType {
      * Migrate: Migrate query.
      * Update: Update running query.
      */
-    enum Value : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update };
+    enum class Value : uint8_t { Add = 0, Stop, Restart, Fail, Migrate, Update };
 
     /**
      * @brief Get query status from string

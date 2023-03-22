@@ -27,7 +27,7 @@
  * fixed: buffer manager that we use for sources
  */
 namespace NES::Runtime {
-enum BufferManagerType { GLOBAL, LOCAL, FIXED };
+enum class BufferManagerType : int8_t { GLOBAL, LOCAL, FIXED };
 class AbstractBufferProvider {
   public:
     virtual ~AbstractBufferProvider() {

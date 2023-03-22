@@ -41,7 +41,7 @@ MonitoringSource::MonitoringSource(Monitoring::MetricCollectorPtr metricCollecto
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
+                 GatheringMode::Value::INTERVAL_MODE,
                  successors),
       metricCollector(metricCollector), waitTime(waitTime) {
     schema = metricCollector->getSchema();
@@ -73,7 +73,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
 
 Monitoring::MetricCollectorType MonitoringSource::getCollectorType() { return metricCollector->getType(); }
 
-SourceType MonitoringSource::getType() const { return MONITORING_SOURCE; }
+SourceType MonitoringSource::getType() const { return SourceType::MONITORING_SOURCE; }
 
 std::string MonitoringSource::toString() const {
     std::stringstream ss;

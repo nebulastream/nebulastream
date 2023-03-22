@@ -64,16 +64,16 @@ class SymbolicExecutionContext {
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.
      */
-    enum MODE : const int8_t { FOLLOW, RECORD };
+    enum class MODE : const int8_t { FOLLOW, RECORD };
     /**
      * @brief Tag state
      * This indicates if we visited a specific tag one or two times.
      * If we already visited it two times, we can skip any further executions at this point.
      */
-    enum TagState : const int8_t { FirstVisit, SecondVisit };
+    enum class TagState : const int8_t { FirstVisit, SecondVisit };
     std::unordered_map<const Tag*, TagState> tagMap;
     std::list<SymbolicExecutionPath> inflightExecutionPaths;
-    MODE currentMode = RECORD;
+    MODE currentMode = MODE::RECORD;
     SymbolicExecutionPath currentExecutionPath = SymbolicExecutionPath();
     uint64_t currentOperation = 0;
     uint64_t iterations = 0;

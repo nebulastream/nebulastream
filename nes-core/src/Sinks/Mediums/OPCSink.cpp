@@ -188,7 +188,7 @@ std::string OPCSink::getUser() const { return user; }
 
 std::string OPCSink::getPassword() const { return password; }
 
-SinkMediumTypes OPCSink::getSinkMediumType() { return OPC_SINK; }
+SinkMediumTypes OPCSink::getSinkMediumType() { return SinkMediumTypes::OPC_SINK; }
 
 UA_StatusCode OPCSink::getRetval() const { return retval; }
 

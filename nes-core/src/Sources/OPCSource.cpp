@@ -165,7 +165,7 @@ bool OPCSource::disconnect() {
     return !connected;
 }
 
-SourceType OPCSource::getType() const { return OPC_SOURCE; }
+SourceType OPCSource::getType() const { return SourceType::OPC_SOURCE; }
 
 std::string OPCSource::getUrl() const { return url; }
 

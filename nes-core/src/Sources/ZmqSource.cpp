@@ -165,7 +165,7 @@ bool ZmqSource::disconnect() {
     return !connected;
 }
 
-SourceType ZmqSource::getType() const { return ZMQ_SOURCE; }
+SourceType ZmqSource::getType() const { return SourceType::ZMQ_SOURCE; }
 
 const std::string& ZmqSource::getHost() const { return host; }
 

@@ -77,7 +77,7 @@ class GeneratableBufferEmit : public GeneratableOperator {
   private:
     GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema);
     OutputBufferAllocationStrategy bufferAllocationStrategy;
-    OutputBufferAssignmentStrategy bufferAssignmentStrategy = FIELD_COPY;
+    OutputBufferAssignmentStrategy bufferAssignmentStrategy = OutputBufferAssignmentStrategy::FIELD_COPY;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif// NES_CORE_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEBUFFEREMIT_HPP_

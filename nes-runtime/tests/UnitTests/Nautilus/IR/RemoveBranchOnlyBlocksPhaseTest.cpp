@@ -110,19 +110,19 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public Abst
                     predecessorsAreCorrect = false;
                 }
                 // Every Block MUST have a terminator operation. Check whether the terminator operation points to the correct next blocks.
-                if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::BranchOp) {
+                if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
                     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
                     nextBlocksAreCorrect =
                         correctBlocks.at(currentBlock->getIdentifier())
                             ->correctNextBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
+                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
                     nextBlocksAreCorrect =
                         correctBlocks.at(currentBlock->getIdentifier())
                             ->correctNextBlocks.contains(ifOp->getTrueBlockInvocation().getBlock()->getIdentifier())
                         && correctBlocks.at(currentBlock->getIdentifier())
                                ->correctNextBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier());
-                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::ReturnOp) {
+                } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::ReturnOp) {
                     nextBlocksAreCorrect = correctBlocks.at(currentBlock->getIdentifier())->correctNextBlocks.empty();
                 } else {
                     NES_NOT_IMPLEMENTED();
@@ -132,12 +132,12 @@ class RemoveBranchOnlyBlocksPhaseTest : public Testing::NESBaseTest, public Abst
             }
             blocksToVisit.pop();
             auto terminatorOp = currentBlock->getTerminatorOp();
-            if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
+            if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::BranchOp) {
                 auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
                 if (!visitedBlocks.contains(branchOp->getNextBlockInvocation().getBlock()->getIdentifier())) {
                     blocksToVisit.emplace(branchOp->getNextBlockInvocation().getBlock());
                 }
-            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::IfOp) {
+            } else if (terminatorOp->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
                 auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(terminatorOp);
                 if (!visitedBlocks.contains(ifOp->getFalseBlockInvocation().getBlock()->getIdentifier())) {
                     blocksToVisit.emplace(ifOp->getFalseBlockInvocation().getBlock());

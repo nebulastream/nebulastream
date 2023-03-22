@@ -33,7 +33,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(uint64_t viewId,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**

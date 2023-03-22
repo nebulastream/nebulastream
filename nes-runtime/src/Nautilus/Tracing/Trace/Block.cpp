@@ -18,7 +18,7 @@
 
 namespace NES::Nautilus::Tracing {
 
-Block::Block(uint32_t blockId) : blockId(blockId), type(Default){};
+Block::Block(uint32_t blockId) : blockId(blockId), type(Type::Default){};
 
 bool Block::isLocalValueRef(ValueRef& ref) {
 
@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const Block& block) {
         os << block.arguments[i] << ",";
     }
     os << ")";
-    if (block.type == Block::ControlFlowMerge) {
+    if (block.type == Block::Type::ControlFlowMerge) {
         os << " ControlFlowMerge";
     }
     os << "\n";

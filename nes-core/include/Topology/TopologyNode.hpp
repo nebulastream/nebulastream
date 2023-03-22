@@ -17,6 +17,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
+#include <Util/Experimental/SpatialType.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <any>
 #include <map>
@@ -31,9 +32,9 @@ class GeoLocation;
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Experimental {
-enum class SpatialType;
-}// namespace Spatial::Experimental
+//namespace Spatial::Experimental {
+//enum class SpatialType;
+//}// namespace Spatial::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;

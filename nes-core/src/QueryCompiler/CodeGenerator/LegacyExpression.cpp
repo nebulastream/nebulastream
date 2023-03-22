@@ -52,7 +52,7 @@ ExpressionStatementPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHan
             return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
                                            op,
                                            *(right->generateCode(code, recordHandler)),
-                                           BRACKETS)
+                                           BracketMode::BRACKETS)
                 .copy();
         }
         return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
@@ -69,7 +69,7 @@ ExpressionStatementPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHan
                    op,
                    (ConstantExpressionStatement(NES::QueryCompilation::GeneratableTypesFactory::createValueType(
                        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
-                   BRACKETS)
+                   BracketMode::BRACKETS)
             .copy();
     }
     return BinaryOperatorStatement(expr,
@@ -233,7 +233,7 @@ LegacyExpressionPtr UnaryPredicate::copy() const { return std::make_shared<Unary
 
 ExpressionStatementPtr UnaryPredicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (bracket) {
-        return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)), op, BRACKETS).copy();
+        return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)), op, BracketMode::BRACKETS).copy();
     }
     return UnaryOperatorStatement(*(child->generateCode(code, recordHandler)), op).copy();
 }

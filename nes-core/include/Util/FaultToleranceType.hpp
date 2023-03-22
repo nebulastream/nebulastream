@@ -20,7 +20,7 @@
 namespace NES {
 class FaultToleranceType {
   public:
-    enum Value : uint8_t {
+    enum class Value : uint8_t {
         NONE = 0,         ///No fault-tolerance
         AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
         AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice

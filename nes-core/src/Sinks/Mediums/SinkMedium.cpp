@@ -38,7 +38,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
@@ -112,15 +112,15 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     Reconfigurable::postReconfigurationCallback(message);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (message.getType()) {
-        case Runtime::FailEndOfStream: {
+        case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::SoftEndOfStream: {
+        case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
-        case Runtime::HardEndOfStream: {
+        case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;
         }

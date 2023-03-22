@@ -56,7 +56,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     using base = Execution::ExecutablePipelineStage;
 
   public:
-    explicit ReconfigurationEntryPointPipelineStage() : base(Unary) {
+    explicit ReconfigurationEntryPointPipelineStage() : base(PipelineStageArity::Unary) {
         // nop
     }
 
@@ -357,7 +357,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
     NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
                queryExecutionPlanId,
                blocking,
-               message.getType());
+               magic_enum::enum_name(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
@@ -391,7 +391,7 @@ bool DynamicQueryManager::addReconfigurationMessage(QueryId queryId,
     NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
                queryExecutionPlanId,
                blocking,
-               task->getType());
+               magic_enum::enum_name(task->getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
@@ -428,7 +428,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(QueryId queryId,
     NES_DEBUG2("QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {} to queue={}",
                queryExecutionPlanId,
                blocking,
-               task->getType(),
+               magic_enum::enum_name(task->getType()),
                queryToTaskQueueIdMap[queryId]);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
@@ -462,7 +462,7 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
     using base = Execution::ExecutablePipelineStage;
 
   public:
-    explicit PoisonPillEntryPointPipelineStage() : base(Unary) {
+    explicit PoisonPillEntryPointPipelineStage() : base(PipelineStageArity::Unary) {
         // nop
     }
 

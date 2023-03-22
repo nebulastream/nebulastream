@@ -25,6 +25,7 @@
 #include <Windowing/WindowTypes/ContentBasedWindowType.hpp>
 #include <Windowing/WindowTypes/ThresholdWindow.hpp>
 #include <Windowing/WindowTypes/TimeBasedWindowType.hpp>
+
 #include <z3++.h>
 
 namespace NES {
@@ -90,11 +91,12 @@ bool CentralWindowOperator::inferSchema(Optimizer::TypeInferencePhaseContext& ty
      */
     if (!windowDefinition->getWindowType()->isThresholdWindow()) {
         outputSchema =
-            outputSchema
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", UINT64))
-                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
+                outputSchema
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start",
+                                       BasicType::UINT64))
+                ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end",
+                                       BasicType::UINT64));
     }
-
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
         auto keyList = windowDefinition->getKeys();

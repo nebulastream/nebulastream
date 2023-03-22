@@ -117,52 +117,52 @@ ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueE
         auto stringValue = std::dynamic_pointer_cast<BasicValue>(value)->value;
         auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8: {
                 auto intValue = (uint8_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt8ValueExpression>(intValue);
             }
-            case BasicPhysicalType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16: {
                 auto intValue = (uint16_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt16ValueExpression>(intValue);
             }
-            case BasicPhysicalType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32: {
                 auto intValue = (uint32_t) std::stoul(stringValue);
                 return std::make_shared<ConstantUInt32ValueExpression>(intValue);
             }
-            case BasicPhysicalType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64: {
                 auto intValue = (uint64_t) std::stoull(stringValue);
                 return std::make_shared<ConstantUInt64ValueExpression>(intValue);
             };
-            case BasicPhysicalType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8: {
                 auto intValue = (int8_t) std::stoi(stringValue);
                 return std::make_shared<ConstantInt8ValueExpression>(intValue);
             };
-            case BasicPhysicalType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16: {
                 auto intValue = (int16_t) std::stoi(stringValue);
                 return std::make_shared<ConstantInt16ValueExpression>(intValue);
             };
-            case BasicPhysicalType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32: {
                 auto intValue = (int32_t) std::stoi(stringValue);
                 return std::make_shared<ConstantInt32ValueExpression>(intValue);
             };
-            case BasicPhysicalType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64: {
                 auto intValue = (int64_t) std::stol(stringValue);
                 return std::make_shared<ConstantInt64ValueExpression>(intValue);
             };
-            case BasicPhysicalType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT: {
                 auto floatValue = std::stof(stringValue);
                 return std::make_shared<ConstantFloatValueExpression>(floatValue);
             };
-            case BasicPhysicalType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE: {
                 auto doubleValue = std::stod(stringValue);
                 return std::make_shared<ConstantDoubleValueExpression>(doubleValue);
             };
-            case BasicPhysicalType::CHAR: break;
-            case BasicPhysicalType::BOOLEAN: {
+            case BasicPhysicalType::NativeType::CHAR: break;
+            case BasicPhysicalType::NativeType::BOOLEAN: {
                 auto boolValue = (bool) std::stoi(stringValue) == 1;
                 return std::make_shared<ConstantBooleanValueExpression>(boolValue);
             };
-            case BasicPhysicalType::TEXT: break;
+            case BasicPhysicalType::NativeType::TEXT: break;
             default: {
                 NES_NOT_IMPLEMENTED();
             }

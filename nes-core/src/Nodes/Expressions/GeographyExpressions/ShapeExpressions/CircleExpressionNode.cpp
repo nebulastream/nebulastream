@@ -23,7 +23,7 @@ CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other) : ShapeE
 }
 
 CircleExpressionNode::CircleExpressionNode(double latitude, double longitude, double radius)
-    : ShapeExpressionNode(Circle), latitude(latitude), longitude(longitude), radius(radius) {}
+    : ShapeExpressionNode(ShapeType::Circle), latitude(latitude), longitude(longitude), radius(radius) {}
 
 ShapeExpressionNodePtr CircleExpressionNode::create(double latitude, double longitude, double radius) {
     auto circleNode = std::make_shared<CircleExpressionNode>(latitude, longitude, radius);

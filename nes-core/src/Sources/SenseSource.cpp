@@ -39,7 +39,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  operatorId,
                  originId,
                  numSourceLocalBuffers,
-                 GatheringMode::INTERVAL_MODE,
+                 GatheringMode::Value::INTERVAL_MODE,
                  std::move(successors)),
       udfs(std::move(udfs)) {}
 
@@ -59,7 +59,7 @@ std::string SenseSource::toString() const {
 
 void SenseSource::fillBuffer(Runtime::TupleBuffer&) {}
 
-SourceType SenseSource::getType() const { return SENSE_SOURCE; }
+SourceType SenseSource::getType() const { return SourceType::SENSE_SOURCE; }
 
 const string& SenseSource::getUdfs() const { return udfs; }
 

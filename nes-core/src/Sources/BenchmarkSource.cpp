@@ -30,6 +30,7 @@
 #endif
 #endif
 #include <utility>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES {
 
@@ -60,12 +61,12 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     NES_ASSERT(this->memoryArea && this->memoryAreaSize > 0, "invalid memory area");
     this->numBuffersToProcess = numBuffersToProcess;
-    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
+    if (gatheringMode == GatheringMode::Value::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+    } else if (gatheringMode == GatheringMode::Value::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
-        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << magic_enum::enum_name(gatheringMode));
     }
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
@@ -121,11 +122,11 @@ void BenchmarkSource::runningRoutine() {
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
             Runtime::TupleBuffer buffer;
             switch (sourceMode) {
-                case SourceMode::EMPTY_BUFFER: {
+                case SourceMode::Value::EMPTY_BUFFER: {
                     buffer = bufferManager->getBufferBlocking();
                     break;
                 }
-                case SourceMode::COPY_BUFFER_SIMD_RTE: {
+                case SourceMode::Value::COPY_BUFFER_SIMD_RTE: {
 #ifdef HAS_AVX
                     buffer = bufferManager->getBufferBlocking();
                     rte_memcpy(buffer.getBuffer(),
@@ -136,24 +137,24 @@ void BenchmarkSource::runningRoutine() {
 #endif
                     break;
                 }
-                case SourceMode::COPY_BUFFER_SIMD_APEX: {
+                case SourceMode::Value::COPY_BUFFER_SIMD_APEX: {
                     buffer = bufferManager->getBufferBlocking();
                     apex_memcpy(buffer.getBuffer(),
                                 numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
                                 buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::CACHE_COPY: {
+                case SourceMode::Value::CACHE_COPY: {
                     buffer = bufferManager->getBufferBlocking();
                     memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::COPY_BUFFER: {
+                case SourceMode::Value::COPY_BUFFER: {
                     buffer = bufferManager->getBufferBlocking();
                     memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
                     break;
                 }
-                case SourceMode::WRAP_BUFFER: {
+                case SourceMode::Value::WRAP_BUFFER: {
                     buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
                                                               bufferSize,
                                                               this);
@@ -197,5 +198,5 @@ std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
 
 std::string BenchmarkSource::toString() const { return "BenchmarkSource"; }
 
-NES::SourceType BenchmarkSource::getType() const { return MEMORY_SOURCE; }
+NES::SourceType BenchmarkSource::getType() const { return SourceType::MEMORY_SOURCE; }
 }// namespace NES

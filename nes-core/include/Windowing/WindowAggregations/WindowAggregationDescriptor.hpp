@@ -28,7 +28,7 @@ namespace NES::Windowing {
  */
 class WindowAggregationDescriptor {
   public:
-    enum Type { Avg, Count, Max, Min, Sum, Median };
+    enum class Type : int8_t { Avg, Count, Max, Min, Sum, Median };
 
     /**
     * Defines the field to which a aggregate output is assigned.

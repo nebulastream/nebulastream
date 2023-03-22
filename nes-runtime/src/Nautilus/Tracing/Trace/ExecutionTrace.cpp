@@ -27,7 +27,7 @@ void ExecutionTrace::addOperation(TraceOperation& operation) {
     }
     operation.operationRef = std::make_shared<OperationRef>(currentBlock, blocks[currentBlock].operations.size());
     blocks[currentBlock].operations.emplace_back(operation);
-    if (operation.op == RETURN) {
+    if (operation.op == OpCode::RETURN) {
         returnRef = operation.operationRef;
     }
 }
@@ -56,7 +56,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // create new block
     auto mergedBlockId = createBlock();
     auto& mergeBlock = getBlock(mergedBlockId);
-    mergeBlock.type = Block::ControlFlowMerge;
+    mergeBlock.type = Block::Type::ControlFlowMerge;
     // move operation to new block
     auto& oldBlock = getBlock(blockIndex);
     // copy everything between opId and end;
@@ -75,9 +75,9 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(
-        TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
+        TraceOperation(OpCode::JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
     auto operation =
-        TraceOperation(JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
+        TraceOperation(OpCode::JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
     addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);
@@ -86,7 +86,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 
     //
     auto& lastMergeOperation = mergeBlock.operations[mergeBlock.operations.size() - 1];
-    if (lastMergeOperation.op == CMP || lastMergeOperation.op == JMP) {
+    if (lastMergeOperation.op == OpCode::CMP || lastMergeOperation.op == OpCode::JMP) {
         for (auto& input : lastMergeOperation.input) {
             auto& blockRef = std::get<BlockRef>(input);
             auto& blockPredecessor = getBlock(blockRef.block).predecessors;

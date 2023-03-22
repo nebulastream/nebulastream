@@ -18,6 +18,7 @@
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -29,7 +30,7 @@ class ExecutablePipelineStage {
   public:
     virtual ~ExecutablePipelineStage() = default;
 
-    explicit ExecutablePipelineStage(PipelineStageArity arity = Unary) : arity(arity) {
+    explicit ExecutablePipelineStage(PipelineStageArity arity = PipelineStageArity::Unary) : arity(arity) {
         // nop
     }
 
@@ -108,7 +109,7 @@ template<>
 struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<std::string> {
     auto format(const NES::Runtime::Execution::ExecutablePipelineStage& ex_pipeline_stage, format_context& ctx)
         -> decltype(ctx.out()) {
-        return format_to(ctx.out(), "{}", ex_pipeline_stage.getArity());
+        return format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
 }//namespace fmt

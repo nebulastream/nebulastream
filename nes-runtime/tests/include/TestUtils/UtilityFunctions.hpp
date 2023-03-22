@@ -69,13 +69,13 @@ void writeNautilusRecord(uint64_t recordIndex,
                          BufferManagerPtr bufferManager) {
     Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
     Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
-    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
 
-    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
@@ -104,7 +104,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(std::vector<Runtime::Tu
         return std::vector<Runtime::TupleBuffer>();
     }
 
-    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         NES_FATAL_ERROR("Column layout is not support for this function currently!");
     }
 
@@ -165,7 +165,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(std::vector<Runtime::
     if (buffersToSort.size() == 0) {
         return std::vector<Runtime::TupleBuffer>();
     }
-    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         NES_FATAL_ERROR("Column layout is not support for this function currently!");
     }
 

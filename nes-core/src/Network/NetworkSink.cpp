@@ -49,7 +49,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), reconnectBuffering(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG2("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+    if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
@@ -59,7 +59,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
     }
 }
 
-SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
+SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     //if a mobile node is in the process of reconnecting, do not attempt to send data but buffer it instead
@@ -93,7 +93,7 @@ void NetworkSink::setup() {
     NES_DEBUG2("NetworkSink: method setup() called {} qep {}", nesPartition.toString(), querySubPlanId);
     auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                   querySubPlanId,
-                                                  Runtime::Initialize,
+                                                  Runtime::ReconfigurationType::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
     queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
@@ -111,7 +111,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
-        case Runtime::Initialize: {
+        case Runtime::ReconfigurationType::Initialize: {
             auto channel =
                 networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
@@ -124,19 +124,19 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                        task.getUserData<uint32_t>());
             break;
         }
-        case Runtime::HardEndOfStream: {
+        case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
             break;
         }
-        case Runtime::SoftEndOfStream: {
+        case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
             break;
         }
-        case Runtime::FailEndOfStream: {
+        case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
-        case Runtime::PropagateEpoch: {
+        case Runtime::ReconfigurationType::PropagateEpoch: {
             auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
@@ -145,11 +145,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
-        case Runtime::StartBuffering: {
+        case Runtime::ReconfigurationType::StartBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::Value::EXACTLY_ONCE) {
                 break;
             }
             if (reconnectBuffering) {
@@ -159,11 +159,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             break;
         }
-        case Runtime::StopBuffering: {
+        case Runtime::ReconfigurationType::StopBuffering: {
             //reconnect buffering is currently not supported if tuples are also buffered for fault tolerance
             //todo #3014: make reconnect buffering and fault tolerance buffering compatible
-            if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE
-                || faultToleranceType == FaultToleranceType::EXACTLY_ONCE) {
+            if (faultToleranceType == FaultToleranceType::Value::AT_LEAST_ONCE
+                || faultToleranceType == FaultToleranceType::Value::EXACTLY_ONCE) {
                 break;
             }
             /*stop buffering new incoming tuples. this will change the order of the tuples if new tuples arrive while we

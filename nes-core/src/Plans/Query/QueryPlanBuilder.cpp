@@ -177,9 +177,9 @@ NES::QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(NES::QueryPla
     auto timeBasedWindowType = Windowing::WindowType::asTimeBasedWindowType(windowType);
 
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>().empty()) {
-        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::IngestionTime) {
+        if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
             return assignWatermark(queryPlan, Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::EventTime) {
+        } else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
             return assignWatermark(queryPlan,
                                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
                                        Attribute(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),

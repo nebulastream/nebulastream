@@ -44,7 +44,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                                     uint64_t numberOfOrigins = 1,
                                     uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
 

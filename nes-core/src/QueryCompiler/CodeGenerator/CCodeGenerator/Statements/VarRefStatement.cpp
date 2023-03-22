@@ -15,7 +15,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 
 namespace NES::QueryCompilation {
-StatementType VarRefStatement::getStamentType() const { return VAR_REF_STMT; }
+StatementType VarRefStatement::getStamentType() const { return StatementType::VAR_REF_STMT; }
 
 CodeExpressionPtr VarRefStatement::getCode() const { return varDeclaration->getIdentifier(); }
 

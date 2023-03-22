@@ -25,8 +25,8 @@ namespace NES {
  */
 class MQTTSinkDescriptor : public SinkDescriptor {
   public:
-    enum TimeUnits { nanoseconds, milliseconds, seconds };
-    enum ServiceQualities { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
+    enum class TimeUnits : int8_t { nanoseconds, milliseconds, seconds };
+    enum class ServiceQualities : int8_t { atMostOnce, atLeastOnce, exactlyOnce };//cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
@@ -51,7 +51,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
                                     std::string&& clientId = "",
-                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::NONE,
+                                    FaultToleranceType::Value faultToleranceType = FaultToleranceType::Value::NONE,
                                     uint64_t numberOfOrigins = 1);
 
     /**

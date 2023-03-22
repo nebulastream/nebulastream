@@ -24,34 +24,34 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
     if (physicalType->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8: {
                 return memref.load<Nautilus::Int8>();
             };
-            case BasicPhysicalType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16: {
                 return memref.load<Nautilus::Int16>();
             };
-            case BasicPhysicalType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32: {
                 return memref.load<Nautilus::Int32>();
             };
-            case BasicPhysicalType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64: {
                 return memref.load<Nautilus::Int64>();
             };
-            case BasicPhysicalType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8: {
                 return memref.load<Nautilus::UInt8>();
             };
-            case BasicPhysicalType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16: {
                 return memref.load<Nautilus::UInt16>();
             };
-            case BasicPhysicalType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32: {
                 return memref.load<Nautilus::UInt32>();
             };
-            case BasicPhysicalType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64: {
                 return memref.load<Nautilus::UInt64>();
             };
-            case BasicPhysicalType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT: {
                 return memref.load<Nautilus::Float>();
             };
-            case BasicPhysicalType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE: {
                 return memref.load<Nautilus::Double>();
             };
             default: {
@@ -69,34 +69,34 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
     if (physicalType->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType) {
-            case BasicPhysicalType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8: {
                 return Nautilus::Value<Nautilus::Int8>((int8_t) (value));
             };
-            case BasicPhysicalType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16: {
                 return Nautilus::Value<Nautilus::Int16>((int16_t) (value));
             };
-            case BasicPhysicalType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32: {
                 return Nautilus::Value<Nautilus::Int32>((int32_t) (value));
             };
-            case BasicPhysicalType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64: {
                 return Nautilus::Value<Nautilus::Int64>((int64_t) value);
             };
-            case BasicPhysicalType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8: {
                 return Nautilus::Value<Nautilus::UInt8>((uint8_t) (value));
             };
-            case BasicPhysicalType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16: {
                 return Nautilus::Value<Nautilus::UInt16>((uint16_t) (value));
             };
-            case BasicPhysicalType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32: {
                 return Nautilus::Value<Nautilus::UInt32>((uint32_t) (value));
             };
-            case BasicPhysicalType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64: {
                 return Nautilus::Value<Nautilus::UInt64>((uint64_t) value);
             };
-            case BasicPhysicalType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT: {
                 return Nautilus::Value<Nautilus::Float>((float) (value));
             };
-            case BasicPhysicalType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE: {
                 return Nautilus::Value<Nautilus::Double>((double) (value));
             };
             default: {

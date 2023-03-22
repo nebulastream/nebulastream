@@ -14,6 +14,7 @@
 
 #include <WorkQueues/RequestTypes/MaintenanceRequest.hpp>
 #include <string>
+#include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Experimental {
 
@@ -27,8 +28,8 @@ MaintenanceRequest::MaintenanceRequest(TopologyNodeId nodeId, MigrationType::Val
 MigrationType::Value MaintenanceRequest::getMigrationType() { return migrationType; }
 
 std::string MaintenanceRequest::toString() {
-    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId) + ", withBuffer: " + std::to_string(migrationType)
-        + "}";
+    return "MaintenanceRequest { Topology Node: " + std::to_string(nodeId) + ", withBuffer: " +
+            std::string(magic_enum::enum_name(migrationType)) + "}";
 }
 TopologyNodeId MaintenanceRequest::getTopologyNode() { return nodeId; }
 }// namespace NES::Experimental

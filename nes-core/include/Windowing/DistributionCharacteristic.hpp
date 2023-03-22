@@ -29,7 +29,7 @@ class DistributionCharacteristic {
     /**
      * @brief The type as enum.
      */
-    enum Type { Complete, Slicing, Combining, Merging };
+    enum class Type : int8_t { Complete, Slicing, Combining, Merging };
     explicit DistributionCharacteristic(Type type);
 
     /**

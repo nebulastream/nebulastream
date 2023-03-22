@@ -112,7 +112,7 @@ class TestHarness {
                     NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
                 }
 
-                if (harnessWorkerConfig->getSourceType() != TestHarnessWorkerConfiguration::MemorySource) {
+                if (harnessWorkerConfig->getSourceType() != TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource) {
                     NES_THROW_RUNTIME_ERROR("TestHarness: Record can be pushed only for source of Memory type.");
                 }
 
@@ -206,7 +206,7 @@ class TestHarness {
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                                                      logicalSourceName,
                                                                                      physicalSourceName,
-                                                                                     TestHarnessWorkerConfiguration::MemorySource,
+                                                                                     TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource,
                                                                                      workerId);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
         return *this;
@@ -239,7 +239,7 @@ class TestHarness {
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                                                      logicalSourceName,
                                                                                      physicalSourceName,
-                                                                                     TestHarnessWorkerConfiguration::LambdaSource,
+                                                                                     TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource,
                                                                                      workerId);
         testHarnessWorkerConfiguration->setPhysicalSourceType(physicalSource);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
@@ -264,7 +264,7 @@ class TestHarness {
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                                                      logicalSourceName,
                                                                                      physicalSourceName,
-                                                                                     TestHarnessWorkerConfiguration::CSVSource,
+                                                                                     TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource,
                                                                                      workerId);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
         return *this;
@@ -319,16 +319,16 @@ class TestHarness {
 
         uint64_t sourceCount = 0;
         for (const auto& workerConf : testHarnessWorkerConfigurations) {
-            if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource && workerConf->getRecords().empty()) {
+            if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource && workerConf->getRecords().empty()) {
                 throw Exceptions::RuntimeException("TestHarness: No Record defined for Memory Source with logical source Name: "
                                                    + workerConf->getLogicalSourceName()
                                                    + " and Physical source name : " + workerConf->getPhysicalSourceName()
                                                    + ". Please add data to the test harness.");
             }
 
-            if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::CSVSource
-                || workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource
-                || workerConf->getSourceType() == TestHarnessWorkerConfiguration::LambdaSource) {
+            if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::CSVSource
+                || workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource
+                || workerConf->getSourceType() == TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource) {
                 sourceCount++;
             }
         }
@@ -435,12 +435,12 @@ class TestHarness {
             workerConfiguration->coordinatorIp = coordinatorIPAddress;
 
             switch (workerConf->getSourceType()) {
-                case TestHarnessWorkerConfiguration::MemorySource: {
+                case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource: {
                     auto physicalSource = createPhysicalSourceOfMemoryType(workerConf);
                     workerConfiguration->physicalSources.add(physicalSource);
                     break;
                 }
-                case TestHarnessWorkerConfiguration::LambdaSource: {
+                case TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::LambdaSource: {
                     auto physicalSource = createPhysicalSourceOfLambdaType(workerConf);
                     workerConfiguration->physicalSources.add(physicalSource);
                     break;

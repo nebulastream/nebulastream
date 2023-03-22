@@ -169,7 +169,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
         bool backLinksAreCorrect = true;
         uint32_t numCheckedBlocks = 0;
         for (auto currentBlock : dpsSortedBlocks) {
-            if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp) {
+            if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::IfOp) {
                 // Check that the currentBlock is actually part of the solution set.
                 if (correctBlocks.contains(currentBlock->getIdentifier())) {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
@@ -209,7 +209,7 @@ class StructuredControlFlowPhaseTest : public testing::Test, public AbstractComp
                               << " was not part of solution set(correctBlocks), but it contains an if-operation.");
                 }
                 ++numCheckedBlocks;
-            } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp) {
+            } else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::LoopOp) {
                 auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
                 // Check loop operation for correctness.
                 if (correctBlocks.contains(currentBlock->getIdentifier())) {
@@ -702,7 +702,7 @@ Value<> emptyIfElse_12() {
 TEST_P(StructuredControlFlowPhaseTest, 12_emptyIfElse) {
     auto dpsSortedBlocks = createTraceAndApplyPhases(&emptyIfElse_12);
     auto convertedIfOperation = dpsSortedBlocks.at(0)->getTerminatorOp();
-    ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::BranchOp);
+    ASSERT_EQ(convertedIfOperation->getOperationType(), IR::Operations::Operation::OperationType::BranchOp);
     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(dpsSortedBlocks.at(0)->getTerminatorOp());
     ASSERT_EQ(branchOp->getNextBlockInvocation().getBlock()->getIdentifier(), "2");
 }

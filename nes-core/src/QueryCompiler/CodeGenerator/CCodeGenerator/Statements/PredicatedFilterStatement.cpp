@@ -63,7 +63,7 @@ PredicatedFilterStatement::PredicatedFilterStatement(ExpressionStatementPtr pred
     this->predicatedCode->addStatement(predicatedCode->createCopy());
 }
 
-StatementType PredicatedFilterStatement::getStamentType() const { return PREDICATED_FILTER_STMT; }
+StatementType PredicatedFilterStatement::getStamentType() const { return StatementType::PREDICATED_FILTER_STMT; }
 CodeExpressionPtr PredicatedFilterStatement::getCode() const {
 
     auto predicateEvaluationGenerated = predicateEvaluation->getCode()->code_;

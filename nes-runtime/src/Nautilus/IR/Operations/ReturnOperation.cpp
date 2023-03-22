@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <string>
 namespace NES::Nautilus::IR::Operations {
-ReturnOperation::ReturnOperation() : Operation(Operation::ReturnOp, Types::StampFactory::createVoidStamp()) {}
+ReturnOperation::ReturnOperation() : Operation(Operation::OperationType::ReturnOp, Types::StampFactory::createVoidStamp()) {}
 ReturnOperation::ReturnOperation(OperationPtr returnValue)
-    : Operation(Operation::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {
+    : Operation(Operation::OperationType::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {
     returnValue->addUsage(this);
 }
 

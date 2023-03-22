@@ -25,9 +25,9 @@ namespace QueryCompilation {
  */
 class PipelineContext {
   public:
-    enum PipelineContextArity { Unary, BinaryLeft, BinaryRight };
+    enum class PipelineContextArity : int8_t { Unary, BinaryLeft, BinaryRight };
 
-    explicit PipelineContext(PipelineContextArity arity = Unary);
+    explicit PipelineContext(PipelineContextArity arity = PipelineContextArity::Unary);
     static PipelineContextPtr create();
     void addVariableDeclaration(const Declaration&);
     BlockScopeStatementPtr createSetupScope();

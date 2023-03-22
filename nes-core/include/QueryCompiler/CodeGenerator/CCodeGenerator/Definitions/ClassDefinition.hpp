@@ -34,7 +34,7 @@ class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
     /**
      * @brief Visibility for class members
      */
-    enum Visibility { Public, Private };
+    enum class Visibility : int8_t { Public, Private };
 
     explicit ClassDefinition(std::string name);
 

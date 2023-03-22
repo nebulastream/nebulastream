@@ -123,7 +123,7 @@ class Exception : public std::runtime_error {
         * @brief Enumeration of exception types.
         *
         */
-    enum eType {
+    enum class eType : int8_t {
         InternalError,///< Internal error.
         ParsingError, ///< Invalid parsing data.
         OperationError///< User operation error.
@@ -273,9 +273,9 @@ class Iterator {
     bool operator!=(const Iterator& it) const;
 
   private:
-    enum eType { None, SequenceType, MapType };
+    enum class eType : int8_t { None, SequenceType, MapType };
 
-    eType m_Type{None};   ///< Type of iterator.
+    eType m_Type{eType::None};   ///< Type of iterator.
     void* m_pImp{nullptr};///< Implementation of iterator class.
 };
 
@@ -344,9 +344,9 @@ class ConstIterator {
     friend bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs);
 
   private:
-    enum eType { None, SequenceType, MapType };
+    enum class eType : int8_t { None, SequenceType, MapType };
 
-    eType m_Type{None};   ///< Type of iterator.
+    eType m_Type{eType::None};   ///< Type of iterator.
     void* m_pImp{nullptr};///< Implementation of constant iterator class.
 };
 
@@ -363,7 +363,7 @@ class Node {
         * @brief Enumeration of node types.
         *
         */
-    enum eType { None, SequenceType, MapType, ScalarType };
+    enum class eType : int8_t { None, SequenceType, MapType, ScalarType };
 
     /**
         * @brief Default constructor.

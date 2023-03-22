@@ -40,7 +40,7 @@ class QueryStatus {
      * Restarting: restarting the query
      * Migrating: migrating query
      */
-    enum Value : uint8_t {
+    enum class Value : uint8_t {
         Registered = 0,
         Optimizing,
         Deployed,

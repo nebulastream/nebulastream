@@ -428,7 +428,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                                                               onLeftKey,
                                                               onRightKey,
                                                               windowType,
-                                                              Join::LogicalJoinDefinition::CARTESIAN_PRODUCT);
+                                                              Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT);
 
             if (operaterName == "SEQ") {
                 // for SEQ we need to add additional filter for order by time
